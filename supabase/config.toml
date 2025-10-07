@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.withdraw]
 verify_jwt = true
+
+[functions.upgrade-plan]
+verify_jwt = true

@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check, Loader2, ArrowLeft, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { comparePlans } from "@/lib/plan-utils";
 
 interface MembershipPlan {
   id: string;
@@ -28,6 +30,7 @@ export default function MembershipPlans() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const [depositBalance, setDepositBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
 
@@ -57,7 +60,7 @@ export default function MembershipPlans() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("membership_plan")
+      .select("membership_plan, deposit_wallet_balance")
       .eq("id", user.id)
       .single();
 
@@ -65,6 +68,7 @@ export default function MembershipPlans() {
       console.error(error);
     } else {
       setCurrentPlan(data?.membership_plan || "free");
+      setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
     }
   };
 
@@ -80,59 +84,49 @@ export default function MembershipPlans() {
       return;
     }
 
+    if (plan.name === "free") {
+      toast.error("Cannot downgrade to free plan. Please contact support.");
+      return;
+    }
+
     setUpgrading(plan.id);
 
     try {
-      // Check deposit wallet balance
+      // Check deposit wallet balance first
       const { data: profile } = await supabase
         .from("profiles")
         .select("deposit_wallet_balance")
         .eq("id", user.id)
         .single();
 
-      if (!profile || profile.deposit_wallet_balance < plan.price) {
-        toast.error(`Insufficient balance. You need $${plan.price} in your deposit wallet.`);
+      if (!profile || parseFloat(String(profile.deposit_wallet_balance)) < plan.price) {
+        toast.error(
+          `Insufficient balance. You need $${plan.price} in your deposit wallet. Please deposit funds first.`
+        );
         setUpgrading(null);
         return;
       }
 
-      // Calculate new balance and expiry date
-      const newBalance = profile.deposit_wallet_balance - plan.price;
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + plan.billing_period_days);
+      // Call the upgrade-plan edge function
+      const { data, error } = await supabase.functions.invoke("upgrade-plan", {
+        body: { planName: plan.name },
+      });
 
-      // Update profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          membership_plan: plan.name,
-          plan_expires_at: expiresAt.toISOString(),
-          deposit_wallet_balance: newBalance,
-        })
-        .eq("id", user.id);
+      if (error) throw error;
 
-      if (updateError) throw updateError;
-
-      // Create transaction record
-      const { error: txError } = await supabase
-        .from("transactions")
-        .insert({
-          user_id: user.id,
-          type: "plan_upgrade",
-          amount: plan.price,
-          wallet_type: "deposit",
-          status: "completed",
-          new_balance: newBalance,
-          description: `Upgraded to ${plan.display_name}`,
-        });
-
-      if (txError) console.error("Transaction log error:", txError);
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
 
       toast.success(`Successfully upgraded to ${plan.display_name}!`);
       setCurrentPlan(plan.name);
-    } catch (error) {
+      
+      // Reload profile to get updated data
+      await loadUserProfile();
+    } catch (error: any) {
       console.error("Upgrade error:", error);
-      toast.error("Failed to upgrade plan. Please try again.");
+      toast.error(error.message || "Failed to upgrade plan. Please try again.");
     } finally {
       setUpgrading(null);
     }
@@ -148,12 +142,36 @@ export default function MembershipPlans() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/dashboard")}
+        className="mb-6"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
+      <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
         <p className="text-muted-foreground text-lg">
           Choose the perfect plan to maximize your earnings
         </p>
       </div>
+
+      {user && (
+        <Alert className="mb-8 max-w-3xl mx-auto">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Your current deposit wallet balance: <strong>${depositBalance.toFixed(2)}</strong>
+            {depositBalance === 0 && (
+              <span className="text-muted-foreground">
+                {" "}
+                - Please deposit funds to upgrade your plan.
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {plans.map((plan) => (
@@ -213,11 +231,21 @@ export default function MembershipPlans() {
               </div>
             </CardContent>
 
-            <CardFooter>
+            <CardFooter className="flex flex-col gap-2">
+              {depositBalance < plan.price && plan.name !== currentPlan && plan.price > 0 && (
+                <p className="text-xs text-destructive text-center">
+                  Insufficient balance (need ${(plan.price - depositBalance).toFixed(2)} more)
+                </p>
+              )}
               <Button
                 className="w-full"
                 onClick={() => handleUpgrade(plan)}
-                disabled={plan.name === currentPlan || upgrading === plan.id}
+                disabled={
+                  plan.name === currentPlan || 
+                  upgrading === plan.id || 
+                  (depositBalance < plan.price && plan.price > 0) ||
+                  plan.name === "free"
+                }
                 variant={plan.name === currentPlan ? "outline" : "default"}
               >
                 {upgrading === plan.id ? (
@@ -228,7 +256,7 @@ export default function MembershipPlans() {
                 ) : plan.name === currentPlan ? (
                   "Current Plan"
                 ) : plan.name === "free" ? (
-                  "Downgrade"
+                  "Cannot Downgrade"
                 ) : (
                   "Upgrade Now"
                 )}
