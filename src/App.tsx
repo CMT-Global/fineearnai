@@ -14,6 +14,8 @@ import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
 import Referrals from "./pages/Referrals";
 import Admin from "./pages/Admin";
+import AITasksGenerate from "./pages/admin/AITasksGenerate";
+import AITasksManage from "./pages/admin/AITasksManage";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";

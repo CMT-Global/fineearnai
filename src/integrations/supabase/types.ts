@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_tasks: {
+        Row: {
+          category: string
+          correct_response: string
+          created_at: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          id: string
+          is_active: boolean
+          prompt: string
+          response_a: string
+          response_b: string
+        }
+        Insert: {
+          category: string
+          correct_response: string
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          is_active?: boolean
+          prompt: string
+          response_a: string
+          response_b: string
+        }
+        Update: {
+          category?: string
+          correct_response?: string
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          is_active?: boolean
+          prompt?: string
+          response_a?: string
+          response_b?: string
+        }
+        Relationships: []
+      }
       membership_plans: {
         Row: {
           account_type: string
@@ -183,6 +219,47 @@ export type Database = {
           referrer_id?: string
         }
         Relationships: []
+      }
+      task_completions: {
+        Row: {
+          completed_at: string
+          earnings_amount: number
+          id: string
+          is_correct: boolean
+          selected_response: string
+          task_id: string
+          time_taken_seconds: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          earnings_amount?: number
+          id?: string
+          is_correct: boolean
+          selected_response: string
+          task_id: string
+          time_taken_seconds: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          earnings_amount?: number
+          id?: string
+          is_correct?: boolean
+          selected_response?: string
+          task_id?: string
+          time_taken_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
