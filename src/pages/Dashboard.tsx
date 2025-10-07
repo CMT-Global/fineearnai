@@ -11,12 +11,14 @@ import {
   DollarSign,
   TrendingUp,
   UserPlus,
-  LogOut
+  LogOut,
+  History
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { WalletCard } from "@/components/wallet/WalletCard";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -178,31 +180,17 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-6 p-8">
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
-                <p className="text-3xl font-bold">${profile.deposit_wallet_balance}</p>
-                <p className="text-xs text-muted-foreground mt-1">For account upgrades</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-              </div>
-            </div>
-          </Card>
+          <WalletCard 
+            type="deposit"
+            balance={profile.deposit_wallet_balance}
+            subtitle="For account upgrades"
+          />
 
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Earnings Wallet</p>
-                <p className="text-3xl font-bold">${profile.earnings_wallet_balance}</p>
-                <p className="text-xs text-muted-foreground mt-1">From tasks & referrals</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-earnings))]/10 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-[hsl(var(--wallet-earnings))]" />
-              </div>
-            </div>
-          </Card>
+          <WalletCard 
+            type="earnings"
+            balance={profile.earnings_wallet_balance}
+            subtitle="From tasks & referrals"
+          />
 
           <Card className="p-6">
             <div className="flex items-start justify-between mb-4">
@@ -276,9 +264,13 @@ const Dashboard = () => {
                 <Zap className="h-4 w-4 text-[hsl(var(--wallet-tasks))]" />
                 Start AI Tasks
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <Wallet className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
-                Manage Wallet
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => navigate("/transactions")}
+              >
+                <History className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
+                Transaction History
               </Button>
               <Button variant="outline" className="w-full justify-start gap-2">
                 <UserPlus className="h-4 w-4 text-[hsl(var(--wallet-referrals))]" />

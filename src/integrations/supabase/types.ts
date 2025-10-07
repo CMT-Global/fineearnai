@@ -82,6 +82,59 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          gateway_transaction_id: string | null
+          id: string
+          metadata: Json | null
+          new_balance: number
+          payment_gateway: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+          wallet_type: Database["public"]["Enums"]["wallet_type"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_balance: number
+          payment_gateway?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+          wallet_type: Database["public"]["Enums"]["wallet_type"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_balance?: number
+          payment_gateway?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+          wallet_type?: Database["public"]["Enums"]["wallet_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -122,6 +175,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      transaction_status: "pending" | "completed" | "failed" | "cancelled"
+      transaction_type:
+        | "deposit"
+        | "withdrawal"
+        | "task_earning"
+        | "referral_commission"
+        | "plan_upgrade"
+        | "transfer"
+        | "adjustment"
+      wallet_type: "deposit" | "earnings"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -250,6 +313,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      transaction_status: ["pending", "completed", "failed", "cancelled"],
+      transaction_type: [
+        "deposit",
+        "withdrawal",
+        "task_earning",
+        "referral_commission",
+        "plan_upgrade",
+        "transfer",
+        "adjustment",
+      ],
+      wallet_type: ["deposit", "earnings"],
     },
   },
 } as const
