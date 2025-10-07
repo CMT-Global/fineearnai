@@ -15,6 +15,7 @@ import {
   History
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ import { formatCurrency } from "@/lib/wallet-utils";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [referralStats, setReferralStats] = useState<any>(null);
@@ -116,6 +118,15 @@ const Dashboard = () => {
             <Crown className="h-5 w-5" />
             <span>Membership</span>
           </button>
+          {isAdmin && (
+            <button 
+              onClick={() => navigate("/admin")}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left bg-[hsl(var(--wallet-deposit))]/10"
+            >
+              <Settings className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
+              <span className="text-[hsl(var(--wallet-deposit))]">Admin Panel</span>
+            </button>
+          )}
           <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
             <Settings className="h-5 w-5" />
             <span>Settings</span>
