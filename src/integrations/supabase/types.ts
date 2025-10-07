@@ -148,6 +148,42 @@ export type Database = {
           },
         ]
       }
+      referral_earnings: {
+        Row: {
+          base_amount: number
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          earning_type: string
+          id: string
+          metadata: Json | null
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          base_amount: number
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          earning_type: string
+          id?: string
+          metadata?: Json | null
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          base_amount?: number
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          earning_type?: string
+          id?: string
+          metadata?: Json | null
+          referred_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           base_reward: number
@@ -322,6 +358,16 @@ export type Database = {
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_referral_stats: {
+        Args: { user_uuid: string }
+        Returns: {
+          active_referrals: number
+          deposit_commission_earnings: number
+          task_commission_earnings: number
+          total_earnings: number
+          total_referrals: number
+        }[]
       }
       has_role: {
         Args: {

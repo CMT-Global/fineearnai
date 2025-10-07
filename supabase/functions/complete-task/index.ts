@@ -151,6 +151,83 @@ Deno.serve(async (req) => {
       throw transactionError;
     }
 
+    // Handle referral commission if user was referred
+    if (profile.referred_by && plan.task_commission_rate > 0) {
+      const commissionAmount = earnedAmount * (plan.task_commission_rate / 100);
+      
+      // Get referrer's profile
+      const { data: referrerProfile, error: referrerError } = await supabase
+        .from('profiles')
+        .select('*, membership_plan')
+        .eq('id', profile.referred_by)
+        .single();
+
+      if (!referrerError && referrerProfile) {
+        // Get referrer's membership plan
+        const { data: referrerPlan } = await supabase
+          .from('membership_plans')
+          .select('*')
+          .eq('name', referrerProfile.membership_plan)
+          .single();
+
+        if (referrerPlan && referrerPlan.task_commission_rate > 0) {
+          // Check max active referrals limit
+          const { count: activeReferralsCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('referred_by', profile.referred_by)
+            .gte('tasks_completed_today', 1);
+
+          const isWithinLimit = (activeReferralsCount || 0) <= referrerPlan.max_active_referrals;
+
+          if (isWithinLimit) {
+            const newReferrerBalance = parseFloat(referrerProfile.earnings_wallet_balance) + commissionAmount;
+
+            // Update referrer's balance
+            await supabase
+              .from('profiles')
+              .update({ earnings_wallet_balance: newReferrerBalance })
+              .eq('id', profile.referred_by);
+
+            // Record referral earning
+            await supabase
+              .from('referral_earnings')
+              .insert({
+                referrer_id: profile.referred_by,
+                referred_user_id: user.id,
+                earning_type: 'task_commission',
+                base_amount: earnedAmount,
+                commission_amount: commissionAmount,
+                commission_rate: plan.task_commission_rate,
+                metadata: {
+                  task_id: userTask.task_id,
+                  user_task_id: userTaskId,
+                },
+              });
+
+            // Create transaction for referrer
+            await supabase
+              .from('transactions')
+              .insert({
+                user_id: profile.referred_by,
+                type: 'referral_commission',
+                amount: commissionAmount,
+                wallet_type: 'earnings',
+                new_balance: newReferrerBalance,
+                description: `Referral commission from ${profile.username}'s task`,
+                status: 'completed',
+                metadata: {
+                  referred_user_id: user.id,
+                  task_id: userTask.task_id,
+                },
+              });
+
+            console.log('Referral commission paid:', { referrerId: profile.referred_by, amount: commissionAmount });
+          }
+        }
+      }
+    }
+
     console.log('Task completed successfully:', { userTaskId, earnedAmount });
 
     return new Response(

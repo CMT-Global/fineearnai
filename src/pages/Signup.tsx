@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,9 @@ import {
 const Signup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const referralCodeFromUrl = searchParams.get("ref");
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -31,7 +33,7 @@ const Signup = () => {
       fullName: "",
       email: "",
       password: "",
-      referralCode: "",
+      referralCode: referralCodeFromUrl || "",
     },
   });
 
@@ -39,6 +41,22 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
+      // First check if referral code is valid (if provided)
+      let referrerId = null;
+      const referralCode = data.referralCode || referralCodeFromUrl;
+      
+      if (referralCode) {
+        const { data: referrerProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("referral_code", referralCode.toUpperCase())
+          .single();
+        
+        if (referrerProfile) {
+          referrerId = referrerProfile.id;
+        }
+      }
+
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -47,6 +65,7 @@ const Signup = () => {
           data: {
             username: data.username,
             full_name: data.fullName,
+            referred_by: referrerId,
           },
         },
       });

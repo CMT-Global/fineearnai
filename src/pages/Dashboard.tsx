@@ -19,11 +19,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletCard } from "@/components/wallet/WalletCard";
+import { formatCurrency } from "@/lib/wallet-utils";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [referralStats, setReferralStats] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,6 +48,14 @@ const Dashboard = () => {
     
     if (data) {
       setProfile(data);
+    }
+
+    // Load referral stats
+    const { data: statsData } = await supabase
+      .rpc("get_referral_stats", { user_uuid: user?.id });
+    
+    if (statsData && statsData.length > 0) {
+      setReferralStats(statsData[0]);
     }
   };
 
@@ -92,10 +102,13 @@ const Dashboard = () => {
             <Wallet className="h-5 w-5" />
             <span>Wallet</span>
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
+          <button 
+            onClick={() => navigate("/referrals")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
+          >
             <Users className="h-5 w-5" />
             <span>Referrals</span>
-          </a>
+          </button>
           <button 
             onClick={() => navigate("/plans")}
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
@@ -222,8 +235,10 @@ const Dashboard = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Referrals</p>
-                <p className="text-3xl font-bold">0</p>
-                <p className="text-xs text-muted-foreground mt-1">$0.00 earned</p>
+                <p className="text-3xl font-bold">{referralStats?.total_referrals || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatCurrency(parseFloat(referralStats?.total_earnings || 0))} earned
+                </p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-referrals))]/10 flex items-center justify-center">
                 <UserPlus className="h-6 w-6 text-[hsl(var(--wallet-referrals))]" />
@@ -293,7 +308,11 @@ const Dashboard = () => {
                 <History className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
                 Transaction History
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => navigate("/referrals")}
+              >
                 <UserPlus className="h-4 w-4 text-[hsl(var(--wallet-referrals))]" />
                 Invite Friends
               </Button>
