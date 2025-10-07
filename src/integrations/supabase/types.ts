@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      membership_plans: {
+        Row: {
+          account_type: string
+          billing_period_days: number
+          created_at: string
+          daily_task_limit: number
+          deposit_commission_rate: number
+          display_name: string
+          earning_per_task: number
+          features: Json | null
+          id: string
+          is_active: boolean
+          max_active_referrals: number
+          max_daily_withdrawal: number
+          min_daily_withdrawal: number
+          min_withdrawal: number
+          name: string
+          price: number
+          task_commission_rate: number
+          task_skip_limit_per_day: number
+          updated_at: string
+        }
+        Insert: {
+          account_type: string
+          billing_period_days?: number
+          created_at?: string
+          daily_task_limit?: number
+          deposit_commission_rate?: number
+          display_name: string
+          earning_per_task?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_active_referrals?: number
+          max_daily_withdrawal?: number
+          min_daily_withdrawal?: number
+          min_withdrawal?: number
+          name: string
+          price?: number
+          task_commission_rate?: number
+          task_skip_limit_per_day?: number
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          billing_period_days?: number
+          created_at?: string
+          daily_task_limit?: number
+          deposit_commission_rate?: number
+          display_name?: string
+          earning_per_task?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_active_referrals?: number
+          max_daily_withdrawal?: number
+          min_daily_withdrawal?: number
+          min_withdrawal?: number
+          name?: string
+          price?: number
+          task_commission_rate?: number
+          task_skip_limit_per_day?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null

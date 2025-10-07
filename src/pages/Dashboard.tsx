@@ -93,10 +93,13 @@ const Dashboard = () => {
             <Users className="h-5 w-5" />
             <span>Referrals</span>
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
+          <button 
+            onClick={() => navigate("/plans")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
+          >
             <Crown className="h-5 w-5" />
             <span>Membership</span>
-          </a>
+          </button>
           <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
             <Settings className="h-5 w-5" />
             <span>Settings</span>
@@ -135,14 +138,21 @@ const Dashboard = () => {
               <p className="text-muted-foreground">Manage your account and track your progress.</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => navigate("/plans")}
+              >
                 <Crown className="h-4 w-4" />
                 Membership
-                <span className="text-xs bg-[hsl(var(--wallet-referrals))]/10 text-[hsl(var(--wallet-referrals))] px-2 py-0.5 rounded-full">
-                  70 days left
+                <span className="text-xs bg-[hsl(var(--wallet-referrals))]/10 text-[hsl(var(--wallet-referrals))] px-2 py-0.5 rounded-full capitalize">
+                  {profile.membership_plan}
                 </span>
               </Button>
-              <Button className="gap-2 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90">
+              <Button 
+                className="gap-2 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
+                onClick={() => navigate("/plans")}
+              >
                 <Sparkles className="h-4 w-4" />
                 Upgrade Account
               </Button>
@@ -276,7 +286,11 @@ const Dashboard = () => {
                 <UserPlus className="h-4 w-4 text-[hsl(var(--wallet-referrals))]" />
                 Invite Friends
               </Button>
-              <Button variant="outline" className="w-full justify-start gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => navigate("/plans")}
+              >
                 <Crown className="h-4 w-4 text-[hsl(var(--wallet-deposit))]" />
                 Upgrade Plan
               </Button>
