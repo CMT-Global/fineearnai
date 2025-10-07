@@ -1,18 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { 
-  Home, 
-  Zap, 
-  Wallet, 
-  Users, 
   Crown, 
-  Settings, 
   Sparkles,
   DollarSign,
   TrendingUp,
   UserPlus,
-  LogOut,
-  History
+  Zap
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -78,100 +73,27 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex flex-col">
-        <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-            <span className="text-xl font-bold">FineEarn</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))]">
-            <Home className="h-5 w-5" />
-            <span>Dashboard</span>
-          </a>
-          <button 
-            onClick={() => navigate("/tasks")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
-          >
-            <Zap className="h-5 w-5" />
-            <span>Tasks</span>
-          </button>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
-            <Wallet className="h-5 w-5" />
-            <span>Wallet</span>
-          </a>
-          <button 
-            onClick={() => navigate("/referrals")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
-          >
-            <Users className="h-5 w-5" />
-            <span>Referrals</span>
-          </button>
-          <button 
-            onClick={() => navigate("/plans")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
-          >
-            <Crown className="h-5 w-5" />
-            <span>Membership</span>
-          </button>
-          {isAdmin && (
-            <button 
-              onClick={() => navigate("/admin")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left bg-[hsl(var(--wallet-deposit))]/10"
-            >
-              <Settings className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-              <span className="text-[hsl(var(--wallet-deposit))]">Admin Panel</span>
-            </button>
-          )}
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
-            <Settings className="h-5 w-5" />
-            <span>Settings</span>
-          </a>
-        </nav>
-
-        <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white text-sm font-bold">
-              {profile.username.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{profile.username}</p>
-              <p className="text-xs text-[hsl(var(--sidebar-fg))]/60 capitalize">{profile.membership_plan} Plan</p>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full mt-2 text-xs text-[hsl(var(--sidebar-fg))]/60 hover:text-[hsl(var(--sidebar-fg))]"
-            onClick={signOut}
-          >
-            <LogOut className="h-3 w-3 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-      </aside>
+      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
         {/* Header */}
-        <header className="bg-card border-b px-8 py-6">
-          <div className="flex items-center justify-between">
+        <header className="bg-card border-b px-4 lg:px-8 py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">Welcome back, {profile.username}!</h1>
               <p className="text-muted-foreground">Manage your account and track your progress.</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button 
                 variant="outline" 
                 className="gap-2"
                 onClick={() => navigate("/plans")}
               >
                 <Crown className="h-4 w-4" />
-                Membership
+                <span className="hidden sm:inline">Membership</span>
                 <span className="text-xs bg-[hsl(var(--wallet-referrals))]/10 text-[hsl(var(--wallet-referrals))] px-2 py-0.5 rounded-full capitalize">
                   {profile.membership_plan}
                 </span>
@@ -181,11 +103,8 @@ const Dashboard = () => {
                 onClick={() => navigate("/plans")}
               >
                 <Sparkles className="h-4 w-4" />
-                Upgrade Account
-              </Button>
-              <Button variant="outline" className="gap-2">
-                <DollarSign className="h-4 w-4" />
-                Manage Wallet
+                <span className="hidden sm:inline">Upgrade Account</span>
+                <span className="sm:hidden">Upgrade</span>
               </Button>
             </div>
           </div>
@@ -216,7 +135,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-6 p-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
           <WalletCard 
             depositBalance={parseFloat(profile.deposit_wallet_balance)}
             earningsBalance={parseFloat(profile.earnings_wallet_balance)}
@@ -253,9 +172,9 @@ const Dashboard = () => {
         </div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-3 gap-6 px-8 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 lg:px-8 pb-8">
           {/* Today's Progress */}
-          <Card className="col-span-2 p-6">
+          <Card className="lg:col-span-2 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
@@ -310,7 +229,7 @@ const Dashboard = () => {
                 className="w-full justify-start gap-2"
                 onClick={() => navigate("/transactions")}
               >
-                <History className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
+                <DollarSign className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
                 Transaction History
               </Button>
               <Button 
