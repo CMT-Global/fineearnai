@@ -148,6 +148,48 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          base_reward: number
+          created_at: string
+          description: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          id: string
+          instructions: Json | null
+          is_active: boolean
+          time_estimate_minutes: number
+          title: string
+          updated_at: string
+          validation_criteria: Json | null
+        }
+        Insert: {
+          base_reward?: number
+          created_at?: string
+          description: string
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          instructions?: Json | null
+          is_active?: boolean
+          time_estimate_minutes?: number
+          title: string
+          updated_at?: string
+          validation_criteria?: Json | null
+        }
+        Update: {
+          base_reward?: number
+          created_at?: string
+          description?: string
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          instructions?: Json | null
+          is_active?: boolean
+          time_estimate_minutes?: number
+          title?: string
+          updated_at?: string
+          validation_criteria?: Json | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -222,6 +264,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tasks: {
+        Row: {
+          assigned_at: string
+          completed_at: string | null
+          earned_amount: number | null
+          expires_at: string
+          id: string
+          skipped_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          submission_data: Json | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          completed_at?: string | null
+          earned_amount?: number | null
+          expires_at: string
+          id?: string
+          skipped_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          submission_data?: Json | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          completed_at?: string | null
+          earned_amount?: number | null
+          expires_at?: string
+          id?: string
+          skipped_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          submission_data?: Json | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -241,6 +333,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      task_difficulty: "easy" | "medium" | "hard"
+      task_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "skipped"
+        | "expired"
       transaction_status: "pending" | "completed" | "failed" | "cancelled"
       transaction_type:
         | "deposit"
@@ -379,6 +478,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      task_difficulty: ["easy", "medium", "hard"],
+      task_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "skipped",
+        "expired",
+      ],
       transaction_status: ["pending", "completed", "failed", "cancelled"],
       transaction_type: [
         "deposit",

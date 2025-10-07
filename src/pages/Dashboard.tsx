@@ -81,10 +81,13 @@ const Dashboard = () => {
             <Home className="h-5 w-5" />
             <span>Dashboard</span>
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
+          <button 
+            onClick={() => navigate("/tasks")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left"
+          >
             <Zap className="h-5 w-5" />
             <span>Tasks</span>
-          </a>
+          </button>
           <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors">
             <Wallet className="h-5 w-5" />
             <span>Wallet</span>
@@ -238,7 +241,11 @@ const Dashboard = () => {
                 <TrendingUp className="h-5 w-5" />
                 <h2 className="font-semibold">Today's Progress</h2>
               </div>
-              <Button size="sm" className="bg-[hsl(var(--wallet-tasks))] text-white hover:opacity-90">
+              <Button 
+                size="sm" 
+                className="bg-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
+                onClick={() => navigate("/tasks")}
+              >
                 Start Tasks
               </Button>
             </div>
@@ -270,7 +277,11 @@ const Dashboard = () => {
           <Card className="p-6">
             <h2 className="font-semibold mb-4">Quick Actions</h2>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => navigate("/tasks")}
+              >
                 <Zap className="h-4 w-4 text-[hsl(var(--wallet-tasks))]" />
                 Start AI Tasks
               </Button>
