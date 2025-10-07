@@ -10,11 +10,59 @@ import {
   Sparkles,
   DollarSign,
   TrendingUp,
-  UserPlus
+  UserPlus,
+  LogOut
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user?.id)
+      .maybeSingle();
+    
+    if (data) {
+      setProfile(data);
+    }
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -56,13 +104,22 @@ const Dashboard = () => {
         <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white text-sm font-bold">
-              R
+              {profile.username.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Rodger Ndungu</p>
-              <p className="text-xs text-[hsl(var(--sidebar-fg))]/60">Free Plan</p>
+              <p className="text-sm font-medium truncate">{profile.username}</p>
+              <p className="text-xs text-[hsl(var(--sidebar-fg))]/60 capitalize">{profile.membership_plan} Plan</p>
             </div>
           </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full mt-2 text-xs text-[hsl(var(--sidebar-fg))]/60 hover:text-[hsl(var(--sidebar-fg))]"
+            onClick={signOut}
+          >
+            <LogOut className="h-3 w-3 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </aside>
 
@@ -72,7 +129,7 @@ const Dashboard = () => {
         <header className="bg-card border-b px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Welcome back, Rodger Ndungu!</h1>
+              <h1 className="text-2xl font-bold">Welcome back, {profile.username}!</h1>
               <p className="text-muted-foreground">Manage your account and track your progress.</p>
             </div>
             <div className="flex gap-3">
@@ -125,7 +182,7 @@ const Dashboard = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
-                <p className="text-3xl font-bold">$122.85</p>
+                <p className="text-3xl font-bold">${profile.deposit_wallet_balance}</p>
                 <p className="text-xs text-muted-foreground mt-1">For account upgrades</p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
@@ -138,7 +195,7 @@ const Dashboard = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Earnings Wallet</p>
-                <p className="text-3xl font-bold">$155.65</p>
+                <p className="text-3xl font-bold">${profile.earnings_wallet_balance}</p>
                 <p className="text-xs text-muted-foreground mt-1">From tasks & referrals</p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-earnings))]/10 flex items-center justify-center">
@@ -151,8 +208,8 @@ const Dashboard = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
-                <p className="text-3xl font-bold">1</p>
-                <p className="text-xs text-muted-foreground mt-1">155 total completed</p>
+                <p className="text-3xl font-bold">{profile.tasks_completed_today}</p>
+                <p className="text-xs text-muted-foreground mt-1">0 total completed</p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
                 <Zap className="h-6 w-6 text-[hsl(var(--wallet-tasks))]" />
@@ -199,10 +256,13 @@ const Dashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Daily Progress</span>
-                  <span className="font-medium">1/10 tasks</span>
+                  <span className="font-medium">{profile.tasks_completed_today}/10 tasks</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full w-[10%] bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))]"></div>
+                  <div 
+                    className="h-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))]"
+                    style={{ width: `${(profile.tasks_completed_today / 10) * 100}%` }}
+                  ></div>
                 </div>
               </div>
             </div>

@@ -14,16 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          country: string | null
+          created_at: string
+          deposit_wallet_balance: number
+          earnings_wallet_balance: number
+          email: string | null
+          full_name: string | null
+          id: string
+          last_login: string | null
+          last_task_date: string | null
+          membership_plan: string
+          phone: string | null
+          plan_expires_at: string | null
+          referral_code: string
+          referred_by: string | null
+          skips_today: number
+          tasks_completed_today: number
+          username: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          deposit_wallet_balance?: number
+          earnings_wallet_balance?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          last_login?: string | null
+          last_task_date?: string | null
+          membership_plan?: string
+          phone?: string | null
+          plan_expires_at?: string | null
+          referral_code: string
+          referred_by?: string | null
+          skips_today?: number
+          tasks_completed_today?: number
+          username: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          deposit_wallet_balance?: number
+          earnings_wallet_balance?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          last_login?: string | null
+          last_task_date?: string | null
+          membership_plan?: string
+          phone?: string | null
+          plan_expires_at?: string | null
+          referral_code?: string
+          referred_by?: string | null
+          skips_today?: number
+          tasks_completed_today?: number
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +248,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
