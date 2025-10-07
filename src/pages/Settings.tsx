@@ -1,0 +1,360 @@
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updateProfileSchema, changePasswordSchema, type UpdateProfileFormData, type ChangePasswordFormData } from "@/lib/auth-schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Calendar, User, Mail, Award, Target, Users } from "lucide-react";
+
+const Settings = () => {
+  const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
+
+  // Fetch profile data
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch user statistics
+  const { data: stats } = useQuery({
+    queryKey: ["user-stats", user?.id],
+    queryFn: async () => {
+      const [tasksResult, referralsResult] = await Promise.all([
+        supabase.from("user_tasks").select("id", { count: "exact", head: true }).eq("user_id", user?.id).eq("status", "completed"),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", user?.id),
+      ]);
+      
+      return {
+        totalTasks: tasksResult.count || 0,
+        totalReferrals: referralsResult.count || 0,
+      };
+    },
+    enabled: !!user?.id,
+  });
+
+  // Profile update form
+  const profileForm = useForm<UpdateProfileFormData>({
+    resolver: zodResolver(updateProfileSchema),
+    values: {
+      fullName: profile?.full_name || "",
+      phone: profile?.phone || "",
+      country: profile?.country || "",
+    },
+  });
+
+  // Password change form
+  const passwordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: UpdateProfileFormData) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.fullName,
+          phone: data.phone || null,
+          country: data.country || null,
+        })
+        .eq("id", user?.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Profile updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update profile: ${error.message}`);
+    },
+  });
+
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordFormData) => {
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword,
+      });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      passwordForm.reset();
+      setIsPasswordFormOpen(false);
+      toast.success("Password changed successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to change password: ${error.message}`);
+    },
+  });
+
+  const onProfileSubmit = (data: UpdateProfileFormData) => {
+    updateProfileMutation.mutate(data);
+  };
+
+  const onPasswordSubmit = (data: ChangePasswordFormData) => {
+    changePasswordMutation.mutate(data);
+  };
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background flex">
+          <Sidebar profile={profile} onSignOut={signOut} />
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner size="lg" text="Loading settings..." />
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background flex w-full">
+        <Sidebar profile={profile} onSignOut={signOut} />
+        
+        <main className="flex-1 p-8 overflow-auto">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+              <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
+            </div>
+
+            {/* Account Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Information</CardTitle>
+                <CardDescription>Your account details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Username</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <Badge variant="secondary">{profile?.username}</Badge>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Email</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{profile?.email || user?.email}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Member Since</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Membership Plan</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Award className="h-4 w-4 text-muted-foreground" />
+                      <Badge variant="default" className="capitalize">
+                        {profile?.membership_plan}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Statistics</CardTitle>
+                <CardDescription>Your activity overview</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3 p-4 border rounded-lg">
+                    <Target className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold">{stats?.totalTasks || 0}</p>
+                      <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 border rounded-lg">
+                    <Users className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold">{stats?.totalReferrals || 0}</p>
+                      <p className="text-sm text-muted-foreground">Total Referrals</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 border rounded-lg">
+                    <Calendar className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {profile?.created_at ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Days Active</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Edit Profile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Profile</CardTitle>
+                <CardDescription>Update your personal information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...profileForm}>
+                  <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                    <FormField
+                      control={profileForm.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter your full name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter your phone number (optional)" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter your country (optional)" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" disabled={updateProfileMutation.isPending}>
+                      {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+
+            {/* Change Password */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!isPasswordFormOpen ? (
+                  <Button onClick={() => setIsPasswordFormOpen(true)} variant="outline">
+                    Change Password
+                  </Button>
+                ) : (
+                  <Form {...passwordForm}>
+                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                      <FormField
+                        control={passwordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="password" placeholder="Enter new password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={passwordForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm Password</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="password" placeholder="Confirm new password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex gap-2">
+                        <Button type="submit" disabled={changePasswordMutation.isPending}>
+                          {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={() => {
+                          setIsPasswordFormOpen(false);
+                          passwordForm.reset();
+                        }}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </ProtectedRoute>
+  );
+};
+
+export default Settings;

@@ -35,6 +35,18 @@ export const updateProfileSchema = z.object({
   country: z.string().max(100, "Country must be less than 100 characters").optional(),
 });
 
+export const changePasswordSchema = z.object({
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password must be less than 100 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export type SignupFormData = z.infer<typeof signupSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;

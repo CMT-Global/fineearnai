@@ -32,6 +32,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Users, label: "Referrals", path: "/referrals" },
     { icon: Crown, label: "Membership", path: "/plans" },
     { icon: History, label: "Transactions", path: "/transactions" },
+    { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   const handleNavigation = (path: string) => {
