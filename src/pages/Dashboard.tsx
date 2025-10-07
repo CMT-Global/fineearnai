@@ -207,15 +207,9 @@ const Dashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-6 p-8">
           <WalletCard 
-            type="deposit"
-            balance={profile.deposit_wallet_balance}
-            subtitle="For account upgrades"
-          />
-
-          <WalletCard 
-            type="earnings"
-            balance={profile.earnings_wallet_balance}
-            subtitle="From tasks & referrals"
+            depositBalance={parseFloat(profile.deposit_wallet_balance)}
+            earningsBalance={parseFloat(profile.earnings_wallet_balance)}
+            onBalanceUpdate={loadProfile}
           />
 
           <Card className="p-6">

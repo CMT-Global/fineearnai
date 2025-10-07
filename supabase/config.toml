@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.complete-task]
 verify_jwt = true
+
+[functions.deposit]
+verify_jwt = true
+
+[functions.withdraw]
+verify_jwt = true
