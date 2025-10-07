@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { 
   Crown, 
   Sparkles,
@@ -16,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { formatCurrency } from "@/lib/wallet-utils";
+import { handleError } from "@/lib/error-handler";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -37,29 +39,33 @@ const Dashboard = () => {
   }, [user]);
 
   const loadProfile = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user?.id)
-      .maybeSingle();
-    
-    if (data) {
-      setProfile(data);
-    }
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user?.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfile(data);
+      }
 
-    // Load referral stats
-    const { data: statsData } = await supabase
-      .rpc("get_referral_stats", { user_uuid: user?.id });
-    
-    if (statsData && statsData.length > 0) {
-      setReferralStats(statsData[0]);
+      // Load referral stats
+      const { data: statsData } = await supabase
+        .rpc("get_referral_stats", { user_uuid: user?.id });
+      
+      if (statsData && statsData.length > 0) {
+        setReferralStats(statsData[0]);
+      }
+    } catch (error) {
+      handleError(error, "loading profile");
     }
   };
 
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <LoadingSpinner size="lg" text="Loading dashboard..." />
       </div>
     );
   }
@@ -67,7 +73,7 @@ const Dashboard = () => {
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading profile...</p>
+        <LoadingSpinner size="lg" text="Loading profile..." />
       </div>
     );
   }
