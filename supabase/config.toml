@@ -14,3 +14,12 @@ verify_jwt = true
 
 [functions.upgrade-plan]
 verify_jwt = true
+
+[functions.generate-ai-tasks]
+verify_jwt = true
+
+[functions.complete-ai-task]
+verify_jwt = true
+
+[functions.cleanup-old-tasks]
+verify_jwt = false

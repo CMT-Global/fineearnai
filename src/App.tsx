@@ -49,6 +49,8 @@ const App = () => (
             <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/tasks/generate" element={<AITasksGenerate />} />
+            <Route path="/admin/tasks/manage" element={<AITasksManage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
