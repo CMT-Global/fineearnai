@@ -29,3 +29,15 @@ verify_jwt = true
 
 [functions.process-withdrawal]
 verify_jwt = true
+
+[functions.adjust-wallet-balance]
+verify_jwt = true
+
+[functions.update-user-profile]
+verify_jwt = true
+
+[functions.reset-daily-limits]
+verify_jwt = true
+
+[functions.generate-master-login]
+verify_jwt = true

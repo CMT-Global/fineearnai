@@ -50,6 +50,66 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      master_login_sessions: {
+        Row: {
+          admin_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          one_time_token: string
+          target_user_id: string
+          used_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          one_time_token: string
+          target_user_id: string
+          used_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          one_time_token?: string
+          target_user_id?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       membership_plans: {
         Row: {
           account_type: string
@@ -145,6 +205,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: Database["public"]["Enums"]["account_status"]
           country: string | null
           created_at: string
           deposit_wallet_balance: number
@@ -165,6 +226,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          account_status?: Database["public"]["Enums"]["account_status"]
           country?: string | null
           created_at?: string
           deposit_wallet_balance?: number
@@ -185,6 +247,7 @@ export type Database = {
           username: string
         }
         Update: {
+          account_status?: Database["public"]["Enums"]["account_status"]
           country?: string | null
           created_at?: string
           deposit_wallet_balance?: number
@@ -536,6 +599,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_status: "active" | "suspended" | "banned"
       app_role: "admin" | "moderator" | "user"
       task_difficulty: "easy" | "medium" | "hard"
       task_status:
@@ -681,6 +745,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["active", "suspended", "banned"],
       app_role: ["admin", "moderator", "user"],
       task_difficulty: ["easy", "medium", "hard"],
       task_status: [

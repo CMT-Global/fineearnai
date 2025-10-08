@@ -17,6 +17,8 @@ import Admin from "./pages/Admin";
 import AITasksGenerate from "@/pages/admin/AITasksGenerate";
 import AITasksManage from "@/pages/admin/AITasksManage";
 import Withdrawals from "@/pages/admin/Withdrawals";
+import Users from "@/pages/admin/Users";
+import UserDetail from "@/pages/admin/UserDetail";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -53,6 +55,8 @@ const App = () => (
           <Route path="/admin/tasks/generate" element={<AITasksGenerate />} />
           <Route path="/admin/tasks/manage" element={<AITasksManage />} />
           <Route path="/admin/withdrawals" element={<Withdrawals />} />
+          <Route path="/admin/users" element={<Users />} />
+          <Route path="/admin/users/:userId" element={<UserDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
