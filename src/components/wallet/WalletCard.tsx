@@ -84,11 +84,11 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     try {
       setWithdrawLoading(true);
-      const { data, error } = await supabase.functions.invoke("withdraw", {
+      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount,
-          withdrawalMethod: withdrawMethod,
-          accountDetails,
+          paymentMethod: withdrawMethod,
+          payoutAddress: accountDetails,
         },
       });
 

@@ -116,6 +116,33 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
@@ -128,6 +155,7 @@ export type Database = {
           last_login: string | null
           last_task_date: string | null
           membership_plan: string
+          payeer_payout_addresses: Json | null
           phone: string | null
           plan_expires_at: string | null
           referral_code: string
@@ -147,6 +175,7 @@ export type Database = {
           last_login?: string | null
           last_task_date?: string | null
           membership_plan?: string
+          payeer_payout_addresses?: Json | null
           phone?: string | null
           plan_expires_at?: string | null
           referral_code: string
@@ -166,6 +195,7 @@ export type Database = {
           last_login?: string | null
           last_task_date?: string | null
           membership_plan?: string
+          payeer_payout_addresses?: Json | null
           phone?: string | null
           plan_expires_at?: string | null
           referral_code?: string
@@ -426,6 +456,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          fee: number
+          id: string
+          net_amount: number
+          payment_method: string
+          payment_processor_id: string | null
+          payout_address: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          fee?: number
+          id?: string
+          net_amount: number
+          payment_method: string
+          payment_processor_id?: string | null
+          payout_address: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          fee?: number
+          id?: string
+          net_amount?: number
+          payment_method?: string
+          payment_processor_id?: string | null
+          payout_address?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

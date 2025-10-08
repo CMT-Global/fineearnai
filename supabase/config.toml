@@ -23,3 +23,9 @@ verify_jwt = true
 
 [functions.cleanup-old-tasks]
 verify_jwt = false
+
+[functions.request-withdrawal]
+verify_jwt = true
+
+[functions.process-withdrawal]
+verify_jwt = true

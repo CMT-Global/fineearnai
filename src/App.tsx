@@ -14,8 +14,9 @@ import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
 import Referrals from "./pages/Referrals";
 import Admin from "./pages/Admin";
-import AITasksGenerate from "./pages/admin/AITasksGenerate";
-import AITasksManage from "./pages/admin/AITasksManage";
+import AITasksGenerate from "@/pages/admin/AITasksGenerate";
+import AITasksManage from "@/pages/admin/AITasksManage";
+import Withdrawals from "@/pages/admin/Withdrawals";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -48,9 +49,10 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
             <Route path="/referrals" element={<Referrals />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/tasks/generate" element={<AITasksGenerate />} />
-            <Route path="/admin/tasks/manage" element={<AITasksManage />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/tasks/generate" element={<AITasksGenerate />} />
+          <Route path="/admin/tasks/manage" element={<AITasksManage />} />
+          <Route path="/admin/withdrawals" element={<Withdrawals />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
