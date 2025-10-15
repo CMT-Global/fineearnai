@@ -9,10 +9,9 @@ import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
 import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
+import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Info, Loader2, RefreshCw } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface AITask {
@@ -430,30 +429,7 @@ const Tasks = () => {
               onResponseChange={setSelectedResponse}
             />
           ) : (
-            <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-background">
-              <CardHeader className="text-center space-y-4 pb-4">
-                <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
-                  <Info className="h-8 w-8 text-blue-500" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold">
-                    No Tasks Available Right Now
-                  </CardTitle>
-                  <CardDescription className="text-base mt-2">
-                    All available tasks have been completed. New tasks will be added soon.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-center pb-6">
-                <p className="text-sm text-muted-foreground">
-                  Please check back later for new AI training tasks.
-                </p>
-                <Button onClick={() => refetchTask()} variant="outline" className="mt-2">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Check Again
-                </Button>
-              </CardContent>
-            </Card>
+            <NoTasksAvailable onRefresh={refetchTask} />
           )}
         </div>
       </main>
