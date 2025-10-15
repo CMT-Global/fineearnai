@@ -297,14 +297,44 @@ const Tasks = () => {
         toast.error("Incorrect answer");
       }
 
-      // Invalidate and refetch the task query to get fresh data
-      queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
-
-      setTimeout(() => {
-        setFeedback(null);
-        setSelectedResponse("");
-        refetchTask();
-      }, 3000);
+      // Check if daily limit reached after this task
+      const tasksCompletedAfter = (userStats?.tasksCompletedToday || 0) + 1;
+      const dailyLimit = userStats?.dailyLimit || 0;
+      const remainingAfter = Math.max(0, dailyLimit - tasksCompletedAfter);
+      
+      if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
+        // Daily limit reached - show congratulatory message and set query data
+        toast.success("Congratulations! You've completed all your tasks for today!");
+        
+        // Immediately set query data to show daily limit UI
+        queryClient.setQueryData(['next-task', user?.id], {
+          success: false,
+          error: 'daily_limit_reached',
+          message: 'You have completed all your tasks for today!',
+          task: null,
+          userStats: {
+            ...userStats,
+            tasksCompletedToday: tasksCompletedAfter,
+            remainingTasks: 0,
+            earningsBalance: data.newBalance,
+          }
+        });
+        
+        // Clear feedback after showing it briefly
+        setTimeout(() => {
+          setFeedback(null);
+          setSelectedResponse("");
+        }, 2000);
+      } else {
+        // More tasks available - invalidate and refetch
+        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+        
+        setTimeout(() => {
+          setFeedback(null);
+          setSelectedResponse("");
+          refetchTask();
+        }, 2000);
+      }
     },
     onError: (error: any, variables, context) => {
       toast.error(error.message || "Failed to submit answer");
