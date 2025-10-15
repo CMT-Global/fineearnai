@@ -29,6 +29,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [referralStats, setReferralStats] = useState<any>(null);
+  const [membershipPlan, setMembershipPlan] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,6 +53,17 @@ const Dashboard = () => {
       
       if (data) {
         setProfile(data);
+        
+        // Load membership plan details
+        const { data: planData } = await supabase
+          .from("membership_plans")
+          .select("*")
+          .eq("name", data.membership_plan)
+          .maybeSingle();
+        
+        if (planData) {
+          setMembershipPlan(planData);
+        }
       }
 
       // Load referral stats
@@ -294,12 +306,12 @@ const Dashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Daily Progress</span>
-                  <span className="font-medium">{profile.tasks_completed_today}/10 tasks</span>
+                  <span className="font-medium">{profile.tasks_completed_today}/{membershipPlan?.daily_task_limit || 10} tasks</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))]"
-                    style={{ width: `${(profile.tasks_completed_today / 10) * 100}%` }}
+                    style={{ width: `${(profile.tasks_completed_today / (membershipPlan?.daily_task_limit || 10)) * 100}%` }}
                   ></div>
                 </div>
               </div>
