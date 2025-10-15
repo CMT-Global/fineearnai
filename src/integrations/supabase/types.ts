@@ -1130,6 +1130,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_available_task_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      get_next_available_task: {
+        Args: { p_user_id: string }
+        Returns: {
+          category: string
+          created_at: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          prompt: string
+          response_a: string
+          response_b: string
+          task_id: string
+        }[]
+      }
       get_referral_stats: {
         Args: { user_uuid: string }
         Returns: {
