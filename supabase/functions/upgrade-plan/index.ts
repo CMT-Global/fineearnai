@@ -63,6 +63,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Get the current plan details (for proration calculation)
+    const { data: currentPlan } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('name', profile.membership_plan)
+      .eq('is_active', true)
+      .maybeSingle();
+
     // Get the new plan details
     const { data: newPlan, error: planError } = await supabase
       .from('membership_plans')
@@ -79,16 +87,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    const upgradeCost = parseFloat(newPlan.price);
+    let finalCost = parseFloat(newPlan.price);
+    let prorationDetails = null;
+    
+    // Calculate proration if upgrading from a paid plan
+    if (currentPlan && 
+        profile.current_plan_start_date && 
+        currentPlan.price > 0 && 
+        profile.membership_plan !== 'free') {
+      
+      console.log('Calculating proration for upgrade from paid plan');
+      
+      // Call the database function to calculate proration
+      const { data: proration, error: prorationError } = await supabase
+        .rpc('calculate_proration', {
+          p_current_plan_price: parseFloat(currentPlan.price),
+          p_current_plan_start_date: profile.current_plan_start_date,
+          p_current_plan_billing_days: currentPlan.billing_period_days,
+          p_new_plan_price: parseFloat(newPlan.price)
+        });
+
+      if (!prorationError && proration) {
+        prorationDetails = proration;
+        finalCost = parseFloat(proration.new_cost);
+        console.log('Proration calculated:', {
+          originalPrice: proration.original_price,
+          credit: proration.credit,
+          finalCost: finalCost,
+          savings: proration.savings
+        });
+      } else {
+        console.error('Error calculating proration:', prorationError);
+      }
+    }
 
     // Check if user has sufficient balance in deposit wallet
     const depositBalance = parseFloat(profile.deposit_wallet_balance);
-    if (depositBalance < upgradeCost) {
+    if (depositBalance < finalCost) {
       return new Response(
         JSON.stringify({ 
           error: 'Insufficient balance in deposit wallet',
-          required: upgradeCost,
+          required: finalCost,
           current: depositBalance,
+          shortfall: finalCost - depositBalance
         }),
         {
           status: 400,
@@ -98,11 +139,23 @@ Deno.serve(async (req) => {
     }
 
     // Calculate new balance
-    const newDepositBalance = depositBalance - upgradeCost;
+    const newDepositBalance = depositBalance - finalCost;
 
-    // Calculate plan expiry date
+    // Calculate plan expiry date based on billing period
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + newPlan.billing_period_days);
+    const billingPeriodDays = newPlan.billing_period_days || 30;
+    
+    // Handle different billing period units
+    if (newPlan.billing_period_unit === 'month') {
+      expiryDate.setMonth(expiryDate.getMonth() + (newPlan.billing_period_value || 1));
+    } else if (newPlan.billing_period_unit === 'year') {
+      expiryDate.setFullYear(expiryDate.getFullYear() + (newPlan.billing_period_value || 1));
+    } else {
+      // Default to days
+      expiryDate.setDate(expiryDate.getDate() + billingPeriodDays);
+    }
+
+    const now = new Date().toISOString();
 
     // Update user profile with new plan
     const { error: updateError } = await supabase
@@ -111,6 +164,8 @@ Deno.serve(async (req) => {
         membership_plan: planName,
         plan_expires_at: expiryDate.toISOString(),
         deposit_wallet_balance: newDepositBalance,
+        current_plan_start_date: now,
+        last_activity: now
       })
       .eq('id', user.id);
 
@@ -119,22 +174,31 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // Create transaction record
+    // Create detailed transaction record
     const { error: transactionError } = await supabase
       .from('transactions')
       .insert({
         user_id: user.id,
         type: 'plan_upgrade',
-        amount: upgradeCost,
+        amount: finalCost,
         wallet_type: 'deposit',
         new_balance: newDepositBalance,
-        description: `Upgraded to ${newPlan.display_name} plan`,
+        description: `Upgraded from ${currentPlan?.display_name || profile.membership_plan} to ${newPlan.display_name}`,
         status: 'completed',
         metadata: {
-          plan_name: planName,
-          plan_display_name: newPlan.display_name,
-          billing_period_days: newPlan.billing_period_days,
+          previous_plan: profile.membership_plan,
+          previous_plan_display_name: currentPlan?.display_name || profile.membership_plan,
+          new_plan: planName,
+          new_plan_display_name: newPlan.display_name,
+          original_price: parseFloat(newPlan.price),
+          final_price: finalCost,
+          proration_applied: prorationDetails !== null,
+          proration_details: prorationDetails,
+          billing_period_days: billingPeriodDays,
+          billing_period_unit: newPlan.billing_period_unit,
+          billing_period_value: newPlan.billing_period_value,
           expires_at: expiryDate.toISOString(),
+          upgraded_at: now
         },
       });
 
@@ -143,14 +207,94 @@ Deno.serve(async (req) => {
       throw transactionError;
     }
 
-    console.log('Plan upgraded successfully:', { userId: user.id, planName, expiryDate });
+    // Log to user activity log
+    await supabase
+      .from('user_activity_log')
+      .insert({
+        user_id: user.id,
+        activity_type: 'plan_upgrade',
+        details: {
+          from_plan: profile.membership_plan,
+          to_plan: planName,
+          amount_paid: finalCost,
+          proration_applied: prorationDetails !== null,
+          savings: prorationDetails?.savings || 0
+        }
+      });
+
+    // Trigger referral commission if user has a referrer and deposit commission applies
+    if (profile.referred_by && newPlan.deposit_commission_rate > 0) {
+      console.log('Triggering referral commission for plan upgrade');
+      
+      try {
+        // Call process-referral-earnings function
+        const { error: commissionError } = await supabase.functions.invoke('process-referral-earnings', {
+          body: {
+            referredUserId: user.id,
+            eventType: 'deposit',
+            amount: finalCost,
+            eventId: `upgrade_${user.id}_${now}`,
+            metadata: {
+              source: 'plan_upgrade',
+              plan_name: planName,
+              original_amount: parseFloat(newPlan.price),
+              proration_applied: prorationDetails !== null
+            }
+          }
+        });
+
+        if (commissionError) {
+          console.error('Error processing referral commission:', commissionError);
+          // Don't fail the upgrade if commission processing fails
+        } else {
+          console.log('Referral commission processed successfully');
+        }
+      } catch (commissionError) {
+        console.error('Exception processing referral commission:', commissionError);
+        // Don't fail the upgrade if commission processing fails
+      }
+    }
+
+    // Send plan upgrade notification (if notifications table exists)
+    try {
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        title: 'Plan Upgraded Successfully',
+        message: `You have successfully upgraded to ${newPlan.display_name}. Your plan expires on ${new Date(expiryDate).toLocaleDateString()}.`,
+        type: 'plan_upgrade',
+        metadata: {
+          plan_name: planName,
+          expires_at: expiryDate.toISOString(),
+          amount_paid: finalCost
+        }
+      });
+    } catch (notifError) {
+      console.log('Note: Could not create notification (table may not exist):', notifError);
+    }
+
+    console.log('Plan upgraded successfully:', { 
+      userId: user.id, 
+      planName, 
+      finalCost,
+      prorationApplied: prorationDetails !== null,
+      expiryDate 
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
         plan: newPlan.display_name,
+        planName: planName,
         expiresAt: expiryDate.toISOString(),
         newBalance: newDepositBalance,
+        amountCharged: finalCost,
+        originalPrice: parseFloat(newPlan.price),
+        prorationApplied: prorationDetails !== null,
+        prorationDetails: prorationDetails ? {
+          credit: prorationDetails.credit,
+          savings: prorationDetails.savings,
+          daysRemaining: prorationDetails.days_remaining
+        } : null
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
