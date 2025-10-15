@@ -12,10 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit, Trash2, Users, DollarSign } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowLeft, Plus, Edit, Trash2, Users, DollarSign, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { ACCOUNT_TYPES, FIELD_CONSTRAINTS, validateMembershipPlan } from "@/lib/membership-plan-validation";
 
 interface MembershipPlan {
   id: string;
@@ -65,6 +68,7 @@ const PlansManage = () => {
     is_active: true,
     features: "[]",
   });
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -126,19 +130,14 @@ const PlansManage = () => {
 
   const handleSave = async () => {
     try {
-      if (!formData.name || !formData.display_name || !formData.account_type) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
+      // Clear previous validation errors
+      setValidationErrors([]);
 
-      // Validate commission rates
-      if (formData.task_commission_rate < 0 || formData.task_commission_rate > 100) {
-        toast.error("Task commission rate must be between 0 and 100");
-        return;
-      }
-
-      if (formData.deposit_commission_rate < 0 || formData.deposit_commission_rate > 100) {
-        toast.error("Deposit commission rate must be between 0 and 100");
+      // Validate using comprehensive validation utility
+      const validation = validateMembershipPlan(formData);
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+        toast.error("Please fix validation errors before saving");
         return;
       }
 
@@ -261,10 +260,12 @@ const PlansManage = () => {
       is_active: true,
       features: "[]",
     });
+    setValidationErrors([]);
   };
 
   const openEditDialog = (plan: MembershipPlan) => {
     setEditingPlan(plan);
+    setValidationErrors([]);
     setFormData({
       name: plan.name,
       display_name: plan.display_name,
@@ -391,6 +392,20 @@ const PlansManage = () => {
                   </DialogHeader>
 
                   <div className="space-y-4">
+                    {/* Validation Errors Display */}
+                    {validationErrors.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Validation Errors</AlertTitle>
+                        <AlertDescription>
+                          <ul className="list-disc list-inside space-y-1 mt-2">
+                            {validationErrors.map((error, idx) => (
+                              <li key={idx} className="text-sm">{error}</li>
+                            ))}
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="name">Plan Name (Internal) *</Label>
@@ -418,14 +433,26 @@ const PlansManage = () => {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="account_type">Account Type *</Label>
-                        <Input
-                          id="account_type"
+                        <Select
                           value={formData.account_type}
-                          onChange={(e) =>
-                            setFormData({ ...formData, account_type: e.target.value })
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, account_type: value })
                           }
-                          placeholder="e.g., Standard"
-                        />
+                        >
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Select account type" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover z-50">
+                            {ACCOUNT_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.price.help}
+                        </p>
                       </div>
 
                       <div>
@@ -433,12 +460,18 @@ const PlansManage = () => {
                         <Input
                           id="price"
                           type="number"
-                          step="0.01"
+                          min={FIELD_CONSTRAINTS.price.min}
+                          max={FIELD_CONSTRAINTS.price.max}
+                          step={FIELD_CONSTRAINTS.price.step}
                           value={formData.price}
                           onChange={(e) =>
-                            setFormData({ ...formData, price: parseFloat(e.target.value) })
+                            setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
                           }
+                          placeholder="0.00"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.price.help}
+                        </p>
                       </div>
 
                       <div>
@@ -446,14 +479,21 @@ const PlansManage = () => {
                         <Input
                           id="billing_period"
                           type="number"
+                          min={FIELD_CONSTRAINTS.billing_period_days.min}
+                          max={FIELD_CONSTRAINTS.billing_period_days.max}
+                          step={FIELD_CONSTRAINTS.billing_period_days.step}
                           value={formData.billing_period_days}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              billing_period_days: parseInt(e.target.value),
+                              billing_period_days: parseInt(e.target.value) || 1,
                             })
                           }
+                          placeholder="30"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.billing_period_days.help}
+                        </p>
                       </div>
                     </div>
 
@@ -463,14 +503,21 @@ const PlansManage = () => {
                         <Input
                           id="daily_task_limit"
                           type="number"
+                          min={FIELD_CONSTRAINTS.daily_task_limit.min}
+                          max={FIELD_CONSTRAINTS.daily_task_limit.max}
+                          step={FIELD_CONSTRAINTS.daily_task_limit.step}
                           value={formData.daily_task_limit}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              daily_task_limit: parseInt(e.target.value),
+                              daily_task_limit: parseInt(e.target.value) || 0,
                             })
                           }
+                          placeholder="10"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.daily_task_limit.help}
+                        </p>
                       </div>
 
                       <div>
@@ -478,14 +525,21 @@ const PlansManage = () => {
                         <Input
                           id="skip_limit"
                           type="number"
+                          min={FIELD_CONSTRAINTS.task_skip_limit_per_day.min}
+                          max={FIELD_CONSTRAINTS.task_skip_limit_per_day.max}
+                          step={FIELD_CONSTRAINTS.task_skip_limit_per_day.step}
                           value={formData.task_skip_limit_per_day}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              task_skip_limit_per_day: parseInt(e.target.value),
+                              task_skip_limit_per_day: parseInt(e.target.value) || 0,
                             })
                           }
+                          placeholder="3"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.task_skip_limit_per_day.help}
+                        </p>
                       </div>
 
                       <div>
@@ -493,15 +547,21 @@ const PlansManage = () => {
                         <Input
                           id="earning_per_task"
                           type="number"
-                          step="0.01"
+                          min={FIELD_CONSTRAINTS.earning_per_task.min}
+                          max={FIELD_CONSTRAINTS.earning_per_task.max}
+                          step={FIELD_CONSTRAINTS.earning_per_task.step}
                           value={formData.earning_per_task}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              earning_per_task: parseFloat(e.target.value),
+                              earning_per_task: parseFloat(e.target.value) || 0,
                             })
                           }
+                          placeholder="0.50"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.earning_per_task.help}
+                        </p>
                       </div>
                     </div>
 
@@ -555,14 +615,21 @@ const PlansManage = () => {
                         <Input
                           id="max_referrals"
                           type="number"
+                          min={FIELD_CONSTRAINTS.max_active_referrals.min}
+                          max={FIELD_CONSTRAINTS.max_active_referrals.max}
+                          step={FIELD_CONSTRAINTS.max_active_referrals.step}
                           value={formData.max_active_referrals}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              max_active_referrals: parseInt(e.target.value),
+                              max_active_referrals: parseInt(e.target.value) || 0,
                             })
                           }
+                          placeholder="100"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.max_active_referrals.help}
+                        </p>
                       </div>
                     </div>
 
@@ -572,15 +639,21 @@ const PlansManage = () => {
                         <Input
                           id="min_withdrawal"
                           type="number"
-                          step="0.01"
+                          min={FIELD_CONSTRAINTS.min_withdrawal.min}
+                          max={FIELD_CONSTRAINTS.min_withdrawal.max}
+                          step={FIELD_CONSTRAINTS.min_withdrawal.step}
                           value={formData.min_withdrawal}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              min_withdrawal: parseFloat(e.target.value),
+                              min_withdrawal: parseFloat(e.target.value) || 0,
                             })
                           }
+                          placeholder="10.00"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.min_withdrawal.help}
+                        </p>
                       </div>
 
                       <div>
@@ -588,15 +661,21 @@ const PlansManage = () => {
                         <Input
                           id="min_daily"
                           type="number"
-                          step="0.01"
+                          min={FIELD_CONSTRAINTS.min_daily_withdrawal.min}
+                          max={FIELD_CONSTRAINTS.min_daily_withdrawal.max}
+                          step={FIELD_CONSTRAINTS.min_daily_withdrawal.step}
                           value={formData.min_daily_withdrawal}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              min_daily_withdrawal: parseFloat(e.target.value),
+                              min_daily_withdrawal: parseFloat(e.target.value) || 0,
                             })
                           }
+                          placeholder="10.00"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.min_daily_withdrawal.help}
+                        </p>
                       </div>
 
                       <div>
@@ -604,15 +683,21 @@ const PlansManage = () => {
                         <Input
                           id="max_daily"
                           type="number"
-                          step="0.01"
+                          min={FIELD_CONSTRAINTS.max_daily_withdrawal.min}
+                          max={FIELD_CONSTRAINTS.max_daily_withdrawal.max}
+                          step={FIELD_CONSTRAINTS.max_daily_withdrawal.step}
                           value={formData.max_daily_withdrawal}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              max_daily_withdrawal: parseFloat(e.target.value),
+                              max_daily_withdrawal: parseFloat(e.target.value) || 0,
                             })
                           }
+                          placeholder="1000.00"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {FIELD_CONSTRAINTS.max_daily_withdrawal.help}
+                        </p>
                       </div>
                     </div>
 
