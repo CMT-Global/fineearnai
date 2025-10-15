@@ -135,27 +135,19 @@ Deno.serve(async (req) => {
 
     console.log(`Calculated commission: ${commissionAmount} (${commissionRate * 100}% of ${amount})`);
 
-    // Update referrer's earnings wallet balance atomically
+    // ============================================================================
+    // CRITICAL FIX: Insert transaction FIRST with correct enum, then update profile
+    // ============================================================================
+    
     const newBalance = Number(referrer.earnings_wallet_balance) + commissionAmount;
-    const { error: updateError } = await supabaseClient
-      .from('profiles')
-      .update({ 
-        earnings_wallet_balance: newBalance,
-        total_earned: supabaseClient.rpc('increment', { x: commissionAmount })
-      })
-      .eq('id', referrerId);
-
-    if (updateError) {
-      console.error('Error updating referrer balance:', updateError);
-      throw new Error(`Failed to update referrer balance: ${updateError.message}`);
-    }
-
-    // Create transaction record
+    
+    // Create transaction record FIRST with correct enum 'referral_commission'
+    console.log(`💰 Inserting transaction: type=referral_commission, amount=${commissionAmount}, new_balance=${newBalance}`);
     const { error: transactionError } = await supabaseClient
       .from('transactions')
       .insert({
         user_id: referrerId,
-        type: 'referral_earning',
+        type: 'referral_commission',  // FIXED: Use correct enum value
         amount: commissionAmount,
         wallet_type: 'earnings',
         status: 'completed',
@@ -172,8 +164,24 @@ Deno.serve(async (req) => {
       });
 
     if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
+      console.error('❌ Transaction insert failed:', transactionError);
       throw new Error(`Failed to create transaction: ${transactionError.message}`);
+    }
+    
+    console.log('✅ Transaction inserted successfully');
+
+    // NOW update referrer's earnings wallet balance atomically
+    const { error: updateError } = await supabaseClient
+      .from('profiles')
+      .update({ 
+        earnings_wallet_balance: newBalance,
+        total_earned: supabaseClient.rpc('increment', { x: commissionAmount })
+      })
+      .eq('id', referrerId);
+
+    if (updateError) {
+      console.error('Error updating referrer balance:', updateError);
+      throw new Error(`Failed to update referrer balance: ${updateError.message}`);
     }
 
     // Create referral earning record

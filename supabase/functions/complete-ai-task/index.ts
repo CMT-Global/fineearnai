@@ -324,7 +324,55 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update user profile with optimistic locking
+    // ============================================================================
+    // CRITICAL FIX: Insert transaction FIRST, then update profile
+    // Trigger validate_transaction_balance requires new_balance = current_balance + amount
+    // ============================================================================
+    
+    // Create transaction record FIRST if earned
+    if (earningsAmount > 0) {
+      const transactionInsertTime = Date.now();
+      console.log(`💰 [${requestId}] Inserting transaction: amount=${earningsAmount}, new_balance=${newEarningsBalance}`);
+      
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'task_earning',
+          amount: earningsAmount,
+          wallet_type: 'earnings',
+          new_balance: newEarningsBalance,
+          description: `AI Task completed: ${task.category}`,
+          status: 'completed',
+          metadata: {
+            task_id: taskId,
+            category: task.category,
+            difficulty: task.difficulty,
+            time_taken_seconds: timeTakenSeconds,
+          },
+        });
+
+      const transactionTime = Date.now() - transactionInsertTime;
+      
+      if (transactionError) {
+        console.error(`❌ [${requestId}] Transaction insert failed (${transactionTime}ms):`, transactionError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'transaction_insert_failed',
+            message: 'Failed to record transaction. Please contact support.',
+            details: transactionError.message
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          }
+        );
+      }
+      
+      console.log(`✅ [${requestId}] Transaction inserted successfully (${transactionTime}ms)`);
+    }
+
+    // NOW update user profile with optimistic locking
     const updateStartTime = Date.now();
     const { error: updateError } = await supabase
       .from('profiles')
@@ -370,66 +418,45 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create transaction record if earned
-    if (earningsAmount > 0) {
-      await supabase
-        .from('transactions')
-        .insert({
-          user_id: user.id,
-          type: 'task_earning',
-          amount: earningsAmount,
-          wallet_type: 'earnings',
-          new_balance: newEarningsBalance,
-          description: `AI Task completed: ${task.category}`,
-          status: 'completed',
-          metadata: {
-            task_id: taskId,
-            category: task.category,
-            difficulty: task.difficulty,
-            time_taken_seconds: timeTakenSeconds,
-          },
-        });
+    // Queue referral commission if user was referred (async processing)
+    if (profile.referred_by && earningsAmount > 0) {
+      const { data: referrer, error: referrerError } = await supabase
+        .from('profiles')
+        .select('id, membership_plan')
+        .eq('id', profile.referred_by)
+        .maybeSingle();
 
-      // Queue referral commission if user was referred (async processing)
-      if (profile.referred_by && earningsAmount > 0) {
-        const { data: referrer } = await supabase
-          .from('profiles')
-          .select('id, membership_plan')
-          .eq('id', profile.referred_by)
-          .single();
+      if (!referrerError && referrer) {
+        // Fetch referrer's membership plan
+        const { data: referrerPlan, error: planError } = await supabase
+          .from('membership_plans')
+          .select('task_commission_rate')
+          .eq('name', referrer.membership_plan)
+          .eq('is_active', true)
+          .maybeSingle();
 
-        if (referrer) {
-          // Fetch referrer's membership plan
-          const { data: referrerPlan } = await supabase
-            .from('membership_plans')
-            .select('task_commission_rate')
-            .eq('name', referrer.membership_plan)
-            .eq('is_active', true)
-            .maybeSingle();
+        if (!planError && referrerPlan && referrerPlan.task_commission_rate > 0) {
+          // Queue commission for async processing (non-blocking)
+          const { error: queueError } = await supabase
+            .from('commission_queue')
+            .insert({
+              referrer_id: referrer.id,
+              referred_user_id: user.id,
+              event_type: 'task',
+              amount: earningsAmount,
+              commission_rate: referrerPlan.task_commission_rate / 100,
+              metadata: {
+                task_id: taskId,
+                category: task.category,
+                username: profile.username
+              }
+            });
 
-          if (referrerPlan && referrerPlan.task_commission_rate > 0) {
-            // Queue commission for async processing (non-blocking)
-            const { error: queueError } = await supabase
-              .from('commission_queue')
-              .insert({
-                referrer_id: referrer.id,
-                referred_user_id: user.id,
-                event_type: 'task',
-                amount: earningsAmount,
-                commission_rate: referrerPlan.task_commission_rate / 100,
-                metadata: {
-                  task_id: taskId,
-                  category: task.category,
-                  username: profile.username
-                }
-              });
-
-            if (queueError) {
-              console.error(`⚠️ [${requestId}] Error queueing task commission:`, queueError);
-              // Don't block user response - log and continue
-            } else {
-              console.log(`💰 [${requestId}] Task commission queued:`, { referrerId: referrer.id, amount: earningsAmount, rate: referrerPlan.task_commission_rate });
-            }
+          if (queueError) {
+            console.error(`⚠️ [${requestId}] Error queueing task commission:`, queueError);
+            // Don't block user response - log and continue
+          } else {
+            console.log(`💰 [${requestId}] Task commission queued:`, { referrerId: referrer.id, amount: earningsAmount, rate: referrerPlan.task_commission_rate });
           }
         }
       }

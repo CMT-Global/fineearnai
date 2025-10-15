@@ -95,6 +95,35 @@ Deno.serve(async (req) => {
     const newEarningsBalance = parseFloat(profile.earnings_wallet_balance) + earnedAmount;
     const newTasksCompleted = profile.tasks_completed_today + 1;
 
+    // ============================================================================
+    // CRITICAL FIX: Insert transaction FIRST, then update profile
+    // ============================================================================
+    
+    // Create transaction record FIRST
+    console.log(`💰 Inserting transaction: amount=${earnedAmount}, new_balance=${newEarningsBalance}`);
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: user.id,
+        type: 'task_earning',
+        amount: earnedAmount,
+        wallet_type: 'earnings',
+        new_balance: newEarningsBalance,
+        description: `Completed task: ${userTask.task.title}`,
+        status: 'completed',
+        metadata: {
+          task_id: userTask.task_id,
+          user_task_id: userTaskId,
+        },
+      });
+
+    if (transactionError) {
+      console.error('❌ Transaction insert failed:', transactionError);
+      throw new Error(`Failed to record transaction: ${transactionError.message}`);
+    }
+    
+    console.log('✅ Transaction inserted successfully');
+
     // Update user task status
     const { error: updateTaskError } = await supabase
       .from('user_tasks')
@@ -124,28 +153,6 @@ Deno.serve(async (req) => {
     if (updateProfileError) {
       console.error('Error updating profile:', updateProfileError);
       throw updateProfileError;
-    }
-
-    // Create transaction record
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'task_earning',
-        amount: earnedAmount,
-        wallet_type: 'earnings',
-        new_balance: newEarningsBalance,
-        description: `Completed task: ${userTask.task.title}`,
-        status: 'completed',
-        metadata: {
-          task_id: userTask.task_id,
-          user_task_id: userTaskId,
-        },
-      });
-
-    if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
-      throw transactionError;
     }
 
     // Handle referral commission if user was referred
