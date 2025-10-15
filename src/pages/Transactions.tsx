@@ -40,8 +40,13 @@ const Transactions = () => {
   const [profile, setProfile] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings">("all");
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -92,35 +97,60 @@ const Transactions = () => {
     };
   }, [user]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = async (append = false) => {
     try {
-      setLoadingTransactions(true);
-      setError(null);
-      
-      // Load profile
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .single();
-      
-      if (profileError) throw profileError;
-      
-      if (profileData) {
-        setProfile(profileData);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoadingTransactions(true);
+        setError(null);
       }
       
-      // Load transactions
+      // Load profile
+      if (!append) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user?.id)
+          .single();
+        
+        if (profileError) throw profileError;
+        
+        if (profileData) {
+          setProfile(profileData);
+        }
+      }
+      
+      // Get total count
+      const { count } = await supabase
+        .from("transactions")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user?.id);
+      
+      if (count !== null) {
+        setTotalCount(count);
+      }
+      
+      // Load transactions with pagination
+      const from = append ? transactions.length : 0;
+      const to = from + PAGE_SIZE - 1;
+      
       const { data, error: txError } = await supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (txError) throw txError;
 
       if (data) {
-        setTransactions(data);
+        if (append) {
+          setTransactions(prev => [...prev, ...data]);
+        } else {
+          setTransactions(data);
+        }
+        setHasMore(data.length === PAGE_SIZE);
       }
     } catch (err: any) {
       console.error("Error loading transactions:", err);
@@ -132,6 +162,13 @@ const Transactions = () => {
       });
     } finally {
       setLoadingTransactions(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      loadTransactions(true);
     }
   };
 
@@ -158,9 +195,15 @@ const Transactions = () => {
       
       <main className="flex-1 overflow-auto lg:mt-0 mt-16">
         <div className="container max-w-6xl mx-auto p-4 lg:p-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Transaction History</h1>
-          <p className="text-muted-foreground">View all your wallet transactions</p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Transaction History</h1>
+              <p className="text-muted-foreground">
+                View all your wallet transactions {totalCount > 0 && `(${totalCount} total)`}
+              </p>
+            </div>
+          </div>
         </div>
 
         <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-6">
@@ -179,7 +222,7 @@ const Transactions = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={loadTransactions}
+                onClick={() => loadTransactions()}
                 className="ml-4"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -238,6 +281,34 @@ const Transactions = () => {
                 </div>
               </Card>
             ))}
+            
+            {/* Load More Button */}
+            {hasMore && filteredTransactions.length > 0 && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  onClick={() => loadMore()}
+                  disabled={loadingMore}
+                  variant="outline"
+                  size="lg"
+                >
+                  {loadingMore ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Loading more...
+                    </>
+                  ) : (
+                    <>Load More Transactions</>
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {/* Pagination Info */}
+            {filteredTransactions.length > 0 && (
+              <div className="text-center mt-4 text-sm text-muted-foreground">
+                Showing {filteredTransactions.length} of {totalCount} transactions
+              </div>
+            )}
           </div>
         )}
         </div>
