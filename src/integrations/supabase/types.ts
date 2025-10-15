@@ -596,37 +596,22 @@ export type Database = {
       }
       referral_program_config: {
         Row: {
-          business_deposit_commission_rate: number
-          business_referrals_enabled: boolean
-          business_task_commission_rate: number
           created_at: string
           id: string
-          personal_deposit_commission_rate: number
-          personal_referrals_enabled: boolean
           signup_bonus_amount: number
           signup_bonus_enabled: boolean
           updated_at: string
         }
         Insert: {
-          business_deposit_commission_rate?: number
-          business_referrals_enabled?: boolean
-          business_task_commission_rate?: number
           created_at?: string
           id?: string
-          personal_deposit_commission_rate?: number
-          personal_referrals_enabled?: boolean
           signup_bonus_amount?: number
           signup_bonus_enabled?: boolean
           updated_at?: string
         }
         Update: {
-          business_deposit_commission_rate?: number
-          business_referrals_enabled?: boolean
-          business_task_commission_rate?: number
           created_at?: string
           id?: string
-          personal_deposit_commission_rate?: number
-          personal_referrals_enabled?: boolean
           signup_bonus_amount?: number
           signup_bonus_enabled?: boolean
           updated_at?: string
