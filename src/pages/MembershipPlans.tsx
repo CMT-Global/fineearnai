@@ -1,17 +1,17 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Check, Loader2, Info, AlertCircle, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
+import { PlanCard } from "@/components/membership/PlanCard";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { comparePlans } from "@/lib/plan-utils";
 import {
   Dialog,
   DialogContent,
@@ -45,168 +45,40 @@ export default function MembershipPlans() {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [plans, setPlans] = useState<MembershipPlan[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<string>("free");
-  const [depositBalance, setDepositBalance] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [errorType, setErrorType] = useState<'network' | 'auth' | 'data' | 'unknown' | null>(null);
-  const [retrying, setRetrying] = useState(false);
+  
+  // Custom hooks for data management
+  const {
+    plans,
+    loading,
+    error,
+    errorType,
+    retrying,
+    earningPotentials,
+    loadPlans,
+    retry
+  } = useMembershipPlans();
+  
+  const {
+    profile,
+    currentPlan,
+    depositBalance,
+    planStatus,
+    loadUserProfile,
+    setCurrentPlan
+  } = useUserProfile(user);
+
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [prorationDetails, setProrationDetails] = useState<any>(null);
-
-  // Cache key for plans data
-  const PLANS_CACHE_KEY = 'membership_plans_cache';
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   useEffect(() => {
     loadPlans();
     loadUserProfile();
-  }, []);
+  }, [loadPlans, loadUserProfile]);
 
-  const loadPlans = useCallback(async () => {
-    try {
-      setError(null);
-      setErrorType(null);
-      
-      // Check cache first
-      const cachedData = sessionStorage.getItem(PLANS_CACHE_KEY);
-      if (cachedData) {
-        const { data: cachedPlans, timestamp } = JSON.parse(cachedData);
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setPlans(cachedPlans);
-          setLoading(false);
-          setRetrying(false);
-          return;
-        }
-      }
-      
-      const { data, error } = await supabase
-        .from("membership_plans")
-        .select("*")
-        .eq("is_active", true)
-        .order("price", { ascending: true });
 
-      if (error) {
-        // Determine error type
-        if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
-          setErrorType('network');
-          setError("Network connection failed. Please check your internet connection and try again.");
-        } else if (error.message?.includes('JWT') || error.message?.includes('auth')) {
-          setErrorType('auth');
-          setError("Authentication error. Please log in again.");
-        } else {
-          setErrorType('data');
-          setError("Unable to load membership plans. Please try again.");
-        }
-        throw error;
-      }
-      
-      if (!data || data.length === 0) {
-        setErrorType('data');
-        setError("No membership plans are currently available. Please contact support.");
-        return;
-      }
-      
-      // Cache the data
-      sessionStorage.setItem(PLANS_CACHE_KEY, JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
-      
-      setPlans(data);
-    } catch (error: any) {
-      console.error("Failed to load plans:", error);
-      
-      // Only show toast if not already setting a specific error
-      if (!errorType) {
-        const isNetworkError = !navigator.onLine || error.message?.includes('Failed to fetch');
-        if (isNetworkError) {
-          setErrorType('network');
-          setError("Network connection failed. Please check your internet connection and try again.");
-        } else {
-          setErrorType('unknown');
-          setError("An unexpected error occurred. Please try again.");
-        }
-        toast.error(isNetworkError ? "No internet connection" : "Failed to load membership plans");
-      }
-    } finally {
-      setLoading(false);
-      setRetrying(false);
-    }
-  }, [PLANS_CACHE_KEY, CACHE_DURATION, errorType]);
-
-  const loadUserProfile = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        // Determine specific error
-        if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
-          toast.error("Network error while loading profile. Some features may be limited.");
-        } else if (error.code === 'PGRST116') {
-          toast.error("Profile not found. Please contact support.");
-        } else {
-          toast.error("Failed to load your profile. Please refresh the page.");
-        }
-        throw error;
-      }
-      
-      setProfile(data);
-      setCurrentPlan(data?.membership_plan || "free");
-      setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
-    } catch (error: any) {
-      console.error("Failed to load profile:", error);
-      // Error toast already shown above
-    }
-  }, [user]);
-
-  // Memoized earning potential calculations
-  const earningPotentials = useMemo(() => {
-    const potentials: Record<string, { daily: number; weekly: number; monthly: number } | null> = {};
-    
-    plans.forEach(plan => {
-      if (plan.name === 'free') {
-        potentials[plan.id] = null;
-      } else {
-        const daily = plan.daily_task_limit * plan.earning_per_task;
-        potentials[plan.id] = {
-          daily,
-          weekly: daily * 7,
-          monthly: daily * 30
-        };
-      }
-    });
-    
-    return potentials;
-  }, [plans]);
-
-  // Memoized plan status check
-  const planStatus = useMemo(() => {
-    if (!profile || !profile.plan_expires_at) return null;
-    
-    const now = new Date();
-    const expiryDate = new Date(profile.plan_expires_at);
-    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilExpiry < 0) {
-      return { status: 'expired', daysUntilExpiry: 0 };
-    } else if (daysUntilExpiry <= 7) {
-      return { status: 'expiring_soon', daysUntilExpiry };
-    }
-    return null;
-  }, [profile]);
-
-  const handleUpgradeClick = async (plan: MembershipPlan) => {
+  const handleUpgradeClick = async (plan: any) => {
     // User must be authenticated (guaranteed by ProtectedRoute)
     if (!user || !profile) {
       toast.error("Please refresh the page and try again");
@@ -369,20 +241,6 @@ export default function MembershipPlans() {
       }
     };
 
-    const handleRetry = async () => {
-      setRetrying(true);
-      setError(null);
-      setErrorType(null);
-      
-      // Check network connectivity first
-      if (!navigator.onLine) {
-        toast.error("No internet connection. Please check your network.");
-        setRetrying(false);
-        return;
-      }
-      
-      await loadPlans();
-    };
 
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -403,7 +261,7 @@ export default function MembershipPlans() {
           {errorType !== 'auth' && (
             <div className="space-y-2">
               <Button 
-                onClick={handleRetry}
+                onClick={retry}
                 disabled={retrying}
                 className="w-full"
               >
@@ -482,160 +340,18 @@ export default function MembershipPlans() {
               // Show skeleton loaders during initial data fetch
               [1, 2, 3, 4].map((i) => <PlanCardSkeleton key={i} />)
             ) : (
-              plans.map((plan) => {
-                const earningPotential = earningPotentials[plan.id];
-                
-                return (
-                  <Card
-                    key={plan.id}
-                    className={`relative flex flex-col ${
-                      profile && plan.name === currentPlan ? "border-primary shadow-lg" : ""
-                    }`}
-                  >
-                  {profile && plan.name === currentPlan && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      Current Plan
-                    </Badge>
-                  )}
-                  
-                  <CardHeader>
-                    <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
-                    <CardDescription className="text-3xl font-bold mt-2">
-                      ${plan.price}
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /{plan.billing_period_days} days
-                      </span>
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4 flex-1">
-                    {/* Earning Potential - Show for all plans except free */}
-                    {earningPotential && (
-                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
-                        <div className="flex items-center gap-2 text-primary mb-2">
-                          <TrendingUp className="h-4 w-4" />
-                          <span className="font-semibold text-sm">Earning Potential</span>
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Daily:</span>
-                            <span className="font-bold">${earningPotential.daily.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Weekly:</span>
-                            <span className="font-bold">${earningPotential.weekly.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Monthly:</span>
-                            <span className="font-bold">${earningPotential.monthly.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Free Plan Specifics */}
-                    {plan.name === 'free' && (
-                      <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
-                        {plan.free_plan_expiry_days && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
-                            <span>Free trial: {plan.free_plan_expiry_days} days</span>
-                          </div>
-                        )}
-                        {plan.free_unlock_withdrawal_enabled && plan.free_unlock_withdrawal_days && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-3 w-3" />
-                            <span>Withdrawals unlock after {plan.free_unlock_withdrawal_days} active days</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm">{plan.daily_task_limit} tasks/day</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm">${plan.earning_per_task} per task</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
-                      </div>
-                      {plan.task_commission_rate > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm">{(plan.task_commission_rate * 100).toFixed(1)}% task commission</span>
-                        </div>
-                      )}
-                      {plan.deposit_commission_rate > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm">{(plan.deposit_commission_rate * 100).toFixed(1)}% deposit commission</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {Array.isArray(plan.features) && plan.features.length > 0 && (
-                      <div className="border-t pt-4 space-y-1">
-                        {plan.features.map((feature: string, idx: number) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-
-                  <CardFooter className="flex flex-col gap-2">
-                    {user && depositBalance < plan.price && plan.name !== currentPlan && plan.price > 0 && (
-                      <div className="text-xs text-destructive text-center space-y-1">
-                        <p>Insufficient balance</p>
-                        <p>Need <strong>${(plan.price - depositBalance).toFixed(2)}</strong> more</p>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => navigate("/wallet")}
-                        >
-                          Go to Wallet
-                        </Button>
-                      </div>
-                    )}
-                    <Button
-                      className="w-full"
-                      onClick={() => handleUpgradeClick(plan)}
-                      disabled={
-                        !profile ||
-                        plan.name === currentPlan || 
-                        upgrading === plan.id || 
-                        (depositBalance < plan.price && plan.price > 0) ||
-                        plan.name === "free"
-                      }
-                      variant={plan.name === currentPlan ? "outline" : "default"}
-                    >
-                      {upgrading === plan.id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Upgrading...
-                        </>
-                      ) : plan.name === currentPlan ? (
-                        "Current Plan"
-                      ) : plan.name === "free" ? (
-                        "Cannot Downgrade"
-                      ) : !profile ? (
-                        "Loading..."
-                      ) : (
-                        "Upgrade Now"
-                      )}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })
+              plans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  isCurrentPlan={plan.name === currentPlan}
+                  earningPotential={earningPotentials[plan.id]}
+                  depositBalance={depositBalance}
+                  upgrading={upgrading === plan.id}
+                  onUpgradeClick={handleUpgradeClick}
+                  hasProfile={!!profile}
+                />
+              ))
             )}
           </div>
         </div>
