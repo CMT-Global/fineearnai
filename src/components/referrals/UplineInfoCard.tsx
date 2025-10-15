@@ -57,50 +57,50 @@ export const UplineInfoCard = ({ userId }: UplineInfoCardProps) => {
 
   if (loading) {
     return (
-      <Card className="p-6">
-        <p className="text-sm text-muted-foreground">Loading upline information...</p>
+      <Card className="p-3 mb-4">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading upline information...</p>
+        </div>
       </Card>
     );
   }
 
   if (!uplineInfo) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <User className="h-5 w-5" />
-          <h3 className="font-semibold">Your Upline</h3>
+      <Card className="p-3 mb-4">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-base">Your Upline</h3>
+          <span className="text-sm text-muted-foreground italic ml-2">
+            You joined directly without a referral link.
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground">
-          You joined directly without a referrer
-        </p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <User className="h-5 w-5" />
-        <h3 className="font-semibold">Your Upline</h3>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <p className="text-sm text-muted-foreground">Referred by</p>
-          <p className="font-medium">{uplineInfo.referrer.username}</p>
-          {uplineInfo.referrer.email && (
-            <p className="text-sm text-muted-foreground">{uplineInfo.referrer.email}</p>
-          )}
+    <Card className="p-3 mb-4">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-base">Your Upline</h3>
         </div>
 
         <div className="flex items-center gap-2 text-sm">
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Referred by:</span>
+          <span className="font-medium">{uplineInfo.referrer.username}</span>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm">
+          <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">Plan:</span>
           <span className="capitalize font-medium">{uplineInfo.referrer.membershipPlan}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-muted-foreground">Member since:</span>
           <span className="font-medium">
             {new Date(uplineInfo.referrer.joinedAt).toLocaleDateString()}
@@ -108,17 +108,15 @@ export const UplineInfoCard = ({ userId }: UplineInfoCardProps) => {
         </div>
 
         {uplineInfo.referralInfo.status && (
-          <div className="pt-2 border-t">
-            <p className="text-sm">
-              <span className="text-muted-foreground">Status: </span>
-              <span className={`capitalize font-medium ${
-                uplineInfo.referralInfo.status === 'active' 
-                  ? 'text-green-600' 
-                  : 'text-orange-600'
-              }`}>
-                {uplineInfo.referralInfo.status}
-              </span>
-            </p>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Status:</span>
+            <span className={`capitalize font-medium ${
+              uplineInfo.referralInfo.status === 'active' 
+                ? 'text-green-600' 
+                : 'text-orange-600'
+            }`}>
+              {uplineInfo.referralInfo.status}
+            </span>
           </div>
         )}
       </div>

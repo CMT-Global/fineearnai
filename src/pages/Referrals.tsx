@@ -139,25 +139,27 @@ const Referrals = () => {
           <div className="flex-1 mb-4">
             <h1 className="text-2xl font-bold">Referral Program</h1>
             <p className="text-muted-foreground">
-              Invite friends and earn commission from their tasks
+              Invite friends and earn commissions from their activities.
             </p>
           </div>
 
-        {/* Stats */}
-        <ReferralStatsCard
-          totalReferrals={stats?.total_referrals || 0}
-          activeReferrals={stats?.active_referrals || 0}
-          totalEarnings={parseFloat(stats?.total_earnings || 0)}
-          taskCommissionEarnings={parseFloat(stats?.task_commission_earnings || 0)}
-        />
+          {/* Upline Info - Compact Banner */}
+          <UplineInfoCard userId={user?.id || ""} />
+
+          {/* Stats */}
+          <ReferralStatsCard
+            totalReferrals={stats?.total_referrals || 0}
+            activeReferrals={stats?.active_referrals || 0}
+            totalEarnings={parseFloat(stats?.total_earnings || 0)}
+            taskCommissionEarnings={parseFloat(stats?.task_commission_earnings || 0)}
+          />
         </header>
 
         {/* Main Content */}
         <div className="p-4 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Referral Code Card with QR and Share */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Your Referral Code</h2>
+          {/* Referral Code Card - Full Width */}
+          <Card className="p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Your Referral Link & Commission</h2>
             
             <ReferralCodeCard
               referralCode={profile.referral_code}
@@ -178,10 +180,6 @@ const Referrals = () => {
               />
             </div>
           </Card>
-
-          {/* Upline Info */}
-          <UplineInfoCard userId={user?.id || ""} />
-        </div>
 
         {/* Commission Structure */}
         <div className="mb-8">
