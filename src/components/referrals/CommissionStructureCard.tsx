@@ -82,7 +82,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
           </div>
 
           <Button 
-            onClick={() => navigate("/membership-plans")}
+            onClick={() => navigate("/plans")}
             className="w-full gap-2"
           >
             Upgrade to Start Earning
@@ -121,7 +121,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => navigate("/membership-plans")}
+              onClick={() => navigate("/plans")}
               className="mt-3 gap-2"
             >
               View Plans

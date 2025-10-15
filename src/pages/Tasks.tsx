@@ -345,7 +345,7 @@ const Tasks = () => {
               tasksCompleted={userStats?.tasksCompletedToday || 0}
               dailyLimit={userStats?.dailyLimit || 0}
               membershipPlan={userStats?.membershipPlan || 'free'}
-              onUpgrade={() => navigate('/membership-plans')}
+              onUpgrade={() => navigate('/plans')}
             />
           ) : currentTask ? (
             <TaskInterface
