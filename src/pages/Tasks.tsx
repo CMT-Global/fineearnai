@@ -60,7 +60,13 @@ const Tasks = () => {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   
   // Zustand store for centralized state management
-  const { stats: userStoreStats, setStats, updateTaskProgress } = useUserStore();
+  const { 
+    stats: userStoreStats, 
+    dailyLimitReached, 
+    setStats, 
+    updateTaskProgress, 
+    setDailyLimitReached 
+  } = useUserStore();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -172,10 +178,17 @@ const Tasks = () => {
     };
   }, [user, queryClient]);
 
+  // Check limit flag on page load to prevent bypass illusion
+  useEffect(() => {
+    if (dailyLimitReached) {
+      console.log('🔒 Daily limit already reached - blocking task interface');
+    }
+  }, [dailyLimitReached]);
+
   const currentTask = taskData?.task || null;
   // Prefer store stats if available (fresher data), fallback to query
   const userStats = userStoreStats || taskData?.userStats || null;
-  const isDailyLimitReached = useUserStore.getState().isDailyLimitReached() || taskData?.error === 'daily_limit_reached';
+  const isDailyLimitReached = dailyLimitReached || useUserStore.getState().isDailyLimitReached() || taskData?.error === 'daily_limit_reached';
 
   // Skip mutation
   const skipMutation = useMutation({
@@ -269,6 +282,10 @@ const Tasks = () => {
       updateTaskProgress(tasksCompletedAfter, data.newBalance);
       
       if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
+        // Set persistent flag IMMEDIATELY to prevent bypass illusion
+        setDailyLimitReached(true);
+        console.log('🔒 Daily limit reached - setting persistent flag');
+        
         // Daily limit reached - show congratulatory message and set query data
         toast.success("Congratulations! You've completed all your tasks for today!");
         
@@ -376,7 +393,7 @@ const Tasks = () => {
           {/* Task Interface or Loading Skeleton */}
           {isLoadingTask ? (
             <TaskSkeleton />
-          ) : isDailyLimitReached ? (
+          ) : dailyLimitReached || isDailyLimitReached ? (
             <DailyLimitReached
               tasksCompleted={userStats?.tasksCompletedToday || 0}
               dailyLimit={userStats?.dailyLimit || 0}
