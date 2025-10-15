@@ -41,7 +41,7 @@ All colors MUST be HSL.
     /* Sidebar colors */
     --sidebar-bg: 222 47% 11%;
     --sidebar-fg: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent: 217 33% 25%;
     --sidebar-border: 217 33% 17%;
     
     /* Wallet accent colors */
@@ -66,22 +66,6 @@ All colors MUST be HSL.
     
     /* Transitions */
     --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
@@ -23,10 +23,11 @@ interface SidebarProps {
 
 export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
 
   const navItems = [
-    { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
+    { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Zap, label: "Tasks", path: "/tasks" },
     { icon: Wallet, label: "Wallet", path: "/dashboard" },
     { icon: Users, label: "Referrals", path: "/referrals" },
@@ -34,6 +35,9 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: History, label: "Transactions", path: "/transactions" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
+
+  const isActive = (path: string) => location.pathname === path;
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -54,13 +58,13 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           <button
             key={item.path}
             onClick={() => handleNavigation(item.path)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${
-              item.active
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))]"
-                : "hover:bg-[hsl(var(--sidebar-accent))]"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+              isActive(item.path)
+                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
             }`}
           >
-            <item.icon className="h-5 w-5" />
+            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
             <span>{item.label}</span>
           </button>
         ))}
@@ -68,7 +72,11 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         {isAdmin && (
           <button
             onClick={() => handleNavigation("/admin")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[hsl(var(--sidebar-accent))] transition-colors w-full text-left bg-[hsl(var(--wallet-deposit))]/10"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+              isAdminRoute
+                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : "hover:bg-[hsl(var(--sidebar-accent))]/50 bg-[hsl(var(--wallet-deposit))]/10"
+            }`}
           >
             <Settings className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
             <span className="text-[hsl(var(--wallet-deposit))]">Admin Panel</span>
