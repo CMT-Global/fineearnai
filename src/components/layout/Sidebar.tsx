@@ -11,9 +11,12 @@ import {
   Sparkles,
   LogOut,
   History,
-  Menu
+  Menu,
+  Shield,
+  ArrowRight
 } from "lucide-react";
 import { useState } from "react";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 
 interface SidebarProps {
   profile: any;
@@ -24,6 +27,7 @@ interface SidebarProps {
 export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { enterAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
 
   const navItems = [
@@ -41,6 +45,12 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   const handleNavigation = (path: string) => {
     navigate(path);
+    setOpen(false);
+  };
+
+  const handleSwitchToAdmin = () => {
+    enterAdminMode();
+    navigate("/admin");
     setOpen(false);
   };
 
@@ -68,25 +78,26 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             <span>{item.label}</span>
           </button>
         ))}
-        
-        {isAdmin && (
-          <button
-            onClick={() => handleNavigation("/admin")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
-              isAdminRoute
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                : "hover:bg-[hsl(var(--sidebar-accent))]/50 bg-[hsl(var(--wallet-deposit))]/10"
-            }`}
-          >
-            <Settings className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-            <span className="text-[hsl(var(--wallet-deposit))]">Admin Panel</span>
-          </button>
-        )}
       </nav>
 
-      <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white text-sm font-bold">
+      {/* Switch to Admin Button - Highly Visible */}
+      {isAdmin && (
+        <div className="px-4 pb-4">
+          <Button
+            onClick={handleSwitchToAdmin}
+            className="w-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90 transition-opacity font-bold py-6"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            Switch to Admin Panel
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {/* User Profile & Logout */}
+      <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3">
+        <div className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--sidebar-accent))]/30 rounded-lg">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold">
             {profile?.username?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
@@ -96,17 +107,18 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             </p>
           </div>
         </div>
+
+        {/* Logout Button - Highly Visible Red Style */}
         <Button
-          variant="ghost"
-          size="sm"
-          className="w-full mt-2 text-xs text-[hsl(var(--sidebar-fg))]/60 hover:text-[hsl(var(--sidebar-fg))]"
           onClick={() => {
             onSignOut();
             setOpen(false);
           }}
+          variant="destructive"
+          className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
-          <LogOut className="h-3 w-3 mr-2" />
-          Sign Out
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
         </Button>
       </div>
     </>

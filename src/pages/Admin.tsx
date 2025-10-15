@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ArrowLeft, 
   Users, 
   Zap, 
   DollarSign, 
@@ -140,29 +139,19 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
-
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Admin Panel</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Manage users, tasks, transactions, and system settings
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
+        <p className="text-muted-foreground">
+          Platform overview and management
+        </p>
+      </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -231,11 +220,11 @@ const Admin = () => {
                 Requires approval
               </p>
             </CardContent>
-          </Card>
-        </div>
+        </Card>
+      </div>
 
-        {/* Management Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+      {/* Management Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -411,10 +400,9 @@ const Admin = () => {
                   </Button>
                 </CardContent>
               </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
