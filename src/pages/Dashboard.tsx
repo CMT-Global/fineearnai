@@ -240,7 +240,9 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
                 <p className="text-3xl font-bold">{profile.tasks_completed_today}</p>
-                <p className="text-xs text-muted-foreground mt-1">0 total completed</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  ${Number(profile.total_earned || 0).toFixed(2)} total earned
+                </p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
                 <Zap className="h-6 w-6 text-[hsl(var(--wallet-tasks))]" />
