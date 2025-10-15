@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { supabase } from "@/integrations/supabase/client";
+import { useReferralData } from "@/hooks/useReferralData";
+import { usePaginatedReferrals } from "@/hooks/usePaginatedReferrals";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -13,8 +14,7 @@ import { SocialShareButtons } from "@/components/referrals/SocialShareButtons";
 import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
-import { Users, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { toast } from "sonner";
+import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import {
   Pagination,
@@ -29,16 +29,15 @@ const Referrals = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [stats, setStats] = useState<any>(null);
-  const [referredUsers, setReferredUsers] = useState<any[]>([]);
-  const [recentEarnings, setRecentEarnings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalReferrals, setTotalReferrals] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [hasPreviousPage, setHasPreviousPage] = useState(false);
+
+  // ✅ NEW: Single React Query hook for all referral data
+  const { data: referralData, isLoading: isReferralDataLoading } = useReferralData(user?.id);
+  const { profile, stats, upline } = referralData || {};
+
+  // ✅ NEW: Separate hook for paginated referrals
+  const { data: paginatedData, isLoading: isReferralsLoading } = usePaginatedReferrals(user?.id, currentPage);
+  const { referrals: referredUsers, pagination } = paginatedData || { referrals: [], pagination: null };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,82 +45,7 @@ const Referrals = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      loadPaginatedReferrals(currentPage);
-    }
-  }, [user, currentPage]);
-
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      // Load profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Load referral stats
-      const { data: statsData, error: statsError } = await supabase
-        .rpc("get_referral_stats", { user_uuid: user?.id });
-
-      if (statsError) {
-        console.error("Error loading stats:", statsError);
-      } else if (statsData && statsData.length > 0) {
-        setStats(statsData[0]);
-      }
-
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Failed to load referral data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadPaginatedReferrals = async (page: number) => {
-    try {
-      const { data, error } = await supabase.functions.invoke("get-paginated-referrals", {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-        body: {
-          page,
-          limit: 20,
-        },
-      });
-
-      if (error) {
-        console.error("Error loading paginated referrals:", error);
-        toast.error("Failed to load referrals");
-        return;
-      }
-
-      if (data?.success) {
-        setReferredUsers(data.data);
-        setTotalPages(data.pagination.totalPages);
-        setTotalReferrals(data.pagination.totalCount);
-        setHasNextPage(data.pagination.hasNextPage);
-        setHasPreviousPage(data.pagination.hasPreviousPage);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to load referrals");
-    }
-  };
-
-  if (loading || isLoading || !profile) {
+  if (loading || isReferralDataLoading || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
@@ -150,8 +74,8 @@ const Referrals = () => {
           <ReferralStatsCard
             totalReferrals={stats?.total_referrals || 0}
             activeReferrals={stats?.active_referrals || 0}
-            totalEarnings={parseFloat(stats?.total_earnings || 0)}
-            taskCommissionEarnings={parseFloat(stats?.task_commission_earnings || 0)}
+            totalEarnings={Number(stats?.total_earnings || 0)}
+            taskCommissionEarnings={Number(stats?.task_commission_earnings || 0)}
           />
         </header>
 
@@ -193,14 +117,18 @@ const Referrals = () => {
               <Users className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Your Referrals</h2>
             </div>
-            {totalReferrals > 0 && (
+            {pagination && pagination.totalCount > 0 && (
               <span className="text-sm text-muted-foreground">
-                Total: {totalReferrals} referral{totalReferrals !== 1 ? 's' : ''}
+                Total: {pagination.totalCount} referral{pagination.totalCount !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
-          {referredUsers.length === 0 ? (
+          {isReferralsLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Loading referrals...</p>
+            </div>
+          ) : referredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
               <p>No referrals yet. Share your link to get started!</p>
@@ -263,10 +191,10 @@ const Referrals = () => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {pagination && pagination.totalPages > 1 && (
                 <div className="mt-6 flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    Page {currentPage} of {pagination.totalPages}
                   </p>
                   
                   <Pagination>
@@ -276,7 +204,7 @@ const Referrals = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                          disabled={!hasPreviousPage}
+                          disabled={!pagination.hasPreviousPage}
                           className="gap-1"
                         >
                           <ChevronLeft className="h-4 w-4" />
@@ -284,14 +212,14 @@ const Referrals = () => {
                         </Button>
                       </PaginationItem>
 
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                         let pageNum;
-                        if (totalPages <= 5) {
+                        if (pagination.totalPages <= 5) {
                           pageNum = i + 1;
                         } else if (currentPage <= 3) {
                           pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
+                        } else if (currentPage >= pagination.totalPages - 2) {
+                          pageNum = pagination.totalPages - 4 + i;
                         } else {
                           pageNum = currentPage - 2 + i;
                         }
@@ -313,8 +241,8 @@ const Referrals = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                          disabled={!hasNextPage}
+                          onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                          disabled={!pagination.hasNextPage}
                           className="gap-1"
                         >
                           Next

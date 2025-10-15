@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useWithdrawalRequests } from "@/hooks/useWithdrawalRequests";
 import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -16,112 +19,25 @@ import {
 } from "lucide-react";
 import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format } from "date-fns";
-import { handleError } from "@/lib/error-handler";
-
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  wallet_type: string;
-  status: string;
-  payment_gateway: string | null;
-  new_balance: number;
-  description: string | null;
-  created_at: string;
-}
-
-interface WithdrawalRequest {
-  id: string;
-  amount: number;
-  fee: number;
-  net_amount: number;
-  payment_method: string;
-  payout_address: string;
-  status: string;
-  rejection_reason: string | null;
-  created_at: string;
-  processed_at: string | null;
-}
 
 const Wallet = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
+
+  // ✅ NEW: React Query hooks for all data
+  const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
+  const { data: transactionsData, isLoading: isTransactionsLoading } = useTransactions(user?.id, 1);
+  const { data: withdrawalRequests, isLoading: isWithdrawalsLoading } = useWithdrawalRequests(user?.id);
+
+  const transactions = transactionsData?.transactions || [];
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (user) {
-      loadWalletData();
-    }
-  }, [user]);
-
-  const loadWithdrawalRequests = async () => {
-    try {
-      setLoadingWithdrawals(true);
-      
-      const { data: withdrawalsData } = await supabase
-        .from("withdrawal_requests")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (withdrawalsData) {
-        setWithdrawalRequests(withdrawalsData);
-      }
-    } catch (error) {
-      handleError(error, "loading withdrawal requests");
-    } finally {
-      setLoadingWithdrawals(false);
-    }
-  };
-
-  const loadWalletData = async () => {
-    try {
-      setLoadingTransactions(true);
-      
-      // Load profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .maybeSingle();
-      
-      if (profileData) {
-        setProfile(profileData);
-      }
-      
-      // Load transactions
-      const { data: transactionsData } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (transactionsData) {
-        setTransactions(transactionsData);
-      }
-
-      // Load withdrawal requests
-      await loadWithdrawalRequests();
-    } catch (error) {
-      handleError(error, "loading wallet data");
-    } finally {
-      setLoadingTransactions(false);
-    }
-  };
 
   const filteredTransactions = transactions.filter((tx) => {
     if (filter === "all") return true;
@@ -132,7 +48,7 @@ const Wallet = () => {
     return ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type);
   };
 
-  if (loading || !user) {
+  if (loading || !user || isProfileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading wallet..." />
@@ -170,9 +86,9 @@ const Wallet = () => {
           {/* Wallet Balances */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <WalletCard 
-              depositBalance={parseFloat(profile.deposit_wallet_balance)}
-              earningsBalance={parseFloat(profile.earnings_wallet_balance)}
-              onBalanceUpdate={loadWalletData}
+              depositBalance={Number(profile.deposit_wallet_balance)}
+              earningsBalance={Number(profile.earnings_wallet_balance)}
+              onBalanceUpdate={refetchProfile}
             />
           </div>
 
@@ -193,11 +109,11 @@ const Wallet = () => {
             </Tabs>
 
             {filter === "withdrawals" ? (
-              loadingWithdrawals ? (
+              isWithdrawalsLoading ? (
                 <div className="py-8 text-center">
                   <LoadingSpinner size="md" text="Loading withdrawal history..." />
                 </div>
-              ) : withdrawalRequests.length === 0 ? (
+              ) : !withdrawalRequests || withdrawalRequests.length === 0 ? (
                 <div className="py-8 text-center">
                   <p className="text-muted-foreground">No withdrawal requests found</p>
                 </div>
@@ -208,7 +124,7 @@ const Wallet = () => {
                   ))}
                 </div>
               )
-            ) : loadingTransactions ? (
+            ) : isTransactionsLoading ? (
               <div className="py-8 text-center">
                 <LoadingSpinner size="md" text="Loading transactions..." />
               </div>

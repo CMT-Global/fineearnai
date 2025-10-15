@@ -16,21 +16,21 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useEffect, useState } from "react";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/stores/userStore";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { formatCurrency } from "@/lib/wallet-utils";
-import { handleError } from "@/lib/error-handler";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [referralStats, setReferralStats] = useState<any>(null);
-  const [membershipPlan, setMembershipPlan] = useState<any>(null);
+  
+  // ✅ NEW: Single React Query hook for all dashboard data
+  const { data, isLoading, refetch } = useDashboardData(user?.id);
+  const { profile, referralStats, membershipPlan } = data || {};
   
   // Zustand store for centralized state management
   const { stats: userStoreStats } = useUserStore();
@@ -40,47 +40,6 @@ const Dashboard = () => {
       navigate("/login");
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
-
-  const loadProfile = async () => {
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .maybeSingle();
-      
-      if (data) {
-        setProfile(data);
-        
-        // Load membership plan details
-        const { data: planData } = await supabase
-          .from("membership_plans")
-          .select("*")
-          .eq("name", data.membership_plan)
-          .maybeSingle();
-        
-        if (planData) {
-          setMembershipPlan(planData);
-        }
-      }
-
-      // Load referral stats
-      const { data: statsData } = await supabase
-        .rpc("get_referral_stats", { user_uuid: user?.id });
-      
-      if (statsData && statsData.length > 0) {
-        setReferralStats(statsData[0]);
-      }
-    } catch (error) {
-      handleError(error, "loading profile");
-    }
-  };
 
   // Check if plan is expired or expiring soon
   const getPlanStatus = () => {
@@ -100,7 +59,7 @@ const Dashboard = () => {
 
   const planStatus = getPlanStatus();
 
-  if (loading || !user) {
+  if (loading || !user || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading dashboard..." />
@@ -234,9 +193,9 @@ const Dashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
             <WalletCard 
-              depositBalance={userStoreStats?.depositBalance ?? parseFloat(profile.deposit_wallet_balance)}
-              earningsBalance={userStoreStats?.earningsBalance ?? parseFloat(profile.earnings_wallet_balance)}
-              onBalanceUpdate={loadProfile}
+              depositBalance={Number(userStoreStats?.depositBalance ?? profile.deposit_wallet_balance)}
+              earningsBalance={Number(userStoreStats?.earningsBalance ?? profile.earnings_wallet_balance)}
+              onBalanceUpdate={refetch}
             />
 
             <Card className="p-6">
@@ -266,7 +225,7 @@ const Dashboard = () => {
                     {referralStats?.active_referrals || 0} active
                   </p>
                   <p className="text-xs font-semibold text-[hsl(var(--wallet-referrals))]">
-                    {formatCurrency(parseFloat(referralStats?.total_earnings || 0))} earned
+                    {formatCurrency(Number(referralStats?.total_earnings || 0))} earned
                   </p>
                 </div>
               </div>

@@ -47,9 +47,10 @@ const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 30000, // 30 seconds (data stays fresh)
+      gcTime: 5 * 60 * 1000, // 5 minutes (cache time)
+      refetchOnWindowFocus: false, // Don't refetch on tab switch
+      retry: 1, // Retry failed requests once
     },
   },
 });
