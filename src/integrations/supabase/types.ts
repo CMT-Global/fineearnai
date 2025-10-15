@@ -139,6 +139,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "commission_queue_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "commission_queue_referrer_id_fkey"
             columns: ["referrer_id"]
             isOneToOne: false
@@ -151,6 +158,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_queue_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -556,6 +570,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       referral_earnings: {
@@ -665,6 +686,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "referrals_referrer_id_fkey"
             columns: ["referrer_id"]
             isOneToOne: false
@@ -677,6 +705,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -868,6 +903,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_activity_log: {
@@ -909,6 +951,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1104,6 +1153,32 @@ export type Database = {
           task_commission_earned: number | null
           total_commission_earned: number | null
           total_referrals: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      user_daily_stats: {
+        Row: {
+          account_status: Database["public"]["Enums"]["account_status"] | null
+          daily_task_limit: number | null
+          deposit_commission_rate: number | null
+          deposit_wallet_balance: number | null
+          earning_per_task: number | null
+          earnings_wallet_balance: number | null
+          last_task_date: string | null
+          max_daily_withdrawal: number | null
+          membership_plan: string | null
+          min_daily_withdrawal: number | null
+          min_withdrawal: number | null
+          plan_expires_at: string | null
+          remaining_skips: number | null
+          remaining_tasks: number | null
+          skips_today: number | null
+          task_commission_rate: number | null
+          task_skip_limit_per_day: number | null
+          tasks_completed_today: number | null
+          total_earned: number | null
           user_id: string | null
           username: string | null
         }
