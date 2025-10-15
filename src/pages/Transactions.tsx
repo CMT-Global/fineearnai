@@ -23,6 +23,9 @@ import {
 import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format, subDays } from "date-fns";
 import { TransactionSkeleton } from "@/components/transactions/TransactionSkeleton";
+import { TransactionErrorBoundary } from "@/components/transactions/TransactionErrorBoundary";
+import { EmptyTransactionState } from "@/components/transactions/EmptyTransactionState";
+import { TransactionListLoading } from "@/components/transactions/TransactionListLoading";
 import { toast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -487,31 +490,32 @@ const Transactions = () => {
         {error ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
+            <AlertDescription className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Failed to load transactions</p>
+                <p className="text-sm">{error}</p>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => loadTransactions()}
-                className="ml-4"
+                className="shrink-0"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
+                Try Again
               </Button>
             </AlertDescription>
           </Alert>
         ) : loadingTransactions ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <TransactionSkeleton key={i} />
-            ))}
-          </div>
+          <TransactionListLoading count={5} isInitialLoad={true} />
         ) : filteredTransactions.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">No transactions found</p>
-          </Card>
+          <EmptyTransactionState 
+            hasActiveFilters={activeFiltersCount > 0}
+            onClearFilters={clearAllFilters}
+          />
         ) : (
-          <div className="space-y-3">
+          <TransactionErrorBoundary>
+            <div className="space-y-3">
             {filteredTransactions.map((tx) => (
               <Card key={tx.id} className="p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -553,7 +557,7 @@ const Transactions = () => {
             ))}
             
             {/* Load More Button */}
-            {hasMore && filteredTransactions.length > 0 && (
+            {hasMore && filteredTransactions.length > 0 && !loadingMore && (
               <div className="flex justify-center mt-6">
                 <Button
                   onClick={() => loadMore()}
@@ -561,16 +565,14 @@ const Transactions = () => {
                   variant="outline"
                   size="lg"
                 >
-                  {loadingMore ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Loading more...
-                    </>
-                  ) : (
-                    <>Load More Transactions</>
-                  )}
+                  Load More Transactions
                 </Button>
               </div>
+            )}
+            
+            {/* Loading More State */}
+            {loadingMore && (
+              <TransactionListLoading count={3} isInitialLoad={false} />
             )}
             
             {/* Pagination Info */}
@@ -580,6 +582,7 @@ const Transactions = () => {
               </div>
             )}
           </div>
+          </TransactionErrorBoundary>
         )}
         </div>
       </main>
