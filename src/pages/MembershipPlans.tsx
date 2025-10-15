@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Loader2, Info, AlertCircle, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { comparePlans } from "@/lib/plan-utils";
@@ -57,15 +58,31 @@ export default function MembershipPlans() {
   const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
   const [prorationDetails, setProrationDetails] = useState<any>(null);
 
+  // Cache key for plans data
+  const PLANS_CACHE_KEY = 'membership_plans_cache';
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
   useEffect(() => {
     loadPlans();
     loadUserProfile();
   }, []);
 
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async () => {
     try {
       setError(null);
       setErrorType(null);
+      
+      // Check cache first
+      const cachedData = sessionStorage.getItem(PLANS_CACHE_KEY);
+      if (cachedData) {
+        const { data: cachedPlans, timestamp } = JSON.parse(cachedData);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setPlans(cachedPlans);
+          setLoading(false);
+          setRetrying(false);
+          return;
+        }
+      }
       
       const { data, error } = await supabase
         .from("membership_plans")
@@ -94,6 +111,12 @@ export default function MembershipPlans() {
         return;
       }
       
+      // Cache the data
+      sessionStorage.setItem(PLANS_CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+      
       setPlans(data);
     } catch (error: any) {
       console.error("Failed to load plans:", error);
@@ -114,9 +137,9 @@ export default function MembershipPlans() {
       setLoading(false);
       setRetrying(false);
     }
-  };
+  }, [PLANS_CACHE_KEY, CACHE_DURATION, errorType]);
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -145,21 +168,30 @@ export default function MembershipPlans() {
       console.error("Failed to load profile:", error);
       // Error toast already shown above
     }
-  };
+  }, [user]);
 
-  // Calculate earning potential for a plan
-  const calculateEarningPotential = (plan: MembershipPlan) => {
-    if (plan.name === 'free') return null;
+  // Memoized earning potential calculations
+  const earningPotentials = useMemo(() => {
+    const potentials: Record<string, { daily: number; weekly: number; monthly: number } | null> = {};
     
-    const daily = plan.daily_task_limit * plan.earning_per_task;
-    const weekly = daily * 7;
-    const monthly = daily * 30;
+    plans.forEach(plan => {
+      if (plan.name === 'free') {
+        potentials[plan.id] = null;
+      } else {
+        const daily = plan.daily_task_limit * plan.earning_per_task;
+        potentials[plan.id] = {
+          daily,
+          weekly: daily * 7,
+          monthly: daily * 30
+        };
+      }
+    });
     
-    return { daily, weekly, monthly };
-  };
+    return potentials;
+  }, [plans]);
 
-  // Check if plan is expired or expiring soon
-  const getPlanStatus = () => {
+  // Memoized plan status check
+  const planStatus = useMemo(() => {
     if (!profile || !profile.plan_expires_at) return null;
     
     const now = new Date();
@@ -172,7 +204,7 @@ export default function MembershipPlans() {
       return { status: 'expiring_soon', daysUntilExpiry };
     }
     return null;
-  };
+  }, [profile]);
 
   const handleUpgradeClick = async (plan: MembershipPlan) => {
     // User must be authenticated (guaranteed by ProtectedRoute)
@@ -291,13 +323,26 @@ export default function MembershipPlans() {
     }
   };
 
-  const planStatus = getPlanStatus();
-
-  // Show loading only during initial auth check or when plans are being fetched
-  if (authLoading || (loading && plans.length === 0)) {
+  // Show skeleton loaders during initial load
+  if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+        <Sidebar profile={null} isAdmin={false} onSignOut={signOut} />
+        <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+          <div className="container mx-auto px-4 lg:px-8 py-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
+              <p className="text-muted-foreground text-lg">
+                Choose the perfect plan to maximize your earnings
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+              {[1, 2, 3, 4].map((i) => (
+                <PlanCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -433,16 +478,20 @@ export default function MembershipPlans() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {plans.map((plan) => {
-              const earningPotential = calculateEarningPotential(plan);
-              
-              return (
-                <Card
-                  key={plan.id}
-                  className={`relative flex flex-col ${
-                    profile && plan.name === currentPlan ? "border-primary shadow-lg" : ""
-                  }`}
-                >
+            {loading && plans.length === 0 ? (
+              // Show skeleton loaders during initial data fetch
+              [1, 2, 3, 4].map((i) => <PlanCardSkeleton key={i} />)
+            ) : (
+              plans.map((plan) => {
+                const earningPotential = earningPotentials[plan.id];
+                
+                return (
+                  <Card
+                    key={plan.id}
+                    className={`relative flex flex-col ${
+                      profile && plan.name === currentPlan ? "border-primary shadow-lg" : ""
+                    }`}
+                  >
                   {profile && plan.name === currentPlan && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                       Current Plan
@@ -586,7 +635,8 @@ export default function MembershipPlans() {
                   </CardFooter>
                 </Card>
               );
-            })}
+            })
+            )}
           </div>
         </div>
 
