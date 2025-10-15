@@ -93,6 +93,42 @@ const Tasks = () => {
     gcTime: 0,
   });
 
+  // Phase 3: Real-time subscription to profile updates
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('📡 Setting up realtime subscription for user profile:', user.id);
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔄 Profile update received via realtime:', payload.new);
+          
+          // Invalidate the next-task query to trigger a refetch with fresh data
+          queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+          
+          // Also update the profile state
+          setProfile(payload.new);
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔌 Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
+
   const currentTask = taskData?.task || null;
   const userStats = taskData?.userStats || null;
 
