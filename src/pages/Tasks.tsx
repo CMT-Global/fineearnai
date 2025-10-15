@@ -142,6 +142,28 @@ const Tasks = () => {
       if (data.error) throw new Error(data.error);
       return data;
     },
+    onMutate: async (variables) => {
+      // Optimistic update: immediately update UI before server response
+      const previousTaskData = queryClient.getQueryData(['next-task', user?.id]);
+      
+      if (previousTaskData && userStats) {
+        // Optimistically update the task stats
+        queryClient.setQueryData(['next-task', user?.id], (old: any) => {
+          if (!old) return old;
+          
+          return {
+            ...old,
+            userStats: {
+              ...old.userStats,
+              tasksCompletedToday: old.userStats.tasksCompletedToday + 1,
+              remainingTasks: Math.max(0, old.userStats.remainingTasks - 1),
+            }
+          };
+        });
+      }
+      
+      return { previousTaskData };
+    },
     onSuccess: (data) => {
       setFeedback(data);
 
@@ -151,14 +173,22 @@ const Tasks = () => {
         toast.error("Incorrect answer");
       }
 
+      // Invalidate and refetch the task query to get fresh data
+      queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+
       setTimeout(() => {
         setFeedback(null);
         setSelectedResponse("");
         refetchTask();
       }, 3000);
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
       toast.error(error.message || "Failed to submit answer");
+      
+      // Rollback optimistic update on error
+      if (context?.previousTaskData) {
+        queryClient.setQueryData(['next-task', user?.id], context.previousTaskData);
+      }
     },
   });
 
