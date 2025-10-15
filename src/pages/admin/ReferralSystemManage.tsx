@@ -9,18 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, TrendingUp, Users, DollarSign, Check, X } from "lucide-react";
+import { ArrowLeft, Save, TrendingUp, Users, DollarSign, Check, X, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Badge } from "@/components/ui/badge";
 
 interface ReferralConfig {
-  personal_referrals_enabled: boolean;
-  business_referrals_enabled: boolean;
-  personal_deposit_commission_rate: number;
-  business_task_commission_rate: number;
-  business_deposit_commission_rate: number;
   signup_bonus_enabled: boolean;
   signup_bonus_amount: number;
 }
@@ -108,21 +104,6 @@ const ReferralSystemManage = () => {
     if (!config) return;
 
     // Validation
-    if (config.personal_deposit_commission_rate < 0 || config.personal_deposit_commission_rate > 100) {
-      toast.error("Personal deposit commission rate must be between 0 and 100");
-      return;
-    }
-
-    if (config.business_task_commission_rate < 0 || config.business_task_commission_rate > 100) {
-      toast.error("Business task commission rate must be between 0 and 100");
-      return;
-    }
-
-    if (config.business_deposit_commission_rate < 0 || config.business_deposit_commission_rate > 100) {
-      toast.error("Business deposit commission rate must be between 0 and 100");
-      return;
-    }
-
     if (config.signup_bonus_enabled && config.signup_bonus_amount < 0) {
       toast.error("Signup bonus amount must be non-negative");
       return;
@@ -133,13 +114,8 @@ const ReferralSystemManage = () => {
 
       const { data, error } = await supabase.functions.invoke("configure-referral-system", {
         body: {
-          personalReferralsEnabled: config.personal_referrals_enabled,
-          businessReferralsEnabled: config.business_referrals_enabled,
-          personalDepositCommissionRate: config.personal_deposit_commission_rate,
-          businessTaskCommissionRate: config.business_task_commission_rate,
-          businessDepositCommissionRate: config.business_deposit_commission_rate,
-          signupBonusEnabled: config.signup_bonus_enabled,
-          signupBonusAmount: config.signup_bonus_amount,
+          signup_bonus_enabled: config.signup_bonus_enabled,
+          signup_bonus_amount: config.signup_bonus_amount,
         },
       });
 
@@ -285,9 +261,27 @@ const ReferralSystemManage = () => {
 
           <h1 className="text-3xl font-bold mb-2">Referral System Management</h1>
           <p className="text-muted-foreground">
-            Configure global referral program settings and commission rates
+            Configure signup bonuses and monitor referral program performance
           </p>
         </div>
+
+        {/* Informational Alert */}
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Commission Configuration</AlertTitle>
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Referral commission rates (task commission and deposit commission) are configured per membership plan.
+            </span>
+            <Button 
+              variant="link" 
+              className="h-auto p-0 ml-4"
+              onClick={() => navigate('/admin/plans/manage')}
+            >
+              Manage Plans →
+            </Button>
+          </AlertDescription>
+        </Alert>
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -353,114 +347,12 @@ const ReferralSystemManage = () => {
           {/* Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Commission Configuration</CardTitle>
+              <CardTitle>Signup Bonus Configuration</CardTitle>
               <CardDescription>
-                Set commission rates for different plan types
+                Configure bonus rewards for new user signups
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Personal Plan Referrals */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-semibold">Personal Plan Referrals</Label>
-                    <p className="text-sm text-muted-foreground">Enable referrals for Personal plan users</p>
-                  </div>
-                  <Switch
-                    checked={config.personal_referrals_enabled}
-                    onCheckedChange={(checked) =>
-                      setConfig({ ...config, personal_referrals_enabled: checked })
-                    }
-                  />
-                </div>
-
-                {config.personal_referrals_enabled && (
-                  <div>
-                    <Label>Personal Deposit Commission Rate (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={config.personal_deposit_commission_rate}
-                      onChange={(e) =>
-                        setConfig({
-                          ...config,
-                          personal_deposit_commission_rate: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Commission earned when referred user upgrades their plan
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Business Plan Referrals */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-semibold">Business Plan Referrals</Label>
-                    <p className="text-sm text-muted-foreground">Enable referrals for Business plan users</p>
-                  </div>
-                  <Switch
-                    checked={config.business_referrals_enabled}
-                    onCheckedChange={(checked) =>
-                      setConfig({ ...config, business_referrals_enabled: checked })
-                    }
-                  />
-                </div>
-
-                {config.business_referrals_enabled && (
-                  <>
-                    <div>
-                      <Label>Business Task Commission Rate (%)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={config.business_task_commission_rate}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            business_task_commission_rate: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Commission earned from referred user's task completions
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label>Business Deposit Commission Rate (%)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={config.business_deposit_commission_rate}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            business_deposit_commission_rate: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Commission earned when referred user upgrades their plan
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <Separator />
-
               {/* Signup Bonus */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -575,18 +467,6 @@ const ReferralSystemManage = () => {
                 <CardTitle>System Status</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-muted-foreground">Personal Referrals</span>
-                  <Badge variant={config.personal_referrals_enabled ? "default" : "secondary"}>
-                    {config.personal_referrals_enabled ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-muted-foreground">Business Referrals</span>
-                  <Badge variant={config.business_referrals_enabled ? "default" : "secondary"}>
-                    {config.business_referrals_enabled ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-sm text-muted-foreground">Signup Bonus</span>
                   <Badge variant={config.signup_bonus_enabled ? "default" : "secondary"}>
