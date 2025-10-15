@@ -22,12 +22,14 @@ interface UserStore {
   isLoading: boolean;
   lastFetch: number;
   dailyLimitReached: boolean; // Persistent flag to prevent UI flicker
+  lastResetDate: string | null; // Track the date of last reset to auto-clear at midnight
   
   // Actions
   setStats: (stats: UserStats) => void;
   updateTaskProgress: (tasksCompleted: number, earningsBalance: number) => void;
   setDailyLimitReached: (reached: boolean) => void;
   clearStats: () => void;
+  checkAndResetDaily: () => void; // Check if date changed and reset if needed
   
   // Computed
   isDailyLimitReached: () => boolean;
@@ -38,14 +40,19 @@ export const useUserStore = create<UserStore>((set, get) => ({
   isLoading: false,
   lastFetch: 0,
   dailyLimitReached: false,
+  lastResetDate: null,
   
-  setStats: (stats) => set({ 
-    stats: { ...stats, lastUpdated: Date.now() },
-    lastFetch: Date.now(),
-    isLoading: false,
-    // Reset limit flag if stats show tasks remaining
-    dailyLimitReached: stats.tasksCompletedToday >= stats.dailyLimit
-  }),
+  setStats: (stats) => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    set({ 
+      stats: { ...stats, lastUpdated: Date.now() },
+      lastFetch: Date.now(),
+      isLoading: false,
+      lastResetDate: currentDate,
+      // Reset limit flag if stats show tasks remaining
+      dailyLimitReached: stats.tasksCompletedToday >= stats.dailyLimit
+    });
+  },
   
   updateTaskProgress: (tasksCompleted, earningsBalance) => set((state) => ({
     stats: state.stats ? {
@@ -61,11 +68,26 @@ export const useUserStore = create<UserStore>((set, get) => ({
   
   setDailyLimitReached: (reached) => set({ dailyLimitReached: reached }),
   
+  checkAndResetDaily: () => {
+    const { lastResetDate, dailyLimitReached } = get();
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // If date has changed since last reset and limit was reached, clear the flag
+    if (lastResetDate && lastResetDate !== currentDate && dailyLimitReached) {
+      console.log('🔄 Date changed - clearing daily limit flag', { lastResetDate, currentDate });
+      set({ 
+        dailyLimitReached: false,
+        lastResetDate: currentDate 
+      });
+    }
+  },
+  
   clearStats: () => set({ 
     stats: null, 
     isLoading: false, 
     lastFetch: 0,
-    dailyLimitReached: false 
+    dailyLimitReached: false,
+    lastResetDate: null
   }),
   
   isDailyLimitReached: () => {

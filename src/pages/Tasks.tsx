@@ -65,8 +65,19 @@ const Tasks = () => {
     dailyLimitReached, 
     setStats, 
     updateTaskProgress, 
-    setDailyLimitReached 
+    setDailyLimitReached,
+    checkAndResetDaily
   } = useUserStore();
+
+  // Check for date change and reset daily limit flag if needed
+  useEffect(() => {
+    if (user) {
+      checkAndResetDaily();
+      // Check every 60 seconds for date changes
+      const interval = setInterval(checkAndResetDaily, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [user, checkAndResetDaily]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -123,7 +134,7 @@ const Tasks = () => {
       // (daily limit, no tasks, plan expired, etc.)
       return data;
     },
-    enabled: !!user && !dailyLimitReached, // Don't fetch if limit already reached
+    enabled: !!user, // Fetch whenever user is authenticated (checkAndResetDaily handles date changes)
     staleTime: 10000,    // Cache for 10 seconds (tasks don't change that fast)
     gcTime: 60000,       // Keep in cache for 1 minute
   });

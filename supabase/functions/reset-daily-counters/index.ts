@@ -17,27 +17,41 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Reset daily counters for all users
+    // Get current date in YYYY-MM-DD format
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    console.log(`Starting daily reset at ${new Date().toISOString()}`);
+    
+    // Reset daily counters for all users where last_task_date is not today
+    // This ensures we only reset users who haven't been reset today already
     const { data, error } = await supabase
       .from('profiles')
       .update({
         tasks_completed_today: 0,
         skips_today: 0,
+        last_task_date: currentDate,
       })
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all users
+      .or(`last_task_date.is.null,last_task_date.lt.${currentDate}`)
+      .select('id, username, tasks_completed_today, skips_today');
 
     if (error) {
-      console.error('Error resetting daily counters:', error);
+      console.error('❌ Error resetting daily counters:', error);
       throw error;
     }
 
-    console.log(`Successfully reset daily counters for all users at ${new Date().toISOString()}`);
+    const resetCount = data?.length || 0;
+    console.log(`✅ Successfully reset daily counters for ${resetCount} users at ${new Date().toISOString()}`);
+    
+    // Also clear the dailyLimitReached flag in Zustand by invalidating user cache
+    // Note: This happens automatically when users refresh or when get-next-task is called
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Daily counters reset successfully',
-        timestamp: new Date().toISOString()
+        usersReset: resetCount,
+        timestamp: new Date().toISOString(),
+        currentDate
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
