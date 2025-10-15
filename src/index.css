@@ -66,6 +66,16 @@ All colors MUST be HSL.
     
     /* Transitions */
     --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Admin Panel Theme */
+    --admin-bg: 222 47% 8%;
+    --admin-bg-elevated: 217 33% 12%;
+    --admin-accent: 262 83% 58%;
+    --admin-accent-hover: 262 83% 65%;
+    --admin-border: 217 33% 15%;
+    --admin-text: 210 40% 98%;
+    --admin-text-muted: 215 20% 65%;
   }
 
   .dark {
@@ -101,7 +111,23 @@ All colors MUST be HSL.
     --sidebar-fg: 210 40% 98%;
     --sidebar-accent: 217 33% 14%;
     --sidebar-border: 217 33% 14%;
+    
+    /* Admin Panel Theme (Dark Mode) */
+    --admin-bg: 222 47% 6%;
+    --admin-bg-elevated: 217 33% 10%;
+    --admin-accent: 262 83% 58%;
+    --admin-accent-hover: 262 83% 65%;
+    --admin-border: 217 33% 12%;
+    --admin-text: 210 40% 98%;
+    --admin-text-muted: 215 20% 65%;
   }
+}
+
+/* Admin Mode Specific Styles */
+.admin-mode {
+  --background: var(--admin-bg);
+  --card: var(--admin-bg-elevated);
+  --accent: var(--admin-accent);
 }
 
 @layer base {
@@ -111,5 +137,21 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Smooth transitions for mode switching */
+  .mode-transition {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  .mode-transition-enter {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .mode-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface AdminModeContextType {
   isAdminMode: boolean;
+  isTransitioning: boolean;
   enterAdminMode: () => void;
   exitAdminMode: () => void;
 }
@@ -14,22 +15,39 @@ export const AdminModeProvider = ({ children }: { children: ReactNode }) => {
     const stored = localStorage.getItem("adminMode");
     return stored === "true";
   });
+  
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Persist admin mode state to localStorage
   useEffect(() => {
     localStorage.setItem("adminMode", String(isAdminMode));
+    
+    // Apply admin mode class to body for theme switching
+    if (isAdminMode) {
+      document.body.classList.add("admin-mode");
+    } else {
+      document.body.classList.remove("admin-mode");
+    }
   }, [isAdminMode]);
 
   const enterAdminMode = () => {
-    setIsAdminMode(true);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsAdminMode(true);
+      setTimeout(() => setIsTransitioning(false), 300);
+    }, 150);
   };
 
   const exitAdminMode = () => {
-    setIsAdminMode(false);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsAdminMode(false);
+      setTimeout(() => setIsTransitioning(false), 300);
+    }, 150);
   };
 
   return (
-    <AdminModeContext.Provider value={{ isAdminMode, enterAdminMode, exitAdminMode }}>
+    <AdminModeContext.Provider value={{ isAdminMode, isTransitioning, enterAdminMode, exitAdminMode }}>
       {children}
     </AdminModeContext.Provider>
   );
