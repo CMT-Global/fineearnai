@@ -81,10 +81,83 @@ const Tasks = () => {
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-next-task");
 
-      if (error) throw error;
+      // Handle HTTP errors from edge function
+      if (error) {
+        console.error('❌ Error from get-next-task:', error);
+        
+        // Parse error details if available
+        const errorMessage = error.message || 'Failed to fetch task';
+        
+        // Check for specific error types
+        if (errorMessage.includes('Daily task limit reached') || errorMessage.includes('429')) {
+          // Daily limit reached - return structured error instead of throwing
+          return {
+            success: false,
+            error: 'daily_limit_reached',
+            message: 'You have completed all your tasks for today!',
+            task: null,
+            userStats: data?.userStats || {
+              tasksCompletedToday: data?.tasksCompletedToday || 0,
+              dailyLimit: data?.dailyLimit || 0,
+              remainingTasks: 0,
+              earningsBalance: 0,
+              depositBalance: 0,
+              totalEarned: 0,
+              skipsToday: 0,
+              skipLimit: 0,
+              remainingSkips: 0,
+              membershipPlan: 'free',
+              planExpiresAt: null,
+            }
+          };
+        }
+        
+        // Handle other error types
+        if (errorMessage.includes('expired') || errorMessage.includes('403')) {
+          return {
+            success: false,
+            error: 'plan_expired',
+            message: 'Your membership plan has expired. Please upgrade to continue.',
+            task: null,
+            userStats: null
+          };
+        }
+        
+        if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+          return {
+            success: false,
+            error: 'no_tasks',
+            message: 'No tasks available at the moment.',
+            task: null,
+            userStats: null
+          };
+        }
+        
+        // Generic error - throw to trigger error UI
+        throw error;
+      }
 
+      // Handle successful response with no task
       if (!data.success || !data.task) {
-        return null;
+        // Check if it's because of daily limit
+        if (data?.userStats?.remainingTasks === 0 || 
+            data?.userStats?.tasksCompletedToday >= data?.userStats?.dailyLimit) {
+          return {
+            success: false,
+            error: 'daily_limit_reached',
+            message: 'You have completed all your tasks for today!',
+            task: null,
+            userStats: data.userStats
+          };
+        }
+        
+        return {
+          success: false,
+          error: 'no_tasks',
+          message: 'No tasks available at the moment.',
+          task: null,
+          userStats: data?.userStats || null
+        };
       }
 
       return data;
