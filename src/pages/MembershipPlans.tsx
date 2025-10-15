@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, Loader2, ArrowLeft, Info } from "lucide-react";
+import { Check, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { comparePlans } from "@/lib/plan-utils";
@@ -26,8 +28,10 @@ interface MembershipPlan {
 }
 
 export default function MembershipPlans() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [depositBalance, setDepositBalance] = useState<number>(0);
@@ -60,13 +64,14 @@ export default function MembershipPlans() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("membership_plan, deposit_wallet_balance")
+      .select("*")
       .eq("id", user.id)
       .single();
 
     if (error) {
       console.error(error);
     } else {
+      setProfile(data);
       setCurrentPlan(data?.membership_plan || "free");
       setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
     }
@@ -132,7 +137,7 @@ export default function MembershipPlans() {
     }
   };
 
-  if (loading) {
+  if (loading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -141,17 +146,12 @@ export default function MembershipPlans() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        onClick={() => navigate("/dashboard")}
-        className="mb-6"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
-      </Button>
-
-      <div className="text-center mb-8">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
+      
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+        <div className="container mx-auto px-4 lg:px-8 py-8">
+          <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
         <p className="text-muted-foreground text-lg">
           Choose the perfect plan to maximize your earnings
@@ -264,7 +264,9 @@ export default function MembershipPlans() {
             </CardFooter>
           </Card>
         ))}
-      </div>
+        </div>
+        </div>
+      </main>
     </div>
   );
 }

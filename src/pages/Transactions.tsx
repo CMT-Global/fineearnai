@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ArrowLeft, 
   ArrowUpRight, 
-  ArrowDownRight,
-  Filter 
+  ArrowDownRight
 } from "lucide-react";
 import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format } from "date-fns";
@@ -27,8 +27,10 @@ interface Transaction {
 }
 
 const Transactions = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings">("all");
@@ -47,6 +49,19 @@ const Transactions = () => {
 
   const loadTransactions = async () => {
     setLoadingTransactions(true);
+    
+    // Load profile
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user?.id)
+      .single();
+    
+    if (profileData) {
+      setProfile(profileData);
+    }
+    
+    // Load transactions
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
@@ -68,7 +83,7 @@ const Transactions = () => {
     return ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type);
   };
 
-  if (loading || !user) {
+  if (loading || !user || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
@@ -77,18 +92,13 @@ const Transactions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto p-8">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/dashboard")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <h1 className="text-3xl font-bold">Transaction History</h1>
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
+      
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+        <div className="container max-w-6xl mx-auto p-4 lg:p-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Transaction History</h1>
           <p className="text-muted-foreground">View all your wallet transactions</p>
         </div>
 
@@ -151,7 +161,8 @@ const Transactions = () => {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

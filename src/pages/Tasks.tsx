@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { 
-  ArrowLeft, 
   CheckCircle2, 
   Clock, 
   AlertCircle,
@@ -34,7 +35,8 @@ interface UserTask {
 }
 
 const Tasks = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
@@ -167,20 +169,18 @@ const Tasks = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b px-8 py-6">
-        <div className="flex items-center gap-4 mb-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
+      
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+        {/* Header */}
+        <header className="bg-card border-b px-4 lg:px-8 py-6">
+          <div className="flex-1 mb-4">
             <h1 className="text-2xl font-bold">AI Training Tasks</h1>
             <p className="text-muted-foreground">
               Complete tasks to earn money and help train AI
             </p>
           </div>
-        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
@@ -224,10 +224,10 @@ const Tasks = () => {
             </div>
           </Card>
         </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="p-8">
+        {/* Main Content */}
+        <div className="p-4 lg:p-8">
         {/* Active Tasks */}
         {userTasks.length > 0 && (
           <div className="mb-8">
@@ -274,6 +274,7 @@ const Tasks = () => {
               );
             })}
           </div>
+        </div>
         </div>
       </main>
     </div>
