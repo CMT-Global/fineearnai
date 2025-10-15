@@ -137,52 +137,37 @@ Deno.serve(async (req) => {
           },
         });
 
-      // Handle referral commission if user was referred
-      if (profile.referred_by) {
+      // Queue referral commission if user was referred (async processing)
+      if (profile.referred_by && earningsAmount > 0) {
         const { data: referrer } = await supabase
           .from('profiles')
-          .select('*, membership_plans!inner(*)')
+          .select('id, membership_plans!inner(task_commission_rate)')
           .eq('id', profile.referred_by)
           .single();
 
-        if (referrer && referrer.membership_plans.task_commission_rate > 0) {
-          const commissionAmount = earningsAmount * (referrer.membership_plans.task_commission_rate / 100);
-          const newReferrerBalance = Number(referrer.earnings_wallet_balance) + commissionAmount;
-
-          // Update referrer balance
-          await supabase
-            .from('profiles')
-            .update({ earnings_wallet_balance: newReferrerBalance })
-            .eq('id', referrer.id);
-
-          // Create referral earning record
-          await supabase
-            .from('referral_earnings')
+        if (referrer && referrer.membership_plans && (referrer.membership_plans as any).task_commission_rate > 0) {
+          // Queue commission for async processing (non-blocking)
+          const { error: queueError } = await supabase
+            .from('commission_queue')
             .insert({
               referrer_id: referrer.id,
               referred_user_id: user.id,
-              earning_type: 'task_commission',
-              base_amount: earningsAmount,
-              commission_rate: referrer.membership_plans.task_commission_rate,
-              commission_amount: commissionAmount,
+              event_type: 'task',
+              amount: earningsAmount,
+              commission_rate: (referrer.membership_plans as any).task_commission_rate / 100,
               metadata: {
                 task_id: taskId,
                 category: task.category,
-              },
+                username: profile.username
+              }
             });
 
-          // Create transaction for referrer
-          await supabase
-            .from('transactions')
-            .insert({
-              user_id: referrer.id,
-              type: 'referral_commission',
-              amount: commissionAmount,
-              wallet_type: 'earnings',
-              new_balance: newReferrerBalance,
-              description: `Referral commission from ${profile.username}'s task`,
-              status: 'completed',
-            });
+          if (queueError) {
+            console.error('Error queueing task commission:', queueError);
+            // Don't block user response - log and continue
+          } else {
+            console.log('Task commission queued:', { referrerId: referrer.id, amount: earningsAmount });
+          }
         }
       }
     }

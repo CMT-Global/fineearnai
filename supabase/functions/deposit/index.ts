@@ -91,66 +91,44 @@ Deno.serve(async (req) => {
       throw transactionError;
     }
 
-    // Handle referral commission on deposit if user was referred
+    // Queue referral commission on deposit if user was referred (async processing)
     if (profile.referred_by) {
-      // Get referrer's profile WITH their membership plan
+      // Get referrer's membership plan to check THEIR commission rate
       const { data: referrerProfile } = await supabase
         .from('profiles')
-        .select('earnings_wallet_balance, membership_plan')
+        .select('id, membership_plan')
         .eq('id', profile.referred_by)
         .single();
 
       if (referrerProfile) {
-        // Get referrer's membership plan to use THEIR commission rate
         const { data: referrerPlan } = await supabase
           .from('membership_plans')
-          .select('*')
+          .select('deposit_commission_rate')
           .eq('name', referrerProfile.membership_plan)
           .single();
 
         if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
-          const commissionAmount = depositAmount * (referrerPlan.deposit_commission_rate / 100);
-          const newReferrerBalance = parseFloat(referrerProfile.earnings_wallet_balance) + commissionAmount;
-
-          // Update referrer's balance
-          await supabase
-            .from('profiles')
-            .update({ earnings_wallet_balance: newReferrerBalance })
-            .eq('id', profile.referred_by);
-
-          // Record referral earning
-          await supabase
-            .from('referral_earnings')
+          // Queue commission for async processing (non-blocking)
+          const { error: queueError } = await supabase
+            .from('commission_queue')
             .insert({
               referrer_id: profile.referred_by,
               referred_user_id: user.id,
-              earning_type: 'deposit_commission',
-              base_amount: depositAmount,
-              commission_amount: commissionAmount,
-              commission_rate: referrerPlan.deposit_commission_rate,
+              event_type: 'deposit',
+              amount: depositAmount,
+              commission_rate: referrerPlan.deposit_commission_rate / 100,
               metadata: {
                 transaction_id: transaction.id,
-              },
+                username: profile.username
+              }
             });
 
-          // Create transaction for referrer
-          await supabase
-            .from('transactions')
-            .insert({
-              user_id: profile.referred_by,
-              type: 'referral_commission',
-              amount: commissionAmount,
-              wallet_type: 'earnings',
-              new_balance: newReferrerBalance,
-              description: `Referral commission from ${profile.username}'s deposit`,
-              status: 'completed',
-              metadata: {
-                referred_user_id: user.id,
-                deposit_transaction_id: transaction.id,
-              },
-            });
-
-          console.log('Deposit referral commission paid:', { referrerId: profile.referred_by, amount: commissionAmount, referrerPlan: referrerPlan.name });
+          if (queueError) {
+            console.error('Error queueing deposit commission:', queueError);
+            // Don't block user response - log and continue
+          } else {
+            console.log('Deposit commission queued:', { referrerId: profile.referred_by, amount: depositAmount, referrerPlan: referrerProfile.membership_plan });
+          }
         }
       }
     }

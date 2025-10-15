@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.refresh-materialized-views]
 verify_jwt = false
+
+[functions.process-commission-queue]
+verify_jwt = false

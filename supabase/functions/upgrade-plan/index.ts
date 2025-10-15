@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
         }
       });
 
-    // Trigger referral commission if user has a referrer
+    // Queue referral commission if user has a referrer (async processing)
     if (profile.referred_by) {
       console.log('Checking referral commission for plan upgrade');
       
@@ -241,34 +241,35 @@ Deno.serve(async (req) => {
             .eq('name', referrerProfile.membership_plan)
             .single();
 
-          // Only process commission if referrer's plan has deposit commission enabled
+          // Only queue commission if referrer's plan has deposit commission enabled
           if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
-            console.log('Triggering referral commission for plan upgrade', { 
+            console.log('Queueing referral commission for plan upgrade', { 
               referrerPlan: referrerProfile.membership_plan, 
               commissionRate: referrerPlan.deposit_commission_rate 
             });
             
-            // Call process-referral-earnings function
-            const { error: commissionError } = await supabase.functions.invoke('process-referral-earnings', {
-              body: {
-                referredUserId: user.id,
-                eventType: 'deposit',
+            // Queue commission for async processing (non-blocking)
+            const { error: queueError } = await supabase
+              .from('commission_queue')
+              .insert({
+                referrer_id: profile.referred_by,
+                referred_user_id: user.id,
+                event_type: 'upgrade',
                 amount: finalCost,
-                eventId: `upgrade_${user.id}_${now}`,
+                commission_rate: referrerPlan.deposit_commission_rate / 100,
                 metadata: {
                   source: 'plan_upgrade',
                   plan_name: planName,
                   original_amount: parseFloat(newPlan.price),
                   proration_applied: prorationDetails !== null
                 }
-              }
-            });
+              });
 
-            if (commissionError) {
-              console.error('Error processing referral commission:', commissionError);
-              // Don't fail the upgrade if commission processing fails
+            if (queueError) {
+              console.error('Error queueing upgrade commission:', queueError);
+              // Don't fail the upgrade if queue insertion fails
             } else {
-              console.log('Referral commission processed successfully');
+              console.log('Upgrade commission queued successfully');
             }
           } else {
             console.log('No commission: referrer plan has 0% deposit commission rate');
