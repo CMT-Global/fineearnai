@@ -19,6 +19,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserStore } from "@/stores/userStore";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { handleError } from "@/lib/error-handler";
@@ -30,6 +31,9 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [referralStats, setReferralStats] = useState<any>(null);
   const [membershipPlan, setMembershipPlan] = useState<any>(null);
+  
+  // Zustand store for centralized state management
+  const { stats: userStoreStats } = useUserStore();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -229,26 +233,28 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
-          <WalletCard 
-            depositBalance={parseFloat(profile.deposit_wallet_balance)}
-            earningsBalance={parseFloat(profile.earnings_wallet_balance)}
-            onBalanceUpdate={loadProfile}
-          />
+            <WalletCard 
+              depositBalance={userStoreStats?.depositBalance ?? parseFloat(profile.deposit_wallet_balance)}
+              earningsBalance={userStoreStats?.earningsBalance ?? parseFloat(profile.earnings_wallet_balance)}
+              onBalanceUpdate={loadProfile}
+            />
 
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
-                <p className="text-3xl font-bold">{profile.tasks_completed_today}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ${Number(profile.total_earned || 0).toFixed(2)} total earned
-                </p>
+            <Card className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
+                  <p className="text-3xl font-bold">
+                    {userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ${Number(userStoreStats?.totalEarned ?? profile.total_earned ?? 0).toFixed(2)} total earned
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-[hsl(var(--wallet-tasks))]" />
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-[hsl(var(--wallet-tasks))]" />
-              </div>
-            </div>
-          </Card>
+            </Card>
 
           <Card className="p-6">
             <div className="flex items-start justify-between mb-4">
@@ -308,12 +314,18 @@ const Dashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Daily Progress</span>
-                  <span className="font-medium">{profile.tasks_completed_today}/{membershipPlan?.daily_task_limit || 10} tasks</span>
+                  <span className="font-medium">
+                    {userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today}/
+                    {userStoreStats?.dailyLimit ?? membershipPlan?.daily_task_limit ?? 10} tasks
+                  </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))]"
-                    style={{ width: `${(profile.tasks_completed_today / (membershipPlan?.daily_task_limit || 10)) * 100}%` }}
+                    style={{ 
+                      width: `${((userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today) / 
+                                 (userStoreStats?.dailyLimit ?? membershipPlan?.daily_task_limit ?? 10)) * 100}%` 
+                    }}
                   ></div>
                 </div>
               </div>

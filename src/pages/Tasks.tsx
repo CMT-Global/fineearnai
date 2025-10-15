@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserStore } from "@/stores/userStore";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
@@ -57,6 +58,9 @@ const Tasks = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  
+  // Zustand store for centralized state management
+  const { stats: userStoreStats, setStats, updateTaskProgress } = useUserStore();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -87,6 +91,26 @@ const Tasks = () => {
       if (error) {
         console.error('❌ Error from get-next-task:', error);
         throw error;
+      }
+
+      // Update Zustand store with fresh user stats
+      if (data.userStats) {
+        setStats({
+          userId: user?.id || '',
+          username: data.userStats.username,
+          tasksCompletedToday: data.userStats.tasksCompletedToday,
+          dailyLimit: data.userStats.dailyLimit,
+          remainingTasks: data.userStats.remainingTasks,
+          earningsBalance: data.userStats.earningsBalance,
+          depositBalance: data.userStats.depositBalance,
+          totalEarned: data.userStats.totalEarned,
+          skipsToday: data.userStats.skipsToday,
+          skipLimit: data.userStats.skipLimit,
+          remainingSkips: data.userStats.remainingSkips,
+          membershipPlan: data.userStats.membershipPlan,
+          planExpiresAt: data.userStats.planExpiresAt,
+          lastUpdated: Date.now()
+        });
       }
 
       // Edge function returns 200 with success: false for expected scenarios
@@ -120,6 +144,14 @@ const Tasks = () => {
           // Show syncing indicator
           setIsSyncing(true);
           
+          // Update Zustand store with realtime data
+          if (userStoreStats) {
+            updateTaskProgress(
+              payload.new.tasks_completed_today,
+              payload.new.earnings_wallet_balance
+            );
+          }
+          
           // Invalidate the next-task query to trigger a refetch with fresh data
           queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
           
@@ -141,8 +173,9 @@ const Tasks = () => {
   }, [user, queryClient]);
 
   const currentTask = taskData?.task || null;
-  const userStats = taskData?.userStats || null;
-  const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
+  // Prefer store stats if available (fresher data), fallback to query
+  const userStats = userStoreStats || taskData?.userStats || null;
+  const isDailyLimitReached = useUserStore.getState().isDailyLimitReached() || taskData?.error === 'daily_limit_reached';
 
   // Skip mutation
   const skipMutation = useMutation({
@@ -231,6 +264,9 @@ const Tasks = () => {
       const tasksCompletedAfter = (userStats?.tasksCompletedToday || 0) + 1;
       const dailyLimit = userStats?.dailyLimit || 0;
       const remainingAfter = Math.max(0, dailyLimit - tasksCompletedAfter);
+      
+      // Update Zustand store immediately with new task progress
+      updateTaskProgress(tasksCompletedAfter, data.newBalance);
       
       if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
         // Daily limit reached - show congratulatory message and set query data
