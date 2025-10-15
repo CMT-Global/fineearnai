@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.generate-master-login]
 verify_jwt = true
+
+[functions.send-bulk-email]
+verify_jwt = true

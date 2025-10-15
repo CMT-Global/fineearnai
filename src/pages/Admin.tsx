@@ -242,6 +242,7 @@ const Admin = () => {
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="plans">Membership Plans</TabsTrigger>
+            <TabsTrigger value="communications">Communications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -375,6 +376,38 @@ const Admin = () => {
                 <CardContent>
                   <Button onClick={() => navigate("/admin/analytics/tasks")}>
                     View Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="communications">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bulk Email System</CardTitle>
+                  <CardDescription>
+                    Send emails to users based on various criteria
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/communications/email")}>
+                    Compose Email
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email Templates</CardTitle>
+                  <CardDescription>
+                    Create and manage reusable email templates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/communications/templates")}>
+                    Manage Templates
                   </Button>
                 </CardContent>
               </Card>
