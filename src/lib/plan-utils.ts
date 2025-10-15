@@ -64,3 +64,103 @@ export const comparePlans = (currentPlan: string, targetPlan: string): {
     tierDifference: Math.abs(difference),
   };
 };
+
+export interface EarningPotential {
+  daily: number;
+  weekly: number;
+  monthly: number;
+}
+
+export const calculateEarningPotential = (plan: {
+  daily_task_limit: number;
+  earning_per_task: number;
+}): EarningPotential => {
+  const daily = plan.daily_task_limit * plan.earning_per_task;
+  return {
+    daily,
+    weekly: daily * 7,
+    monthly: daily * 30,
+  };
+};
+
+export interface ProrationDetails {
+  credit: number;
+  newCost: number;
+  savings: number;
+  daysRemaining: number;
+  dailyRate: number;
+  originalPrice: number;
+}
+
+export const calculateProration = (
+  currentPlan: {
+    price: number;
+    billing_period_days: number;
+  },
+  currentPlanStartDate: string | Date,
+  newPlan: {
+    price: number;
+  }
+): ProrationDetails => {
+  const startDate = new Date(currentPlanStartDate);
+  const now = new Date();
+  
+  // Calculate days used and remaining
+  const daysUsed = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, currentPlan.billing_period_days - daysUsed);
+  
+  // Calculate daily rate and credit
+  const dailyRate = currentPlan.price / currentPlan.billing_period_days;
+  const credit = dailyRate * daysRemaining;
+  
+  // Calculate new cost after credit
+  const newCost = Math.max(0, newPlan.price - credit);
+  const savings = credit;
+  
+  return {
+    credit,
+    newCost,
+    savings,
+    daysRemaining,
+    dailyRate,
+    originalPrice: newPlan.price,
+  };
+};
+
+export const formatBillingPeriodFromValue = (value: number, unit: string): string => {
+  if (value === 1) {
+    return unit === "day" ? "daily" : unit === "week" ? "weekly" : unit === "month" ? "monthly" : unit === "year" ? "yearly" : `1 ${unit}`;
+  }
+  return `${value} ${unit}${value > 1 ? "s" : ""}`;
+};
+
+export const isPlanExpiringSoon = (expiresAt: string | Date | null, daysThreshold: number = 7): boolean => {
+  if (!expiresAt) return false;
+  
+  const expiryDate = new Date(expiresAt);
+  const now = new Date();
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays > 0 && diffDays <= daysThreshold;
+};
+
+export const isPlanExpired = (expiresAt: string | Date | null): boolean => {
+  if (!expiresAt) return false;
+  
+  const expiryDate = new Date(expiresAt);
+  const now = new Date();
+  
+  return now > expiryDate;
+};
+
+export const getDaysUntilExpiry = (expiresAt: string | Date | null): number | null => {
+  if (!expiresAt) return null;
+  
+  const expiryDate = new Date(expiresAt);
+  const now = new Date();
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays;
+};
