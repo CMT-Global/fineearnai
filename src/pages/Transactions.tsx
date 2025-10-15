@@ -11,8 +11,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  ArrowUpRight, 
-  ArrowDownRight,
   AlertCircle,
   RefreshCw,
   Search,
@@ -20,9 +18,8 @@ import {
   Calendar as CalendarIcon,
   X
 } from "lucide-react";
-import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
-import { format, subDays } from "date-fns";
-import { TransactionSkeleton } from "@/components/transactions/TransactionSkeleton";
+import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
+import { TransactionCard } from "@/components/transactions/TransactionCard";
 import { TransactionErrorBoundary } from "@/components/transactions/TransactionErrorBoundary";
 import { EmptyTransactionState } from "@/components/transactions/EmptyTransactionState";
 import { TransactionListLoading } from "@/components/transactions/TransactionListLoading";
@@ -31,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { format, subDays } from "date-fns";
 
 interface Transaction {
   id: string;
@@ -516,45 +514,9 @@ const Transactions = () => {
         ) : (
           <TransactionErrorBoundary>
             <div className="space-y-3">
-            {filteredTransactions.map((tx) => (
-              <Card key={tx.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        isCredit(tx.type) ? 'bg-green-100' : 'bg-red-100'
-                      }`}
-                    >
-                      {isCredit(tx.type) ? (
-                        <ArrowDownRight className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <ArrowUpRight className="h-5 w-5 text-red-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{getTransactionTypeLabel(tx.type)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(tx.created_at), "MMM dd, yyyy 'at' hh:mm a")}
-                      </p>
-                      {tx.description && (
-                        <p className="text-xs text-muted-foreground mt-1">{tx.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-lg font-bold ${getTransactionTypeColor(tx.type)}`}>
-                      {isCredit(tx.type) ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Balance: {formatCurrency(tx.new_balance)}
-                    </p>
-                    <p className={`text-xs capitalize ${getTransactionStatusColor(tx.status)}`}>
-                      {tx.status}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ))}
+              {filteredTransactions.map((tx) => (
+                <TransactionCard key={tx.id} transaction={tx} />
+              ))}
             
             {/* Load More Button */}
             {hasMore && filteredTransactions.length > 0 && !loadingMore && (
