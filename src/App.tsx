@@ -19,6 +19,9 @@ import AITasksManage from "@/pages/admin/AITasksManage";
 import Withdrawals from "@/pages/admin/Withdrawals";
 import Users from "@/pages/admin/Users";
 import UserDetail from "@/pages/admin/UserDetail";
+import Deposits from "@/pages/admin/Deposits";
+import AdminTransactions from "@/pages/admin/Transactions";
+import PaymentSettings from "@/pages/admin/PaymentSettings";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -57,6 +60,9 @@ const App = () => (
           <Route path="/admin/withdrawals" element={<Withdrawals />} />
           <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/users/:userId" element={<UserDetail />} />
+          <Route path="/admin/deposits" element={<Deposits />} />
+          <Route path="/admin/transactions" element={<AdminTransactions />} />
+          <Route path="/admin/settings/payments" element={<PaymentSettings />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />

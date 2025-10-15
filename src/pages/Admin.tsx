@@ -304,19 +304,49 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="transactions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Transaction Management</CardTitle>
-                <CardDescription>
-                  Review and approve transactions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/admin/transactions")}>
-                  Manage Transactions
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Deposit Management</CardTitle>
+                  <CardDescription>
+                    View and manage all platform deposits
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/deposits")}>
+                    View Deposits
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Transaction Logs</CardTitle>
+                  <CardDescription>
+                    Comprehensive audit trail of all transactions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/transactions")}>
+                    View All Transactions
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Payment Processor Settings</CardTitle>
+                  <CardDescription>
+                    Configure payment gateways, fees, and limits
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/settings/payments")}>
+                    Configure Payment Processors
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="plans">

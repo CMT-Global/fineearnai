@@ -176,6 +176,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_processors: {
+        Row: {
+          config: Json
+          created_at: string
+          fee_fixed: number
+          fee_percentage: number
+          id: string
+          is_active: boolean
+          max_amount: number
+          min_amount: number
+          name: string
+          processor_type: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          fee_fixed?: number
+          fee_percentage?: number
+          id?: string
+          is_active?: boolean
+          max_amount?: number
+          min_amount?: number
+          name: string
+          processor_type: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          fee_fixed?: number
+          fee_percentage?: number
+          id?: string
+          is_active?: boolean
+          max_amount?: number
+          min_amount?: number
+          name?: string
+          processor_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_config: {
         Row: {
           created_at: string
