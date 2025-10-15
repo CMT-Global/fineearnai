@@ -442,6 +442,35 @@ Deno.serve(async (req) => {
     const totalExecutionTime = Date.now() - requestStartTime;
     metricSuccess = true;
 
+    // ============================================================================
+    // PHASE 1: INVALIDATE USER STATS CACHE IN GET-NEXT-TASK
+    // ============================================================================
+    
+    // Invalidate cache immediately after task completion
+    const cacheInvalidationStartTime = Date.now();
+    try {
+      // Call get-next-task to trigger cache invalidation
+      const invalidationResponse = await fetch(`${supabaseUrl}/functions/v1/invalidate-user-cache`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id })
+      });
+      
+      const cacheInvalidationTime = Date.now() - cacheInvalidationStartTime;
+      if (!invalidationResponse.ok) {
+        console.warn(`⚠️ [${requestId}] Cache invalidation warning (${cacheInvalidationTime}ms): Response not OK`);
+      } else {
+        console.log(`🗑️ [${requestId}] User stats cache invalidated (${cacheInvalidationTime}ms)`);
+      }
+    } catch (cacheError: any) {
+      const cacheInvalidationTime = Date.now() - cacheInvalidationStartTime;
+      console.warn(`⚠️ [${requestId}] Cache invalidation failed (${cacheInvalidationTime}ms):`, cacheError.message);
+      // Don't block response - cache will expire naturally in 5 seconds
+    }
+
     console.log(`✅ [${requestId}] Task completion successful. Total time: ${totalExecutionTime}ms`, {
       userId,
       taskId,

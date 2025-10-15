@@ -5,11 +5,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// In-memory cache for user stats (1 minute TTL)
+// In-memory cache for user stats (5 second TTL - Phase 1 optimization)
 const statsCache = new Map<string, { data: any; expiresAt: number }>();
 
 // In-memory cache for membership plan data (5 minute TTL)
 const planCache = new Map<string, { data: any; expiresAt: number }>();
+
+// Cache invalidation helper
+export function invalidateUserStatsCache(userId: string) {
+  const cacheKey = `stats_${userId}`;
+  statsCache.delete(cacheKey);
+  console.log('🗑️ Cache invalidated for user:', userId);
+}
 
 /**
  * Get Next Task Edge Function
@@ -192,10 +199,10 @@ Deno.serve(async (req) => {
 
       userStats = statsData;
       
-      // Cache for 1 minute
+      // Cache for 5 seconds (Phase 1 optimization)
       statsCache.set(cacheKey, {
         data: userStats,
-        expiresAt: now + 60000 // 1 minute
+        expiresAt: now + 5000 // 5 seconds
       });
 
       console.log('Cache miss for user stats, fetched and cached:', user.id);
