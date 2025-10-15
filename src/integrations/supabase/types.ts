@@ -472,6 +472,13 @@ export type Database = {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
             isOneToOne: false
+            referencedRelation: "mv_user_referral_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -588,8 +595,22 @@ export type Database = {
             foreignKeyName: "referrals_referred_id_fkey"
             columns: ["referred_id"]
             isOneToOne: false
+            referencedRelation: "mv_user_referral_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "mv_user_referral_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "referrals_referrer_id_fkey"
@@ -778,6 +799,13 @@ export type Database = {
             foreignKeyName: "transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "mv_user_referral_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -809,6 +837,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mv_user_referral_stats"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "user_activity_log_user_id_fkey"
             columns: ["user_id"]
@@ -978,8 +1013,40 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_platform_stats: {
+        Row: {
+          active_tasks: number | null
+          active_users: number | null
+          last_updated: string | null
+          pending_withdrawals: number | null
+          total_referrals: number | null
+          total_tasks_completed: number | null
+          total_users: number | null
+          total_value_locked: number | null
+        }
+        Relationships: []
+      }
+      mv_user_referral_stats: {
+        Row: {
+          active_referrals: number | null
+          deposit_commission_earned: number | null
+          last_commission_date: string | null
+          task_commission_earned: number | null
+          total_commission_earned: number | null
+          total_referrals: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      analyze_query_performance: {
+        Args: { query_text: string }
+        Returns: {
+          plan_line: string
+        }[]
+      }
       calculate_proration: {
         Args: {
           p_current_plan_billing_days: number
@@ -1009,6 +1076,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      refresh_materialized_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

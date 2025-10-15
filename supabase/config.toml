@@ -71,3 +71,6 @@ verify_jwt = true
 
 [functions.create-notification]
 verify_jwt = false
+
+[functions.refresh-materialized-views]
+verify_jwt = false
