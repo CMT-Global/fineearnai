@@ -91,9 +91,10 @@ Deno.serve(async (req) => {
         // Materialized view doesn't exist yet, use fallback query
         console.log('Materialized view not found, using fallback query');
         
+        // First fetch the profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*, membership_plans!inner(*)')
+          .select('*')
           .eq('id', user.id)
           .single();
 
@@ -111,8 +112,28 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Map profile data to stats format
-        const plan = (profile as any).membership_plans;
+        // Then fetch the membership plan separately
+        const { data: plan, error: planError } = await supabase
+          .from('membership_plans')
+          .select('*')
+          .eq('name', profile.membership_plan)
+          .single();
+
+        if (planError || !plan) {
+          console.error('Error fetching membership plan:', planError);
+          return new Response(
+            JSON.stringify({ 
+              error: 'stats_error',
+              message: 'Failed to fetch membership plan' 
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            }
+          );
+        }
+
+        // Map profile and plan data to stats format
         statsData = {
           user_id: profile.id,
           username: profile.username,
