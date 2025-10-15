@@ -2,39 +2,46 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+
+// Eager-loaded critical routes
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
-import Wallet from "./pages/Wallet";
-import Transactions from "./pages/Transactions";
-import MembershipPlans from "./pages/MembershipPlans";
-import Tasks from "./pages/Tasks";
-import TaskDetail from "./pages/TaskDetail";
-import Referrals from "./pages/Referrals";
-import Admin from "./pages/Admin";
-import AITasksGenerate from "@/pages/admin/AITasksGenerate";
-import AITasksManage from "@/pages/admin/AITasksManage";
-import Withdrawals from "@/pages/admin/Withdrawals";
-import Users from "@/pages/admin/Users";
-import UserDetail from "@/pages/admin/UserDetail";
-import Deposits from "@/pages/admin/Deposits";
-import AdminTransactions from "@/pages/admin/Transactions";
-import PaymentSettings from "@/pages/admin/PaymentSettings";
-import PlansManage from "@/pages/admin/PlansManage";
-import ReferralSystemManage from "@/pages/admin/ReferralSystemManage";
-import TaskAnalytics from "@/pages/admin/TaskAnalytics";
-import BulkEmail from "@/pages/admin/BulkEmail";
-import EmailTemplates from "@/pages/admin/EmailTemplates";
-import Settings from "./pages/Settings";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
+
+// Lazy-loaded user routes
+const Wallet = lazy(() => import("./pages/Wallet"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const MembershipPlans = lazy(() => import("./pages/MembershipPlans"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const TaskDetail = lazy(() => import("./pages/TaskDetail"));
+const Referrals = lazy(() => import("./pages/Referrals"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Lazy-loaded admin routes
+const Admin = lazy(() => import("./pages/Admin"));
+const AITasksGenerate = lazy(() => import("@/pages/admin/AITasksGenerate"));
+const AITasksManage = lazy(() => import("@/pages/admin/AITasksManage"));
+const Withdrawals = lazy(() => import("@/pages/admin/Withdrawals"));
+const Users = lazy(() => import("@/pages/admin/Users"));
+const UserDetail = lazy(() => import("@/pages/admin/UserDetail"));
+const Deposits = lazy(() => import("@/pages/admin/Deposits"));
+const AdminTransactions = lazy(() => import("@/pages/admin/Transactions"));
+const PaymentSettings = lazy(() => import("@/pages/admin/PaymentSettings"));
+const PlansManage = lazy(() => import("@/pages/admin/PlansManage"));
+const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemManage"));
+const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
+const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
+const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,18 +85,25 @@ const RoutesWrapper = () => {
     );
   }
 
+  const PageLoader = () => (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
+
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/wallet" element={<Wallet />} />
-      <Route path="/transactions" element={<Transactions />} />
-      <Route path="/plans" element={<MembershipPlans />} />
-      <Route path="/tasks" element={<Tasks />} />
-      <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
-      <Route path="/referrals" element={<Referrals />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/transactions" element={<Transactions />} />
+        <Route path="/plans" element={<MembershipPlans />} />
+        <Route path="/tasks" element={<Tasks />} />
+        <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
+        <Route path="/referrals" element={<Referrals />} />
       
       {/* Admin Routes - Protected with AdminRoute guard and wrapped in AdminLayout */}
       <Route
@@ -238,7 +252,8 @@ const RoutesWrapper = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

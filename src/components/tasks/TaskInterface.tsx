@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -40,7 +40,7 @@ const difficultyColors = {
   hard: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
-export const TaskInterface = ({
+const TaskInterfaceComponent = ({
   task,
   onSubmit,
   onSkip,
@@ -231,3 +231,5 @@ export const TaskInterface = ({
     </Card>
   );
 };
+
+export const TaskInterface = memo(TaskInterfaceComponent);

@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
+import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,15 +48,11 @@ const Tasks = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // State management - single task approach
   const [profile, setProfile] = useState<any>(null);
-  const [currentTask, setCurrentTask] = useState<AITask | null>(null);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<string>("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [startTime] = useState<number>(Date.now());
 
   // Redirect if not authenticated
@@ -64,151 +62,87 @@ const Tasks = () => {
     }
   }, [user, loading, navigate]);
 
-  // Load profile and initial task
+  // Load profile
   useEffect(() => {
     if (user) {
-      loadProfileAndTask();
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => data && setProfile(data));
     }
   }, [user]);
 
-  /**
-   * Load user profile and fetch next task using the new edge function
-   */
-  const loadProfileAndTask = async () => {
-    setIsLoading(true);
-    try {
-      // Load basic profile for sidebar
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user?.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Fetch next task using the optimized edge function
-      await loadNextTask();
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Failed to load tasks");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Load next available task using get-next-task edge function
-   * This replaces 5-7 sequential queries with a single optimized call
-   */
-  const loadNextTask = async () => {
-    try {
+  // Fetch next task with TanStack Query
+  const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
+    queryKey: ['next-task', user?.id],
+    queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-next-task");
-
-      if (error) {
-        console.error("Error fetching next task:", error);
-        
-        // Handle specific error cases
-        if (error.message?.includes("daily_limit_reached")) {
-          toast.error("Daily task limit reached!", {
-            description: "Upgrade your plan to complete more tasks per day",
-          });
-          navigate("/membership");
-          return;
-        }
-
-        if (error.message?.includes("plan_expired")) {
-          toast.error("Your membership plan has expired", {
-            description: "Please upgrade to continue completing tasks",
-          });
-          navigate("/membership");
-          return;
-        }
-
-        if (error.message?.includes("no_tasks_available")) {
-          toast.info("No more tasks available", {
-            description: "Please check back later for new tasks",
-          });
-          setCurrentTask(null);
-          return;
-        }
-
-        toast.error("Failed to load task");
-        return;
-      }
-
-      if (!data.success || !data.task) {
-        toast.info("No tasks available at the moment");
-        setCurrentTask(null);
-        return;
-      }
-
-      // Update state with task and user stats
-      setCurrentTask(data.task);
-      setUserStats(data.userStats);
-      setSelectedResponse("");
-      setFeedback(null);
-
-      console.log("Loaded task:", data.task.id);
-    } catch (error: any) {
-      console.error("Unexpected error loading task:", error);
-      toast.error(error.message || "Failed to load task");
-    }
-  };
-
-  /**
-   * Handle skip task functionality
-   */
-  const handleSkipTask = async () => {
-    if (!userStats) return;
-
-    // Check skip limit
-    if (userStats.skipsToday >= userStats.skipLimit) {
-      toast.error("Daily skip limit reached!");
-      return;
-    }
-
-    try {
-      // Update skip count in profile
-      const { error } = await supabase
-        .from("profiles")
-        .update({ skips_today: userStats.skipsToday + 1 })
-        .eq("id", user?.id);
 
       if (error) throw error;
 
+      if (!data.success || !data.task) {
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const currentTask = taskData?.task || null;
+  const userStats = taskData?.userStats || null;
+
+  // Skip mutation
+  const skipMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ skips_today: (userStats?.skipsToday || 0) + 1 })
+        .eq("id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
       toast.info("Task skipped");
-      
-      // Load next task immediately
-      await loadNextTask();
-    } catch (error: any) {
-      console.error("Error skipping task:", error);
+      setFeedback(null);
+      setSelectedResponse("");
+      refetchTask();
+    },
+    onError: (error: any) => {
       toast.error(error.message || "Failed to skip task");
+    },
+  });
+
+  const handleSkipTask = useCallback(async () => {
+    if (!userStats || userStats.skipsToday >= userStats.skipLimit) {
+      toast.error("Daily skip limit reached!");
+      return;
     }
-  };
+    skipMutation.mutate();
+  }, [userStats, skipMutation]);
 
-  /**
-   * Handle task submission
-   */
-  const handleSubmitAnswer = async (response: string) => {
-    if (!currentTask) return;
-
-    setIsSubmitting(true);
-    const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-
-    try {
+  // Submit mutation with optimistic updates
+  const submitMutation = useMutation({
+    mutationFn: async ({ taskId, response, timeTaken }: { taskId: string; response: string; timeTaken: number }) => {
       const { data, error } = await supabase.functions.invoke("complete-ai-task", {
         body: {
-          taskId: currentTask.id,
+          taskId,
           selectedResponse: response,
           timeTakenSeconds: timeTaken,
         },
       });
 
       if (error) throw error;
-
-      // Show feedback
+      if (data.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
       setFeedback(data);
 
       if (data.isCorrect) {
@@ -217,37 +151,29 @@ const Tasks = () => {
         toast.error("Incorrect answer");
       }
 
-      // Update user stats with new values
-      if (userStats) {
-        setUserStats({
-          ...userStats,
-          tasksCompletedToday: data.tasksCompletedToday,
-          remainingTasks: userStats.dailyLimit - data.tasksCompletedToday,
-          earningsBalance: data.newBalance,
-        });
-      }
-
-      // Auto-load next task after 3 seconds
       setTimeout(() => {
         setFeedback(null);
         setSelectedResponse("");
-        loadNextTask();
-        setIsSubmitting(false);
+        refetchTask();
       }, 3000);
-    } catch (error: any) {
-      console.error("Error submitting answer:", error);
+    },
+    onError: (error: any) => {
       toast.error(error.message || "Failed to submit answer");
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
-  // Loading state
-  if (loading || isLoading || !profile) {
+  const handleSubmitAnswer = useCallback(async (response: string) => {
+    if (!currentTask) return;
+    const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+    submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
+  }, [currentTask, startTime, submitMutation]);
+
+  if (loading || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading tasks...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -291,13 +217,15 @@ const Tasks = () => {
             />
           )}
 
-          {/* Task Interface or No Tasks Message */}
-          {currentTask ? (
+          {/* Task Interface or Loading Skeleton */}
+          {isLoadingTask ? (
+            <TaskSkeleton />
+          ) : currentTask ? (
             <TaskInterface
               task={currentTask}
               onSubmit={handleSubmitAnswer}
               onSkip={handleSkipTask}
-              isSubmitting={isSubmitting}
+              isSubmitting={submitMutation.isPending}
               feedback={feedback}
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}

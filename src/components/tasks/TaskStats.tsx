@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Zap, Wallet } from "lucide-react";
 
@@ -8,7 +9,7 @@ interface TaskStatsProps {
   earningsBalance: number;
 }
 
-export const TaskStats = ({
+const TaskStatsComponent = ({
   tasksCompletedToday,
   dailyLimit,
   remainingTasks,
@@ -69,3 +70,5 @@ export const TaskStats = ({
     </div>
   );
 };
+
+export const TaskStats = memo(TaskStatsComponent);
