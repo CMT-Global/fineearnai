@@ -54,6 +54,7 @@ const Tasks = () => {
   const [selectedResponse, setSelectedResponse] = useState<string>("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -112,11 +113,17 @@ const Tasks = () => {
         (payload) => {
           console.log('🔄 Profile update received via realtime:', payload.new);
           
+          // Show syncing indicator
+          setIsSyncing(true);
+          
           // Invalidate the next-task query to trigger a refetch with fresh data
           queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
           
           // Also update the profile state
           setProfile(payload.new);
+          
+          // Hide syncing indicator after a short delay
+          setTimeout(() => setIsSyncing(false), 1000);
         }
       )
       .subscribe((status) => {
@@ -280,6 +287,8 @@ const Tasks = () => {
               dailyLimit={userStats.dailyLimit}
               remainingTasks={userStats.remainingTasks}
               earningsBalance={userStats.earningsBalance}
+              isLoading={isLoadingTask && !userStats}
+              isSyncing={isSyncing || submitMutation.isPending}
             />
           )}
 
