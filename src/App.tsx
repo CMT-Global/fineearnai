@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { AdminRoute } from "@/components/admin/AdminRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -59,19 +60,22 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
             <Route path="/referrals" element={<Referrals />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/tasks/generate" element={<AITasksGenerate />} />
-          <Route path="/admin/tasks/manage" element={<AITasksManage />} />
-          <Route path="/admin/withdrawals" element={<Withdrawals />} />
-          <Route path="/admin/users" element={<Users />} />
-          <Route path="/admin/users/:userId" element={<UserDetail />} />
-          <Route path="/admin/deposits" element={<Deposits />} />
-          <Route path="/admin/transactions" element={<AdminTransactions />} />
-          <Route path="/admin/settings/payments" element={<PaymentSettings />} />
-          <Route path="/admin/plans/manage" element={<PlansManage />} />
-          <Route path="/admin/analytics/tasks" element={<TaskAnalytics />} />
-          <Route path="/admin/communications/email" element={<BulkEmail />} />
-          <Route path="/admin/communications/templates" element={<EmailTemplates />} />
+            
+            {/* Admin Routes - Protected with AdminRoute guard */}
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/admin/tasks/generate" element={<AdminRoute><AITasksGenerate /></AdminRoute>} />
+            <Route path="/admin/tasks/manage" element={<AdminRoute><AITasksManage /></AdminRoute>} />
+            <Route path="/admin/withdrawals" element={<AdminRoute><Withdrawals /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><Users /></AdminRoute>} />
+            <Route path="/admin/users/:userId" element={<AdminRoute><UserDetail /></AdminRoute>} />
+            <Route path="/admin/deposits" element={<AdminRoute><Deposits /></AdminRoute>} />
+            <Route path="/admin/transactions" element={<AdminRoute><AdminTransactions /></AdminRoute>} />
+            <Route path="/admin/settings/payments" element={<AdminRoute><PaymentSettings /></AdminRoute>} />
+            <Route path="/admin/plans/manage" element={<AdminRoute><PlansManage /></AdminRoute>} />
+            <Route path="/admin/analytics/tasks" element={<AdminRoute><TaskAnalytics /></AdminRoute>} />
+            <Route path="/admin/communications/email" element={<AdminRoute><BulkEmail /></AdminRoute>} />
+            <Route path="/admin/communications/templates" element={<AdminRoute><EmailTemplates /></AdminRoute>} />
+            
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
