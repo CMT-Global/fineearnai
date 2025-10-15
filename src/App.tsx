@@ -22,6 +22,8 @@ import UserDetail from "@/pages/admin/UserDetail";
 import Deposits from "@/pages/admin/Deposits";
 import AdminTransactions from "@/pages/admin/Transactions";
 import PaymentSettings from "@/pages/admin/PaymentSettings";
+import PlansManage from "@/pages/admin/PlansManage";
+import TaskAnalytics from "@/pages/admin/TaskAnalytics";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -63,6 +65,8 @@ const App = () => (
           <Route path="/admin/deposits" element={<Deposits />} />
           <Route path="/admin/transactions" element={<AdminTransactions />} />
           <Route path="/admin/settings/payments" element={<PaymentSettings />} />
+          <Route path="/admin/plans/manage" element={<PlansManage />} />
+          <Route path="/admin/analytics/tasks" element={<TaskAnalytics />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />

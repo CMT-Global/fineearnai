@@ -350,19 +350,35 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="plans">
-            <Card>
-              <CardHeader>
-                <CardTitle>Membership Plans</CardTitle>
-                <CardDescription>
-                  Configure membership tiers and pricing
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/admin/plans")}>
-                  Manage Plans
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Membership Plans</CardTitle>
+                  <CardDescription>
+                    Configure membership tiers and pricing
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/plans/manage")}>
+                    Manage Plans
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Task Analytics</CardTitle>
+                  <CardDescription>
+                    View task completion rates and performance metrics
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/admin/analytics/tasks")}>
+                    View Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
