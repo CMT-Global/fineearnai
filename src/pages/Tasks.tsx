@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
+import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -211,6 +212,7 @@ const Tasks = () => {
 
   const currentTask = taskData?.task || null;
   const userStats = taskData?.userStats || null;
+  const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
 
   // Skip mutation
   const skipMutation = useMutation({
@@ -368,6 +370,13 @@ const Tasks = () => {
           {/* Task Interface or Loading Skeleton */}
           {isLoadingTask ? (
             <TaskSkeleton />
+          ) : isDailyLimitReached ? (
+            <DailyLimitReached
+              tasksCompleted={userStats?.tasksCompletedToday || 0}
+              dailyLimit={userStats?.dailyLimit || 0}
+              membershipPlan={userStats?.membershipPlan || 'free'}
+              onUpgrade={() => navigate('/membership-plans')}
+            />
           ) : currentTask ? (
             <TaskInterface
               task={currentTask}
