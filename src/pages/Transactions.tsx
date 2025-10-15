@@ -7,12 +7,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   ArrowUpRight, 
-  ArrowDownRight
+  ArrowDownRight,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format } from "date-fns";
+import { TransactionSkeleton } from "@/components/transactions/TransactionSkeleton";
+import { toast } from "@/hooks/use-toast";
 
 interface Transaction {
   id: string;
@@ -21,8 +26,10 @@ interface Transaction {
   wallet_type: string;
   status: string;
   payment_gateway: string | null;
+  gateway_transaction_id: string | null;
   new_balance: number;
   description: string | null;
+  metadata: any;
   created_at: string;
 }
 
@@ -33,6 +40,7 @@ const Transactions = () => {
   const [profile, setProfile] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings">("all");
 
   useEffect(() => {
@@ -47,31 +55,84 @@ const Transactions = () => {
     }
   }, [user]);
 
-  const loadTransactions = async () => {
-    setLoadingTransactions(true);
-    
-    // Load profile
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user?.id)
-      .single();
-    
-    if (profileData) {
-      setProfile(profileData);
-    }
-    
-    // Load transactions
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", user?.id)
-      .order("created_at", { ascending: false });
+  // Real-time subscription for transactions
+  useEffect(() => {
+    if (!user) return;
 
-    if (data) {
-      setTransactions(data);
+    const channel = supabase
+      .channel('user-transactions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setTransactions(prev => [payload.new as Transaction, ...prev]);
+            toast({
+              title: "New Transaction",
+              description: `${getTransactionTypeLabel(payload.new.type)} - ${formatCurrency(payload.new.amount)}`,
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setTransactions(prev =>
+              prev.map(tx => tx.id === payload.new.id ? payload.new as Transaction : tx)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setTransactions(prev => prev.filter(tx => tx.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const loadTransactions = async () => {
+    try {
+      setLoadingTransactions(true);
+      setError(null);
+      
+      // Load profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user?.id)
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      if (profileData) {
+        setProfile(profileData);
+      }
+      
+      // Load transactions
+      const { data, error: txError } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (txError) throw txError;
+
+      if (data) {
+        setTransactions(data);
+      }
+    } catch (err: any) {
+      console.error("Error loading transactions:", err);
+      setError(err.message || "Failed to load transactions");
+      toast({
+        title: "Error",
+        description: "Failed to load transactions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTransactions(false);
     }
-    setLoadingTransactions(false);
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -110,10 +171,28 @@ const Transactions = () => {
           </TabsList>
         </Tabs>
 
-        {loadingTransactions ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">Loading transactions...</p>
-          </Card>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadTransactions}
+                className="ml-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : loadingTransactions ? (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <TransactionSkeleton key={i} />
+            ))}
+          </div>
         ) : filteredTransactions.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground">No transactions found</p>
