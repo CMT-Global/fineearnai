@@ -238,12 +238,18 @@ const Tasks = () => {
   });
 
   const handleSkipTask = useCallback(async () => {
+    // Prevent skipping if daily limit reached
+    if (isDailyLimitReached) {
+      toast.info("Daily limit reached. Please upgrade or come back tomorrow.");
+      return;
+    }
+    
     if (!userStats || userStats.skipsToday >= userStats.skipLimit) {
       toast.error("Daily skip limit reached!");
       return;
     }
     skipMutation.mutate();
-  }, [userStats, skipMutation]);
+  }, [userStats, skipMutation, isDailyLimitReached]);
 
   // Submit mutation with optimistic updates
   const submitMutation = useMutation({
@@ -311,10 +317,16 @@ const Tasks = () => {
   });
 
   const handleSubmitAnswer = useCallback(async (response: string) => {
+    // Prevent submission if daily limit reached
+    if (isDailyLimitReached) {
+      toast.info("Daily limit reached. Please upgrade or come back tomorrow.");
+      return;
+    }
+    
     if (!currentTask) return;
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
-  }, [currentTask, startTime, submitMutation]);
+  }, [currentTask, startTime, submitMutation, isDailyLimitReached]);
 
   if (loading || !profile) {
     return (
@@ -382,7 +394,7 @@ const Tasks = () => {
               task={currentTask}
               onSubmit={handleSubmitAnswer}
               onSkip={handleSkipTask}
-              isSubmitting={submitMutation.isPending}
+              isSubmitting={submitMutation.isPending || isDailyLimitReached}
               feedback={feedback}
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
