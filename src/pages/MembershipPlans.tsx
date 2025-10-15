@@ -50,6 +50,8 @@ export default function MembershipPlans() {
   const [depositBalance, setDepositBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<'network' | 'auth' | 'data' | 'unknown' | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
@@ -63,21 +65,54 @@ export default function MembershipPlans() {
   const loadPlans = async () => {
     try {
       setError(null);
+      setErrorType(null);
+      
       const { data, error } = await supabase
         .from("membership_plans")
         .select("*")
         .eq("is_active", true)
         .order("price", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        // Determine error type
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
+          setErrorType('network');
+          setError("Network connection failed. Please check your internet connection and try again.");
+        } else if (error.message?.includes('JWT') || error.message?.includes('auth')) {
+          setErrorType('auth');
+          setError("Authentication error. Please log in again.");
+        } else {
+          setErrorType('data');
+          setError("Unable to load membership plans. Please try again.");
+        }
+        throw error;
+      }
       
-      setPlans(data || []);
+      if (!data || data.length === 0) {
+        setErrorType('data');
+        setError("No membership plans are currently available. Please contact support.");
+        return;
+      }
+      
+      setPlans(data);
     } catch (error: any) {
       console.error("Failed to load plans:", error);
-      setError("Failed to load membership plans. Please try again.");
-      toast.error("Failed to load membership plans");
+      
+      // Only show toast if not already setting a specific error
+      if (!errorType) {
+        const isNetworkError = !navigator.onLine || error.message?.includes('Failed to fetch');
+        if (isNetworkError) {
+          setErrorType('network');
+          setError("Network connection failed. Please check your internet connection and try again.");
+        } else {
+          setErrorType('unknown');
+          setError("An unexpected error occurred. Please try again.");
+        }
+        toast.error(isNetworkError ? "No internet connection" : "Failed to load membership plans");
+      }
     } finally {
       setLoading(false);
+      setRetrying(false);
     }
   };
 
@@ -91,14 +126,24 @@ export default function MembershipPlans() {
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Determine specific error
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
+          toast.error("Network error while loading profile. Some features may be limited.");
+        } else if (error.code === 'PGRST116') {
+          toast.error("Profile not found. Please contact support.");
+        } else {
+          toast.error("Failed to load your profile. Please refresh the page.");
+        }
+        throw error;
+      }
       
       setProfile(data);
       setCurrentPlan(data?.membership_plan || "free");
       setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
     } catch (error: any) {
       console.error("Failed to load profile:", error);
-      toast.error("Failed to load your profile. Please refresh the page.");
+      // Error toast already shown above
     }
   };
 
@@ -191,12 +236,30 @@ export default function MembershipPlans() {
     setUpgrading(selectedPlan.id);
 
     try {
+      // Check network connectivity first
+      if (!navigator.onLine) {
+        toast.error("No internet connection. Please check your network and try again.");
+        setUpgrading(null);
+        return;
+      }
+
       // Call the upgrade-plan edge function
       const { data, error } = await supabase.functions.invoke("upgrade-plan", {
         body: { planName: selectedPlan.name },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Determine error type
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
+          toast.error("Network error during upgrade. Please check your connection and try again.");
+        } else if (error.message?.includes('JWT') || error.message?.includes('auth')) {
+          toast.error("Authentication error. Please log in again and retry.");
+          setTimeout(() => navigate('/login'), 2000);
+        } else {
+          toast.error("Failed to process upgrade. Please try again or contact support.");
+        }
+        throw error;
+      }
 
       if (data.error) {
         toast.error(data.error);
@@ -216,7 +279,13 @@ export default function MembershipPlans() {
       await loadUserProfile();
     } catch (error: any) {
       console.error("Upgrade error:", error);
-      toast.error(error.message || "Failed to upgrade plan. Please try again.");
+      
+      // Show user-friendly error if no specific error was already shown
+      if (!navigator.onLine) {
+        toast.error("Lost internet connection. Please try again when connected.");
+      } else if (error.message && !error.message.includes('Failed to fetch')) {
+        toast.error(error.message || "Failed to upgrade plan. Please try again.");
+      }
     } finally {
       setUpgrading(null);
     }
@@ -235,18 +304,81 @@ export default function MembershipPlans() {
 
   // Show error state with retry option
   if (error) {
+    const getErrorIcon = () => {
+      if (errorType === 'network') {
+        return <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />;
+      }
+      return <AlertCircle className="h-12 w-12 text-destructive mx-auto" />;
+    };
+
+    const getErrorTitle = () => {
+      switch (errorType) {
+        case 'network':
+          return 'Connection Error';
+        case 'auth':
+          return 'Authentication Required';
+        case 'data':
+          return 'Data Not Available';
+        default:
+          return 'Unable to Load Plans';
+      }
+    };
+
+    const handleRetry = async () => {
+      setRetrying(true);
+      setError(null);
+      setErrorType(null);
+      
+      // Check network connectivity first
+      if (!navigator.onLine) {
+        toast.error("No internet connection. Please check your network.");
+        setRetrying(false);
+        return;
+      }
+      
+      await loadPlans();
+    };
+
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen p-4">
         <div className="text-center space-y-4 max-w-md">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-          <h2 className="text-2xl font-bold">Unable to Load Plans</h2>
+          {getErrorIcon()}
+          <h2 className="text-2xl font-bold">{getErrorTitle()}</h2>
           <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => {
-            setLoading(true);
-            loadPlans();
-          }}>
-            Try Again
-          </Button>
+          
+          {errorType === 'auth' && (
+            <Button 
+              onClick={() => navigate('/login')}
+              className="w-full"
+            >
+              Log In Again
+            </Button>
+          )}
+          
+          {errorType !== 'auth' && (
+            <div className="space-y-2">
+              <Button 
+                onClick={handleRetry}
+                disabled={retrying}
+                className="w-full"
+              >
+                {retrying ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Retrying...
+                  </>
+                ) : (
+                  'Try Again'
+                )}
+              </Button>
+              
+              {errorType === 'network' && (
+                <p className="text-xs text-muted-foreground">
+                  Check your internet connection and try again
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
