@@ -102,17 +102,16 @@ Deno.serve(async (req) => {
     // PHASE 5: OPTIMIZED DATA FETCHING WITH VALIDATION
     // ============================================================================
     
-    // Fetch user profile and membership plan
+    // Fetch user profile
     const profileStartTime = Date.now();
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*, membership_plans!inner(*)')
+      .select('*')
       .eq('id', user.id)
       .single();
 
-    const profileTime = Date.now() - profileStartTime;
-
     if (profileError || !profile) {
+      const profileTime = Date.now() - profileStartTime;
       console.error(`❌ [${requestId}] Profile fetch error (${profileTime}ms):`, profileError);
       return new Response(
         JSON.stringify({ 
@@ -126,11 +125,35 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch membership plan separately (no FK relationship exists)
+    const { data: membershipPlan, error: planError } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('name', profile.membership_plan)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const profileTime = Date.now() - profileStartTime;
+
+    if (planError || !membershipPlan) {
+      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'plan_not_found',
+          message: `Membership plan '${profile.membership_plan}' not found or inactive` 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404,
+        }
+      );
+    }
+
     console.log(`📊 [${requestId}] Profile loaded (${profileTime}ms):`, {
       username: profile.username,
       plan: profile.membership_plan,
       tasksCompleted: profile.tasks_completed_today,
-      dailyLimit: (profile.membership_plans as any).daily_task_limit
+      dailyLimit: membershipPlan.daily_task_limit
     });
 
     // Check account status
@@ -188,13 +211,13 @@ Deno.serve(async (req) => {
     }
 
     // Check daily task limit
-    if (profile.tasks_completed_today >= (profile.membership_plans as any).daily_task_limit) {
+    if (profile.tasks_completed_today >= membershipPlan.daily_task_limit) {
       return new Response(
         JSON.stringify({ 
           error: 'daily_limit_reached',
           message: 'Daily task limit reached. Upgrade your plan to complete more tasks.',
           tasksCompletedToday: profile.tasks_completed_today,
-          dailyLimit: (profile.membership_plans as any).daily_task_limit
+          dailyLimit: membershipPlan.daily_task_limit
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -246,7 +269,7 @@ Deno.serve(async (req) => {
     
     // Check if answer is correct
     const isCorrect = selectedResponse === task.correct_response;
-    const earningsAmount = isCorrect ? (profile.membership_plans as any).earning_per_task : 0;
+    const earningsAmount = isCorrect ? membershipPlan.earning_per_task : 0;
 
     console.log(`${isCorrect ? '✅' : '❌'} [${requestId}] Answer ${isCorrect ? 'correct' : 'incorrect'}. Earnings: $${earningsAmount}`);
 
@@ -371,32 +394,42 @@ Deno.serve(async (req) => {
       if (profile.referred_by && earningsAmount > 0) {
         const { data: referrer } = await supabase
           .from('profiles')
-          .select('id, membership_plans!inner(task_commission_rate)')
+          .select('id, membership_plan')
           .eq('id', profile.referred_by)
           .single();
 
-        if (referrer && referrer.membership_plans && (referrer.membership_plans as any).task_commission_rate > 0) {
-          // Queue commission for async processing (non-blocking)
-          const { error: queueError } = await supabase
-            .from('commission_queue')
-            .insert({
-              referrer_id: referrer.id,
-              referred_user_id: user.id,
-              event_type: 'task',
-              amount: earningsAmount,
-              commission_rate: (referrer.membership_plans as any).task_commission_rate / 100,
-              metadata: {
-                task_id: taskId,
-                category: task.category,
-                username: profile.username
-              }
-            });
+        if (referrer) {
+          // Fetch referrer's membership plan
+          const { data: referrerPlan } = await supabase
+            .from('membership_plans')
+            .select('task_commission_rate')
+            .eq('name', referrer.membership_plan)
+            .eq('is_active', true)
+            .maybeSingle();
 
-          if (queueError) {
-            console.error('Error queueing task commission:', queueError);
-            // Don't block user response - log and continue
-          } else {
-            console.log('Task commission queued:', { referrerId: referrer.id, amount: earningsAmount });
+          if (referrerPlan && referrerPlan.task_commission_rate > 0) {
+            // Queue commission for async processing (non-blocking)
+            const { error: queueError } = await supabase
+              .from('commission_queue')
+              .insert({
+                referrer_id: referrer.id,
+                referred_user_id: user.id,
+                event_type: 'task',
+                amount: earningsAmount,
+                commission_rate: referrerPlan.task_commission_rate / 100,
+                metadata: {
+                  task_id: taskId,
+                  category: task.category,
+                  username: profile.username
+                }
+              });
+
+            if (queueError) {
+              console.error(`⚠️ [${requestId}] Error queueing task commission:`, queueError);
+              // Don't block user response - log and continue
+            } else {
+              console.log(`💰 [${requestId}] Task commission queued:`, { referrerId: referrer.id, amount: earningsAmount, rate: referrerPlan.task_commission_rate });
+            }
           }
         }
       }
@@ -464,8 +497,8 @@ Deno.serve(async (req) => {
         earnedAmount: earningsAmount,
         newBalance: newEarningsBalance,
         tasksCompletedToday: newTasksCompleted,
-        dailyLimit: (profile.membership_plans as any).daily_task_limit,
-        remainingTasks: (profile.membership_plans as any).daily_task_limit - newTasksCompleted,
+        dailyLimit: membershipPlan.daily_task_limit,
+        remainingTasks: membershipPlan.daily_task_limit - newTasksCompleted,
         totalEarned: newTotalEarned,
         taskCategory: task.category,
         taskDifficulty: task.difficulty,
