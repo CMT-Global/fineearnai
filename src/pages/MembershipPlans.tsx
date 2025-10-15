@@ -41,7 +41,7 @@ interface MembershipPlan {
 }
 
 export default function MembershipPlans() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
@@ -215,7 +215,8 @@ export default function MembershipPlans() {
 
   const planStatus = getPlanStatus();
 
-  if (loading || !profile) {
+  // Show loading only during initial auth check or when plans are being fetched
+  if (authLoading || (loading && plans.length === 0)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -225,7 +226,7 @@ export default function MembershipPlans() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
+      <Sidebar profile={profile || null} isAdmin={isAdmin} onSignOut={signOut} />
       
       <main className="flex-1 overflow-auto lg:mt-0 mt-16">
         <div className="container mx-auto px-4 lg:px-8 py-8">
@@ -257,7 +258,7 @@ export default function MembershipPlans() {
             </Alert>
           )}
 
-          {user && (
+          {user && profile && (
             <Alert className="mb-8 max-w-3xl mx-auto">
               <Info className="h-4 w-4" />
               <AlertDescription>
@@ -270,6 +271,15 @@ export default function MembershipPlans() {
               </AlertDescription>
             </Alert>
           )}
+          
+          {!user && (
+            <Alert className="mb-8 max-w-3xl mx-auto">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/login")}>Login</Button> to upgrade your plan and start earning.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {plans.map((plan) => {
@@ -279,10 +289,10 @@ export default function MembershipPlans() {
                 <Card
                   key={plan.id}
                   className={`relative flex flex-col ${
-                    plan.name === currentPlan ? "border-primary shadow-lg" : ""
+                    profile && plan.name === currentPlan ? "border-primary shadow-lg" : ""
                   }`}
                 >
-                  {plan.name === currentPlan && (
+                  {profile && plan.name === currentPlan && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                       Current Plan
                     </Badge>
@@ -381,7 +391,7 @@ export default function MembershipPlans() {
                   </CardContent>
 
                   <CardFooter className="flex flex-col gap-2">
-                    {depositBalance < plan.price && plan.name !== currentPlan && plan.price > 0 && (
+                    {user && depositBalance < plan.price && plan.name !== currentPlan && plan.price > 0 && (
                       <div className="text-xs text-destructive text-center space-y-1">
                         <p>Insufficient balance</p>
                         <p>Need <strong>${(plan.price - depositBalance).toFixed(2)}</strong> more</p>
@@ -399,6 +409,7 @@ export default function MembershipPlans() {
                       className="w-full"
                       onClick={() => handleUpgradeClick(plan)}
                       disabled={
+                        !user ||
                         plan.name === currentPlan || 
                         upgrading === plan.id || 
                         (depositBalance < plan.price && plan.price > 0) ||
@@ -406,7 +417,9 @@ export default function MembershipPlans() {
                       }
                       variant={plan.name === currentPlan ? "outline" : "default"}
                     >
-                      {upgrading === plan.id ? (
+                      {!user ? (
+                        "Login to Upgrade"
+                      ) : upgrading === plan.id ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Upgrading...
