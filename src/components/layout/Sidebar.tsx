@@ -29,7 +29,6 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Zap, label: "Tasks", path: "/tasks" },
-    { icon: Wallet, label: "Wallet", path: "/dashboard" },
     { icon: Users, label: "Referrals", path: "/referrals" },
     { icon: Crown, label: "Membership", path: "/plans" },
     { icon: History, label: "Transactions", path: "/transactions" },
