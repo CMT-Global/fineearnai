@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WalletCard } from "@/components/wallet/WalletCard";
+import { WithdrawalHistoryCard } from "@/components/wallet/WithdrawalHistoryCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowUpRight, 
@@ -29,14 +30,29 @@ interface Transaction {
   created_at: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  amount: number;
+  fee: number;
+  net_amount: number;
+  payment_method: string;
+  payout_address: string;
+  status: string;
+  rejection_reason: string | null;
+  created_at: string;
+  processed_at: string | null;
+}
+
 const Wallet = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [filter, setFilter] = useState<"all" | "deposit" | "earnings">("all");
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
+  const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,6 +65,27 @@ const Wallet = () => {
       loadWalletData();
     }
   }, [user]);
+
+  const loadWithdrawalRequests = async () => {
+    try {
+      setLoadingWithdrawals(true);
+      
+      const { data: withdrawalsData } = await supabase
+        .from("withdrawal_requests")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (withdrawalsData) {
+        setWithdrawalRequests(withdrawalsData);
+      }
+    } catch (error) {
+      handleError(error, "loading withdrawal requests");
+    } finally {
+      setLoadingWithdrawals(false);
+    }
+  };
 
   const loadWalletData = async () => {
     try {
@@ -76,6 +113,9 @@ const Wallet = () => {
       if (transactionsData) {
         setTransactions(transactionsData);
       }
+
+      // Load withdrawal requests
+      await loadWithdrawalRequests();
     } catch (error) {
       handleError(error, "loading wallet data");
     } finally {
@@ -148,10 +188,27 @@ const Wallet = () => {
                 <TabsTrigger value="all">All Transactions</TabsTrigger>
                 <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
                 <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
+                <TabsTrigger value="withdrawals">Withdrawal History</TabsTrigger>
               </TabsList>
             </Tabs>
 
-            {loadingTransactions ? (
+            {filter === "withdrawals" ? (
+              loadingWithdrawals ? (
+                <div className="py-8 text-center">
+                  <LoadingSpinner size="md" text="Loading withdrawal history..." />
+                </div>
+              ) : withdrawalRequests.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-muted-foreground">No withdrawal requests found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {withdrawalRequests.map((withdrawal) => (
+                    <WithdrawalHistoryCard key={withdrawal.id} withdrawal={withdrawal} />
+                  ))}
+                </div>
+              )
+            ) : loadingTransactions ? (
               <div className="py-8 text-center">
                 <LoadingSpinner size="md" text="Loading transactions..." />
               </div>
