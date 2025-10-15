@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,16 +21,23 @@ import {
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const referralCode = searchParams.get("ref");
 
   useEffect(() => {
+    // Store referral code in localStorage if present
+    if (referralCode) {
+      localStorage.setItem("pending_referral_code", referralCode.toUpperCase());
+    }
+
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/dashboard");
       }
     });
-  }, [navigate]);
+  }, [navigate, referralCode]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -160,7 +167,7 @@ const Login = () => {
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link
-            to="/signup"
+            to={referralCode ? `/signup?ref=${referralCode}` : "/signup"}
             className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium"
           >
             Sign up

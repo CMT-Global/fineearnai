@@ -8,8 +8,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormData } from "@/lib/auth-schema";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { validateReferralCode } from "@/lib/referral-utils";
 import {
   Form,
   FormControl,
@@ -25,6 +26,52 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const referralCodeFromUrl = searchParams.get("ref");
+  const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
+
+  // Store referral code in localStorage when page loads with ref parameter
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      const upperCode = referralCodeFromUrl.toUpperCase();
+      
+      // Validate format
+      if (validateReferralCode(upperCode)) {
+        localStorage.setItem("pending_referral_code", upperCode);
+        
+        // Fetch and display referrer info
+        fetchReferrerInfo(upperCode);
+      } else {
+        toast({
+          title: "Invalid referral code",
+          description: "The referral code format is invalid.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [referralCodeFromUrl]);
+
+  const fetchReferrerInfo = async (code: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("referral_code", code)
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: "Referral code not found",
+          description: "The referral code you entered does not exist.",
+          variant: "destructive",
+        });
+        localStorage.removeItem("pending_referral_code");
+        return;
+      }
+
+      setReferrerUsername(data.username);
+    } catch (error) {
+      console.error("Error fetching referrer info:", error);
+    }
+  };
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -41,23 +88,11 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // First check if referral code is valid (if provided)
-      let referrerId = null;
-      const referralCode = data.referralCode || referralCodeFromUrl;
-      
-      if (referralCode) {
-        const { data: referrerProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("referral_code", referralCode.toUpperCase())
-          .single();
-        
-        if (referrerProfile) {
-          referrerId = referrerProfile.id;
-        }
-      }
+      // Get referral code from form or localStorage
+      const referralCode = data.referralCode || localStorage.getItem("pending_referral_code");
 
-      const { error } = await supabase.auth.signUp({
+      // Create the account
+      const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -65,13 +100,12 @@ const Signup = () => {
           data: {
             username: data.username,
             full_name: data.fullName,
-            referred_by: referrerId,
           },
         },
       });
 
-      if (error) {
-        if (error.message.includes("already registered")) {
+      if (signupError) {
+        if (signupError.message.includes("already registered")) {
           toast({
             title: "Account exists",
             description: "This email is already registered. Please login instead.",
@@ -80,20 +114,58 @@ const Signup = () => {
         } else {
           toast({
             title: "Signup failed",
-            description: error.message,
+            description: signupError.message,
             variant: "destructive",
           });
         }
         return;
       }
 
-      toast({
-        title: "Account created!",
-        description: "Welcome to FineEarn. Redirecting to dashboard...",
-      });
+      // If signup successful and we have a referral code, link the user to referrer
+      if (authData.user && referralCode) {
+        try {
+          const { data: linkData, error: linkError } = await supabase.functions.invoke(
+            "link-user-to-referrer",
+            {
+              body: {
+                userId: authData.user.id,
+                referralCode: referralCode.toUpperCase(),
+              },
+            }
+          );
 
-      setTimeout(() => navigate("/dashboard"), 1500);
+          if (linkError) {
+            console.error("Error linking referral:", linkError);
+            toast({
+              title: "Referral link failed",
+              description: "Your account was created, but we couldn't link the referral code.",
+              variant: "destructive",
+            });
+          } else if (linkData?.success) {
+            toast({
+              title: "Account created!",
+              description: referrerUsername 
+                ? `Welcome to FineEarn! You've been referred by ${referrerUsername}.`
+                : "Welcome to FineEarn! Referral link successful.",
+            });
+          }
+        } catch (linkErr) {
+          console.error("Exception linking referral:", linkErr);
+          // Don't block the signup flow for referral errors
+        } finally {
+          // Clear the stored referral code
+          localStorage.removeItem("pending_referral_code");
+        }
+      } else {
+        toast({
+          title: "Account created!",
+          description: "Welcome to FineEarn. Redirecting to dashboard...",
+        });
+      }
+
+      setTimeout(() => navigate("/dashboard"), 2000);
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -114,7 +186,11 @@ const Signup = () => {
             </div>
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="text-muted-foreground">Start earning in minutes</p>
+          <p className="text-muted-foreground">
+            {referrerUsername 
+              ? `Invited by ${referrerUsername}. Start earning in minutes!`
+              : "Start earning in minutes"}
+          </p>
         </div>
 
         <Form {...form}>
@@ -228,7 +304,10 @@ const Signup = () => {
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium">
+          <Link 
+            to={referralCodeFromUrl ? `/login?ref=${referralCodeFromUrl}` : "/login"}
+            className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium"
+          >
             Sign in
           </Link>
         </p>
