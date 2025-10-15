@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
+import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
@@ -100,7 +101,11 @@ const RoutesWrapper = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/transactions" element={<Transactions />} />
-        <Route path="/plans" element={<MembershipPlans />} />
+        <Route path="/plans" element={
+          <ProtectedRoute>
+            <MembershipPlans />
+          </ProtectedRoute>
+        } />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
         <Route path="/referrals" element={<Referrals />} />

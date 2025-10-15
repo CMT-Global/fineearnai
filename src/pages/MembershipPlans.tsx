@@ -49,6 +49,7 @@ export default function MembershipPlans() {
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [depositBalance, setDepositBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
@@ -60,36 +61,44 @@ export default function MembershipPlans() {
   }, []);
 
   const loadPlans = async () => {
-    const { data, error } = await supabase
-      .from("membership_plans")
-      .select("*")
-      .eq("is_active", true)
-      .order("price", { ascending: true });
+    try {
+      setError(null);
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .select("*")
+        .eq("is_active", true)
+        .order("price", { ascending: true });
 
-    if (error) {
-      toast.error("Failed to load membership plans");
-      console.error(error);
-    } else {
+      if (error) throw error;
+      
       setPlans(data || []);
+    } catch (error: any) {
+      console.error("Failed to load plans:", error);
+      setError("Failed to load membership plans. Please try again.");
+      toast.error("Failed to load membership plans");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const loadUserProfile = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
-    if (error) {
-      console.error(error);
-    } else {
+      if (error) throw error;
+      
       setProfile(data);
       setCurrentPlan(data?.membership_plan || "free");
       setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
+    } catch (error: any) {
+      console.error("Failed to load profile:", error);
+      toast.error("Failed to load your profile. Please refresh the page.");
     }
   };
 
@@ -121,9 +130,9 @@ export default function MembershipPlans() {
   };
 
   const handleUpgradeClick = async (plan: MembershipPlan) => {
-    if (!user) {
-      toast.error("Please login to upgrade");
-      navigate("/login");
+    // User must be authenticated (guaranteed by ProtectedRoute)
+    if (!user || !profile) {
+      toast.error("Please refresh the page and try again");
       return;
     }
 
@@ -224,6 +233,25 @@ export default function MembershipPlans() {
     );
   }
 
+  // Show error state with retry option
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4 max-w-md">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+          <h2 className="text-2xl font-bold">Unable to Load Plans</h2>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => {
+            setLoading(true);
+            loadPlans();
+          }}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar profile={profile || null} isAdmin={isAdmin} onSignOut={signOut} />
@@ -268,15 +296,6 @@ export default function MembershipPlans() {
                     {" "}- Please <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>deposit funds</Button> to upgrade your plan.
                   </span>
                 )}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {!user && (
-            <Alert className="mb-8 max-w-3xl mx-auto">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/login")}>Login</Button> to upgrade your plan and start earning.
               </AlertDescription>
             </Alert>
           )}
@@ -409,7 +428,7 @@ export default function MembershipPlans() {
                       className="w-full"
                       onClick={() => handleUpgradeClick(plan)}
                       disabled={
-                        !user ||
+                        !profile ||
                         plan.name === currentPlan || 
                         upgrading === plan.id || 
                         (depositBalance < plan.price && plan.price > 0) ||
@@ -417,9 +436,7 @@ export default function MembershipPlans() {
                       }
                       variant={plan.name === currentPlan ? "outline" : "default"}
                     >
-                      {!user ? (
-                        "Login to Upgrade"
-                      ) : upgrading === plan.id ? (
+                      {upgrading === plan.id ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Upgrading...
@@ -428,6 +445,8 @@ export default function MembershipPlans() {
                         "Current Plan"
                       ) : plan.name === "free" ? (
                         "Cannot Downgrade"
+                      ) : !profile ? (
+                        "Loading..."
                       ) : (
                         "Upgrade Now"
                       )}
