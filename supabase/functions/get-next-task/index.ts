@@ -262,15 +262,31 @@ Deno.serve(async (req) => {
     // STEP 5: GET NEXT AVAILABLE TASK USING DATABASE FUNCTION
     // ============================================================================
     
+    console.log('Attempting to fetch next task for user:', user.id);
+    console.log('User stats before task fetch:', {
+      tasksCompletedToday: userStats.tasks_completed_today,
+      dailyLimit: userStats.daily_task_limit,
+      remainingTasks: userStats.remaining_tasks,
+      membershipPlan: userStats.membership_plan,
+      accountStatus: userStats.account_status
+    });
+
     const { data: taskData, error: taskError } = await supabase
       .rpc('get_next_available_task', { p_user_id: user.id });
 
     if (taskError) {
-      console.error('Error calling get_next_available_task:', taskError);
+      console.error('Error calling get_next_available_task RPC:', {
+        code: taskError.code,
+        message: taskError.message,
+        details: taskError.details,
+        hint: taskError.hint,
+        userId: user.id
+      });
       return new Response(
         JSON.stringify({ 
           error: 'task_fetch_error',
-          message: 'Failed to fetch next task' 
+          message: 'Failed to fetch next task',
+          details: taskError.message 
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -279,8 +295,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('Task data received:', taskData ? `${taskData.length} task(s)` : 'null or empty');
+
     // Check if any tasks are available
     if (!taskData || taskData.length === 0) {
+      console.log('No tasks available for user:', user.id);
       return new Response(
         JSON.stringify({ 
           error: 'no_tasks_available',
@@ -295,15 +314,28 @@ Deno.serve(async (req) => {
     }
 
     const task = taskData[0];
+    console.log('Retrieved task for user:', user.id, '| Task ID:', task.task_id, '| Category:', task.category, '| Difficulty:', task.difficulty);
 
     // ============================================================================
     // STEP 6: GET AVAILABLE TASK COUNT FOR PROGRESS TRACKING
     // ============================================================================
     
+    console.log('Fetching available task count for user:', user.id);
+    
     const { data: taskCount, error: countError } = await supabase
       .rpc('get_available_task_count', { p_user_id: user.id });
 
+    if (countError) {
+      console.error('Error calling get_available_task_count RPC:', {
+        code: countError.code,
+        message: countError.message,
+        details: countError.details,
+        userId: user.id
+      });
+    }
+
     const availableTaskCount = countError ? 0 : (taskCount || 0);
+    console.log('Available task count for user:', user.id, '| Count:', availableTaskCount);
 
     // ============================================================================
     // STEP 7: CONSTRUCT COMPREHENSIVE RESPONSE
@@ -340,7 +372,16 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    console.log('Successfully retrieved next task for user:', user.id, 'Task ID:', task.task_id);
+    console.log('✅ Successfully retrieved next task for user:', user.id, {
+      taskId: task.task_id,
+      category: task.category,
+      difficulty: task.difficulty,
+      reward: userStats.earning_per_task,
+      tasksCompletedToday: userStats.tasks_completed_today,
+      dailyLimit: userStats.daily_task_limit,
+      remainingTasks: userStats.remaining_tasks,
+      availableTaskCount: availableTaskCount
+    });
 
     return new Response(
       JSON.stringify(response),
@@ -351,7 +392,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Unexpected error in get-next-task:', error);
+    console.error('❌ Unexpected error in get-next-task edge function:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      details: error.toString()
+    });
     return new Response(
       JSON.stringify({ 
         error: 'internal_error',
