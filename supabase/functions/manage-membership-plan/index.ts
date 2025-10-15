@@ -33,6 +33,161 @@ interface ManagePlanRequest {
   };
 }
 
+/**
+ * Comprehensive server-side validation for membership plan data
+ * Single source of truth for all plan validation rules
+ */
+function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // ========== Required Fields Validation ==========
+  if (!planData.name || typeof planData.name !== 'string' || planData.name.trim().length === 0) {
+    errors.push("Plan name is required and must be a non-empty string");
+  }
+
+  if (!planData.display_name || typeof planData.display_name !== 'string' || planData.display_name.trim().length === 0) {
+    errors.push("Display name is required and must be a non-empty string");
+  }
+
+  if (!planData.account_type || typeof planData.account_type !== 'string' || planData.account_type.trim().length === 0) {
+    errors.push("Account type is required");
+  }
+
+  // ========== Account Type Validation ==========
+  const validAccountTypes = ['free', 'personal', 'business', 'group'];
+  if (planData.account_type && !validAccountTypes.includes(planData.account_type)) {
+    errors.push(`Account type must be one of: ${validAccountTypes.join(', ')}`);
+  }
+
+  // ========== Price Validation ==========
+  if (planData.price !== undefined) {
+    if (typeof planData.price !== 'number' || isNaN(planData.price)) {
+      errors.push("Price must be a valid number");
+    } else if (planData.price < 0) {
+      errors.push("Price cannot be negative");
+    } else if (planData.price > 10000) {
+      errors.push("Price cannot exceed 10000");
+    }
+  }
+
+  // ========== Daily Task Limit Validation ==========
+  if (planData.daily_task_limit !== undefined) {
+    if (typeof planData.daily_task_limit !== 'number' || isNaN(planData.daily_task_limit)) {
+      errors.push("Daily task limit must be a valid number");
+    } else if (planData.daily_task_limit < 0 || planData.daily_task_limit > 1000) {
+      errors.push("Daily task limit must be between 0 and 1000");
+    }
+  }
+
+  // ========== Task Skip Limit Validation ==========
+  if (planData.task_skip_limit_per_day !== undefined) {
+    if (typeof planData.task_skip_limit_per_day !== 'number' || isNaN(planData.task_skip_limit_per_day)) {
+      errors.push("Task skip limit must be a valid number");
+    } else if (planData.task_skip_limit_per_day < 0 || planData.task_skip_limit_per_day > 100) {
+      errors.push("Task skip limit must be between 0 and 100");
+    }
+  }
+
+  // ========== Earning Per Task Validation ==========
+  if (planData.earning_per_task !== undefined) {
+    if (typeof planData.earning_per_task !== 'number' || isNaN(planData.earning_per_task)) {
+      errors.push("Earning per task must be a valid number");
+    } else if (planData.earning_per_task < 0) {
+      errors.push("Earning per task cannot be negative");
+    } else if (planData.earning_per_task > 100) {
+      errors.push("Earning per task cannot exceed 100");
+    }
+  }
+
+  // ========== Commission Rates Validation (0-100%) ==========
+  if (planData.task_commission_rate !== undefined) {
+    if (typeof planData.task_commission_rate !== 'number' || isNaN(planData.task_commission_rate)) {
+      errors.push("Task commission rate must be a valid number");
+    } else if (planData.task_commission_rate < 0 || planData.task_commission_rate > 100) {
+      errors.push("Task commission rate must be between 0 and 100");
+    }
+  }
+
+  if (planData.deposit_commission_rate !== undefined) {
+    if (typeof planData.deposit_commission_rate !== 'number' || isNaN(planData.deposit_commission_rate)) {
+      errors.push("Deposit commission rate must be a valid number");
+    } else if (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 100) {
+      errors.push("Deposit commission rate must be between 0 and 100");
+    }
+  }
+
+  // ========== Max Active Referrals Validation ==========
+  if (planData.max_active_referrals !== undefined) {
+    if (typeof planData.max_active_referrals !== 'number' || isNaN(planData.max_active_referrals)) {
+      errors.push("Max active referrals must be a valid number");
+    } else if (planData.max_active_referrals < 0 || planData.max_active_referrals > 999999) {
+      errors.push("Max active referrals must be between 0 and 999999");
+    }
+  }
+
+  // ========== Withdrawal Amount Validations ==========
+  if (planData.min_withdrawal !== undefined) {
+    if (typeof planData.min_withdrawal !== 'number' || isNaN(planData.min_withdrawal)) {
+      errors.push("Minimum withdrawal must be a valid number");
+    } else if (planData.min_withdrawal < 0 || planData.min_withdrawal > 10000) {
+      errors.push("Minimum withdrawal must be between 0 and 10000");
+    }
+  }
+
+  if (planData.min_daily_withdrawal !== undefined) {
+    if (typeof planData.min_daily_withdrawal !== 'number' || isNaN(planData.min_daily_withdrawal)) {
+      errors.push("Minimum daily withdrawal must be a valid number");
+    } else if (planData.min_daily_withdrawal < 0 || planData.min_daily_withdrawal > 10000) {
+      errors.push("Minimum daily withdrawal must be between 0 and 10000");
+    }
+  }
+
+  if (planData.max_daily_withdrawal !== undefined) {
+    if (typeof planData.max_daily_withdrawal !== 'number' || isNaN(planData.max_daily_withdrawal)) {
+      errors.push("Maximum daily withdrawal must be a valid number");
+    } else if (planData.max_daily_withdrawal < 0 || planData.max_daily_withdrawal > 100000) {
+      errors.push("Maximum daily withdrawal must be between 0 and 100000");
+    }
+  }
+
+  // ========== Withdrawal Logic Cross-Validation ==========
+  if (planData.min_withdrawal !== undefined && planData.max_daily_withdrawal !== undefined) {
+    if (planData.min_withdrawal > planData.max_daily_withdrawal) {
+      errors.push("Minimum withdrawal cannot exceed maximum daily withdrawal");
+    }
+  }
+
+  if (planData.min_daily_withdrawal !== undefined && planData.max_daily_withdrawal !== undefined) {
+    if (planData.min_daily_withdrawal > planData.max_daily_withdrawal) {
+      errors.push("Minimum daily withdrawal cannot exceed maximum daily withdrawal");
+    }
+  }
+
+  // ========== Billing Period Validation ==========
+  if (planData.billing_period_days !== undefined) {
+    if (typeof planData.billing_period_days !== 'number' || isNaN(planData.billing_period_days)) {
+      errors.push("Billing period days must be a valid number");
+    } else if (planData.billing_period_days < 1 || planData.billing_period_days > 365) {
+      errors.push("Billing period must be between 1 and 365 days");
+    }
+  }
+
+  // ========== Business Logic Rules ==========
+  if (planData.account_type === 'free' && planData.price && planData.price > 0) {
+    errors.push("Free account type cannot have a price greater than 0");
+  }
+
+  // Validate billing period unit if provided
+  if (planData.billing_period_unit && !['day', 'month', 'year'].includes(planData.billing_period_unit)) {
+    errors.push("Billing period unit must be 'day', 'month', or 'year'");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -83,8 +238,15 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create_plan': {
-        if (!planData || !planData.name || !planData.display_name) {
-          throw new Error('Plan name and display_name are required');
+        if (!planData) {
+          throw new Error('Plan data is required');
+        }
+
+        // Comprehensive validation using centralized validation function
+        const validation = validatePlanData(planData);
+        if (!validation.valid) {
+          console.error('Validation errors:', validation.errors);
+          throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
         }
 
         // Validate plan name is unique
@@ -96,29 +258,6 @@ Deno.serve(async (req) => {
 
         if (existingPlan) {
           throw new Error(`Plan with name '${planData.name}' already exists`);
-        }
-
-        // Validate commission rates (stored as percentages 0-100)
-        if (planData.task_commission_rate !== undefined && 
-            (planData.task_commission_rate < 0 || planData.task_commission_rate > 100)) {
-          throw new Error('Task commission rate must be between 0 and 100');
-        }
-
-        if (planData.deposit_commission_rate !== undefined && 
-            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 100)) {
-          throw new Error('Deposit commission rate must be between 0 and 100');
-        }
-
-        // Validate billing period unit
-        if (planData.billing_period_unit && 
-            !['day', 'month', 'year'].includes(planData.billing_period_unit)) {
-          throw new Error('Billing period unit must be day, month, or year');
-        }
-
-        // Validate account type
-        if (planData.account_type && 
-            !['free', 'personal', 'business', 'group'].includes(planData.account_type)) {
-          throw new Error('Account type must be free, personal, business, or group');
         }
 
         // Create the plan
@@ -147,6 +286,13 @@ Deno.serve(async (req) => {
           throw new Error('Plan data is required for update');
         }
 
+        // Comprehensive validation using centralized validation function
+        const validation = validatePlanData(planData);
+        if (!validation.valid) {
+          console.error('Validation errors:', validation.errors);
+          throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
+        }
+
         // Get current plan
         const { data: currentPlan, error: fetchError } = await supabaseClient
           .from('membership_plans')
@@ -156,17 +302,6 @@ Deno.serve(async (req) => {
 
         if (fetchError || !currentPlan) {
           throw new Error('Plan not found');
-        }
-
-        // Validate commission rates if being updated (stored as percentages 0-100)
-        if (planData.task_commission_rate !== undefined && 
-            (planData.task_commission_rate < 0 || planData.task_commission_rate > 100)) {
-          throw new Error('Task commission rate must be between 0 and 100');
-        }
-
-        if (planData.deposit_commission_rate !== undefined && 
-            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 100)) {
-          throw new Error('Deposit commission rate must be between 0 and 100');
         }
 
         // If name is being changed, check it's unique
