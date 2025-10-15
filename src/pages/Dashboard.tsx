@@ -2,13 +2,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { 
   Crown, 
   Sparkles,
   DollarSign,
   TrendingUp,
   UserPlus,
-  Zap
+  Zap,
+  AlertCircle,
+  Clock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -62,6 +66,24 @@ const Dashboard = () => {
     }
   };
 
+  // Check if plan is expired or expiring soon
+  const getPlanStatus = () => {
+    if (!profile || !profile.plan_expires_at) return null;
+    
+    const now = new Date();
+    const expiryDate = new Date(profile.plan_expires_at);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) {
+      return { status: 'expired', daysUntilExpiry: 0, expiryDate };
+    } else if (daysUntilExpiry <= 7) {
+      return { status: 'expiring_soon', daysUntilExpiry, expiryDate };
+    }
+    return { status: 'active', daysUntilExpiry, expiryDate };
+  };
+
+  const planStatus = getPlanStatus();
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -100,21 +122,74 @@ const Dashboard = () => {
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Membership</span>
-                <span className="text-xs bg-[hsl(var(--wallet-referrals))]/10 text-[hsl(var(--wallet-referrals))] px-2 py-0.5 rounded-full capitalize">
+                <Badge 
+                  variant={
+                    planStatus?.status === 'expired' ? 'destructive' :
+                    planStatus?.status === 'expiring_soon' ? 'secondary' :
+                    'default'
+                  }
+                  className="ml-2 capitalize"
+                >
                   {profile.membership_plan}
-                </span>
+                  {planStatus && planStatus.status !== 'active' && planStatus.daysUntilExpiry > 0 && 
+                    ` (${planStatus.daysUntilExpiry}d left)`
+                  }
+                  {planStatus?.status === 'expired' && ' (Expired)'}
+                </Badge>
               </Button>
-              <Button 
-                className="gap-2 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
-                onClick={() => navigate("/plans")}
-              >
-                <Sparkles className="h-4 w-4" />
-                <span className="hidden sm:inline">Upgrade Account</span>
-                <span className="sm:hidden">Upgrade</span>
-              </Button>
+              {planStatus && (planStatus.status === 'expired' || planStatus.status === 'expiring_soon') ? (
+                <Button 
+                  className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+                  onClick={() => navigate("/plans")}
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">{planStatus.status === 'expired' ? 'Upgrade Now' : 'Renew Account'}</span>
+                  <span className="sm:hidden">Renew</span>
+                </Button>
+              ) : (
+                <Button 
+                  className="gap-2 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
+                  onClick={() => navigate("/plans")}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Upgrade Account</span>
+                  <span className="sm:hidden">Upgrade</span>
+                </Button>
+              )}
             </div>
           </div>
         </header>
+
+        {/* Plan Expiry Alerts */}
+        {planStatus && planStatus.status === 'expired' && (
+          <div className="mx-4 lg:mx-8 mt-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Plan Expired</AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                <span>Your {profile.membership_plan} plan has expired. Upgrade now to continue enjoying premium benefits.</span>
+                <Button size="sm" variant="destructive" onClick={() => navigate("/plans")}>
+                  Upgrade Now
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {planStatus && planStatus.status === 'expiring_soon' && (
+          <div className="mx-4 lg:mx-8 mt-6">
+            <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-900 dark:text-amber-100">Plan Expiring Soon</AlertTitle>
+              <AlertDescription className="flex items-center justify-between text-amber-800 dark:text-amber-200">
+                <span>Your {profile.membership_plan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew now to avoid losing access.</span>
+                <Button size="sm" variant="default" onClick={() => navigate("/plans")}>
+                  Renew Account
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
 
         {/* Info Alert */}
         <div className="mx-8 mt-6">
@@ -166,14 +241,27 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Referrals</p>
                 <p className="text-3xl font-bold">{referralStats?.total_referrals || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatCurrency(parseFloat(referralStats?.total_earnings || 0))} earned
-                </p>
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {referralStats?.active_referrals || 0} active
+                  </p>
+                  <p className="text-xs font-semibold text-[hsl(var(--wallet-referrals))]">
+                    {formatCurrency(parseFloat(referralStats?.total_earnings || 0))} earned
+                  </p>
+                </div>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-referrals))]/10 flex items-center justify-center">
                 <UserPlus className="h-6 w-6 text-[hsl(var(--wallet-referrals))]" />
               </div>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full mt-2"
+              onClick={() => navigate("/referrals")}
+            >
+              View Details
+            </Button>
           </Card>
         </div>
 
