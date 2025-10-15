@@ -24,6 +24,9 @@ verify_jwt = true
 [functions.cleanup-old-tasks]
 verify_jwt = false
 
+[functions.cleanup-expired-plans]
+verify_jwt = false
+
 [functions.request-withdrawal]
 verify_jwt = true
 
@@ -55,4 +58,13 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.get-referrer-info]
+verify_jwt = true
+
+[functions.manage-membership-plan]
+verify_jwt = true
+
+[functions.configure-referral-system]
+verify_jwt = true
+
+[functions.admin-manage-user]
 verify_jwt = true
