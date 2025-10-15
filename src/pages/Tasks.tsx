@@ -87,7 +87,7 @@ const Tasks = () => {
     }
   }, [user]);
 
-  // Fetch next task with TanStack Query
+  // Fetch next task with TanStack Query - Optimized cache settings
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
     queryKey: ['next-task', user?.id],
     queryFn: async () => {
@@ -123,9 +123,9 @@ const Tasks = () => {
       // (daily limit, no tasks, plan expired, etc.)
       return data;
     },
-    enabled: !!user,
-    staleTime: 0,
-    gcTime: 0,
+    enabled: !!user && !dailyLimitReached, // Don't fetch if limit already reached
+    staleTime: 10000,    // Cache for 10 seconds (tasks don't change that fast)
+    gcTime: 60000,       // Keep in cache for 1 minute
   });
 
   // Phase 3: Real-time subscription to profile updates
