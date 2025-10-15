@@ -10,14 +10,27 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ============================================================================
+  // PHASE 1: ENHANCED LOGGING & PERFORMANCE TRACKING
+  // ============================================================================
+  const requestStartTime = Date.now();
+  const requestId = crypto.randomUUID();
+  let userId: string | undefined;
+  let taskId: string | undefined;
+  let metricSuccess = false;
+
+  console.log(`🚀 [${requestId}] Task submission started at ${new Date().toISOString()}`);
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Authenticate user
+    const authStartTime = Date.now();
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error(`❌ [${requestId}] No authorization header provided`);
       throw new Error('No authorization header');
     }
 
@@ -25,10 +38,23 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      console.error(`❌ [${requestId}] Authentication failed:`, authError?.message);
       throw new Error('Unauthorized');
     }
 
-    const { taskId, selectedResponse, timeTakenSeconds } = await req.json();
+    userId = user.id;
+    const authTime = Date.now() - authStartTime;
+    console.log(`✅ [${requestId}] User authenticated: ${userId} (${authTime}ms)`);
+
+    const { taskId: submittedTaskId, selectedResponse, timeTakenSeconds } = await req.json();
+    taskId = submittedTaskId;
+
+    console.log(`📝 [${requestId}] Task submission details:`, {
+      userId,
+      taskId,
+      selectedResponse,
+      timeTakenSeconds
+    });
 
     // ============================================================================
     // PHASE 5: ENHANCED INPUT VALIDATION
@@ -77,14 +103,17 @@ Deno.serve(async (req) => {
     // ============================================================================
     
     // Fetch user profile and membership plan
+    const profileStartTime = Date.now();
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*, membership_plans!inner(*)')
       .eq('id', user.id)
       .single();
 
+    const profileTime = Date.now() - profileStartTime;
+
     if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
+      console.error(`❌ [${requestId}] Profile fetch error (${profileTime}ms):`, profileError);
       return new Response(
         JSON.stringify({ 
           error: 'profile_not_found',
@@ -96,6 +125,13 @@ Deno.serve(async (req) => {
         }
       );
     }
+
+    console.log(`📊 [${requestId}] Profile loaded (${profileTime}ms):`, {
+      username: profile.username,
+      plan: profile.membership_plan,
+      tasksCompleted: profile.tasks_completed_today,
+      dailyLimit: (profile.membership_plans as any).daily_task_limit
+    });
 
     // Check account status
     if (profile.account_status !== 'active') {
@@ -206,9 +242,13 @@ Deno.serve(async (req) => {
     // PHASE 5: ATOMIC TRANSACTION FOR TASK COMPLETION
     // ============================================================================
     
+    const processingStartTime = Date.now();
+    
     // Check if answer is correct
     const isCorrect = selectedResponse === task.correct_response;
     const earningsAmount = isCorrect ? (profile.membership_plans as any).earning_per_task : 0;
+
+    console.log(`${isCorrect ? '✅' : '❌'} [${requestId}] Answer ${isCorrect ? 'correct' : 'incorrect'}. Earnings: $${earningsAmount}`);
 
     // Calculate new values
     const newEarningsBalance = Number(profile.earnings_wallet_balance) + earningsAmount;
@@ -217,6 +257,7 @@ Deno.serve(async (req) => {
     const todayDate = new Date().toISOString().split('T')[0];
 
     // Insert task completion record
+    const insertStartTime = Date.now();
     const { error: completionError } = await supabase
       .from('task_completions')
       .insert({
@@ -227,6 +268,9 @@ Deno.serve(async (req) => {
         earnings_amount: earningsAmount,
         time_taken_seconds: timeTakenSeconds,
       });
+
+    const insertTime = Date.now() - insertStartTime;
+    console.log(`💾 [${requestId}] Task completion inserted (${insertTime}ms)`);
 
     if (completionError) {
       console.error('Completion insert error:', completionError);
@@ -258,6 +302,7 @@ Deno.serve(async (req) => {
     }
 
     // Update user profile with optimistic locking
+    const updateStartTime = Date.now();
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
@@ -269,6 +314,9 @@ Deno.serve(async (req) => {
       })
       .eq('id', user.id)
       .eq('tasks_completed_today', profile.tasks_completed_today); // Optimistic lock
+
+    const updateTime = Date.now() - updateStartTime;
+    console.log(`🔄 [${requestId}] Profile updated (${updateTime}ms)`);
 
     if (updateError) {
       console.error('Profile update error:', updateError);
@@ -355,6 +403,53 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
+    // PHASE 1: PERFORMANCE METRICS RECORDING
+    // ============================================================================
+    
+    const totalExecutionTime = Date.now() - requestStartTime;
+    metricSuccess = true;
+
+    console.log(`✅ [${requestId}] Task completion successful. Total time: ${totalExecutionTime}ms`, {
+      userId,
+      taskId,
+      isCorrect,
+      earnings: earningsAmount,
+      newBalance: newEarningsBalance,
+      executionBreakdown: {
+        authentication: authTime,
+        profile_fetch: profileTime,
+        task_insert: insertTime,
+        profile_update: updateTime,
+        total: totalExecutionTime
+      }
+    });
+
+    // Record performance metrics (non-blocking)
+    supabase
+      .from('edge_function_metrics')
+      .insert({
+        function_name: 'complete-ai-task',
+        execution_time_ms: totalExecutionTime,
+        success: true,
+        user_id: userId,
+        metadata: {
+          task_id: taskId,
+          is_correct: isCorrect,
+          earnings_amount: earningsAmount,
+          time_taken_seconds: timeTakenSeconds,
+          auth_time_ms: authTime,
+          profile_time_ms: profileTime,
+          insert_time_ms: insertTime,
+          update_time_ms: updateTime
+        }
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error(`⚠️ [${requestId}] Failed to record metrics:`, error);
+        }
+      });
+    
+    // ============================================================================
     // PHASE 5: COMPREHENSIVE RESPONSE WITH NEXT TASK DATA
     // ============================================================================
     
@@ -385,15 +480,45 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     // ============================================================================
-    // PHASE 5: ENHANCED ERROR HANDLING & LOGGING
+    // PHASE 1: ENHANCED ERROR HANDLING & LOGGING WITH METRICS
     // ============================================================================
-    console.error('Unexpected error in complete-ai-task:', {
-      userId: error.userId || 'unknown',
-      taskId: error.taskId || 'unknown',
+    const totalExecutionTime = Date.now() - requestStartTime;
+
+    console.error(`💥 [${requestId}] Fatal error in complete-ai-task (${totalExecutionTime}ms):`, {
+      userId: userId || 'unknown',
+      taskId: taskId || 'unknown',
       errorMessage: error.message,
       errorCode: error.code,
+      errorName: error.name,
       stack: error.stack,
     });
+
+    // Record error metrics (non-blocking)
+    if (userId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      supabase
+        .from('edge_function_metrics')
+        .insert({
+          function_name: 'complete-ai-task',
+          execution_time_ms: totalExecutionTime,
+          success: false,
+          error_message: error.message,
+          user_id: userId,
+          metadata: {
+            task_id: taskId,
+            error_code: error.code,
+            error_name: error.name
+          }
+        })
+        .then(({ error: metricError }) => {
+          if (metricError) {
+            console.error(`⚠️ [${requestId}] Failed to record error metrics:`, metricError);
+          }
+        });
+    }
 
     return new Response(
       JSON.stringify({ 

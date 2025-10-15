@@ -168,6 +168,39 @@ export type Database = {
           },
         ]
       }
+      edge_function_metrics: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number
+          function_name: string
+          id: string
+          metadata: Json | null
+          success: boolean
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms: number
+          function_name: string
+          id?: string
+          metadata?: Json | null
+          success: boolean
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number
+          function_name?: string
+          id?: string
+          metadata?: Json | null
+          success?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           body: string
@@ -407,6 +440,45 @@ export type Database = {
           task_commission_rate?: number
           task_skip_limit_per_day?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          priority: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          priority?: string
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          priority?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -802,6 +874,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_pool_metrics: {
+        Row: {
+          active_task_count: number
+          alert_message: string | null
+          alert_triggered: boolean | null
+          average_completion_rate: number | null
+          created_at: string
+          id: string
+          tasks_completed_last_24h: number
+          total_task_count: number
+        }
+        Insert: {
+          active_task_count: number
+          alert_message?: string | null
+          alert_triggered?: boolean | null
+          average_completion_rate?: number | null
+          created_at?: string
+          id?: string
+          tasks_completed_last_24h: number
+          total_task_count: number
+        }
+        Update: {
+          active_task_count?: number
+          alert_message?: string | null
+          alert_triggered?: boolean | null
+          average_completion_rate?: number | null
+          created_at?: string
+          id?: string
+          tasks_completed_last_24h?: number
+          total_task_count?: number
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -1229,6 +1334,17 @@ export type Database = {
           task_commission_earnings: number
           total_earnings: number
           total_referrals: number
+        }[]
+      }
+      get_task_pool_health: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active_tasks: number
+          avg_completion_rate: number
+          completed_last_24h: number
+          health_status: string
+          recommendation: string
+          total_tasks: number
         }[]
       }
       has_role: {
