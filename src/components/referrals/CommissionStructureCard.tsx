@@ -75,7 +75,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
                   Referral Program Not Available
                 </p>
                 <p className="text-sm text-orange-700 dark:text-orange-300">
-                  You need to upgrade to a paid plan to participate in the referral program and earn commissions.
+                  You need to upgrade your account to start earning commissions.
                 </p>
               </div>
             </div>
