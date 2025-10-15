@@ -114,7 +114,7 @@ export default function Users() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-[hsl(0,0%,98%)] p-6">
       <div className="max-w-7xl mx-auto">
         <AdminBreadcrumb items={[{ label: "User Management" }]} />
         

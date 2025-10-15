@@ -37,7 +37,7 @@ const AITasksGenerate = () => {
 
   if (adminLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -79,7 +79,7 @@ const AITasksGenerate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-[hsl(0,0%,98%)] p-6">
       <div className="max-w-4xl mx-auto">
         <AdminBreadcrumb 
           items={[

@@ -21,13 +21,6 @@ export const AdminModeProvider = ({ children }: { children: ReactNode }) => {
   // Persist admin mode state to localStorage
   useEffect(() => {
     localStorage.setItem("adminMode", String(isAdminMode));
-    
-    // Apply admin mode class to body for theme switching
-    if (isAdminMode) {
-      document.body.classList.add("admin-mode");
-    } else {
-      document.body.classList.remove("admin-mode");
-    }
   }, [isAdminMode]);
 
   const enterAdminMode = () => {
