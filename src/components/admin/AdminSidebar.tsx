@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
+import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 
 interface AdminSidebarProps {
   profile: any;
@@ -48,6 +50,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
   const location = useLocation();
   const { exitAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(() => {
     const stored = localStorage.getItem("adminExpandedCategories");
     return stored ? JSON.parse(stored) : ["overview"];
@@ -136,6 +139,16 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     setOpen(false);
   };
 
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutDialogOpen(false);
+    setOpen(false);
+    onSignOut();
+  };
+
   const NavContent = () => (
     <>
       {/* Admin Header */}
@@ -212,28 +225,28 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       {/* Admin Profile & Logout */}
       <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3">
         <div className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--sidebar-accent))]/30 rounded-lg">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.username || "Admin"}</p>
             <div className="flex items-center gap-2 mt-1">
-              <Shield className="h-3 w-3 text-[hsl(var(--wallet-deposit))]" />
-              <span className="text-xs text-[hsl(var(--wallet-deposit))] font-medium">Admin</span>
+              <Badge variant="default" className="text-xs px-2 py-0 bg-[hsl(var(--wallet-deposit))]">
+                <Shield className="h-3 w-3 mr-1" />
+                Admin
+              </Badge>
             </div>
           </div>
         </div>
 
         {/* Logout Button - Highly Visible Red Style */}
         <Button
-          onClick={() => {
-            onSignOut();
-            setOpen(false);
-          }}
+          onClick={handleLogoutClick}
           variant="destructive"
+          size="lg"
           className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="h-5 w-5 mr-2" />
           Logout
         </Button>
       </div>
@@ -242,6 +255,11 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
 
   return (
     <>
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={handleLogoutConfirm}
+      />
       {/* Mobile Admin Sidebar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -1,13 +1,14 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  Home, 
-  Zap, 
-  Wallet, 
-  Users, 
-  Crown, 
-  Settings, 
+import { Badge } from "@/components/ui/badge";
+import {
+  Home,
+  Zap,
+  Wallet,
+  Users,
+  Crown,
+  Settings,
   Sparkles,
   LogOut,
   History,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
+import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 
 interface SidebarProps {
   profile: any;
@@ -29,6 +31,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const location = useLocation();
   const { enterAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -52,6 +55,16 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     enterAdminMode();
     navigate("/admin");
     setOpen(false);
+  };
+
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutDialogOpen(false);
+    setOpen(false);
+    onSignOut();
   };
 
   const NavContent = () => (
@@ -97,27 +110,27 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* User Profile & Logout */}
       <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3">
         <div className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--sidebar-accent))]/30 rounded-lg">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.username?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.username || "User"}</p>
-            <p className="text-xs text-[hsl(var(--sidebar-fg))]/60 capitalize">
-              {profile?.membership_plan || "free"} Plan
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs px-2 py-0 capitalize">
+                {profile?.membership_plan || "free"}
+              </Badge>
+            </div>
           </div>
         </div>
 
         {/* Logout Button - Highly Visible Red Style */}
         <Button
-          onClick={() => {
-            onSignOut();
-            setOpen(false);
-          }}
+          onClick={handleLogoutClick}
           variant="destructive"
+          size="lg"
           className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="h-5 w-5 mr-2" />
           Logout
         </Button>
       </div>
@@ -126,6 +139,11 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   return (
     <>
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={handleLogoutConfirm}
+      />
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
