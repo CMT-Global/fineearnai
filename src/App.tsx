@@ -27,6 +27,7 @@ import Deposits from "@/pages/admin/Deposits";
 import AdminTransactions from "@/pages/admin/Transactions";
 import PaymentSettings from "@/pages/admin/PaymentSettings";
 import PlansManage from "@/pages/admin/PlansManage";
+import ReferralSystemManage from "@/pages/admin/ReferralSystemManage";
 import TaskAnalytics from "@/pages/admin/TaskAnalytics";
 import BulkEmail from "@/pages/admin/BulkEmail";
 import EmailTemplates from "@/pages/admin/EmailTemplates";
@@ -187,6 +188,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <PlansManage />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/referrals/manage"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <ReferralSystemManage />
             </AdminLayout>
           </AdminRoute>
         }

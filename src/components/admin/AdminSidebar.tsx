@@ -97,6 +97,13 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       ],
     },
     {
+      label: "Referral Management",
+      icon: TrendingUp,
+      items: [
+        { label: "Referral System", path: "/admin/referrals/manage" },
+      ],
+    },
+    {
       label: "Communications",
       icon: Mail,
       items: [
