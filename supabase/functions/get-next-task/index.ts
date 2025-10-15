@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
-    // STEP 2: GET USER STATS (with fallback and caching)
+    // STEP 2: GET USER STATS (Direct DB query - no materialized view)
     // ============================================================================
     const cacheKey = `stats_${user.id}`;
     const now = Date.now();
@@ -83,94 +83,18 @@ Deno.serve(async (req) => {
       console.log('Cache hit for user stats:', user.id);
       userStats = cached.data;
     } else {
-      // Try materialized view first, fall back to direct query if not available
-      let statsData: any = null;
-      let statsError: any = null;
-
-      // Try materialized view
-      const mvResult = await supabase
-        .from('user_daily_stats')
+      // Always fetch fresh data from profiles + membership_plans
+      console.log('Cache miss - fetching fresh user stats from database');
+      
+      // Fetch the profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('id', user.id)
+        .single();
 
-      if (mvResult.error && mvResult.error.code === 'PGRST205') {
-        // Materialized view doesn't exist yet, use fallback query
-        console.log('Materialized view not found, using fallback query');
-        
-        // First fetch the profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError || !profile) {
-          console.error('Error fetching profile:', profileError);
-          return new Response(
-            JSON.stringify({ 
-              error: 'stats_error',
-              message: 'Failed to fetch user statistics' 
-            }),
-            {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500,
-            }
-          );
-        }
-
-        // Then fetch the membership plan separately
-        const { data: plan, error: planError } = await supabase
-          .from('membership_plans')
-          .select('*')
-          .eq('name', profile.membership_plan)
-          .single();
-
-        if (planError || !plan) {
-          console.error('Error fetching membership plan:', planError);
-          return new Response(
-            JSON.stringify({ 
-              error: 'stats_error',
-              message: 'Failed to fetch membership plan' 
-            }),
-            {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500,
-            }
-          );
-        }
-
-        // Map profile and plan data to stats format
-        statsData = {
-          user_id: profile.id,
-          username: profile.username,
-          tasks_completed_today: profile.tasks_completed_today,
-          skips_today: profile.skips_today,
-          membership_plan: profile.membership_plan,
-          earnings_wallet_balance: profile.earnings_wallet_balance,
-          deposit_wallet_balance: profile.deposit_wallet_balance,
-          total_earned: profile.total_earned,
-          last_task_date: profile.last_task_date,
-          plan_expires_at: profile.plan_expires_at,
-          account_status: profile.account_status,
-          daily_task_limit: plan.daily_task_limit,
-          earning_per_task: plan.earning_per_task,
-          task_skip_limit_per_day: plan.task_skip_limit_per_day,
-          task_commission_rate: plan.task_commission_rate,
-          deposit_commission_rate: plan.deposit_commission_rate,
-          min_withdrawal: plan.min_withdrawal,
-          min_daily_withdrawal: plan.min_daily_withdrawal,
-          max_daily_withdrawal: plan.max_daily_withdrawal,
-          remaining_tasks: plan.daily_task_limit - profile.tasks_completed_today,
-          remaining_skips: plan.task_skip_limit_per_day - profile.skips_today,
-        };
-      } else {
-        statsData = mvResult.data;
-        statsError = mvResult.error;
-      }
-
-      if (statsError) {
-        console.error('Error fetching user stats:', statsError);
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
         return new Response(
           JSON.stringify({ 
             error: 'stats_error',
@@ -183,21 +107,51 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (!statsData) {
-        console.error('User stats not found:', user.id);
+      // Fetch the membership plan separately
+      const { data: plan, error: planError } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('name', profile.membership_plan)
+        .single();
+
+      if (planError || !plan) {
+        console.error('Error fetching membership plan:', planError);
         return new Response(
           JSON.stringify({ 
-            error: 'user_not_found',
-            message: 'User profile not found. Please contact support.' 
+            error: 'stats_error',
+            message: 'Failed to fetch membership plan' 
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 404,
+            status: 500,
           }
         );
       }
 
-      userStats = statsData;
+      // Map profile and plan data to stats format
+      userStats = {
+        user_id: profile.id,
+        username: profile.username,
+        tasks_completed_today: profile.tasks_completed_today,
+        skips_today: profile.skips_today,
+        membership_plan: profile.membership_plan,
+        earnings_wallet_balance: profile.earnings_wallet_balance,
+        deposit_wallet_balance: profile.deposit_wallet_balance,
+        total_earned: profile.total_earned,
+        last_task_date: profile.last_task_date,
+        plan_expires_at: profile.plan_expires_at,
+        account_status: profile.account_status,
+        daily_task_limit: plan.daily_task_limit,
+        earning_per_task: plan.earning_per_task,
+        task_skip_limit_per_day: plan.task_skip_limit_per_day,
+        task_commission_rate: plan.task_commission_rate,
+        deposit_commission_rate: plan.deposit_commission_rate,
+        min_withdrawal: plan.min_withdrawal,
+        min_daily_withdrawal: plan.min_daily_withdrawal,
+        max_daily_withdrawal: plan.max_daily_withdrawal,
+        remaining_tasks: plan.daily_task_limit - profile.tasks_completed_today,
+        remaining_skips: plan.task_skip_limit_per_day - profile.skips_today,
+      };
       
       // Cache for 5 seconds (Phase 1 optimization)
       statsCache.set(cacheKey, {
@@ -205,7 +159,12 @@ Deno.serve(async (req) => {
         expiresAt: now + 5000 // 5 seconds
       });
 
-      console.log('Cache miss for user stats, fetched and cached:', user.id);
+      console.log('✅ Fresh user stats fetched and cached:', {
+        userId: user.id,
+        tasksCompletedToday: userStats.tasks_completed_today,
+        earningsBalance: userStats.earnings_wallet_balance,
+        remainingTasks: userStats.remaining_tasks
+      });
     }
 
     // ============================================================================
