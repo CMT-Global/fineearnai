@@ -93,23 +93,23 @@ Deno.serve(async (req) => {
 
     // Handle referral commission on deposit if user was referred
     if (profile.referred_by) {
-      const { data: plan } = await supabase
-        .from('membership_plans')
-        .select('*')
-        .eq('name', profile.membership_plan)
+      // Get referrer's profile WITH their membership plan
+      const { data: referrerProfile } = await supabase
+        .from('profiles')
+        .select('earnings_wallet_balance, membership_plan')
+        .eq('id', profile.referred_by)
         .single();
 
-      if (plan && plan.deposit_commission_rate > 0) {
-        const commissionAmount = depositAmount * (plan.deposit_commission_rate / 100);
-
-        // Get referrer's profile
-        const { data: referrerProfile } = await supabase
-          .from('profiles')
-          .select('earnings_wallet_balance')
-          .eq('id', profile.referred_by)
+      if (referrerProfile) {
+        // Get referrer's membership plan to use THEIR commission rate
+        const { data: referrerPlan } = await supabase
+          .from('membership_plans')
+          .select('*')
+          .eq('name', referrerProfile.membership_plan)
           .single();
 
-        if (referrerProfile) {
+        if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
+          const commissionAmount = depositAmount * (referrerPlan.deposit_commission_rate / 100);
           const newReferrerBalance = parseFloat(referrerProfile.earnings_wallet_balance) + commissionAmount;
 
           // Update referrer's balance
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
               earning_type: 'deposit_commission',
               base_amount: depositAmount,
               commission_amount: commissionAmount,
-              commission_rate: plan.deposit_commission_rate,
+              commission_rate: referrerPlan.deposit_commission_rate,
               metadata: {
                 transaction_id: transaction.id,
               },
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
               },
             });
 
-          console.log('Deposit referral commission paid:', { referrerId: profile.referred_by, amount: commissionAmount });
+          console.log('Deposit referral commission paid:', { referrerId: profile.referred_by, amount: commissionAmount, referrerPlan: referrerPlan.name });
         }
       }
     }

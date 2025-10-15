@@ -222,32 +222,57 @@ Deno.serve(async (req) => {
         }
       });
 
-    // Trigger referral commission if user has a referrer and deposit commission applies
-    if (profile.referred_by && newPlan.deposit_commission_rate > 0) {
-      console.log('Triggering referral commission for plan upgrade');
+    // Trigger referral commission if user has a referrer
+    if (profile.referred_by) {
+      console.log('Checking referral commission for plan upgrade');
       
       try {
-        // Call process-referral-earnings function
-        const { error: commissionError } = await supabase.functions.invoke('process-referral-earnings', {
-          body: {
-            referredUserId: user.id,
-            eventType: 'deposit',
-            amount: finalCost,
-            eventId: `upgrade_${user.id}_${now}`,
-            metadata: {
-              source: 'plan_upgrade',
-              plan_name: planName,
-              original_amount: parseFloat(newPlan.price),
-              proration_applied: prorationDetails !== null
-            }
-          }
-        });
+        // Get referrer's membership plan to check THEIR commission rate
+        const { data: referrerProfile } = await supabase
+          .from('profiles')
+          .select('membership_plan')
+          .eq('id', profile.referred_by)
+          .single();
 
-        if (commissionError) {
-          console.error('Error processing referral commission:', commissionError);
-          // Don't fail the upgrade if commission processing fails
-        } else {
-          console.log('Referral commission processed successfully');
+        if (referrerProfile) {
+          const { data: referrerPlan } = await supabase
+            .from('membership_plans')
+            .select('deposit_commission_rate')
+            .eq('name', referrerProfile.membership_plan)
+            .single();
+
+          // Only process commission if referrer's plan has deposit commission enabled
+          if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
+            console.log('Triggering referral commission for plan upgrade', { 
+              referrerPlan: referrerProfile.membership_plan, 
+              commissionRate: referrerPlan.deposit_commission_rate 
+            });
+            
+            // Call process-referral-earnings function
+            const { error: commissionError } = await supabase.functions.invoke('process-referral-earnings', {
+              body: {
+                referredUserId: user.id,
+                eventType: 'deposit',
+                amount: finalCost,
+                eventId: `upgrade_${user.id}_${now}`,
+                metadata: {
+                  source: 'plan_upgrade',
+                  plan_name: planName,
+                  original_amount: parseFloat(newPlan.price),
+                  proration_applied: prorationDetails !== null
+                }
+              }
+            });
+
+            if (commissionError) {
+              console.error('Error processing referral commission:', commissionError);
+              // Don't fail the upgrade if commission processing fails
+            } else {
+              console.log('Referral commission processed successfully');
+            }
+          } else {
+            console.log('No commission: referrer plan has 0% deposit commission rate');
+          }
         }
       } catch (commissionError) {
         console.error('Exception processing referral commission:', commissionError);
