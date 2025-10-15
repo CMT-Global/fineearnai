@@ -209,17 +209,37 @@ Deno.serve(async (req) => {
     // ============================================================================
     
     if (userStats.tasks_completed_today >= userStats.daily_task_limit) {
+      console.log('Daily limit reached for user:', user.id, {
+        tasksCompletedToday: userStats.tasks_completed_today,
+        dailyLimit: userStats.daily_task_limit
+      });
+      
       return new Response(
         JSON.stringify({ 
+          success: false,
           error: 'daily_limit_reached',
           message: 'You have reached your daily task limit. Upgrade your plan to complete more tasks.',
-          tasksCompletedToday: userStats.tasks_completed_today,
-          dailyLimit: userStats.daily_task_limit,
-          membershipPlan: userStats.membership_plan
+          task: null,
+          userStats: {
+            username: userStats.username,
+            tasksCompletedToday: userStats.tasks_completed_today,
+            dailyLimit: userStats.daily_task_limit,
+            remainingTasks: 0,
+            earningsBalance: Number(userStats.earnings_wallet_balance),
+            depositBalance: Number(userStats.deposit_wallet_balance),
+            totalEarned: Number(userStats.total_earned),
+            skipsToday: userStats.skips_today,
+            skipLimit: userStats.task_skip_limit_per_day,
+            remainingSkips: userStats.remaining_skips,
+            membershipPlan: userStats.membership_plan,
+            planExpiresAt: userStats.plan_expires_at
+          },
+          hasMoreTasks: false,
+          availableTaskCount: 0
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 429,
+          status: 200,
         }
       );
     }
@@ -268,13 +288,30 @@ Deno.serve(async (req) => {
       console.log('No tasks available for user:', user.id);
       return new Response(
         JSON.stringify({ 
+          success: false,
           error: 'no_tasks_available',
           message: 'No more tasks available at the moment. Please check back later.',
-          hasMoreTasks: false
+          task: null,
+          userStats: {
+            username: userStats.username,
+            tasksCompletedToday: userStats.tasks_completed_today,
+            dailyLimit: userStats.daily_task_limit,
+            remainingTasks: userStats.remaining_tasks,
+            earningsBalance: Number(userStats.earnings_wallet_balance),
+            depositBalance: Number(userStats.deposit_wallet_balance),
+            totalEarned: Number(userStats.total_earned),
+            skipsToday: userStats.skips_today,
+            skipLimit: userStats.task_skip_limit_per_day,
+            remainingSkips: userStats.remaining_skips,
+            membershipPlan: userStats.membership_plan,
+            planExpiresAt: userStats.plan_expires_at
+          },
+          hasMoreTasks: false,
+          availableTaskCount: 0
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 404,
+          status: 200,
         }
       );
     }
