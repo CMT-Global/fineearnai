@@ -397,17 +397,15 @@ const Tasks = () => {
             </AlertDescription>
           </Alert>
 
-          {/* Stats Cards */}
-          {userStats && (
-            <TaskStats
-              tasksCompletedToday={userStats.tasksCompletedToday}
-              dailyLimit={userStats.dailyLimit}
-              remainingTasks={userStats.remainingTasks}
-              earningsBalance={userStats.earningsBalance}
-              isLoading={isLoadingTask && !userStats}
-              isSyncing={isSyncing || submitMutation.isPending}
-            />
-          )}
+          {/* Stats Cards - Always Visible */}
+          <TaskStats
+            tasksCompletedToday={userStats?.tasksCompletedToday || 0}
+            dailyLimit={userStats?.dailyLimit || 0}
+            remainingTasks={userStats?.remainingTasks || 0}
+            earningsBalance={userStats?.earningsBalance || 0}
+            isLoading={isLoadingTask && !userStats}
+            isSyncing={isSyncing || submitMutation.isPending}
+          />
 
           {/* Task Interface or Loading Skeleton */}
           {isLoadingTask ? (
