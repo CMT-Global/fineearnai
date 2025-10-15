@@ -2,11 +2,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface ConfigureReferralRequest {
-  personal_deposit_commission_rate?: number;
-  business_task_commission_rate?: number;
-  business_deposit_commission_rate?: number;
-  personal_referrals_enabled?: boolean;
-  business_referrals_enabled?: boolean;
   signup_bonus_enabled?: boolean;
   signup_bonus_amount?: number;
 }
@@ -50,25 +45,6 @@ Deno.serve(async (req) => {
     const configData: ConfigureReferralRequest = await req.json();
 
     console.log(`Admin ${user.id} updating referral system configuration`);
-
-    // Validate commission rates (must be between 0 and 1, representing 0% to 100%)
-    if (configData.personal_deposit_commission_rate !== undefined) {
-      if (configData.personal_deposit_commission_rate < 0 || configData.personal_deposit_commission_rate > 1) {
-        throw new Error('Personal deposit commission rate must be between 0 and 1 (0% to 100%)');
-      }
-    }
-
-    if (configData.business_task_commission_rate !== undefined) {
-      if (configData.business_task_commission_rate < 0 || configData.business_task_commission_rate > 1) {
-        throw new Error('Business task commission rate must be between 0 and 1 (0% to 100%)');
-      }
-    }
-
-    if (configData.business_deposit_commission_rate !== undefined) {
-      if (configData.business_deposit_commission_rate < 0 || configData.business_deposit_commission_rate > 1) {
-        throw new Error('Business deposit commission rate must be between 0 and 1 (0% to 100%)');
-      }
-    }
 
     // Validate signup bonus amount (must be non-negative)
     if (configData.signup_bonus_amount !== undefined) {
@@ -133,18 +109,10 @@ Deno.serve(async (req) => {
 
     console.log('Referral system configuration updated successfully');
 
-    // Format commission rates as percentages for display
-    const formattedConfig = {
-      ...updatedConfig,
-      personal_deposit_commission_rate_percent: updatedConfig.personal_deposit_commission_rate * 100,
-      business_task_commission_rate_percent: updatedConfig.business_task_commission_rate * 100,
-      business_deposit_commission_rate_percent: updatedConfig.business_deposit_commission_rate * 100
-    };
-
     return new Response(
       JSON.stringify({
         success: true,
-        config: formattedConfig,
+        config: updatedConfig,
         message: 'Referral system configuration updated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
