@@ -72,7 +72,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
               <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-1">
-                  Referral Program Not Available
+                  Referral Income Not Available For Free Accounts
                 </p>
                 <p className="text-sm text-orange-700 dark:text-orange-300">
                   You need to upgrade your account to start earning commissions.
