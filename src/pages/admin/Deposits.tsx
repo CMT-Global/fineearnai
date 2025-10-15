@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Search, Filter } from "lucide-react";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { Download, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -143,16 +144,18 @@ const Deposits = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background p-6">
+      <div className="container mx-auto">
+        <AdminBreadcrumb 
+          items={[
+            { label: "Financial Management" },
+            { label: "Deposits" }
+          ]} 
+        />
+        
         <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
-          </Button>
-
-          <h1 className="text-3xl font-bold mb-2">Deposit Management</h1>
-          <p className="text-muted-foreground">View and manage all platform deposits</p>
+          <h1 className="text-3xl font-bold">Deposit Management</h1>
+          <p className="text-muted-foreground mt-1">View and manage all platform deposits</p>
         </div>
 
         <Card>

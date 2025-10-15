@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { ArrowLeft, Search, Eye } from "lucide-react";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { Search, Eye } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -115,17 +116,11 @@ export default function Users() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/admin")}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Admin
-            </Button>
-            <h1 className="text-3xl font-bold">User Management</h1>
-          </div>
+        <AdminBreadcrumb items={[{ label: "User Management" }]} />
+        
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground mt-1">View and manage all platform users</p>
         </div>
 
         <Card>

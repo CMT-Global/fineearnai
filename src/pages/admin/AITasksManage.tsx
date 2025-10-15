@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -116,28 +117,28 @@ const AITasksManage = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b px-8 py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">AI Task Management</h1>
-              <p className="text-muted-foreground">
-                Manage all AI training tasks ({filteredTasks.length} tasks)
-              </p>
-            </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="container mx-auto">
+        <AdminBreadcrumb 
+          items={[
+            { label: "Task Management" },
+            { label: "Manage AI Tasks" }
+          ]} 
+        />
+        
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">AI Task Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage all AI training tasks ({filteredTasks.length} tasks)
+            </p>
           </div>
           <Button onClick={() => navigate("/admin/tasks/generate")}>
             <Plus className="h-4 w-4 mr-2" />
             Generate Tasks
           </Button>
         </div>
-      </header>
 
-      <main className="p-8">
         {/* Filters */}
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -249,7 +250,7 @@ const AITasksManage = () => {
             </Card>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };

@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -78,22 +79,22 @@ const AITasksGenerate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b px-8 py-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Generate AI Tasks</h1>
-            <p className="text-muted-foreground">
-              Use AI to automatically generate training tasks
-            </p>
-          </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-4xl mx-auto">
+        <AdminBreadcrumb 
+          items={[
+            { label: "Task Management" },
+            { label: "Generate AI Tasks" }
+          ]} 
+        />
+        
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Generate AI Tasks</h1>
+          <p className="text-muted-foreground mt-1">
+            Use AI to automatically generate training tasks
+          </p>
         </div>
-      </header>
 
-      <main className="p-8 max-w-2xl mx-auto">
         <Card className="p-6">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -154,7 +155,7 @@ const AITasksGenerate = () => {
             </Button>
           </div>
         </Card>
-      </main>
+      </div>
     </div>
   );
 };

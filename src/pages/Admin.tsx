@@ -5,7 +5,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   Zap, 
@@ -14,7 +13,8 @@ import {
   TrendingUp,
   AlertCircle,
   Shield,
-  RefreshCw
+  RefreshCw,
+  ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
@@ -152,257 +152,204 @@ const Admin = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Users
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                <Users className="h-8 w-8 text-blue-500" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stats?.activeUsers || 0} active today
-              </p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Users
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {stats?.activeUsers || 0} active today
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Tasks Completed Today
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats?.completedTasksToday || 0}</div>
-                <Zap className="h-8 w-8 text-green-500" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stats?.totalTasks || 0} total tasks
-              </p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Tasks Completed Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{stats?.completedTasksToday || 0}</div>
+              <Zap className="h-8 w-8 text-green-500" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {stats?.totalTasks || 0} total tasks
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Platform Earnings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats?.totalEarnings || 0)}
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-500" />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Platform Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">
+                {formatCurrency(stats?.totalEarnings || 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {stats?.totalTransactions || 0} transactions
-              </p>
-            </CardContent>
-          </Card>
+              <TrendingUp className="h-8 w-8 text-purple-500" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {stats?.totalTransactions || 0} transactions
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Withdrawals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats?.pendingWithdrawals || 0}</div>
-                <AlertCircle className="h-8 w-8 text-orange-500" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Requires approval
-              </p>
-            </CardContent>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending Withdrawals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">{stats?.pendingWithdrawals || 0}</div>
+              <AlertCircle className="h-8 w-8 text-orange-500" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Requires approval
+            </p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* Management Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="plans">Membership Plans</TabsTrigger>
-            <TabsTrigger value="communications">Communications</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview">
-            <Card>
+      {/* Quick Access Cards */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/users")}>
               <CardHeader>
-                <CardTitle>Membership Distribution</CardTitle>
-                <CardDescription>
-                  Overview of user membership tiers
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {stats?.membershipDistribution &&
-                    Object.entries(stats.membershipDistribution).map(
-                      ([plan, count]: [string, any]) => (
-                        <div key={plan} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Crown className="h-5 w-5 text-primary" />
-                            <span className="font-medium capitalize">{plan}</span>
-                          </div>
-                          <span className="text-2xl font-bold">{count}</span>
-                        </div>
-                      )
-                    )}
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">User Management</CardTitle>
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  View and manage all platform users
-                </CardDescription>
+                <CardDescription>View and manage all users</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => navigate("/admin/users")}>
+                <Button variant="ghost" className="w-full justify-between">
                   Manage Users
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="tasks">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/tasks/generate")}>
               <CardHeader>
-                <CardTitle>Task Management</CardTitle>
-                <CardDescription>
-                  Create, edit, and manage tasks
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">AI Tasks</CardTitle>
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>Generate and manage tasks</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => navigate("/admin/tasks")}>
-                  Manage Tasks
+                <Button variant="ghost" className="w-full justify-between">
+                  Generate Tasks
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="transactions">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Deposit Management</CardTitle>
-                  <CardDescription>
-                    View and manage all platform deposits
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/deposits")}>
-                    View Deposits
-                  </Button>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/withdrawals")}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Withdrawals</CardTitle>
+                  <DollarSign className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>Process withdrawal requests</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  View Withdrawals
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Transaction Logs</CardTitle>
-                  <CardDescription>
-                    Comprehensive audit trail of all transactions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/transactions")}>
-                    View All Transactions
-                  </Button>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/transactions")}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Transactions</CardTitle>
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>View all transactions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  View Transactions
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
 
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>Payment Processor Settings</CardTitle>
-                  <CardDescription>
-                    Configure payment gateways, fees, and limits
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/settings/payments")}>
-                    Configure Payment Processors
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/plans/manage")}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Membership Plans</CardTitle>
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>Configure plans and pricing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  Manage Plans
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="plans">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Membership Plans</CardTitle>
-                  <CardDescription>
-                    Configure membership tiers and pricing
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/plans/manage")}>
-                    Manage Plans
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Task Analytics</CardTitle>
-                  <CardDescription>
-                    View task completion rates and performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/analytics/tasks")}>
-                    View Analytics
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="communications">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Bulk Email System</CardTitle>
-                  <CardDescription>
-                    Send emails to users based on various criteria
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/communications/email")}>
-                    Compose Email
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Email Templates</CardTitle>
-                  <CardDescription>
-                    Create and manage reusable email templates
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/admin/communications/templates")}>
-                    Manage Templates
-                  </Button>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/analytics/tasks")}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Analytics</CardTitle>
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>View platform analytics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  View Analytics
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Membership Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Membership Distribution</CardTitle>
+            <CardDescription>Overview of user membership tiers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stats?.membershipDistribution &&
+                Object.entries(stats.membershipDistribution).map(
+                  ([plan, count]: [string, any]) => (
+                    <div key={plan} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Crown className="h-5 w-5 text-primary" />
+                        <span className="font-medium capitalize">{plan}</span>
+                      </div>
+                      <span className="text-2xl font-bold">{count}</span>
+                    </div>
+                  )
+                )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
