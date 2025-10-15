@@ -131,36 +131,58 @@ const PlansManage = () => {
         return;
       }
 
+      // Validate commission rates
+      if (formData.task_commission_rate < 0 || formData.task_commission_rate > 100) {
+        toast.error("Task commission rate must be between 0 and 100");
+        return;
+      }
+
+      if (formData.deposit_commission_rate < 0 || formData.deposit_commission_rate > 100) {
+        toast.error("Deposit commission rate must be between 0 and 100");
+        return;
+      }
+
       let features;
       try {
         features = JSON.parse(formData.features);
+        if (!Array.isArray(features)) {
+          throw new Error("Features must be an array");
+        }
       } catch {
-        toast.error("Invalid JSON format for features");
+        toast.error("Invalid JSON format for features. Must be an array.");
         return;
       }
 
       const planData = {
-        ...formData,
+        name: formData.name,
+        display_name: formData.display_name,
+        account_type: formData.account_type,
+        price: formData.price,
+        billing_period_days: formData.billing_period_days,
+        daily_task_limit: formData.daily_task_limit,
+        task_skip_limit_per_day: formData.task_skip_limit_per_day,
+        earning_per_task: formData.earning_per_task,
+        task_commission_rate: formData.task_commission_rate,
+        deposit_commission_rate: formData.deposit_commission_rate,
+        max_active_referrals: formData.max_active_referrals,
+        min_withdrawal: formData.min_withdrawal,
+        min_daily_withdrawal: formData.min_daily_withdrawal,
+        max_daily_withdrawal: formData.max_daily_withdrawal,
+        is_active: formData.is_active,
         features,
       };
 
-      if (editingPlan) {
-        const { error } = await supabase
-          .from("membership_plans")
-          .update(planData)
-          .eq("id", editingPlan.id);
+      const { data, error } = await supabase.functions.invoke("manage-membership-plan", {
+        body: {
+          action: editingPlan ? "update_plan" : "create_plan",
+          planId: editingPlan?.id,
+          planData,
+        },
+      });
 
-        if (error) throw error;
-        toast.success("Membership plan updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("membership_plans")
-          .insert([planData]);
+      if (error) throw error;
 
-        if (error) throw error;
-        toast.success("Membership plan created successfully");
-      }
-
+      toast.success(editingPlan ? "Plan updated successfully" : "Plan created successfully");
       setDialogOpen(false);
       setEditingPlan(null);
       resetForm();
@@ -171,16 +193,23 @@ const PlansManage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (plan: MembershipPlan) => {
+    if (plan.subscriber_count && plan.subscriber_count > 0) {
+      toast.error(`Cannot delete plan with ${plan.subscriber_count} active subscribers`);
+      return;
+    }
+
     if (!confirm("Are you sure you want to delete this membership plan?")) {
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from("membership_plans")
-        .delete()
-        .eq("id", id);
+      const { data, error } = await supabase.functions.invoke("manage-membership-plan", {
+        body: {
+          action: "delete_plan",
+          planId: plan.id,
+        },
+      });
 
       if (error) throw error;
 
@@ -188,16 +217,20 @@ const PlansManage = () => {
       loadPlans();
     } catch (error: any) {
       console.error("Error deleting plan:", error);
-      toast.error("Failed to delete membership plan");
+      toast.error(error.message || "Failed to delete membership plan. Plan may have active subscribers.");
     }
   };
 
   const handleToggleActive = async (plan: MembershipPlan) => {
     try {
-      const { error } = await supabase
-        .from("membership_plans")
-        .update({ is_active: !plan.is_active })
-        .eq("id", plan.id);
+      const action = plan.is_active ? "deactivate_plan" : "activate_plan";
+      
+      const { data, error } = await supabase.functions.invoke("manage-membership-plan", {
+        body: {
+          action,
+          planId: plan.id,
+        },
+      });
 
       if (error) throw error;
 
@@ -680,7 +713,9 @@ const PlansManage = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(plan.id)}
+                              onClick={() => handleDelete(plan)}
+                              disabled={plan.subscriber_count !== undefined && plan.subscriber_count > 0}
+                              title={plan.subscriber_count && plan.subscriber_count > 0 ? "Cannot delete plan with active subscribers" : "Delete plan"}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>

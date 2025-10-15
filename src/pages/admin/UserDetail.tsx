@@ -26,7 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { toast } from "sonner";
-import { ArrowLeft, Wallet, RefreshCw, Key, Activity } from "lucide-react";
+import { ArrowLeft, Wallet, RefreshCw, Key, Activity, Users, TrendingUp, DollarSign, Search, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/wallet-utils";
 
 export default function UserDetail() {
   const navigate = useNavigate();
@@ -46,6 +47,14 @@ export default function UserDetail() {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [referralStats, setReferralStats] = useState<any>(null);
+  const [detailedReferrals, setDetailedReferrals] = useState<any[]>([]);
+  const [referralPage, setReferralPage] = useState(1);
+  const [totalReferralPages, setTotalReferralPages] = useState(1);
+  const [changeUplineDialogOpen, setChangeUplineDialogOpen] = useState(false);
+  const [newUplineSearch, setNewUplineSearch] = useState("");
+  const [searchedUplines, setSearchedUplines] = useState<any[]>([]);
+  const [selectedNewUpline, setSelectedNewUpline] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
@@ -105,6 +114,9 @@ export default function UserDetail() {
         .eq("referred_by", userId);
       setReferrals(referralsData || []);
 
+      // Load referral stats and detailed info
+      await loadReferralData();
+
       // Load audit logs for this user
       const { data: auditData } = await supabase
         .from("audit_logs")
@@ -119,6 +131,157 @@ export default function UserDetail() {
       toast.error("Failed to load user data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReferralData = async () => {
+    if (!userId) return;
+
+    try {
+      // Get referral summary
+      const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
+        "admin-manage-user",
+        {
+          body: {
+            action: "get_user_referral_summary",
+            userId,
+          },
+        }
+      );
+
+      if (summaryError) {
+        console.error("Error loading referral summary:", summaryError);
+      } else if (summaryData?.success) {
+        setReferralStats(summaryData.data);
+      }
+
+      // Get detailed referrals (paginated)
+      await loadDetailedReferrals(referralPage);
+    } catch (error) {
+      console.error("Error loading referral data:", error);
+    }
+  };
+
+  const loadDetailedReferrals = async (page: number) => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+        body: {
+          action: "get_detailed_user_referrals",
+          userId,
+          page,
+          limit: 10,
+        },
+      });
+
+      if (error) {
+        console.error("Error loading detailed referrals:", error);
+        return;
+      }
+
+      if (data?.success) {
+        setDetailedReferrals(data.data);
+        setTotalReferralPages(data.pagination?.totalPages || 1);
+      }
+    } catch (error) {
+      console.error("Error loading detailed referrals:", error);
+    }
+  };
+
+  const searchUplines = async () => {
+    if (!newUplineSearch.trim()) {
+      setSearchedUplines([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username, email, membership_plan, account_status")
+        .or(`username.ilike.%${newUplineSearch}%,email.ilike.%${newUplineSearch}%`)
+        .neq("id", userId)
+        .eq("account_status", "active")
+        .limit(10);
+
+      if (error) throw error;
+
+      setSearchedUplines(data || []);
+    } catch (error) {
+      console.error("Error searching uplines:", error);
+      toast.error("Failed to search for users");
+    }
+  };
+
+  const handleChangeUpline = async () => {
+    if (!selectedNewUpline) {
+      toast.error("Please select a new upline");
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to change this user's upline to ${selectedNewUpline.username}?`)) {
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+        body: {
+          action: "change_upline",
+          userId,
+          newUplineId: selectedNewUpline.id,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("Upline changed successfully");
+        setChangeUplineDialogOpen(false);
+        setNewUplineSearch("");
+        setSearchedUplines([]);
+        setSelectedNewUpline(null);
+        loadUserData();
+      } else {
+        toast.error(data?.message || "Failed to change upline");
+      }
+    } catch (error: any) {
+      console.error("Error changing upline:", error);
+      toast.error(error.message || "Failed to change upline");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleUpdateReferralStatus = async (referralId: string, newStatus: string) => {
+    if (!confirm(`Are you sure you want to update the referral status to ${newStatus}?`)) {
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+        body: {
+          action: "update_referral_status",
+          userId,
+          referralId,
+          newStatus,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("Referral status updated");
+        loadReferralData();
+      } else {
+        toast.error(data?.message || "Failed to update status");
+      }
+    } catch (error: any) {
+      console.error("Error updating referral status:", error);
+      toast.error(error.message || "Failed to update referral status");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -600,6 +763,104 @@ export default function UserDetail() {
             </Button>
             <Button onClick={handleWalletAdjustment} disabled={processing}>
               {processing ? "Processing..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Upline Dialog */}
+      <Dialog open={changeUplineDialogOpen} onOpenChange={setChangeUplineDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Change User's Upline</DialogTitle>
+            <DialogDescription>
+              Search for a new upline user. The system will validate to prevent circular referrals.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search by username or email..."
+                value={newUplineSearch}
+                onChange={(e) => setNewUplineSearch(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    searchUplines();
+                  }
+                }}
+              />
+              <Button onClick={searchUplines}>
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {searchedUplines.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Search Results</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {searchedUplines.map((upline) => (
+                      <div
+                        key={upline.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedNewUpline?.id === upline.id
+                            ? "bg-primary/10 border-primary"
+                            : "hover:bg-accent"
+                        }`}
+                        onClick={() => setSelectedNewUpline(upline)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{upline.username}</p>
+                            <p className="text-sm text-muted-foreground">{upline.email}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="capitalize">
+                              {upline.membership_plan}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {upline.account_status}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedNewUpline && (
+              <Card className="bg-accent/50">
+                <CardContent className="pt-4">
+                  <p className="text-sm font-medium">Selected New Upline:</p>
+                  <p className="text-lg font-bold">{selectedNewUpline.username}</p>
+                  <p className="text-sm text-muted-foreground">{selectedNewUpline.email}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChangeUplineDialogOpen(false);
+                setNewUplineSearch("");
+                setSearchedUplines([]);
+                setSelectedNewUpline(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangeUpline}
+              disabled={!selectedNewUpline || processing}
+            >
+              {processing ? "Processing..." : "Change Upline"}
             </Button>
           </DialogFooter>
         </DialogContent>
