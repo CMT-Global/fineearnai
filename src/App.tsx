@@ -8,6 +8,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Wallet from "./pages/Wallet";
 import Transactions from "./pages/Transactions";
 import MembershipPlans from "./pages/MembershipPlans";
 import Tasks from "./pages/Tasks";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/plans" element={<MembershipPlans />} />
             <Route path="/tasks" element={<Tasks />} />
