@@ -511,6 +511,8 @@ const PlansManage = () => {
                         <Input
                           id="task_commission"
                           type="number"
+                          min="0"
+                          max="100"
                           step="0.01"
                           value={formData.task_commission_rate}
                           onChange={(e) =>
@@ -519,7 +521,11 @@ const PlansManage = () => {
                               task_commission_rate: parseFloat(e.target.value),
                             })
                           }
+                          placeholder="0-100"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Commission earned on referral task earnings
+                        </p>
                       </div>
 
                       <div>
@@ -527,6 +533,8 @@ const PlansManage = () => {
                         <Input
                           id="deposit_commission"
                           type="number"
+                          min="0"
+                          max="100"
                           step="0.01"
                           value={formData.deposit_commission_rate}
                           onChange={(e) =>
@@ -535,7 +543,11 @@ const PlansManage = () => {
                               deposit_commission_rate: parseFloat(e.target.value),
                             })
                           }
+                          placeholder="0-100"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Commission earned on referral deposits
+                        </p>
                       </div>
 
                       <div>

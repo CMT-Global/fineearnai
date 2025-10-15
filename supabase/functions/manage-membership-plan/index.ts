@@ -98,15 +98,15 @@ Deno.serve(async (req) => {
           throw new Error(`Plan with name '${planData.name}' already exists`);
         }
 
-        // Validate commission rates
+        // Validate commission rates (stored as percentages 0-100)
         if (planData.task_commission_rate !== undefined && 
-            (planData.task_commission_rate < 0 || planData.task_commission_rate > 1)) {
-          throw new Error('Task commission rate must be between 0 and 1');
+            (planData.task_commission_rate < 0 || planData.task_commission_rate > 100)) {
+          throw new Error('Task commission rate must be between 0 and 100');
         }
 
         if (planData.deposit_commission_rate !== undefined && 
-            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 1)) {
-          throw new Error('Deposit commission rate must be between 0 and 1');
+            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 100)) {
+          throw new Error('Deposit commission rate must be between 0 and 100');
         }
 
         // Validate billing period unit
@@ -158,15 +158,15 @@ Deno.serve(async (req) => {
           throw new Error('Plan not found');
         }
 
-        // Validate commission rates if being updated
+        // Validate commission rates if being updated (stored as percentages 0-100)
         if (planData.task_commission_rate !== undefined && 
-            (planData.task_commission_rate < 0 || planData.task_commission_rate > 1)) {
-          throw new Error('Task commission rate must be between 0 and 1');
+            (planData.task_commission_rate < 0 || planData.task_commission_rate > 100)) {
+          throw new Error('Task commission rate must be between 0 and 100');
         }
 
         if (planData.deposit_commission_rate !== undefined && 
-            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 1)) {
-          throw new Error('Deposit commission rate must be between 0 and 1');
+            (planData.deposit_commission_rate < 0 || planData.deposit_commission_rate > 100)) {
+          throw new Error('Deposit commission rate must be between 0 and 100');
         }
 
         // If name is being changed, check it's unique
