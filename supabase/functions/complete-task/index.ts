@@ -152,22 +152,18 @@ Deno.serve(async (req) => {
     if (profile.referred_by && plan.task_commission_rate > 0) {
       const commissionAmount = earnedAmount * (plan.task_commission_rate / 100);
       
-      // Get referrer's profile
+      // Get referrer's profile (optimized - only fetch needed fields)
       const { data: referrerProfile, error: referrerError } = await supabase
         .from('profiles')
-        .select('*, membership_plan')
+        .select('id, membership_plan, earnings_wallet_balance')
         .eq('id', profile.referred_by)
         .single();
 
       if (!referrerError && referrerProfile) {
-        // Get referrer's membership plan
-        const { data: referrerPlan } = await supabase
-          .from('membership_plans')
-          .select('*')
-          .eq('name', referrerProfile.membership_plan)
-          .single();
+        // Use cached plan lookup (Phase 2 optimization)
+        const referrerMembershipPlan = await getMembershipPlan(supabase, referrerProfile.membership_plan);
 
-        if (referrerPlan && referrerPlan.task_commission_rate > 0) {
+        if (referrerMembershipPlan && referrerMembershipPlan.task_commission_rate > 0) {
           // Check max active referrals limit
           const { count: activeReferralsCount } = await supabase
             .from('profiles')
@@ -175,7 +171,7 @@ Deno.serve(async (req) => {
             .eq('referred_by', profile.referred_by)
             .gte('tasks_completed_today', 1);
 
-          const isWithinLimit = (activeReferralsCount || 0) <= referrerPlan.max_active_referrals;
+          const isWithinLimit = (activeReferralsCount || 0) <= referrerMembershipPlan.max_active_referrals;
 
           if (isWithinLimit) {
             const newReferrerBalance = parseFloat(referrerProfile.earnings_wallet_balance) + commissionAmount;
