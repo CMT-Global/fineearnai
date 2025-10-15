@@ -172,6 +172,33 @@ export type Database = {
         }
         Relationships: []
       }
+      group_account_config: {
+        Row: {
+          created_at: string
+          default_commission_rate_to_master: number
+          default_earning_rate_for_sub_accounts: number
+          enable_master_account_top_up: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_commission_rate_to_master?: number
+          default_earning_rate_for_sub_accounts?: number
+          enable_master_account_top_up?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_commission_rate_to_master?: number
+          default_earning_rate_for_sub_accounts?: number
+          enable_master_account_top_up?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       master_login_sessions: {
         Row: {
           admin_id: string
@@ -206,20 +233,29 @@ export type Database = {
         Row: {
           account_type: string
           billing_period_days: number
+          billing_period_unit: string
+          billing_period_value: number
           created_at: string
+          custom_categories: boolean
           daily_task_limit: number
           deposit_commission_rate: number
           display_name: string
           earning_per_task: number
           features: Json | null
+          free_plan_expiry_days: number | null
+          free_unlock_withdrawal_days: number | null
+          free_unlock_withdrawal_enabled: boolean
           id: string
           is_active: boolean
           max_active_referrals: number
           max_daily_withdrawal: number
+          max_group_members: number
           min_daily_withdrawal: number
           min_withdrawal: number
           name: string
           price: number
+          priority_support: boolean
+          sub_account_earning_commission_rate: number | null
           task_commission_rate: number
           task_skip_limit_per_day: number
           updated_at: string
@@ -227,20 +263,29 @@ export type Database = {
         Insert: {
           account_type: string
           billing_period_days?: number
+          billing_period_unit?: string
+          billing_period_value?: number
           created_at?: string
+          custom_categories?: boolean
           daily_task_limit?: number
           deposit_commission_rate?: number
           display_name: string
           earning_per_task?: number
           features?: Json | null
+          free_plan_expiry_days?: number | null
+          free_unlock_withdrawal_days?: number | null
+          free_unlock_withdrawal_enabled?: boolean
           id?: string
           is_active?: boolean
           max_active_referrals?: number
           max_daily_withdrawal?: number
+          max_group_members?: number
           min_daily_withdrawal?: number
           min_withdrawal?: number
           name: string
           price?: number
+          priority_support?: boolean
+          sub_account_earning_commission_rate?: number | null
           task_commission_rate?: number
           task_skip_limit_per_day?: number
           updated_at?: string
@@ -248,20 +293,29 @@ export type Database = {
         Update: {
           account_type?: string
           billing_period_days?: number
+          billing_period_unit?: string
+          billing_period_value?: number
           created_at?: string
+          custom_categories?: boolean
           daily_task_limit?: number
           deposit_commission_rate?: number
           display_name?: string
           earning_per_task?: number
           features?: Json | null
+          free_plan_expiry_days?: number | null
+          free_unlock_withdrawal_days?: number | null
+          free_unlock_withdrawal_enabled?: boolean
           id?: string
           is_active?: boolean
           max_active_referrals?: number
           max_daily_withdrawal?: number
+          max_group_members?: number
           min_daily_withdrawal?: number
           min_withdrawal?: number
           name?: string
           price?: number
+          priority_support?: boolean
+          sub_account_earning_commission_rate?: number | null
           task_commission_rate?: number
           task_skip_limit_per_day?: number
           updated_at?: string
@@ -340,13 +394,16 @@ export type Database = {
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
+          auto_renew: boolean
           country: string | null
           created_at: string
+          current_plan_start_date: string | null
           deposit_wallet_balance: number
           earnings_wallet_balance: number
           email: string | null
           full_name: string | null
           id: string
+          last_activity: string | null
           last_login: string | null
           last_task_date: string | null
           membership_plan: string
@@ -357,17 +414,21 @@ export type Database = {
           referred_by: string | null
           skips_today: number
           tasks_completed_today: number
+          total_earned: number
           username: string
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          auto_renew?: boolean
           country?: string | null
           created_at?: string
+          current_plan_start_date?: string | null
           deposit_wallet_balance?: number
           earnings_wallet_balance?: number
           email?: string | null
           full_name?: string | null
           id: string
+          last_activity?: string | null
           last_login?: string | null
           last_task_date?: string | null
           membership_plan?: string
@@ -378,17 +439,21 @@ export type Database = {
           referred_by?: string | null
           skips_today?: number
           tasks_completed_today?: number
+          total_earned?: number
           username: string
         }
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          auto_renew?: boolean
           country?: string | null
           created_at?: string
+          current_plan_start_date?: string | null
           deposit_wallet_balance?: number
           earnings_wallet_balance?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          last_activity?: string | null
           last_login?: string | null
           last_task_date?: string | null
           membership_plan?: string
@@ -399,6 +464,7 @@ export type Database = {
           referred_by?: string | null
           skips_today?: number
           tasks_completed_today?: number
+          total_earned?: number
           username?: string
         }
         Relationships: [
@@ -446,6 +512,93 @@ export type Database = {
           referrer_id?: string
         }
         Relationships: []
+      }
+      referral_program_config: {
+        Row: {
+          business_deposit_commission_rate: number
+          business_referrals_enabled: boolean
+          business_task_commission_rate: number
+          created_at: string
+          id: string
+          personal_deposit_commission_rate: number
+          personal_referrals_enabled: boolean
+          signup_bonus_amount: number
+          signup_bonus_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          business_deposit_commission_rate?: number
+          business_referrals_enabled?: boolean
+          business_task_commission_rate?: number
+          created_at?: string
+          id?: string
+          personal_deposit_commission_rate?: number
+          personal_referrals_enabled?: boolean
+          signup_bonus_amount?: number
+          signup_bonus_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          business_deposit_commission_rate?: number
+          business_referrals_enabled?: boolean
+          business_task_commission_rate?: number
+          created_at?: string
+          id?: string
+          personal_deposit_commission_rate?: number
+          personal_referrals_enabled?: boolean
+          signup_bonus_amount?: number
+          signup_bonus_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          last_commission_date: string | null
+          referral_code_used: string
+          referred_id: string
+          referrer_id: string
+          status: string
+          total_commission_earned: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_commission_date?: string | null
+          referral_code_used: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+          total_commission_earned?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_commission_date?: string | null
+          referral_code_used?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+          total_commission_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_emails: {
         Row: {
@@ -630,6 +783,41 @@ export type Database = {
           },
         ]
       }
+      user_activity_log: {
+        Row: {
+          activity_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -757,6 +945,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_proration: {
+        Args: {
+          p_current_plan_billing_days: number
+          p_current_plan_price: number
+          p_current_plan_start_date: string
+          p_new_plan_price: number
+        }
+        Returns: Json
+      }
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
