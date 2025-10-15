@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 interface RenewalResult {
   userId: string;
@@ -118,16 +119,11 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Get the user's current membership plan details
-          const { data: membershipPlan, error: planError } = await supabaseClient
-            .from('membership_plans')
-            .select('*')
-            .eq('name', user.membership_plan)
-            .eq('is_active', true)
-            .maybeSingle();
+          // Get the user's current membership plan details using cache
+          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
 
-          if (planError || !membershipPlan) {
-            console.error(`Error fetching plan for user ${user.id}:`, planError);
+          if (!membershipPlan) {
+            console.error(`Membership plan not found for user ${user.id}:`, user.membership_plan);
             // Downgrade to free if plan not found
             await supabaseClient
               .from('profiles')

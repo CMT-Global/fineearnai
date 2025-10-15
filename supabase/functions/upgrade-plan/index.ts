@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,24 +64,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get the current plan details (for proration calculation)
-    const { data: currentPlan } = await supabase
-      .from('membership_plans')
-      .select('*')
-      .eq('name', profile.membership_plan)
-      .eq('is_active', true)
-      .maybeSingle();
+    // Get the current plan details (for proration calculation) using cache
+    const currentPlan = profile.membership_plan 
+      ? await getMembershipPlan(supabase, profile.membership_plan)
+      : null;
 
-    // Get the new plan details
-    const { data: newPlan, error: planError } = await supabase
-      .from('membership_plans')
-      .select('*')
-      .eq('name', planName)
-      .eq('is_active', true)
-      .single();
+    // Get the new plan details using cache
+    const newPlan = await getMembershipPlan(supabase, planName);
 
-    if (planError || !newPlan) {
-      console.error('Plan not found:', planError);
+    if (!newPlan || !newPlan.is_active) {
+      console.error('Plan not found or inactive:', planName);
       return new Response(JSON.stringify({ error: 'Invalid or inactive membership plan' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -90,10 +83,10 @@ Deno.serve(async (req) => {
     let finalCost = parseFloat(newPlan.price);
     let prorationDetails = null;
     
-    // Calculate proration if upgrading from a paid plan
+    // Calculate proration if upgrading from a paid plan (convert price string to number)
     if (currentPlan && 
         profile.current_plan_start_date && 
-        currentPlan.price > 0 && 
+        parseFloat(currentPlan.price as string) > 0 && 
         profile.membership_plan !== 'free') {
       
       console.log('Calculating proration for upgrade from paid plan');
@@ -235,11 +228,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (referrerProfile) {
-          const { data: referrerPlan } = await supabase
-            .from('membership_plans')
-            .select('deposit_commission_rate')
-            .eq('name', referrerProfile.membership_plan)
-            .single();
+          const referrerPlan = await getMembershipPlan(supabase, referrerProfile.membership_plan);
 
           // Only queue commission if referrer's plan has deposit commission enabled
           if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
@@ -247,7 +236,6 @@ Deno.serve(async (req) => {
               referrerPlan: referrerProfile.membership_plan, 
               commissionRate: referrerPlan.deposit_commission_rate 
             });
-            
             // Queue commission for async processing (non-blocking)
             const { error: queueError } = await supabase
               .from('commission_queue')

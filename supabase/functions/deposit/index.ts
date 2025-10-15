@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,11 +102,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (referrerProfile) {
-        const { data: referrerPlan } = await supabase
-          .from('membership_plans')
-          .select('deposit_commission_rate')
-          .eq('name', referrerProfile.membership_plan)
-          .single();
+        const referrerPlan = await getMembershipPlan(supabase, referrerProfile.membership_plan);
 
         if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
           // Queue commission for async processing (non-blocking)

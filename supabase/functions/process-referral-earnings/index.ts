@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 interface ReferralEarningRequest {
   referredUserId: string;
@@ -100,16 +101,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get referrer's membership plan details
-    const { data: membershipPlan, error: planError } = await supabaseClient
-      .from('membership_plans')
-      .select('task_commission_rate, deposit_commission_rate')
-      .eq('name', referrer.membership_plan)
-      .eq('is_active', true)
-      .maybeSingle();
+    // Get referrer's membership plan details using cache
+    const membershipPlan = await getMembershipPlan(supabaseClient, referrer.membership_plan);
 
-    if (planError || !membershipPlan) {
-      console.error('Error fetching membership plan:', planError);
+    if (!membershipPlan) {
+      console.error('Membership plan not found:', referrer.membership_plan);
       throw new Error('Failed to fetch membership plan');
     }
 

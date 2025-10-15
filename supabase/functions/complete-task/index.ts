@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,15 +71,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get membership plan details
-    const { data: plan, error: planError } = await supabase
-      .from('membership_plans')
-      .select('*')
-      .eq('name', profile.membership_plan)
-      .single();
+    // Get membership plan details using cache
+    const plan = await getMembershipPlan(supabase, profile.membership_plan);
 
-    if (planError || !plan) {
-      console.error('Plan not found:', planError);
+    if (!plan) {
+      console.error('Plan not found:', profile.membership_plan);
       return new Response(JSON.stringify({ error: 'Membership plan not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -93,8 +90,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Calculate earnings based on membership plan
-    const earnedAmount = plan.earning_per_task;
+    // Calculate earnings based on membership plan (convert string to number)
+    const earnedAmount = parseFloat(plan.earning_per_task as string);
     const newEarningsBalance = parseFloat(profile.earnings_wallet_balance) + earnedAmount;
     const newTasksCompleted = profile.tasks_completed_today + 1;
 

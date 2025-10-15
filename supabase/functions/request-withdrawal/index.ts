@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { getMembershipPlan } from '../_shared/cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,15 +48,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get membership plan details
-    const { data: plan, error: planError } = await supabase
-      .from('membership_plans')
-      .select('*')
-      .eq('name', profile.membership_plan)
-      .single();
+    // Get membership plan details using cache
+    const plan = await getMembershipPlan(supabase, profile.membership_plan);
 
-    if (planError || !plan) {
-      console.error('Plan not found:', planError);
+    if (!plan) {
+      console.error('Plan not found:', profile.membership_plan);
       return new Response(JSON.stringify({ error: 'Membership plan not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -81,10 +78,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check minimum withdrawal
-    if (withdrawalAmount < plan.min_withdrawal) {
+    // Check minimum withdrawal (convert string to number)
+    const minWithdrawal = parseFloat(plan.min_withdrawal as string);
+    if (withdrawalAmount < minWithdrawal) {
       return new Response(
-        JSON.stringify({ error: `Minimum withdrawal is ${plan.min_withdrawal}` }),
+        JSON.stringify({ error: `Minimum withdrawal is ${minWithdrawal}` }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -131,10 +129,11 @@ Deno.serve(async (req) => {
       0
     ) || 0;
 
-    if (totalWithdrawnToday + withdrawalAmount > plan.max_daily_withdrawal) {
+    const maxDailyWithdrawal = parseFloat(plan.max_daily_withdrawal as string);
+    if (totalWithdrawnToday + withdrawalAmount > maxDailyWithdrawal) {
       return new Response(
         JSON.stringify({ 
-          error: `Daily withdrawal limit exceeded. You can withdraw up to ${plan.max_daily_withdrawal - totalWithdrawnToday} more today.` 
+          error: `Daily withdrawal limit exceeded. You can withdraw up to ${maxDailyWithdrawal - totalWithdrawnToday} more today.`
         }),
         {
           status: 400,
