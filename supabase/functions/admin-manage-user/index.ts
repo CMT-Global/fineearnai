@@ -2,12 +2,32 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface AdminManageUserRequest {
-  action: 'change_upline' | 'update_referral_status' | 'get_user_referral_summary' | 'get_detailed_user_referrals';
+  action: 'change_upline' | 'update_referral_status' | 'get_user_referral_summary' | 'get_detailed_user_referrals' |
+          'get_user_detail' | 'update_user_profile' | 'update_user_email' | 'adjust_wallet_balance' | 
+          'change_membership_plan' | 'suspend_user' | 'ban_user' | 'reset_daily_limits';
   userId: string;
   newUplineEmail?: string;
   referralStatus?: string;
   page?: number;
   limit?: number;
+  // New action parameters
+  profileData?: {
+    full_name?: string;
+    phone?: string;
+    country?: string;
+  };
+  newEmail?: string;
+  walletAdjustment?: {
+    wallet_type: 'deposit' | 'earnings';
+    amount: number;
+    reason: string;
+  };
+  planData?: {
+    plan_name: string;
+    expires_at?: string;
+  };
+  banReason?: string;
+  suspendReason?: string;
 }
 
 Deno.serve(async (req) => {
@@ -46,7 +66,10 @@ Deno.serve(async (req) => {
       throw new Error('Admin access required');
     }
 
-    const { action, userId, newUplineEmail, referralStatus, page = 1, limit = 20 }: AdminManageUserRequest = await req.json();
+    const { 
+      action, userId, newUplineEmail, referralStatus, page = 1, limit = 20,
+      profileData, newEmail, walletAdjustment, planData, banReason, suspendReason
+    }: AdminManageUserRequest = await req.json();
 
     console.log(`Admin ${user.id} performing action: ${action} on user ${userId}`);
 
@@ -328,6 +351,361 @@ Deno.serve(async (req) => {
         };
 
         console.log(`Retrieved detailed referrals for user ${userId}, page ${page}`);
+        break;
+      }
+
+      case 'get_user_detail': {
+        // Call the database function to get complete user detail
+        const { data: userDetail, error: detailError } = await supabaseClient
+          .rpc('get_user_detail_aggregated', { p_user_id: userId });
+
+        if (detailError) {
+          throw new Error(`Failed to fetch user detail: ${detailError.message}`);
+        }
+
+        result = userDetail;
+        console.log(`Retrieved complete detail for user ${userId}`);
+        break;
+      }
+
+      case 'update_user_profile': {
+        if (!profileData) {
+          throw new Error('Profile data is required');
+        }
+
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({
+            full_name: profileData.full_name,
+            phone: profileData.phone,
+            country: profileData.country
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to update profile: ${updateError.message}`);
+        }
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'update_user_profile',
+            target_user_id: userId,
+            details: { updated_fields: profileData }
+          });
+
+        result = { success: true, message: 'Profile updated successfully' };
+        console.log(`Updated profile for user ${userId}`);
+        break;
+      }
+
+      case 'update_user_email': {
+        if (!newEmail) {
+          throw new Error('New email is required');
+        }
+
+        // Check if email already exists
+        const { data: existingUser } = await supabaseClient
+          .from('profiles')
+          .select('id')
+          .eq('email', newEmail)
+          .maybeSingle();
+
+        if (existingUser && existingUser.id !== userId) {
+          throw new Error('Email already in use by another user');
+        }
+
+        // Update email in auth.users using admin API
+        const { error: authError } = await supabaseClient.auth.admin.updateUserById(
+          userId,
+          { email: newEmail }
+        );
+
+        if (authError) {
+          throw new Error(`Failed to update auth email: ${authError.message}`);
+        }
+
+        // Update email in profiles
+        const { error: profileError } = await supabaseClient
+          .from('profiles')
+          .update({ email: newEmail })
+          .eq('id', userId);
+
+        if (profileError) {
+          throw new Error(`Failed to update profile email: ${profileError.message}`);
+        }
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'update_user_email',
+            target_user_id: userId,
+            details: { new_email: newEmail }
+          });
+
+        result = { success: true, message: 'Email updated successfully' };
+        console.log(`Updated email for user ${userId} to ${newEmail}`);
+        break;
+      }
+
+      case 'adjust_wallet_balance': {
+        if (!walletAdjustment) {
+          throw new Error('Wallet adjustment details are required');
+        }
+
+        const { wallet_type, amount, reason } = walletAdjustment;
+
+        if (!wallet_type || amount === undefined || !reason) {
+          throw new Error('Wallet type, amount, and reason are required');
+        }
+
+        // Get current balance
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('deposit_wallet_balance, earnings_wallet_balance')
+          .eq('id', userId)
+          .single();
+
+        if (!profile) {
+          throw new Error('User not found');
+        }
+
+        const walletField = wallet_type === 'deposit' ? 'deposit_wallet_balance' : 'earnings_wallet_balance';
+        const currentBalance = wallet_type === 'deposit' ? profile.deposit_wallet_balance : profile.earnings_wallet_balance;
+        const newBalance = Number(currentBalance) + Number(amount);
+
+        if (newBalance < 0) {
+          throw new Error('Insufficient balance for this adjustment');
+        }
+
+        // Update wallet balance
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ [walletField]: newBalance })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to adjust wallet: ${updateError.message}`);
+        }
+
+        // Create transaction record
+        await supabaseClient
+          .from('transactions')
+          .insert({
+            user_id: userId,
+            type: 'adjustment',
+            amount: Math.abs(Number(amount)),
+            wallet_type: wallet_type,
+            status: 'completed',
+            new_balance: newBalance,
+            description: `Admin adjustment: ${reason}`,
+            metadata: { adjusted_by: user.id, reason }
+          });
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'adjust_wallet_balance',
+            target_user_id: userId,
+            details: { wallet_type, amount, reason, new_balance: newBalance }
+          });
+
+        result = { 
+          success: true, 
+          message: 'Wallet balance adjusted successfully',
+          new_balance: newBalance
+        };
+        console.log(`Adjusted ${wallet_type} wallet for user ${userId} by ${amount}`);
+        break;
+      }
+
+      case 'change_membership_plan': {
+        if (!planData || !planData.plan_name) {
+          throw new Error('Plan name is required');
+        }
+
+        // Validate plan exists
+        const { data: plan } = await supabaseClient
+          .from('membership_plans')
+          .select('*')
+          .eq('name', planData.plan_name)
+          .eq('is_active', true)
+          .single();
+
+        if (!plan) {
+          throw new Error('Invalid or inactive plan');
+        }
+
+        // Calculate expiry date
+        let expiresAt = planData.expires_at;
+        if (!expiresAt) {
+          const now = new Date();
+          now.setDate(now.getDate() + plan.billing_period_days);
+          expiresAt = now.toISOString();
+        }
+
+        // Update plan
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({
+            membership_plan: planData.plan_name,
+            plan_expires_at: expiresAt,
+            current_plan_start_date: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to change plan: ${updateError.message}`);
+        }
+
+        // Create transaction record
+        await supabaseClient
+          .from('transactions')
+          .insert({
+            user_id: userId,
+            type: 'plan_upgrade',
+            amount: plan.price,
+            wallet_type: 'deposit',
+            status: 'completed',
+            description: `Admin plan change to ${plan.display_name}`,
+            metadata: { changed_by: user.id, plan_name: plan.name }
+          });
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'change_membership_plan',
+            target_user_id: userId,
+            details: { plan_name: plan.name, expires_at: expiresAt }
+          });
+
+        result = { 
+          success: true, 
+          message: 'Membership plan updated successfully',
+          plan: plan.display_name,
+          expires_at: expiresAt
+        };
+        console.log(`Changed plan for user ${userId} to ${plan.name}`);
+        break;
+      }
+
+      case 'suspend_user': {
+        // Get current status
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('account_status')
+          .eq('id', userId)
+          .single();
+
+        if (!profile) {
+          throw new Error('User not found');
+        }
+
+        const newStatus = profile.account_status === 'suspended' ? 'active' : 'suspended';
+
+        // Update status
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ account_status: newStatus })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to suspend user: ${updateError.message}`);
+        }
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'suspend_user',
+            target_user_id: userId,
+            details: { 
+              new_status: newStatus, 
+              reason: suspendReason || 'No reason provided'
+            }
+          });
+
+        result = { 
+          success: true, 
+          message: newStatus === 'suspended' ? 'User suspended successfully' : 'User unsuspended successfully',
+          status: newStatus
+        };
+        console.log(`${newStatus === 'suspended' ? 'Suspended' : 'Unsuspended'} user ${userId}`);
+        break;
+      }
+
+      case 'ban_user': {
+        if (!banReason) {
+          throw new Error('Ban reason is required');
+        }
+
+        // Update status to banned
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ account_status: 'banned' })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to ban user: ${updateError.message}`);
+        }
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'ban_user',
+            target_user_id: userId,
+            details: { reason: banReason }
+          });
+
+        result = { 
+          success: true, 
+          message: 'User banned successfully'
+        };
+        console.log(`Banned user ${userId} - Reason: ${banReason}`);
+        break;
+      }
+
+      case 'reset_daily_limits': {
+        // Reset daily counters
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({
+            tasks_completed_today: 0,
+            skips_today: 0,
+            last_task_date: new Date().toISOString().split('T')[0]
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw new Error(`Failed to reset limits: ${updateError.message}`);
+        }
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'reset_daily_limits',
+            target_user_id: userId,
+            details: { reset_date: new Date().toISOString() }
+          });
+
+        result = { 
+          success: true, 
+          message: 'Daily limits reset successfully'
+        };
+        console.log(`Reset daily limits for user ${userId}`);
         break;
       }
 
