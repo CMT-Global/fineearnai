@@ -59,12 +59,9 @@ const Tasks = () => {
   const [startTime] = useState<number>(Date.now());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   
-  // Zustand store for centralized state management
+  // ✅ Phase 3: Zustand for UI state only (dailyLimitReached flag)
   const { 
-    stats: userStoreStats, 
     dailyLimitReached, 
-    setStats, 
-    updateTaskProgress, 
     setDailyLimitReached,
     checkAndResetDaily
   } = useUserStore();
@@ -98,7 +95,7 @@ const Tasks = () => {
     }
   }, [user]);
 
-  // Fetch next task with TanStack Query - Optimized cache settings
+  // ✅ Phase 1 & 3: React Query handles ALL server data (user stats from get-next-task)
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
     queryKey: ['next-task', user?.id],
     queryFn: async () => {
@@ -110,26 +107,6 @@ const Tasks = () => {
         throw error;
       }
 
-      // Update Zustand store with fresh user stats
-      if (data.userStats) {
-        setStats({
-          userId: user?.id || '',
-          username: data.userStats.username,
-          tasksCompletedToday: data.userStats.tasksCompletedToday,
-          dailyLimit: data.userStats.dailyLimit,
-          remainingTasks: data.userStats.remainingTasks,
-          earningsBalance: data.userStats.earningsBalance,
-          depositBalance: data.userStats.depositBalance,
-          totalEarned: data.userStats.totalEarned,
-          skipsToday: data.userStats.skipsToday,
-          skipLimit: data.userStats.skipLimit,
-          remainingSkips: data.userStats.remainingSkips,
-          membershipPlan: data.userStats.membershipPlan,
-          planExpiresAt: data.userStats.planExpiresAt,
-          lastUpdated: Date.now()
-        });
-      }
-
       // Edge function returns 200 with success: false for expected scenarios
       // (daily limit, no tasks, plan expired, etc.)
       return data;
@@ -139,7 +116,7 @@ const Tasks = () => {
     gcTime: 60000,       // Keep in cache for 1 minute
   });
 
-  // Phase 3: Real-time subscription to profile updates
+  // ✅ Phase 3: Real-time subscription to profile updates (React Query invalidation only)
   useEffect(() => {
     if (!user) return;
 
@@ -160,14 +137,6 @@ const Tasks = () => {
           
           // Show syncing indicator
           setIsSyncing(true);
-          
-          // Update Zustand store with realtime data
-          if (userStoreStats) {
-            updateTaskProgress(
-              payload.new.tasks_completed_today,
-              payload.new.earnings_wallet_balance
-            );
-          }
           
           // Invalidate the next-task query to trigger a refetch with fresh data
           queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
@@ -197,9 +166,9 @@ const Tasks = () => {
   }, [dailyLimitReached]);
 
   const currentTask = taskData?.task || null;
-  // Prefer store stats if available (fresher data), fallback to query
-  const userStats = userStoreStats || taskData?.userStats || null;
-  const isDailyLimitReached = dailyLimitReached || useUserStore.getState().isDailyLimitReached() || taskData?.error === 'daily_limit_reached';
+  // ✅ Phase 3: All user stats from React Query (taskData)
+  const userStats = taskData?.userStats || null;
+  const isDailyLimitReached = dailyLimitReached || taskData?.error === 'daily_limit_reached';
 
   // Skip mutation
   const skipMutation = useMutation({
@@ -288,9 +257,6 @@ const Tasks = () => {
       const tasksCompletedAfter = (userStats?.tasksCompletedToday || 0) + 1;
       const dailyLimit = userStats?.dailyLimit || 0;
       const remainingAfter = Math.max(0, dailyLimit - tasksCompletedAfter);
-      
-      // Update Zustand store immediately with new task progress
-      updateTaskProgress(tasksCompletedAfter, data.newBalance);
       
       if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
         // Set persistent flag IMMEDIATELY to prevent bypass illusion

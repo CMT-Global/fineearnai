@@ -19,7 +19,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUserStore } from "@/stores/userStore";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { formatCurrency } from "@/lib/wallet-utils";
 
@@ -28,12 +27,9 @@ const Dashboard = () => {
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   
-  // ✅ NEW: Single React Query hook for all dashboard data
+  // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
   const { profile, referralStats, membershipPlan } = data || {};
-  
-  // Zustand store for centralized state management
-  const { stats: userStoreStats } = useUserStore();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -193,8 +189,8 @@ const Dashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
             <WalletCard 
-              depositBalance={Number(userStoreStats?.depositBalance ?? profile.deposit_wallet_balance)}
-              earningsBalance={Number(userStoreStats?.earningsBalance ?? profile.earnings_wallet_balance)}
+              depositBalance={Number(profile?.deposit_wallet_balance || 0)}
+              earningsBalance={Number(profile?.earnings_wallet_balance || 0)}
               onBalanceUpdate={refetch}
             />
 
@@ -203,10 +199,10 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
                   <p className="text-3xl font-bold">
-                    {userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today}
+                    {profile?.tasks_completed_today || 0}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    ${Number(userStoreStats?.totalEarned ?? profile.total_earned ?? 0).toFixed(2)} total earned
+                    ${Number(profile?.total_earned || 0).toFixed(2)} total earned
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
@@ -274,16 +270,16 @@ const Dashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Daily Progress</span>
                   <span className="font-medium">
-                    {userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today}/
-                    {userStoreStats?.dailyLimit ?? membershipPlan?.daily_task_limit ?? 10} tasks
+                    {profile?.tasks_completed_today || 0}/
+                    {membershipPlan?.daily_task_limit || 10} tasks
                   </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))]"
                     style={{ 
-                      width: `${((userStoreStats?.tasksCompletedToday ?? profile.tasks_completed_today) / 
-                                 (userStoreStats?.dailyLimit ?? membershipPlan?.daily_task_limit ?? 10)) * 100}%` 
+                      width: `${((profile?.tasks_completed_today || 0) / 
+                                 (membershipPlan?.daily_task_limit || 10)) * 100}%` 
                     }}
                   ></div>
                 </div>
