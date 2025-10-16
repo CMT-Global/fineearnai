@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
@@ -264,7 +264,7 @@ const RoutesWrapper = () => {
 };
 
 const App = () => (
-  <ErrorBoundary>
+  <GlobalErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AdminModeProvider>
         <TooltipProvider>
@@ -276,7 +276,7 @@ const App = () => (
         </TooltipProvider>
       </AdminModeProvider>
     </QueryClientProvider>
-  </ErrorBoundary>
+  </GlobalErrorBoundary>
 );
 
 export default App;
