@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { UserManagementStats } from "@/components/admin/UserManagementStats";
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar";
 import { BulkUpdatePlanDialog } from "@/components/admin/dialogs/BulkUpdatePlanDialog";
@@ -17,8 +18,9 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { sanitizeSearchTerm } from "@/lib/admin-validation";
 
-export default function Users() {
+function UsersContent() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
@@ -31,7 +33,7 @@ export default function Users() {
   const [showBulkPlanDialog, setShowBulkPlanDialog] = useState(false);
   const [showBulkSuspendDialog, setShowBulkSuspendDialog] = useState(false);
   
-  const debouncedSearch = useDebounce(searchTerm, 500);
+  const debouncedSearch = useDebounce(sanitizeSearchTerm(searchTerm), 500);
   
   const {
     useUserList,
@@ -373,5 +375,13 @@ export default function Users() {
         />
       </div>
     </div>
+  );
+}
+
+export default function Users() {
+  return (
+    <AdminErrorBoundary fallbackTitle="User Management Error">
+      <UsersContent />
+    </AdminErrorBoundary>
   );
 }

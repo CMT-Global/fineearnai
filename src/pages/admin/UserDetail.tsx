@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
 import { ArrowLeft, Key, Activity } from "lucide-react";
 
@@ -25,7 +26,7 @@ import { ChangePlanDialog } from "@/components/admin/dialogs/ChangePlanDialog";
 import { SuspendUserDialog } from "@/components/admin/dialogs/SuspendUserDialog";
 import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
 
-export default function UserDetail() {
+function UserDetailContent() {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const { user, loading: authLoading } = useAuth();
@@ -301,5 +302,13 @@ function ActivityLogsTab({ userId }: { userId: string }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export default function UserDetail() {
+  return (
+    <AdminErrorBoundary fallbackTitle="User Detail Error">
+      <UserDetailContent />
+    </AdminErrorBoundary>
   );
 }

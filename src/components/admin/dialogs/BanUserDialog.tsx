@@ -12,8 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { validateBan, sanitizeUserInput } from "@/lib/admin-validation";
 import { ShieldX, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 interface BanUserDialogProps {
   open: boolean;
@@ -36,12 +38,22 @@ export const BanUserDialog = ({
   const { banUser } = useUserManagement();
 
   const handleSubmit = () => {
-    if (!reason.trim() || !confirmed) return;
+    // Validate using schema
+    const validation = validateBan({
+      banReason: reason.trim(),
+      confirmed,
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError?.message || "Validation failed");
+      return;
+    }
 
     banUser.mutate(
       {
         userId,
-        banReason: reason.trim(),
+        banReason: sanitizeUserInput(reason.trim()),
       },
       {
         onSuccess: () => {

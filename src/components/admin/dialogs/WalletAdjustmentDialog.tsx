@@ -13,7 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { validateWalletAdjustment, sanitizeUserInput } from "@/lib/admin-validation";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { toast } from "sonner";
 
 interface WalletAdjustmentDialogProps {
   open: boolean;
@@ -40,11 +42,18 @@ export const WalletAdjustmentDialog = ({
   const { adjustWalletBalance } = useUserManagement();
 
   const handleSubmit = () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      return;
-    }
+    const parsedAmount = parseFloat(amount);
+    
+    // Validate using schema
+    const validation = validateWalletAdjustment({
+      wallet_type: walletType,
+      amount: parsedAmount,
+      reason: reason.trim(),
+    });
 
-    if (!reason.trim()) {
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError?.message || "Validation failed");
       return;
     }
 
@@ -53,8 +62,8 @@ export const WalletAdjustmentDialog = ({
         userId,
         walletAdjustment: {
           wallet_type: walletType,
-          amount: parseFloat(amount),
-          reason: reason.trim(),
+          amount: parsedAmount,
+          reason: sanitizeUserInput(reason.trim()),
         },
       },
       {
