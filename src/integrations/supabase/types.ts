@@ -1278,6 +1278,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
+      get_multiple_users_detail: {
+        Args: { p_user_ids: string[] }
+        Returns: Json
+      }
       get_next_available_task: {
         Args: { p_user_id: string }
         Returns: {
@@ -1339,6 +1343,10 @@ export type Database = {
           recommendation: string
           total_tasks: number
         }[]
+      }
+      get_user_detail_aggregated: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       get_user_management_by_id: {
         Args: { p_user_id: string }
