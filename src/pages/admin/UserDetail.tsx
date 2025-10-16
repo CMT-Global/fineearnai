@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -19,12 +19,24 @@ import { TasksActivityTab } from "@/components/admin/user-detail/TasksActivityTa
 import { ReferralsTab } from "@/components/admin/user-detail/ReferralsTab";
 import { TransactionsTab } from "@/components/admin/user-detail/TransactionsTab";
 
+// Import dialog components
+import { WalletAdjustmentDialog } from "@/components/admin/dialogs/WalletAdjustmentDialog";
+import { ChangePlanDialog } from "@/components/admin/dialogs/ChangePlanDialog";
+import { SuspendUserDialog } from "@/components/admin/dialogs/SuspendUserDialog";
+import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
+
 export default function UserDetail() {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { useUserDetail } = useUserManagement();
+
+  // Dialog states
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+  const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false);
+  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
 
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, refetch } = useUserDetail(userId || '');
@@ -136,10 +148,10 @@ export default function UserDetail() {
           <TabsContent value="overview">
             <OverviewTab 
               userData={userDetail} 
-              onEditProfile={() => toast.info("Edit profile dialog coming soon")}
-              onChangePlan={() => toast.info("Change plan dialog coming soon")}
-              onSuspend={() => toast.info("Suspend dialog coming soon")}
-              onBan={() => toast.info("Ban dialog coming soon")}
+              onEditProfile={() => toast.info("Use inline editing in Overview tab")}
+              onChangePlan={() => setChangePlanDialogOpen(true)}
+              onSuspend={() => setSuspendDialogOpen(true)}
+              onBan={() => setBanDialogOpen(true)}
               onResetLimits={() => toast.info("Reset limits coming soon")}
               onMasterLogin={handleGenerateMasterLogin}
             />
@@ -148,7 +160,7 @@ export default function UserDetail() {
           <TabsContent value="financial">
             <FinancialTab 
               userData={userDetail} 
-              onAdjustWallet={(walletType) => toast.info(`Adjust ${walletType} wallet coming soon`)}
+              onAdjustWallet={() => setWalletDialogOpen(true)}
             />
           </TabsContent>
 
@@ -172,6 +184,47 @@ export default function UserDetail() {
             <ActivityLogsTab userId={userId!} />
           </TabsContent>
         </Tabs>
+
+        {/* Dialogs */}
+        {userDetail && (
+          <>
+            <WalletAdjustmentDialog
+              open={walletDialogOpen}
+              onOpenChange={setWalletDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              currentBalance={{
+                deposit: userDetail.financial?.deposit_wallet_balance || 0,
+                earnings: userDetail.financial?.earnings_wallet_balance || 0,
+              }}
+            />
+
+            <ChangePlanDialog
+              open={changePlanDialogOpen}
+              onOpenChange={setChangePlanDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              currentPlan={profile.membership_plan}
+              currentExpiry={profile.plan_expires_at}
+            />
+
+            <SuspendUserDialog
+              open={suspendDialogOpen}
+              onOpenChange={setSuspendDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              currentStatus={profile.account_status}
+            />
+
+            <BanUserDialog
+              open={banDialogOpen}
+              onOpenChange={setBanDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              email={profile.email}
+            />
+          </>
+        )}
       </div>
     </div>
   );

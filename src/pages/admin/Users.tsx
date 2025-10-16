@@ -10,20 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { UserManagementStats } from "@/components/admin/UserManagementStats";
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar";
+import { BulkUpdatePlanDialog } from "@/components/admin/dialogs/BulkUpdatePlanDialog";
+import { BulkSuspendDialog } from "@/components/admin/dialogs/BulkSuspendDialog";
 import { Search, Eye, Download, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
 export default function Users() {
   const navigate = useNavigate();
@@ -36,9 +29,7 @@ export default function Users() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkPlanDialog, setShowBulkPlanDialog] = useState(false);
-  const [bulkPlanName, setBulkPlanName] = useState("");
   const [showBulkSuspendDialog, setShowBulkSuspendDialog] = useState(false);
-  const [bulkSuspendReason, setBulkSuspendReason] = useState("");
   
   const debouncedSearch = useDebounce(searchTerm, 500);
   
@@ -86,34 +77,6 @@ export default function Users() {
       return newSet;
     });
   }, []);
-
-  // Handle bulk plan update
-  const handleBulkUpdatePlan = useCallback(async () => {
-    if (!bulkPlanName || selectedUsers.size === 0) return;
-    
-    await bulkUpdatePlan.mutateAsync({
-      userIds: Array.from(selectedUsers),
-      planName: bulkPlanName,
-    });
-    
-    setShowBulkPlanDialog(false);
-    setSelectedUsers(new Set());
-    setBulkPlanName("");
-  }, [bulkPlanName, selectedUsers, bulkUpdatePlan]);
-
-  // Handle bulk suspend
-  const handleBulkSuspend = useCallback(async () => {
-    if (selectedUsers.size === 0) return;
-    
-    await bulkSuspend.mutateAsync({
-      userIds: Array.from(selectedUsers),
-      suspendReason: bulkSuspendReason,
-    });
-    
-    setShowBulkSuspendDialog(false);
-    setSelectedUsers(new Set());
-    setBulkSuspendReason("");
-  }, [selectedUsers, bulkSuspendReason, bulkSuspend]);
 
   // Handle bulk export
   const handleBulkExport = useCallback(async () => {
@@ -394,79 +357,20 @@ export default function Users() {
           </CardContent>
         </Card>
 
-        {/* Bulk Update Plan Dialog */}
-        <Dialog open={showBulkPlanDialog} onOpenChange={setShowBulkPlanDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Bulk Update Plan</DialogTitle>
-              <DialogDescription>
-                Update {selectedUsers.size} user(s) to a new membership plan
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="bulk-plan">Select Plan</Label>
-                <Select value={bulkPlanName} onValueChange={setBulkPlanName}>
-                  <SelectTrigger id="bulk-plan">
-                    <SelectValue placeholder="Choose a plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="vip">VIP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowBulkPlanDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleBulkUpdatePlan}
-                disabled={!bulkPlanName || bulkUpdatePlan.isPending}
-              >
-                {bulkUpdatePlan.isPending ? "Updating..." : "Update Plan"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Bulk Dialogs */}
+        <BulkUpdatePlanDialog
+          open={showBulkPlanDialog}
+          onOpenChange={setShowBulkPlanDialog}
+          selectedUserIds={Array.from(selectedUsers)}
+          onComplete={() => setSelectedUsers(new Set())}
+        />
 
-        {/* Bulk Suspend Dialog */}
-        <Dialog open={showBulkSuspendDialog} onOpenChange={setShowBulkSuspendDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Bulk Suspend Users</DialogTitle>
-              <DialogDescription>
-                Suspend {selectedUsers.size} user(s). Provide a reason for suspension.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="suspend-reason">Reason (Optional)</Label>
-                <Input
-                  id="suspend-reason"
-                  placeholder="e.g., Policy violation"
-                  value={bulkSuspendReason}
-                  onChange={(e) => setBulkSuspendReason(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowBulkSuspendDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={handleBulkSuspend}
-                disabled={bulkSuspend.isPending}
-              >
-                {bulkSuspend.isPending ? "Suspending..." : "Suspend Users"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <BulkSuspendDialog
+          open={showBulkSuspendDialog}
+          onOpenChange={setShowBulkSuspendDialog}
+          selectedUserIds={Array.from(selectedUsers)}
+          onComplete={() => setSelectedUsers(new Set())}
+        />
       </div>
     </div>
   );
