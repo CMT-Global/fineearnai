@@ -245,27 +245,19 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
-    // STEP 5: GET NEXT AVAILABLE TASK USING DATABASE FUNCTION
+    // STEP 5: GET NEXT TASK WITH COUNT (OPTIMIZED - SINGLE QUERY)
     // ============================================================================
     
-    console.log('Attempting to fetch next task for user:', user.id);
-    console.log('User stats before task fetch:', {
-      tasksCompletedToday: userStats.tasks_completed_today,
-      dailyLimit: userStats.daily_task_limit,
-      remainingTasks: userStats.remaining_tasks,
-      membershipPlan: userStats.membership_plan,
-      accountStatus: userStats.account_status
-    });
+    console.log('⚡ Fetching next task (optimized) for user:', user.id);
 
     const { data: taskData, error: taskError } = await supabase
-      .rpc('get_next_available_task', { p_user_id: user.id });
+      .rpc('get_next_task_optimized', { p_user_id: user.id });
 
     if (taskError) {
-      console.error('Error calling get_next_available_task RPC:', {
+      console.error('❌ Error calling get_next_task_optimized RPC:', {
         code: taskError.code,
         message: taskError.message,
         details: taskError.details,
-        hint: taskError.hint,
         userId: user.id
       });
       return new Response(
@@ -280,8 +272,6 @@ Deno.serve(async (req) => {
         }
       );
     }
-
-    console.log('Task data received:', taskData ? `${taskData.length} task(s)` : 'null or empty');
 
     // Check if any tasks are available
     if (!taskData || taskData.length === 0) {
@@ -317,28 +307,14 @@ Deno.serve(async (req) => {
     }
 
     const task = taskData[0];
-    console.log('Retrieved task for user:', user.id, '| Task ID:', task.task_id, '| Category:', task.category, '| Difficulty:', task.difficulty);
-
-    // ============================================================================
-    // STEP 6: GET AVAILABLE TASK COUNT FOR PROGRESS TRACKING
-    // ============================================================================
+    const availableTaskCount = task.available_count || 0;
     
-    console.log('Fetching available task count for user:', user.id);
-    
-    const { data: taskCount, error: countError } = await supabase
-      .rpc('get_available_task_count', { p_user_id: user.id });
-
-    if (countError) {
-      console.error('Error calling get_available_task_count RPC:', {
-        code: countError.code,
-        message: countError.message,
-        details: countError.details,
-        userId: user.id
-      });
-    }
-
-    const availableTaskCount = countError ? 0 : (taskCount || 0);
-    console.log('Available task count for user:', user.id, '| Count:', availableTaskCount);
+    console.log('✅ Retrieved task for user:', user.id, {
+      taskId: task.task_id,
+      category: task.category,
+      difficulty: task.difficulty,
+      availableCount: availableTaskCount
+    });
 
     // ============================================================================
     // STEP 7: CONSTRUCT COMPREHENSIVE RESPONSE

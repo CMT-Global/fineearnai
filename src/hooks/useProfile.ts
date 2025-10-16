@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeProfile } from './useRealtimeProfile';
 
 export const useProfile = (userId: string | undefined) => {
+  // Phase 7: Enable real-time updates for profile
+  useRealtimeProfile(userId);
+
   return useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {

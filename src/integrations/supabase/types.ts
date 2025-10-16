@@ -1290,6 +1290,19 @@ export type Database = {
           task_id: string
         }[]
       }
+      get_next_task_optimized: {
+        Args: { p_user_id: string }
+        Returns: {
+          available_count: number
+          category: string
+          created_at: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          prompt: string
+          response_a: string
+          response_b: string
+          task_id: string
+        }[]
+      }
       get_referral_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -1298,6 +1311,22 @@ export type Database = {
           task_commission_earnings: number
           total_earnings: number
           total_referrals: number
+        }[]
+      }
+      get_referrals_with_details: {
+        Args: { p_limit?: number; p_offset?: number; p_referrer_id: string }
+        Returns: {
+          account_status: Database["public"]["Enums"]["account_status"]
+          created_at: string
+          email: string
+          id: string
+          last_activity: string
+          membership_plan: string
+          referred_id: string
+          status: string
+          total_commission_earned: number
+          total_count: number
+          username: string
         }[]
       }
       get_task_pool_health: {
