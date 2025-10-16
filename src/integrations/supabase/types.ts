@@ -1270,6 +1270,10 @@ export type Database = {
         }
         Returns: Json
       }
+      check_refresh_system_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1277,6 +1281,15 @@ export type Database = {
       get_available_task_count: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      get_materialized_view_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          last_refresh: string
+          row_count: number
+          size_bytes: number
+          view_name: string
+        }[]
       }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
@@ -1388,6 +1401,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      manual_refresh_user_management_view: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       process_commission_atomic: {
         Args: {
