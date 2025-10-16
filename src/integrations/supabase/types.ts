@@ -128,13 +128,6 @@ export type Database = {
             foreignKeyName: "commission_queue_referred_user_id_fkey"
             columns: ["referred_user_id"]
             isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "commission_queue_referred_user_id_fkey"
-            columns: ["referred_user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -143,13 +136,6 @@ export type Database = {
             columns: ["referred_user_id"]
             isOneToOne: false
             referencedRelation: "user_daily_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "commission_queue_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
             referencedColumns: ["user_id"]
           },
           {
@@ -632,13 +618,6 @@ export type Database = {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
             isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "profiles_referred_by_fkey"
-            columns: ["referred_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -747,13 +726,6 @@ export type Database = {
             foreignKeyName: "referrals_referred_id_fkey"
             columns: ["referred_id"]
             isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "referrals_referred_id_fkey"
-            columns: ["referred_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -762,13 +734,6 @@ export type Database = {
             columns: ["referred_id"]
             isOneToOne: false
             referencedRelation: "user_daily_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
             referencedColumns: ["user_id"]
           },
           {
@@ -998,13 +963,6 @@ export type Database = {
             foreignKeyName: "transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1043,13 +1001,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "user_activity_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "mv_user_referral_stats"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "user_activity_log_user_id_fkey"
             columns: ["user_id"]
@@ -1239,10 +1190,10 @@ export type Database = {
       }
       mv_platform_stats: {
         Row: {
-          active_tasks: number | null
-          active_users: number | null
-          last_updated: string | null
+          active_tasks_count: number | null
+          active_users_30d: number | null
           pending_withdrawals: number | null
+          today_platform_earnings: number | null
           total_referrals: number | null
           total_tasks_completed: number | null
           total_users: number | null
@@ -1253,15 +1204,28 @@ export type Database = {
       mv_user_referral_stats: {
         Row: {
           active_referrals: number | null
-          deposit_commission_earned: number | null
-          last_commission_date: string | null
-          task_commission_earned: number | null
-          total_commission_earned: number | null
+          deposit_commission_earnings: number | null
+          referrer_id: string | null
+          task_commission_earnings: number | null
+          total_earnings: number | null
           total_referrals: number | null
-          user_id: string | null
-          username: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_daily_stats: {
         Row: {
