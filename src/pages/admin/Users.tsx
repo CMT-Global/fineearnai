@@ -1,133 +1,178 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useAdmin } from "@/hooks/useAdmin";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
-import { Search, Eye } from "lucide-react";
+import { UserManagementStats } from "@/components/admin/UserManagementStats";
+import { BulkActionsBar } from "@/components/admin/BulkActionsBar";
+import { Search, Eye, Download, RefreshCw, ArrowUpDown } from "lucide-react";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useUserManagement } from "@/hooks/useUserManagement";
+import { useDebounce } from "@/hooks/useDebounce";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function Users() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useAdmin();
-
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 20;
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [showBulkPlanDialog, setShowBulkPlanDialog] = useState(false);
+  const [bulkPlanName, setBulkPlanName] = useState("");
+  const [showBulkSuspendDialog, setShowBulkSuspendDialog] = useState(false);
+  const [bulkSuspendReason, setBulkSuspendReason] = useState("");
+  
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  
+  const {
+    useUserList,
+    useUserStats,
+    bulkUpdatePlan,
+    bulkSuspend,
+    bulkExport,
+  } = useUserManagement();
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (!adminLoading && !isAdmin) {
-      navigate("/dashboard");
-    }
-  }, [isAdmin, adminLoading, navigate]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadUsers();
-    }
-  }, [isAdmin, searchTerm, planFilter, statusFilter, countryFilter, currentPage]);
-
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from("profiles")
-        .select("*", { count: "exact" });
-
-      // Apply filters
-      if (searchTerm) {
-        query = query.or(`username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
-      }
-
-      if (planFilter !== "all") {
-        query = query.eq("membership_plan", planFilter);
-      }
-
-      if (statusFilter !== "all") {
-        query = query.eq("account_status", statusFilter as "active" | "suspended" | "banned");
-      }
-
-      if (countryFilter) {
-        query = query.ilike("country", `%${countryFilter}%`);
-      }
-
-      // Pagination
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
-      query = query.range(from, to).order("created_at", { ascending: false });
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      setUsers(data || []);
-      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
-    } catch (error) {
-      console.error("Error loading users:", error);
-    } finally {
-      setLoading(false);
-    }
+  const filters = {
+    searchTerm: debouncedSearch,
+    planFilter,
+    statusFilter,
+    countryFilter,
+    sortBy,
+    sortOrder,
   };
 
-  if (authLoading || adminLoading || !isAdmin) {
-    return <LoadingSpinner />;
-  }
+  const { data: usersData, isLoading } = useUserList(filters, currentPage, 20);
+  const { data: stats, isLoading: statsLoading } = useUserStats();
+
+  const users = usersData?.users || [];
+  const totalPages = usersData?.totalPages || 1;
+
+  // Select/Deselect all users on current page
+  const toggleSelectAll = useCallback(() => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map((u: any) => u.id)));
+    }
+  }, [users, selectedUsers.size]);
+
+  // Toggle individual user selection
+  const toggleSelectUser = useCallback((userId: string) => {
+    setSelectedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Handle bulk plan update
+  const handleBulkUpdatePlan = useCallback(async () => {
+    if (!bulkPlanName || selectedUsers.size === 0) return;
+    
+    await bulkUpdatePlan.mutateAsync({
+      userIds: Array.from(selectedUsers),
+      planName: bulkPlanName,
+    });
+    
+    setShowBulkPlanDialog(false);
+    setSelectedUsers(new Set());
+    setBulkPlanName("");
+  }, [bulkPlanName, selectedUsers, bulkUpdatePlan]);
+
+  // Handle bulk suspend
+  const handleBulkSuspend = useCallback(async () => {
+    if (selectedUsers.size === 0) return;
+    
+    await bulkSuspend.mutateAsync({
+      userIds: Array.from(selectedUsers),
+      suspendReason: bulkSuspendReason,
+    });
+    
+    setShowBulkSuspendDialog(false);
+    setSelectedUsers(new Set());
+    setBulkSuspendReason("");
+  }, [selectedUsers, bulkSuspendReason, bulkSuspend]);
+
+  // Handle bulk export
+  const handleBulkExport = useCallback(async () => {
+    if (selectedUsers.size === 0) return;
+    
+    await bulkExport.mutateAsync({
+      userIds: Array.from(selectedUsers),
+      exportFormat: 'csv',
+    });
+  }, [selectedUsers, bulkExport]);
+
+  // Handle sort column toggle
+  const handleSort = useCallback((column: string) => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      setSortBy(column);
+      setSortOrder('DESC');
+    }
+  }, [sortBy]);
 
   return (
     <div className="min-h-screen bg-[hsl(0,0%,98%)] p-6">
       <div className="max-w-7xl mx-auto">
         <AdminBreadcrumb items={[{ label: "User Management" }]} />
         
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">View and manage all platform users</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">User Management</h1>
+            <p className="text-muted-foreground mt-1">Manage and monitor all platform users</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
+
+        {/* Stats Cards */}
+        <UserManagementStats stats={stats} isLoading={statsLoading} />
+
+        {/* Bulk Actions Bar */}
+        <BulkActionsBar
+          selectedCount={selectedUsers.size}
+          onClearSelection={() => setSelectedUsers(new Set())}
+          onBulkUpdatePlan={() => setShowBulkPlanDialog(true)}
+          onBulkSuspend={() => setShowBulkSuspendDialog(true)}
+          onBulkExport={handleBulkExport}
+        />
 
         <Card>
           <CardHeader>
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Filters */}
             <div className="flex flex-col gap-4 mb-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
@@ -146,7 +191,7 @@ export default function Users() {
                   setPlanFilter(value);
                   setCurrentPage(1);
                 }}>
-                  <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Filter by plan" />
                   </SelectTrigger>
                   <SelectContent>
@@ -161,7 +206,7 @@ export default function Users() {
                   setStatusFilter(value);
                   setCurrentPage(1);
                 }}>
-                  <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,12 +223,21 @@ export default function Users() {
                     setCountryFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full md:w-[200px]"
+                  className="w-full md:w-[180px]"
                 />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkExport()}
+                  disabled={users.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export All
+                </Button>
               </div>
             </div>
 
-            {loading ? (
+            {isLoading ? (
               <LoadingSpinner />
             ) : (
               <>
@@ -191,18 +245,71 @@ export default function Users() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Username</TableHead>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedUsers.size === users.length && users.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
+                        <TableHead>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleSort('username')}
+                            className="h-8 px-2"
+                          >
+                            Username
+                            <ArrowUpDown className="ml-2 h-3 w-3" />
+                          </Button>
+                        </TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Plan</TableHead>
+                        <TableHead>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleSort('membership_plan')}
+                            className="h-8 px-2"
+                          >
+                            Plan
+                            <ArrowUpDown className="ml-2 h-3 w-3" />
+                          </Button>
+                        </TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Country</TableHead>
-                        <TableHead>Joined</TableHead>
+                        <TableHead>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleSort('total_earned')}
+                            className="h-8 px-2"
+                          >
+                            Earned
+                            <ArrowUpDown className="ml-2 h-3 w-3" />
+                          </Button>
+                        </TableHead>
+                        <TableHead>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleSort('created_at')}
+                            className="h-8 px-2"
+                          >
+                            Joined
+                            <ArrowUpDown className="ml-2 h-3 w-3" />
+                          </Button>
+                        </TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
+                      {users.map((user: any) => (
+                        <TableRow key={user.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedUsers.has(user.id)}
+                              onCheckedChange={() => toggleSelectUser(user.id)}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{user.username}</TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
@@ -222,6 +329,7 @@ export default function Users() {
                             </Badge>
                           </TableCell>
                           <TableCell>{user.country || "-"}</TableCell>
+                          <TableCell>${(user.total_earned || 0).toFixed(2)}</TableCell>
                           <TableCell>
                             {new Date(user.created_at).toLocaleDateString()}
                           </TableCell>
@@ -238,7 +346,7 @@ export default function Users() {
                       ))}
                       {users.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                             No users found
                           </TableCell>
                         </TableRow>
@@ -285,6 +393,80 @@ export default function Users() {
             )}
           </CardContent>
         </Card>
+
+        {/* Bulk Update Plan Dialog */}
+        <Dialog open={showBulkPlanDialog} onOpenChange={setShowBulkPlanDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bulk Update Plan</DialogTitle>
+              <DialogDescription>
+                Update {selectedUsers.size} user(s) to a new membership plan
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="bulk-plan">Select Plan</Label>
+                <Select value={bulkPlanName} onValueChange={setBulkPlanName}>
+                  <SelectTrigger id="bulk-plan">
+                    <SelectValue placeholder="Choose a plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="basic">Basic</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                    <SelectItem value="vip">VIP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBulkPlanDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleBulkUpdatePlan}
+                disabled={!bulkPlanName || bulkUpdatePlan.isPending}
+              >
+                {bulkUpdatePlan.isPending ? "Updating..." : "Update Plan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Suspend Dialog */}
+        <Dialog open={showBulkSuspendDialog} onOpenChange={setShowBulkSuspendDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bulk Suspend Users</DialogTitle>
+              <DialogDescription>
+                Suspend {selectedUsers.size} user(s). Provide a reason for suspension.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="suspend-reason">Reason (Optional)</Label>
+                <Input
+                  id="suspend-reason"
+                  placeholder="e.g., Policy violation"
+                  value={bulkSuspendReason}
+                  onChange={(e) => setBulkSuspendReason(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBulkSuspendDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleBulkSuspend}
+                disabled={bulkSuspend.isPending}
+              >
+                {bulkSuspend.isPending ? "Suspending..." : "Suspend Users"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
