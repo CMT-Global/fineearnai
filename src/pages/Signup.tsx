@@ -121,6 +121,18 @@ const Signup = () => {
         return;
       }
 
+      // Track registration location (non-blocking)
+      if (authData.user) {
+        try {
+          await supabase.functions.invoke("track-user-registration", {
+            body: { userId: authData.user.id }
+          });
+        } catch (error) {
+          console.error("Failed to track registration location:", error);
+          // Don't block signup flow
+        }
+      }
+
       // If signup successful and we have a referral code, link the user to referrer
       if (authData.user && referralCode) {
         try {
