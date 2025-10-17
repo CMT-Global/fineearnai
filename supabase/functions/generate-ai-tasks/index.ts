@@ -54,6 +54,160 @@ Deno.serve(async (req) => {
 
     console.log(`Generating ${quantity} ${difficulty} ${category} tasks`);
 
+    // ============================================================================
+    // PHASE 2: CATEGORY-SPECIFIC SIMPLIFICATION TEMPLATES
+    // ============================================================================
+    
+    interface CategoryTemplate {
+      promptFormat: string;
+      responseFormat: string;
+      maxPromptWords: { easy: number; medium: number; hard: number };
+      maxResponseWords: { easy: number; medium: number; hard: number };
+      examples: { easy: string; medium: string; hard: string };
+      vocabulary: string[];
+    }
+
+    const categoryTemplates: Record<string, CategoryTemplate> = {
+      'Sentiment Analysis': {
+        promptFormat: 'Present a simple statement about [topic]. Ask: Is this positive or negative?',
+        responseFormat: 'Option A: [positive interpretation] | Option B: [negative interpretation]',
+        maxPromptWords: { easy: 15, medium: 25, hard: 35 },
+        maxResponseWords: { easy: 8, medium: 12, hard: 18 },
+        examples: {
+          easy: 'Prompt: "I love this place!" Is this positive or negative? | A: Positive feeling | B: Negative feeling',
+          medium: 'Prompt: "The service was okay, but I expected more for the price." What is the overall sentiment? | A: Mostly disappointed | B: Satisfied with value',
+          hard: 'Prompt: "While the product functions adequately, the user experience leaves room for improvement." What is the sentiment? | A: Cautiously positive | B: Politely critical'
+        },
+        vocabulary: ['happy', 'sad', 'good', 'bad', 'positive', 'negative', 'like', 'dislike', 'love', 'hate', 'satisfied', 'disappointed', 'pleased', 'upset']
+      },
+      'Hotel Review Sentiment': {
+        promptFormat: 'Show a hotel guest comment. Ask: Was the guest happy or unhappy?',
+        responseFormat: 'Option A: [guest satisfied] | Option B: [guest dissatisfied]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 10, medium: 15, hard: 20 },
+        examples: {
+          easy: 'Prompt: "The room was clean and the bed was comfortable." How did the guest feel? | A: Happy with the room | B: Unhappy with the room',
+          medium: 'Prompt: "The hotel location was great, but the breakfast was cold and limited." Overall impression? | A: Positive despite issues | B: Negative experience',
+          hard: 'Prompt: "The staff demonstrated exceptional professionalism, though the dated facilities somewhat diminished the experience." Guest sentiment? | A: Appreciative but reserved | B: Critical but fair'
+        },
+        vocabulary: ['clean', 'dirty', 'comfortable', 'uncomfortable', 'friendly', 'rude', 'helpful', 'unhelpful', 'nice', 'terrible', 'excellent', 'poor', 'good', 'bad']
+      },
+      'Product Review Sentiment': {
+        promptFormat: 'Show a customer comment about a product. Ask: Did they like it or not?',
+        responseFormat: 'Option A: [customer likes product] | Option B: [customer dislikes product]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 10, medium: 15, hard: 20 },
+        examples: {
+          easy: 'Prompt: "This phone works great. I use it every day." Customer opinion? | A: Likes the product | B: Dislikes the product',
+          medium: 'Prompt: "The quality is good but it arrived late and the packaging was damaged." Overall review? | A: Satisfied with product | B: Unhappy with experience',
+          hard: 'Prompt: "While the build quality meets expectations, the price point seems inconsistent with comparable alternatives." Customer view? | A: Values quality over price | B: Questions value proposition'
+        },
+        vocabulary: ['works', 'broken', 'quality', 'cheap', 'expensive', 'worth', 'waste', 'useful', 'useless', 'good', 'bad', 'recommend', 'avoid', 'buy', 'return']
+      },
+      'Business Review Sentiment': {
+        promptFormat: 'Show a review about a business or service. Ask: Is this a good or bad review?',
+        responseFormat: 'Option A: [positive review] | Option B: [negative review]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 10, medium: 15, hard: 20 },
+        examples: {
+          easy: 'Prompt: "Fast service and good prices. I will come back." Review type? | A: Good review | B: Bad review',
+          medium: 'Prompt: "The staff tried hard but the wait time was too long for what we ordered." Overall? | A: Appreciates effort | B: Disappointed overall',
+          hard: 'Prompt: "The establishment demonstrates potential, though operational inconsistencies suggest room for improvement." Assessment? | A: Constructive optimism | B: Measured criticism'
+        },
+        vocabulary: ['fast', 'slow', 'good', 'bad', 'expensive', 'cheap', 'friendly', 'rude', 'professional', 'unprofessional', 'recommend', 'avoid', 'satisfied', 'disappointed']
+      },
+      'Social Media Sentiment': {
+        promptFormat: 'Show a social media post or comment. Ask: What is the mood or feeling?',
+        responseFormat: 'Option A: [positive mood] | Option B: [negative mood]',
+        maxPromptWords: { easy: 15, medium: 25, hard: 35 },
+        maxResponseWords: { easy: 8, medium: 12, hard: 18 },
+        examples: {
+          easy: 'Prompt: "Best day ever! 😊" What is the mood? | A: Happy and excited | B: Sad and upset',
+          medium: 'Prompt: "Another Monday... at least the coffee is good ☕" Sentiment? | A: Making the best of it | B: Complaining about Monday',
+          hard: 'Prompt: "Fascinating how perspectives shift when circumstances change. Growth happens in unexpected ways." Tone? | A: Reflective and positive | B: Philosophical but uncertain'
+        },
+        vocabulary: ['happy', 'sad', 'excited', 'bored', 'angry', 'calm', 'positive', 'negative', 'fun', 'boring', 'love', 'hate', 'best', 'worst', 'good', 'bad']
+      },
+      'Customer Feedback Sentiment': {
+        promptFormat: 'Show customer feedback or complaint. Ask: Is the customer satisfied or not?',
+        responseFormat: 'Option A: [satisfied customer] | Option B: [dissatisfied customer]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 10, medium: 15, hard: 20 },
+        examples: {
+          easy: 'Prompt: "Thank you for fixing my problem so quickly!" Customer feeling? | A: Satisfied and grateful | B: Angry and upset',
+          medium: 'Prompt: "The issue was resolved but it took three calls to get help." Satisfaction level? | A: Problem solved, acceptable | B: Frustrated by process',
+          hard: 'Prompt: "While appreciating the eventual resolution, the initial response time raises concerns about support capacity." Overall sentiment? | A: Cautiously positive | B: Diplomatically critical'
+        },
+        vocabulary: ['satisfied', 'dissatisfied', 'happy', 'unhappy', 'helpful', 'unhelpful', 'quick', 'slow', 'resolved', 'unresolved', 'thank', 'complain', 'good', 'bad', 'pleased', 'disappointed']
+      },
+      'Fact Checking': {
+        promptFormat: 'Present a simple statement. Ask: Is this true or false?',
+        responseFormat: 'Option A: [true/accurate] | Option B: [false/inaccurate]',
+        maxPromptWords: { easy: 15, medium: 25, hard: 35 },
+        maxResponseWords: { easy: 8, medium: 12, hard: 18 },
+        examples: {
+          easy: 'Prompt: "Water freezes at 0 degrees Celsius." Is this true? | A: True statement | B: False statement',
+          medium: 'Prompt: "The Great Wall of China is visible from space with the naked eye." Fact or myth? | A: True, can be seen | B: False, common myth',
+          hard: 'Prompt: "Caffeine consumption demonstrably improves cognitive performance in all individuals regardless of tolerance." Accurate? | A: Scientifically supported | B: Oversimplified claim'
+        },
+        vocabulary: ['true', 'false', 'fact', 'myth', 'correct', 'wrong', 'real', 'fake', 'accurate', 'inaccurate', 'yes', 'no', 'right', 'incorrect']
+      },
+      'Tone Analysis': {
+        promptFormat: 'Show a message or statement. Ask: What is the tone or feeling?',
+        responseFormat: 'Option A: [tone type 1] | Option B: [tone type 2]',
+        maxPromptWords: { easy: 15, medium: 25, hard: 35 },
+        maxResponseWords: { easy: 8, medium: 12, hard: 18 },
+        examples: {
+          easy: 'Prompt: "Please help me when you can." What is the tone? | A: Polite request | B: Angry demand',
+          medium: 'Prompt: "I suppose that could work if we have no other options." Tone? | A: Reluctant acceptance | B: Enthusiastic agreement',
+          hard: 'Prompt: "One might consider alternative approaches given the current circumstances." Communication style? | A: Diplomatically suggestive | B: Assertively directive'
+        },
+        vocabulary: ['polite', 'rude', 'friendly', 'angry', 'formal', 'casual', 'happy', 'sad', 'calm', 'excited', 'serious', 'funny', 'professional', 'informal']
+      },
+      'Grammar Correction': {
+        promptFormat: 'Show two versions of a sentence. Ask: Which one is grammatically correct?',
+        responseFormat: 'Option A: [sentence version 1] | Option B: [sentence version 2]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 12, medium: 18, hard: 25 },
+        examples: {
+          easy: 'Prompt: Which sentence is correct? | A: She go to school every day. | B: She goes to school every day.',
+          medium: 'Prompt: Which is grammatically correct? | A: The team are working on the project. | B: The team is working on the project.',
+          hard: 'Prompt: Which sentence has correct grammar? | A: Neither of the proposals were acceptable to the committee. | B: Neither of the proposals was acceptable to the committee.'
+        },
+        vocabulary: ['correct', 'incorrect', 'right', 'wrong', 'proper', 'improper', 'grammar', 'sentence', 'word', 'spelling', 'punctuation']
+      },
+      'Summarization': {
+        promptFormat: 'Show a text and two summaries. Ask: Which summary is better or more accurate?',
+        responseFormat: 'Option A: [summary version 1] | Option B: [summary version 2]',
+        maxPromptWords: { easy: 30, medium: 45, hard: 60 },
+        maxResponseWords: { easy: 15, medium: 25, hard: 35 },
+        examples: {
+          easy: 'Prompt: "The store opens at 9am and closes at 6pm Monday to Friday. On weekends it opens at 10am." Best summary? | A: Store hours: 9am-6pm weekdays, 10am start weekends | B: The store has different opening times',
+          medium: 'Prompt: "The new policy requires employees to submit expense reports within 5 days. Managers must approve within 3 days. Late submissions need director approval." Key points? | A: Time limits for expense reports and approvals with escalation | B: Employees and managers handle expense reports',
+          hard: 'Prompt: "The research indicates correlation between variables, though causation remains unestablished. Further longitudinal studies would strengthen conclusions." Accurate summary? | A: Study shows relationship but cannot prove cause, needs more research | B: Research proves connection between variables'
+        },
+        vocabulary: ['summary', 'main', 'point', 'key', 'important', 'detail', 'brief', 'short', 'accurate', 'complete', 'missing', 'includes', 'covers', 'explains']
+      },
+      'Translation': {
+        promptFormat: 'Show a phrase in another language and two English translations. Ask: Which translation is more accurate?',
+        responseFormat: 'Option A: [translation 1] | Option B: [translation 2]',
+        maxPromptWords: { easy: 20, medium: 30, hard: 40 },
+        maxResponseWords: { easy: 10, medium: 15, hard: 22 },
+        examples: {
+          easy: 'Prompt: Spanish: "Buenos días" | A: Good morning | B: Good night',
+          medium: 'Prompt: French: "Je voudrais un café, s\'il vous plaît" | A: I would like a coffee, please | B: I want coffee now',
+          hard: 'Prompt: German: "Es tut mir leid, dass ich Sie warten ließ" | A: I am sorry that I kept you waiting | B: I apologize for the wait you experienced'
+        },
+        vocabulary: ['translation', 'meaning', 'accurate', 'correct', 'wrong', 'better', 'language', 'word', 'phrase', 'sentence', 'says', 'means']
+      }
+    };
+
+    // Get template for current category
+    const template = categoryTemplates[category];
+    if (!template) {
+      console.warn(`No template found for category: ${category}, using defaults`);
+    }
+
     // System prompt for task generation with language simplicity guidelines
     const systemPrompt = `You are an AI task generator for an AI training platform. Generate high-quality, nuanced tasks for the specified category.
 
@@ -85,68 +239,68 @@ Return ONLY a valid JSON array (no markdown, no explanation) with this exact str
   }
 ]`;
 
+    // Enhanced user prompt with category-specific templates
     const userPrompt = `Generate ${quantity} unique ${difficulty}-level tasks for the "${category}" category.
 
-Category Guidelines (use simple language for all):
-- Sentiment Analysis: Ask users to identify if a statement feels positive, negative, or neutral. Use everyday situations.
-- Hotel Review Sentiment: Present simple hotel reviews. Ask if the guest was happy or unhappy.
-- Product Review Sentiment: Show basic product reviews. Ask if the customer liked or disliked the product.
-- Business Review Sentiment: Present simple business reviews. Ask if the review is good or bad.
-- Social Media Sentiment: Show short social media posts. Ask if the mood is positive or negative.
-- Customer Feedback Sentiment: Present customer comments. Ask if the customer is satisfied or not.
-- Fact Checking: Present simple statements. Ask if they are true or false based on common knowledge.
-- Tone Analysis: Present messages. Ask about the feeling: friendly, angry, polite, rude, etc.
-- Grammar Correction: Show two versions of a sentence. Ask which one is correct.
-- Summarization: Show a short text and two summaries. Ask which one is better.
-- Translation: Show a phrase in another language and two translations. Ask which is more accurate.
+${template ? `
+CATEGORY-SPECIFIC TEMPLATE FOR "${category}":
+- Prompt Format: ${template.promptFormat}
+- Response Format: ${template.responseFormat}
+- Maximum Prompt Words: ${template.maxPromptWords[difficulty as keyof typeof template.maxPromptWords]} words
+- Maximum Response Words: ${template.maxResponseWords[difficulty as keyof typeof template.maxResponseWords]} words per option
+- Recommended Vocabulary: ${template.vocabulary.join(', ')}
+
+EXAMPLE FOR ${difficulty.toUpperCase()} LEVEL:
+${template.examples[difficulty as keyof typeof template.examples]}
+` : ''}
 
 DIFFICULTY-SPECIFIC LANGUAGE COMPLEXITY REQUIREMENTS:
 
 ${difficulty === 'easy' ? `
 EASY LEVEL (6th-grade reading level):
-- Vocabulary: Use only common words (1,000-2,000 most frequent English words)
+- Vocabulary: Use only common words from the template vocabulary list
 - Sentence length: Maximum 15 words per sentence
-- Prompt length: 20-40 words total
-- Response length: 10-20 words each
+- Prompt length: ${template ? template.maxPromptWords.easy : '20-40'} words total
+- Response length: ${template ? template.maxResponseWords.easy : '10-20'} words each
 - Concepts: Use everyday situations everyone understands (weather, food, family, work, shopping)
 - NO idioms, NO slang, NO cultural references, NO complex grammar
-- Example vocabulary to use: happy, sad, good, bad, like, dislike, easy, hard, yes, no, big, small
-- Example sentences: "The food was cold." "I like this hotel." "The service was slow."
+- Use the template format: ${template?.promptFormat || 'Keep it simple and direct'}
 - Make the difference between options clear but not too obvious` : ''}
 
 ${difficulty === 'medium' ? `
 MEDIUM LEVEL (9th-grade reading level):
-- Vocabulary: Use common words plus some descriptive terms (2,000-5,000 most frequent words)
+- Vocabulary: Use template vocabulary plus basic descriptive terms
 - Sentence length: Maximum 20 words per sentence
-- Prompt length: 40-60 words total
-- Response length: 15-30 words each
-- Concepts: Use familiar situations with some detail (customer service, travel, shopping experiences)
+- Prompt length: ${template ? template.maxPromptWords.medium : '40-60'} words total
+- Response length: ${template ? template.maxResponseWords.medium : '15-30'} words each
+- Concepts: Use familiar situations with some detail
 - Minimal idioms, avoid complex metaphors
-- Example vocabulary to use: excellent, terrible, disappointed, satisfied, comfortable, professional, quality, value
-- Example sentences: "The room was clean but the check-in took too long." "The product works well but costs too much."
+- Follow template format: ${template?.promptFormat || 'Add context that requires basic judgment'}
 - Include some context that requires basic judgment` : ''}
 
 ${difficulty === 'hard' ? `
 HARD LEVEL (12th-grade reading level):
-- Vocabulary: Can include more sophisticated terms but keep them clear (up to 10,000 frequent words)
+- Vocabulary: Template vocabulary plus more sophisticated but clear terms
 - Sentence length: Maximum 25 words per sentence
-- Prompt length: 60-80 words total
-- Response length: 20-40 words each
-- Concepts: Can include nuanced situations requiring careful judgment
+- Prompt length: ${template ? template.maxPromptWords.hard : '60-80'} words total
+- Response length: ${template ? template.maxResponseWords.hard : '20-40'} words each
+- Concepts: Nuanced situations requiring careful judgment
 - Can use some professional terminology when relevant
-- Example vocabulary to use: exceptional, subpar, ambiguous, inconsistent, comprehensive, adequate, commendable, concerning
-- Example sentences: "While the amenities met expectations, the inconsistent service quality created concerns."
+- Apply template format: ${template?.promptFormat || 'Require careful evaluation of subtle differences'}
 - Require careful evaluation of subtle differences` : ''}
 
 CRITICAL REQUIREMENTS FOR ALL LEVELS:
-1. Use direct, simple sentence structures (Subject-Verb-Object)
-2. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
-3. Use concrete, specific examples instead of abstract ideas
-4. Avoid double negatives ("not bad" → use "okay" or "good")
-5. Keep numbers and dates simple
-6. If using names, use common international names (Maria, John, Ahmed, Li)
-7. Both response options must be clearly written and easy to understand
-8. The differences between options should be genuine, not just word swaps`;
+1. Follow the category template format exactly: ${template?.promptFormat || 'Use clear structure'}
+2. Keep response options in template format: ${template?.responseFormat || 'Make options distinct'}
+3. Use direct, simple sentence structures (Subject-Verb-Object)
+4. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
+5. Use concrete, specific examples instead of abstract ideas
+6. Avoid double negatives ("not bad" → use "okay" or "good")
+7. Keep numbers and dates simple
+8. If using names, use common international names (Maria, John, Ahmed, Li)
+9. Both response options must be clearly written and easy to understand
+10. The differences between options should be genuine, not just word swaps
+11. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty as keyof typeof template.maxPromptWords] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty as keyof typeof template.maxResponseWords] || 'specified'} words each`;
 
     // Call Lovable AI Gateway
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -258,9 +412,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
       
       console.log(`[Attempt ${retryCount + 1}] Checking ${promptsToCheck.length} prompts for duplicates...`);
 
-      // ============================================================================
-      // STEP 1: Check for exact duplicate prompts
-      // ============================================================================
+      // Check for exact duplicate prompts
       const { data: existingTasks, error: checkError } = await supabase
         .from('ai_tasks')
         .select('prompt')
@@ -278,9 +430,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 
       console.log(`[Attempt ${retryCount + 1}] Found ${exactDuplicateCount} exact duplicate(s), ${uniqueTasks.length} passed exact check`);
 
-      // ============================================================================
-      // PHASE 4: SEMANTIC SIMILARITY CHECK
-      // ============================================================================
+      // Semantic similarity check
       if (uniqueTasks.length > 0) {
         console.log(`[Phase 4] Starting semantic similarity check for ${uniqueTasks.length} task(s)...`);
         
@@ -362,10 +512,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
         console.log(`✅ [Attempt ${retryCount + 1}] Successfully created ${insertedTasks.length} task(s). Remaining: ${remainingToGenerate}`);
       }
 
-      // ============================================================================
-      // PHASE 3: RETRY LOGIC - Generate more tasks if needed
-      // ============================================================================
-      
+      // Retry logic - Generate more tasks if needed
       if (remainingToGenerate > 0 && retryCount < maxRetries) {
         retryCount++;
         console.log(`🔄 Retrying generation for ${remainingToGenerate} remaining task(s) (Retry ${retryCount}/${maxRetries})`);
@@ -379,26 +526,21 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
         const allExistingPrompts = allExistingTasks?.map(t => t.prompt) || [];
         const promptExamples = allExistingPrompts.slice(-5).join('\n- ');
 
-        // Enhanced retry prompt with explicit avoidance instructions and language simplicity
+        // Enhanced retry prompt with template information
         const retryUserPrompt = `Generate ${remainingToGenerate} BRAND NEW unique ${difficulty}-level tasks for the "${category}" category.
 
 ⚠️ CRITICAL: The following prompts already exist in the database. You MUST generate completely different prompts:
 ${promptExamples ? `\nExisting prompt examples:\n- ${promptExamples}` : ''}
 
-Category Guidelines (use simple language):
-- Sentiment Analysis: Ask users to identify if a statement feels positive, negative, or neutral. Use everyday situations.
-- Hotel Review Sentiment: Present simple hotel reviews. Ask if the guest was happy or unhappy.
-- Product Review Sentiment: Show basic product reviews. Ask if the customer liked or disliked the product.
-- Business Review Sentiment: Present simple business reviews. Ask if the review is good or bad.
-- Social Media Sentiment: Show short social media posts. Ask if the mood is positive or negative.
-- Customer Feedback Sentiment: Present customer comments. Ask if the customer is satisfied or not.
-- Fact Checking: Present simple statements. Ask if they are true or false.
-- Tone Analysis: Present messages. Ask about the feeling: friendly, angry, polite, rude.
-- Grammar Correction: Show two sentence versions. Ask which is correct.
-- Summarization: Show text and two summaries. Ask which is better.
-- Translation: Show a phrase and two translations. Ask which is more accurate.
+${template ? `
+CATEGORY TEMPLATE FOR "${category}":
+- Format: ${template.promptFormat}
+- Vocabulary: ${template.vocabulary.slice(0, 10).join(', ')}
+- Max Prompt Words: ${template.maxPromptWords[difficulty as keyof typeof template.maxPromptWords]}
+- Max Response Words: ${template.maxResponseWords[difficulty as keyof typeof template.maxResponseWords]}
+` : ''}
 
-LANGUAGE SIMPLICITY REQUIREMENTS (apply ${difficulty} level guidelines from main prompt):
+LANGUAGE SIMPLICITY REQUIREMENTS (apply ${difficulty} level guidelines):
 - Use simple, everyday vocabulary appropriate for non-native speakers
 - Keep sentences short and clear (max ${difficulty === 'easy' ? '15' : difficulty === 'medium' ? '20' : '25'} words)
 - Avoid idioms, slang, and cultural references
@@ -410,7 +552,7 @@ Make sure your NEW prompts are:
 2. Use different contexts, situations, and wording
 3. Cover different aspects of the ${category} category
 4. Maintain ${difficulty} difficulty level
-5. Follow all language simplicity guidelines`;
+5. Follow all language simplicity and template guidelines`;
 
         // Call AI for retry generation
         const retryAiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
