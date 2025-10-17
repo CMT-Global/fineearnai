@@ -70,73 +70,73 @@ Deno.serve(async (req) => {
     const categoryTemplates: Record<string, CategoryTemplate> = {
       'Sentiment Analysis': {
         promptFormat: 'Present a simple statement about [topic]. Ask: Is this positive or negative?',
-        responseFormat: 'Option A: [positive interpretation] | Option B: [negative interpretation]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 15, medium: 25, hard: 35 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
-          easy: 'Prompt: "I love this place!" Is this positive or negative? | A: Positive feeling | B: Negative feeling',
-          medium: 'Prompt: "The service was okay, but I expected more for the price." What is the overall sentiment? | A: Mostly disappointed | B: Satisfied with value',
-          hard: 'Prompt: "While the product functions adequately, the user experience leaves room for improvement." What is the sentiment? | A: Cautiously positive | B: Politely critical'
+          easy: 'Prompt: "I love this place!" Is this positive or negative? | A: Positive | B: Negative',
+          medium: 'Prompt: "The service was okay, but I expected more for the price." What is the overall sentiment? | A: Positive | B: Negative',
+          hard: 'Prompt: "While the product functions adequately, the user experience leaves room for improvement." What is the sentiment? | A: Positive | B: Negative'
         },
         vocabulary: ['happy', 'sad', 'good', 'bad', 'positive', 'negative', 'like', 'dislike', 'love', 'hate', 'satisfied', 'disappointed', 'pleased', 'upset']
       },
       'Hotel Review Sentiment': {
         promptFormat: 'Show a hotel guest comment. Ask: Was the guest happy or unhappy?',
-        responseFormat: 'Option A: [guest satisfied] | Option B: [guest dissatisfied]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 20, medium: 30, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "The room was clean and the bed was comfortable." How did the guest feel? | A: Happy with the room | B: Unhappy with the room',
-          medium: 'Prompt: "The hotel location was great, but the breakfast was cold and limited." Overall impression? | A: Positive despite issues | B: Negative experience',
-          hard: 'Prompt: "The staff demonstrated exceptional professionalism, though the dated facilities somewhat diminished the experience." Guest sentiment? | A: Appreciative but reserved | B: Critical but fair'
+          easy: 'Prompt: "The room was clean and the bed was comfortable." How did the guest feel? | A: Positive | B: Negative',
+          medium: 'Prompt: "The hotel location was great, but the breakfast was cold and limited." Overall impression? | A: Positive | B: Negative',
+          hard: 'Prompt: "The staff demonstrated exceptional professionalism, though the dated facilities somewhat diminished the experience." Guest sentiment? | A: Positive | B: Negative'
         },
         vocabulary: ['clean', 'dirty', 'comfortable', 'uncomfortable', 'friendly', 'rude', 'helpful', 'unhelpful', 'nice', 'terrible', 'excellent', 'poor', 'good', 'bad']
       },
       'Product Review Sentiment': {
         promptFormat: 'Show a customer comment about a product. Ask: Did they like it or not?',
-        responseFormat: 'Option A: [customer likes product] | Option B: [customer dislikes product]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 20, medium: 30, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "This phone works great. I use it every day." Customer opinion? | A: Likes the product | B: Dislikes the product',
-          medium: 'Prompt: "The quality is good but it arrived late and the packaging was damaged." Overall review? | A: Satisfied with product | B: Unhappy with experience',
-          hard: 'Prompt: "While the build quality meets expectations, the price point seems inconsistent with comparable alternatives." Customer view? | A: Values quality over price | B: Questions value proposition'
+          easy: 'Prompt: "This phone works great. I use it every day." Customer opinion? | A: Positive | B: Negative',
+          medium: 'Prompt: "The quality is good but it arrived late and the packaging was damaged." Overall review? | A: Positive | B: Negative',
+          hard: 'Prompt: "While the build quality meets expectations, the price point seems inconsistent with comparable alternatives." Customer view? | A: Positive | B: Negative'
         },
         vocabulary: ['works', 'broken', 'quality', 'cheap', 'expensive', 'worth', 'waste', 'useful', 'useless', 'good', 'bad', 'recommend', 'avoid', 'buy', 'return']
       },
       'Business Review Sentiment': {
         promptFormat: 'Show a review about a business or service. Ask: Is this a good or bad review?',
-        responseFormat: 'Option A: [positive review] | Option B: [negative review]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 20, medium: 30, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "Fast service and good prices. I will come back." Review type? | A: Good review | B: Bad review',
-          medium: 'Prompt: "The staff tried hard but the wait time was too long for what we ordered." Overall? | A: Appreciates effort | B: Disappointed overall',
-          hard: 'Prompt: "The establishment demonstrates potential, though operational inconsistencies suggest room for improvement." Assessment? | A: Constructive optimism | B: Measured criticism'
+          easy: 'Prompt: "Fast service and good prices. I will come back." Review type? | A: Positive | B: Negative',
+          medium: 'Prompt: "The staff tried hard but the wait time was too long for what we ordered." Overall? | A: Positive | B: Negative',
+          hard: 'Prompt: "The establishment demonstrates potential, though operational inconsistencies suggest room for improvement." Assessment? | A: Positive | B: Negative'
         },
         vocabulary: ['fast', 'slow', 'good', 'bad', 'expensive', 'cheap', 'friendly', 'rude', 'professional', 'unprofessional', 'recommend', 'avoid', 'satisfied', 'disappointed']
       },
       'Social Media Sentiment': {
         promptFormat: 'Show a social media post or comment. Ask: What is the mood or feeling?',
-        responseFormat: 'Option A: [positive mood] | Option B: [negative mood]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 15, medium: 25, hard: 35 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
-          easy: 'Prompt: "Best day ever! 😊" What is the mood? | A: Happy and excited | B: Sad and upset',
-          medium: 'Prompt: "Another Monday... at least the coffee is good ☕" Sentiment? | A: Making the best of it | B: Complaining about Monday',
-          hard: 'Prompt: "Fascinating how perspectives shift when circumstances change. Growth happens in unexpected ways." Tone? | A: Reflective and positive | B: Philosophical but uncertain'
+          easy: 'Prompt: "Best day ever! 😊" What is the mood? | A: Positive | B: Negative',
+          medium: 'Prompt: "Another Monday... at least the coffee is good ☕" Sentiment? | A: Positive | B: Negative',
+          hard: 'Prompt: "Fascinating how perspectives shift when circumstances change. Growth happens in unexpected ways." Tone? | A: Positive | B: Negative'
         },
         vocabulary: ['happy', 'sad', 'excited', 'bored', 'angry', 'calm', 'positive', 'negative', 'fun', 'boring', 'love', 'hate', 'best', 'worst', 'good', 'bad']
       },
       'Customer Feedback Sentiment': {
         promptFormat: 'Show customer feedback or complaint. Ask: Is the customer satisfied or not?',
-        responseFormat: 'Option A: [satisfied customer] | Option B: [dissatisfied customer]',
+        responseFormat: 'Option A: Positive | Option B: Negative',
         maxPromptWords: { easy: 20, medium: 30, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "Thank you for fixing my problem so quickly!" Customer feeling? | A: Satisfied and grateful | B: Angry and upset',
-          medium: 'Prompt: "The issue was resolved but it took three calls to get help." Satisfaction level? | A: Problem solved, acceptable | B: Frustrated by process',
-          hard: 'Prompt: "While appreciating the eventual resolution, the initial response time raises concerns about support capacity." Overall sentiment? | A: Cautiously positive | B: Diplomatically critical'
+          easy: 'Prompt: "Thank you for fixing my problem so quickly!" Customer feeling? | A: Positive | B: Negative',
+          medium: 'Prompt: "The issue was resolved but it took three calls to get help." Satisfaction level? | A: Positive | B: Negative',
+          hard: 'Prompt: "While appreciating the eventual resolution, the initial response time raises concerns about support capacity." Overall sentiment? | A: Positive | B: Negative'
         },
         vocabulary: ['satisfied', 'dissatisfied', 'happy', 'unhappy', 'helpful', 'unhelpful', 'quick', 'slow', 'resolved', 'unresolved', 'thank', 'complain', 'good', 'bad', 'pleased', 'disappointed']
       },
@@ -218,6 +218,7 @@ CRITICAL RULES:
 4. The correct answer should not be obvious (but not impossible either)
 5. Tasks should require genuine human judgment
 6. USE SIMPLE, CLEAR LANGUAGE appropriate for non-native English speakers
+7. FOR SENTIMENT CATEGORIES: Response options MUST be EXACTLY "Positive" and "Negative" - NO other words or descriptions allowed
 
 LANGUAGE SIMPLICITY GUIDELINES (CRITICAL):
 - Use common, everyday vocabulary
@@ -292,8 +293,9 @@ HARD LEVEL (12th-grade reading level):
 CRITICAL REQUIREMENTS FOR ALL LEVELS:
 1. Follow the category template format exactly: ${template?.promptFormat || 'Use clear structure'}
 2. Keep response options in template format: ${template?.responseFormat || 'Make options distinct'}
-3. Use direct, simple sentence structures (Subject-Verb-Object)
-4. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
+3. ${category.includes('Sentiment') || category.includes('Review') || category.includes('Feedback') ? '⚠️ MANDATORY: For sentiment tasks, response_a and response_b MUST be EXACTLY "Positive" and "Negative" - no other words, descriptions, or variations allowed!' : 'Make options clearly distinct and easy to understand'}
+4. Use direct, simple sentence structures (Subject-Verb-Object)
+5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
 5. Use concrete, specific examples instead of abstract ideas
 6. Avoid double negatives ("not bad" → use "okay" or "good")
 7. Keep numbers and dates simple
