@@ -554,6 +554,9 @@ export type Database = {
           id: string
           last_activity: string | null
           last_login: string | null
+          last_login_country: string | null
+          last_login_country_name: string | null
+          last_login_ip: string | null
           last_task_date: string | null
           membership_plan: string
           payeer_payout_addresses: Json | null
@@ -561,6 +564,9 @@ export type Database = {
           plan_expires_at: string | null
           referral_code: string
           referred_by: string | null
+          registration_country: string | null
+          registration_country_name: string | null
+          registration_ip: string | null
           skips_today: number
           tasks_completed_today: number
           total_earned: number
@@ -579,6 +585,9 @@ export type Database = {
           id: string
           last_activity?: string | null
           last_login?: string | null
+          last_login_country?: string | null
+          last_login_country_name?: string | null
+          last_login_ip?: string | null
           last_task_date?: string | null
           membership_plan?: string
           payeer_payout_addresses?: Json | null
@@ -586,6 +595,9 @@ export type Database = {
           plan_expires_at?: string | null
           referral_code: string
           referred_by?: string | null
+          registration_country?: string | null
+          registration_country_name?: string | null
+          registration_ip?: string | null
           skips_today?: number
           tasks_completed_today?: number
           total_earned?: number
@@ -604,6 +616,9 @@ export type Database = {
           id?: string
           last_activity?: string | null
           last_login?: string | null
+          last_login_country?: string | null
+          last_login_country_name?: string | null
+          last_login_ip?: string | null
           last_task_date?: string | null
           membership_plan?: string
           payeer_payout_addresses?: Json | null
@@ -611,6 +626,9 @@ export type Database = {
           plan_expires_at?: string | null
           referral_code?: string
           referred_by?: string | null
+          registration_country?: string | null
+          registration_country_name?: string | null
+          registration_ip?: string | null
           skips_today?: number
           tasks_completed_today?: number
           total_earned?: number
