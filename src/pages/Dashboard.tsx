@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { 
   Crown, 
   Sparkles,
@@ -130,6 +131,16 @@ const Dashboard = () => {
             </div>
           </div>
         </header>
+
+        {/* Free Account Upgrade Banner */}
+        {profile.membership_plan === 'free' && (
+          <div className="mx-4 lg:mx-8 mt-6">
+            <FreeAccountUpgradeBanner 
+              userId={user.id}
+              onUpgrade={() => navigate("/plans")}
+            />
+          </div>
+        )}
 
         {/* Plan Expiry Alerts */}
         {planStatus && planStatus.status === 'expired' && (
