@@ -139,11 +139,17 @@ Difficulty levels:
     }
 
     // ============================================================================
-    // PHASE 2: CHECK FOR DUPLICATE PROMPTS BEFORE INSERTION
+    // PHASE 2 & 3: DUPLICATE CHECKING WITH RETRY LOGIC
     // ============================================================================
     
-    // Prepare tasks for insertion
-    const tasksToInsert = tasks.map(task => ({
+    let allInsertedTasks: any[] = [];
+    let totalDuplicatesSkipped = 0;
+    let remainingToGenerate = quantity;
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    // Prepare initial tasks for insertion
+    let tasksToInsert = tasks.map(task => ({
       prompt: task.prompt,
       response_a: task.response_a,
       response_b: task.response_b,
@@ -153,70 +159,165 @@ Difficulty levels:
       is_active: true,
     }));
 
-    // Extract all prompts to check for duplicates
-    const promptsToCheck = tasksToInsert.map(t => t.prompt);
-    
-    console.log(`Checking ${promptsToCheck.length} prompts for duplicates...`);
+    // Main generation loop with retry logic
+    while (remainingToGenerate > 0 && retryCount <= maxRetries) {
+      // Extract all prompts to check for duplicates
+      const promptsToCheck = tasksToInsert.map(t => t.prompt);
+      
+      console.log(`[Attempt ${retryCount + 1}] Checking ${promptsToCheck.length} prompts for duplicates...`);
 
-    // Query database for existing prompts
-    const { data: existingTasks, error: checkError } = await supabase
-      .from('ai_tasks')
-      .select('prompt')
-      .in('prompt', promptsToCheck);
+      // Query database for existing prompts (including newly inserted ones)
+      const { data: existingTasks, error: checkError } = await supabase
+        .from('ai_tasks')
+        .select('prompt')
+        .in('prompt', promptsToCheck);
 
-    if (checkError) {
-      console.error('Error checking for duplicate prompts:', checkError);
-      throw checkError;
-    }
+      if (checkError) {
+        console.error('Error checking for duplicate prompts:', checkError);
+        throw checkError;
+      }
 
-    // Create a Set of existing prompts for fast lookup
-    const existingPrompts = new Set(existingTasks?.map(t => t.prompt) || []);
-    
-    // Filter out duplicates - only keep tasks with unique prompts
-    const uniqueTasks = tasksToInsert.filter(t => !existingPrompts.has(t.prompt));
-    const duplicateCount = tasksToInsert.length - uniqueTasks.length;
+      // Create a Set of existing prompts for fast lookup
+      const existingPrompts = new Set(existingTasks?.map(t => t.prompt) || []);
+      
+      // Filter out duplicates - only keep tasks with unique prompts
+      const uniqueTasks = tasksToInsert.filter(t => !existingPrompts.has(t.prompt));
+      const duplicateCount = tasksToInsert.length - uniqueTasks.length;
+      totalDuplicatesSkipped += duplicateCount;
 
-    console.log(`Found ${duplicateCount} duplicate(s), inserting ${uniqueTasks.length} unique task(s)`);
+      console.log(`[Attempt ${retryCount + 1}] Found ${duplicateCount} duplicate(s), ${uniqueTasks.length} unique task(s)`);
 
-    // Handle case where all tasks are duplicates
-    if (uniqueTasks.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          tasksCreated: 0,
-          duplicatesSkipped: duplicateCount,
-          tasks: [],
-          message: 'All generated tasks were duplicates. No new tasks created.'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+      // Insert unique tasks if any
+      if (uniqueTasks.length > 0) {
+        const { data: insertedTasks, error: insertError } = await supabase
+          .from('ai_tasks')
+          .insert(uniqueTasks)
+          .select();
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
         }
-      );
+
+        allInsertedTasks.push(...insertedTasks);
+        remainingToGenerate -= insertedTasks.length;
+        
+        console.log(`✅ [Attempt ${retryCount + 1}] Successfully created ${insertedTasks.length} task(s). Remaining: ${remainingToGenerate}`);
+      }
+
+      // ============================================================================
+      // PHASE 3: RETRY LOGIC - Generate more tasks if needed
+      // ============================================================================
+      
+      if (remainingToGenerate > 0 && retryCount < maxRetries) {
+        retryCount++;
+        console.log(`🔄 Retrying generation for ${remainingToGenerate} remaining task(s) (Retry ${retryCount}/${maxRetries})`);
+
+        // Get all existing prompts to avoid them in retry
+        const { data: allExistingTasks } = await supabase
+          .from('ai_tasks')
+          .select('prompt')
+          .eq('category', category);
+
+        const allExistingPrompts = allExistingTasks?.map(t => t.prompt) || [];
+        const promptExamples = allExistingPrompts.slice(-5).join('\n- ');
+
+        // Enhanced retry prompt with explicit avoidance instructions
+        const retryUserPrompt = `Generate ${remainingToGenerate} BRAND NEW unique ${difficulty}-level tasks for the "${category}" category.
+
+⚠️ CRITICAL: The following prompts already exist in the database. You MUST generate completely different prompts:
+${promptExamples ? `\nExisting prompt examples:\n- ${promptExamples}` : ''}
+
+Category Guidelines:
+- Sentiment Analysis: Classify overall sentiment (positive/negative/neutral) of statements
+- Hotel Review Sentiment: Analyze hotel review sentiment
+- Product Review Sentiment: Evaluate product review sentiment  
+- Business Review Sentiment: Assess business review sentiment
+- Social Media Sentiment: Determine social media post sentiment
+- Customer Feedback Sentiment: Analyze customer feedback sentiment
+- Fact Checking: Verify if statements are factually accurate
+- Tone Analysis: Identify the tone (formal/casual/aggressive/cautious/etc)
+- Grammar Correction: Choose the grammatically correct version
+- Summarization: Select the better summary
+- Translation: Choose the better translation
+
+Make sure your prompts are:
+1. Completely different from existing examples
+2. Use different scenarios, contexts, and wording
+3. Cover different aspects of the ${category} category
+4. Maintain ${difficulty} difficulty level`;
+
+        // Call AI for retry generation
+        const retryAiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: retryUserPrompt }
+            ],
+            temperature: 0.9, // Slightly higher temperature for more variety
+          }),
+        });
+
+        if (!retryAiResponse.ok) {
+          console.error(`Retry AI call failed: ${retryAiResponse.status}`);
+          break; // Exit retry loop on API failure
+        }
+
+        const retryAiData = await retryAiResponse.json();
+        const retryGeneratedContent = retryAiData.choices[0].message.content;
+
+        // Parse retry response
+        try {
+          const cleaned = retryGeneratedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          const retryTasks = JSON.parse(cleaned);
+          
+          if (Array.isArray(retryTasks) && retryTasks.length > 0) {
+            tasksToInsert = retryTasks.map(task => ({
+              prompt: task.prompt,
+              response_a: task.response_a,
+              response_b: task.response_b,
+              correct_response: task.correct_response,
+              category,
+              difficulty,
+              is_active: true,
+            }));
+          } else {
+            console.error('Retry AI did not return valid tasks');
+            break;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse retry AI response');
+          break;
+        }
+      } else {
+        break; // Exit loop if no more retries or remaining tasks
+      }
     }
 
-    // Insert only unique tasks
-    const { data: insertedTasks, error: insertError } = await supabase
-      .from('ai_tasks')
-      .insert(uniqueTasks)
-      .select();
+    // Final response
+    const finalMessage = remainingToGenerate > 0
+      ? `Created ${allInsertedTasks.length}/${quantity} tasks, skipped ${totalDuplicatesSkipped} duplicate(s). Could not generate ${remainingToGenerate} more unique task(s) after ${retryCount} retries.`
+      : totalDuplicatesSkipped > 0
+        ? `Created ${allInsertedTasks.length} tasks, skipped ${totalDuplicatesSkipped} duplicate(s) with ${retryCount} retry attempts.`
+        : `Created ${allInsertedTasks.length} tasks successfully.`;
 
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      throw insertError;
-    }
-
-    console.log(`✅ Successfully created ${insertedTasks.length} unique task(s)`);
+    console.log(`✅ Final result: ${finalMessage}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        tasksCreated: insertedTasks.length,
-        duplicatesSkipped: duplicateCount,
-        tasks: insertedTasks,
-        message: duplicateCount > 0 
-          ? `Created ${insertedTasks.length} tasks, skipped ${duplicateCount} duplicate(s)`
-          : `Created ${insertedTasks.length} tasks`
+        tasksCreated: allInsertedTasks.length,
+        tasksRequested: quantity,
+        duplicatesSkipped: totalDuplicatesSkipped,
+        retriesUsed: retryCount,
+        tasks: allInsertedTasks,
+        message: finalMessage
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
