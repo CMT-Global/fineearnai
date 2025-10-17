@@ -138,7 +138,11 @@ Difficulty levels:
       throw new Error('AI did not return valid tasks array');
     }
 
-    // Insert tasks into database
+    // ============================================================================
+    // PHASE 2: CHECK FOR DUPLICATE PROMPTS BEFORE INSERTION
+    // ============================================================================
+    
+    // Prepare tasks for insertion
     const tasksToInsert = tasks.map(task => ({
       prompt: task.prompt,
       response_a: task.response_a,
@@ -149,9 +153,52 @@ Difficulty levels:
       is_active: true,
     }));
 
+    // Extract all prompts to check for duplicates
+    const promptsToCheck = tasksToInsert.map(t => t.prompt);
+    
+    console.log(`Checking ${promptsToCheck.length} prompts for duplicates...`);
+
+    // Query database for existing prompts
+    const { data: existingTasks, error: checkError } = await supabase
+      .from('ai_tasks')
+      .select('prompt')
+      .in('prompt', promptsToCheck);
+
+    if (checkError) {
+      console.error('Error checking for duplicate prompts:', checkError);
+      throw checkError;
+    }
+
+    // Create a Set of existing prompts for fast lookup
+    const existingPrompts = new Set(existingTasks?.map(t => t.prompt) || []);
+    
+    // Filter out duplicates - only keep tasks with unique prompts
+    const uniqueTasks = tasksToInsert.filter(t => !existingPrompts.has(t.prompt));
+    const duplicateCount = tasksToInsert.length - uniqueTasks.length;
+
+    console.log(`Found ${duplicateCount} duplicate(s), inserting ${uniqueTasks.length} unique task(s)`);
+
+    // Handle case where all tasks are duplicates
+    if (uniqueTasks.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          tasksCreated: 0,
+          duplicatesSkipped: duplicateCount,
+          tasks: [],
+          message: 'All generated tasks were duplicates. No new tasks created.'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      );
+    }
+
+    // Insert only unique tasks
     const { data: insertedTasks, error: insertError } = await supabase
       .from('ai_tasks')
-      .insert(tasksToInsert)
+      .insert(uniqueTasks)
       .select();
 
     if (insertError) {
@@ -159,13 +206,17 @@ Difficulty levels:
       throw insertError;
     }
 
-    console.log(`Successfully created ${insertedTasks.length} tasks`);
+    console.log(`✅ Successfully created ${insertedTasks.length} unique task(s)`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         tasksCreated: insertedTasks.length,
-        tasks: insertedTasks
+        duplicatesSkipped: duplicateCount,
+        tasks: insertedTasks,
+        message: duplicateCount > 0 
+          ? `Created ${insertedTasks.length} tasks, skipped ${duplicateCount} duplicate(s)`
+          : `Created ${insertedTasks.length} tasks`
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
