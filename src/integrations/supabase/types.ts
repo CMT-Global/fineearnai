@@ -1273,10 +1273,6 @@ export type Database = {
         }
         Returns: Json
       }
-      check_refresh_system_health: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1284,15 +1280,6 @@ export type Database = {
       get_available_task_count: {
         Args: { p_user_id: string }
         Returns: number
-      }
-      get_materialized_view_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          last_refresh: string
-          row_count: number
-          size_bytes: number
-          view_name: string
-        }[]
       }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
@@ -1364,50 +1351,12 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_user_management_by_id: {
-        Args: { p_user_id: string }
-        Returns: {
-          account_status: Database["public"]["Enums"]["account_status"]
-          active_referrals: number
-          country: string
-          created_at: string
-          deposit_wallet_balance: number
-          earnings_wallet_balance: number
-          email: string
-          full_name: string
-          id: string
-          last_activity: string
-          last_login: string
-          membership_plan: string
-          pending_withdrawals: number
-          phone: string
-          plan_expires_at: string
-          tasks_today: number
-          total_deposits: number
-          total_earned: number
-          total_referral_earnings: number
-          total_referrals: number
-          total_tasks_completed: number
-          total_transactions: number
-          total_withdrawal_requests: number
-          total_withdrawals: number
-          username: string
-        }[]
-      }
-      get_user_management_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
-      }
-      manual_refresh_user_management_view: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
       }
       process_commission_atomic: {
         Args: {
@@ -1424,46 +1373,6 @@ export type Database = {
       refresh_materialized_views: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      search_users_optimized: {
-        Args: {
-          p_country_filter?: string
-          p_limit?: number
-          p_offset?: number
-          p_plan_filter?: string
-          p_search_term?: string
-          p_sort_by?: string
-          p_sort_order?: string
-          p_status_filter?: Database["public"]["Enums"]["account_status"]
-        }
-        Returns: {
-          account_status: Database["public"]["Enums"]["account_status"]
-          active_referrals: number
-          country: string
-          created_at: string
-          deposit_wallet_balance: number
-          earnings_wallet_balance: number
-          email: string
-          full_name: string
-          id: string
-          last_activity: string
-          last_login: string
-          membership_plan: string
-          pending_withdrawals: number
-          phone: string
-          plan_expires_at: string
-          tasks_today: number
-          total_count: number
-          total_deposits: number
-          total_earned: number
-          total_referral_earnings: number
-          total_referrals: number
-          total_tasks_completed: number
-          total_transactions: number
-          total_withdrawal_requests: number
-          total_withdrawals: number
-          username: string
-        }[]
       }
     }
     Enums: {
