@@ -54,15 +54,25 @@ Deno.serve(async (req) => {
 
     console.log(`Generating ${quantity} ${difficulty} ${category} tasks`);
 
-    // System prompt for task generation
+    // System prompt for task generation with language simplicity guidelines
     const systemPrompt = `You are an AI task generator for an AI training platform. Generate high-quality, nuanced tasks for the specified category.
 
 CRITICAL RULES:
 1. Generate EXACTLY the number of tasks requested
 2. Each task must be unique and realistic
 3. Responses must be meaningfully different (not just opposite)
-4. The correct answer should not be obvious
+4. The correct answer should not be obvious (but not impossible either)
 5. Tasks should require genuine human judgment
+6. USE SIMPLE, CLEAR LANGUAGE appropriate for non-native English speakers
+
+LANGUAGE SIMPLICITY GUIDELINES (CRITICAL):
+- Use common, everyday vocabulary
+- Keep sentences short and direct (max 20 words per sentence)
+- Avoid idioms, slang, cultural references, and complex metaphors
+- Use active voice instead of passive voice
+- Break complex ideas into simple parts
+- Avoid technical jargon unless it's the specific task requirement
+- Use concrete examples instead of abstract concepts
 
 Return ONLY a valid JSON array (no markdown, no explanation) with this exact structure:
 [
@@ -77,23 +87,66 @@ Return ONLY a valid JSON array (no markdown, no explanation) with this exact str
 
     const userPrompt = `Generate ${quantity} unique ${difficulty}-level tasks for the "${category}" category.
 
-Category Guidelines:
-- Sentiment Analysis: Classify overall sentiment (positive/negative/neutral) of statements
-- Hotel Review Sentiment: Analyze hotel review sentiment
-- Product Review Sentiment: Evaluate product review sentiment  
-- Business Review Sentiment: Assess business review sentiment
-- Social Media Sentiment: Determine social media post sentiment
-- Customer Feedback Sentiment: Analyze customer feedback sentiment
-- Fact Checking: Verify if statements are factually accurate
-- Tone Analysis: Identify the tone (formal/casual/aggressive/cautious/etc)
-- Grammar Correction: Choose the grammatically correct version
-- Summarization: Select the better summary
-- Translation: Choose the better translation
+Category Guidelines (use simple language for all):
+- Sentiment Analysis: Ask users to identify if a statement feels positive, negative, or neutral. Use everyday situations.
+- Hotel Review Sentiment: Present simple hotel reviews. Ask if the guest was happy or unhappy.
+- Product Review Sentiment: Show basic product reviews. Ask if the customer liked or disliked the product.
+- Business Review Sentiment: Present simple business reviews. Ask if the review is good or bad.
+- Social Media Sentiment: Show short social media posts. Ask if the mood is positive or negative.
+- Customer Feedback Sentiment: Present customer comments. Ask if the customer is satisfied or not.
+- Fact Checking: Present simple statements. Ask if they are true or false based on common knowledge.
+- Tone Analysis: Present messages. Ask about the feeling: friendly, angry, polite, rude, etc.
+- Grammar Correction: Show two versions of a sentence. Ask which one is correct.
+- Summarization: Show a short text and two summaries. Ask which one is better.
+- Translation: Show a phrase in another language and two translations. Ask which is more accurate.
 
-Difficulty levels:
-- easy: Clear, straightforward cases
-- medium: Some nuance required
-- hard: Subtle distinctions, expert judgment needed`;
+DIFFICULTY-SPECIFIC LANGUAGE COMPLEXITY REQUIREMENTS:
+
+${difficulty === 'easy' ? `
+EASY LEVEL (6th-grade reading level):
+- Vocabulary: Use only common words (1,000-2,000 most frequent English words)
+- Sentence length: Maximum 15 words per sentence
+- Prompt length: 20-40 words total
+- Response length: 10-20 words each
+- Concepts: Use everyday situations everyone understands (weather, food, family, work, shopping)
+- NO idioms, NO slang, NO cultural references, NO complex grammar
+- Example vocabulary to use: happy, sad, good, bad, like, dislike, easy, hard, yes, no, big, small
+- Example sentences: "The food was cold." "I like this hotel." "The service was slow."
+- Make the difference between options clear but not too obvious` : ''}
+
+${difficulty === 'medium' ? `
+MEDIUM LEVEL (9th-grade reading level):
+- Vocabulary: Use common words plus some descriptive terms (2,000-5,000 most frequent words)
+- Sentence length: Maximum 20 words per sentence
+- Prompt length: 40-60 words total
+- Response length: 15-30 words each
+- Concepts: Use familiar situations with some detail (customer service, travel, shopping experiences)
+- Minimal idioms, avoid complex metaphors
+- Example vocabulary to use: excellent, terrible, disappointed, satisfied, comfortable, professional, quality, value
+- Example sentences: "The room was clean but the check-in took too long." "The product works well but costs too much."
+- Include some context that requires basic judgment` : ''}
+
+${difficulty === 'hard' ? `
+HARD LEVEL (12th-grade reading level):
+- Vocabulary: Can include more sophisticated terms but keep them clear (up to 10,000 frequent words)
+- Sentence length: Maximum 25 words per sentence
+- Prompt length: 60-80 words total
+- Response length: 20-40 words each
+- Concepts: Can include nuanced situations requiring careful judgment
+- Can use some professional terminology when relevant
+- Example vocabulary to use: exceptional, subpar, ambiguous, inconsistent, comprehensive, adequate, commendable, concerning
+- Example sentences: "While the amenities met expectations, the inconsistent service quality created concerns."
+- Require careful evaluation of subtle differences` : ''}
+
+CRITICAL REQUIREMENTS FOR ALL LEVELS:
+1. Use direct, simple sentence structures (Subject-Verb-Object)
+2. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
+3. Use concrete, specific examples instead of abstract ideas
+4. Avoid double negatives ("not bad" → use "okay" or "good")
+5. Keep numbers and dates simple
+6. If using names, use common international names (Maria, John, Ahmed, Li)
+7. Both response options must be clearly written and easy to understand
+8. The differences between options should be genuine, not just word swaps`;
 
     // Call Lovable AI Gateway
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -326,30 +379,38 @@ Difficulty levels:
         const allExistingPrompts = allExistingTasks?.map(t => t.prompt) || [];
         const promptExamples = allExistingPrompts.slice(-5).join('\n- ');
 
-        // Enhanced retry prompt with explicit avoidance instructions
+        // Enhanced retry prompt with explicit avoidance instructions and language simplicity
         const retryUserPrompt = `Generate ${remainingToGenerate} BRAND NEW unique ${difficulty}-level tasks for the "${category}" category.
 
 ⚠️ CRITICAL: The following prompts already exist in the database. You MUST generate completely different prompts:
 ${promptExamples ? `\nExisting prompt examples:\n- ${promptExamples}` : ''}
 
-Category Guidelines:
-- Sentiment Analysis: Classify overall sentiment (positive/negative/neutral) of statements
-- Hotel Review Sentiment: Analyze hotel review sentiment
-- Product Review Sentiment: Evaluate product review sentiment  
-- Business Review Sentiment: Assess business review sentiment
-- Social Media Sentiment: Determine social media post sentiment
-- Customer Feedback Sentiment: Analyze customer feedback sentiment
-- Fact Checking: Verify if statements are factually accurate
-- Tone Analysis: Identify the tone (formal/casual/aggressive/cautious/etc)
-- Grammar Correction: Choose the grammatically correct version
-- Summarization: Select the better summary
-- Translation: Choose the better translation
+Category Guidelines (use simple language):
+- Sentiment Analysis: Ask users to identify if a statement feels positive, negative, or neutral. Use everyday situations.
+- Hotel Review Sentiment: Present simple hotel reviews. Ask if the guest was happy or unhappy.
+- Product Review Sentiment: Show basic product reviews. Ask if the customer liked or disliked the product.
+- Business Review Sentiment: Present simple business reviews. Ask if the review is good or bad.
+- Social Media Sentiment: Show short social media posts. Ask if the mood is positive or negative.
+- Customer Feedback Sentiment: Present customer comments. Ask if the customer is satisfied or not.
+- Fact Checking: Present simple statements. Ask if they are true or false.
+- Tone Analysis: Present messages. Ask about the feeling: friendly, angry, polite, rude.
+- Grammar Correction: Show two sentence versions. Ask which is correct.
+- Summarization: Show text and two summaries. Ask which is better.
+- Translation: Show a phrase and two translations. Ask which is more accurate.
 
-Make sure your prompts are:
-1. Completely different from existing examples
-2. Use different scenarios, contexts, and wording
+LANGUAGE SIMPLICITY REQUIREMENTS (apply ${difficulty} level guidelines from main prompt):
+- Use simple, everyday vocabulary appropriate for non-native speakers
+- Keep sentences short and clear (max ${difficulty === 'easy' ? '15' : difficulty === 'medium' ? '20' : '25'} words)
+- Avoid idioms, slang, and cultural references
+- Use active voice and concrete examples
+- Make both response options clear and easy to understand
+
+Make sure your NEW prompts are:
+1. Completely different scenarios from existing examples above
+2. Use different contexts, situations, and wording
 3. Cover different aspects of the ${category} category
-4. Maintain ${difficulty} difficulty level`;
+4. Maintain ${difficulty} difficulty level
+5. Follow all language simplicity guidelines`;
 
         // Call AI for retry generation
         const retryAiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
