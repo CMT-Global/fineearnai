@@ -71,74 +71,74 @@ Deno.serve(async (req) => {
       'Sentiment Analysis': {
         promptFormat: 'Present a simple statement about [topic]. Ask: Is this positive or negative?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 25, hard: 35 },
+        maxPromptWords: { easy: 25, medium: 35, hard: 35 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
           easy: 'Prompt: "My new internet connection is working well. The speed is decent and the price is fair for what I get." Is this positive or negative? | A: Positive | B: Negative',
-          medium: 'Prompt: "The service was okay, but I expected more for the price." What is the overall sentiment? | A: Positive | B: Negative',
+          medium: 'Prompt: "The customer service was friendly and helpful, but the wait time was nearly an hour and my issue still needs a follow-up call." What is the overall sentiment? | A: Positive | B: Negative',
           hard: 'Prompt: "While the product functions adequately, the user experience leaves room for improvement." What is the sentiment? | A: Positive | B: Negative'
         },
-        vocabulary: ['happy', 'sad', 'good', 'bad', 'positive', 'negative', 'like', 'dislike', 'satisfied', 'disappointed', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable']
+        vocabulary: ['happy', 'sad', 'good', 'bad', 'positive', 'negative', 'like', 'dislike', 'satisfied', 'disappointed', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable', 'but', 'however', 'although', 'despite']
       },
       'Hotel Review Sentiment': {
         promptFormat: 'Show a hotel guest comment. Ask: Was the guest happy or unhappy?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 30, hard: 40 },
+        maxPromptWords: { easy: 25, medium: 40, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
           easy: 'Prompt: "The hotel room was clean enough. The bed was comfortable and the wifi worked well. I got what I paid for." How did the guest feel? | A: Positive | B: Negative',
-          medium: 'Prompt: "The hotel location was great, but the breakfast was cold and limited." Overall impression? | A: Positive | B: Negative',
+          medium: 'Prompt: "The hotel room was spacious and the location was perfect for downtown access. However, the air conditioning was noisy and the front desk took 20 minutes to check us in." Overall impression? | A: Positive | B: Negative',
           hard: 'Prompt: "The staff demonstrated exceptional professionalism, though the dated facilities somewhat diminished the experience." Guest sentiment? | A: Positive | B: Negative'
         },
-        vocabulary: ['clean', 'dirty', 'comfortable', 'uncomfortable', 'friendly', 'helpful', 'unhelpful', 'good', 'bad', 'decent', 'fair', 'okay', 'acceptable', 'worth']
+        vocabulary: ['clean', 'dirty', 'comfortable', 'uncomfortable', 'friendly', 'helpful', 'unhelpful', 'good', 'bad', 'decent', 'fair', 'okay', 'acceptable', 'worth', 'but', 'however', 'although', 'despite']
       },
       'Product Review Sentiment': {
         promptFormat: 'Show a customer comment about a product. Ask: Did they like it or not?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 30, hard: 40 },
+        maxPromptWords: { easy: 25, medium: 40, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
           easy: 'Prompt: "I bought this laptop for work three months ago. The battery lasts about 6 hours and it handles my tasks well enough. The price was fair." Customer opinion? | A: Positive | B: Negative',
-          medium: 'Prompt: "The quality is good but it arrived late and the packaging was damaged." Overall review? | A: Positive | B: Negative',
+          medium: 'Prompt: "The camera quality on this phone is excellent and the battery easily lasts all day. But the screen scratches very easily and customer support was not helpful when I contacted them about it." Overall review? | A: Positive | B: Negative',
           hard: 'Prompt: "While the build quality meets expectations, the price point seems inconsistent with comparable alternatives." Customer view? | A: Positive | B: Negative'
         },
-        vocabulary: ['works', 'quality', 'worth', 'useful', 'good', 'bad', 'recommend', 'avoid', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'handles']
+        vocabulary: ['works', 'quality', 'worth', 'useful', 'good', 'bad', 'recommend', 'avoid', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'handles', 'but', 'however', 'although', 'despite']
       },
       'Business Review Sentiment': {
         promptFormat: 'Show a review about a business or service. Ask: Is this a good or bad review?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 30, hard: 40 },
+        maxPromptWords: { easy: 25, medium: 40, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
           easy: 'Prompt: "The car repair shop fixed my issue in two days. The mechanic explained what was wrong and the bill matched the estimate. Fair price for the work done." Review type? | A: Positive | B: Negative',
-          medium: 'Prompt: "The staff tried hard but the wait time was too long for what we ordered." Overall? | A: Positive | B: Negative',
+          medium: 'Prompt: "The restaurant has a nice atmosphere and the staff was polite. However, the food came out cold and my order was missing items. When I mentioned it, they fixed it but seemed annoyed." Overall? | A: Positive | B: Negative',
           hard: 'Prompt: "The establishment demonstrates potential, though operational inconsistencies suggest room for improvement." Assessment? | A: Positive | B: Negative'
         },
-        vocabulary: ['good', 'bad', 'professional', 'helpful', 'recommend', 'avoid', 'satisfied', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'fixed']
+        vocabulary: ['good', 'bad', 'professional', 'helpful', 'recommend', 'avoid', 'satisfied', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'fixed', 'but', 'however', 'although', 'despite']
       },
       'Social Media Sentiment': {
         promptFormat: 'Show a social media post or comment. Ask: What is the mood or feeling?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 25, hard: 35 },
+        maxPromptWords: { easy: 25, medium: 35, hard: 35 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
           easy: 'Prompt: "Got my tax refund today. The process was smoother than I expected and the amount was decent. Good start to the month." What is the mood? | A: Positive | B: Negative',
-          medium: 'Prompt: "Another Monday... at least the coffee is good ☕" Sentiment? | A: Positive | B: Negative',
+          medium: 'Prompt: "Just finished my first week at the new job. The team seems nice and the office is modern. But the commute is 90 minutes each way and I have to wake up at 5am. Not sure how long I can keep this up." Sentiment? | A: Positive | B: Negative',
           hard: 'Prompt: "Fascinating how perspectives shift when circumstances change. Growth happens in unexpected ways." Tone? | A: Positive | B: Negative'
         },
-        vocabulary: ['happy', 'sad', 'positive', 'negative', 'good', 'bad', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable', 'satisfied', 'disappointed']
+        vocabulary: ['happy', 'sad', 'positive', 'negative', 'good', 'bad', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable', 'satisfied', 'disappointed', 'but', 'however', 'although', 'despite']
       },
       'Customer Feedback Sentiment': {
         promptFormat: 'Show customer feedback or complaint. Ask: Is the customer satisfied or not?',
         responseFormat: 'Option A: Positive | Option B: Negative',
-        maxPromptWords: { easy: 25, medium: 30, hard: 40 },
+        maxPromptWords: { easy: 25, medium: 40, hard: 40 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
           easy: 'Prompt: "The support team answered my email within 24 hours and solved my billing issue. They explained each step clearly and gave me a refund. Fair outcome." Customer feeling? | A: Positive | B: Negative',
-          medium: 'Prompt: "The issue was resolved but it took three calls to get help." Satisfaction level? | A: Positive | B: Negative',
+          medium: 'Prompt: "The technician was professional and fixed my internet within the scheduled time window. But the appointment was rescheduled twice before they came, and I had to take time off work three times." Satisfaction level? | A: Positive | B: Negative',
           hard: 'Prompt: "While appreciating the eventual resolution, the initial response time raises concerns about support capacity." Overall sentiment? | A: Positive | B: Negative'
         },
-        vocabulary: ['satisfied', 'dissatisfied', 'helpful', 'unhelpful', 'resolved', 'unresolved', 'good', 'bad', 'pleased', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'answered']
+        vocabulary: ['satisfied', 'dissatisfied', 'helpful', 'unhelpful', 'resolved', 'unresolved', 'good', 'bad', 'pleased', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'answered', 'but', 'however', 'although', 'despite']
       },
       'Fact Checking': {
         promptFormat: 'Present a simple statement. Ask: Is this true or false?',
@@ -273,15 +273,20 @@ EASY LEVEL (Adult-friendly, accessible tasks for ages 21-45):
 - Make the sentiment clear but not too obvious - require some thought` : ''}
 
 ${difficulty === 'medium' ? `
-MEDIUM LEVEL (9th-grade reading level):
-- Vocabulary: Use template vocabulary plus basic descriptive terms
+MEDIUM LEVEL (Mixed-Sentiment Analysis for ages 21-45):
+- Target: Adults who can evaluate conflicting information
+- Vocabulary: Template vocabulary plus contrast words ('but', 'however', 'although', 'despite', 'while', 'yet')
 - Sentence length: Maximum 20 words per sentence
-- Prompt length: ${template ? template.maxPromptWords.medium : '40-60'} words total
-- Response length: ${template ? template.maxResponseWords.medium : '15-30'} words each
-- Concepts: Use familiar situations with some detail
-- Minimal idioms, avoid complex metaphors
-- Follow template format: ${template?.promptFormat || 'Add context that requires basic judgment'}
-- Include some context that requires basic judgment` : ''}
+- Prompt length: ${template ? template.maxPromptWords.medium : '35-40'} words total (longer to accommodate both sentiments)
+- Response length: ${template ? template.maxResponseWords.medium : '12-15'} words each
+- CRITICAL REQUIREMENT: Prompt MUST contain BOTH positive AND negative elements
+- Structure: Present at least one positive aspect AND at least one negative aspect
+- Context: Professional/consumer scenarios (workplace, purchases, services, appointments)
+- User Task: Determine which sentiment is STRONGER overall (not just present)
+- Use transition words to show contrast between positive and negative elements
+- Make both sentiments substantial - not just token mentions
+- Follow template format: ${template?.promptFormat || 'Present balanced but leaning scenario'}
+- Avoid making the answer too obvious - require weighing both sides` : ''}
 
 ${difficulty === 'hard' ? `
 HARD LEVEL (12th-grade reading level):
