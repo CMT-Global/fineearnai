@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserStore } from "@/stores/userStore";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
@@ -58,23 +57,6 @@ const Tasks = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  
-  // ✅ Phase 3: Zustand for UI state only (dailyLimitReached flag)
-  const { 
-    dailyLimitReached, 
-    setDailyLimitReached,
-    checkAndResetDaily
-  } = useUserStore();
-
-  // Check for date change and reset daily limit flag if needed
-  useEffect(() => {
-    if (user) {
-      checkAndResetDaily();
-      // Check every 60 seconds for date changes
-      const interval = setInterval(checkAndResetDaily, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [user, checkAndResetDaily]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -95,7 +77,8 @@ const Tasks = () => {
     }
   }, [user]);
 
-  // ✅ Phase 1 & 3: React Query handles ALL server data (user stats from get-next-task)
+  // ✅ Phase 2: React Query handles ALL server data (user stats from get-next-task)
+  // Database is the single source of truth for task resets
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
     queryKey: ['next-task', user?.id],
     queryFn: async () => {
@@ -111,12 +94,12 @@ const Tasks = () => {
       // (daily limit, no tasks, plan expired, etc.)
       return data;
     },
-    enabled: !!user, // Fetch whenever user is authenticated (checkAndResetDaily handles date changes)
-    staleTime: 10000,    // Cache for 10 seconds (tasks don't change that fast)
+    enabled: !!user,
+    staleTime: 10000,    // Cache for 10 seconds
     gcTime: 60000,       // Keep in cache for 1 minute
   });
 
-  // ✅ Phase 3: Real-time subscription to profile updates (React Query invalidation only)
+  // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
   useEffect(() => {
     if (!user) return;
 
@@ -158,17 +141,11 @@ const Tasks = () => {
     };
   }, [user, queryClient]);
 
-  // Check limit flag on page load to prevent bypass illusion
-  useEffect(() => {
-    if (dailyLimitReached) {
-      console.log('🔒 Daily limit already reached - blocking task interface');
-    }
-  }, [dailyLimitReached]);
-
   const currentTask = taskData?.task || null;
-  // ✅ Phase 3: All user stats from React Query (taskData)
+  // ✅ Phase 2: All user stats from React Query (taskData)
+  // Database is single source of truth - API tells us if limit is reached
   const userStats = taskData?.userStats || null;
-  const isDailyLimitReached = dailyLimitReached || taskData?.error === 'daily_limit_reached';
+  const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
 
   // Skip mutation
   const skipMutation = useMutation({
@@ -194,18 +171,12 @@ const Tasks = () => {
   });
 
   const handleSkipTask = useCallback(async () => {
-    // Prevent skipping if daily limit reached
-    if (isDailyLimitReached) {
-      toast.info("Daily limit reached. Please upgrade or come back tomorrow.");
-      return;
-    }
-    
     if (!userStats || userStats.skipsToday >= userStats.skipLimit) {
       toast.error("Daily skip limit reached!");
       return;
     }
     skipMutation.mutate();
-  }, [userStats, skipMutation, isDailyLimitReached]);
+  }, [userStats, skipMutation]);
 
   // Submit mutation with optimistic updates
   const submitMutation = useMutation({
@@ -259,14 +230,10 @@ const Tasks = () => {
       const remainingAfter = Math.max(0, dailyLimit - tasksCompletedAfter);
       
       if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
-        // Set persistent flag IMMEDIATELY to prevent bypass illusion
-        setDailyLimitReached(true);
-        console.log('🔒 Daily limit reached - setting persistent flag');
-        
-        // Daily limit reached - show congratulatory message and set query data
+        // Daily limit reached - show congratulatory message
         toast.success("Congratulations! You've completed all your tasks for today!");
         
-        // Immediately set query data to show daily limit UI
+        // Set query data to show daily limit UI
         queryClient.setQueryData(['next-task', user?.id], {
           success: false,
           error: 'daily_limit_reached',
@@ -307,16 +274,10 @@ const Tasks = () => {
   });
 
   const handleSubmitAnswer = useCallback(async (response: string) => {
-    // Prevent submission if daily limit reached
-    if (isDailyLimitReached) {
-      toast.info("Daily limit reached. Please upgrade or come back tomorrow.");
-      return;
-    }
-    
     if (!currentTask) return;
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
-  }, [currentTask, startTime, submitMutation, isDailyLimitReached]);
+  }, [currentTask, startTime, submitMutation]);
 
   if (loading || !profile) {
     return (
@@ -370,7 +331,7 @@ const Tasks = () => {
           {/* Task Interface or Loading Skeleton */}
           {isLoadingTask ? (
             <TaskSkeleton />
-          ) : dailyLimitReached || isDailyLimitReached ? (
+          ) : isDailyLimitReached ? (
             <DailyLimitReached
               tasksCompleted={userStats?.tasksCompletedToday || 0}
               dailyLimit={userStats?.dailyLimit || 0}
@@ -382,7 +343,7 @@ const Tasks = () => {
               task={currentTask}
               onSubmit={handleSubmitAnswer}
               onSkip={handleSkipTask}
-              isSubmitting={submitMutation.isPending || isDailyLimitReached}
+              isSubmitting={submitMutation.isPending}
               feedback={feedback}
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
