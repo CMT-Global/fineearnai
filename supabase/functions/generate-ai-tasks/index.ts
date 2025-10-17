@@ -139,14 +139,53 @@ Difficulty levels:
     }
 
     // ============================================================================
-    // PHASE 2 & 3: DUPLICATE CHECKING WITH RETRY LOGIC
+    // PHASE 2, 3 & 4: DUPLICATE CHECKING WITH RETRY LOGIC & SEMANTIC SIMILARITY
     // ============================================================================
     
+    // Helper function to generate embeddings
+    const generateEmbedding = async (text: string): Promise<number[]> => {
+      const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: text,
+        }),
+      });
+
+      if (!embeddingResponse.ok) {
+        throw new Error('Failed to generate embedding');
+      }
+
+      const embeddingData = await embeddingResponse.json();
+      return embeddingData.data[0].embedding;
+    };
+
+    // Helper function to calculate cosine similarity
+    const cosineSimilarity = (a: number[], b: number[]): number => {
+      let dotProduct = 0;
+      let normA = 0;
+      let normB = 0;
+      
+      for (let i = 0; i < a.length; i++) {
+        dotProduct += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+      }
+      
+      return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    };
+
     let allInsertedTasks: any[] = [];
     let totalDuplicatesSkipped = 0;
+    let totalSemanticDuplicatesSkipped = 0;
     let remainingToGenerate = quantity;
     const maxRetries = 3;
     let retryCount = 0;
+    const SIMILARITY_THRESHOLD = 0.90; // 90% similarity threshold
 
     // Prepare initial tasks for insertion
     let tasksToInsert = tasks.map(task => ({
@@ -166,7 +205,9 @@ Difficulty levels:
       
       console.log(`[Attempt ${retryCount + 1}] Checking ${promptsToCheck.length} prompts for duplicates...`);
 
-      // Query database for existing prompts (including newly inserted ones)
+      // ============================================================================
+      // STEP 1: Check for exact duplicate prompts
+      // ============================================================================
       const { data: existingTasks, error: checkError } = await supabase
         .from('ai_tasks')
         .select('prompt')
@@ -177,15 +218,78 @@ Difficulty levels:
         throw checkError;
       }
 
-      // Create a Set of existing prompts for fast lookup
       const existingPrompts = new Set(existingTasks?.map(t => t.prompt) || []);
-      
-      // Filter out duplicates - only keep tasks with unique prompts
-      const uniqueTasks = tasksToInsert.filter(t => !existingPrompts.has(t.prompt));
-      const duplicateCount = tasksToInsert.length - uniqueTasks.length;
-      totalDuplicatesSkipped += duplicateCount;
+      let uniqueTasks = tasksToInsert.filter(t => !existingPrompts.has(t.prompt));
+      const exactDuplicateCount = tasksToInsert.length - uniqueTasks.length;
+      totalDuplicatesSkipped += exactDuplicateCount;
 
-      console.log(`[Attempt ${retryCount + 1}] Found ${duplicateCount} duplicate(s), ${uniqueTasks.length} unique task(s)`);
+      console.log(`[Attempt ${retryCount + 1}] Found ${exactDuplicateCount} exact duplicate(s), ${uniqueTasks.length} passed exact check`);
+
+      // ============================================================================
+      // PHASE 4: SEMANTIC SIMILARITY CHECK
+      // ============================================================================
+      if (uniqueTasks.length > 0) {
+        console.log(`[Phase 4] Starting semantic similarity check for ${uniqueTasks.length} task(s)...`);
+        
+        // Get recent existing prompts from the same category for comparison
+        const { data: recentTasks } = await supabase
+          .from('ai_tasks')
+          .select('prompt')
+          .eq('category', category)
+          .order('created_at', { ascending: false })
+          .limit(50); // Check against 50 most recent tasks in category
+
+        if (recentTasks && recentTasks.length > 0) {
+          const semanticallyUniqueTasks: any[] = [];
+          let semanticDuplicatesInBatch = 0;
+
+          // Process each unique task for semantic similarity
+          for (const task of uniqueTasks) {
+            try {
+              // Generate embedding for new task prompt
+              const newTaskEmbedding = await generateEmbedding(task.prompt);
+              let isTooSimilar = false;
+
+              // Compare with a sample of existing tasks (check first 10 for efficiency)
+              const tasksToCompare = recentTasks.slice(0, 10);
+              
+              for (const existingTask of tasksToCompare) {
+                // Generate embedding for existing task
+                const existingEmbedding = await generateEmbedding(existingTask.prompt);
+                
+                // Calculate cosine similarity
+                const similarity = cosineSimilarity(newTaskEmbedding, existingEmbedding);
+                
+                if (similarity >= SIMILARITY_THRESHOLD) {
+                  console.log(`  ⚠️ Semantic duplicate detected (${(similarity * 100).toFixed(1)}% similar):`);
+                  console.log(`    New: "${task.prompt.substring(0, 60)}..."`);
+                  console.log(`    Existing: "${existingTask.prompt.substring(0, 60)}..."`);
+                  isTooSimilar = true;
+                  semanticDuplicatesInBatch++;
+                  break; // No need to check further
+                }
+              }
+
+              if (!isTooSimilar) {
+                semanticallyUniqueTasks.push(task);
+              }
+            } catch (embeddingError) {
+              console.error('  ⚠️ Embedding generation failed, keeping task:', embeddingError);
+              // On embedding error, keep the task (fail open)
+              semanticallyUniqueTasks.push(task);
+            }
+          }
+
+          totalSemanticDuplicatesSkipped += semanticDuplicatesInBatch;
+          uniqueTasks = semanticallyUniqueTasks;
+          
+          console.log(`[Phase 4] Filtered out ${semanticDuplicatesInBatch} semantic duplicate(s), ${uniqueTasks.length} truly unique`);
+        } else {
+          console.log(`[Phase 4] No existing tasks to compare, skipping semantic check`);
+        }
+      }
+
+      console.log(`[Attempt ${retryCount + 1}] Final unique count: ${uniqueTasks.length} task(s)`);
 
       // Insert unique tasks if any
       if (uniqueTasks.length > 0) {
@@ -302,9 +406,9 @@ Make sure your prompts are:
 
     // Final response
     const finalMessage = remainingToGenerate > 0
-      ? `Created ${allInsertedTasks.length}/${quantity} tasks, skipped ${totalDuplicatesSkipped} duplicate(s). Could not generate ${remainingToGenerate} more unique task(s) after ${retryCount} retries.`
-      : totalDuplicatesSkipped > 0
-        ? `Created ${allInsertedTasks.length} tasks, skipped ${totalDuplicatesSkipped} duplicate(s) with ${retryCount} retry attempts.`
+      ? `Created ${allInsertedTasks.length}/${quantity} tasks. Skipped ${totalDuplicatesSkipped} exact duplicate(s) and ${totalSemanticDuplicatesSkipped} semantic duplicate(s). Could not generate ${remainingToGenerate} more unique task(s) after ${retryCount} retries.`
+      : (totalDuplicatesSkipped > 0 || totalSemanticDuplicatesSkipped > 0)
+        ? `Created ${allInsertedTasks.length} tasks. Skipped ${totalDuplicatesSkipped} exact duplicate(s) and ${totalSemanticDuplicatesSkipped} semantic duplicate(s) with ${retryCount} retry attempts.`
         : `Created ${allInsertedTasks.length} tasks successfully.`;
 
     console.log(`✅ Final result: ${finalMessage}`);
@@ -314,7 +418,9 @@ Make sure your prompts are:
         success: true, 
         tasksCreated: allInsertedTasks.length,
         tasksRequested: quantity,
-        duplicatesSkipped: totalDuplicatesSkipped,
+        exactDuplicatesSkipped: totalDuplicatesSkipped,
+        semanticDuplicatesSkipped: totalSemanticDuplicatesSkipped,
+        totalDuplicatesSkipped: totalDuplicatesSkipped + totalSemanticDuplicatesSkipped,
         retriesUsed: retryCount,
         tasks: allInsertedTasks,
         message: finalMessage
