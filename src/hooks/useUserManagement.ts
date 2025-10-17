@@ -28,44 +28,129 @@ export interface UserFilters {
 export const useUserManagement = () => {
   const queryClient = useQueryClient();
 
-  // Fetch user list with optimized search
+  // Fetch user list with direct queries (simplified, real-time)
   const useUserList = (filters: UserFilters, page: number = 1, limit: number = 20) => {
     return useQuery({
       queryKey: ['admin-users', filters, page, limit],
       queryFn: async () => {
-        const { data, error } = await supabase.rpc('search_users_optimized', {
-          p_search_term: filters.searchTerm || null,
-          p_plan_filter: filters.planFilter === 'all' ? null : filters.planFilter,
-          p_status_filter: filters.statusFilter === 'all' ? null : (filters.statusFilter as 'active' | 'banned' | 'suspended' | null),
-          p_country_filter: filters.countryFilter || null,
-          p_sort_by: filters.sortBy || 'created_at',
-          p_sort_order: filters.sortOrder || 'DESC',
-          p_limit: limit,
-          p_offset: (page - 1) * limit
-        });
+        // Build query with direct Supabase client
+        let query = supabase
+          .from('profiles')
+          .select(`
+            id,
+            username,
+            email,
+            full_name,
+            country,
+            phone,
+            membership_plan,
+            account_status,
+            deposit_wallet_balance,
+            earnings_wallet_balance,
+            total_earned,
+            plan_expires_at,
+            created_at,
+            last_login,
+            last_activity,
+            tasks_completed_today
+          `, { count: 'exact' });
+
+        // Apply search filter
+        if (filters.searchTerm) {
+          query = query.or(`username.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,full_name.ilike.%${filters.searchTerm}%`);
+        }
+
+        // Apply plan filter
+        if (filters.planFilter && filters.planFilter !== 'all') {
+          query = query.eq('membership_plan', filters.planFilter);
+        }
+
+        // Apply status filter
+        if (filters.statusFilter && filters.statusFilter !== 'all') {
+          query = query.eq('account_status', filters.statusFilter as any);
+        }
+
+        // Apply country filter
+        if (filters.countryFilter) {
+          query = query.ilike('country', `%${filters.countryFilter}%`);
+        }
+
+        // Apply sorting and pagination
+        const { data, error, count } = await query
+          .order(filters.sortBy || 'created_at', { ascending: filters.sortOrder === 'ASC' })
+          .range((page - 1) * limit, page * limit - 1);
 
         if (error) throw error;
         
         return {
           users: data || [],
-          totalCount: data?.[0]?.total_count || 0,
-          totalPages: Math.ceil((data?.[0]?.total_count || 0) / limit)
+          totalCount: count || 0,
+          totalPages: Math.ceil((count || 0) / limit)
         };
       },
       staleTime: 30000, // 30 seconds
     });
   };
 
-  // Fetch platform statistics
+  // Fetch platform statistics with direct queries (real-time)
   const useUserStats = () => {
     return useQuery({
       queryKey: ['admin-user-stats'],
       queryFn: async () => {
-        const { data, error } = await supabase.rpc('get_user_management_stats');
-        if (error) throw error;
-        return data;
+        // Get all profiles with their balances
+        const { data: profiles, count } = await supabase
+          .from('profiles')
+          .select('account_status, membership_plan, deposit_wallet_balance, earnings_wallet_balance, total_earned', { count: 'exact' });
+        
+        // Get referral counts (active status)
+        const { count: referralCount } = await supabase
+          .from('referrals')
+          .select('*', { count: 'exact', head: true });
+        
+        // Get pending withdrawal counts
+        const { count: pendingWithdrawals } = await supabase
+          .from('withdrawal_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        
+        // Get total tasks completed
+        const { count: totalTasks } = await supabase
+          .from('task_completions')
+          .select('*', { count: 'exact', head: true });
+
+        // Get total deposits and withdrawals from transactions
+        const { data: transactions } = await supabase
+          .from('transactions')
+          .select('amount, type, status')
+          .in('type', ['deposit', 'withdrawal'])
+          .eq('status', 'completed');
+        
+        // Calculate aggregated stats
+        const stats = {
+          total_users: count || 0,
+          active_users: profiles?.filter(p => p.account_status === 'active').length || 0,
+          suspended_users: profiles?.filter(p => p.account_status === 'suspended').length || 0,
+          banned_users: profiles?.filter(p => p.account_status === 'banned').length || 0,
+          free_plan_users: profiles?.filter(p => p.membership_plan === 'free').length || 0,
+          paid_plan_users: profiles?.filter(p => p.membership_plan !== 'free').length || 0,
+          total_platform_balance: profiles?.reduce((sum, p) => 
+            sum + Number(p.deposit_wallet_balance || 0) + Number(p.earnings_wallet_balance || 0), 0
+          ) || 0,
+          total_earnings_paid: profiles?.reduce((sum, p) => 
+            sum + Number(p.total_earned || 0), 0
+          ) || 0,
+          total_deposits: transactions?.filter(t => t.type === 'deposit')
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0,
+          total_withdrawals: transactions?.filter(t => t.type === 'withdrawal')
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0,
+          active_referrals_count: referralCount || 0,
+          pending_withdrawals_count: pendingWithdrawals || 0,
+          total_tasks_completed: totalTasks || 0,
+        };
+        
+        return stats;
       },
-      staleTime: 60000, // 1 minute
+      staleTime: 30000, // 30 seconds for real-time data
     });
   };
 
