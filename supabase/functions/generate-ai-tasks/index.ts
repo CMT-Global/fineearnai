@@ -74,9 +74,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 35, hard: 45 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
-          easy: 'Prompt: "My new internet connection is working well. The speed is decent and the price is fair for what I get." Is this positive or negative? | A: Positive | B: Negative',
-          medium: 'Prompt: "The customer service was friendly and helpful, but the wait time was nearly an hour and my issue still needs a follow-up call." What is the overall sentiment? | A: Positive | B: Negative',
-          hard: 'Prompt: "The implementation appears to meet the basic requirements, though one might argue that the approach could be more efficient. The results are acceptable, relatively speaking, but there seems to be room for optimization in future iterations." What is the sentiment? | A: Positive | B: Negative'
+          easy: 'Prompt: "The internet connection is working well. Speed tests show good results. The price is fair and customer support responded in 3 hours." Is this positive or negative? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "The customer service was friendly and solved my issue quickly. But I had to wait 50 minutes on hold and call three times before reaching someone. The resolution was good though." Overall sentiment? | A: Positive | B: Negative [Mixed, requires weighing]',
+          hard: 'Prompt: "The implementation appears to meet basic requirements, though one might suggest the approach could be more efficient. The results are acceptable, relatively speaking, and there seems to be room for optimization." Sentiment? | A: Positive | B: Negative [Indirect negative]'
         },
         vocabulary: ['happy', 'sad', 'good', 'bad', 'positive', 'negative', 'like', 'dislike', 'satisfied', 'disappointed', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable', 'but', 'however', 'although', 'despite', 'could be better', 'room for improvement', 'appears to', 'seems to', 'relatively', 'somewhat', 'fairly']
       },
@@ -86,9 +86,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 40, hard: 50 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "The hotel room was clean enough. The bed was comfortable and the wifi worked well. I got what I paid for." How did the guest feel? | A: Positive | B: Negative',
-          medium: 'Prompt: "The hotel room was spacious and the location was perfect for downtown access. However, the air conditioning was noisy and the front desk took 20 minutes to check us in." Overall impression? | A: Positive | B: Negative',
-          hard: 'Prompt: "The accommodations were adequate for the price point, though one could argue the amenities appear somewhat dated compared to similar establishments. The service level tends to be acceptable during peak hours, relatively speaking, but there seems to be potential for enhancement." Guest sentiment? | A: Positive | B: Negative'
+          easy: 'Prompt: "The hotel room was clean and spacious. The bed was comfortable and wifi worked well. Staff were helpful with our requests. Good value for the price." Guest feeling? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "The hotel room was spacious and location was perfect for downtown. Staff were friendly. However, the air conditioning was broken, check-in took 45 minutes, and breakfast was cold." Overall? | A: Positive | B: Negative [2 positive, 3 negative = Requires weighing]',
+          hard: 'Prompt: "The accommodations appear adequate for the price point, though one might observe the amenities seem somewhat dated. The service level tends to be acceptable, relatively speaking, but there appears to be room for enhancement." Sentiment? | A: Positive | B: Negative [Indirect negative]'
         },
         vocabulary: ['clean', 'dirty', 'comfortable', 'uncomfortable', 'friendly', 'helpful', 'unhelpful', 'good', 'bad', 'decent', 'fair', 'okay', 'acceptable', 'worth', 'but', 'however', 'although', 'despite', 'could be better', 'room for improvement', 'appears to', 'seems to', 'relatively', 'somewhat', 'tends to']
       },
@@ -98,9 +98,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 40, hard: 50 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "I bought this laptop for work three months ago. The battery lasts about 6 hours and it handles my tasks well enough. The price was fair." Customer opinion? | A: Positive | B: Negative',
-          medium: 'Prompt: "The camera quality on this phone is excellent and the battery easily lasts all day. But the screen scratches very easily and customer support was not helpful when I contacted them about it." Overall review? | A: Positive | B: Negative',
-          hard: 'Prompt: "The device appears to function within acceptable parameters for this category. One might suggest the user interface could be more intuitive, though it tends to be fairly responsive in typical usage scenarios. The value proposition seems reasonable, relatively speaking." Customer view? | A: Positive | B: Negative'
+          easy: 'Prompt: "I bought this laptop three months ago. The battery lasts 7 hours and handles my tasks well. The keyboard is comfortable and the price was fair." Opinion? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "The camera quality on this phone is excellent and battery lasts all day. Screen is bright and clear. But it overheats during video calls, storage filled up quickly, and customer support was unhelpful." Overall? | A: Positive | B: Negative [3 positive, 3 negative = Balance]',
+          hard: 'Prompt: "The device appears to function within acceptable parameters. One might suggest the interface could be more intuitive, though it tends to be fairly responsive. The value proposition seems reasonable, relatively speaking." View? | A: Positive | B: Negative [Indirect cautious positive]'
         },
         vocabulary: ['works', 'quality', 'worth', 'useful', 'good', 'bad', 'recommend', 'avoid', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'handles', 'but', 'however', 'although', 'despite', 'could be better', 'room for improvement', 'appears to', 'seems to', 'relatively', 'somewhat', 'tends to', 'fairly']
       },
@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 40, hard: 50 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "The car repair shop fixed my issue in two days. The mechanic explained what was wrong and the bill matched the estimate. Fair price for the work done." Review type? | A: Positive | B: Negative',
-          medium: 'Prompt: "The restaurant has a nice atmosphere and the staff was polite. However, the food came out cold and my order was missing items. When I mentioned it, they fixed it but seemed annoyed." Overall? | A: Positive | B: Negative',
-          hard: 'Prompt: "The establishment appears to have potential in terms of location and concept. Service delivery tends to be adequate during off-peak hours, though operational efficiency could be enhanced. The overall experience seems acceptable for the market segment, relatively speaking." Assessment? | A: Positive | B: Negative'
+          easy: 'Prompt: "The car repair shop fixed my issue in two days. The mechanic explained everything clearly. The bill matched the estimate and the price was fair." Review? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "The restaurant has nice atmosphere and staff were polite and attentive. Food presentation was good. However, meals came out cold, order was wrong twice, and prices are high for the quality." Overall? | A: Positive | B: Negative [3 positive, 3 negative = Balance]',
+          hard: 'Prompt: "The establishment appears to have potential in terms of concept. Service delivery tends to be adequate during off-peak hours, though efficiency could be enhanced. The experience seems acceptable, relatively speaking." Assessment? | A: Positive | B: Negative [Indirect cautious positive]'
         },
         vocabulary: ['good', 'bad', 'professional', 'helpful', 'recommend', 'avoid', 'satisfied', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'reliable', 'fixed', 'but', 'however', 'although', 'despite', 'could be better', 'room for improvement', 'appears to', 'seems to', 'relatively', 'somewhat', 'tends to', 'potential for']
       },
@@ -122,9 +122,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 35, hard: 45 },
         maxResponseWords: { easy: 8, medium: 12, hard: 18 },
         examples: {
-          easy: 'Prompt: "Got my tax refund today. The process was smoother than I expected and the amount was decent. Good start to the month." What is the mood? | A: Positive | B: Negative',
-          medium: 'Prompt: "Just finished my first week at the new job. The team seems nice and the office is modern. But the commute is 90 minutes each way and I have to wake up at 5am. Not sure how long I can keep this up." Sentiment? | A: Positive | B: Negative',
-          hard: 'Prompt: "It appears the changes we discussed are moving forward, though one might observe the timeline seems somewhat ambitious. Progress tends to be visible in certain areas, relatively speaking, but the overall direction could potentially be clearer." Tone? | A: Positive | B: Negative'
+          easy: 'Prompt: "Got my tax refund today. The process was smooth and the amount was good. Filed online easily and got the money in 10 days. Good start to the month." Mood? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "First week at new job done. Team is nice and office is modern. However, commute is 90 minutes each way, I wake at 5am, and parking costs $200 monthly. Not sustainable long-term." Sentiment? | A: Positive | B: Negative [2 positive, 3 negative = Weighing needed]',
+          hard: 'Prompt: "The changes appear to be moving forward, though one might observe the timeline seems somewhat ambitious. Progress tends to be visible in certain areas, relatively speaking, but the direction could potentially be clearer." Tone? | A: Positive | B: Negative [Indirect uncertain/cautious]'
         },
         vocabulary: ['happy', 'sad', 'positive', 'negative', 'good', 'bad', 'pleased', 'upset', 'decent', 'fair', 'okay', 'acceptable', 'satisfied', 'disappointed', 'but', 'however', 'although', 'despite', 'could be better', 'appears to', 'seems to', 'relatively', 'somewhat', 'tends to', 'potentially']
       },
@@ -134,9 +134,9 @@ Deno.serve(async (req) => {
         maxPromptWords: { easy: 25, medium: 40, hard: 50 },
         maxResponseWords: { easy: 10, medium: 15, hard: 20 },
         examples: {
-          easy: 'Prompt: "The support team answered my email within 24 hours and solved my billing issue. They explained each step clearly and gave me a refund. Fair outcome." Customer feeling? | A: Positive | B: Negative',
-          medium: 'Prompt: "The technician was professional and fixed my internet within the scheduled time window. But the appointment was rescheduled twice before they came, and I had to take time off work three times." Satisfaction level? | A: Positive | B: Negative',
-          hard: 'Prompt: "The resolution appears to address the immediate concern, though one might suggest the response time could be improved. The outcome seems acceptable given the circumstances, relatively speaking, but the process tends to leave room for enhancement in future interactions." Overall sentiment? | A: Positive | B: Negative'
+          easy: 'Prompt: "The support team answered my email within 24 hours. They solved my billing issue and explained each step clearly. They also gave me a refund. Fair outcome." Feeling? | A: Positive | B: Negative [All positive = CLEAR]',
+          medium: 'Prompt: "The technician was professional and fixed my internet quickly. Work was done well. But the appointment was rescheduled twice, I took time off work three times, and no one called to apologize." Satisfaction? | A: Positive | B: Negative [2 positive, 3 negative = Weighing]',
+          hard: 'Prompt: "The resolution appears to address the immediate concern, though one might suggest response time could be improved. The outcome seems acceptable given circumstances, relatively speaking, but the process tends to leave room for enhancement." Sentiment? | A: Positive | B: Negative [Indirect mixed/cautious]'
         },
         vocabulary: ['satisfied', 'dissatisfied', 'helpful', 'unhelpful', 'resolved', 'unresolved', 'good', 'bad', 'pleased', 'disappointed', 'decent', 'fair', 'okay', 'acceptable', 'answered', 'but', 'however', 'although', 'despite', 'could be better', 'room for improvement', 'appears to', 'seems to', 'relatively', 'somewhat', 'tends to']
       },
@@ -258,8 +258,12 @@ ${template.examples[difficulty as keyof typeof template.examples]}
 DIFFICULTY-SPECIFIC LANGUAGE COMPLEXITY REQUIREMENTS:
 
 ${difficulty === 'easy' ? `
-EASY LEVEL (Adult-friendly, accessible tasks for ages 21-45):
-- Target Audience: Adults aged 21-45 who can read and understand basic concepts
+EASY LEVEL - Single Clear Sentiment (Ages 21-45):
+- Target Audience: Adults who need clear, unambiguous tasks with accessible language
+- CRITICAL RULE: 80%+ of the content should support ONE sentiment (positive OR negative)
+- Include 2-3 data points that MOSTLY align with the same sentiment
+- If you include a minor opposing point, it MUST be clearly outweighed (e.g., "small issue" vs multiple strong positives)
+- ⚠️ BANNED: Do NOT create 50/50 or 60/40 mixed sentiments - those belong in MEDIUM level
 - Vocabulary: Use common everyday words plus mild qualifiers like 'decent', 'fair', 'okay', 'acceptable'
 - BANNED WORDS (too extreme/childish): 'fantastic', 'amazing', 'incredible', 'terrible', 'horrible', 'awful', 'perfect', 'worst', 'best', 'love' (use sparingly)
 - Sentence length: Maximum 15 words per sentence
@@ -270,27 +274,33 @@ EASY LEVEL (Adult-friendly, accessible tasks for ages 21-45):
 - Tone: Straightforward and practical, not childish or overly enthusiastic
 - NO idioms, NO slang, NO cultural references, NO complex grammar
 - Use the template format: ${template?.promptFormat || 'Keep it simple and direct'}
-- Make the sentiment clear but not too obvious - require some thought` : ''}
+- Goal: Users should answer correctly 85-90% of the time (clear but requires basic reading)
+
+CORRECT EASY EXAMPLE: "The internet connection has been stable all week. Speed tests show consistent performance. Support resolved my ticket in 2 hours." (All positive → Clear answer)
+WRONG EASY EXAMPLE: "The staff were helpful at check-in. The bed was comfortable. However, the air conditioning did not work well." (2 positive, 1 negative = This is MEDIUM level!)` : ''}
 
 ${difficulty === 'medium' ? `
-MEDIUM LEVEL (Mixed-Sentiment Analysis for ages 21-45):
-- Target: Adults who can evaluate conflicting information
+MEDIUM LEVEL - Balanced Mixed Sentiment (Ages 21-45):
+- Target: Adults who can evaluate conflicting information and weigh competing factors
+- CRITICAL REQUIREMENT: 40-60% positive AND 40-60% negative (genuine mixed sentiment)
+- Include 2-3 positive aspects AND 2-3 negative aspects of roughly equal weight
 - Vocabulary: Template vocabulary plus contrast words ('but', 'however', 'although', 'despite', 'while', 'yet')
 - Sentence length: Maximum 20 words per sentence
 - Prompt length: ${template ? template.maxPromptWords.medium : '35-40'} words total (longer to accommodate both sentiments)
 - Response length: ${template ? template.maxResponseWords.medium : '12-15'} words each
-- CRITICAL REQUIREMENT: Prompt MUST contain BOTH positive AND negative elements
-- Structure: Present at least one positive aspect AND at least one negative aspect
+- Structure: Use transition words to show contrast between positive and negative elements
 - Context: Professional/consumer scenarios (workplace, purchases, services, appointments)
-- User Task: Determine which sentiment is STRONGER overall (not just present)
-- Use transition words to show contrast between positive and negative elements
-- Make both sentiments substantial - not just token mentions
+- User Task: Determine which sentiment is STRONGER overall (requires genuine weighing)
+- Make both sentiments substantial - avoid token mentions
 - Follow template format: ${template?.promptFormat || 'Present balanced but leaning scenario'}
-- Avoid making the answer too obvious - require weighing both sides` : ''}
+- Goal: Users should answer correctly 70-75% of the time (requires careful analysis)
+
+CORRECT MEDIUM EXAMPLE: "The hotel room was spacious and clean. Location was perfect. But check-in took 45 minutes, AC was broken, and breakfast was cold." (2 positive, 3 negative = Requires weighing)` : ''}
 
 ${difficulty === 'hard' ? `
-HARD LEVEL (Subtle/Indirect Sentiment for ages 21-45):
+HARD LEVEL - Subtle/Indirect Sentiment (Ages 21-45):
 - Target: Adults who can detect underlying sentiment in diplomatic/professional language
+- Sentiment Type: Can be single sentiment OR mixed, but ALWAYS expressed INDIRECTLY
 - Vocabulary: Template vocabulary plus indirect/subtle expressions (see required phrases below)
 - REQUIRED INDIRECT PHRASES (use at least 2 per task): 'could be better', 'could be improved', 'room for improvement', 'room for enhancement', 'leaves room for', 'acceptable', 'adequate', 'fairly', 'somewhat', 'relatively', 'appears to', 'seems to', 'tends to', 'one might suggest', 'one could argue', 'potential for'
 - Sentence length: Maximum 25 words per sentence
@@ -302,7 +312,9 @@ HARD LEVEL (Subtle/Indirect Sentiment for ages 21-45):
 - Context: Professional reviews, diplomatic feedback, business assessments, formal evaluations
 - User Challenge: Read between the lines to understand the true sentiment
 - Follow template format: ${template?.promptFormat || 'Require careful interpretation'}
-- Make sentiment subtle but detectable with careful reading - avoid being too cryptic` : ''}
+- Goal: Users should answer correctly 60-65% of the time (requires careful reading & interpretation)
+
+CORRECT HARD EXAMPLE: "The implementation appears to meet basic requirements, though one might suggest the approach could be more efficient. Results are acceptable, relatively speaking." (Indirect negative sentiment)` : ''}
 
 CRITICAL REQUIREMENTS FOR ALL LEVELS:
 1. Follow the category template format exactly: ${template?.promptFormat || 'Use clear structure'}
