@@ -2,8 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users } from "lucide-react";
-import { format } from "date-fns";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 
 interface OverviewTabProps {
   userData: any;
@@ -107,69 +109,68 @@ export const OverviewTab = ({
         </CardContent>
       </Card>
 
-      {/* Location & Security Card */}
+      {/* Location & Security Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Location & Security</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Location & Security Information
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Registration Info */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
-                Registration Details
-              </h4>
-              <div className="space-y-2 pl-6">
-                <div>
-                  <p className="text-xs text-muted-foreground">IP Address</p>
-                  <p className="font-mono text-sm">{profile.registration_ip || "N/A"}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Registration Details */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Registration Location</Label>
+              <div className="text-sm space-y-1">
+                <div className="flex items-center gap-2">
+                  <Flag className="h-4 w-4 text-muted-foreground" />
+                  <span>{profile.registration_country_name || "Unknown"}</span>
+                  {profile.registration_country && (
+                    <Badge variant="outline">{profile.registration_country}</Badge>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Country</p>
-                  <p className="text-sm font-medium">
-                    {profile.registration_country_name 
-                      ? `${profile.registration_country_name} (${profile.registration_country})` 
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Registered On</p>
-                  <p className="text-sm">
-                    {profile.created_at ? format(new Date(profile.created_at), "PPp") : "N/A"}
-                  </p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Network className="h-4 w-4" />
+                  <span className="font-mono text-xs">{profile.registration_ip || "N/A"}</span>
                 </div>
               </div>
             </div>
 
-            {/* Last Login Info */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Last Login Details
-              </h4>
-              <div className="space-y-2 pl-6">
-                <div>
-                  <p className="text-xs text-muted-foreground">IP Address</p>
-                  <p className="font-mono text-sm">{profile.last_login_ip || "N/A"}</p>
+            {/* Last Login Details */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Last Login Location</Label>
+              <div className="text-sm space-y-1">
+                <div className="flex items-center gap-2">
+                  <Flag className="h-4 w-4 text-muted-foreground" />
+                  <span>{profile.last_login_country_name || "Unknown"}</span>
+                  {profile.last_login_country && (
+                    <Badge variant="outline">{profile.last_login_country}</Badge>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Country</p>
-                  <p className="text-sm font-medium">
-                    {profile.last_login_country_name 
-                      ? `${profile.last_login_country_name} (${profile.last_login_country})` 
-                      : "N/A"}
-                  </p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Network className="h-4 w-4" />
+                  <span className="font-mono text-xs">{profile.last_login_ip || "N/A"}</span>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Last Login</p>
-                  <p className="text-sm">
-                    {profile.last_login ? format(new Date(profile.last_login), "PPp") : "Never"}
-                  </p>
+                <div className="text-xs text-muted-foreground">
+                  {profile.last_login && formatDistanceToNow(new Date(profile.last_login), { addSuffix: true })}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Security Alert: Different countries */}
+          {profile.registration_country && 
+           profile.last_login_country && 
+           profile.registration_country !== profile.last_login_country && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Location Change Detected</AlertTitle>
+              <AlertDescription>
+                This user registered from {profile.registration_country_name} but last logged in from {profile.last_login_country_name}.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

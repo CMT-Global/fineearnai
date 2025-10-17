@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Calendar, User, Mail, Award, Target, Users } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -229,6 +230,71 @@ const Settings = () => {
                       <p className="text-sm text-muted-foreground">Days Active</p>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Security & Location */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Account Security & Location
+                </CardTitle>
+                <CardDescription>
+                  Your account location information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Registration Location */}
+                  <div className="flex items-start gap-3 p-4 border rounded-lg">
+                    <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium">Registration Location</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {profile?.registration_country_name ? (
+                          <>Country: {profile.registration_country_name} ({profile.registration_country})</>
+                        ) : (
+                          "Location data not available"
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Registered on {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Last Login Location */}
+                  <div className="flex items-start gap-3 p-4 border rounded-lg">
+                    <Globe className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium">Last Login Location</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {profile?.last_login_country_name ? (
+                          <>Country: {profile.last_login_country_name} ({profile.last_login_country})</>
+                        ) : (
+                          "No login data available yet"
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {profile?.last_login ? (
+                          <>Last login: {new Date(profile.last_login).toLocaleString()}</>
+                        ) : (
+                          "Never logged in"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Security Note */}
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Location Tracking</AlertTitle>
+                    <AlertDescription>
+                      We track your registration and login locations for security purposes. This helps us protect your account from unauthorized access.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               </CardContent>
             </Card>

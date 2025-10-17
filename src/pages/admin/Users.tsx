@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +56,25 @@ function UsersContent() {
 
   const { data: usersData, isLoading } = useUserList(filters, currentPage, 20);
   const { data: stats, isLoading: statsLoading } = useUserStats();
+
+  // Fetch distinct countries for filter
+  const { data: countries } = useQuery({
+    queryKey: ["admin", "countries"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("registration_country, registration_country_name")
+        .not("registration_country", "is", null)
+        .order("registration_country_name");
+      
+      // Deduplicate
+      const unique = Array.from(
+        new Map(data?.map(item => [item.registration_country, item]))
+      ).map(([_, value]) => value);
+      
+      return unique;
+    },
+  });
 
   const users = usersData?.users || [];
   const totalPages = usersData?.totalPages || 1;
@@ -181,15 +202,22 @@ function UsersContent() {
                     <SelectItem value="banned">Banned</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="Country..."
-                  value={countryFilter}
-                  onChange={(e) => {
-                    setCountryFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full md:w-[180px]"
-                />
+                <Select value={countryFilter} onValueChange={(value) => {
+                  setCountryFilter(value);
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="Filter by country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Countries</SelectItem>
+                    {countries?.map((c) => (
+                      <SelectItem key={c.registration_country} value={c.registration_country || ""}>
+                        {c.registration_country_name} ({c.registration_country})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
                   variant="outline"
                   size="sm"
