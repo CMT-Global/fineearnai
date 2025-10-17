@@ -23,6 +23,7 @@ export type Database = {
           id: string
           is_active: boolean
           prompt: string
+          prompt_hash: string | null
           response_a: string
           response_b: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           prompt: string
+          prompt_hash?: string | null
           response_a: string
           response_b: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           prompt?: string
+          prompt_hash?: string | null
           response_a?: string
           response_b?: string
         }
