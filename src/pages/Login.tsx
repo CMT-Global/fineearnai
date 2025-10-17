@@ -73,6 +73,16 @@ const Login = () => {
         return;
       }
 
+      // Get the session to extract user ID
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Track login location (non-blocking)
+      if (session?.user) {
+        supabase.functions.invoke("track-user-login", {
+          body: { userId: session.user.id }
+        }).catch(err => console.error("Failed to track login:", err));
+      }
+
       toast({
         title: "Welcome back!",
         description: "Redirecting to dashboard...",
