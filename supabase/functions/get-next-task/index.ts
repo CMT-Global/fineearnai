@@ -168,6 +168,52 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
+    // STEP 2.5: SAFETY NET - AUTO-RESET IF DATE HAS CHANGED (Phase 3)
+    // ============================================================================
+    // This is a defensive mechanism in case CRON job fails
+    // If last_task_date is older than today, reset counters automatically
+    
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    if (userStats.last_task_date && userStats.last_task_date < currentDate) {
+      console.log('📅 Date changed detected - auto-resetting daily counters', {
+        userId: user.id,
+        lastTaskDate: userStats.last_task_date,
+        currentDate: currentDate,
+        tasksCompletedToday: userStats.tasks_completed_today
+      });
+      
+      // Reset counters in database
+      const { error: resetError } = await supabase
+        .from('profiles')
+        .update({
+          tasks_completed_today: 0,
+          skips_today: 0,
+          last_task_date: currentDate
+        })
+        .eq('id', user.id);
+      
+      if (resetError) {
+        console.error('❌ Error auto-resetting daily counters:', resetError);
+        // Don't fail the request - log error and continue
+      } else {
+        console.log('✅ Daily counters auto-reset successfully for user:', user.id);
+        
+        // Update cached stats to reflect reset
+        userStats.tasks_completed_today = 0;
+        userStats.skips_today = 0;
+        userStats.last_task_date = currentDate;
+        userStats.remaining_tasks = userStats.daily_task_limit; // Full limit available
+        userStats.remaining_skips = userStats.task_skip_limit_per_day; // Full skips available
+        
+        // Invalidate cache to force fresh fetch on next request
+        statsCache.delete(cacheKey);
+        
+        console.log('🔄 Cache invalidated after auto-reset');
+      }
+    }
+
+    // ============================================================================
     // STEP 3: VALIDATE ACCOUNT STATUS AND PLAN EXPIRY
     // ============================================================================
     
