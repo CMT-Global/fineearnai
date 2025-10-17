@@ -111,6 +111,13 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "Email Templates", path: "/admin/communications/templates" },
       ],
     },
+    {
+      label: "Security",
+      icon: Shield,
+      items: [
+        { label: "Security Settings", path: "/admin/security-settings" },
+      ],
+    },
   ];
 
   // Save expanded categories to localStorage

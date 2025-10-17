@@ -43,6 +43,7 @@ const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemMana
 const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
 const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
+const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -248,6 +249,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <EmailTemplates />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/security-settings"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <SecuritySettings />
             </AdminLayout>
           </AdminRoute>
         }

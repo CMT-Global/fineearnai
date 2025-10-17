@@ -107,6 +107,72 @@ export const OverviewTab = ({
         </CardContent>
       </Card>
 
+      {/* Location & Security Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Location & Security</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Registration Info */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                <UserCheck className="h-4 w-4" />
+                Registration Details
+              </h4>
+              <div className="space-y-2 pl-6">
+                <div>
+                  <p className="text-xs text-muted-foreground">IP Address</p>
+                  <p className="font-mono text-sm">{profile.registration_ip || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Country</p>
+                  <p className="text-sm font-medium">
+                    {profile.registration_country_name 
+                      ? `${profile.registration_country_name} (${profile.registration_country})` 
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Registered On</p>
+                  <p className="text-sm">
+                    {profile.created_at ? format(new Date(profile.created_at), "PPp") : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Last Login Info */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Last Login Details
+              </h4>
+              <div className="space-y-2 pl-6">
+                <div>
+                  <p className="text-xs text-muted-foreground">IP Address</p>
+                  <p className="font-mono text-sm">{profile.last_login_ip || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Country</p>
+                  <p className="text-sm font-medium">
+                    {profile.last_login_country_name 
+                      ? `${profile.last_login_country_name} (${profile.last_login_country})` 
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Last Login</p>
+                  <p className="text-sm">
+                    {profile.last_login ? format(new Date(profile.last_login), "PPp") : "Never"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
