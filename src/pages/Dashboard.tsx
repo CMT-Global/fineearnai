@@ -5,6 +5,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
+import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
 import { 
   Crown, 
   Sparkles,
@@ -137,6 +138,17 @@ const Dashboard = () => {
           <div className="mx-4 lg:mx-8 mt-6">
             <FreeAccountUpgradeBanner 
               userId={user.id}
+              onUpgrade={() => navigate("/plans")}
+            />
+          </div>
+        )}
+
+        {/* Premium Upgrade Banner - For paid plans below the highest tier */}
+        {profile.membership_plan !== 'free' && profile.membership_plan !== 'pro' && (
+          <div className="mx-4 lg:mx-8 mt-6">
+            <PremiumUpgradeBanner 
+              userId={user.id}
+              currentPlan={profile.membership_plan}
               onUpgrade={() => navigate("/plans")}
             />
           </div>
