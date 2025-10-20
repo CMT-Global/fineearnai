@@ -15,17 +15,23 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { countries, getCountryName } from "@/lib/countries";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+  const [isCurrencyPopoverOpen, setIsCurrencyPopoverOpen] = useState(false);
+  const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
 
   // Fetch profile data
   const { data: profile, isLoading } = useQuery({
@@ -38,6 +44,12 @@ const Settings = () => {
         .single();
       
       if (error) throw error;
+      
+      // Initialize selected currency from profile
+      if (data?.preferred_currency) {
+        setSelectedCurrency(data.preferred_currency);
+      }
+      
       return data;
     },
     enabled: !!user?.id,
@@ -121,6 +133,20 @@ const Settings = () => {
     },
   });
 
+  // Update currency mutation
+  const updateCurrencyMutation = useMutation({
+    mutationFn: async (currencyCode: string) => {
+      await updateUserCurrency(currencyCode);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Currency preference updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update currency: ${error.message}`);
+    },
+  });
+
   const onProfileSubmit = (data: UpdateProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -128,6 +154,16 @@ const Settings = () => {
   const onPasswordSubmit = (data: ChangePasswordFormData) => {
     changePasswordMutation.mutate(data);
   };
+
+  const handleCurrencyUpdate = () => {
+    if (selectedCurrency && selectedCurrency !== userCurrency) {
+      updateCurrencyMutation.mutate(selectedCurrency);
+    }
+  };
+
+  // Calculate live conversion preview
+  const previewAmount = 100; // USD
+  const convertedPreview = convertAmount(previewAmount);
 
   if (isLoading) {
     return (
@@ -411,6 +447,126 @@ const Settings = () => {
                     </Button>
                   </form>
                 </Form>
+              </CardContent>
+            </Card>
+
+            {/* Currency Preferences */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Currency Preferences
+                </CardTitle>
+                <CardDescription>
+                  Choose your preferred display currency
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Current Currency Display */}
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <Label className="text-sm font-medium">Current Currency</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary" className="text-base">
+                        {getCurrencySymbol(userCurrency)} {userCurrency}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {getCurrencyName(userCurrency)}
+                      </span>
+                    </div>
+                  </div>
+                  {!isCurrencyLoading && (
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Live Preview</p>
+                      <p className="text-sm font-medium">
+                        $100 USD = <CurrencyDisplay amountUSD={previewAmount} showTooltip={false} />
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Currency Selector */}
+                <div className="space-y-2">
+                  <Label>Select Currency</Label>
+                  <Popover open={isCurrencyPopoverOpen} onOpenChange={setIsCurrencyPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={isCurrencyPopoverOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedCurrency ? (
+                          <span className="flex items-center gap-2">
+                            <span className="font-medium">{getCurrencySymbol(selectedCurrency)}</span>
+                            {selectedCurrency} - {getCurrencyName(selectedCurrency)}
+                          </span>
+                        ) : (
+                          "Select currency..."
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[500px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search currency..." />
+                        <CommandList>
+                          <CommandEmpty>No currency found.</CommandEmpty>
+                          <CommandGroup heading="All Currencies">
+                            {CURRENCIES.map((currency) => (
+                              <CommandItem
+                                key={currency.code}
+                                value={`${currency.code} ${currency.name}`}
+                                onSelect={() => {
+                                  setSelectedCurrency(currency.code);
+                                  setIsCurrencyPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedCurrency === currency.code
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <span className="font-medium mr-2">{currency.symbol}</span>
+                                <span className="font-mono mr-2">{currency.code}</span>
+                                <span className="text-muted-foreground">{currency.name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">
+                    Select from {CURRENCIES.length} supported currencies
+                  </p>
+                </div>
+
+                {/* Save Button */}
+                <Button
+                  onClick={handleCurrencyUpdate}
+                  disabled={
+                    updateCurrencyMutation.isPending ||
+                    !selectedCurrency ||
+                    selectedCurrency === userCurrency
+                  }
+                  className="w-full"
+                >
+                  {updateCurrencyMutation.isPending ? "Updating..." : "Update Currency"}
+                </Button>
+
+                {/* Information Alert */}
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Display Only</AlertTitle>
+                  <AlertDescription>
+                    Currency conversion affects display only. All transactions are processed in USD. 
+                    Exchange rates are updated every 24 hours.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
 
