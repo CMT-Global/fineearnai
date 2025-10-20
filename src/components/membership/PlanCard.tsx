@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Loader2, Clock, TrendingUp, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface MembershipPlan {
   id: string;
@@ -61,7 +62,7 @@ export function PlanCard({
       <CardHeader>
         <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
         <CardDescription className="text-3xl font-bold mt-2">
-          ${plan.price}
+          <CurrencyDisplay amountUSD={plan.price} />
           <span className="text-sm font-normal text-muted-foreground">
             /{plan.billing_period_days} days
           </span>
@@ -79,15 +80,15 @@ export function PlanCard({
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Daily:</span>
-                <span className="font-bold">${earningPotential.daily.toFixed(2)}</span>
+                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.daily} /></span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Weekly:</span>
-                <span className="font-bold">${earningPotential.weekly.toFixed(2)}</span>
+                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.weekly} /></span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Monthly:</span>
-                <span className="font-bold">${earningPotential.monthly.toFixed(2)}</span>
+                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
               </div>
             </div>
           </div>
@@ -119,7 +120,7 @@ export function PlanCard({
           </div>
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-primary" />
-            <span className="text-sm">${plan.earning_per_task} per task</span>
+            <span className="text-sm"><CurrencyDisplay amountUSD={plan.earning_per_task} /> per task</span>
           </div>
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-primary" />
@@ -156,7 +157,7 @@ export function PlanCard({
         {isInsufficientBalance && (
           <div className="text-xs text-destructive text-center space-y-1">
             <p>Insufficient balance</p>
-            <p>Need <strong>${(plan.price - depositBalance).toFixed(2)}</strong> more</p>
+            <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
             <Button
               variant="link"
               size="sm"

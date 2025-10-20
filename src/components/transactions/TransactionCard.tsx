@@ -12,7 +12,8 @@ import {
   Wallet,
   CreditCard
 } from "lucide-react";
-import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -124,10 +125,10 @@ export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
 
           <div className="text-right">
             <p className={cn("text-lg font-bold", getTransactionTypeColor(tx.type))}>
-              {isCredit ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
+              {isCredit ? '+' : '-'}<CurrencyDisplay amountUSD={Math.abs(tx.amount)} />
             </p>
             <p className="text-sm text-muted-foreground">
-              Balance: {formatCurrency(tx.new_balance)}
+              Balance: <CurrencyDisplay amountUSD={tx.new_balance} />
             </p>
           </div>
         </div>

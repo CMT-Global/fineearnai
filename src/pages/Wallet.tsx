@@ -17,7 +17,8 @@ import {
   ArrowDownRight,
   Wallet as WalletIcon
 } from "lucide-react";
-import { formatCurrency, getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { format } from "date-fns";
 
 const Wallet = () => {
@@ -164,12 +165,12 @@ const Wallet = () => {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
+                       <div className="text-right">
                         <p className={`text-lg font-bold ${getTransactionTypeColor(tx.type)}`}>
-                          {isCredit(tx.type) ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
+                          {isCredit(tx.type) ? '+' : '-'}<CurrencyDisplay amountUSD={Math.abs(tx.amount)} />
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Balance: {formatCurrency(tx.new_balance)}
+                          Balance: <CurrencyDisplay amountUSD={tx.new_balance} />
                         </p>
                         <p className={`text-xs capitalize ${getTransactionStatusColor(tx.status)}`}>
                           {tx.status}

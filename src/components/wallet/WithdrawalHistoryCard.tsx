@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { format } from "date-fns";
 import { 
   Clock, 
@@ -106,13 +106,13 @@ export const WithdrawalHistoryCard = ({ withdrawal }: WithdrawalHistoryCardProps
         </div>
         <div className="text-right space-y-1">
           <p className="text-lg font-bold text-destructive">
-            -{formatCurrency(withdrawal.amount)}
+            -<CurrencyDisplay amountUSD={withdrawal.amount} />
           </p>
           <p className="text-xs text-muted-foreground">
-            Fee: {formatCurrency(withdrawal.fee)}
+            Fee: <CurrencyDisplay amountUSD={withdrawal.fee} />
           </p>
           <p className="text-sm text-green-600 font-semibold">
-            Net: {formatCurrency(withdrawal.net_amount)}
+            Net: <CurrencyDisplay amountUSD={withdrawal.net_amount} />
           </p>
           {withdrawal.processed_at && (
             <p className="text-xs text-muted-foreground">

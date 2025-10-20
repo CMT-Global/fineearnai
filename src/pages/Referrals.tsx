@@ -15,7 +15,7 @@ import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
 import { Users, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import {
   Pagination,
   PaginationContent,
@@ -174,7 +174,7 @@ const Referrals = () => {
                           </span>
                         </td>
                         <td className="py-3 px-4 font-medium text-[hsl(var(--wallet-earnings))]">
-                          {formatCurrency(referral.totalCommissionEarned)}
+                          <CurrencyDisplay amountUSD={referral.totalCommissionEarned} />
                         </td>
                         <td className="py-3 px-4 text-sm text-muted-foreground">
                           {referral.referredUser.lastActivity 

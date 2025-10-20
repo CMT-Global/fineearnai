@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { TrendingUp, User, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -149,10 +149,10 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
 
                         <div className="text-right">
                           <p className="font-semibold text-lg text-[hsl(var(--wallet-earnings))]">
-                            +{formatCurrency(earning.commission_amount)}
+                            +<CurrencyDisplay amountUSD={earning.commission_amount} />
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {earning.commission_rate}% of {formatCurrency(earning.base_amount)}
+                            {earning.commission_rate}% of <CurrencyDisplay amountUSD={earning.base_amount} />
                           </p>
                         </div>
                       </div>

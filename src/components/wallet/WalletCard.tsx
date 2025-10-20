@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Wallet, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface WalletCardProps {
   depositBalance: number;
@@ -122,7 +122,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           <div className="p-4 border rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
             <p className="text-2xl font-bold text-[hsl(var(--wallet-deposit))]">
-              {formatCurrency(depositBalance)}
+              <CurrencyDisplay amountUSD={depositBalance} />
             </p>
             <p className="text-xs text-muted-foreground mb-3">For account upgrades</p>
             <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
@@ -188,7 +188,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           <div className="p-4 border rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Earnings Wallet</p>
             <p className="text-2xl font-bold text-[hsl(var(--wallet-earnings))]">
-              {formatCurrency(earningsBalance)}
+              <CurrencyDisplay amountUSD={earningsBalance} />
             </p>
             <p className="text-xs text-muted-foreground mb-3">From tasks & referrals</p>
             <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
@@ -219,7 +219,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       max={earningsBalance}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Available: {formatCurrency(earningsBalance)}
+                      Available: <CurrencyDisplay amountUSD={earningsBalance} />
                     </p>
                   </div>
                   <div>

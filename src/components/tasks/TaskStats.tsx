@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Zap, Wallet, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface TaskStatsProps {
   tasksCompletedToday: number;
@@ -112,7 +113,7 @@ const TaskStatsComponent = ({
               Earnings Wallet
               {isSyncing && <Loader2 className="h-3 w-3 animate-spin" />}
             </p>
-            <p className="text-2xl font-bold">${earningsBalance.toFixed(2)}</p>
+            <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={earningsBalance} /></p>
           </div>
         </div>
       </Card>

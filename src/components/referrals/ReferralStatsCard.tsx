@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Users, TrendingUp, DollarSign, UserPlus } from "lucide-react";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface ReferralStatsCardProps {
   totalReferrals: number;
@@ -48,7 +48,7 @@ export const ReferralStatsCard = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Total Earnings</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalEarnings)}</p>
+            <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={totalEarnings} /></p>
           </div>
         </div>
       </Card>
@@ -60,7 +60,7 @@ export const ReferralStatsCard = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Task Commissions</p>
-            <p className="text-2xl font-bold">{formatCurrency(taskCommissionEarnings)}</p>
+            <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={taskCommissionEarnings} /></p>
           </div>
         </div>
       </Card>

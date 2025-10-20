@@ -18,7 +18,8 @@ import {
   Calendar as CalendarIcon,
   X
 } from "lucide-react";
-import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { getTransactionTypeLabel } from "@/lib/wallet-utils";
 import { TransactionCard } from "@/components/transactions/TransactionCard";
 import { TransactionErrorBoundary } from "@/components/transactions/TransactionErrorBoundary";
 import { EmptyTransactionState } from "@/components/transactions/EmptyTransactionState";
@@ -101,7 +102,7 @@ const Transactions = () => {
             setTransactions(prev => [payload.new as Transaction, ...prev]);
             toast({
               title: "New Transaction",
-              description: `${getTransactionTypeLabel(payload.new.type)} - ${formatCurrency(payload.new.amount)}`,
+              description: `${getTransactionTypeLabel(payload.new.type)} - $${payload.new.amount.toFixed(2)}`,
             });
           } else if (payload.eventType === 'UPDATE') {
             setTransactions(prev =>

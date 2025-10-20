@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, DollarSign, Zap } from "lucide-react";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface TaskCardProps {
   title: string;
@@ -48,7 +48,7 @@ export const TaskCard = ({
       <div className="flex items-center gap-4 mb-4 text-sm">
         <div className="flex items-center gap-1 text-[hsl(var(--wallet-earnings))]">
           <DollarSign className="h-4 w-4" />
-          <span className="font-semibold">{formatCurrency(baseReward)}</span>
+          <span className="font-semibold"><CurrencyDisplay amountUSD={baseReward} /></span>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground">
           <Clock className="h-4 w-4" />

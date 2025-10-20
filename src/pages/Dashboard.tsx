@@ -22,7 +22,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { WalletCard } from "@/components/wallet/WalletCard";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -225,7 +225,7 @@ const Dashboard = () => {
                     {profile?.tasks_completed_today || 0}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    ${Number(profile?.total_earned || 0).toFixed(2)} total earned
+                    <CurrencyDisplay amountUSD={Number(profile?.total_earned || 0)} /> total earned
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
@@ -244,7 +244,7 @@ const Dashboard = () => {
                     {referralStats?.active_referrals || 0} active
                   </p>
                   <p className="text-xs font-semibold text-[hsl(var(--wallet-referrals))]">
-                    {formatCurrency(Number(referralStats?.total_earnings || 0))} earned
+                    <CurrencyDisplay amountUSD={Number(referralStats?.total_earnings || 0)} /> earned
                   </p>
                 </div>
               </div>
