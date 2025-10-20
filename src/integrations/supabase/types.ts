@@ -157,6 +157,39 @@ export type Database = {
           },
         ]
       }
+      daily_reset_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          executed_at: string
+          execution_time_ms: number | null
+          id: string
+          reset_date: string
+          triggered_by: string
+          users_reset: number
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          executed_at?: string
+          execution_time_ms?: number | null
+          id?: string
+          reset_date: string
+          triggered_by?: string
+          users_reset: number
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          executed_at?: string
+          execution_time_ms?: number | null
+          id?: string
+          reset_date?: string
+          triggered_by?: string
+          users_reset?: number
+        }
+        Relationships: []
+      }
       edge_function_metrics: {
         Row: {
           created_at: string
