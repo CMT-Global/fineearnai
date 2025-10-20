@@ -45,6 +45,7 @@ const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
 const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
+const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -260,6 +261,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <SecuritySettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/monitoring/daily-reset-logs"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <DailyResetLogs />
             </AdminLayout>
           </AdminRoute>
         }

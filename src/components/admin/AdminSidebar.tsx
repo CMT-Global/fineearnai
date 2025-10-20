@@ -22,6 +22,7 @@ import {
   Settings,
   TrendingUp,
   Sparkles,
+  Activity,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
@@ -116,6 +117,13 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Shield,
       items: [
         { label: "Security Settings", path: "/admin/security-settings" },
+      ],
+    },
+    {
+      label: "Monitoring",
+      icon: Activity,
+      items: [
+        { label: "Daily Reset Logs", path: "/admin/monitoring/daily-reset-logs" },
       ],
     },
   ];
