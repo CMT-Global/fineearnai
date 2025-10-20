@@ -103,6 +103,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
+    // Global deposit limits (prevents extreme values before processor checks)
+    const MIN_DEPOSIT = 1;
+    const MAX_DEPOSIT = 10000;
+    
+    if (amount < MIN_DEPOSIT || amount > MAX_DEPOSIT) {
+      toast.error(`Deposit amount must be between $${MIN_DEPOSIT} and $${MAX_DEPOSIT}`);
+      return;
+    }
+
     const processor = depositProcessors.find(p => p.name === depositMethod);
     if (!processor) {
       toast.error("Invalid payment method");
