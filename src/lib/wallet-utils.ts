@@ -1,3 +1,7 @@
+/**
+ * Format currency amount in USD (legacy function for backward compatibility)
+ * For new code, use CurrencyDisplay component instead
+ */
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -5,6 +9,34 @@ export const formatCurrency = (amount: number): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+};
+
+/**
+ * Format currency amount with conversion
+ * @param amountUSD - Amount in USD to convert
+ * @param currency - Target currency code (ISO 4217)
+ * @param exchangeRate - Exchange rate from USD to target currency
+ * @returns Formatted currency string
+ */
+export const formatCurrencyConverted = (
+  amountUSD: number,
+  currency: string,
+  exchangeRate: number
+): string => {
+  const convertedAmount = amountUSD * exchangeRate;
+  
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(convertedAmount);
+  } catch (error) {
+    // Fallback if currency is not supported
+    console.error(`Error formatting currency ${currency}:`, error);
+    return `${currency} ${convertedAmount.toFixed(2)}`;
+  }
 };
 
 export const getTransactionTypeLabel = (type: string): string => {

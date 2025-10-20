@@ -1,0 +1,116 @@
+import React from 'react';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
+/**
+ * Currency Display Component
+ * 
+ * Universal component for displaying converted monetary amounts
+ * Features:
+ * - Automatic conversion from USD to user's preferred currency
+ * - Loading skeleton during initialization
+ * - Tooltip showing original USD amount
+ * - Proper localized formatting
+ * - Graceful error handling
+ */
+
+interface CurrencyDisplayProps {
+  /** Amount in USD (required) */
+  amountUSD: number;
+  /** Show currency symbol (default: true) */
+  showSymbol?: boolean;
+  /** Show thousand separators (default: true) */
+  showSeparator?: boolean;
+  /** Show loading skeleton during initialization (default: true) */
+  showLoadingState?: boolean;
+  /** Custom class name */
+  className?: string;
+  /** Number of decimal places (default: 2) */
+  decimals?: number;
+  /** Show tooltip with original USD amount (default: true) */
+  showTooltip?: boolean;
+}
+
+export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
+  amountUSD,
+  showSymbol = true,
+  showSeparator = true,
+  showLoadingState = true,
+  className,
+  decimals = 2,
+  showTooltip = true,
+}) => {
+  const { convertAmount, userCurrency, isLoading, error } = useCurrencyConversion();
+
+  // Show loading skeleton during initialization
+  if (isLoading && showLoadingState) {
+    return <Skeleton className={cn("h-5 w-20 inline-block", className)} />;
+  }
+
+  // Convert amount
+  const { amount: convertedAmount, currency } = convertAmount(amountUSD);
+
+  // Format the converted amount
+  const formatCurrency = (value: number, currencyCode: string): string => {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: showSymbol ? 'currency' : 'decimal',
+        currency: currencyCode,
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: showSeparator,
+      }).format(value);
+    } catch (formatError) {
+      // Fallback formatting if currency is not supported
+      console.error(`Error formatting currency ${currencyCode}:`, formatError);
+      const formattedValue = value.toFixed(decimals);
+      return showSymbol ? `${currencyCode} ${formattedValue}` : formattedValue;
+    }
+  };
+
+  const formattedAmount = formatCurrency(convertedAmount, currency);
+
+  // Format original USD amount for tooltip
+  const formattedUSD = formatCurrency(amountUSD, 'USD');
+
+  // If there's an error and currency is not USD, show fallback
+  if (error && currency !== 'USD') {
+    const fallbackAmount = formatCurrency(amountUSD, 'USD');
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={cn("text-muted-foreground", className)}>
+              {fallbackAmount}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Currency conversion unavailable</p>
+            <p className="text-xs text-muted-foreground">{error}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Don't show tooltip if currency is USD or tooltip is disabled
+  if (!showTooltip || currency === 'USD') {
+    return <span className={className}>{formattedAmount}</span>;
+  }
+
+  // Show with tooltip
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={className}>{formattedAmount}</span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">Original: {formattedUSD}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};

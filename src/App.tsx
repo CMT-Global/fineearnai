@@ -7,6 +7,7 @@ import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -278,13 +279,15 @@ const App = () => (
   <GlobalErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AdminModeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner position="top-right" />
-          <BrowserRouter>
-            <RoutesWrapper />
-          </BrowserRouter>
-        </TooltipProvider>
+        <CurrencyProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner position="top-right" />
+            <BrowserRouter>
+              <RoutesWrapper />
+            </BrowserRouter>
+          </TooltipProvider>
+        </CurrencyProvider>
       </AdminModeProvider>
     </QueryClientProvider>
   </GlobalErrorBoundary>
