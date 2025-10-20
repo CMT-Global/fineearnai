@@ -323,6 +323,22 @@ const Admin = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/settings/cpay-checkouts")}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">CPAY Checkouts</CardTitle>
+                  <DollarSign className="h-5 w-5 text-primary" />
+                </div>
+                <CardDescription>Manage deposit checkout pages</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  Manage Checkouts
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
