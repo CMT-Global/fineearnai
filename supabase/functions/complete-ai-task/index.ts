@@ -99,10 +99,10 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
-    // PHASE 5: OPTIMIZED DATA FETCHING WITH VALIDATION
+    // PHASE 1.2: OPTIMIZED DATA FETCHING WITH BASIC VALIDATION
     // ============================================================================
     
-    // Fetch user profile
+    // Fetch user profile for quick validation
     const profileStartTime = Date.now();
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
       dailyLimit: membershipPlan.daily_task_limit
     });
 
-    // Check account status
+    // Fast-fail validation checks (before calling atomic function)
     if (profile.account_status !== 'active') {
       return new Response(
         JSON.stringify({ 
@@ -189,44 +189,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check if task already completed (prevent duplicate submissions)
-    const { data: existingCompletion } = await supabase
-      .from('task_completions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('task_id', taskId)
-      .maybeSingle();
-
-    if (existingCompletion) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'duplicate_submission',
-          message: 'This task has already been completed' 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 409,
-        }
-      );
-    }
-
-    // Check daily task limit
-    if (profile.tasks_completed_today >= membershipPlan.daily_task_limit) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'daily_limit_reached',
-          message: 'Daily task limit reached. Upgrade your plan to complete more tasks.',
-          tasksCompletedToday: profile.tasks_completed_today,
-          dailyLimit: membershipPlan.daily_task_limit
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 429,
-        }
-      );
-    }
-
-    // Get task details with validation
+    // Get task details for calculating earnings
     const { data: task, error: taskError } = await supabase
       .from('ai_tasks')
       .select('*')
@@ -234,21 +197,8 @@ Deno.serve(async (req) => {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (taskError) {
-      console.error('Task fetch error:', taskError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'task_fetch_error',
-          message: 'Failed to fetch task details' 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500,
-        }
-      );
-    }
-
-    if (!task) {
+    if (taskError || !task) {
+      console.error(`❌ [${requestId}] Task fetch error:`, taskError);
       return new Response(
         JSON.stringify({ 
           error: 'task_not_found',
@@ -262,154 +212,37 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
-    // PHASE 5: ATOMIC TRANSACTION FOR TASK COMPLETION
+    // PHASE 1.2: ATOMIC TASK COMPLETION (SINGLE DATABASE TRANSACTION)
     // ============================================================================
     
     const processingStartTime = Date.now();
     
-    // Check if answer is correct
+    // Calculate correctness and earnings
     const isCorrect = selectedResponse === task.correct_response;
     const earningsAmount = isCorrect ? membershipPlan.earning_per_task : 0;
 
     console.log(`${isCorrect ? '✅' : '❌'} [${requestId}] Answer ${isCorrect ? 'correct' : 'incorrect'}. Earnings: $${earningsAmount}`);
 
-    // Calculate new values
-    const newEarningsBalance = Number(profile.earnings_wallet_balance) + earningsAmount;
-    const newTotalEarned = Number(profile.total_earned) + earningsAmount;
-    const newTasksCompleted = profile.tasks_completed_today + 1;
-    const todayDate = new Date().toISOString().split('T')[0];
-
-    // Insert task completion record
-    const insertStartTime = Date.now();
-    const { error: completionError } = await supabase
-      .from('task_completions')
-      .insert({
-        user_id: user.id,
-        task_id: taskId,
-        selected_response: selectedResponse,
-        is_correct: isCorrect,
-        earnings_amount: earningsAmount,
-        time_taken_seconds: timeTakenSeconds,
+    // Call atomic database function - everything happens in ONE transaction
+    const { data: result, error: atomicError } = await supabase
+      .rpc('complete_task_atomic', {
+        p_user_id: user.id,
+        p_task_id: taskId,
+        p_selected_response: selectedResponse,
+        p_time_taken_seconds: timeTakenSeconds,
+        p_is_correct: isCorrect,
+        p_earnings_amount: earningsAmount
       });
 
-    const insertTime = Date.now() - insertStartTime;
-    console.log(`💾 [${requestId}] Task completion inserted (${insertTime}ms)`);
-
-    if (completionError) {
-      console.error('Completion insert error:', completionError);
-      
-      // Check if duplicate key error
-      if (completionError.code === '23505') {
-        return new Response(
-          JSON.stringify({ 
-            error: 'duplicate_submission',
-            message: 'This task has already been completed' 
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 409,
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          error: 'submission_failed',
-          message: 'Failed to record task completion' 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500,
-        }
-      );
-    }
-
-    // ============================================================================
-    // CRITICAL FIX: Insert transaction FIRST, then update profile
-    // Trigger validate_transaction_balance requires new_balance = current_balance + amount
-    // ============================================================================
+    const processingTime = Date.now() - processingStartTime;
     
-    // Create transaction record FIRST if earned
-    if (earningsAmount > 0) {
-      const transactionInsertTime = Date.now();
-      console.log(`💰 [${requestId}] Inserting transaction: amount=${earningsAmount}, new_balance=${newEarningsBalance}`);
-      
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: user.id,
-          type: 'task_earning',
-          amount: earningsAmount,
-          wallet_type: 'earnings',
-          new_balance: newEarningsBalance,
-          description: `AI Task completed: ${task.category}`,
-          status: 'completed',
-          metadata: {
-            task_id: taskId,
-            category: task.category,
-            difficulty: task.difficulty,
-            time_taken_seconds: timeTakenSeconds,
-          },
-        });
-
-      const transactionTime = Date.now() - transactionInsertTime;
-      
-      if (transactionError) {
-        console.error(`❌ [${requestId}] Transaction insert failed (${transactionTime}ms):`, transactionError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'transaction_insert_failed',
-            message: 'Failed to record transaction. Please contact support.',
-            details: transactionError.message
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
-          }
-        );
-      }
-      
-      console.log(`✅ [${requestId}] Transaction inserted successfully (${transactionTime}ms)`);
-    }
-
-    // NOW update user profile with optimistic locking
-    const updateStartTime = Date.now();
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        earnings_wallet_balance: newEarningsBalance,
-        total_earned: newTotalEarned,
-        tasks_completed_today: newTasksCompleted,
-        last_task_date: todayDate,
-        last_activity: new Date().toISOString(),
-      })
-      .eq('id', user.id)
-      .eq('tasks_completed_today', profile.tasks_completed_today); // Optimistic lock
-
-    const updateTime = Date.now() - updateStartTime;
-    console.log(`🔄 [${requestId}] Profile updated (${updateTime}ms)`);
-
-    if (updateError) {
-      console.error('Profile update error:', updateError);
-      
-      // If optimistic lock failed, task was likely submitted concurrently
-      if (updateError.code === 'PGRST116') {
-        return new Response(
-          JSON.stringify({ 
-            error: 'concurrent_submission',
-            message: 'Please wait a moment before submitting another task' 
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 409,
-          }
-        );
-      }
-
+    if (atomicError) {
+      console.error(`❌ [${requestId}] Atomic task completion failed (${processingTime}ms):`, atomicError);
       return new Response(
         JSON.stringify({ 
-          error: 'update_failed',
-          message: 'Failed to update user profile' 
+          error: 'task_completion_failed',
+          message: 'Failed to complete task. Please try again.',
+          details: atomicError.message
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -417,6 +250,39 @@ Deno.serve(async (req) => {
         }
       );
     }
+
+    // Check if atomic operation succeeded
+    if (!result || !result.success) {
+      const errorCode = result?.error_code || 'UNKNOWN_ERROR';
+      const errorMessage = result?.error || 'Task completion failed';
+      
+      console.error(`❌ [${requestId}] Atomic operation failed (${processingTime}ms):`, { errorCode, errorMessage });
+
+      // Map error codes to HTTP status codes
+      let statusCode = 500;
+      if (errorCode === 'DAILY_LIMIT_REACHED') statusCode = 429;
+      else if (errorCode === 'DUPLICATE_SUBMISSION') statusCode = 409;
+      else if (errorCode === 'PROFILE_NOT_FOUND' || errorCode === 'INVALID_TASK') statusCode = 404;
+      else if (errorCode === 'INVALID_PLAN') statusCode = 403;
+
+      return new Response(
+        JSON.stringify({ 
+          error: errorCode.toLowerCase(),
+          message: errorMessage,
+          ...result
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: statusCode,
+        }
+      );
+    }
+
+    console.log(`✅ [${requestId}] Atomic task completion succeeded (${processingTime}ms):`, {
+      tasksCompleted: result.tasks_completed_today,
+      remainingTasks: result.remaining_tasks,
+      newBalance: result.new_earnings_balance
+    });
 
     // Queue referral commission if user was referred (async processing)
     if (profile.referred_by && earningsAmount > 0) {
@@ -503,12 +369,11 @@ Deno.serve(async (req) => {
       taskId,
       isCorrect,
       earnings: earningsAmount,
-      newBalance: newEarningsBalance,
+      newBalance: result.new_earnings_balance,
       executionBreakdown: {
         authentication: authTime,
         profile_fetch: profileTime,
-        task_insert: insertTime,
-        profile_update: updateTime,
+        atomic_transaction: processingTime,
         total: totalExecutionTime
       }
     });
@@ -528,8 +393,7 @@ Deno.serve(async (req) => {
           time_taken_seconds: timeTakenSeconds,
           auth_time_ms: authTime,
           profile_time_ms: profileTime,
-          insert_time_ms: insertTime,
-          update_time_ms: updateTime
+          atomic_transaction_ms: processingTime
         }
       })
       .then(({ error }) => {
@@ -539,11 +403,8 @@ Deno.serve(async (req) => {
       });
     
     // ============================================================================
-    // PHASE 5: COMPREHENSIVE RESPONSE WITH NEXT TASK DATA
+    // PHASE 1.2: COMPREHENSIVE RESPONSE WITH ATOMIC RESULT DATA
     // ============================================================================
-    
-    // Optionally preload next task for faster UX (commented out for now to avoid complexity)
-    // This can be enabled in future optimization
     
     return new Response(
       JSON.stringify({
@@ -551,11 +412,11 @@ Deno.serve(async (req) => {
         isCorrect,
         correctAnswer: task.correct_response,
         earnedAmount: earningsAmount,
-        newBalance: newEarningsBalance,
-        tasksCompletedToday: newTasksCompleted,
-        dailyLimit: membershipPlan.daily_task_limit,
-        remainingTasks: membershipPlan.daily_task_limit - newTasksCompleted,
-        totalEarned: newTotalEarned,
+        newBalance: result.new_earnings_balance,
+        tasksCompletedToday: result.tasks_completed_today,
+        dailyLimit: result.daily_task_limit,
+        remainingTasks: result.remaining_tasks,
+        totalEarned: result.new_total_earned,
         taskCategory: task.category,
         taskDifficulty: task.difficulty,
         timeTaken: timeTakenSeconds,

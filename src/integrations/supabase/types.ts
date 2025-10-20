@@ -1294,6 +1294,17 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_task_atomic: {
+        Args: {
+          p_earnings_amount: number
+          p_is_correct: boolean
+          p_selected_response: string
+          p_task_id: string
+          p_time_taken_seconds: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
