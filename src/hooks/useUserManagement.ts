@@ -71,8 +71,8 @@ export const useUserManagement = () => {
         }
 
         // Apply country filter
-        if (filters.countryFilter) {
-          query = query.ilike('country', `%${filters.countryFilter}%`);
+        if (filters.countryFilter && filters.countryFilter !== 'all') {
+          query = query.eq('country', filters.countryFilter);
         }
 
         // Apply sorting and pagination

@@ -27,7 +27,7 @@ function UsersContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,11 +65,16 @@ function UsersContent() {
         .from("profiles")
         .select("registration_country, registration_country_name")
         .not("registration_country", "is", null)
+        .not("registration_country_name", "is", null)
         .order("registration_country_name");
       
-      // Deduplicate
+      // Deduplicate and filter out any remaining nulls
       const unique = Array.from(
-        new Map(data?.map(item => [item.registration_country, item]))
+        new Map(
+          data
+            ?.filter(item => item.registration_country && item.registration_country_name)
+            ?.map(item => [item.registration_country, item])
+        )
       ).map(([_, value]) => value);
       
       return unique;
@@ -210,12 +215,15 @@ function UsersContent() {
                     <SelectValue placeholder="Filter by country" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Countries</SelectItem>
-                    {countries?.map((c) => (
-                      <SelectItem key={c.registration_country} value={c.registration_country || ""}>
-                        {c.registration_country_name} ({c.registration_country})
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">All Countries</SelectItem>
+                    {countries
+                      ?.filter(c => c.registration_country && c.registration_country_name)
+                      ?.map((c) => (
+                        <SelectItem key={c.registration_country} value={c.registration_country}>
+                          {c.registration_country_name} ({c.registration_country})
+                        </SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
                 <Button
