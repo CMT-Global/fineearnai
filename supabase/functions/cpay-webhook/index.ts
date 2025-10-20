@@ -94,7 +94,8 @@ serve(async (req) => {
       const encryptedData = rawPayload.data;
       
       // Import crypto-js for AES decryption (Deno-compatible)
-      const CryptoJS = await import('https://esm.sh/crypto-js@4.2.0');
+      const CryptoJSModule = await import('https://esm.sh/crypto-js@4.2.0');
+      const CryptoJS = CryptoJSModule.default;
       
       try {
         // Decrypt using AES-256-CBC with EVP_BytesToKey derivation (OpenSSL default)
