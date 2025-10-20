@@ -59,18 +59,9 @@ Deno.serve(async (req) => {
     const depositAmount = parseFloat(amount);
     const newBalance = parseFloat(profile.deposit_wallet_balance) + depositAmount;
 
-    // Update profile balance
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ deposit_wallet_balance: newBalance })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating balance:', updateError);
-      throw updateError;
-    }
-
-    // Create transaction record
+    // CRITICAL: Insert transaction BEFORE updating profile balance
+    // The validate_transaction_balance trigger checks if new_balance matches
+    // current_balance + amount. If we update profile first, validation fails.
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')
       .insert({
@@ -90,6 +81,17 @@ Deno.serve(async (req) => {
     if (transactionError) {
       console.error('Error creating transaction:', transactionError);
       throw transactionError;
+    }
+
+    // Now update profile balance AFTER transaction is recorded
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ deposit_wallet_balance: newBalance })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error updating balance:', updateError);
+      throw updateError;
     }
 
     // Queue referral commission on deposit if user was referred (async processing)
