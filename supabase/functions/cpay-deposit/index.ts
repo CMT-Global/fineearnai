@@ -9,6 +9,7 @@ const corsHeaders = {
 interface DepositRequest {
   amount: number;
   currency?: string;
+  processorId?: string;
 }
 
 serve(async (req) => {
@@ -32,13 +33,13 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { amount, currency = 'USDT' }: DepositRequest = await req.json();
+    const { amount, currency = 'USDT', processorId }: DepositRequest = await req.json();
 
     if (!amount || amount <= 0) {
       throw new Error('Invalid amount');
     }
 
-    console.log(`Processing deposit request: User ${user.id}, Amount ${amount} ${currency}`);
+    console.log(`Processing deposit request: User ${user.id}, Amount ${amount} ${currency}, ProcessorId: ${processorId || 'auto'}`);
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase
@@ -53,19 +54,74 @@ serve(async (req) => {
     }
 
     // Find an active CPAY checkout for the requested currency
-    const { data: checkout, error: checkoutError } = await supabase
-      .from('cpay_checkouts')
-      .select('*')
-      .eq('currency', currency)
-      .eq('is_active', true)
-      .gte('max_amount', amount)
-      .lte('min_amount', amount)
-      .limit(1)
-      .single();
+    let checkout = null;
 
-    if (checkoutError || !checkout) {
-      console.error('No active checkout found for currency:', currency, checkoutError);
-      throw new Error(`No active checkout available for ${currency}. Please contact support.`);
+    // If processorId provided, try to load processor-bound checkout
+    if (processorId) {
+      const { data: processor, error: procError } = await supabase
+        .from('payment_processors')
+        .select('*')
+        .eq('id', processorId)
+        .single();
+
+      if (procError) {
+        console.error('Failed to load processor:', procError);
+        throw new Error('Invalid payment processor');
+      }
+
+      // Extract cpay_checkout_id from config
+      const checkoutId = processor.config?.cpay_checkout_id;
+      if (!checkoutId) {
+        console.error('Processor has no cpay_checkout_id in config');
+        throw new Error('Payment processor not properly configured');
+      }
+
+      // Load the specific checkout
+      const { data: boundCheckout, error: boundError } = await supabase
+        .from('cpay_checkouts')
+        .select('*')
+        .eq('id', checkoutId)
+        .single();
+
+      if (boundError || !boundCheckout) {
+        console.error('Bound checkout not found:', boundError);
+        throw new Error('Configured checkout not found');
+      }
+
+      // Verify checkout is active and amount is within limits
+      if (!boundCheckout.is_active) {
+        throw new Error('Selected checkout is not active');
+      }
+
+      if (amount < boundCheckout.min_amount || amount > boundCheckout.max_amount) {
+        throw new Error(`Amount must be between ${boundCheckout.min_amount} and ${boundCheckout.max_amount} ${boundCheckout.currency}`);
+      }
+
+      checkout = boundCheckout;
+      console.log(`Using processor-bound checkout: ${checkout.id} (${checkout.currency})`);
+    } else {
+      // Fallback: Find an active CPAY checkout based on currency and amount (auto-select)
+      const { data: autoCheckout, error: checkoutError } = await supabase
+        .from('cpay_checkouts')
+        .select('*')
+        .eq('currency', currency)
+        .eq('is_active', true)
+        .gte('max_amount', amount)
+        .lte('min_amount', amount)
+        .limit(1)
+        .single();
+
+      if (checkoutError || !autoCheckout) {
+        console.error('No active checkout found for currency:', currency, checkoutError);
+        throw new Error(`No active checkout available for ${currency}. Please contact support.`);
+      }
+
+      checkout = autoCheckout;
+      console.log(`Auto-selected checkout: ${checkout.id} (${checkout.currency})`);
+    }
+
+    if (!checkout) {
+      throw new Error('No suitable checkout found');
     }
 
     // Generate unique order_id for tracking

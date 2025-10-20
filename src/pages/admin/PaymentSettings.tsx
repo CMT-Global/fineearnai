@@ -11,20 +11,30 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface PaymentProcessor {
-  id: string;
+  id?: string;
   name: string;
   processor_type: string;
-  is_active: boolean;
   fee_percentage: number;
   fee_fixed: number;
   min_amount: number;
   max_amount: number;
-  config: any;
+  is_active: boolean;
+  config?: any;
+}
+
+interface CPAYCheckout {
+  id: string;
+  checkout_id: string;
+  checkout_url: string;
+  currency: string;
+  min_amount: number;
+  max_amount: number;
+  is_active: boolean;
 }
 
 const PaymentSettings = () => {
@@ -32,24 +42,53 @@ const PaymentSettings = () => {
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const [processors, setProcessors] = useState<PaymentProcessor[]>([]);
+  const [cpayCheckouts, setCpayCheckouts] = useState<CPAYCheckout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProcessor, setEditingProcessor] = useState<PaymentProcessor | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    processor_type: "",
-    is_active: true,
-    fee_percentage: 0,
-    fee_fixed: 0,
-    min_amount: 0,
-    max_amount: 10000,
-  });
+  
+  // Form state
+  const [processorName, setProcessorName] = useState("");
+  const [processorType, setProcessorType] = useState("");
+  const [preset, setPreset] = useState("");
+  const [selectedCheckoutId, setSelectedCheckoutId] = useState("");
+  const [feePercentage, setFeePercentage] = useState("");
+  const [feeFixed, setFeeFixed] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
-  // Helper function to safely parse numeric input
-  const parseNumericInput = (value: string, defaultValue: number = 0): number => {
+  // Helper function to safely parse numeric inputs
+  const parseNumericInput = (value: string): number => {
     const parsed = parseFloat(value);
-    return isNaN(parsed) ? defaultValue : parsed;
+    return isNaN(parsed) ? 0 : parsed;
   };
+
+  // Load CPAY checkouts
+  const loadCpayCheckouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("cpay_checkouts")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCpayCheckouts(data || []);
+    } catch (error: any) {
+      console.error("Error loading CPAY checkouts:", error);
+      toast.error("Failed to load CPAY checkouts");
+    }
+  };
+
+  // Load payment processors and CPAY checkouts
+  useEffect(() => {
+    if (user && isAdmin) {
+      loadProcessors();
+      loadCpayCheckouts();
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -64,16 +103,10 @@ const PaymentSettings = () => {
     }
   }, [isAdmin, adminLoading, navigate]);
 
-  useEffect(() => {
-    if (isAdmin) {
-      loadProcessors();
-    }
-  }, [isAdmin]);
-
+  // Load all payment processors
   const loadProcessors = async () => {
     try {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("payment_processors")
         .select("*")
@@ -90,49 +123,97 @@ const PaymentSettings = () => {
     }
   };
 
+  // Handle preset selection
+  const handlePresetChange = (value: string) => {
+    setPreset(value);
+    
+    if (value === "cpay_deposit") {
+      setProcessorName("CPAY Deposit");
+      setProcessorType("deposit");
+      setFeePercentage("0");
+      setFeeFixed("0");
+    } else if (value === "cpay_withdrawal_usdt") {
+      setProcessorName("CPAY Withdrawal - USDT TRC20");
+      setProcessorType("withdrawal");
+      setFeePercentage("0");
+      setFeeFixed("1");
+    } else {
+      // Custom preset - clear fields
+      setProcessorName("");
+      setSelectedCheckoutId("");
+    }
+  };
+
+  // Save processor (create or update)
   const handleSave = async () => {
+    if (!processorName || !processorType) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate CPAY deposit requires checkout selection
+    if (preset === "cpay_deposit" && !selectedCheckoutId) {
+      toast.error("Please select a CPAY checkout for deposit processor");
+      return;
+    }
+
     try {
-      if (!formData.name || !formData.processor_type) {
-        toast.error("Please fill in all required fields");
-        return;
+      setSaving(true);
+
+      // Build config object for CPAY deposit
+      let config = {};
+      if (preset === "cpay_deposit" && selectedCheckoutId) {
+        const selectedCheckout = cpayCheckouts.find(c => c.id === selectedCheckoutId);
+        config = {
+          processor: "cpay",
+          display_name: processorName,
+          cpay_checkout_id: selectedCheckoutId,
+          currency: selectedCheckout?.currency || "USDT",
+        };
       }
 
-      // Validate and sanitize numeric inputs
-      const sanitizedData = {
-        ...formData,
-        fee_percentage: parseNumericInput(formData.fee_percentage.toString(), 0),
-        fee_fixed: parseNumericInput(formData.fee_fixed.toString(), 0),
-        min_amount: parseNumericInput(formData.min_amount.toString(), 0),
-        max_amount: parseNumericInput(formData.max_amount.toString(), 10000),
+      const processorData = {
+        name: processorName,
+        processor_type: processorType,
+        fee_percentage: parseNumericInput(feePercentage || "0"),
+        fee_fixed: parseNumericInput(feeFixed || "0"),
+        min_amount: parseNumericInput(minAmount || "0"),
+        max_amount: parseNumericInput(maxAmount || "10000"),
+        is_active: isActive,
+        config: config,
       };
 
       if (editingProcessor) {
+        // Update existing processor
         const { error } = await supabase
           .from("payment_processors")
-          .update(sanitizedData)
+          .update(processorData)
           .eq("id", editingProcessor.id);
 
         if (error) throw error;
         toast.success("Payment processor updated successfully");
       } else {
+        // Create new processor
         const { error } = await supabase
           .from("payment_processors")
-          .insert([sanitizedData]);
+          .insert([processorData]);
 
         if (error) throw error;
-        toast.success("Payment processor added successfully");
+        toast.success("Payment processor created successfully");
       }
 
       setDialogOpen(false);
-      setEditingProcessor(null);
       resetForm();
       loadProcessors();
     } catch (error: any) {
       console.error("Error saving processor:", error);
       toast.error(error.message || "Failed to save payment processor");
+    } finally {
+      setSaving(false);
     }
   };
 
+  // Delete processor
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this payment processor?")) {
       return;
@@ -154,6 +235,7 @@ const PaymentSettings = () => {
     }
   };
 
+  // Toggle processor active status
   const handleToggleActive = async (processor: PaymentProcessor) => {
     try {
       const { error } = await supabase
@@ -171,32 +253,41 @@ const PaymentSettings = () => {
     }
   };
 
+  // Reset form
   const resetForm = () => {
-    setFormData({
-      name: "",
-      processor_type: "",
-      is_active: true,
-      fee_percentage: 0,
-      fee_fixed: 0,
-      min_amount: 0,
-      max_amount: 10000,
-    });
+    setProcessorName("");
+    setProcessorType("");
+    setPreset("");
+    setSelectedCheckoutId("");
+    setFeePercentage("");
+    setFeeFixed("");
+    setMinAmount("");
+    setMaxAmount("");
+    setIsActive(true);
+    setEditingProcessor(null);
   };
 
+  // Open dialog for editing
   const openEditDialog = (processor: PaymentProcessor) => {
     setEditingProcessor(processor);
-    setFormData({
-      name: processor.name,
-      processor_type: processor.processor_type,
-      is_active: processor.is_active,
-      fee_percentage: processor.fee_percentage,
-      fee_fixed: processor.fee_fixed,
-      min_amount: processor.min_amount,
-      max_amount: processor.max_amount,
-    });
+    setProcessorName(processor.name);
+    setProcessorType(processor.processor_type);
+    setFeePercentage(processor.fee_percentage.toString());
+    setFeeFixed(processor.fee_fixed.toString());
+    setMinAmount(processor.min_amount.toString());
+    setMaxAmount(processor.max_amount.toString());
+    setIsActive(processor.is_active);
+    
+    // Load config if exists
+    if (processor.config?.cpay_checkout_id) {
+      setPreset("cpay_deposit");
+      setSelectedCheckoutId(processor.config.cpay_checkout_id);
+    }
+    
     setDialogOpen(true);
   };
 
+  // Open dialog for adding
   const openAddDialog = () => {
     setEditingProcessor(null);
     resetForm();
@@ -214,16 +305,21 @@ const PaymentSettings = () => {
   return (
     <div className="min-h-screen bg-[hsl(0,0%,98%)]">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
-          </Button>
-
-          <h1 className="text-3xl font-bold mb-2">Payment Processor Configuration</h1>
-          <p className="text-muted-foreground">
-            Configure payment methods, fees, and limits
-          </p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Payment Settings</h1>
+            <p className="text-muted-foreground">Configure payment processors for deposits and withdrawals</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/admin/settings/cpay-checkouts")} variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage CPAY Checkouts
+            </Button>
+            <Button onClick={() => navigate("/admin")} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -242,7 +338,7 @@ const PaymentSettings = () => {
                     Add Processor
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingProcessor ? "Edit" : "Add"} Payment Processor
@@ -254,95 +350,132 @@ const PaymentSettings = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="name">Processor Name *</Label>
+                      <Label htmlFor="preset">Preset Configuration</Label>
+                      <select
+                        id="preset"
+                        value={preset}
+                        onChange={(e) => handlePresetChange(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="">Custom Configuration</option>
+                        <option value="cpay_deposit">CPAY Deposit (Hosted Checkout)</option>
+                        <option value="cpay_withdrawal_usdt">CPAY Withdrawal - USDT TRC20</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Select a preset to auto-fill common configurations
+                      </p>
+                    </div>
+
+                    {preset === "cpay_deposit" && (
+                      <div>
+                        <Label htmlFor="cpayCheckout">Select CPAY Checkout *</Label>
+                        <select
+                          id="cpayCheckout"
+                          value={selectedCheckoutId}
+                          onChange={(e) => setSelectedCheckoutId(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          required
+                        >
+                          <option value="">-- Select Checkout --</option>
+                          {cpayCheckouts.map((checkout) => (
+                            <option key={checkout.id} value={checkout.id}>
+                              {checkout.currency} - {checkout.checkout_url.substring(0, 40)}...
+                            </option>
+                          ))}
+                        </select>
+                        {cpayCheckouts.length === 0 && (
+                          <p className="text-xs text-destructive mt-1">
+                            No active CPAY checkouts found. Please add one first.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <Label htmlFor="processorName">Processor Name *</Label>
                       <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Payeer, PayPal"
+                        id="processorName"
+                        value={processorName}
+                        onChange={(e) => setProcessorName(e.target.value)}
+                        placeholder="e.g., PayPal USD"
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="type">Processor Type *</Label>
-                      <Input
-                        id="type"
-                        value={formData.processor_type}
-                        onChange={(e) =>
-                          setFormData({ ...formData, processor_type: e.target.value })
-                        }
-                        placeholder="e.g., crypto, bank_transfer, paypal"
-                      />
+                      <Label htmlFor="processorType">Processor Type *</Label>
+                      <select
+                        id="processorType"
+                        value={processorType}
+                        onChange={(e) => setProcessorType(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        required
+                      >
+                        <option value="">-- Select Type --</option>
+                        <option value="deposit">Deposit</option>
+                        <option value="withdrawal">Withdrawal</option>
+                        <option value="both">Both</option>
+                      </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="fee_percentage">Fee Percentage (%)</Label>
+                        <Label htmlFor="feePercentage">Fee Percentage (%)</Label>
                         <Input
-                          id="fee_percentage"
+                          id="feePercentage"
                           type="number"
                           step="0.01"
-                          value={formData.fee_percentage || 0}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              fee_percentage: parseNumericInput(e.target.value, 0),
-                            })
-                          }
+                          value={feePercentage}
+                          onChange={(e) => setFeePercentage(e.target.value)}
+                          placeholder="0"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="fee_fixed">Fixed Fee ($)</Label>
+                        <Label htmlFor="feeFixed">Fixed Fee ($)</Label>
                         <Input
-                          id="fee_fixed"
+                          id="feeFixed"
                           type="number"
                           step="0.01"
-                          value={formData.fee_fixed || 0}
-                          onChange={(e) =>
-                            setFormData({ ...formData, fee_fixed: parseNumericInput(e.target.value, 0) })
-                          }
+                          value={feeFixed}
+                          onChange={(e) => setFeeFixed(e.target.value)}
+                          placeholder="0"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="min_amount">Min Amount ($)</Label>
+                        <Label htmlFor="minAmount">Min Amount ($)</Label>
                         <Input
-                          id="min_amount"
+                          id="minAmount"
                           type="number"
                           step="0.01"
-                          value={formData.min_amount || 0}
-                          onChange={(e) =>
-                            setFormData({ ...formData, min_amount: parseNumericInput(e.target.value, 0) })
-                          }
+                          value={minAmount}
+                          onChange={(e) => setMinAmount(e.target.value)}
+                          placeholder="0"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="max_amount">Max Amount ($)</Label>
+                        <Label htmlFor="maxAmount">Max Amount ($)</Label>
                         <Input
-                          id="max_amount"
+                          id="maxAmount"
                           type="number"
                           step="0.01"
-                          value={formData.max_amount || 10000}
-                          onChange={(e) =>
-                            setFormData({ ...formData, max_amount: parseNumericInput(e.target.value, 10000) })
-                          }
+                          value={maxAmount}
+                          onChange={(e) => setMaxAmount(e.target.value)}
+                          placeholder="10000"
                         />
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <Switch
-                        id="is_active"
-                        checked={formData.is_active}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, is_active: checked })
-                        }
+                        id="isActive"
+                        checked={isActive}
+                        onCheckedChange={setIsActive}
                       />
-                      <Label htmlFor="is_active">Active</Label>
+                      <Label htmlFor="isActive">Active</Label>
                     </div>
                   </div>
 
@@ -350,8 +483,8 @@ const PaymentSettings = () => {
                     <Button variant="outline" onClick={() => setDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleSave}>
-                      {editingProcessor ? "Update" : "Add"} Processor
+                    <Button onClick={handleSave} disabled={saving}>
+                      {saving ? "Saving..." : editingProcessor ? "Update" : "Add"} Processor
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -381,7 +514,14 @@ const PaymentSettings = () => {
                   ) : (
                     processors.map((processor) => (
                       <TableRow key={processor.id}>
-                        <TableCell className="font-medium">{processor.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {processor.name}
+                          {processor.config?.cpay_checkout_id && (
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              CPAY: {processor.config.currency}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{processor.processor_type}</Badge>
                         </TableCell>
@@ -417,7 +557,7 @@ const PaymentSettings = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(processor.id)}
+                              onClick={() => handleDelete(processor.id!)}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>

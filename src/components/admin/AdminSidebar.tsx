@@ -88,6 +88,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "Deposits", path: "/admin/deposits" },
         { label: "Withdrawals", path: "/admin/withdrawals" },
         { label: "Payment Settings", path: "/admin/settings/payments" },
+        { label: "CPAY Checkouts", path: "/admin/settings/cpay-checkouts" },
       ],
     },
     {

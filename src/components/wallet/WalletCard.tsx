@@ -100,7 +100,11 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       // Check if it's a CPAY processor
       if (processor.config?.processor === 'cpay') {
         const { data, error } = await supabase.functions.invoke("cpay-deposit", {
-          body: { amount, currency: 'USDT' },
+          body: { 
+            amount, 
+            currency: processor.config.currency || 'USDT',
+            processorId: processor.id // Pass processor ID to backend
+          },
         });
 
         if (error) throw error;
