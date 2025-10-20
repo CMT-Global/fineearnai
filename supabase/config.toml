@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.backfill-registration-location]
 verify_jwt = false
+
+[functions.convert-usd-to-local]
+verify_jwt = true
