@@ -562,6 +562,7 @@ export type Database = {
           payeer_payout_addresses: Json | null
           phone: string | null
           plan_expires_at: string | null
+          preferred_currency: string
           referral_code: string
           referred_by: string | null
           registration_country: string | null
@@ -593,6 +594,7 @@ export type Database = {
           payeer_payout_addresses?: Json | null
           phone?: string | null
           plan_expires_at?: string | null
+          preferred_currency?: string
           referral_code: string
           referred_by?: string | null
           registration_country?: string | null
@@ -624,6 +626,7 @@ export type Database = {
           payeer_payout_addresses?: Json | null
           phone?: string | null
           plan_expires_at?: string | null
+          preferred_currency?: string
           referral_code?: string
           referred_by?: string | null
           registration_country?: string | null
