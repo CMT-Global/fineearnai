@@ -45,6 +45,12 @@ const PaymentSettings = () => {
     max_amount: 10000,
   });
 
+  // Helper function to safely parse numeric input
+  const parseNumericInput = (value: string, defaultValue: number = 0): number => {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+  };
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login");
@@ -91,10 +97,19 @@ const PaymentSettings = () => {
         return;
       }
 
+      // Validate and sanitize numeric inputs
+      const sanitizedData = {
+        ...formData,
+        fee_percentage: parseNumericInput(formData.fee_percentage.toString(), 0),
+        fee_fixed: parseNumericInput(formData.fee_fixed.toString(), 0),
+        min_amount: parseNumericInput(formData.min_amount.toString(), 0),
+        max_amount: parseNumericInput(formData.max_amount.toString(), 10000),
+      };
+
       if (editingProcessor) {
         const { error } = await supabase
           .from("payment_processors")
-          .update(formData)
+          .update(sanitizedData)
           .eq("id", editingProcessor.id);
 
         if (error) throw error;
@@ -102,7 +117,7 @@ const PaymentSettings = () => {
       } else {
         const { error } = await supabase
           .from("payment_processors")
-          .insert([formData]);
+          .insert([sanitizedData]);
 
         if (error) throw error;
         toast.success("Payment processor added successfully");
@@ -267,11 +282,11 @@ const PaymentSettings = () => {
                           id="fee_percentage"
                           type="number"
                           step="0.01"
-                          value={formData.fee_percentage}
+                          value={formData.fee_percentage || 0}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              fee_percentage: parseFloat(e.target.value),
+                              fee_percentage: parseNumericInput(e.target.value, 0),
                             })
                           }
                         />
@@ -283,9 +298,9 @@ const PaymentSettings = () => {
                           id="fee_fixed"
                           type="number"
                           step="0.01"
-                          value={formData.fee_fixed}
+                          value={formData.fee_fixed || 0}
                           onChange={(e) =>
-                            setFormData({ ...formData, fee_fixed: parseFloat(e.target.value) })
+                            setFormData({ ...formData, fee_fixed: parseNumericInput(e.target.value, 0) })
                           }
                         />
                       </div>
@@ -298,9 +313,9 @@ const PaymentSettings = () => {
                           id="min_amount"
                           type="number"
                           step="0.01"
-                          value={formData.min_amount}
+                          value={formData.min_amount || 0}
                           onChange={(e) =>
-                            setFormData({ ...formData, min_amount: parseFloat(e.target.value) })
+                            setFormData({ ...formData, min_amount: parseNumericInput(e.target.value, 0) })
                           }
                         />
                       </div>
@@ -311,9 +326,9 @@ const PaymentSettings = () => {
                           id="max_amount"
                           type="number"
                           step="0.01"
-                          value={formData.max_amount}
+                          value={formData.max_amount || 10000}
                           onChange={(e) =>
-                            setFormData({ ...formData, max_amount: parseFloat(e.target.value) })
+                            setFormData({ ...formData, max_amount: parseNumericInput(e.target.value, 10000) })
                           }
                         />
                       </div>

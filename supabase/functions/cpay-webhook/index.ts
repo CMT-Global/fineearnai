@@ -6,10 +6,64 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiter: Track requests per IP with sliding window
+const rateLimiter = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 100; // Max requests per minute per IP
+const RATE_WINDOW = 60 * 1000; // 1 minute in milliseconds
+
+// Cleanup old entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of rateLimiter.entries()) {
+    if (now > data.resetTime) {
+      rateLimiter.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimiter.get(ip);
+
+  if (!record || now > record.resetTime) {
+    // New window or expired window
+    rateLimiter.set(ip, { count: 1, resetTime: now + RATE_WINDOW });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    console.warn(`Rate limit exceeded for IP: ${ip}`);
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Get client IP for rate limiting
+  const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                   req.headers.get('x-real-ip') || 
+                   'unknown';
+
+  // Check rate limit
+  if (!checkRateLimit(clientIP)) {
+    console.error(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Too many requests. Please try again later.' 
+      }),
+      { 
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 
   try {
