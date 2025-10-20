@@ -1,5 +1,14 @@
 project_id = "mobikymhzchzakwzpqep"
 
+[functions.cpay-deposit]
+verify_jwt = true
+
+[functions.cpay-withdraw]
+verify_jwt = true
+
+[functions.cpay-webhook]
+verify_jwt = false
+
 [functions.skip-task]
 verify_jwt = true
 
