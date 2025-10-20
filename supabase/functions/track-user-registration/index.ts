@@ -7,6 +7,48 @@ const corsHeaders = {
 };
 
 /**
+ * Country to Currency Mapping (Deno-compatible inline version)
+ * Maps ISO country codes to primary currency codes for auto-detection
+ */
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  // Africa
+  'ZA': 'ZAR', 'NG': 'NGN', 'EG': 'EGP', 'KE': 'KES', 'GH': 'GHS',
+  'TZ': 'TZS', 'UG': 'UGX', 'MA': 'MAD', 'ET': 'ETB', 'DZ': 'DZD',
+  
+  // Americas
+  'US': 'USD', 'CA': 'CAD', 'BR': 'BRL', 'MX': 'MXN', 'AR': 'ARS',
+  'CL': 'CLP', 'CO': 'COP', 'PE': 'PEN',
+  
+  // Europe
+  'GB': 'GBP', 'EU': 'EUR', 'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR',
+  'ES': 'EUR', 'NL': 'EUR', 'BE': 'EUR', 'AT': 'EUR', 'PT': 'EUR',
+  'IE': 'EUR', 'GR': 'EUR', 'PL': 'PLN', 'RO': 'RON', 'CZ': 'CZK',
+  'HU': 'HUF', 'SE': 'SEK', 'DK': 'DKK', 'NO': 'NOK', 'CH': 'CHF',
+  'TR': 'TRY', 'RU': 'RUB', 'UA': 'UAH',
+  
+  // Asia
+  'CN': 'CNY', 'IN': 'INR', 'JP': 'JPY', 'KR': 'KRW', 'ID': 'IDR',
+  'TH': 'THB', 'MY': 'MYR', 'SG': 'SGD', 'PH': 'PHP', 'VN': 'VND',
+  'BD': 'BDT', 'PK': 'PKR', 'LK': 'LKR', 'MM': 'MMK', 'KH': 'KHR',
+  
+  // Middle East
+  'SA': 'SAR', 'AE': 'AED', 'IL': 'ILS', 'QA': 'QAR', 'KW': 'KWD',
+  'OM': 'OMR', 'BH': 'BHD', 'JO': 'JOD', 'LB': 'LBP',
+  
+  // Oceania
+  'AU': 'AUD', 'NZ': 'NZD',
+};
+
+/**
+ * Get currency for country code, fallback to USD
+ */
+function getCurrencyForCountry(countryCode: string | null | undefined): string {
+  if (!countryCode) return 'USD';
+  const upperCode = countryCode.trim().toUpperCase();
+  return COUNTRY_CURRENCY_MAP[upperCode] || 'USD';
+}
+
+/**
  * Track User Registration - IPStack Integration (Phase 4)
  * 
  * Purpose: Capture and store user's IP and country information at registration time
@@ -153,6 +195,11 @@ Deno.serve(async (req) => {
       updateData.country = locationData.country_code;
       console.log(`📝 [Registration Tracking] Auto-populating country field: ${locationData.country_code}`);
     }
+
+    // 🌍 Smart Auto-Currency Detection: Set preferred_currency based on country
+    const detectedCurrency = getCurrencyForCountry(locationData.country_code);
+    updateData.preferred_currency = detectedCurrency;
+    console.log(`💱 [Registration Tracking] Auto-detected currency: ${detectedCurrency} for country ${locationData.country_code}`);
 
     // Update profile with registration location
     const { error: updateError } = await supabase
