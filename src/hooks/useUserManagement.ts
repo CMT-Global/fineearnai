@@ -70,9 +70,9 @@ export const useUserManagement = () => {
           query = query.eq('account_status', filters.statusFilter as any);
         }
 
-        // Apply country filter
+        // Apply country filter (using IPStack-detected registration country)
         if (filters.countryFilter && filters.countryFilter !== 'all') {
-          query = query.eq('country', filters.countryFilter);
+          query = query.eq('registration_country', filters.countryFilter);
         }
 
         // Apply sorting and pagination
