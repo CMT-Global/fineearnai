@@ -147,26 +147,35 @@ const Tasks = () => {
   const userStats = taskData?.userStats || null;
   const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
 
-  // Skip mutation
+  // Skip mutation - Phase 1.3: Server-side skip enforcement
   const skipMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({ skips_today: (userStats?.skipsToday || 0) + 1 })
-        .eq("id", user.id);
+      // Call server-side skip function with limit enforcement
+      const { data, error } = await supabase.functions.invoke('skip-task', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.message || 'Failed to skip task');
+      
+      return data;
     },
-    onSuccess: () => {
-      toast.info("Task skipped");
+    onSuccess: (data) => {
+      toast.info(`Task skipped (${data.remainingSkips} skips remaining)`);
       setFeedback(null);
       setSelectedResponse("");
       refetchTask();
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to skip task");
+      if (error.message?.includes('skip_limit_reached')) {
+        toast.error("Daily skip limit reached!");
+      } else {
+        toast.error(error.message || "Failed to skip task");
+      }
     },
   });
 

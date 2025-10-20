@@ -1,5 +1,8 @@
 project_id = "mobikymhzchzakwzpqep"
 
+[functions.skip-task]
+verify_jwt = true
+
 [functions.reset-daily-counters]
 verify_jwt = false
 
