@@ -142,57 +142,11 @@ serve(async (req) => {
 
     console.log(`[CPAY-DEPOSIT] ✓ Checkout selected: ${checkout.checkout_id}, Order: ${orderId}, Has binding: ${hasCheckoutBinding}`);
 
-    // Get CPAY API credentials
-    const cpayPublicKey = Deno.env.get('CPAY_API_PUBLIC_KEY');
-    const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY');
-    const cpayAccountId = Deno.env.get('CPAY_ACCOUNT_ID');
+    // Build CPAY checkout URL with clickId parameter (CPAY's tracking mechanism)
+    const checkoutUrl = `https://checkouts.cpay.world/checkout/${checkout.checkout_id}?clickId=${orderId}`;
+    console.log(`[CPAY-DEPOSIT] 🔗 Checkout URL: ${checkoutUrl}`);
 
-    if (!cpayPublicKey || !cpayPrivateKey || !cpayAccountId) {
-      console.error('[CPAY-DEPOSIT] ❌ Missing CPAY API credentials');
-      throw new Error('CPAY API credentials not configured. Please contact support.');
-    }
-
-    // Create charge via CPAY API
-    console.log(`[CPAY-DEPOSIT] 🔄 Creating CPAY charge: Amount ${amount} ${currency}`);
-    
-    const cpayChargePayload = {
-      amount: amount.toString(),
-      currency: currency,
-      description: `Deposit to account`,
-      metadata: {
-        order_id: orderId,
-        user_id: user.id,
-        username: profile.username,
-        email: profile.email,
-      },
-      redirect_url: `${Deno.env.get('SUPABASE_URL')?.replace('/functions/v1', '')}/deposit-result`,
-      checkout_id: checkout.checkout_id,
-    };
-
-    const cpayResponse = await fetch('https://api.cpay.world/v1/charges', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${cpayPrivateKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(cpayChargePayload),
-    });
-
-    if (!cpayResponse.ok) {
-      const errorText = await cpayResponse.text();
-      console.error('[CPAY-DEPOSIT] ❌ CPAY API Error:', cpayResponse.status, errorText);
-      throw new Error(`CPAY API error: ${cpayResponse.status} - ${errorText}`);
-    }
-
-    const cpayCharge = await cpayResponse.json();
-    console.log(`[CPAY-DEPOSIT] ✓ CPAY charge created: ${cpayCharge.id}`);
-
-    if (!cpayCharge.id || !cpayCharge.hosted_url) {
-      console.error('[CPAY-DEPOSIT] ❌ Invalid CPAY response:', cpayCharge);
-      throw new Error('Invalid response from CPAY API');
-    }
-
-    // Create pending transaction in database with CPAY charge details
+    // Create pending transaction in database
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
@@ -202,16 +156,15 @@ serve(async (req) => {
         wallet_type: 'deposit',
         status: 'pending',
         payment_gateway: 'cpay',
-        gateway_transaction_id: cpayCharge.id, // Store CPAY charge ID
+        gateway_transaction_id: orderId, // Will be matched via order_id in webhook
         new_balance: profile.deposit_wallet_balance,
-        description: `CPAY ${currency} deposit via ${checkout.checkout_id}`,
+        description: `CPAY ${currency} deposit - Order ${orderId}`,
         metadata: {
-          order_id: orderId,
+          order_id: orderId, // Critical: webhook will match using this
           currency: currency,
           checkout_id: checkout.checkout_id,
-          cpay_charge_id: cpayCharge.id,
-          cpay_hosted_url: cpayCharge.hosted_url,
-          cpay_status: cpayCharge.status,
+          cpay_checkout_id: checkout.checkout_id,
+          requested_amount: amount,
           initiated_at: new Date().toISOString(),
         },
       })
@@ -223,18 +176,17 @@ serve(async (req) => {
       throw new Error('Failed to create transaction record');
     }
 
-    console.log(`[CPAY-DEPOSIT] ✅ SUCCESS: Transaction ${transaction.id}, Order ${orderId}, CPAY Charge ${cpayCharge.id}`);
+    console.log(`[CPAY-DEPOSIT] ✅ SUCCESS: Transaction ${transaction.id}, Order ${orderId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        checkout_url: cpayCharge.hosted_url, // Use CPAY's hosted URL
+        checkout_url: checkoutUrl, // CPAY static checkout with clickId
         order_id: orderId,
         transaction_id: transaction.id,
         currency: currency,
         amount: amount,
         checkout_id: checkout.id,
-        cpay_charge_id: cpayCharge.id,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
