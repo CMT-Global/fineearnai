@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const cpayPrivateKey = Deno.env.get('CPAY_PRIVATE_KEY')!;
+    const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY')!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

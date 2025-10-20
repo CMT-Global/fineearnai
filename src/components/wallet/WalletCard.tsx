@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Wallet, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, ExternalLink, InfoIcon } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+
+interface PaymentProcessor {
+  id: string;
+  name: string;
+  processor_type: string;
+  is_active: boolean;
+  fee_fixed: number;
+  fee_percentage: number;
+  min_amount: number;
+  max_amount: number;
+  config: any;
+}
 
 interface WalletCardProps {
   depositBalance: number;
@@ -27,6 +40,36 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [depositProcessors, setDepositProcessors] = useState<PaymentProcessor[]>([]);
+  const [withdrawalProcessors, setWithdrawalProcessors] = useState<PaymentProcessor[]>([]);
+  const [loadingProcessors, setLoadingProcessors] = useState(true);
+
+  useEffect(() => {
+    loadPaymentProcessors();
+  }, []);
+
+  const loadPaymentProcessors = async () => {
+    try {
+      setLoadingProcessors(true);
+      const { data, error } = await supabase
+        .from("payment_processors")
+        .select("*")
+        .eq("is_active", true);
+
+      if (error) throw error;
+
+      const deposits = (data || []).filter(p => p.processor_type === 'deposit');
+      const withdrawals = (data || []).filter(p => p.processor_type === 'withdrawal');
+
+      setDepositProcessors(deposits);
+      setWithdrawalProcessors(withdrawals);
+    } catch (error) {
+      console.error("Error loading payment processors:", error);
+      toast.error("Failed to load payment methods");
+    } finally {
+      setLoadingProcessors(false);
+    }
+  };
 
   const handleDeposit = async () => {
     if (!depositAmount || !depositMethod) {
@@ -40,23 +83,52 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
+    const processor = depositProcessors.find(p => p.name === depositMethod);
+    if (!processor) {
+      toast.error("Invalid payment method");
+      return;
+    }
+
+    if (amount < processor.min_amount || amount > processor.max_amount) {
+      toast.error(`Amount must be between $${processor.min_amount} and $${processor.max_amount}`);
+      return;
+    }
+
     try {
       setDepositLoading(true);
-      const { data, error } = await supabase.functions.invoke("deposit", {
-        body: {
-          amount,
-          paymentMethod: depositMethod,
-          gatewayTransactionId: `TXN-${Date.now()}`,
-        },
-      });
 
-      if (error) throw error;
+      // Check if it's a CPAY processor
+      if (processor.config?.processor === 'cpay') {
+        const { data, error } = await supabase.functions.invoke("cpay-deposit", {
+          body: { amount, currency: 'USDT' },
+        });
 
-      toast.success("Deposit successful!");
-      setDepositAmount("");
-      setDepositMethod("");
-      setDepositDialogOpen(false);
-      onBalanceUpdate();
+        if (error) throw error;
+
+        if (data?.payment_url) {
+          toast.success("Redirecting to payment gateway...");
+          window.location.href = data.payment_url;
+        } else {
+          throw new Error("No payment URL received");
+        }
+      } else {
+        // Legacy deposit flow
+        const { data, error } = await supabase.functions.invoke("deposit", {
+          body: {
+            amount,
+            paymentMethod: depositMethod,
+            gatewayTransactionId: `TXN-${Date.now()}`,
+          },
+        });
+
+        if (error) throw error;
+
+        toast.success("Deposit successful!");
+        setDepositAmount("");
+        setDepositMethod("");
+        setDepositDialogOpen(false);
+        onBalanceUpdate();
+      }
     } catch (error: any) {
       console.error("Deposit error:", error);
       toast.error(error.message || "Failed to process deposit");
@@ -154,17 +226,28 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </div>
                   <div>
                     <Label htmlFor="deposit-method">Payment Method</Label>
-                    <Select value={depositMethod} onValueChange={setDepositMethod}>
+                    <Select value={depositMethod} onValueChange={setDepositMethod} disabled={loadingProcessors}>
                       <SelectTrigger id="deposit-method">
-                        <SelectValue placeholder="Select payment method" />
+                        <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select payment method"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="card">Credit/Debit Card</SelectItem>
-                        <SelectItem value="paypal">PayPal</SelectItem>
-                        <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                        {depositProcessors.length === 0 ? (
+                          <SelectItem value="none" disabled>No payment methods available</SelectItem>
+                        ) : (
+                          depositProcessors.map((processor) => (
+                            <SelectItem key={processor.id} value={processor.name}>
+                              {processor.config?.display_name || processor.name}
+                              {processor.fee_fixed > 0 && ` (Fee: $${processor.fee_fixed})`}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    {depositMethod && depositProcessors.find(p => p.name === depositMethod)?.config?.description && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {depositProcessors.find(p => p.name === depositMethod)?.config?.description}
+                      </p>
+                    )}
                   </div>
                   <Button
                     onClick={handleDeposit}
@@ -224,22 +307,44 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </div>
                   <div>
                     <Label htmlFor="withdraw-method">Withdrawal Method</Label>
-                    <Select value={withdrawMethod} onValueChange={setWithdrawMethod}>
+                    <Select value={withdrawMethod} onValueChange={setWithdrawMethod} disabled={loadingProcessors}>
                       <SelectTrigger id="withdraw-method">
-                        <SelectValue placeholder="Select withdrawal method" />
+                        <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select withdrawal method"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="paypal">PayPal</SelectItem>
-                        <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                        {withdrawalProcessors.length === 0 ? (
+                          <SelectItem value="none" disabled>No withdrawal methods available</SelectItem>
+                        ) : (
+                          withdrawalProcessors.map((processor) => (
+                            <SelectItem key={processor.id} value={processor.name}>
+                              {processor.config?.display_name || processor.name}
+                              {processor.fee_fixed > 0 && ` (Fee: $${processor.fee_fixed})`}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    {withdrawMethod && withdrawalProcessors.find(p => p.name === withdrawMethod) && (
+                      <Alert className="mt-2">
+                        <InfoIcon className="h-4 w-4" />
+                        <AlertDescription className="text-xs">
+                          {withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.description}
+                          <br />
+                          <strong>Fee:</strong> ${withdrawalProcessors.find(p => p.name === withdrawMethod)?.fee_fixed || 0}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="account-details">Account Details</Label>
+                    <Label htmlFor="account-details">
+                      {withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_label || "Account Details"}
+                    </Label>
                     <Textarea
                       id="account-details"
-                      placeholder="Enter your account details (bank account number, PayPal email, crypto address, etc.)"
+                      placeholder={
+                        withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_placeholder ||
+                        "Enter your account details (bank account number, PayPal email, crypto address, etc.)"
+                      }
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
                       rows={3}

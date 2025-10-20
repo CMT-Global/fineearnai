@@ -118,8 +118,20 @@ export default function Withdrawals() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.functions.invoke("process-withdrawal", {
-        body: {
+      const withdrawal = withdrawals.find(w => w.id === selectedWithdrawal);
+      if (!withdrawal) throw new Error("Withdrawal not found");
+
+      // Check if payment method is CPAY
+      const isCpayWithdrawal = withdrawal.payment_method?.includes('cpay');
+
+      const functionName = isCpayWithdrawal ? "cpay-withdraw" : "process-withdrawal";
+      
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: isCpayWithdrawal ? {
+          withdrawal_request_id: selectedWithdrawal,
+          action: dialogAction,
+          rejection_reason: dialogAction === "reject" ? rejectionReason : undefined,
+        } : {
           withdrawalRequestId: selectedWithdrawal,
           action: dialogAction,
           rejectionReason: dialogAction === "reject" ? rejectionReason : undefined,
