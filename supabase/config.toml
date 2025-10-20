@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.refresh-materialized-views]
 verify_jwt = false
+
+[functions.backfill-registration-location]
+verify_jwt = false
