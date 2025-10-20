@@ -52,7 +52,11 @@ export const useUserManagement = () => {
             created_at,
             last_login,
             last_activity,
-            tasks_completed_today
+            tasks_completed_today,
+            registration_country,
+            registration_country_name,
+            last_login_country,
+            last_login_country_name
           `, { count: 'exact' });
 
         // Apply search filter
