@@ -59,8 +59,8 @@ serve(async (req) => {
       currency: currency,
       order_id: `DEP-${user.id}-${Date.now()}`,
       description: `Deposit for ${profile.username}`,
-      success_url: `${Deno.env.get('VITE_SUPABASE_URL')?.replace('https://mobikymhzchzakwzpqep.supabase.co', 'https://your-app-url.lovable.app') || 'https://your-app-url.lovable.app'}/wallet?deposit=success`,
-      fail_url: `${Deno.env.get('VITE_SUPABASE_URL')?.replace('https://mobikymhzchzakwzpqep.supabase.co', 'https://your-app-url.lovable.app') || 'https://your-app-url.lovable.app'}/wallet?deposit=failed`,
+      success_url: `${Deno.env.get('VITE_SUPABASE_URL') || ''}/deposit-result?deposit=success`,
+      fail_url: `${Deno.env.get('VITE_SUPABASE_URL') || ''}/deposit-result?deposit=failed`,
       callback_url: `${supabaseUrl}/functions/v1/cpay-webhook`,
     };
 

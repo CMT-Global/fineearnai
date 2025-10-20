@@ -27,6 +27,7 @@ const Referrals = lazy(() => import("./pages/Referrals"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const DepositResult = lazy(() => import("./pages/DepositResult"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy-loaded admin routes
@@ -46,6 +47,7 @@ const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
 const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
+const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +115,7 @@ const RoutesWrapper = () => {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
         <Route path="/referrals" element={<Referrals />} />
+        <Route path="/deposit-result" element={<DepositResult />} />
       
       {/* Admin Routes - Protected with AdminRoute guard and wrapped in AdminLayout */}
       <Route
@@ -201,6 +204,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <PaymentSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/monitoring/cpay"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <CPAYMonitoring />
             </AdminLayout>
           </AdminRoute>
         }
