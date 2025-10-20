@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, DollarSign } from "lucide-react";
-import { formatCurrency } from "@/lib/wallet-utils";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface AITask {
   id: string;
@@ -71,10 +71,15 @@ const TaskInterfaceComponent = ({
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Reward</p>
-          <div className="flex items-center gap-1 text-[hsl(var(--wallet-earnings))]">
-            <DollarSign className="h-4 w-4" />
-            <p className="text-lg font-bold">{formatCurrency(task.reward)}</p>
-          </div>
+          <p className="text-lg font-bold text-[hsl(var(--wallet-earnings))]">
+            <CurrencyDisplay 
+              amountUSD={task.reward}
+              showSymbol={true}
+              showSeparator={true}
+              decimals={2}
+              showTooltip={true}
+            />
+          </p>
         </div>
       </div>
 
@@ -102,7 +107,13 @@ const TaskInterfaceComponent = ({
                     Correct Answer!
                   </p>
                   <p className="text-sm text-green-700 dark:text-green-300">
-                    You earned {formatCurrency(feedback.earnedAmount)}
+                    You earned <CurrencyDisplay 
+                      amountUSD={feedback.earnedAmount}
+                      showSymbol={true}
+                      decimals={2}
+                      showTooltip={false}
+                      className="inline"
+                    />
                   </p>
                 </div>
               </>
