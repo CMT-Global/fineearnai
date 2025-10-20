@@ -157,6 +157,45 @@ export type Database = {
           },
         ]
       }
+      cpay_checkouts: {
+        Row: {
+          checkout_id: string
+          checkout_url: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          is_active: boolean
+          max_amount: number
+          min_amount: number
+          updated_at: string
+        }
+        Insert: {
+          checkout_id: string
+          checkout_url: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          is_active?: boolean
+          max_amount?: number
+          min_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          checkout_id?: string
+          checkout_url?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          is_active?: boolean
+          max_amount?: number
+          min_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_reset_logs: {
         Row: {
           created_at: string

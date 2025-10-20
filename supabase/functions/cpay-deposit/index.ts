@@ -20,9 +20,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const cpayPublicKey = Deno.env.get('CPAY_API_PUBLIC_KEY')!;
-    const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY')!;
-    const cpayAccountId = Deno.env.get('CPAY_ACCOUNT_ID')!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -41,83 +38,86 @@ serve(async (req) => {
       throw new Error('Invalid amount');
     }
 
+    console.log(`Processing deposit request: User ${user.id}, Amount ${amount} ${currency}`);
+
     // Get user profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('email, username')
+      .select('email, username, deposit_wallet_balance')
       .eq('id', user.id)
       .single();
 
     if (profileError) {
+      console.error('Profile fetch error:', profileError);
       throw new Error('Failed to fetch user profile');
     }
 
-    // Create payment request with CPAY
-    const paymentData = {
-      account: cpayAccountId,
-      amount: amount.toString(),
-      currency: currency,
-      order_id: `DEP-${user.id}-${Date.now()}`,
-      description: `Deposit for ${profile.username}`,
-      success_url: `${Deno.env.get('VITE_SUPABASE_URL') || ''}/deposit-result?deposit=success`,
-      fail_url: `${Deno.env.get('VITE_SUPABASE_URL') || ''}/deposit-result?deposit=failed`,
-      callback_url: `${supabaseUrl}/functions/v1/cpay-webhook`,
-    };
+    // Find an active CPAY checkout for the requested currency
+    const { data: checkout, error: checkoutError } = await supabase
+      .from('cpay_checkouts')
+      .select('*')
+      .eq('currency', currency)
+      .eq('is_active', true)
+      .gte('max_amount', amount)
+      .lte('min_amount', amount)
+      .limit(1)
+      .single();
 
-    // Sign the request
-    const signString = Object.keys(paymentData)
-      .sort()
-      .map(key => `${key}=${paymentData[key as keyof typeof paymentData]}`)
-      .join('&') + cpayPrivateKey;
-
-    const encoder = new TextEncoder();
-    const data = encoder.encode(signString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // Make API request to CPAY
-    const cpayResponse = await fetch('https://api.cpay.com/v1/payment/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': cpayPublicKey,
-      },
-      body: JSON.stringify({
-        ...paymentData,
-        signature,
-      }),
-    });
-
-    const cpayResult = await cpayResponse.json();
-
-    if (!cpayResponse.ok || cpayResult.status !== 'success') {
-      console.error('CPAY API Error:', cpayResult);
-      throw new Error(cpayResult.message || 'Payment creation failed');
+    if (checkoutError || !checkout) {
+      console.error('No active checkout found for currency:', currency, checkoutError);
+      throw new Error(`No active checkout available for ${currency}. Please contact support.`);
     }
 
-    // Log the deposit initiation
-    await supabase.from('transactions').insert({
-      user_id: user.id,
-      type: 'deposit',
-      amount: amount,
-      wallet_type: 'deposit',
-      status: 'pending',
-      payment_gateway: 'cpay',
-      gateway_transaction_id: cpayResult.data.payment_id,
-      new_balance: 0, // Will be updated on webhook
-      description: 'CPAY deposit initiated',
-      metadata: {
-        order_id: paymentData.order_id,
-        currency: currency,
-      },
-    });
+    // Generate unique order_id for tracking
+    const orderId = `DEP-${user.id.substring(0, 8)}-${Date.now()}`;
+
+    console.log(`Using checkout ${checkout.checkout_id} for order ${orderId}`);
+
+    // Create pending transaction in database
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: user.id,
+        type: 'deposit',
+        amount: amount,
+        wallet_type: 'deposit',
+        status: 'pending',
+        payment_gateway: 'cpay',
+        gateway_transaction_id: orderId, // Use order_id as transaction_id for now
+        new_balance: profile.deposit_wallet_balance,
+        description: `CPAY ${currency} deposit via ${checkout.checkout_id}`,
+        metadata: {
+          order_id: orderId,
+          currency: currency,
+          checkout_id: checkout.checkout_id,
+          checkout_url: checkout.checkout_url,
+          initiated_at: new Date().toISOString(),
+        },
+      })
+      .select()
+      .single();
+
+    if (txError) {
+      console.error('Transaction creation error:', txError);
+      throw new Error('Failed to create transaction record');
+    }
+
+    // Build checkout URL with order_id and amount as query parameters
+    const checkoutUrl = new URL(checkout.checkout_url);
+    checkoutUrl.searchParams.set('order_id', orderId);
+    checkoutUrl.searchParams.set('amount', amount.toString());
+    checkoutUrl.searchParams.set('user_id', user.id);
+
+    console.log(`✅ Deposit initiated: Transaction ${transaction.id}, Order ${orderId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        payment_url: cpayResult.data.payment_url,
-        payment_id: cpayResult.data.payment_id,
+        checkout_url: checkoutUrl.toString(),
+        order_id: orderId,
+        transaction_id: transaction.id,
+        currency: currency,
+        amount: amount,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

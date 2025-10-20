@@ -43,11 +43,13 @@ serve(async (req) => {
 
     const { order_id, payment_id, status, amount, currency } = webhookData;
 
-    // Find the transaction
+    console.log(`Processing webhook: Order ${order_id}, Payment ${payment_id}, Status ${status}`);
+
+    // Find the transaction by order_id (stored in gateway_transaction_id)
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .select('*, profiles!inner(id, deposit_wallet_balance)')
-      .eq('gateway_transaction_id', payment_id)
+      .eq('gateway_transaction_id', order_id)
       .eq('type', 'deposit')
       .single();
 
@@ -71,7 +73,7 @@ serve(async (req) => {
         throw new Error('Failed to update balance');
       }
 
-      // Update transaction status
+      // Update transaction status with payment_id
       await supabase
         .from('transactions')
         .update({
@@ -81,11 +83,12 @@ serve(async (req) => {
             ...transaction.metadata,
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
+            cpay_payment_id: payment_id,
           },
         })
         .eq('id', transaction.id);
 
-      console.log(`Deposit completed for user ${transaction.profiles.id}: ${amount} ${currency}`);
+      console.log(`✅ Deposit completed for user ${transaction.profiles.id}: ${amount} ${currency}`);
 
       // Send success notification
       await supabase.functions.invoke('send-cpay-notification', {

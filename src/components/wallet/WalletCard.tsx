@@ -105,11 +105,11 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
         if (error) throw error;
 
-        if (data?.payment_url) {
-          toast.success("Redirecting to payment gateway...");
-          window.location.href = data.payment_url;
+        if (data?.checkout_url) {
+          toast.success("Redirecting to checkout...");
+          window.location.href = data.checkout_url;
         } else {
-          throw new Error("No payment URL received");
+          throw new Error("No checkout URL received");
         }
       } else {
         // Legacy deposit flow
