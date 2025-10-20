@@ -11,19 +11,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Phase 2.3: Enhanced logging with execution time tracking
+  const executionStartTime = Date.now();
+  const requestId = crypto.randomUUID();
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get current date in YYYY-MM-DD format
-    const currentDate = new Date().toISOString().split('T')[0];
+    // Get current date and times in different timezones
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const utcTime = now.toISOString();
+    const eatTime = new Date(now.getTime() + (3 * 60 * 60 * 1000)).toISOString(); // UTC+3 for EAT
     
-    console.log(`Starting daily reset at ${new Date().toISOString()}`);
+    console.log(`🔄 [${requestId}] Starting daily reset at ${utcTime} (UTC)`);
+    console.log(`🕐 [${requestId}] EAT Time: ${eatTime}`);
+    console.log(`📅 [${requestId}] Reset Date: ${currentDate}`);
     
     // Reset daily counters for all users where last_task_date is not today
     // This ensures we only reset users who haven't been reset today already
+    const resetStartTime = Date.now();
     const { data, error } = await supabase
       .from('profiles')
       .update({
@@ -32,26 +42,59 @@ Deno.serve(async (req) => {
         last_task_date: currentDate,
       })
       .or(`last_task_date.is.null,last_task_date.lt.${currentDate}`)
-      .select('id, username, tasks_completed_today, skips_today');
+      .select('id, username');
+
+    const resetTime = Date.now() - resetStartTime;
 
     if (error) {
-      console.error('❌ Error resetting daily counters:', error);
+      console.error(`❌ [${requestId}] Error resetting daily counters (${resetTime}ms):`, error);
       throw error;
     }
 
     const resetCount = data?.length || 0;
-    console.log(`✅ Successfully reset daily counters for ${resetCount} users at ${new Date().toISOString()}`);
+    const executionTime = Date.now() - executionStartTime;
     
-    // Also clear the dailyLimitReached flag in Zustand by invalidating user cache
-    // Note: This happens automatically when users refresh or when get-next-task is called
+    console.log(`✅ [${requestId}] Successfully reset daily counters for ${resetCount} users (${executionTime}ms)`);
+    console.log(`⏱️ [${requestId}] Reset operation took ${resetTime}ms`);
+    console.log(`📊 [${requestId}] Total execution time: ${executionTime}ms`);
+    
+    // Phase 2.3: Log reset operation to audit table
+    const logStartTime = Date.now();
+    const { error: logError } = await supabase
+      .from('daily_reset_logs')
+      .insert({
+        reset_date: currentDate,
+        users_reset: resetCount,
+        triggered_by: 'cron',
+        execution_time_ms: executionTime,
+        details: {
+          utc_time: utcTime,
+          eat_time: eatTime,
+          reset_operation_ms: resetTime,
+          request_id: requestId,
+          user_sample: data?.slice(0, 5).map(u => ({ id: u.id, username: u.username })) || []
+        }
+      });
+
+    const logTime = Date.now() - logStartTime;
+
+    if (logError) {
+      // Don't fail the entire operation if logging fails
+      console.error(`⚠️ [${requestId}] Failed to log reset operation (${logTime}ms):`, logError);
+    } else {
+      console.log(`📝 [${requestId}] Reset operation logged to audit table (${logTime}ms)`);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Daily counters reset successfully',
         usersReset: resetCount,
-        timestamp: new Date().toISOString(),
-        currentDate
+        timestamp: utcTime,
+        eatTime: eatTime,
+        currentDate,
+        executionTimeMs: executionTime,
+        requestId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,10 +102,17 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Function error:', error);
+    const executionTime = Date.now() - executionStartTime;
+    console.error(`💥 [${requestId}] Function error (${executionTime}ms):`, error);
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        requestId,
+        executionTimeMs: executionTime
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
