@@ -78,11 +78,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`💱 Currency conversion request: USD → ${currencyCode} for user ${user.id}`);
+    const isDev = Deno.env.get('ENVIRONMENT') !== 'production';
+    
+    if (isDev) {
+      console.log(`💱 Currency conversion request: USD → ${currencyCode} for user ${user.id}`);
+    }
 
     // If USD, return rate of 1 immediately
     if (currencyCode === 'USD') {
-      console.log('✅ USD requested, returning rate of 1');
+      if (isDev) {
+        console.log('✅ USD requested, returning rate of 1');
+      }
       return new Response(
         JSON.stringify({
           exchangeRate: 1,
@@ -97,7 +103,9 @@ Deno.serve(async (req) => {
     // Check cache first
     const cachedEntry = exchangeRateCache.get(currencyCode);
     if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
-      console.log(`✅ Cache hit for ${currencyCode}: ${cachedEntry.rate}`);
+      if (isDev) {
+        console.log(`✅ Cache hit for ${currencyCode}: ${cachedEntry.rate}`);
+      }
       return new Response(
         JSON.stringify({
           exchangeRate: cachedEntry.rate,
@@ -110,7 +118,9 @@ Deno.serve(async (req) => {
     }
 
     // Cache miss - fetch from OpenExchangeRates API
-    console.log(`🔄 Cache miss for ${currencyCode}, fetching from OpenExchangeRates API...`);
+    if (isDev) {
+      console.log(`🔄 Cache miss for ${currencyCode}, fetching from OpenExchangeRates API...`);
+    }
 
     const apiKey = Deno.env.get('OPENEXCHANGERATES_APP_ID');
     if (!apiKey) {
@@ -130,7 +140,10 @@ Deno.serve(async (req) => {
 
     // Fetch latest rates from OpenExchangeRates
     const apiUrl = `https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD&symbols=${currencyCode}`;
-    console.log(`📡 Fetching: ${apiUrl.replace(apiKey, '***')}`);
+    
+    if (isDev) {
+      console.log(`📡 Fetching: ${apiUrl.replace(apiKey, '***')}`);
+    }
 
     const apiResponse = await fetch(apiUrl);
 
@@ -176,7 +189,10 @@ Deno.serve(async (req) => {
       rate: exchangeRate,
       expiresAt: Date.now() + CACHE_TTL,
     });
-    console.log(`✅ Cached exchange rate for ${currencyCode}: ${exchangeRate} (valid for 24h)`);
+    
+    if (isDev) {
+      console.log(`✅ Cached exchange rate for ${currencyCode}: ${exchangeRate} (valid for 24h)`);
+    }
 
     return new Response(
       JSON.stringify({

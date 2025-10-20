@@ -44,7 +44,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchExchangeRate = useCallback(async (currency: string, userId: string) => {
-    console.log(`💱 Fetching exchange rate for ${currency}...`);
+    if (!import.meta.env.PROD) {
+      console.log(`💱 Fetching exchange rate for ${currency}...`);
+    }
 
     // USD always has rate of 1
     if (currency === 'USD') {
@@ -69,14 +71,70 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           cached.userId === userId &&
           cached.currency === currency
         ) {
-          console.log(`✅ Using cached rate for ${currency}: ${cached.rate}`);
-          setExchangeRate(cached.rate);
-          setUserCurrency(currency);
-          setIsLoading(false);
-          setLastUpdated(new Date());
-          return;
-        } else {
-          console.log(`🔄 Cache expired or invalid for ${currency}`);
+          if (!import.meta.env.PROD) {
+            console.log(`✅ Using cached rate for ${currency}: ${cached.rate}`);
+          }
+          
+          // Validate rate before using
+          if (!Number.isFinite(cached.rate) || cached.rate <= 0) {
+            if (!import.meta.env.PROD) {
+              console.warn(`⚠️ Invalid cached rate for ${currency}, refetching...`);
+            }
+            localStorage.removeItem(cacheKey);
+          } else {
+            setExchangeRate(cached.rate);
+            setUserCurrency(currency);
+            setIsLoading(false);
+            setLastUpdated(new Date());
+            return;
+          }
+        } else if (cached.expiresAt <= Date.now()) {
+          // Cache expired - use stale data immediately, then revalidate in background
+          if (!import.meta.env.PROD) {
+            console.log(`🔄 Cache expired for ${currency}, using stale and revalidating...`);
+          }
+          
+          // Validate stale rate before using
+          if (Number.isFinite(cached.rate) && cached.rate > 0) {
+            setExchangeRate(cached.rate);
+            setUserCurrency(currency);
+            setIsLoading(false);
+            setLastUpdated(new Date());
+            
+            // Revalidate in background (fire-and-forget)
+            setTimeout(() => {
+              supabase.functions.invoke('convert-usd-to-local', {
+                body: { targetCurrencyCode: currency }
+              }).then(({ data, error }) => {
+                if (!error && data?.exchangeRate && Number.isFinite(data.exchangeRate) && data.exchangeRate > 0) {
+                  const cacheData: CachedRate = {
+                    rate: data.exchangeRate,
+                    currency,
+                    expiresAt: Date.now() + CACHE_TTL_MS,
+                    userId,
+                  };
+                  localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                  setExchangeRate(data.exchangeRate);
+                  setLastUpdated(new Date());
+                  if (!import.meta.env.PROD) {
+                    console.log(`✅ Background refresh complete for ${currency}: ${data.exchangeRate}`);
+                  }
+                } else {
+                  setError('Stale exchange rate in use - refresh failed');
+                }
+              }).catch((err) => {
+                console.error('Background refresh failed:', err);
+                setError('Stale exchange rate in use - refresh failed');
+              });
+            }, 0);
+            
+            return;
+          } else {
+            if (!import.meta.env.PROD) {
+              console.log(`🔄 Stale cache invalid for ${currency}, fetching fresh...`);
+            }
+            localStorage.removeItem(cacheKey);
+          }
         }
       } catch (e) {
         console.error('Error parsing cached rate:', e);
@@ -96,7 +154,15 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (data?.exchangeRate) {
         const rate = data.exchangeRate;
-        console.log(`✅ Fetched exchange rate for ${currency}: ${rate}`);
+        
+        // Validate exchange rate
+        if (!Number.isFinite(rate) || rate <= 0) {
+          throw new Error(`Invalid exchange rate received: ${rate}`);
+        }
+        
+        if (!import.meta.env.PROD) {
+          console.log(`✅ Fetched exchange rate for ${currency}: ${rate}`);
+        }
 
         // Cache the rate
         const cacheData: CachedRate = {
@@ -146,7 +212,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     const currencyCode = newCurrency.toUpperCase();
-    console.log(`🔄 Updating user currency to ${currencyCode}...`);
+    if (!import.meta.env.PROD) {
+      console.log(`🔄 Updating user currency to ${currencyCode}...`);
+    }
 
     setIsLoading(true);
     setError(null);
@@ -162,7 +230,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         throw updateError;
       }
 
-      console.log(`✅ Updated user currency to ${currencyCode}`);
+      if (!import.meta.env.PROD) {
+        console.log(`✅ Updated user currency to ${currencyCode}`);
+      }
 
       // Fetch new exchange rate
       await fetchExchangeRate(currencyCode, user.id);
@@ -182,7 +252,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      console.log('🔧 Initializing currency context for user:', user.id);
+      if (!import.meta.env.PROD) {
+        console.log('🔧 Initializing currency context for user:', user.id);
+      }
 
       try {
         // Fetch user profile to get preferred currency
@@ -197,7 +269,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
 
         const preferredCurrency = profile?.preferred_currency || 'USD';
-        console.log(`👤 User preferred currency: ${preferredCurrency}`);
+        if (!import.meta.env.PROD) {
+          console.log(`👤 User preferred currency: ${preferredCurrency}`);
+        }
 
         await fetchExchangeRate(preferredCurrency, user.id);
       } catch (err: any) {

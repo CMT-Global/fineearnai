@@ -55,13 +55,19 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
   // Format the converted amount
   const formatCurrency = (value: number, currencyCode: string): string => {
     try {
-      return new Intl.NumberFormat(undefined, {
+      const options: Intl.NumberFormatOptions = {
         style: showSymbol ? 'currency' : 'decimal',
-        currency: currencyCode,
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
         useGrouping: showSeparator,
-      }).format(value);
+      };
+      
+      // Only add currency property if showing symbol
+      if (showSymbol) {
+        options.currency = currencyCode;
+      }
+      
+      return new Intl.NumberFormat(undefined, options).format(value);
     } catch (formatError) {
       // Fallback formatting if currency is not supported
       console.error(`Error formatting currency ${currencyCode}:`, formatError);

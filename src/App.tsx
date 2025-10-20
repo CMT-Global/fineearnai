@@ -265,7 +265,11 @@ const RoutesWrapper = () => {
         }
       />
       
-      <Route path="/settings" element={<Settings />} />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -277,19 +281,19 @@ const RoutesWrapper = () => {
 
 const App = () => (
   <GlobalErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AdminModeProvider>
-        <CurrencyProvider>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AdminModeProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner position="top-right" />
-            <BrowserRouter>
+            <CurrencyProvider>
               <RoutesWrapper />
-            </BrowserRouter>
+            </CurrencyProvider>
           </TooltipProvider>
-        </CurrencyProvider>
-      </AdminModeProvider>
-    </QueryClientProvider>
+        </AdminModeProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   </GlobalErrorBoundary>
 );
 
