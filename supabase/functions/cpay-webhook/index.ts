@@ -87,6 +87,19 @@ serve(async (req) => {
 
       console.log(`Deposit completed for user ${transaction.profiles.id}: ${amount} ${currency}`);
 
+      // Send success notification
+      await supabase.functions.invoke('send-cpay-notification', {
+        body: {
+          user_id: transaction.profiles.id,
+          type: 'deposit_success',
+          data: {
+            amount: parseFloat(amount),
+            currency,
+            transaction_id: payment_id,
+          },
+        },
+      });
+
     } else if (status === 'failed' || status === 'cancelled' || status === 'expired') {
       // Update transaction as failed
       await supabase
@@ -102,6 +115,19 @@ serve(async (req) => {
         .eq('id', transaction.id);
 
       console.log(`Deposit failed for user ${transaction.profiles.id}: ${status}`);
+
+      // Send failure notification
+      await supabase.functions.invoke('send-cpay-notification', {
+        body: {
+          user_id: transaction.profiles.id,
+          type: 'deposit_failed',
+          data: {
+            amount: parseFloat(amount),
+            currency,
+            transaction_id: payment_id,
+          },
+        },
+      });
     }
 
     return new Response(

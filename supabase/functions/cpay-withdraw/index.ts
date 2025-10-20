@@ -117,6 +117,19 @@ serve(async (req) => {
         },
       });
 
+      // Send rejection notification
+      await supabase.functions.invoke('send-cpay-notification', {
+        body: {
+          user_id: withdrawal.user_id,
+          type: 'withdrawal_rejected',
+          data: {
+            amount: withdrawal.amount,
+            currency: 'USDT',
+            reason: rejection_reason,
+          },
+        },
+      });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -213,6 +226,20 @@ serve(async (req) => {
         order_id: payoutData.order_id,
         net_amount: withdrawal.net_amount,
         fee: withdrawal.fee,
+      },
+    });
+
+    // Send completion notification
+    await supabase.functions.invoke('send-cpay-notification', {
+      body: {
+        user_id: withdrawal.user_id,
+        type: 'withdrawal_completed',
+        data: {
+          amount: withdrawal.net_amount,
+          currency: 'USDT',
+          payout_address: withdrawal.payout_address,
+          transaction_id: cpayResult.data.payout_id,
+        },
       },
     });
 

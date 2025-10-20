@@ -48,6 +48,7 @@ const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
 const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
+const CPAYReconciliation = lazy(() => import("@/pages/admin/CPAYReconciliation"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -214,6 +215,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <CPAYMonitoring />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/monitoring/cpay-reconciliation"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <CPAYReconciliation />
             </AdminLayout>
           </AdminRoute>
         }
