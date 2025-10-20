@@ -58,7 +58,18 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       if (error) throw error;
 
-      const deposits = (data || []).filter(p => p.processor_type === 'deposit');
+      // Filter deposit processors: exclude CPAY processors missing cpay_checkout_id
+      const deposits = (data || [])
+        .filter(p => p.processor_type === 'deposit')
+        .filter(p => {
+          // If it's a CPAY processor, ensure it has cpay_checkout_id in config
+          const config = p.config as any;
+          if (config?.processor === 'cpay') {
+            return !!config?.cpay_checkout_id;
+          }
+          return true;
+        });
+      
       const withdrawals = (data || []).filter(p => p.processor_type === 'withdrawal');
 
       setDepositProcessors(deposits);

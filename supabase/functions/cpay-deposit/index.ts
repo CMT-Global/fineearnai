@@ -39,7 +39,7 @@ serve(async (req) => {
       throw new Error('Invalid amount');
     }
 
-    console.log(`Processing deposit request: User ${user.id}, Amount ${amount} ${currency}, ProcessorId: ${processorId || 'auto'}`);
+    console.log(`[CPAY-DEPOSIT] User: ${user.id}, Amount: ${amount} ${currency}, ProcessorId: ${processorId || 'auto'}`);
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase
@@ -55,9 +55,11 @@ serve(async (req) => {
 
     // Find an active CPAY checkout for the requested currency
     let checkout = null;
+    let hasCheckoutBinding = false;
 
     // If processorId provided, try to load processor-bound checkout
     if (processorId) {
+      console.log(`[CPAY-DEPOSIT] Loading processor ${processorId}`);
       const { data: processor, error: procError } = await supabase
         .from('payment_processors')
         .select('*')
@@ -65,42 +67,50 @@ serve(async (req) => {
         .single();
 
       if (procError) {
-        console.error('Failed to load processor:', procError);
+        console.error('[CPAY-DEPOSIT] Failed to load processor:', procError);
         throw new Error('Invalid payment processor');
       }
 
       // Extract cpay_checkout_id from config
       const checkoutId = processor.config?.cpay_checkout_id;
+      
       if (!checkoutId) {
-        console.error('Processor has no cpay_checkout_id in config');
-        throw new Error('Payment processor not properly configured');
+        console.warn(`[CPAY-DEPOSIT] Processor ${processorId} has no cpay_checkout_id. Falling back to auto-select.`);
+        // FALL BACK to auto-select instead of erroring
+      } else {
+        hasCheckoutBinding = true;
+        console.log(`[CPAY-DEPOSIT] Processor has binding to checkout ${checkoutId}`);
+        
+        // Load the specific checkout
+        const { data: boundCheckout, error: boundError } = await supabase
+          .from('cpay_checkouts')
+          .select('*')
+          .eq('id', checkoutId)
+          .single();
+
+        if (boundError || !boundCheckout) {
+          console.error('[CPAY-DEPOSIT] Bound checkout not found:', boundError);
+          throw new Error('Configured checkout not found. Please contact support.');
+        }
+
+        // Verify checkout is active
+        if (!boundCheckout.is_active) {
+          throw new Error('Selected checkout is currently inactive. Please contact support.');
+        }
+
+        // Verify amount is within limits
+        if (amount < boundCheckout.min_amount || amount > boundCheckout.max_amount) {
+          throw new Error(`Amount must be between $${boundCheckout.min_amount} and $${boundCheckout.max_amount} for ${boundCheckout.currency}`);
+        }
+
+        checkout = boundCheckout;
+        console.log(`[CPAY-DEPOSIT] Using processor-bound checkout: ${checkout.id} (${checkout.currency})`);
       }
-
-      // Load the specific checkout
-      const { data: boundCheckout, error: boundError } = await supabase
-        .from('cpay_checkouts')
-        .select('*')
-        .eq('id', checkoutId)
-        .single();
-
-      if (boundError || !boundCheckout) {
-        console.error('Bound checkout not found:', boundError);
-        throw new Error('Configured checkout not found');
-      }
-
-      // Verify checkout is active and amount is within limits
-      if (!boundCheckout.is_active) {
-        throw new Error('Selected checkout is not active');
-      }
-
-      if (amount < boundCheckout.min_amount || amount > boundCheckout.max_amount) {
-        throw new Error(`Amount must be between ${boundCheckout.min_amount} and ${boundCheckout.max_amount} ${boundCheckout.currency}`);
-      }
-
-      checkout = boundCheckout;
-      console.log(`Using processor-bound checkout: ${checkout.id} (${checkout.currency})`);
-    } else {
-      // Fallback: Find an active CPAY checkout based on currency and amount (auto-select)
+    }
+    
+    // Auto-select if no processorId or processor had no binding
+    if (!checkout) {
+      console.log(`[CPAY-DEPOSIT] Auto-selecting checkout for ${currency}, amount ${amount}`);
       const { data: autoCheckout, error: checkoutError } = await supabase
         .from('cpay_checkouts')
         .select('*')
@@ -112,12 +122,15 @@ serve(async (req) => {
         .single();
 
       if (checkoutError || !autoCheckout) {
-        console.error('No active checkout found for currency:', currency, checkoutError);
-        throw new Error(`No active checkout available for ${currency}. Please contact support.`);
+        console.error('[CPAY-DEPOSIT] No active checkout found for currency:', currency, checkoutError);
+        throw new Error(
+          `No active CPAY checkout matches currency ${currency} and amount $${amount}. ` +
+          `Please configure a checkout in Admin > CPAY Checkouts, or update processor binding.`
+        );
       }
 
       checkout = autoCheckout;
-      console.log(`Auto-selected checkout: ${checkout.id} (${checkout.currency})`);
+      console.log(`[CPAY-DEPOSIT] Auto-selected checkout: ${checkout.id} (${checkout.currency})`);
     }
 
     if (!checkout) {
@@ -127,7 +140,7 @@ serve(async (req) => {
     // Generate unique order_id for tracking
     const orderId = `DEP-${user.id.substring(0, 8)}-${Date.now()}`;
 
-    console.log(`Using checkout ${checkout.checkout_id} for order ${orderId}`);
+    console.log(`[CPAY-DEPOSIT] ✓ Checkout selected: ${checkout.checkout_id}, Order: ${orderId}, Has binding: ${hasCheckoutBinding}`);
 
     // Create pending transaction in database
     const { data: transaction, error: txError } = await supabase
@@ -164,7 +177,7 @@ serve(async (req) => {
     checkoutUrl.searchParams.set('amount', amount.toString());
     checkoutUrl.searchParams.set('user_id', user.id);
 
-    console.log(`✅ Deposit initiated: Transaction ${transaction.id}, Order ${orderId}`);
+    console.log(`[CPAY-DEPOSIT] ✅ SUCCESS: Transaction ${transaction.id}, Order ${orderId}, Checkout ${checkout.id}`);
 
     return new Response(
       JSON.stringify({
@@ -174,16 +187,17 @@ serve(async (req) => {
         transaction_id: transaction.id,
         currency: currency,
         amount: amount,
+        checkout_id: checkout.id,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in cpay-deposit:', error);
+    console.error('[CPAY-DEPOSIT] ❌ ERROR:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error occurred during deposit processing' 
       }),
       { 
         status: 400,

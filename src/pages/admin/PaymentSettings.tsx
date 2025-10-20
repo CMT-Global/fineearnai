@@ -483,7 +483,10 @@ const PaymentSettings = () => {
                     <Button variant="outline" onClick={() => setDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleSave} disabled={saving}>
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={saving || (preset === "cpay_deposit" && !selectedCheckoutId)}
+                    >
                       {saving ? "Saving..." : editingProcessor ? "Update" : "Add"} Processor
                     </Button>
                   </DialogFooter>
