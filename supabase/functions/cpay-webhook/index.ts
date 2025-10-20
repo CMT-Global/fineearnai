@@ -75,7 +75,8 @@ serve(async (req) => {
 
     const webhookData = await req.json();
     
-    console.log('CPAY Webhook received:', JSON.stringify(webhookData, null, 2));
+    console.log('[CPAY-WEBHOOK] 📥 Webhook received from IP:', clientIP);
+    console.log('[CPAY-WEBHOOK] 📦 Full payload:', JSON.stringify(webhookData, null, 2));
 
     // Verify webhook signature
     const { signature, ...dataToVerify } = webhookData;
@@ -95,27 +96,76 @@ serve(async (req) => {
       throw new Error('Invalid signature');
     }
 
-    const { order_id, payment_id, status, amount, currency } = webhookData;
+    // Extract webhook data - CPAY sends clickId which matches our order_id
+    const { 
+      clickId, 
+      payment_id, 
+      status, 
+      amount: webhookAmount, 
+      currency,
+      order_id // Some CPAY webhooks may send order_id instead of clickId
+    } = webhookData;
 
-    console.log(`Processing webhook: Order ${order_id}, Payment ${payment_id}, Status ${status}`);
+    const trackingId = clickId || order_id;
+    
+    console.log(`[CPAY-WEBHOOK] 🔍 Processing: clickId/order_id=${trackingId}, payment_id=${payment_id}, status=${status}, amount=${webhookAmount} ${currency}`);
 
-    // Find the transaction by order_id (stored in gateway_transaction_id)
+    if (!trackingId) {
+      console.error('[CPAY-WEBHOOK] ❌ No clickId or order_id in webhook payload');
+      throw new Error('Missing clickId/order_id in webhook');
+    }
+
+    // Find transaction by matching order_id stored in metadata (sent as clickId to CPAY)
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
-      .select('*, profiles!inner(id, deposit_wallet_balance)')
-      .eq('gateway_transaction_id', order_id)
+      .select('*, profiles!inner(id, deposit_wallet_balance, username, email)')
+      .eq('payment_gateway', 'cpay')
       .eq('type', 'deposit')
+      .contains('metadata', { order_id: trackingId })
       .single();
 
     if (txError || !transaction) {
-      console.error('Transaction not found:', payment_id);
-      throw new Error('Transaction not found');
+      console.error(`[CPAY-WEBHOOK] ❌ Transaction not found for clickId=${trackingId}, payment_id=${payment_id}`, txError);
+      
+      // Log all pending CPAY transactions for debugging
+      const { data: pendingTxs } = await supabase
+        .from('transactions')
+        .select('id, metadata, created_at')
+        .eq('payment_gateway', 'cpay')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      console.log('[CPAY-WEBHOOK] 📋 Recent pending CPAY transactions:', JSON.stringify(pendingTxs, null, 2));
+      throw new Error('Transaction not found - clickId/order_id does not match any pending deposit');
+    }
+
+    console.log(`[CPAY-WEBHOOK] ✓ Transaction found: ${transaction.id}, User: ${transaction.profiles.username} (${transaction.profiles.email})`);
+    
+    // Extract requested amount from transaction metadata
+    const requestedAmount = transaction.metadata?.requested_amount || transaction.amount;
+    const actualAmount = parseFloat(webhookAmount);
+    
+    // Check for amount discrepancy
+    if (Math.abs(actualAmount - requestedAmount) > 0.01) {
+      console.warn(
+        `[CPAY-WEBHOOK] ⚠️ AMOUNT DISCREPANCY: ` +
+        `User requested $${requestedAmount}, but paid $${actualAmount}. ` +
+        `Crediting actual amount: $${actualAmount}`
+      );
+    } else {
+      console.log(`[CPAY-WEBHOOK] ✓ Amount matches: Requested=$${requestedAmount}, Paid=$${actualAmount}`);
     }
 
     // Handle payment status
     if (status === 'completed' || status === 'success') {
-      // Update user's deposit wallet balance
-      const newBalance = transaction.profiles.deposit_wallet_balance + parseFloat(amount);
+      // Credit user with ACTUAL amount paid (not requested amount)
+      const newBalance = transaction.profiles.deposit_wallet_balance + actualAmount;
+      
+      console.log(
+        `[CPAY-WEBHOOK] 💰 Crediting user ${transaction.profiles.id}: ` +
+        `${transaction.profiles.deposit_wallet_balance} + ${actualAmount} = ${newBalance}`
+      );
       
       const { error: updateError } = await supabase
         .from('profiles')
@@ -123,39 +173,60 @@ serve(async (req) => {
         .eq('id', transaction.profiles.id);
 
       if (updateError) {
-        console.error('Failed to update balance:', updateError);
+        console.error('[CPAY-WEBHOOK] ❌ Failed to update balance:', updateError);
         throw new Error('Failed to update balance');
       }
 
-      // Update transaction status with payment_id
-      await supabase
+      // Update transaction with actual amount and new balance
+      const { error: txUpdateError } = await supabase
         .from('transactions')
         .update({
           status: 'completed',
+          amount: actualAmount, // Update to actual amount paid
           new_balance: newBalance,
+          gateway_transaction_id: payment_id, // Store CPAY's payment_id
           metadata: {
             ...transaction.metadata,
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
             cpay_payment_id: payment_id,
+            requested_amount: requestedAmount,
+            actual_amount_paid: actualAmount,
+            amount_discrepancy: actualAmount - requestedAmount,
+            webhook_payload: webhookData, // Store full webhook for debugging
           },
         })
         .eq('id', transaction.id);
 
-      console.log(`✅ Deposit completed for user ${transaction.profiles.id}: ${amount} ${currency}`);
+      if (txUpdateError) {
+        console.error('[CPAY-WEBHOOK] ❌ Failed to update transaction:', txUpdateError);
+        throw new Error('Failed to update transaction');
+      }
+
+      console.log(
+        `[CPAY-WEBHOOK] ✅ DEPOSIT COMPLETED: ` +
+        `User ${transaction.profiles.username} (${transaction.profiles.id}) ` +
+        `credited ${actualAmount} ${currency}. New balance: ${newBalance}`
+      );
 
       // Send success notification
-      await supabase.functions.invoke('send-cpay-notification', {
-        body: {
-          user_id: transaction.profiles.id,
-          type: 'deposit_success',
-          data: {
-            amount: parseFloat(amount),
-            currency,
-            transaction_id: payment_id,
+      try {
+        await supabase.functions.invoke('send-cpay-notification', {
+          body: {
+            user_id: transaction.profiles.id,
+            type: 'deposit_success',
+            data: {
+              amount: actualAmount,
+              currency,
+              transaction_id: payment_id,
+              requested_amount: requestedAmount,
+            },
           },
-        },
-      });
+        });
+      } catch (notifError) {
+        console.warn('[CPAY-WEBHOOK] ⚠️ Failed to send notification:', notifError);
+        // Don't throw - notification failure shouldn't fail the webhook
+      }
 
     } else if (status === 'failed' || status === 'cancelled' || status === 'expired') {
       // Update transaction as failed
@@ -163,37 +234,51 @@ serve(async (req) => {
         .from('transactions')
         .update({
           status: 'failed',
+          gateway_transaction_id: payment_id,
           metadata: {
             ...transaction.metadata,
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
+            webhook_payload: webhookData,
           },
         })
         .eq('id', transaction.id);
 
-      console.log(`Deposit failed for user ${transaction.profiles.id}: ${status}`);
+      console.log(
+        `[CPAY-WEBHOOK] ❌ DEPOSIT FAILED: ` +
+        `User ${transaction.profiles.username} (${transaction.profiles.id}), Status: ${status}`
+      );
 
       // Send failure notification
-      await supabase.functions.invoke('send-cpay-notification', {
-        body: {
-          user_id: transaction.profiles.id,
-          type: 'deposit_failed',
-          data: {
-            amount: parseFloat(amount),
-            currency,
-            transaction_id: payment_id,
+      try {
+        await supabase.functions.invoke('send-cpay-notification', {
+          body: {
+            user_id: transaction.profiles.id,
+            type: 'deposit_failed',
+            data: {
+              amount: actualAmount,
+              currency,
+              transaction_id: payment_id,
+            },
           },
-        },
-      });
+        });
+      } catch (notifError) {
+        console.warn('[CPAY-WEBHOOK] ⚠️ Failed to send failure notification:', notifError);
+      }
+    } else {
+      console.warn(`[CPAY-WEBHOOK] ⚠️ Unknown payment status: ${status}. Transaction ID: ${transaction.id}`);
     }
 
+    console.log('[CPAY-WEBHOOK] ✅ Webhook processed successfully');
+    
     return new Response(
-      JSON.stringify({ success: true, message: 'Webhook processed' }),
+      JSON.stringify({ success: true, message: 'Webhook processed successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in cpay-webhook:', error);
+    console.error('[CPAY-WEBHOOK] ❌ ERROR:', error);
+    console.error('[CPAY-WEBHOOK] 📍 Error stack:', error instanceof Error ? error.stack : 'N/A');
     return new Response(
       JSON.stringify({ 
         success: false, 
