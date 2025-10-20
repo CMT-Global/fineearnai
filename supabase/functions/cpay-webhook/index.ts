@@ -73,46 +73,102 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const webhookData = await req.json();
+    const rawPayload = await req.json();
     
     console.log('[CPAY-WEBHOOK] 📥 Webhook received from IP:', clientIP);
-    console.log('[CPAY-WEBHOOK] 📦 Full payload:', JSON.stringify(webhookData, null, 2));
+    console.log('[CPAY-WEBHOOK] 📦 Raw payload:', JSON.stringify(rawPayload, null, 2));
 
-    // Verify webhook signature
-    const { signature, ...dataToVerify } = webhookData;
-    const verifyString = Object.keys(dataToVerify)
-      .sort()
-      .map(key => `${key}=${dataToVerify[key]}`)
-      .join('&') + cpayPrivateKey;
-
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifyString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    if (signature !== expectedSignature) {
-      console.error('Invalid webhook signature');
-      throw new Error('Invalid signature');
+    // Known CPAY IPs for logging (not blocking)
+    const knownCPAYIPs = ['195.201.62.123'];
+    if (!knownCPAYIPs.includes(clientIP)) {
+      console.warn(`[CPAY-WEBHOOK] ⚠️ Webhook from unknown IP: ${clientIP} (not blocking)`);
     }
 
-    // Extract webhook data - CPAY sends clickId which matches our order_id
-    const { 
-      clickId, 
-      payment_id, 
-      status, 
-      amount: webhookAmount, 
-      currency,
-      order_id // Some CPAY webhooks may send order_id instead of clickId
-    } = webhookData;
+    let webhookData: any;
 
-    const trackingId = clickId || order_id;
+    // Check if payload is encrypted (contains 'data' field with base64)
+    if (rawPayload.data && typeof rawPayload.data === 'string' && rawPayload.data.startsWith('U2FsdGVk')) {
+      console.log('[CPAY-WEBHOOK] 🔐 Encrypted payload detected, decrypting...');
+      
+      // Decrypt using OpenSSL-compatible AES-256-CBC with EVP_BytesToKey
+      const encryptedData = rawPayload.data;
+      
+      // Import crypto-js for AES decryption (Deno-compatible)
+      const CryptoJS = await import('https://esm.sh/crypto-js@4.2.0');
+      
+      try {
+        // Decrypt using AES-256-CBC with EVP_BytesToKey derivation (OpenSSL default)
+        const decrypted = CryptoJS.AES.decrypt(encryptedData, cpayPrivateKey);
+        const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+        
+        if (!decryptedText) {
+          throw new Error('Decryption resulted in empty string');
+        }
+        
+        webhookData = JSON.parse(decryptedText);
+        console.log('[CPAY-WEBHOOK] ✅ Decrypted payload:', JSON.stringify(webhookData, null, 2));
+      } catch (decryptError) {
+        console.error('[CPAY-WEBHOOK] ❌ Decryption failed:', decryptError);
+        const errorMsg = decryptError instanceof Error ? decryptError.message : 'Unknown decryption error';
+        throw new Error(`Failed to decrypt webhook: ${errorMsg}`);
+      }
+    } else if (rawPayload.signature) {
+      console.log('[CPAY-WEBHOOK] 📝 Signature-based payload detected, verifying...');
+      
+      // Verify webhook signature (plaintext webhook)
+      const { signature, ...dataToVerify } = rawPayload;
+      const verifyString = Object.keys(dataToVerify)
+        .sort()
+        .map(key => `${key}=${dataToVerify[key]}`)
+        .join('&') + cpayPrivateKey;
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(verifyString);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (signature !== expectedSignature) {
+        console.error('[CPAY-WEBHOOK] ❌ Invalid webhook signature');
+        throw new Error('Invalid signature');
+      }
+      
+      webhookData = dataToVerify;
+      console.log('[CPAY-WEBHOOK] ✅ Signature verified');
+    } else {
+      console.error('[CPAY-WEBHOOK] ❌ Unknown payload format - no data field or signature');
+      throw new Error('Unknown webhook payload format');
+    }
+
+    // Normalize webhook fields (CPAY sends different field names)
+    const trackingId = webhookData.outsideOrderId || webhookData.clickId || webhookData.order_id;
+    const payment_id = webhookData.orderId || webhookData.chargeId || webhookData.hash || webhookData.payment_id;
+    const webhookAmount = parseFloat(webhookData.amountUSD || webhookData.amount || '0');
+    const currency = webhookData.currency || 'USD';
     
-    console.log(`[CPAY-WEBHOOK] 🔍 Processing: clickId/order_id=${trackingId}, payment_id=${payment_id}, status=${status}, amount=${webhookAmount} ${currency}`);
+    // Determine payment status
+    let status: string;
+    if (webhookData.systemStatus === 'Done' || 
+        webhookData.chargeStatus === 'Done' || 
+        webhookData.status === true ||
+        webhookData.systemStatus === 'Success') {
+      status = 'completed';
+    } else if (webhookData.systemStatus === 'Cancelled' || 
+               webhookData.systemStatus === 'Failed' || 
+               webhookData.systemStatus === 'Expired' ||
+               webhookData.chargeStatus === 'Failed' ||
+               webhookData.chargeStatus === 'Cancelled' ||
+               webhookData.status === false) {
+      status = 'failed';
+    } else {
+      status = 'pending';
+    }
+    
+    console.log(`[CPAY-WEBHOOK] 🔍 Normalized data: trackingId=${trackingId}, payment_id=${payment_id}, status=${status}, amount=${webhookAmount} ${currency}`);
 
     if (!trackingId) {
-      console.error('[CPAY-WEBHOOK] ❌ No clickId or order_id in webhook payload');
-      throw new Error('Missing clickId/order_id in webhook');
+      console.error('[CPAY-WEBHOOK] ❌ No trackingId found in webhook payload');
+      throw new Error('Missing trackingId (outsideOrderId/clickId/order_id) in webhook');
     }
 
     // Find transaction by matching order_id stored in metadata (sent as clickId to CPAY)
@@ -162,7 +218,7 @@ serve(async (req) => {
     
     // Extract requested amount from transaction metadata
     const requestedAmount = transaction.metadata?.requested_amount || transaction.amount;
-    const actualAmount = parseFloat(webhookAmount);
+    const actualAmount = webhookAmount; // Already parsed as number during normalization
     
     // Check for amount discrepancy
     if (Math.abs(actualAmount - requestedAmount) > 0.01) {
@@ -176,7 +232,7 @@ serve(async (req) => {
     }
 
     // Handle payment status
-    if (status === 'completed' || status === 'success') {
+    if (status === 'completed') {
       // Credit user with ACTUAL amount paid (not requested amount)
       const newBalance = transaction.profiles.deposit_wallet_balance + actualAmount;
       
@@ -208,10 +264,14 @@ serve(async (req) => {
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
             cpay_payment_id: payment_id,
+            cpay_system_status: webhookData.systemStatus || webhookData.chargeStatus,
+            cpay_hash: webhookData.hash || webhookData.incomingTxHash,
             requested_amount: requestedAmount,
             actual_amount_paid: actualAmount,
             amount_discrepancy: actualAmount - requestedAmount,
-            webhook_payload: webhookData, // Store full webhook for debugging
+            webhook_received_from_ip: clientIP,
+            webhook_payload: webhookData, // Store full decrypted webhook for debugging
+            raw_webhook_payload: rawPayload // Store original encrypted payload
           },
         })
         .eq('id', transaction.id);
@@ -246,7 +306,7 @@ serve(async (req) => {
         // Don't throw - notification failure shouldn't fail the webhook
       }
 
-    } else if (status === 'failed' || status === 'cancelled' || status === 'expired') {
+    } else if (status === 'failed') {
       // Update transaction as failed
       await supabase
         .from('transactions')
@@ -257,7 +317,10 @@ serve(async (req) => {
             ...transaction.metadata,
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
+            cpay_system_status: webhookData.systemStatus || webhookData.chargeStatus,
+            webhook_received_from_ip: clientIP,
             webhook_payload: webhookData,
+            raw_webhook_payload: rawPayload,
           },
         })
         .eq('id', transaction.id);

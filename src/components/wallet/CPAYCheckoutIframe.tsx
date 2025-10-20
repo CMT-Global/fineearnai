@@ -30,7 +30,7 @@ export const CPAYCheckoutIframe = ({
   const [transactionStatus, setTransactionStatus] = useState<"pending" | "completed" | "failed">("pending");
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
-  const MAX_POLLS = 60; // Poll for 3 minutes (60 * 3 seconds)
+  const MAX_POLLS = 120; // Poll for 6 minutes (120 * 3 seconds) - increased for webhook processing time
 
   useEffect(() => {
     if (!open) {
