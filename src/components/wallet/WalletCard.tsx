@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, ExternalLink, InfoIcon } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 
 interface PaymentProcessor {
   id: string;
@@ -43,6 +44,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [depositProcessors, setDepositProcessors] = useState<PaymentProcessor[]>([]);
   const [withdrawalProcessors, setWithdrawalProcessors] = useState<PaymentProcessor[]>([]);
   const [loadingProcessors, setLoadingProcessors] = useState(true);
+  
+  // CPAY iframe state
+  const [showCpayIframe, setShowCpayIframe] = useState(false);
+  const [cpayCheckoutUrl, setCpayCheckoutUrl] = useState("");
+  const [cpayTransactionId, setCpayTransactionId] = useState("");
+  const [cpayOrderId, setCpayOrderId] = useState("");
+  const [cpayAmount, setCpayAmount] = useState(0);
+  const [cpayCurrency, setCpayCurrency] = useState("");
 
   useEffect(() => {
     loadPaymentProcessors();
@@ -114,15 +123,22 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           body: { 
             amount, 
             currency: processor.config.currency || 'USDT',
-            processorId: processor.id // Pass processor ID to backend
+            processorId: processor.id
           },
         });
 
         if (error) throw error;
 
         if (data?.checkout_url) {
-          toast.success("Redirecting to checkout...");
-          window.location.href = data.checkout_url;
+          // Open CPAY checkout in iframe
+          setCpayCheckoutUrl(data.checkout_url);
+          setCpayTransactionId(data.transaction_id);
+          setCpayOrderId(data.order_id);
+          setCpayAmount(amount);
+          setCpayCurrency(data.currency || 'USDT');
+          setDepositDialogOpen(false); // Close deposit dialog
+          setShowCpayIframe(true); // Show iframe
+          toast.success("Opening checkout...");
         } else {
           throw new Error("No checkout URL received");
         }
@@ -195,16 +211,34 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
   };
 
+  const handleCpaySuccess = () => {
+    onBalanceUpdate();
+    setDepositAmount("");
+    setDepositMethod("");
+  };
+
   return (
-    <Card className="col-span-2">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          Wallet Balance
-        </CardTitle>
-        <CardDescription>Manage your deposits and earnings</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <>
+      <CPAYCheckoutIframe
+        open={showCpayIframe}
+        onOpenChange={setShowCpayIframe}
+        checkoutUrl={cpayCheckoutUrl}
+        transactionId={cpayTransactionId}
+        orderId={cpayOrderId}
+        amount={cpayAmount}
+        currency={cpayCurrency}
+        onSuccess={handleCpaySuccess}
+      />
+      
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            Wallet Balance
+          </CardTitle>
+          <CardDescription>Manage your deposits and earnings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 border rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
@@ -386,5 +420,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         </div>
       </CardContent>
     </Card>
+    </>
   );
 };
