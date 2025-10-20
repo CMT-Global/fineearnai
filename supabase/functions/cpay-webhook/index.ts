@@ -142,6 +142,24 @@ serve(async (req) => {
 
     console.log(`[CPAY-WEBHOOK] ✓ Transaction found: ${transaction.id}, User: ${transaction.profiles.username} (${transaction.profiles.email})`);
     
+    // ============= IDEMPOTENCY CHECK =============
+    // Prevent processing the same webhook twice (duplicate credits)
+    if (transaction.status === 'completed') {
+      console.log(
+        `[CPAY-WEBHOOK] ⚠️ IDEMPOTENCY: Transaction ${transaction.id} already completed. ` +
+        `Webhook for clickId=${trackingId}, payment_id=${payment_id} ignored to prevent duplicate credit.`
+      );
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Webhook already processed - transaction already completed',
+          transaction_id: transaction.id 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // ============================================
+    
     // Extract requested amount from transaction metadata
     const requestedAmount = transaction.metadata?.requested_amount || transaction.amount;
     const actualAmount = parseFloat(webhookAmount);
