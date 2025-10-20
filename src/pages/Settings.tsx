@@ -15,8 +15,12 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { countries, getCountryName } from "@/lib/countries";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -62,7 +66,7 @@ const Settings = () => {
     values: {
       fullName: profile?.full_name || "",
       phone: profile?.phone || "",
-      country: profile?.country || "",
+      country: profile?.country || profile?.registration_country || profile?.last_login_country || "",
     },
   });
 
@@ -340,11 +344,63 @@ const Settings = () => {
                       control={profileForm.control}
                       name="country"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                           <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter your country (optional)" />
-                          </FormControl>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? getCountryName(field.value) || field.value
+                                    : "Select country"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search country..." />
+                                <CommandList>
+                                  <CommandEmpty>No country found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {countries.map((country) => (
+                                      <CommandItem
+                                        value={country.name}
+                                        key={country.code}
+                                        onSelect={() => {
+                                          profileForm.setValue("country", country.code);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            country.code === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        {country.name} ({country.code})
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          {(profile?.registration_country || profile?.last_login_country) && (
+                            <p className="text-xs text-muted-foreground">
+                              Detected: {getCountryName(profile?.registration_country || profile?.last_login_country || "")} (
+                              {profile?.registration_country || profile?.last_login_country}) from your{" "}
+                              {profile?.registration_country ? "registration" : "last login"}
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}

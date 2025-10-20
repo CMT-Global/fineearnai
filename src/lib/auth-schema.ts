@@ -32,7 +32,12 @@ export const updateProfileSchema = z.object({
     .min(2, "Full name must be at least 2 characters")
     .max(100, "Full name must be less than 100 characters"),
   phone: z.string().max(20, "Phone number must be less than 20 characters").optional(),
-  country: z.string().max(100, "Country must be less than 100 characters").optional(),
+  country: z
+    .string()
+    .length(2, "Country must be a valid 2-letter country code")
+    .toUpperCase()
+    .optional()
+    .or(z.literal("")),
 });
 
 export const changePasswordSchema = z.object({
