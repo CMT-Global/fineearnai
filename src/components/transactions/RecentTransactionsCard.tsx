@@ -27,13 +27,25 @@ interface RecentTransactionsCardProps {
   maxItems?: number;
   showPagination?: boolean;
   title?: string;
+  externalFilter?: {
+    searchQuery?: string;
+    typeFilter?: string;
+    statusFilter?: string;
+    dateRange?: { from: Date | undefined; to: Date | undefined };
+    sortBy?: string;
+  };
+  hideTitle?: boolean;
+  hideTabs?: boolean;
 }
 
 export const RecentTransactionsCard = ({ 
   userId, 
   maxItems = 10, 
   showPagination = true,
-  title = "Recent Transactions"
+  title = "Recent Transactions",
+  externalFilter,
+  hideTitle = false,
+  hideTabs = false
 }: RecentTransactionsCardProps) => {
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,13 +57,71 @@ export const RecentTransactionsCard = ({
   const totalPages = transactionsData?.totalPages || 1;
   const totalCount = transactionsData?.totalCount || 0;
 
-  const filteredTransactions = transactions.filter((tx) => {
-    // Hide pending transactions from user view
-    if (tx.status === "pending") return false;
-    
-    if (filter === "all") return true;
-    return tx.wallet_type === filter;
-  });
+  const filteredTransactions = transactions
+    .filter((tx) => {
+      // Hide pending transactions from user view
+      if (tx.status === "pending") return false;
+      
+      // Apply tab filter (if not using external filter)
+      if (!externalFilter && filter !== "all" && tx.wallet_type !== filter) return false;
+      
+      // Apply external filters if provided
+      if (externalFilter) {
+        // Wallet type filter (from tabs)
+        if (filter !== "all" && tx.wallet_type !== filter) return false;
+        
+        // Transaction type filter
+        if (externalFilter.typeFilter && externalFilter.typeFilter !== "all" && tx.type !== externalFilter.typeFilter) return false;
+        
+        // Status filter
+        if (externalFilter.statusFilter && externalFilter.statusFilter !== "all" && tx.status !== externalFilter.statusFilter) return false;
+        
+        // Search filter
+        if (externalFilter.searchQuery) {
+          const query = externalFilter.searchQuery.toLowerCase();
+          const matchesDescription = tx.description?.toLowerCase().includes(query);
+          const matchesId = tx.id.toLowerCase().includes(query);
+          const matchesType = getTransactionTypeLabel(tx.type).toLowerCase().includes(query);
+          const matchesGateway = tx.payment_gateway?.toLowerCase().includes(query);
+          const matchesGatewayId = tx.gateway_transaction_id?.toLowerCase().includes(query);
+          
+          if (!matchesDescription && !matchesId && !matchesType && !matchesGateway && !matchesGatewayId) {
+            return false;
+          }
+        }
+        
+        // Date range filter
+        if (externalFilter.dateRange?.from || externalFilter.dateRange?.to) {
+          const txDate = new Date(tx.created_at);
+          if (externalFilter.dateRange.from && txDate < externalFilter.dateRange.from) return false;
+          if (externalFilter.dateRange.to) {
+            const endOfDay = new Date(externalFilter.dateRange.to);
+            endOfDay.setHours(23, 59, 59, 999);
+            if (txDate > endOfDay) return false;
+          }
+        }
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Apply external sort if provided
+      if (externalFilter?.sortBy) {
+        switch (externalFilter.sortBy) {
+          case "oldest":
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          case "amount-high":
+            return Math.abs(b.amount) - Math.abs(a.amount);
+          case "amount-low":
+            return Math.abs(a.amount) - Math.abs(b.amount);
+          case "newest":
+          default:
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+      }
+      // Default sort (newest first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const isCredit = (type: string) => {
     return ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type);
@@ -59,19 +129,23 @@ export const RecentTransactionsCard = ({
 
   return (
     <Card className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-1">{title}</h2>
-        <p className="text-sm text-muted-foreground">View your wallet transaction history</p>
-      </div>
+      {!hideTitle && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-1">{title}</h2>
+          <p className="text-sm text-muted-foreground">View your wallet transaction history</p>
+        </div>
+      )}
 
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-6">
-        <TabsList>
-          <TabsTrigger value="all">All Transactions</TabsTrigger>
-          <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
-          <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
-          <TabsTrigger value="withdrawals">Withdrawal History</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {!hideTabs && (
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="all">All Transactions</TabsTrigger>
+            <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
+            <TabsTrigger value="withdrawals">Withdrawal History</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {filter === "withdrawals" ? (
         isWithdrawalsLoading ? (

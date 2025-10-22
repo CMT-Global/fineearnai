@@ -6,57 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  AlertCircle,
-  RefreshCw,
   Search,
   Filter,
   Calendar as CalendarIcon,
   X
 } from "lucide-react";
-import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
-import { getTransactionTypeLabel } from "@/lib/wallet-utils";
-import { TransactionCard } from "@/components/transactions/TransactionCard";
-import { TransactionErrorBoundary } from "@/components/transactions/TransactionErrorBoundary";
-import { EmptyTransactionState } from "@/components/transactions/EmptyTransactionState";
-import { TransactionListLoading } from "@/components/transactions/TransactionListLoading";
-import { toast } from "@/hooks/use-toast";
+import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays } from "date-fns";
 
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  wallet_type: string;
-  status: string;
-  payment_gateway: string | null;
-  gateway_transaction_id: string | null;
-  new_balance: number;
-  description: string | null;
-  metadata: any;
-  created_at: string;
-}
-
 const Transactions = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "deposit" | "earnings">("all");
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [hasMore, setHasMore] = useState(true);
   
   // Advanced filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,8 +37,6 @@ const Transactions = () => {
     to: undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
-  
-  const PAGE_SIZE = 50;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -79,189 +46,27 @@ const Transactions = () => {
 
   useEffect(() => {
     if (user) {
-      loadTransactions();
+      loadProfile();
     }
   }, [user]);
 
-  // Real-time subscription for transactions
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('user-transactions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            // Only show completed transactions in real-time updates
-            if (payload.new.status === 'completed') {
-              setTransactions(prev => [payload.new as Transaction, ...prev]);
-              toast({
-                title: "New Transaction",
-                description: `${getTransactionTypeLabel(payload.new.type)} - $${payload.new.amount.toFixed(2)}`,
-              });
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            // Update transaction if it becomes completed
-            if (payload.new.status === 'completed') {
-              setTransactions(prev => {
-                const exists = prev.find(tx => tx.id === payload.new.id);
-                if (exists) {
-                  return prev.map(tx => tx.id === payload.new.id ? payload.new as Transaction : tx);
-                } else {
-                  return [payload.new as Transaction, ...prev];
-                }
-              });
-            } else {
-              // Remove if it's not completed (e.g., failed, cancelled)
-              setTransactions(prev => prev.filter(tx => tx.id !== payload.new.id));
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setTransactions(prev => prev.filter(tx => tx.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  const loadTransactions = async (append = false) => {
+  const loadProfile = async () => {
     try {
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoadingTransactions(true);
-        setError(null);
-      }
-      
-      // Load profile
-      if (!append) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user?.id)
-          .single();
-        
-        if (profileError) throw profileError;
-        
-        if (profileData) {
-          setProfile(profileData);
-        }
-      }
-      
-      // Get total count (exclude pending)
-      const { count } = await supabase
-        .from("transactions")
-        .select("*", { count: 'exact', head: true })
-        .eq("user_id", user?.id)
-        .neq("status", "pending");
-      
-      if (count !== null) {
-        setTotalCount(count);
-      }
-      
-      // Load transactions with pagination
-      const from = append ? transactions.length : 0;
-      const to = from + PAGE_SIZE - 1;
-      
-      const { data, error: txError } = await supabase
-        .from("transactions")
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
         .select("*")
-        .eq("user_id", user?.id)
-        .neq("status", "pending") // Exclude pending transactions from user view
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (txError) throw txError;
-
-      if (data) {
-        if (append) {
-          setTransactions(prev => [...prev, ...data]);
-        } else {
-          setTransactions(data);
-        }
-        setHasMore(data.length === PAGE_SIZE);
+        .eq("id", user?.id)
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      if (profileData) {
+        setProfile(profileData);
       }
-    } catch (err: any) {
-      console.error("Error loading transactions:", err);
-      setError(err.message || "Failed to load transactions");
-      toast({
-        title: "Error",
-        description: "Failed to load transactions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingTransactions(false);
-      setLoadingMore(false);
+    } catch (err) {
+      console.error("Error loading profile:", err);
     }
   };
-
-  const loadMore = () => {
-    if (!loadingMore && hasMore) {
-      loadTransactions(true);
-    }
-  };
-
-  const filteredTransactions = transactions
-    .filter((tx) => {
-      // Wallet type filter (from tabs)
-      if (filter !== "all" && tx.wallet_type !== filter) return false;
-      
-      // Transaction type filter
-      if (typeFilter !== "all" && tx.type !== typeFilter) return false;
-      
-      // Status filter
-      if (statusFilter !== "all" && tx.status !== statusFilter) return false;
-      
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesDescription = tx.description?.toLowerCase().includes(query);
-        const matchesId = tx.id.toLowerCase().includes(query);
-        const matchesType = getTransactionTypeLabel(tx.type).toLowerCase().includes(query);
-        const matchesGateway = tx.payment_gateway?.toLowerCase().includes(query);
-        const matchesGatewayId = tx.gateway_transaction_id?.toLowerCase().includes(query);
-        
-        if (!matchesDescription && !matchesId && !matchesType && !matchesGateway && !matchesGatewayId) {
-          return false;
-        }
-      }
-      
-      // Date range filter
-      if (dateRange.from || dateRange.to) {
-        const txDate = new Date(tx.created_at);
-        if (dateRange.from && txDate < dateRange.from) return false;
-        if (dateRange.to) {
-          const endOfDay = new Date(dateRange.to);
-          endOfDay.setHours(23, 59, 59, 999);
-          if (txDate > endOfDay) return false;
-        }
-      }
-      
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "amount-high":
-          return Math.abs(b.amount) - Math.abs(a.amount);
-        case "amount-low":
-          return Math.abs(a.amount) - Math.abs(b.amount);
-        case "newest":
-        default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    });
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -278,10 +83,6 @@ const Transactions = () => {
     (dateRange.from || dateRange.to ? 1 : 0) +
     (sortBy !== "newest" ? 1 : 0);
 
-  const isCredit = (type: string) => {
-    return ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type);
-  };
-
   if (loading || !user || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -297,23 +98,11 @@ const Transactions = () => {
       <main className="flex-1 overflow-auto lg:mt-0 mt-16">
         <div className="container max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Transaction History</h1>
-              <p className="text-muted-foreground">
-                View all your wallet transactions {totalCount > 0 && `(${totalCount} total)`}
-              </p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold">Transaction History</h1>
+          <p className="text-muted-foreground">
+            View all your wallet transactions
+          </p>
         </div>
-
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all">All Transactions</TabsTrigger>
-            <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
-          </TabsList>
-        </Tabs>
 
         {/* Search and Filters */}
         <Card className="p-4 mb-6">
@@ -502,67 +291,20 @@ const Transactions = () => {
           </div>
         </Card>
 
-        {error ? (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex-1">
-                <p className="font-semibold mb-1">Failed to load transactions</p>
-                <p className="text-sm">{error}</p>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => loadTransactions()}
-                className="shrink-0"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : loadingTransactions ? (
-          <TransactionListLoading count={5} isInitialLoad={true} />
-        ) : filteredTransactions.length === 0 ? (
-          <EmptyTransactionState 
-            hasActiveFilters={activeFiltersCount > 0}
-            onClearFilters={clearAllFilters}
-          />
-        ) : (
-          <TransactionErrorBoundary>
-            <div className="space-y-3">
-              {filteredTransactions.map((tx) => (
-                <TransactionCard key={tx.id} transaction={tx} />
-              ))}
-            
-            {/* Load More Button */}
-            {hasMore && filteredTransactions.length > 0 && !loadingMore && (
-              <div className="flex justify-center mt-6">
-                <Button
-                  onClick={() => loadMore()}
-                  disabled={loadingMore}
-                  variant="outline"
-                  size="lg"
-                >
-                  Load More Transactions
-                </Button>
-              </div>
-            )}
-            
-            {/* Loading More State */}
-            {loadingMore && (
-              <TransactionListLoading count={3} isInitialLoad={false} />
-            )}
-            
-            {/* Pagination Info */}
-            {filteredTransactions.length > 0 && (
-              <div className="text-center mt-4 text-sm text-muted-foreground">
-                Showing {filteredTransactions.length} of {totalCount} transactions
-              </div>
-            )}
-          </div>
-          </TransactionErrorBoundary>
-        )}
+        <RecentTransactionsCard 
+          userId={user.id}
+          maxItems={50}
+          showPagination={true}
+          hideTitle={true}
+          hideTabs={false}
+          externalFilter={{
+            searchQuery,
+            typeFilter,
+            statusFilter,
+            dateRange,
+            sortBy
+          }}
+        />
         </div>
       </main>
     </div>
