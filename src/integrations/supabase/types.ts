@@ -1323,6 +1323,18 @@ export type Database = {
           },
         ]
       }
+      pending_transactions_health: {
+        Row: {
+          newest_pending: string | null
+          oldest_pending: string | null
+          pending_last_24h: number | null
+          pending_last_hour: number | null
+          stale_pending: number | null
+          total_pending: number | null
+          total_pending_amount: number | null
+        }
+        Relationships: []
+      }
       user_daily_stats: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"] | null

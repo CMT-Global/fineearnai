@@ -48,6 +48,9 @@ verify_jwt = false
 [functions.cleanup-expired-plans]
 verify_jwt = false
 
+[functions.cleanup-pending-transactions]
+verify_jwt = false
+
 [functions.request-withdrawal]
 verify_jwt = true
 
