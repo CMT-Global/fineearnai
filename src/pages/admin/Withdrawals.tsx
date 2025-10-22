@@ -115,10 +115,21 @@ export default function Withdrawals() {
       const withdrawal = withdrawals.find(w => w.id === selectedWithdrawal);
       if (!withdrawal) throw new Error("Withdrawal not found");
 
-      // Check if payment method is CPAY
-      const isCpayWithdrawal = withdrawal.payment_method?.includes('cpay');
+      // Robust payment processor detection (case-insensitive)
+      const paymentMethodLower = withdrawal.payment_method?.toLowerCase() || '';
+      const isCpayWithdrawal = paymentMethodLower.includes('cpay');
+      const isPayeerWithdrawal = paymentMethodLower.includes('payeer');
 
+      // Route to appropriate edge function based on payment processor
       const functionName = isCpayWithdrawal ? "cpay-withdraw" : "process-withdrawal";
+      
+      console.log('Processing withdrawal:', {
+        withdrawalId: selectedWithdrawal,
+        paymentMethod: withdrawal.payment_method,
+        isCpay: isCpayWithdrawal,
+        isPayeer: isPayeerWithdrawal,
+        functionName
+      });
       
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: isCpayWithdrawal ? {
