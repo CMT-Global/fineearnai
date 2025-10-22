@@ -29,6 +29,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Rate limiting: Max 3 withdrawal requests per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: recentRequests, error: rateLimitError } = await supabase
+      .from('withdrawal_requests')
+      .select('id')
+      .eq('user_id', user.id)
+      .gte('created_at', oneHourAgo);
+
+    if (!rateLimitError && recentRequests && recentRequests.length >= 3) {
+      console.log('Rate limit exceeded:', { userId: user.id, requestCount: recentRequests.length });
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded. Maximum 3 withdrawal requests per hour.',
+        retryAfter: 3600 // seconds
+      }), {
+        status: 429,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': '3600'
+        }
+      });
+    }
+
     const { amount, payoutAddress, paymentMethod } = await req.json();
 
     console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod });
