@@ -306,16 +306,25 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         console.error("Error loading payout days:", configError);
       }
 
-      if (payoutConfig?.value) {
-        const payoutDays = payoutConfig.value as number[];
-        const today = new Date().getDay();
-        if (!payoutDays.includes(today)) {
-          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          const allowedDays = payoutDays.map(d => dayNames[d]).join(', ');
-          toast.error(`Withdrawals are only allowed on: ${allowedDays}`);
-          return;
-        }
+    if (payoutConfig?.value) {
+      const payoutDays = payoutConfig.value as number[];
+      const today = new Date().getDay();
+      
+      if (!payoutDays.includes(today)) {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const allowedDays = payoutDays.map(d => dayNames[d]).join(', ');
+        
+        // Enhanced error message with longer visibility and description
+        toast.error(
+          `Withdrawals are only allowed on: ${allowedDays}`,
+          {
+            duration: 6000,
+            description: "Please come back on an allowed day to request your withdrawal.",
+          }
+        );
+        return;
       }
+    }
 
       // All validations passed, proceed with withdrawal request
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {

@@ -11,9 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit, Trash2, Settings } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Settings, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PaymentProcessor {
   id?: string;
@@ -59,6 +60,10 @@ const PaymentSettings = () => {
   const [maxAmount, setMaxAmount] = useState("");
   const [isActive, setIsActive] = useState(true);
 
+  // Payout days configuration state
+  const [payoutDays, setPayoutDays] = useState<number[]>([]);
+  const [savingPayoutConfig, setSavingPayoutConfig] = useState(false);
+
   // Helper function to safely parse numeric inputs
   const parseNumericInput = (value: string): number => {
     const parsed = parseFloat(value);
@@ -82,11 +87,30 @@ const PaymentSettings = () => {
     }
   };
 
+  // Load payout configuration
+  const loadPayoutConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_config')
+        .select('*')
+        .eq('key', 'payout_days')
+        .single();
+      
+      if (error) throw error;
+      if (data?.value) {
+        setPayoutDays(data.value as number[]);
+      }
+    } catch (error: any) {
+      console.error("Error loading payout config:", error);
+    }
+  };
+
   // Load payment processors and CPAY checkouts
   useEffect(() => {
     if (user && isAdmin) {
       loadProcessors();
       loadCpayCheckouts();
+      loadPayoutConfig();
     }
   }, [user, isAdmin]);
 
@@ -292,6 +316,44 @@ const PaymentSettings = () => {
     setEditingProcessor(null);
     resetForm();
     setDialogOpen(true);
+  };
+
+  // Toggle payout day selection
+  const togglePayoutDay = (dayIndex: number) => {
+    setPayoutDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex].sort()
+    );
+  };
+
+  // Save payout configuration
+  const handleSavePayoutConfig = async () => {
+    if (payoutDays.length === 0) {
+      toast.error("Please select at least one payout day");
+      return;
+    }
+
+    try {
+      setSavingPayoutConfig(true);
+      
+      const { error } = await supabase
+        .from('platform_config')
+        .update({ 
+          value: payoutDays,
+          updated_at: new Date().toISOString()
+        })
+        .eq('key', 'payout_days');
+
+      if (error) throw error;
+
+      toast.success("Payout schedule updated successfully");
+    } catch (error: any) {
+      console.error("Error saving payout config:", error);
+      toast.error("Failed to update payout schedule");
+    } finally {
+      setSavingPayoutConfig(false);
+    }
   };
 
   if (authLoading || adminLoading || loading) {
@@ -572,6 +634,84 @@ const PaymentSettings = () => {
                 </TableBody>
               </Table>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Payout Schedule Configuration */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Payout Schedule Configuration</CardTitle>
+            <CardDescription>
+              Configure which days users can request withdrawals
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Day Selection */}
+            <div>
+              <Label className="text-base mb-3 block">Allowed Payout Days</Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { index: 0, name: 'Sunday', short: 'Sun' },
+                  { index: 1, name: 'Monday', short: 'Mon' },
+                  { index: 2, name: 'Tuesday', short: 'Tue' },
+                  { index: 3, name: 'Wednesday', short: 'Wed' },
+                  { index: 4, name: 'Thursday', short: 'Thu' },
+                  { index: 5, name: 'Friday', short: 'Fri' },
+                  { index: 6, name: 'Saturday', short: 'Sat' },
+                ].map(day => (
+                  <div
+                    key={day.index}
+                    onClick={() => togglePayoutDay(day.index)}
+                    className={`
+                      cursor-pointer p-4 rounded-lg border-2 transition-all
+                      ${payoutDays.includes(day.index)
+                        ? 'border-[hsl(var(--wallet-deposit))] bg-[hsl(var(--wallet-deposit))]/10'
+                        : 'border-gray-200 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    <div className="text-center">
+                      <div className="font-bold">{day.short}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{day.name}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Click to select/deselect days. Users can only request withdrawals on selected days.
+              </p>
+            </div>
+
+            {/* Current Schedule Preview */}
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Current Schedule:</strong>{' '}
+                {payoutDays.length > 0 
+                  ? payoutDays.map(d => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d]).join(', ')
+                  : 'No days selected'
+                }
+              </AlertDescription>
+            </Alert>
+
+            {/* Save Button */}
+            <Button 
+              onClick={handleSavePayoutConfig}
+              disabled={savingPayoutConfig || payoutDays.length === 0}
+              className="w-full md:w-auto"
+            >
+              {savingPayoutConfig ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Save Payout Schedule
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </div>
