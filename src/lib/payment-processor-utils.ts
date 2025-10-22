@@ -73,13 +73,11 @@ export const maskTransactionDescription = (
   // Apply masking for regular users
   let maskedDescription = description;
 
-  // Replace CPAY references
-  maskedDescription = maskedDescription.replace(/CPAY/gi, "Crypto");
-  maskedDescription = maskedDescription.replace(/cpay/gi, "crypto");
+  // Replace CPAY references (all variations with word boundaries)
+  maskedDescription = maskedDescription.replace(/\bCPAY\b/gi, "Crypto");
 
-  // Replace Payeer references
-  maskedDescription = maskedDescription.replace(/Payeer/gi, "Crypto");
-  maskedDescription = maskedDescription.replace(/payeer/gi, "crypto");
+  // Replace Payeer references (all variations with word boundaries)
+  maskedDescription = maskedDescription.replace(/\bPayeer\b/gi, "Crypto");
 
   // Replace technical order IDs pattern (e.g., "Order DEP-xxx" or "Order WD-xxx")
   maskedDescription = maskedDescription.replace(
