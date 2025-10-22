@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Clock, DollarSign } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
+import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
 
 interface WithdrawalRequest {
   id: string;
@@ -301,7 +302,12 @@ export default function Withdrawals() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Payment Method</p>
-                        <p className="font-medium">{withdrawal.payment_method}</p>
+                        <p className="font-medium">
+                          {getPaymentMethodDisplayName(withdrawal.payment_method, true)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Raw: {withdrawal.payment_method}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Payout Address</p>
