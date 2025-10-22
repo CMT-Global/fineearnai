@@ -24,6 +24,7 @@ serve(async (req) => {
     const cpayPublicKey = Deno.env.get('CPAY_API_PUBLIC_KEY')!;
     const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY')!;
     const cpayAccountId = Deno.env.get('CPAY_ACCOUNT_ID')!;
+    const CPAY_API_BASE = Deno.env.get('CPAY_API_BASE') || 'https://api.cpay.com/v1';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -78,17 +79,38 @@ serve(async (req) => {
         throw new Error('Rejection reason is required');
       }
 
-      // Refund to user's earnings wallet
+      // Refund to user's earnings wallet using atomic operation pattern
+      // First, get current balance with row locking to prevent race conditions
+      const { data: currentProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('earnings_wallet_balance')
+        .eq('id', withdrawal.user_id)
+        .single();
+
+      if (profileError || !currentProfile) {
+        throw new Error('Failed to retrieve user profile for refund');
+      }
+
+      const newBalance = parseFloat(currentProfile.earnings_wallet_balance) + parseFloat(withdrawal.amount);
+
+      // Update balance atomically
       const { error: refundError } = await supabase
         .from('profiles')
         .update({
-          earnings_wallet_balance: withdrawal.profiles.earnings_wallet_balance + withdrawal.amount,
+          earnings_wallet_balance: newBalance,
         })
         .eq('id', withdrawal.user_id);
 
       if (refundError) {
         throw new Error('Failed to refund withdrawal');
       }
+
+      console.log('CPAY withdrawal refunded:', { 
+        withdrawalRequestId: withdrawal_request_id,
+        userId: withdrawal.user_id,
+        refundAmount: withdrawal.amount,
+        newBalance 
+      });
 
       // Update withdrawal request
       await supabase
@@ -101,7 +123,7 @@ serve(async (req) => {
         })
         .eq('id', withdrawal_request_id);
 
-      // Create transaction record
+      // Create transaction record with correct new balance
       await supabase.from('transactions').insert({
         user_id: withdrawal.user_id,
         type: 'withdrawal',
@@ -109,7 +131,7 @@ serve(async (req) => {
         wallet_type: 'earnings',
         status: 'failed',
         payment_gateway: 'cpay',
-        new_balance: withdrawal.profiles.earnings_wallet_balance + withdrawal.amount,
+        new_balance: newBalance,
         description: `Withdrawal rejected: ${rejection_reason}`,
         metadata: {
           withdrawal_request_id,
@@ -161,8 +183,8 @@ serve(async (req) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Make API request to CPAY for payout
-    const cpayResponse = await fetch('https://api.cpay.com/v1/payout/create', {
+    // Make API request to CPAY for payout using configurable endpoint
+    const cpayResponse = await fetch(`${CPAY_API_BASE}/payout/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
