@@ -79,6 +79,15 @@ export const maskTransactionDescription = (
   // Replace Payeer references (all variations with word boundaries)
   maskedDescription = maskedDescription.replace(/\bPayeer\b/gi, "Crypto");
 
+  // Mask "Deposit via cpay/payeer" → "Cryptocurrency deposit"
+  maskedDescription = maskedDescription.replace(/Deposit\s+via\s+(cpay|payeer)/gi, "Cryptocurrency deposit");
+
+  // Mask "Withdrawal via cpay/payeer" → "Cryptocurrency withdrawal"
+  maskedDescription = maskedDescription.replace(/Withdrawal\s+via\s+(cpay|payeer)/gi, "Cryptocurrency withdrawal");
+
+  // Mask standalone processor mentions with crypto types
+  maskedDescription = maskedDescription.replace(/\b(cpay|payeer)\s+(USDT|BTC|deposit|withdrawal)/gi, "Crypto $2");
+
   // Replace technical order IDs pattern (e.g., "Order DEP-xxx" or "Order WD-xxx")
   maskedDescription = maskedDescription.replace(
     /Order (DEP|WD)-[A-Z0-9-]+/gi,
