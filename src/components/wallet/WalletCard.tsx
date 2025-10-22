@@ -485,6 +485,42 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       Available: <CurrencyDisplay amountUSD={earningsBalance} />
                     </p>
                   </div>
+                  
+                  {/* Withdrawal Fee Breakdown */}
+                  {withdrawAmount && withdrawMethod && withdrawalProcessors.find(p => p.name === withdrawMethod) && parseFloat(withdrawAmount) > 0 && (
+                    <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                      <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <AlertDescription>
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Withdrawal Amount:</span>
+                            <span className="font-semibold">
+                              <CurrencyDisplay amountUSD={parseFloat(withdrawAmount)} />
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Processing Fee:</span>
+                            <span className="font-semibold text-red-600 dark:text-red-400">
+                              - <CurrencyDisplay amountUSD={withdrawalProcessors.find(p => p.name === withdrawMethod)?.fee_fixed || 0} />
+                            </span>
+                          </div>
+                          <div className="border-t border-blue-200 dark:border-blue-800 pt-1 mt-1"></div>
+                          <div className="flex justify-between">
+                            <span className="font-semibold text-muted-foreground">You will receive:</span>
+                            <span className="font-bold text-green-600 dark:text-green-400 text-sm">
+                              <CurrencyDisplay 
+                                amountUSD={
+                                  parseFloat(withdrawAmount) - 
+                                  (withdrawalProcessors.find(p => p.name === withdrawMethod)?.fee_fixed || 0)
+                                } 
+                              />
+                            </span>
+                          </div>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div>
                     <Label htmlFor="withdraw-method">Withdrawal Method</Label>
                     <Select value={withdrawMethod} onValueChange={setWithdrawMethod} disabled={loadingProcessors}>
