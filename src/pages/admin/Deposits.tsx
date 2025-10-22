@@ -36,8 +36,9 @@ const Deposits = () => {
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("completed"); // Default to completed only
   const [methodFilter, setMethodFilter] = useState<string>("all");
+  const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, failed: 0 });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -56,12 +57,13 @@ const Deposits = () => {
     if (isAdmin) {
       loadDeposits();
     }
-  }, [isAdmin]);
+  }, [isAdmin, statusFilter]); // Reload when status filter changes
 
   const loadDeposits = async () => {
     try {
       setLoading(true);
 
+      // Build query with status filter applied server-side
       let query = supabase
         .from("transactions")
         .select(`
@@ -77,14 +79,36 @@ const Deposits = () => {
             email
           )
         `)
-        .eq("type", "deposit")
-        .order("created_at", { ascending: false });
+        .eq("type", "deposit");
+
+      // Apply status filter if not "all"
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter as any);
+      }
+
+      query = query.order("created_at", { ascending: false });
 
       const { data, error } = await query;
 
       if (error) throw error;
 
       setDeposits(data || []);
+
+      // Load stats for summary card
+      const { data: statsData, error: statsError } = await supabase
+        .from("transactions")
+        .select("status")
+        .eq("type", "deposit");
+
+      if (!statsError && statsData) {
+        const statsCount = {
+          total: statsData.length,
+          completed: statsData.filter(t => t.status === "completed").length,
+          pending: statsData.filter(t => t.status === "pending").length,
+          failed: statsData.filter(t => t.status === "failed").length,
+        };
+        setStats(statsCount);
+      }
     } catch (error: any) {
       console.error("Error loading deposits:", error);
       toast.error("Failed to load deposits");
@@ -158,11 +182,45 @@ const Deposits = () => {
           <p className="text-muted-foreground mt-1">View and manage all platform deposits</p>
         </div>
 
+        {/* Stats Summary Card */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Total Deposits</CardDescription>
+              <CardTitle className="text-2xl">{stats.total}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Completed</CardDescription>
+              <CardTitle className="text-2xl text-green-600">{stats.completed}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Pending</CardDescription>
+              <CardTitle className="text-2xl text-yellow-600">{stats.pending}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Failed</CardDescription>
+              <CardTitle className="text-2xl text-red-600">{stats.failed}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>All Deposits</CardTitle>
+            <CardTitle>
+              {statusFilter === "all" ? "All Deposits" : 
+               statusFilter === "completed" ? "Completed Deposits" :
+               statusFilter === "pending" ? "Pending Deposits" :
+               "Failed Deposits"}
+            </CardTitle>
             <CardDescription>
               {filteredDeposits.length} deposit{filteredDeposits.length !== 1 ? "s" : ""} found
+              {statusFilter !== "all" && ` (${statusFilter} only)`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -181,15 +239,15 @@ const Deposits = () => {
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="completed">✓ Completed Only</SelectItem>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="pending">⏳ Pending Only</SelectItem>
+                  <SelectItem value="failed">✗ Failed Only</SelectItem>
                 </SelectContent>
               </Select>
 
