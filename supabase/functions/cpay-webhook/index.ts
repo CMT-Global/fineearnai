@@ -288,34 +288,74 @@ serve(async (req) => {
 
     // Handle payment status
     if (status === 'completed') {
-      // Credit user with ACTUAL amount paid (not requested amount)
-      const newBalance = transaction.profiles.deposit_wallet_balance + actualAmount;
-      
+      // Credit user with ACTUAL amount paid using atomic function (race-condition safe)
       console.log(
-        `[CPAY-WEBHOOK] 💰 Crediting user ${transaction.profiles.id}: ` +
-        `${transaction.profiles.deposit_wallet_balance} + ${actualAmount} = ${newBalance}`
+        `[CPAY-WEBHOOK] 💰 Calling atomic deposit function for user ${transaction.profiles.id}: ` +
+        `Current balance: ${transaction.profiles.deposit_wallet_balance}, Amount to credit: ${actualAmount}`
       );
       
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ deposit_wallet_balance: newBalance })
-        .eq('id', transaction.profiles.id);
+      const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic', {
+        p_user_id: transaction.profiles.id,
+        p_amount: actualAmount,
+        p_order_id: payment_id, // Use payment_id as order_id for idempotency
+        p_payment_method: 'cpay',
+        p_gateway_transaction_id: payment_id,
+        p_metadata: {
+          webhook_received_at: new Date().toISOString(),
+          cpay_status: status,
+          cpay_payment_id: payment_id,
+          cpay_system_status: webhookData.systemStatus || webhookData.chargeStatus,
+          cpay_hash: webhookData.hash || webhookData.incomingTxHash,
+          requested_amount: requestedAmount,
+          actual_amount_paid: actualAmount,
+          amount_discrepancy: actualAmount - requestedAmount,
+          webhook_received_from_ip: clientIP,
+          original_transaction_id: transaction.id,
+          tracking_id: trackingId
+        }
+      });
 
-      if (updateError) {
-        console.error('[CPAY-WEBHOOK] ❌ Failed to update balance:', updateError);
-        throw new Error('Failed to update balance');
+      if (atomicError) {
+        console.error('[CPAY-WEBHOOK] ❌ Atomic deposit function error:', atomicError);
+        throw new Error('Failed to process deposit atomically: ' + atomicError.message);
       }
 
-      // Update transaction with actual amount and new balance
+      // Check if atomic function detected duplicate or failed
+      if (!atomicResult.success) {
+        if (atomicResult.error === 'duplicate_transaction') {
+          console.log('[CPAY-WEBHOOK] ⚠️ Duplicate detected by atomic function (another webhook already processed this payment_id)');
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Transaction already processed by atomic function',
+              transaction_id: atomicResult.transaction_id 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        console.error('[CPAY-WEBHOOK] ❌ Atomic deposit failed:', atomicResult);
+        throw new Error(atomicResult.message || 'Atomic deposit processing failed');
+      }
+
+      console.log('[CPAY-WEBHOOK] ✅ Atomic deposit successful:', {
+        transactionId: atomicResult.transaction_id,
+        oldBalance: atomicResult.old_balance,
+        newBalance: atomicResult.new_balance,
+        amountCredited: atomicResult.amount_credited
+      });
+
+      // Update the original pending transaction to mark it as completed
       const { error: txUpdateError } = await supabase
         .from('transactions')
         .update({
           status: 'completed',
           amount: actualAmount, // Update to actual amount paid
-          new_balance: newBalance,
-          gateway_transaction_id: payment_id, // Store CPAY's payment_id
+          new_balance: atomicResult.new_balance,
+          gateway_transaction_id: payment_id,
           metadata: {
             ...transaction.metadata,
+            atomic_transaction_id: atomicResult.transaction_id,
             webhook_received_at: new Date().toISOString(),
             cpay_status: status,
             cpay_payment_id: payment_id,
@@ -332,9 +372,11 @@ serve(async (req) => {
         .eq('id', transaction.id);
 
       if (txUpdateError) {
-        console.error('[CPAY-WEBHOOK] ❌ Failed to update transaction:', txUpdateError);
-        throw new Error('Failed to update transaction');
+        console.warn('[CPAY-WEBHOOK] ⚠️ Failed to update original pending transaction (deposit still credited via atomic function):', txUpdateError);
+        // Don't throw - the deposit was credited successfully, this is just metadata update
       }
+      
+      const newBalance = atomicResult.new_balance; // Use balance from atomic result
 
       console.log(
         `[CPAY-WEBHOOK] ✅ DEPOSIT COMPLETED: ` +

@@ -1377,14 +1377,19 @@ export type Database = {
         }
         Returns: Json
       }
-      generate_referral_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
+      credit_deposit_atomic: {
+        Args: {
+          p_amount: number
+          p_gateway_transaction_id?: string
+          p_metadata?: Json
+          p_order_id: string
+          p_payment_method?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
-      get_available_task_count: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
+      generate_referral_code: { Args: never; Returns: string }
+      get_available_task_count: { Args: { p_user_id: string }; Returns: number }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
         Returns: Json
@@ -1441,7 +1446,7 @@ export type Database = {
         }[]
       }
       get_task_pool_health: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_tasks: number
           avg_completion_rate: number
@@ -1451,10 +1456,7 @@ export type Database = {
           total_tasks: number
         }[]
       }
-      get_user_detail_aggregated: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
+      get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1474,10 +1476,7 @@ export type Database = {
         }
         Returns: Json
       }
-      refresh_materialized_views: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      refresh_materialized_views: { Args: never; Returns: undefined }
     }
     Enums: {
       account_status: "active" | "suspended" | "banned"

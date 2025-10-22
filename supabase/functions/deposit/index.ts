@@ -57,42 +57,55 @@ Deno.serve(async (req) => {
     }
 
     const depositAmount = parseFloat(amount);
-    const newBalance = parseFloat(profile.deposit_wallet_balance) + depositAmount;
+    
+    // Use atomic deposit function for race-condition protection
+    console.log('Calling atomic deposit function:', { userId: user.id, amount: depositAmount, paymentMethod });
+    
+    const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic', {
+      p_user_id: user.id,
+      p_amount: depositAmount,
+      p_order_id: gatewayTransactionId || `manual-${Date.now()}`,
+      p_payment_method: paymentMethod,
+      p_gateway_transaction_id: gatewayTransactionId,
+      p_metadata: {
+        deposit_via: 'direct',
+        processed_at: new Date().toISOString()
+      }
+    });
 
-    // CRITICAL: Insert transaction BEFORE updating profile balance
-    // The validate_transaction_balance trigger checks if new_balance matches
-    // current_balance + amount. If we update profile first, validation fails.
-    const { data: transaction, error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'deposit',
-        amount: depositAmount,
-        wallet_type: 'deposit',
-        new_balance: newBalance,
-        description: `Deposit via ${paymentMethod}`,
-        status: 'completed',
-        payment_gateway: paymentMethod,
-        gateway_transaction_id: gatewayTransactionId,
-      })
-      .select()
-      .single();
-
-    if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
-      throw transactionError;
+    if (atomicError) {
+      console.error('Atomic deposit function error:', atomicError);
+      throw new Error('Failed to process deposit atomically: ' + atomicError.message);
     }
 
-    // Now update profile balance AFTER transaction is recorded
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ deposit_wallet_balance: newBalance })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating balance:', updateError);
-      throw updateError;
+    // Check if atomic function detected duplicate or failed
+    if (!atomicResult.success) {
+      if (atomicResult.error === 'duplicate_transaction') {
+        console.log('Duplicate transaction detected by atomic function');
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Transaction already processed',
+            transaction: { id: atomicResult.transaction_id },
+            newBalance: atomicResult.new_balance || profile.deposit_wallet_balance
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.error('Atomic deposit failed:', atomicResult);
+      throw new Error(atomicResult.message || 'Atomic deposit processing failed');
     }
+
+    console.log('Atomic deposit successful:', {
+      transactionId: atomicResult.transaction_id,
+      oldBalance: atomicResult.old_balance,
+      newBalance: atomicResult.new_balance,
+      amountCredited: atomicResult.amount_credited
+    });
+
+    const transaction = { id: atomicResult.transaction_id };
+    const newBalance = atomicResult.new_balance;
 
     // Queue referral commission on deposit if user was referred (async processing)
     if (profile.referred_by) {
