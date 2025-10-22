@@ -88,26 +88,80 @@ serve(async (req) => {
 
     // Check if payload is encrypted (contains 'data' field with base64)
     if (rawPayload.data && typeof rawPayload.data === 'string' && rawPayload.data.startsWith('U2FsdGVk')) {
-      console.log('[CPAY-WEBHOOK] 🔐 Encrypted payload detected, decrypting...');
-      
-      // Decrypt using OpenSSL-compatible AES-256-CBC with EVP_BytesToKey
-      const encryptedData = rawPayload.data;
+      console.log('[CPAY-WEBHOOK] 🔐 Encrypted payload detected, using JWT-based two-stage decryption...');
       
       // Import crypto-js for AES decryption (Deno-compatible)
       const CryptoJSModule = await import('https://esm.sh/crypto-js@4.2.0');
       const CryptoJS = CryptoJSModule.default;
       
       try {
-        // Decrypt using AES-256-CBC with EVP_BytesToKey derivation (OpenSSL default)
-        const decrypted = CryptoJS.AES.decrypt(encryptedData, cpayPrivateKey);
-        const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
-        
-        if (!decryptedText) {
-          throw new Error('Decryption resulted in empty string');
+        // STEP 1: Extract and decode JWT from Authorization header
+        const authHeader = req.headers.get('authorization') || '';
+        if (!authHeader.startsWith('Bearer ')) {
+          throw new Error('Missing or invalid Authorization header - JWT Bearer token required for encrypted webhooks');
         }
         
-        webhookData = JSON.parse(decryptedText);
-        console.log('[CPAY-WEBHOOK] ✅ Decrypted payload:', JSON.stringify(webhookData, null, 2));
+        // Extract token (up to first comma if present)
+        let jwtToken = authHeader.slice('Bearer '.length).trim();
+        const commaIndex = jwtToken.indexOf(',');
+        if (commaIndex !== -1) {
+          jwtToken = jwtToken.substring(0, commaIndex);
+        }
+        
+        // Decode JWT (simple base64url decode, no verification needed per CPAY docs)
+        const jwtParts = jwtToken.split('.');
+        if (jwtParts.length !== 3) {
+          throw new Error('Invalid JWT structure');
+        }
+        
+        // Base64url decode payload
+        const base64Payload = jwtParts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const paddedPayload = base64Payload.padEnd(base64Payload.length + (4 - base64Payload.length % 4) % 4, '=');
+        const decodedPayload = atob(paddedPayload);
+        const jwtPayload = JSON.parse(decodedPayload);
+        
+        console.log('[CPAY-WEBHOOK] ✓ JWT decoded successfully');
+        
+        // STEP 2: Extract required fields from JWT
+        const walletId = jwtPayload.id;
+        const encryptedSalt = jwtPayload.salt;
+        const exp = jwtPayload.exp;
+        
+        if (!walletId || !encryptedSalt || !exp) {
+          throw new Error('JWT missing required fields: id, salt, or exp');
+        }
+        
+        // STEP 3: Validate JWT expiration
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (exp < currentTime) {
+          throw new Error('JWT token has expired');
+        }
+        
+        console.log('[CPAY-WEBHOOK] ✓ JWT validation passed');
+        
+        // STEP 4: Decrypt the encryptedSalt using walletId as password to get finalSalt
+        const decryptedSaltBytes = CryptoJS.AES.decrypt(encryptedSalt, walletId);
+        const finalSalt = decryptedSaltBytes.toString(CryptoJS.enc.Utf8);
+        
+        if (!finalSalt) {
+          throw new Error('Failed to derive finalSalt from encrypted salt');
+        }
+        
+        console.log('[CPAY-WEBHOOK] ✓ finalSalt derived successfully');
+        
+        // STEP 5: Decrypt the body.data using finalSalt as password
+        const encryptedData = rawPayload.data;
+        const decryptedBodyBytes = CryptoJS.AES.decrypt(encryptedData, finalSalt);
+        const decryptedBodyText = decryptedBodyBytes.toString(CryptoJS.enc.Utf8);
+        
+        if (!decryptedBodyText) {
+          throw new Error('Decryption resulted in empty string - finalSalt may be incorrect');
+        }
+        
+        // STEP 6: Parse decrypted JSON
+        webhookData = JSON.parse(decryptedBodyText);
+        console.log('[CPAY-WEBHOOK] ✅ Two-stage decryption successful');
+        
       } catch (decryptError) {
         console.error('[CPAY-WEBHOOK] ❌ Decryption failed:', decryptError);
         const errorMsg = decryptError instanceof Error ? decryptError.message : 'Unknown decryption error';
