@@ -62,9 +62,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Idempotency check - prevent double processing
     if (withdrawalRequest.status !== 'pending') {
+      console.warn('Withdrawal already processed:', { 
+        withdrawalRequestId, 
+        currentStatus: withdrawalRequest.status,
+        adminId: user.id 
+      });
+      
       return new Response(
-        JSON.stringify({ error: `Withdrawal request is already ${withdrawalRequest.status}` }),
+        JSON.stringify({ 
+          error: `Withdrawal request is already ${withdrawalRequest.status}`,
+          current_status: withdrawalRequest.status,
+          processed_at: withdrawalRequest.processed_at,
+          processed_by: withdrawalRequest.processed_by
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -193,31 +205,63 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Process payment via Payeer API
+      // Process payment via Payeer API with proper signature
       try {
+        console.log('Initiating Payeer payout:', {
+          withdrawalRequestId,
+          netAmount: withdrawalRequest.net_amount,
+          payoutAddress: withdrawalRequest.payout_address
+        });
+
+        // Generate SHA256 signature for Payeer API
+        // Format: account:apiId:apiPass:to:sum:curIn:curOut:comment
+        const signString = `${PAYEER_ACCOUNT}:${PAYEER_API_ID}:${PAYEER_API_KEY}:${withdrawalRequest.payout_address}:${withdrawalRequest.net_amount}:USD:USD:Withdrawal ${withdrawalRequestId}`;
+        
+        const encoder = new TextEncoder();
+        const data = encoder.encode(signString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        console.log('Generated Payeer signature for withdrawal:', withdrawalRequestId);
+
+        // Prepare Payeer API payload with all required fields
         const payeerPayload = {
-          api_id: PAYEER_API_ID,
-          api_pass: PAYEER_API_KEY,
           account: PAYEER_ACCOUNT,
-          to: withdrawalRequest.payout_address,
-          sum: withdrawalRequest.net_amount.toString(),
+          apiId: PAYEER_API_ID,
+          apiPass: PAYEER_API_KEY,
+          action: 'output',
+          ps: '1136053', // USDT TRC20 payment system ID
+          sumIn: withdrawalRequest.net_amount.toString(),
           curIn: 'USD',
           curOut: 'USD',
+          to: withdrawalRequest.payout_address,
           comment: `Withdrawal ${withdrawalRequestId}`,
+          sign: signature,
         };
 
-        const payeerResponse = await fetch('https://payeer.com/ajax/api/api.php', {
+        const payeerResponse = await fetch('https://payeer.com/api/api.php', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
           },
-          body: new URLSearchParams(payeerPayload as any),
+          body: JSON.stringify(payeerPayload),
         });
 
         const payeerResult = await payeerResponse.json();
+        
+        console.log('Payeer API response:', { 
+          withdrawalRequestId, 
+          success: !payeerResult.errors,
+          historyId: payeerResult.historyId 
+        });
 
         if (payeerResult.errors && payeerResult.errors.length > 0) {
-          throw new Error(payeerResult.errors.join(', '));
+          throw new Error(`Payeer API error: ${payeerResult.errors.join(', ')}`);
+        }
+
+        if (!payeerResult.historyId) {
+          throw new Error('Payeer did not return transaction ID');
         }
 
         // Payment successful
