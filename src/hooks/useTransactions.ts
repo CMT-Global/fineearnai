@@ -1,16 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useTransactions = (userId: string | undefined, page: number = 1) => {
-  const PAGE_SIZE = 50;
-  
+export const useTransactions = (userId: string | undefined, page: number = 1, pageSize: number = 50) => {
   return useQuery({
-    queryKey: ['transactions', userId, page],
+    queryKey: ['transactions', userId, page, pageSize],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
       
       const { data, error, count } = await supabase
         .from('transactions')
@@ -24,7 +22,9 @@ export const useTransactions = (userId: string | undefined, page: number = 1) =>
       return {
         transactions: data || [],
         totalCount: count || 0,
-        hasMore: (count || 0) > to + 1
+        hasMore: (count || 0) > to + 1,
+        currentPage: page,
+        totalPages: Math.ceil((count || 0) / pageSize)
       };
     },
     enabled: !!userId,
