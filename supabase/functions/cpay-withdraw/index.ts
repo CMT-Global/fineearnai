@@ -152,6 +152,19 @@ serve(async (req) => {
         },
       });
 
+      // Audit log for rejection
+      await supabase.from('audit_logs').insert({
+        admin_id: user.id,
+        action_type: 'withdrawal_reject',
+        target_user_id: withdrawal.user_id,
+        details: {
+          withdrawal_id: withdrawal_request_id,
+          amount: withdrawal.amount,
+          payment_method: withdrawal.payment_method,
+          rejection_reason,
+        },
+      });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -262,6 +275,20 @@ serve(async (req) => {
           payout_address: withdrawal.payout_address,
           transaction_id: cpayResult.data.payout_id,
         },
+      },
+    });
+
+    // Audit log for approval
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: 'withdrawal_approve',
+      target_user_id: withdrawal.user_id,
+      details: {
+        withdrawal_id: withdrawal_request_id,
+        amount: withdrawal.amount,
+        net_amount: withdrawal.net_amount,
+        payment_method: withdrawal.payment_method,
+        payout_id: cpayResult.data.payout_id,
       },
     });
 
