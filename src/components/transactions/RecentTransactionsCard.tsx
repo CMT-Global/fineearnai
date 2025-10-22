@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useWithdrawalRequests } from "@/hooks/useWithdrawalRequests";
-import { useAdmin } from "@/hooks/useAdmin";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -51,7 +50,6 @@ export const RecentTransactionsCard = ({
 }: RecentTransactionsCardProps) => {
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const { isAdmin } = useAdmin();
 
   const { data: transactionsData, isLoading: isTransactionsLoading } = useTransactions(userId, currentPage, maxItems);
   const { data: withdrawalRequests, isLoading: isWithdrawalsLoading } = useWithdrawalRequests(userId);
@@ -204,7 +202,7 @@ export const RecentTransactionsCard = ({
                       </p>
                       {tx.description && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {maskTransactionDescription(tx.description, isAdmin)}
+                          {maskTransactionDescription(tx.description, false)}
                         </p>
                       )}
                     </div>

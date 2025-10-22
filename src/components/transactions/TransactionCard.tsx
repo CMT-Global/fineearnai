@@ -103,7 +103,7 @@ export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
                 {/* Payment Gateway Badge */}
                 {tx.payment_gateway && (
                   <Badge variant="secondary" className="text-xs uppercase">
-                    {getDisplayNameForUser(tx.payment_gateway, isAdmin)}
+                    {getDisplayNameForUser(tx.payment_gateway, false)}
                   </Badge>
                 )}
 
@@ -122,7 +122,7 @@ export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
 
               {tx.description && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {maskTransactionDescription(tx.description, isAdmin)}
+                  {maskTransactionDescription(tx.description, false)}
                 </p>
               )}
             </div>
