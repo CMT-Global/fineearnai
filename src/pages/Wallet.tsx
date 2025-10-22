@@ -54,6 +54,9 @@ const Wallet = () => {
   }, [user, loading, navigate]);
 
   const filteredTransactions = transactions.filter((tx) => {
+    // Hide pending transactions from user view
+    if (tx.status === "pending") return false;
+    
     if (filter === "all") return true;
     return tx.wallet_type === filter;
   });

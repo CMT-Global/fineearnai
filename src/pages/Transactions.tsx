@@ -99,15 +99,29 @@ const Transactions = () => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTransactions(prev => [payload.new as Transaction, ...prev]);
-            toast({
-              title: "New Transaction",
-              description: `${getTransactionTypeLabel(payload.new.type)} - $${payload.new.amount.toFixed(2)}`,
-            });
+            // Only show completed transactions in real-time updates
+            if (payload.new.status === 'completed') {
+              setTransactions(prev => [payload.new as Transaction, ...prev]);
+              toast({
+                title: "New Transaction",
+                description: `${getTransactionTypeLabel(payload.new.type)} - $${payload.new.amount.toFixed(2)}`,
+              });
+            }
           } else if (payload.eventType === 'UPDATE') {
-            setTransactions(prev =>
-              prev.map(tx => tx.id === payload.new.id ? payload.new as Transaction : tx)
-            );
+            // Update transaction if it becomes completed
+            if (payload.new.status === 'completed') {
+              setTransactions(prev => {
+                const exists = prev.find(tx => tx.id === payload.new.id);
+                if (exists) {
+                  return prev.map(tx => tx.id === payload.new.id ? payload.new as Transaction : tx);
+                } else {
+                  return [payload.new as Transaction, ...prev];
+                }
+              });
+            } else {
+              // Remove if it's not completed (e.g., failed, cancelled)
+              setTransactions(prev => prev.filter(tx => tx.id !== payload.new.id));
+            }
           } else if (payload.eventType === 'DELETE') {
             setTransactions(prev => prev.filter(tx => tx.id !== payload.old.id));
           }
@@ -144,11 +158,12 @@ const Transactions = () => {
         }
       }
       
-      // Get total count
+      // Get total count (exclude pending)
       const { count } = await supabase
         .from("transactions")
         .select("*", { count: 'exact', head: true })
-        .eq("user_id", user?.id);
+        .eq("user_id", user?.id)
+        .neq("status", "pending");
       
       if (count !== null) {
         setTotalCount(count);
@@ -162,6 +177,7 @@ const Transactions = () => {
         .from("transactions")
         .select("*")
         .eq("user_id", user?.id)
+        .neq("status", "pending") // Exclude pending transactions from user view
         .order("created_at", { ascending: false })
         .range(from, to);
 
