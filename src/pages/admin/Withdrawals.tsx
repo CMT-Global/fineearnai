@@ -73,30 +73,24 @@ export default function Withdrawals() {
   const loadWithdrawals = async () => {
     try {
       setLoading(true);
+      
+      // Single optimized query with join - eliminates N+1 problem
+      // Using the foreign key relationship added in migration
       const { data, error } = await supabase
         .from("withdrawal_requests")
-        .select("*")
+        .select(`
+          *,
+          profiles (
+            username,
+            email
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Manually fetch profile data for each withdrawal
-      const withdrawalsWithProfiles = await Promise.all(
-        (data || []).map(async (withdrawal) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("username, email")
-            .eq("id", withdrawal.user_id)
-            .single();
-
-          return {
-            ...withdrawal,
-            profiles: profile || { username: "Unknown", email: "" },
-          };
-        })
-      );
-
-      setWithdrawals(withdrawalsWithProfiles);
+      // Type assertion since TypeScript types haven't regenerated yet
+      setWithdrawals((data as any) || []);
     } catch (error) {
       console.error("Error loading withdrawals:", error);
       toast({
