@@ -118,11 +118,11 @@ Deno.serve(async (req) => {
         })
         .eq('id', withdrawalRequestId);
 
-      // Update transaction status
+      // Update transaction status using proper JSON filtering
       await supabase
         .from('transactions')
         .update({ status: 'cancelled' })
-        .eq('metadata->>withdrawal_request_id', withdrawalRequestId);
+        .contains('metadata', { withdrawal_request_id: withdrawalRequestId });
 
       // Create refund transaction
       await supabase
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
               note: 'Manual processing required - Payeer not configured' 
             }
           })
-          .eq('metadata->>withdrawal_request_id', withdrawalRequestId);
+          .contains('metadata', { withdrawal_request_id: withdrawalRequestId });
 
         return new Response(
           JSON.stringify({
@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
             status: 'completed',
             gateway_transaction_id: payeerResult.historyId 
           })
-          .eq('metadata->>withdrawal_request_id', withdrawalRequestId);
+          .contains('metadata', { withdrawal_request_id: withdrawalRequestId });
 
         console.log('Withdrawal processed successfully via Payeer:', { 
           withdrawalRequestId,
@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
         await supabase
           .from('transactions')
           .update({ status: 'failed' })
-          .eq('metadata->>withdrawal_request_id', withdrawalRequestId);
+          .contains('metadata', { withdrawal_request_id: withdrawalRequestId });
 
         return new Response(
           JSON.stringify({
