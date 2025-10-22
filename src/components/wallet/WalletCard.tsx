@@ -196,6 +196,128 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     try {
       setWithdrawLoading(true);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to withdraw");
+        return;
+      }
+
+      // Check for pending withdrawal (prevent duplicates)
+      const { data: pendingWithdrawals, error: pendingError } = await supabase
+        .from('withdrawal_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (pendingError) {
+        console.error("Error checking pending withdrawals:", pendingError);
+      }
+
+      if (pendingWithdrawals) {
+        toast.error("You already have a pending withdrawal request. Please wait for it to be processed.");
+        return;
+      }
+
+      // Get user profile and membership plan
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('membership_plan, earnings_wallet_balance')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        toast.error("Failed to load profile information");
+        return;
+      }
+
+      // Get membership plan details
+      const { data: plan, error: planError } = await supabase
+        .from('membership_plans')
+        .select('min_withdrawal, max_daily_withdrawal, min_daily_withdrawal')
+        .eq('name', profile.membership_plan)
+        .single();
+
+      if (planError || !plan) {
+        toast.error("Failed to load membership plan details");
+        return;
+      }
+
+      // Validate minimum withdrawal
+      const minWithdrawal = typeof plan.min_withdrawal === 'number' 
+        ? plan.min_withdrawal 
+        : parseFloat(plan.min_withdrawal as string);
+      if (amount < minWithdrawal) {
+        toast.error(`Minimum withdrawal is $${minWithdrawal.toFixed(2)}`);
+        return;
+      }
+
+      // Validate minimum daily withdrawal
+      if (plan.min_daily_withdrawal) {
+        const minDailyWithdrawal = typeof plan.min_daily_withdrawal === 'number'
+          ? plan.min_daily_withdrawal
+          : parseFloat(plan.min_daily_withdrawal as string);
+        if (minDailyWithdrawal > 0 && amount < minDailyWithdrawal) {
+          toast.error(`Minimum daily withdrawal is $${minDailyWithdrawal.toFixed(2)}`);
+          return;
+        }
+      }
+
+      // Check daily withdrawal limit
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayWithdrawals, error: todayError } = await supabase
+        .from('withdrawal_requests')
+        .select('amount')
+        .eq('user_id', user.id)
+        .gte('created_at', today)
+        .in('status', ['pending', 'approved', 'processing', 'completed']);
+
+      if (todayError) {
+        console.error("Error checking daily withdrawals:", todayError);
+      }
+
+      const totalWithdrawnToday = todayWithdrawals?.reduce(
+        (sum, t) => {
+          const withdrawnAmount = typeof t.amount === 'number' ? t.amount : parseFloat(String(t.amount));
+          return sum + withdrawnAmount;
+        },
+        0
+      ) || 0;
+
+      const maxDailyWithdrawal = typeof plan.max_daily_withdrawal === 'number'
+        ? plan.max_daily_withdrawal
+        : parseFloat(plan.max_daily_withdrawal as string);
+      if (totalWithdrawnToday + amount > maxDailyWithdrawal) {
+        const remainingLimit = maxDailyWithdrawal - totalWithdrawnToday;
+        toast.error(`Daily withdrawal limit exceeded. You can withdraw up to $${remainingLimit.toFixed(2)} more today.`);
+        return;
+      }
+
+      // Check payout days configuration
+      const { data: payoutConfig, error: configError } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'payout_days')
+        .single();
+
+      if (configError) {
+        console.error("Error loading payout days:", configError);
+      }
+
+      if (payoutConfig?.value) {
+        const payoutDays = payoutConfig.value as number[];
+        const today = new Date().getDay();
+        if (!payoutDays.includes(today)) {
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const allowedDays = payoutDays.map(d => dayNames[d]).join(', ');
+          toast.error(`Withdrawals are only allowed on: ${allowedDays}`);
+          return;
+        }
+      }
+
+      // All validations passed, proceed with withdrawal request
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount,
