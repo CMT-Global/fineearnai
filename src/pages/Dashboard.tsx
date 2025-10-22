@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
+import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { 
   Crown, 
   Sparkles,
@@ -348,6 +349,16 @@ const Dashboard = () => {
               </Button>
             </div>
           </Card>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="px-4 lg:px-8 pb-8">
+          <RecentTransactionsCard 
+            userId={user?.id || ''} 
+            maxItems={5} 
+            showPagination={false} 
+            title="Recent Activity"
+          />
         </div>
       </main>
     </div>
