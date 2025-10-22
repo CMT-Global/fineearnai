@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,17 +7,28 @@ import { supabase } from '@/integrations/supabase/client';
  * 
  * Subscribes to new transactions and automatically updates React Query cache
  * Provides instant UI updates when new transactions occur
+ * Prevents duplicate subscriptions across multiple components
  */
 export const useRealtimeTransactions = (userId: string | undefined) => {
   const queryClient = useQueryClient();
+  const channelRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
 
+    const channelName = `transactions-${userId}`;
+    
+    // Prevent duplicate subscriptions
+    if (channelRef.current === channelName) {
+      console.log('🔴 Subscription already exists for:', channelName);
+      return;
+    }
+
     console.log('🔴 Setting up real-time subscription for transactions:', userId);
+    channelRef.current = channelName;
 
     const channel = supabase
-      .channel(`transactions-${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -53,6 +64,7 @@ export const useRealtimeTransactions = (userId: string | undefined) => {
 
     return () => {
       console.log('🔴 Cleaning up real-time subscription for transactions:', userId);
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
   }, [userId, queryClient]);

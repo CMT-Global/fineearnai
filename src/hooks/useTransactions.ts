@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useTransactions = (userId: string | undefined, page: number = 1, pageSize: number = 50) => {
+export const useTransactions = (
+  userId: string | undefined, 
+  page: number = 1, 
+  pageSize: number = 50,
+  enabled: boolean = true
+) => {
   return useQuery({
     queryKey: ['transactions', userId, page, pageSize],
     queryFn: async () => {
@@ -27,8 +32,9 @@ export const useTransactions = (userId: string | undefined, page: number = 1, pa
         totalPages: Math.ceil((count || 0) / pageSize)
       };
     },
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     staleTime: 10000, // 10 seconds (fresh financial data)
+    refetchOnMount: false, // Prevent redundant fetches
     placeholderData: (previousData) => previousData, // Keep old data while fetching
   });
 };
