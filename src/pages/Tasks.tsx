@@ -10,6 +10,7 @@ import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
 import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
+import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -360,6 +361,16 @@ const Tasks = () => {
           ) : (
             <NoTasksAvailable onRefresh={refetchTask} />
           )}
+
+          {/* Recent Activity */}
+          <div className="mt-8">
+            <RecentTransactionsCard 
+              userId={user?.id || ''} 
+              maxItems={5} 
+              showPagination={false} 
+              title="Recent Activity"
+            />
+          </div>
         </div>
       </main>
     </div>
