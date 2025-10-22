@@ -155,69 +155,92 @@ Deno.serve(async (req) => {
     const fee = (withdrawalAmount * feePercentage) / 100;
     const netAmount = withdrawalAmount - fee;
 
-    // Deduct from earnings wallet
-    const newBalance = currentBalance - withdrawalAmount;
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ earnings_wallet_balance: newBalance })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating balance:', updateError);
-      throw updateError;
-    }
-
-    // Create withdrawal request
-    const { data: withdrawalRequest, error: requestError } = await supabase
+    // Check for existing pending withdrawal request (prevent duplicates)
+    const { data: pendingCheck, error: pendingError } = await supabase
       .from('withdrawal_requests')
-      .insert({
-        user_id: user.id,
-        amount: withdrawalAmount,
-        net_amount: netAmount,
-        fee: fee,
-        payout_address: payoutAddress,
-        payment_method: paymentMethod,
-        status: 'pending',
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .maybeSingle();
 
-    if (requestError) {
-      console.error('Error creating withdrawal request:', requestError);
-      // Rollback balance change
-      await supabase
-        .from('profiles')
-        .update({ earnings_wallet_balance: currentBalance })
-        .eq('id', user.id);
-      throw requestError;
+    if (pendingError) {
+      console.error('Error checking pending withdrawals:', pendingError);
     }
 
-    // Create transaction record
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'withdrawal',
-        amount: withdrawalAmount,
-        wallet_type: 'earnings',
-        new_balance: newBalance,
-        description: `Withdrawal request via ${paymentMethod}`,
-        status: 'pending',
-        payment_gateway: paymentMethod,
-        metadata: {
-          withdrawal_request_id: withdrawalRequest.id,
-          payout_address: payoutAddress,
-          fee: fee,
-          net_amount: netAmount,
-        },
-      });
-
-    if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
+    if (pendingCheck) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'You already have a pending withdrawal request. Please wait for it to be processed.' 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    console.log('Withdrawal request created successfully:', { userId: user.id, amount: withdrawalAmount });
+    // Use atomic database function to process withdrawal request
+    // This eliminates race conditions and ensures all-or-nothing operation
+    const { data: result, error: atomicError } = await supabase.rpc(
+      'process_withdrawal_request_atomic',
+      {
+        p_user_id: user.id,
+        p_amount: withdrawalAmount,
+        p_fee: fee,
+        p_net_amount: netAmount,
+        p_payout_address: payoutAddress,
+        p_payment_method: paymentMethod,
+        p_payment_processor_id: null, // Can be added later if needed
+      }
+    );
+
+    if (atomicError) {
+      console.error('Error calling atomic withdrawal function:', atomicError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to process withdrawal request' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Check if the atomic operation was successful
+    if (!result || !result.success) {
+      const errorMessage = result?.error || 'Failed to create withdrawal request';
+      const errorCode = result?.error_code || 'UNKNOWN_ERROR';
+      
+      console.error('Atomic withdrawal failed:', { errorCode, errorMessage, userId: user.id });
+      
+      return new Response(
+        JSON.stringify({ error: errorMessage, code: errorCode }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('Withdrawal request created successfully (atomic):', { 
+      userId: user.id, 
+      amount: withdrawalAmount,
+      withdrawalRequestId: result.withdrawal_request_id,
+      transactionId: result.transaction_id
+    });
+
+    // Prepare withdrawal request object for response
+    const withdrawalRequest = {
+      id: result.withdrawal_request_id,
+      user_id: user.id,
+      amount: withdrawalAmount,
+      fee: fee,
+      net_amount: netAmount,
+      payout_address: payoutAddress,
+      payment_method: paymentMethod,
+      status: 'pending',
+    };
+
+    const newBalance = result.new_balance;
 
     return new Response(
       JSON.stringify({
