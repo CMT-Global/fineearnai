@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
+import { getDisplayNameForUser, maskTransactionDescription } from "@/lib/payment-processor-utils";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,7 @@ interface TransactionCardProps {
 export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { isAdmin } = useAdmin();
 
   const isCredit = ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(tx.type);
 
@@ -100,7 +103,7 @@ export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
                 {/* Payment Gateway Badge */}
                 {tx.payment_gateway && (
                   <Badge variant="secondary" className="text-xs uppercase">
-                    {tx.payment_gateway}
+                    {getDisplayNameForUser(tx.payment_gateway, isAdmin)}
                   </Badge>
                 )}
 
@@ -118,7 +121,9 @@ export const TransactionCard = ({ transaction: tx }: TransactionCardProps) => {
               </p>
 
               {tx.description && (
-                <p className="text-xs text-muted-foreground mt-1">{tx.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {maskTransactionDescription(tx.description, isAdmin)}
+                </p>
               )}
             </div>
           </div>

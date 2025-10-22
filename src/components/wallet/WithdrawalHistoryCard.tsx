@@ -1,6 +1,8 @@
+import { useAdmin } from "@/hooks/useAdmin";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
 import { format } from "date-fns";
 import { 
   Clock, 
@@ -75,6 +77,7 @@ const getStatusConfig = (status: string) => {
 export const WithdrawalHistoryCard = ({ withdrawal }: WithdrawalHistoryCardProps) => {
   const statusConfig = getStatusConfig(withdrawal.status);
   const StatusIcon = statusConfig.icon;
+  const { isAdmin } = useAdmin();
 
   return (
     <Card className="p-4 hover:shadow-sm transition-shadow">
@@ -95,7 +98,7 @@ export const WithdrawalHistoryCard = ({ withdrawal }: WithdrawalHistoryCardProps
               {format(new Date(withdrawal.created_at), "MMM dd, yyyy 'at' hh:mm a")}
             </p>
             <p className="text-xs text-muted-foreground">
-              Method: {withdrawal.payment_method}
+              Method: {getPaymentMethodDisplayName(withdrawal.payment_method, isAdmin)}
             </p>
             {withdrawal.rejection_reason && (
               <p className="text-xs text-red-600 mt-1">
