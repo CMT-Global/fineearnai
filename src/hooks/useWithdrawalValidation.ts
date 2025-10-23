@@ -23,6 +23,7 @@ interface WithdrawalValidation {
   currentDay: number;
   currentTime: string;
   message: string;
+  countdownSeconds: number | null; // NEW: Seconds until next window
 }
 
 export const useWithdrawalValidation = () => {
@@ -59,19 +60,62 @@ export const useWithdrawalValidation = () => {
         ? scheduleConfig.value as unknown as PayoutSchedule[] 
         : null;
 
-      // Get next available window if not currently allowed
+      // Calculate next available window and countdown if not currently allowed
       let nextWindow: NextWindow | null = null;
-      if (!isAllowed) {
-        const { data, error: windowError } = await supabase
-          .from('platform_config')
-          .select('value')
-          .eq('key', 'payout_schedule')
-          .single();
+      let countdownSeconds: number | null = null;
+      
+      if (!isAllowed && schedule) {
+        const now = new Date();
+        const utcNow = Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes(),
+          now.getUTCSeconds()
+        );
         
-        if (!windowError && data) {
-          // For now, we'll calculate next window client-side from schedule
-          // The DB function isn't typed in the generated types yet
-          nextWindow = null; // Will be populated after types regenerate
+        // Find next enabled window
+        const enabledDays = schedule.filter(s => s.enabled).sort((a, b) => a.day - b.day);
+        
+        if (enabledDays.length > 0) {
+          const currentDayNum = now.getUTCDay();
+          const currentTimeMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+          
+          // Search for next window (today or future days)
+          let nextWindowFound = false;
+          
+          for (let i = 0; i < 7 && !nextWindowFound; i++) {
+            const checkDay = (currentDayNum + i) % 7;
+            const daySchedule = enabledDays.find(s => s.day === checkDay);
+            
+            if (daySchedule) {
+              const [startHour, startMin] = daySchedule.start_time.split(':').map(Number);
+              const startTimeMinutes = startHour * 60 + startMin;
+              
+              // If today and window hasn't started, or future day
+              if (i > 0 || startTimeMinutes > currentTimeMinutes) {
+                const daysAhead = i;
+                const targetDate = new Date(now);
+                targetDate.setUTCDate(targetDate.getUTCDate() + daysAhead);
+                targetDate.setUTCHours(startHour, startMin, 0, 0);
+                
+                const targetTime = targetDate.getTime();
+                countdownSeconds = Math.floor((targetTime - utcNow) / 1000);
+                
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                nextWindow = {
+                  next_day: dayNames[checkDay],
+                  next_date: targetDate.toISOString().split('T')[0],
+                  start_time: daySchedule.start_time,
+                  end_time: daySchedule.end_time,
+                  hours_until: Math.floor(countdownSeconds / 3600)
+                };
+                
+                nextWindowFound = true;
+              }
+            }
+          }
         }
       }
 
@@ -100,6 +144,7 @@ export const useWithdrawalValidation = () => {
         currentDay: currentDay || 0,
         currentTime: currentTime || '00:00',
         message,
+        countdownSeconds,
       };
     },
     refetchInterval: 60000, // Refetch every minute
