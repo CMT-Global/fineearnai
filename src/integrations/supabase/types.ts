@@ -1235,6 +1235,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_withdrawal_payment_processor"
+            columns: ["payment_processor_id"]
+            isOneToOne: false
+            referencedRelation: "payment_processors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_withdrawal_requests_user_id"
             columns: ["user_id"]
             isOneToOne: false
