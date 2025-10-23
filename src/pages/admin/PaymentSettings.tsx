@@ -811,8 +811,17 @@ const PaymentSettings = () => {
                   { index: 5, name: 'Friday' },
                   { index: 6, name: 'Saturday' },
                 ].map(day => {
-                  const schedule = payoutSchedule.find(s => s.day === day.index);
-                  if (!schedule) return null;
+                  let schedule = payoutSchedule.find(s => s.day === day.index);
+                  if (!schedule) {
+                    console.warn(`Missing schedule for day ${day.index}, using default`);
+                    // Provide default instead of returning null
+                    schedule = { 
+                      day: day.index, 
+                      enabled: false, 
+                      start_time: '00:00', 
+                      end_time: '23:59' 
+                    };
+                  }
                   
                   return (
                     <div
