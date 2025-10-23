@@ -1516,6 +1516,7 @@ export type Database = {
         Returns: Json
       }
       refresh_materialized_views: { Args: never; Returns: undefined }
+      validate_payout_days: { Args: { config_value: Json }; Returns: boolean }
     }
     Enums: {
       account_status: "active" | "suspended" | "banned"

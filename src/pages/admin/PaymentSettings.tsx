@@ -97,11 +97,19 @@ const PaymentSettings = () => {
         .single();
       
       if (error) throw error;
+      
       if (data?.value) {
-        setPayoutDays(data.value as number[]);
+        // Normalize to numbers (handle both string and number arrays)
+        const normalized = (data.value as any[]).map(d => 
+          typeof d === 'string' ? parseInt(d, 10) : d
+        ).filter(d => !isNaN(d) && d >= 0 && d <= 6);
+        
+        setPayoutDays(normalized);
+        console.log('Loaded payout days:', normalized);
       }
     } catch (error: any) {
       console.error("Error loading payout config:", error);
+      toast.error("Failed to load payout configuration");
     }
   };
 
@@ -329,28 +337,43 @@ const PaymentSettings = () => {
 
   // Save payout configuration
   const handleSavePayoutConfig = async () => {
+    // Validation
     if (payoutDays.length === 0) {
       toast.error("Please select at least one payout day");
+      return;
+    }
+
+    // Validate all days are integers 0-6
+    const invalidDays = payoutDays.filter(d => !Number.isInteger(d) || d < 0 || d > 6);
+    if (invalidDays.length > 0) {
+      toast.error("Invalid day selection detected. Please refresh and try again.");
       return;
     }
 
     try {
       setSavingPayoutConfig(true);
       
+      // Ensure clean integer array (no duplicates, sorted)
+      const cleanDays = [...new Set(payoutDays)].sort((a, b) => a - b);
+      
       const { error } = await supabase
         .from('platform_config')
         .update({ 
-          value: payoutDays,
+          value: cleanDays, // JSONB will store as numbers
           updated_at: new Date().toISOString()
         })
         .eq('key', 'payout_days');
 
       if (error) throw error;
 
-      toast.success("Payout schedule updated successfully");
+      // Update local state with clean data
+      setPayoutDays(cleanDays);
+      
+      toast.success(`Payout schedule updated: ${cleanDays.length} day(s) selected`);
+      console.log('Saved payout days:', cleanDays);
     } catch (error: any) {
       console.error("Error saving payout config:", error);
-      toast.error("Failed to update payout schedule");
+      toast.error("Failed to update payout schedule: " + error.message);
     } finally {
       setSavingPayoutConfig(false);
     }
