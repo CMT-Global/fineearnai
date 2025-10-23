@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check payout schedule
+    // Check payout schedule (using UTC timezone)
     const { data: payoutDaysConfig } = await supabase
       .from('platform_config')
       .select('value')
@@ -122,13 +122,35 @@ Deno.serve(async (req) => {
 
     if (payoutDaysConfig) {
       const payoutDays = payoutDaysConfig.value as number[];
-      const today = new Date().getDay();
       
-      if (!payoutDays.includes(today)) {
+      // Get UTC day from database (avoids timezone issues)
+      const { data: utcDayData, error: utcError } = await supabase
+        .rpc('get_current_utc_day');
+      
+      if (utcError) {
+        console.error('Error getting UTC day:', utcError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to validate payout schedule' }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      const currentUtcDay = utcDayData as number;
+      console.log('Payout day check:', { currentUtcDay, payoutDays, allowed: payoutDays.includes(currentUtcDay) });
+      
+      if (!payoutDays.includes(currentUtcDay)) {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const allowedDayNames = payoutDays.map(d => dayNames[d]).join(', ');
+        
         return new Response(
           JSON.stringify({ 
-            error: 'Withdrawals are only allowed on scheduled payout days',
-            payoutDays 
+            error: `Withdrawals are only allowed on: ${allowedDayNames} (UTC time)`,
+            payoutDays,
+            currentUtcDay,
+            currentDayName: dayNames[currentUtcDay]
           }),
           {
             status: 400,

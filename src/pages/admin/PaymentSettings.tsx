@@ -63,6 +63,10 @@ const PaymentSettings = () => {
   // Payout days configuration state
   const [payoutDays, setPayoutDays] = useState<number[]>([]);
   const [savingPayoutConfig, setSavingPayoutConfig] = useState(false);
+  
+  // UTC time display
+  const [currentUtcTime, setCurrentUtcTime] = useState<string>('');
+  const [currentUtcDay, setCurrentUtcDay] = useState<number>(0);
 
   // Helper function to safely parse numeric inputs
   const parseNumericInput = (value: string): number => {
@@ -127,6 +131,22 @@ const PaymentSettings = () => {
       navigate("/login");
     }
   }, [user, authLoading, navigate]);
+
+  // Update UTC time display
+  useEffect(() => {
+    const updateUtcTime = () => {
+      const now = new Date();
+      const utcDay = now.getUTCDay();
+      const utcTime = now.toISOString().slice(11, 16); // HH:MM
+      setCurrentUtcDay(utcDay);
+      setCurrentUtcTime(utcTime);
+    };
+    
+    updateUtcTime();
+    const interval = setInterval(updateUtcTime, 1000); // Update every second
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -669,9 +689,44 @@ const PaymentSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* UTC Clock Display */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-900">Current UTC Time</p>
+                  <p className="text-xs text-blue-700">
+                    Withdrawal validation uses UTC timezone
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-900 font-mono">
+                    {currentUtcTime} UTC
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentUtcDay]}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Visual indicator if withdrawals are currently allowed */}
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                {payoutDays.includes(currentUtcDay) ? (
+                  <div className="flex items-center gap-2 text-green-700">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-medium">Withdrawals Currently OPEN</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-orange-700">
+                    <div className="h-2 w-2 rounded-full bg-orange-500" />
+                    <span className="text-sm font-medium">Withdrawals Currently CLOSED</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             {/* Day Selection */}
             <div>
-              <Label className="text-base mb-3 block">Allowed Payout Days</Label>
+              <Label className="text-base mb-3 block">Allowed Payout Days (UTC)</Label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { index: 0, name: 'Sunday', short: 'Sun' },

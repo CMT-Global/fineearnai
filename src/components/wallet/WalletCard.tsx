@@ -295,7 +295,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Check payout days configuration
+      // Check payout days configuration (UTC-based)
       const { data: payoutConfig, error: configError } = await supabase
         .from('platform_config')
         .select('value')
@@ -306,25 +306,34 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         console.error("Error loading payout days:", configError);
       }
 
-    if (payoutConfig?.value) {
-      const payoutDays = payoutConfig.value as number[];
-      const today = new Date().getDay();
-      
-      if (!payoutDays.includes(today)) {
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const allowedDays = payoutDays.map(d => dayNames[d]).join(', ');
+      if (payoutConfig?.value) {
+        const payoutDays = payoutConfig.value as number[];
         
-        // Enhanced error message with longer visibility and description
-        toast.error(
-          `Withdrawals are only allowed on: ${allowedDays}`,
-          {
-            duration: 6000,
-            description: "Please come back on an allowed day to request your withdrawal.",
-          }
-        );
-        return;
+        // Get UTC day from database for consistency
+        const { data: currentUtcDay, error: utcError } = await supabase
+          .rpc('get_current_utc_day');
+        
+        if (utcError) {
+          console.error("Error getting UTC day:", utcError);
+          toast.error("Unable to validate withdrawal schedule. Please try again.");
+          return;
+        }
+        
+        if (!payoutDays.includes(currentUtcDay as number)) {
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const allowedDays = payoutDays.map(d => dayNames[d]).join(', ');
+          
+          // Show enhanced error with UTC context
+          toast.error(
+            `Withdrawals are only allowed on: ${allowedDays}`,
+            {
+              duration: 6000,
+              description: `Current day (UTC): ${dayNames[currentUtcDay as number]}. Please come back on an allowed day.`,
+            }
+          );
+          return;
+        }
       }
-    }
 
       // All validations passed, proceed with withdrawal request
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {

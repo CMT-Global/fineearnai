@@ -1417,6 +1417,8 @@ export type Database = {
       }
       generate_referral_code: { Args: never; Returns: string }
       get_available_task_count: { Args: { p_user_id: string }; Returns: number }
+      get_current_utc_day: { Args: never; Returns: number }
+      get_current_utc_time: { Args: never; Returns: string }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
         Returns: Json
