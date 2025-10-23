@@ -13,6 +13,7 @@ import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle } 
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
+import { WithdrawalCountdown } from "./WithdrawalCountdown";
 
 interface PaymentProcessor {
   id: string;
@@ -502,6 +503,16 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       <AlertDescription>{validation.message}</AlertDescription>
                     </Alert>
                   )}
+                  
+                  {/* Display countdown timer when withdrawals are closed */}
+                  {validation && !validation.isAllowed && validation.countdownSeconds !== null && validation.nextWindow && (
+                    <WithdrawalCountdown
+                      secondsUntilNext={validation.countdownSeconds}
+                      nextWindowDay={validation.nextWindow.next_day}
+                      nextWindowTime={`${validation.nextWindow.start_time}-${validation.nextWindow.end_time}`}
+                    />
+                  )}
+                  
                   <div>
                     <Label htmlFor="withdraw-amount">Amount</Label>
                     <Input
