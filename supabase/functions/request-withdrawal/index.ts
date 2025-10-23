@@ -82,14 +82,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Parse withdrawal amount first for validation and fee calculation
+    const withdrawalAmount = parseFloat(amount);
+    
     // Get withdrawal fees from payment processor configuration
     let feeFixed = 0;
     let feePercentage = 0;
     
     if (paymentProcessorId) {
+      console.log('Fetching fees for processor:', paymentProcessorId);
+      
       const { data: processorConfig, error: processorError } = await supabase
         .from('payment_processors')
-        .select('fee_fixed, fee_percentage')
+        .select('fee_fixed, fee_percentage, name')
         .eq('id', paymentProcessorId)
         .eq('is_active', true)
         .single();
@@ -104,6 +109,13 @@ Deno.serve(async (req) => {
       
       feeFixed = parseFloat(String(processorConfig.fee_fixed)) || 0;
       feePercentage = parseFloat(String(processorConfig.fee_percentage)) || 0;
+      
+      console.log('Processor fees loaded:', { 
+        processor: processorConfig.name,
+        feeFixed, 
+        feePercentage,
+        totalFeeForAmount: feeFixed + (withdrawalAmount * feePercentage / 100)
+      });
     } else {
       // Fallback to old platform config if processor ID not provided
       const { data: feeConfig } = await supabase
@@ -114,8 +126,6 @@ Deno.serve(async (req) => {
       
       feePercentage = feeConfig ? parseFloat(feeConfig.value as string) : 2;
     }
-
-    const withdrawalAmount = parseFloat(amount);
 
     // Validate withdrawal amount
     if (!withdrawalAmount || withdrawalAmount <= 0) {
