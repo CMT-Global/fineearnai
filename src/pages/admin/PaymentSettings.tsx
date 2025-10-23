@@ -136,28 +136,6 @@ const PaymentSettings = () => {
         console.log('Loaded complete payout schedule (7 days):', completeSchedule);
         return;
       }
-      
-      // Fallback to old payout_days format
-      const { data: daysData, error: daysError } = await supabase
-        .from('platform_config')
-        .select('*')
-        .eq('key', 'payout_days')
-        .single();
-      
-      if (!daysError && daysData?.value) {
-        // Convert old format to new format
-        const days = (daysData.value as any[]).map(d => 
-          typeof d === 'string' ? parseInt(d, 10) : d
-        ).filter(d => !isNaN(d) && d >= 0 && d <= 6);
-        
-        const converted = payoutSchedule.map(s => ({
-          ...s,
-          enabled: days.includes(s.day)
-        }));
-        
-        setPayoutSchedule(converted);
-        console.log('Converted payout days to schedule:', converted);
-      }
     } catch (error: any) {
       console.error("Error loading payout config:", error);
       toast.error("Failed to load payout configuration");
