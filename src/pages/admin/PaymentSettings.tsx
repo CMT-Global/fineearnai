@@ -118,9 +118,22 @@ const PaymentSettings = () => {
         .single();
       
       if (!scheduleError && scheduleData?.value) {
-        const schedule = scheduleData.value as unknown as PayoutScheduleDay[];
-        setPayoutSchedule(schedule);
-        console.log('Loaded payout schedule:', schedule);
+        const dbSchedule = scheduleData.value as unknown as PayoutScheduleDay[];
+        
+        // CRITICAL FIX: Merge DB data with complete 7-day structure
+        // This ensures all days 0-6 are always present in the state
+        const completeSchedule = [0, 1, 2, 3, 4, 5, 6].map(day => {
+          const dbDay = dbSchedule.find(s => s.day === day);
+          return dbDay || {
+            day,
+            enabled: false,
+            start_time: '00:00',
+            end_time: '23:59'
+          };
+        });
+        
+        setPayoutSchedule(completeSchedule);
+        console.log('Loaded complete payout schedule (7 days):', completeSchedule);
         return;
       }
       
