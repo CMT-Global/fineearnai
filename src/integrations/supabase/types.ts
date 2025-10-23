@@ -1186,10 +1186,12 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
+          admin_notes: string | null
           amount: number
           created_at: string
           fee: number
           id: string
+          manual_txn_hash: string | null
           net_amount: number
           payment_method: string
           payment_processor_id: string | null
@@ -1202,10 +1204,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           amount: number
           created_at?: string
           fee?: number
           id?: string
+          manual_txn_hash?: string | null
           net_amount: number
           payment_method: string
           payment_processor_id?: string | null
@@ -1218,10 +1222,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           amount?: number
           created_at?: string
           fee?: number
           id?: string
+          manual_txn_hash?: string | null
           net_amount?: number
           payment_method?: string
           payment_processor_id?: string | null
