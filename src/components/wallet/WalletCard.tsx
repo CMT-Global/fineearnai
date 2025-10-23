@@ -317,11 +317,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
 
       // All validations passed, proceed with withdrawal request
+      // Find the selected processor to get its ID
+      const selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+      
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount,
           paymentMethod: withdrawMethod,
           payoutAddress: accountDetails,
+          paymentProcessorId: selectedProcessor?.id || null,
         },
       });
 

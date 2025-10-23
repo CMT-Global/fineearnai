@@ -52,9 +52,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { amount, payoutAddress, paymentMethod } = await req.json();
+    const { amount, payoutAddress, paymentMethod, paymentProcessorId } = await req.json();
 
-    console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod });
+    console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod, paymentProcessorId });
 
     // Get user profile and membership plan
     const { data: profile, error: profileError } = await supabase
@@ -82,14 +82,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get withdrawal fee percentage from platform config
-    const { data: feeConfig } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'withdrawal_fee_percentage')
-      .single();
-
-    const feePercentage = feeConfig ? parseFloat(feeConfig.value as string) : 2;
+    // Get withdrawal fees from payment processor configuration
+    let feeFixed = 0;
+    let feePercentage = 0;
+    
+    if (paymentProcessorId) {
+      const { data: processorConfig, error: processorError } = await supabase
+        .from('payment_processors')
+        .select('fee_fixed, fee_percentage')
+        .eq('id', paymentProcessorId)
+        .eq('is_active', true)
+        .single();
+      
+      if (processorError) {
+        console.error('Error fetching processor config:', processorError);
+        return new Response(JSON.stringify({ error: 'Invalid payment processor' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      feeFixed = parseFloat(processorConfig.fee_fixed as any) || 0;
+      feePercentage = parseFloat(processorConfig.fee_percentage as any) || 0;
+    } else {
+      // Fallback to old platform config if processor ID not provided
+      const { data: feeConfig } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'withdrawal_fee_percentage')
+        .single();
+      
+      feePercentage = feeConfig ? parseFloat(feeConfig.value as string) : 2;
+    }
 
     const withdrawalAmount = parseFloat(amount);
 
@@ -271,8 +295,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Calculate fee and net amount
-    const fee = (withdrawalAmount * feePercentage) / 100;
+    // Calculate fee and net amount (fixed fee + percentage fee)
+    const percentageFee = (withdrawalAmount * feePercentage) / 100;
+    const fee = feeFixed + percentageFee;
     const netAmount = withdrawalAmount - fee;
 
     // Check for existing pending withdrawal request (prevent duplicates)
@@ -310,7 +335,7 @@ Deno.serve(async (req) => {
         p_net_amount: netAmount,
         p_payout_address: payoutAddress,
         p_payment_method: paymentMethod,
-        p_payment_processor_id: null, // Can be added later if needed
+        p_payment_processor_id: paymentProcessorId || null,
       }
     );
 
