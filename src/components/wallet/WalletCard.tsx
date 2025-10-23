@@ -317,15 +317,27 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
 
       // All validations passed, proceed with withdrawal request
-      // Find the selected processor to get its ID
+      // Validate processor selection
       const selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+      
+      if (!selectedProcessor) {
+        toast.error("Please select a valid withdrawal method");
+        return;
+      }
+
+      console.log('Processing withdrawal with processor:', {
+        id: selectedProcessor.id,
+        name: selectedProcessor.name,
+        feeFixed: selectedProcessor.fee_fixed,
+        feePercentage: selectedProcessor.fee_percentage
+      });
       
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount,
           paymentMethod: withdrawMethod,
           payoutAddress: accountDetails,
-          paymentProcessorId: selectedProcessor?.id || null,
+          paymentProcessorId: selectedProcessor.id, // UUID passed correctly
         },
       });
 
