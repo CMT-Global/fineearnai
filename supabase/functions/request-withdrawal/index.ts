@@ -117,14 +117,14 @@ Deno.serve(async (req) => {
         totalFeeForAmount: feeFixed + (withdrawalAmount * feePercentage / 100)
       });
     } else {
-      // Fallback to old platform config if processor ID not provided
-      const { data: feeConfig } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'withdrawal_fee_percentage')
-        .single();
-      
-      feePercentage = feeConfig ? parseFloat(feeConfig.value as string) : 2;
+      // Processor ID is required - no fallback
+      console.error('Payment processor ID is required');
+      return new Response(JSON.stringify({ 
+        error: 'Payment processor selection is required for withdrawals' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Validate withdrawal amount
