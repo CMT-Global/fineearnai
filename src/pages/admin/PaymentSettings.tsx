@@ -430,7 +430,18 @@ const PaymentSettings = () => {
 
   // Save payout configuration
   const handleSavePayoutConfig = async () => {
-    // Validation
+    // CRITICAL VALIDATION: Ensure all 7 days exist
+    const allDaysPresent = [0, 1, 2, 3, 4, 5, 6].every(day => 
+      payoutSchedule.some(s => s.day === day)
+    );
+    
+    if (!allDaysPresent) {
+      toast.error('Invalid schedule: Missing days detected. Please refresh the page.');
+      console.error('Missing days in payout schedule:', payoutSchedule);
+      return;
+    }
+    
+    // Validation: At least one day must be enabled
     const enabledDays = payoutSchedule.filter(s => s.enabled);
     if (enabledDays.length === 0) {
       toast.error("Please enable at least one payout day");
