@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
+import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
 
 interface PaymentProcessor {
   id: string;
@@ -52,6 +53,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [cpayOrderId, setCpayOrderId] = useState("");
   const [cpayAmount, setCpayAmount] = useState(0);
   const [cpayCurrency, setCpayCurrency] = useState("");
+  
+  const { data: validation } = useWithdrawalValidation();
 
   useEffect(() => {
     loadPaymentProcessors();
@@ -191,6 +194,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     if (amount > earningsBalance) {
       toast.error("Insufficient balance");
+      return;
+    }
+    
+    // Frontend pre-validation
+    if (validation && !validation.isAllowed) {
+      toast.error(validation.message);
       return;
     }
 
@@ -487,6 +496,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  {validation && !validation.isAllowed && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{validation.message}</AlertDescription>
+                    </Alert>
+                  )}
                   <div>
                     <Label htmlFor="withdraw-amount">Amount</Label>
                     <Input

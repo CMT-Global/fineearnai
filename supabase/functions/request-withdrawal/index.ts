@@ -119,6 +119,15 @@ Deno.serve(async (req) => {
 
     if (scheduleError) {
       console.error('Error checking withdrawal schedule:', scheduleError);
+      
+      // Log validation failure
+      await supabase.from('withdrawal_attempt_logs').insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        attempt_status: 'error',
+        failure_reason: 'Schedule validation error: ' + scheduleError.message,
+      });
+      
       return new Response(
         JSON.stringify({ error: 'Failed to validate withdrawal schedule' }),
         {
@@ -129,7 +138,39 @@ Deno.serve(async (req) => {
     }
 
     if (!isAllowed) {
-      console.log('Withdrawal not allowed at current time');
+      console.log('Withdrawal blocked by schedule:', { 
+        userId: user.id, 
+        amount: withdrawalAmount,
+        timestamp: new Date().toISOString() 
+      });
+      
+      // Get next available withdrawal window
+      const { data: nextWindowData } = await supabase
+        .rpc('get_next_withdrawal_window')
+        .single();
+      
+      const nextWindow = nextWindowData as {
+        next_day: string;
+        next_date: string;
+        start_time: string;
+        end_time: string;
+        hours_until: number;
+      } | null;
+      
+      // Get current UTC day and time for logging
+      const { data: currentDay } = await supabase.rpc('get_current_utc_day');
+      const { data: currentTime } = await supabase.rpc('get_current_utc_time');
+      
+      // Log blocked attempt
+      await supabase.from('withdrawal_attempt_logs').insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        attempt_status: 'blocked_schedule',
+        failure_reason: 'Withdrawal attempted outside allowed schedule',
+        blocked_by_schedule: true,
+        current_day: currentDay as number,
+        current_time: currentTime as string,
+      });
       
       // Get schedule details for error message
       const { data: scheduleConfig } = await supabase
@@ -139,6 +180,12 @@ Deno.serve(async (req) => {
         .single();
 
       let errorMessage = 'Withdrawals are not allowed at this time';
+      let nextWindowMessage = '';
+      
+      if (nextWindow) {
+        const hoursText = nextWindow.hours_until === 1 ? 'hour' : 'hours';
+        nextWindowMessage = `\n\nNext available: ${nextWindow.next_day}, ${nextWindow.next_date} at ${nextWindow.start_time}-${nextWindow.end_time} UTC (in ${nextWindow.hours_until} ${hoursText})`;
+      }
       
       if (scheduleConfig && scheduleConfig.value) {
         const schedule = scheduleConfig.value as Array<{
@@ -155,14 +202,15 @@ Deno.serve(async (req) => {
           .join(', ');
         
         if (enabledDays) {
-          errorMessage = `Withdrawals are only allowed during: ${enabledDays}`;
+          errorMessage = `Withdrawals are only allowed during: ${enabledDays}${nextWindowMessage}`;
         }
       }
       
       return new Response(
         JSON.stringify({ 
           error: errorMessage,
-          code: 'WITHDRAWAL_TIME_RESTRICTED'
+          code: 'WITHDRAWAL_TIME_RESTRICTED',
+          nextWindow: nextWindow || null
         }),
         {
           status: 400,
@@ -187,6 +235,14 @@ Deno.serve(async (req) => {
 
     const maxDailyWithdrawal = parseFloat(plan.max_daily_withdrawal as string);
     if (totalWithdrawnToday + withdrawalAmount > maxDailyWithdrawal) {
+      // Log limit violation
+      await supabase.from('withdrawal_attempt_logs').insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        attempt_status: 'blocked_limit',
+        failure_reason: `Daily limit exceeded: ${totalWithdrawnToday + withdrawalAmount} > ${maxDailyWithdrawal}`,
+      });
+      
       return new Response(
         JSON.stringify({ 
           error: `Daily withdrawal limit exceeded. You can withdraw up to ${maxDailyWithdrawal - totalWithdrawnToday} more today.`
@@ -201,6 +257,14 @@ Deno.serve(async (req) => {
     // Check sufficient balance
     const currentBalance = parseFloat(profile.earnings_wallet_balance);
     if (currentBalance < withdrawalAmount) {
+      // Log insufficient balance attempt
+      await supabase.from('withdrawal_attempt_logs').insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        attempt_status: 'blocked_balance',
+        failure_reason: `Insufficient balance: requested ${withdrawalAmount}, available ${currentBalance}`,
+      });
+      
       return new Response(JSON.stringify({ error: 'Insufficient balance' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -282,6 +346,14 @@ Deno.serve(async (req) => {
       amount: withdrawalAmount,
       withdrawalRequestId: result.withdrawal_request_id,
       transactionId: result.transaction_id
+    });
+    
+    // Log successful withdrawal request
+    await supabase.from('withdrawal_attempt_logs').insert({
+      user_id: user.id,
+      amount: withdrawalAmount,
+      attempt_status: 'success',
+      failure_reason: null,
     });
 
     // Prepare withdrawal request object for response
