@@ -113,51 +113,62 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check payout schedule (using UTC timezone)
-    const { data: payoutDaysConfig } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'payout_days')
-      .single();
+    // Check if withdrawal is currently allowed (using time-aware schedule)
+    const { data: isAllowed, error: scheduleError } = await supabase
+      .rpc('is_withdrawal_allowed');
 
-    if (payoutDaysConfig) {
-      const payoutDays = payoutDaysConfig.value as number[];
+    if (scheduleError) {
+      console.error('Error checking withdrawal schedule:', scheduleError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to validate withdrawal schedule' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (!isAllowed) {
+      console.log('Withdrawal not allowed at current time');
       
-      // Get UTC day from database (avoids timezone issues)
-      const { data: utcDayData, error: utcError } = await supabase
-        .rpc('get_current_utc_day');
+      // Get schedule details for error message
+      const { data: scheduleConfig } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'payout_schedule')
+        .single();
+
+      let errorMessage = 'Withdrawals are not allowed at this time';
       
-      if (utcError) {
-        console.error('Error getting UTC day:', utcError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to validate payout schedule' }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
-      
-      const currentUtcDay = utcDayData as number;
-      console.log('Payout day check:', { currentUtcDay, payoutDays, allowed: payoutDays.includes(currentUtcDay) });
-      
-      if (!payoutDays.includes(currentUtcDay)) {
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const allowedDayNames = payoutDays.map(d => dayNames[d]).join(', ');
+      if (scheduleConfig && scheduleConfig.value) {
+        const schedule = scheduleConfig.value as Array<{
+          day: number;
+          enabled: boolean;
+          start_time: string;
+          end_time: string;
+        }>;
         
-        return new Response(
-          JSON.stringify({ 
-            error: `Withdrawals are only allowed on: ${allowedDayNames} (UTC time)`,
-            payoutDays,
-            currentUtcDay,
-            currentDayName: dayNames[currentUtcDay]
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const enabledDays = schedule
+          .filter(s => s.enabled)
+          .map(s => `${dayNames[s.day]} (${s.start_time}-${s.end_time} UTC)`)
+          .join(', ');
+        
+        if (enabledDays) {
+          errorMessage = `Withdrawals are only allowed during: ${enabledDays}`;
+        }
       }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: errorMessage,
+          code: 'WITHDRAWAL_TIME_RESTRICTED'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Check daily withdrawal limits

@@ -38,6 +38,13 @@ interface CPAYCheckout {
   is_active: boolean;
 }
 
+interface PayoutScheduleDay {
+  day: number;
+  enabled: boolean;
+  start_time: string;
+  end_time: string;
+}
+
 const PaymentSettings = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -60,9 +67,18 @@ const PaymentSettings = () => {
   const [maxAmount, setMaxAmount] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  // Payout days configuration state
-  const [payoutDays, setPayoutDays] = useState<number[]>([]);
+  // Payout schedule configuration state
+  const [payoutSchedule, setPayoutSchedule] = useState<PayoutScheduleDay[]>([
+    { day: 0, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 1, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 2, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 3, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 4, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 5, enabled: false, start_time: "00:00", end_time: "23:59" },
+    { day: 6, enabled: false, start_time: "00:00", end_time: "23:59" },
+  ]);
   const [savingPayoutConfig, setSavingPayoutConfig] = useState(false);
+  const [isWithdrawalAllowed, setIsWithdrawalAllowed] = useState(false);
   
   // UTC time display
   const [currentUtcTime, setCurrentUtcTime] = useState<string>('');
@@ -94,26 +110,56 @@ const PaymentSettings = () => {
   // Load payout configuration
   const loadPayoutConfig = async () => {
     try {
-      const { data, error } = await supabase
+      // Try loading new payout_schedule first
+      const { data: scheduleData, error: scheduleError } = await supabase
+        .from('platform_config')
+        .select('*')
+        .eq('key', 'payout_schedule')
+        .single();
+      
+      if (!scheduleError && scheduleData?.value) {
+        const schedule = scheduleData.value as unknown as PayoutScheduleDay[];
+        setPayoutSchedule(schedule);
+        console.log('Loaded payout schedule:', schedule);
+        return;
+      }
+      
+      // Fallback to old payout_days format
+      const { data: daysData, error: daysError } = await supabase
         .from('platform_config')
         .select('*')
         .eq('key', 'payout_days')
         .single();
       
-      if (error) throw error;
-      
-      if (data?.value) {
-        // Normalize to numbers (handle both string and number arrays)
-        const normalized = (data.value as any[]).map(d => 
+      if (!daysError && daysData?.value) {
+        // Convert old format to new format
+        const days = (daysData.value as any[]).map(d => 
           typeof d === 'string' ? parseInt(d, 10) : d
         ).filter(d => !isNaN(d) && d >= 0 && d <= 6);
         
-        setPayoutDays(normalized);
-        console.log('Loaded payout days:', normalized);
+        const converted = payoutSchedule.map(s => ({
+          ...s,
+          enabled: days.includes(s.day)
+        }));
+        
+        setPayoutSchedule(converted);
+        console.log('Converted payout days to schedule:', converted);
       }
     } catch (error: any) {
       console.error("Error loading payout config:", error);
       toast.error("Failed to load payout configuration");
+    }
+  };
+  
+  // Check if withdrawal is currently allowed
+  const checkWithdrawalAllowed = async () => {
+    try {
+      const { data, error } = await supabase.rpc('is_withdrawal_allowed');
+      if (!error) {
+        setIsWithdrawalAllowed(data || false);
+      }
+    } catch (error) {
+      console.error('Error checking withdrawal allowed:', error);
     }
   };
 
@@ -132,7 +178,7 @@ const PaymentSettings = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Update UTC time display
+  // Update UTC time display and check withdrawal status
   useEffect(() => {
     const updateUtcTime = () => {
       const now = new Date();
@@ -140,13 +186,22 @@ const PaymentSettings = () => {
       const utcTime = now.toISOString().slice(11, 16); // HH:MM
       setCurrentUtcDay(utcDay);
       setCurrentUtcTime(utcTime);
+      
+      // Check if currently allowed based on local schedule
+      const daySchedule = payoutSchedule.find(s => s.day === utcDay && s.enabled);
+      if (daySchedule) {
+        const allowed = utcTime >= daySchedule.start_time && utcTime <= daySchedule.end_time;
+        setIsWithdrawalAllowed(allowed);
+      } else {
+        setIsWithdrawalAllowed(false);
+      }
     };
     
     updateUtcTime();
     const interval = setInterval(updateUtcTime, 1000); // Update every second
     
     return () => clearInterval(interval);
-  }, []);
+  }, [payoutSchedule]);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -346,51 +401,57 @@ const PaymentSettings = () => {
     setDialogOpen(true);
   };
 
-  // Toggle payout day selection
+  // Toggle payout day enabled/disabled
   const togglePayoutDay = (dayIndex: number) => {
-    setPayoutDays(prev => 
-      prev.includes(dayIndex) 
-        ? prev.filter(d => d !== dayIndex)
-        : [...prev, dayIndex].sort()
+    setPayoutSchedule(prev => 
+      prev.map(s => s.day === dayIndex ? { ...s, enabled: !s.enabled } : s)
+    );
+  };
+  
+  // Update time for specific day
+  const updateDayTime = (dayIndex: number, field: 'start_time' | 'end_time', value: string) => {
+    setPayoutSchedule(prev => 
+      prev.map(s => s.day === dayIndex ? { ...s, [field]: value } : s)
     );
   };
 
   // Save payout configuration
   const handleSavePayoutConfig = async () => {
     // Validation
-    if (payoutDays.length === 0) {
-      toast.error("Please select at least one payout day");
+    const enabledDays = payoutSchedule.filter(s => s.enabled);
+    if (enabledDays.length === 0) {
+      toast.error("Please enable at least one payout day");
       return;
     }
 
-    // Validate all days are integers 0-6
-    const invalidDays = payoutDays.filter(d => !Number.isInteger(d) || d < 0 || d > 6);
-    if (invalidDays.length > 0) {
-      toast.error("Invalid day selection detected. Please refresh and try again.");
-      return;
+    // Validate time windows
+    for (const day of enabledDays) {
+      if (day.start_time >= day.end_time) {
+        const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day.day];
+        toast.error(`Invalid time window for ${dayName}: Start time must be before end time`);
+        return;
+      }
     }
 
     try {
       setSavingPayoutConfig(true);
       
-      // Ensure clean integer array (no duplicates, sorted)
-      const cleanDays = [...new Set(payoutDays)].sort((a, b) => a - b);
-      
       const { error } = await supabase
         .from('platform_config')
-        .update({ 
-          value: cleanDays, // JSONB will store as numbers
+        .upsert({ 
+          key: 'payout_schedule',
+          value: payoutSchedule as any,
+          description: 'Payout schedule with time windows (UTC). day: 0=Sunday-6=Saturday',
           updated_at: new Date().toISOString()
-        })
-        .eq('key', 'payout_days');
+        }, { onConflict: 'key' });
 
       if (error) throw error;
-
-      // Update local state with clean data
-      setPayoutDays(cleanDays);
       
-      toast.success(`Payout schedule updated: ${cleanDays.length} day(s) selected`);
-      console.log('Saved payout days:', cleanDays);
+      toast.success(`Payout schedule updated: ${enabledDays.length} day(s) enabled with time windows`);
+      console.log('Saved payout schedule:', payoutSchedule);
+      
+      // Refresh withdrawal allowed status
+      checkWithdrawalAllowed();
     } catch (error: any) {
       console.error("Error saving payout config:", error);
       toast.error("Failed to update payout schedule: " + error.message);
@@ -710,7 +771,7 @@ const PaymentSettings = () => {
               
               {/* Visual indicator if withdrawals are currently allowed */}
               <div className="mt-3 pt-3 border-t border-blue-200">
-                {payoutDays.includes(currentUtcDay) ? (
+                {isWithdrawalAllowed ? (
                   <div className="flex items-center gap-2 text-green-700">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-sm font-medium">Withdrawals Currently OPEN</span>
@@ -724,39 +785,77 @@ const PaymentSettings = () => {
               </div>
             </div>
             
-            {/* Day Selection */}
+            {/* Day Selection with Time Windows */}
             <div>
-              <Label className="text-base mb-3 block">Allowed Payout Days (UTC)</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Label className="text-base mb-3 block">Payout Schedule with Time Windows (UTC)</Label>
+              <div className="space-y-3">
                 {[
-                  { index: 0, name: 'Sunday', short: 'Sun' },
-                  { index: 1, name: 'Monday', short: 'Mon' },
-                  { index: 2, name: 'Tuesday', short: 'Tue' },
-                  { index: 3, name: 'Wednesday', short: 'Wed' },
-                  { index: 4, name: 'Thursday', short: 'Thu' },
-                  { index: 5, name: 'Friday', short: 'Fri' },
-                  { index: 6, name: 'Saturday', short: 'Sat' },
-                ].map(day => (
-                  <div
-                    key={day.index}
-                    onClick={() => togglePayoutDay(day.index)}
-                    className={`
-                      cursor-pointer p-4 rounded-lg border-2 transition-all
-                      ${payoutDays.includes(day.index)
-                        ? 'border-[hsl(var(--wallet-deposit))] bg-[hsl(var(--wallet-deposit))]/10'
-                        : 'border-gray-200 hover:border-gray-300'
-                      }
-                    `}
-                  >
-                    <div className="text-center">
-                      <div className="font-bold">{day.short}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{day.name}</div>
+                  { index: 0, name: 'Sunday' },
+                  { index: 1, name: 'Monday' },
+                  { index: 2, name: 'Tuesday' },
+                  { index: 3, name: 'Wednesday' },
+                  { index: 4, name: 'Thursday' },
+                  { index: 5, name: 'Friday' },
+                  { index: 6, name: 'Saturday' },
+                ].map(day => {
+                  const schedule = payoutSchedule.find(s => s.day === day.index);
+                  if (!schedule) return null;
+                  
+                  return (
+                    <div
+                      key={day.index}
+                      className={`
+                        p-4 rounded-lg border-2 transition-all
+                        ${schedule.enabled
+                          ? 'border-[hsl(var(--wallet-deposit))] bg-[hsl(var(--wallet-deposit))]/5'
+                          : 'border-gray-200'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        {/* Day Toggle */}
+                        <div className="flex items-center gap-3 min-w-[120px]">
+                          <Switch
+                            checked={schedule.enabled}
+                            onCheckedChange={() => togglePayoutDay(day.index)}
+                          />
+                          <span className="font-medium">{day.name}</span>
+                        </div>
+                        
+                        {/* Time Inputs (only shown when enabled) */}
+                        {schedule.enabled && (
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <Label htmlFor={`start-${day.index}`} className="text-xs">Start Time</Label>
+                              <Input
+                                id={`start-${day.index}`}
+                                type="time"
+                                value={schedule.start_time}
+                                onChange={(e) => updateDayTime(day.index, 'start_time', e.target.value)}
+                                className="w-32"
+                              />
+                            </div>
+                            <span className="text-muted-foreground mt-5">to</span>
+                            <div>
+                              <Label htmlFor={`end-${day.index}`} className="text-xs">End Time</Label>
+                              <Input
+                                id={`end-${day.index}`}
+                                type="time"
+                                value={schedule.end_time}
+                                onChange={(e) => updateDayTime(day.index, 'end_time', e.target.value)}
+                                className="w-32"
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground mt-5">UTC</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Click to select/deselect days. Users can only request withdrawals on selected days.
+                Enable days and set time windows when users can request withdrawals. All times are in UTC.
               </p>
             </div>
 
@@ -764,10 +863,16 @@ const PaymentSettings = () => {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                <strong>Current Schedule:</strong>{' '}
-                {payoutDays.length > 0 
-                  ? payoutDays.map(d => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d]).join(', ')
-                  : 'No days selected'
+                <strong>Active Schedule:</strong>{' '}
+                {payoutSchedule.filter(s => s.enabled).length > 0 
+                  ? payoutSchedule
+                      .filter(s => s.enabled)
+                      .map(s => {
+                        const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][s.day];
+                        return `${dayName} (${s.start_time}-${s.end_time})`;
+                      })
+                      .join(', ')
+                  : 'No days enabled'
                 }
               </AlertDescription>
             </Alert>
@@ -775,7 +880,7 @@ const PaymentSettings = () => {
             {/* Save Button */}
             <Button 
               onClick={handleSavePayoutConfig}
-              disabled={savingPayoutConfig || payoutDays.length === 0}
+              disabled={savingPayoutConfig || payoutSchedule.filter(s => s.enabled).length === 0}
               className="w-full md:w-auto"
             >
               {savingPayoutConfig ? (

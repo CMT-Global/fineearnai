@@ -1493,6 +1493,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_withdrawal_allowed: { Args: never; Returns: boolean }
       process_commission_atomic: {
         Args: {
           p_base_amount: number
@@ -1519,6 +1520,10 @@ export type Database = {
       }
       refresh_materialized_views: { Args: never; Returns: undefined }
       validate_payout_days: { Args: { config_value: Json }; Returns: boolean }
+      validate_payout_schedule: {
+        Args: { config_value: Json }
+        Returns: boolean
+      }
     }
     Enums: {
       account_status: "active" | "suspended" | "banned"
