@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
         .eq('is_active', true)
         .single();
       
-      if (processorError) {
+      if (processorError || !processorConfig) {
         console.error('Error fetching processor config:', processorError);
         return new Response(JSON.stringify({ error: 'Invalid payment processor' }), {
           status: 400,
@@ -102,8 +102,8 @@ Deno.serve(async (req) => {
         });
       }
       
-      feeFixed = parseFloat(processorConfig.fee_fixed as any) || 0;
-      feePercentage = parseFloat(processorConfig.fee_percentage as any) || 0;
+      feeFixed = parseFloat(String(processorConfig.fee_fixed)) || 0;
+      feePercentage = parseFloat(String(processorConfig.fee_percentage)) || 0;
     } else {
       // Fallback to old platform config if processor ID not provided
       const { data: feeConfig } = await supabase
