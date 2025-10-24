@@ -420,6 +420,11 @@ function detectPaymentProvider(paymentMethod: string): string {
 
 // Process CPAY withdrawal via API with proper authentication flow
 async function processCPAYWithdrawal(withdrawal: any) {
+  // Helper function to format amount with fixed decimal places
+  function formatAmount(value: number, decimals: number): string {
+    return value.toFixed(decimals);
+  }
+
   console.log('[CPAY-WITHDRAWAL] Starting CPAY withdrawal process...');
 
   // Validate required CPAY credentials
@@ -550,12 +555,12 @@ async function processCPAYWithdrawal(withdrawal: any) {
 
     // Construct minimal withdrawal payload (CPAY auto-detects USDT TRC20)
     // ✅ LASER FIX: Remove dependency on unreliable currency API
-    // ✅ CRITICAL: CPAY requires amount as STRING, not number
+    // ✅ CRITICAL: CPAY requires amount as STRING with fixed decimals
     // Documentation: Lines 1360, 672-680 in CPAY_WITHDRAWALS_API-2.docx
-    // Example: "28.1" not 28.1
+    // Starting with 2 decimal places (e.g., "28.10" not "28.1")
     const withdrawalPayload: any = {
       to: withdrawal.payout_address,              // ✅ Correct field name
-      amount: String(parseFloat(withdrawal.net_amount)),  // ✅ String type (CPAY requirement)
+      amount: formatAmount(parseFloat(withdrawal.net_amount), 2),  // ✅ String with 2 decimals
       // ❌ currencyToken REMOVED - CPAY should auto-detect for USDT TRC20
     };
 
@@ -563,6 +568,7 @@ async function processCPAYWithdrawal(withdrawal: any) {
       to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
       amount: withdrawalPayload.amount,
       amountType: typeof withdrawalPayload.amount,  // ✅ Verify it's "string"
+      amountPrecision: '2dp',
       currencyTokenIncluded: 'currencyToken' in withdrawalPayload
     });
 
@@ -583,7 +589,57 @@ async function processCPAYWithdrawal(withdrawal: any) {
     console.log('[CPAY-WITHDRAWAL] Withdrawal response body (truncated):', responseText.substring(0, 500));
 
     // ============================================================
-    // FALLBACK: Retry with currencyToken if CPAY requires it
+    // FALLBACK 1: Retry with 6 decimal precision if amount format error
+    // ============================================================
+    if (!withdrawalResponse.ok) {
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        errorData = { message: responseText };
+      }
+
+      const errorMessage = errorData.data?.message || errorData.message || responseText;
+      const errorString = Array.isArray(errorMessage) ? errorMessage.join('; ') : String(errorMessage);
+      const lowerError = errorString.toLowerCase();
+
+      // Check if error is about amount format
+      const isAmountFormatError = lowerError.includes('amount must be a number string');
+
+      if (isAmountFormatError) {
+        console.log('[CPAY-WITHDRAWAL] ⚠️ Amount format error detected, retrying with 6 decimal precision...');
+        
+        // Update amount to 6 decimal precision
+        withdrawalPayload.amount = formatAmount(parseFloat(withdrawal.net_amount), 6);
+        
+        console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload (6dp):', {
+          to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
+          amount: withdrawalPayload.amount,
+          amountType: typeof withdrawalPayload.amount,
+          amountPrecision: '6dp',
+          currencyTokenIncluded: 'currencyToken' in withdrawalPayload
+        });
+
+        // Retry withdrawal with 6dp amount
+        withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${walletBearerToken}`,
+            'Idempotency-Key': `${withdrawal.id}-retry-6dp`,
+          },
+          body: JSON.stringify(withdrawalPayload),
+          signal: AbortSignal.timeout(30000),
+        });
+
+        responseText = await withdrawalResponse.text();
+        console.log('[CPAY-WITHDRAWAL] 🔄 Retry response status (6dp):', withdrawalResponse.status);
+        console.log('[CPAY-WITHDRAWAL] 🔄 Retry response body (truncated):', responseText.substring(0, 500));
+      }
+    }
+
+    // ============================================================
+    // FALLBACK 2: Retry with currencyToken if CPAY requires it
     // ============================================================
     if (!withdrawalResponse.ok) {
       let errorData;
@@ -611,10 +667,10 @@ async function processCPAYWithdrawal(withdrawal: any) {
           // Add currencyToken to payload
           withdrawalPayload.currencyToken = CPAY_USDT_TOKEN_ID;
           
-          console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload:', {
+          console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload (with currency):', {
             to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
             amount: withdrawalPayload.amount,
-            amountType: typeof withdrawalPayload.amount,  // ✅ Verify it's "string"
+            amountType: typeof withdrawalPayload.amount,
             currencyToken: CPAY_USDT_TOKEN_ID
           });
 
@@ -624,14 +680,14 @@ async function processCPAYWithdrawal(withdrawal: any) {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${walletBearerToken}`,
-              'Idempotency-Key': `${withdrawal.id}-retry`,
+              'Idempotency-Key': `${withdrawal.id}-retry-currency`,
             },
             body: JSON.stringify(withdrawalPayload),
             signal: AbortSignal.timeout(30000),
           });
 
           responseText = await withdrawalResponse.text();
-          console.log('[CPAY-WITHDRAWAL] 🔄 Retry response status:', withdrawalResponse.status);
+          console.log('[CPAY-WITHDRAWAL] 🔄 Retry response status (currency):', withdrawalResponse.status);
           console.log('[CPAY-WITHDRAWAL] 🔄 Retry response body (truncated):', responseText.substring(0, 500));
         } else {
           console.error('[CPAY-WITHDRAWAL] ❌ Currency required but CPAY_USDT_TOKEN_ID not configured');
