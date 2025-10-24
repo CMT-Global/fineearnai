@@ -84,12 +84,12 @@ Deno.serve(async (req) => {
     const authResponse = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        publicKey: CPAY_API_PUBLIC_KEY,
-        privateKey: CPAY_API_PRIVATE_KEY,
-        walletId: CPAY_WALLET_ID,
-        walletPassphrase: CPAY_WALLET_PASSPHRASE
-      })
+    body: JSON.stringify({
+      publicKey: CPAY_API_PUBLIC_KEY,
+      privateKey: CPAY_API_PRIVATE_KEY,
+      walletId: CPAY_WALLET_ID,
+      passphrase: CPAY_WALLET_PASSPHRASE
+    })
     });
 
     console.log('[GET-CPAY-WALLET-INFO] Response status:', authResponse.status);
