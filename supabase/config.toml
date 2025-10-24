@@ -3,6 +3,9 @@ project_id = "mobikymhzchzakwzpqep"
 [functions.get-cpay-wallet-info]
 verify_jwt = true
 
+[functions.get-cpay-wallet-balance]
+verify_jwt = true
+
 [functions.cpay-deposit]
 verify_jwt = true
 
