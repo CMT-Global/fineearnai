@@ -55,6 +55,9 @@ export default function Withdrawals() {
   const [fetchingWalletInfo, setFetchingWalletInfo] = useState(false);
   const [walletInfo, setWalletInfo] = useState<any | null>(null);
   const [showWalletInfoDialog, setShowWalletInfoDialog] = useState(false);
+  const [fetchingBalance, setFetchingBalance] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<any | null>(null);
+  const [showBalanceDialog, setShowBalanceDialog] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -453,6 +456,55 @@ export default function Withdrawals() {
     }
   };
 
+  const handleFetchCPAYWalletBalance = async () => {
+    try {
+      setFetchingBalance(true);
+      setWalletBalance(null);
+
+      console.log('[Withdrawals] Fetching CPAY wallet balance...');
+      
+      const { data, error } = await supabase.functions.invoke('get-cpay-wallet-balance');
+
+      if (error) {
+        console.error('[Withdrawals] Error fetching wallet balance:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch wallet balance",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data?.success) {
+        console.error('[Withdrawals] API returned error:', data);
+        toast({
+          title: "CPAY Error",
+          description: data?.error || "Failed to fetch wallet balance from CPAY",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[Withdrawals] Wallet balance retrieved:', data);
+      setWalletBalance(data);
+      setShowBalanceDialog(true);
+
+      toast({
+        title: "Success",
+        description: "Wallet balance retrieved successfully",
+      });
+    } catch (err: any) {
+      console.error('[Withdrawals] Unexpected error:', err);
+      toast({
+        title: "Error",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setFetchingBalance(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       pending: { label: "Pending", variant: "secondary" },
@@ -586,11 +638,31 @@ export default function Withdrawals() {
                   </>
                 )}
               </Button>
+
+              <Button
+                onClick={handleFetchCPAYWalletBalance}
+                disabled={fetchingBalance}
+                variant="outline"
+                className="border-purple-300 hover:bg-purple-100"
+              >
+                {fetchingBalance ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Fetching...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Check Wallet Balance
+                  </>
+                )}
+              </Button>
             </div>
             
             <div className="text-sm text-muted-foreground space-y-1">
               <p><strong>Wallet API:</strong> Fetches all tokens from your CPAY wallet</p>
               <p><strong>Last Deposit:</strong> Extracts token ID from your most recent CPAY deposit (recommended if you've deposited)</p>
+              <p><strong>Check Balance:</strong> View your wallet balance and all token details with USDT TRC20 highlighted</p>
             </div>
           </div>
         </CardContent>
@@ -861,6 +933,247 @@ export default function Withdrawals() {
                 "Reject & Refund"
               )}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* CPAY Wallet Balance Dialog */}
+      <AlertDialog open={showBalanceDialog} onOpenChange={setShowBalanceDialog}>
+        <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              CPAY Wallet Balance & Tokens
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Complete overview of your CPAY wallet including all tokens and their details
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {walletBalance && (
+            <div className="space-y-6 py-4">
+              {/* Wallet Overview */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{walletBalance.wallet?.balance || '0.00'}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ${walletBalance.wallet?.balanceUSD || '0.00'} USD
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Available Balance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">
+                      {walletBalance.wallet?.availableBalance || '0.00'}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ${walletBalance.wallet?.availableBalanceUSD || '0.00'} USD
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Hold Balance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {walletBalance.wallet?.holdBalance || '0.00'}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pending transactions
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* USDT TRC20 Highlight */}
+              {walletBalance.usdtTrc20 && (
+                <Alert className="border-green-300 bg-green-50">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800">USDT TRC20 Token Found! 🎯</AlertTitle>
+                  <AlertDescription className="mt-2">
+                    <div className="space-y-3">
+                      <div className="font-mono text-sm bg-white p-3 rounded border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <strong className="text-green-700">currencyId:</strong>
+                            <code className="ml-2 text-lg font-bold text-green-700">
+                              {walletBalance.usdtTrc20.currencyId}
+                            </code>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(walletBalance.usdtTrc20.currencyId);
+                              toast({ 
+                                title: "Copied!", 
+                                description: "USDT TRC20 currencyId copied to clipboard" 
+                              });
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <strong>Name:</strong> {walletBalance.usdtTrc20.name}
+                        </div>
+                        <div>
+                          <strong>Network:</strong> {walletBalance.usdtTrc20.nodeType}
+                        </div>
+                        <div>
+                          <strong>Type:</strong> {walletBalance.usdtTrc20.currencyType}
+                        </div>
+                        <div>
+                          <strong>Balance:</strong> {walletBalance.usdtTrc20.balance}
+                        </div>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* All Tokens Table */}
+              {walletBalance.tokens && walletBalance.tokens.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">All Tokens ({walletBalance.tokens.length})</h4>
+                    {!walletBalance.usdtTrc20 && (
+                      <Badge variant="destructive">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        USDT TRC20 not found
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-medium">Currency ID</th>
+                            <th className="px-4 py-3 text-left font-medium">Name</th>
+                            <th className="px-4 py-3 text-left font-medium">Network</th>
+                            <th className="px-4 py-3 text-left font-medium">Type</th>
+                            <th className="px-4 py-3 text-right font-medium">Balance</th>
+                            <th className="px-4 py-3 text-right font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {walletBalance.tokens.map((token: any, idx: number) => (
+                            <tr 
+                              key={idx}
+                              className={token.isUsdtTrc20 ? 'bg-green-50' : 'hover:bg-muted/50'}
+                            >
+                              <td className="px-4 py-3">
+                                <code className={`text-xs ${token.isUsdtTrc20 ? 'text-green-700 font-bold' : 'text-muted-foreground'}`}>
+                                  {token.currencyId.substring(0, 12)}...
+                                </code>
+                              </td>
+                              <td className="px-4 py-3 font-medium">
+                                {token.name}
+                                {token.isUsdtTrc20 && (
+                                  <Badge variant="default" className="ml-2 text-xs">
+                                    Recommended
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {token.nodeType}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {token.currencyType}
+                              </td>
+                              <td className="px-4 py-3 text-right font-mono">
+                                {token.balance}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(token.currencyId);
+                                    toast({ 
+                                      title: "Copied!", 
+                                      description: `${token.name} currencyId copied` 
+                                    });
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No Tokens Found</AlertTitle>
+                  <AlertDescription>
+                    Your CPAY wallet returned 0 tokens. Make sure USDT TRC20 is enabled in your CPAY account.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Tips Section */}
+              {walletBalance.tips && (
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                    💡 Tips
+                  </h4>
+                  <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
+                    {walletBalance.tips.map((tip: string, idx: number) => (
+                      <li key={idx}>{tip}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-2">📋 Next Steps:</h4>
+                <ol className="text-sm space-y-2 list-decimal list-inside">
+                  <li>Copy the <code className="bg-muted px-1">currencyId</code> from the USDT TRC20 token above</li>
+                  <li>Update the secret <code className="bg-muted px-1">CPAY_USDT_TOKEN_ID</code> with this 24-character value</li>
+                  <li>Ensure you have sufficient TRX balance in your wallet for network fees</li>
+                  <li>Return to this page and process pending withdrawals</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            {walletBalance?.usdtTrc20 && (
+              <AlertDialogAction
+                onClick={() => {
+                  navigator.clipboard.writeText(walletBalance.usdtTrc20.currencyId);
+                  toast({
+                    title: "Copied!",
+                    description: "USDT TRC20 currencyId copied to clipboard",
+                  });
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copy USDT TRC20 ID
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
