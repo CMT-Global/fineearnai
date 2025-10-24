@@ -151,11 +151,11 @@ Deno.serve(async (req) => {
     console.log('[GET-CPAY-WALLET-INFO] ✅ Wallet authenticated, token received');
 
     // ============================================================
-    // STEP 4: FETCH WALLET INFO (using public/wallet endpoint)
+    // STEP 4: FETCH CURRENCY LIST (using /api/public/currency)
     // ============================================================
-    console.log('[GET-CPAY-WALLET-INFO] 💼 Fetching wallet info from /api/public/wallet...');
+    console.log('[GET-CPAY-WALLET-INFO] 💼 Fetching currency list from /api/public/currency...');
 
-    const walletResponse = await fetch(`${CPAY_BASE_URL}/api/public/wallet`, {
+    const currencyResponse = await fetch(`${CPAY_BASE_URL}/api/public/currency`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${walletToken}`,
@@ -163,12 +163,12 @@ Deno.serve(async (req) => {
       }
     });
 
-    if (!walletResponse.ok) {
-      const errorText = await walletResponse.text();
-      console.error('[GET-CPAY-WALLET-INFO] ❌ Wallet fetch failed:', errorText);
+    if (!currencyResponse.ok) {
+      const errorText = await currencyResponse.text();
+      console.error('[GET-CPAY-WALLET-INFO] ❌ Currency list fetch failed:', errorText);
       return new Response(JSON.stringify({
-        error: 'Failed to fetch wallet info',
-        status: walletResponse.status,
+        error: 'Failed to fetch currency list',
+        status: currencyResponse.status,
         details: errorText
       }), {
         status: 500,
@@ -176,8 +176,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const walletData = await walletResponse.json();
-    console.log('[GET-CPAY-WALLET-INFO] ✅ Wallet info received');
+    const currencies = await currencyResponse.json();
+    console.log('[GET-CPAY-WALLET-INFO] ✅ Currency list received:', currencies.length, 'currencies');
 
     // ============================================================
     // STEP 5: HANDLE DIFFERENT MODES
@@ -228,19 +228,19 @@ Deno.serve(async (req) => {
       console.log('[GET-CPAY-WALLET-INFO] 📋 Deposit wallet ID:', depositWalletId);
       console.log('[GET-CPAY-WALLET-INFO] 💰 Currency:', depositCurrency, '| Blockchain:', depositBlockchain);
 
-      // Now fetch wallet to find the matching token
-      const tokens = walletData.tokens || [];
-      const matchingToken = tokens.find((t: any) => 
-        t.currency?.toUpperCase() === depositCurrency?.toUpperCase() &&
-        t.blockchain?.toUpperCase() === depositBlockchain?.toUpperCase()
+      // Find matching currency in the currency list
+      const matchingCurrency = currencies.find((c: any) => 
+        c.name?.toUpperCase() === depositCurrency?.toUpperCase() &&
+        (c.nodeType?.toLowerCase() === depositBlockchain?.toLowerCase() || 
+         c.blockchain?.toUpperCase() === depositBlockchain?.toUpperCase())
       );
 
-      if (!matchingToken) {
+      if (!matchingCurrency) {
         return new Response(JSON.stringify({
           success: false,
-          error: `No matching token found for ${depositCurrency} on ${depositBlockchain}`,
+          error: `No matching currency found for ${depositCurrency} on ${depositBlockchain}`,
           depositInfo: { wallet: depositWalletId, currency: depositCurrency, blockchain: depositBlockchain },
-          suggestion: 'The deposit wallet might be different from your configured CPAY_WALLET_ID'
+          suggestion: 'The currency might not be enabled in your CPAY account'
         }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -252,15 +252,14 @@ Deno.serve(async (req) => {
         source: 'last_deposit',
         depositDate: lastDeposit.created_at,
         token: {
-          currencyId: matchingToken.currencyId,
-          currency: matchingToken.currency,
-          blockchain: matchingToken.blockchain,
-          balance: matchingToken.balance,
-          address: matchingToken.address,
-          message: '✅ This is the token from your last CPAY deposit'
+          currencyId: matchingCurrency._id,
+          currency: matchingCurrency.name,
+          blockchain: matchingCurrency.nodeType || matchingCurrency.blockchain,
+          currencyType: matchingCurrency.currencyType,
+          message: '✅ This is the currency ID from your last CPAY deposit'
         },
         instructions: [
-          '1. Copy the currencyId above',
+          '1. Copy the currencyId above (MongoDB ID)',
           '2. Update CPAY_USDT_TOKEN_ID secret with this value',
           '3. Retry pending withdrawals'
         ]
@@ -271,25 +270,25 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================
-    // MODE: wallet (default) - Parse and format ALL tokens
+    // MODE: wallet (default) - Parse and format ALL currencies
     // ============================================================
-    console.log('[GET-CPAY-WALLET-INFO] 📦 MODE: Fetching all wallet tokens...');
-    const tokens = walletData.tokens || [];
-    console.log('[GET-CPAY-WALLET-INFO] 📊 Found', tokens.length, 'tokens');
+    console.log('[GET-CPAY-WALLET-INFO] 📦 MODE: Processing all currencies from API...');
+    console.log('[GET-CPAY-WALLET-INFO] 📊 Found', currencies.length, 'currencies');
 
-    // Find USDT TRC20 specifically
-    const usdtTrc20 = tokens.find((t: any) => 
-      t.currency?.toUpperCase() === 'USDT' && 
-      (t.blockchain?.toUpperCase() === 'TRC20' || t.blockchain?.toUpperCase() === 'TRX')
+    // Find USDT TRC20 specifically using correct CPAY fields
+    const usdtTrc20 = currencies.find((c: any) => 
+      c.name?.toUpperCase() === 'USDT' && 
+      c.nodeType?.toLowerCase() === 'tron' &&
+      c.currencyType === 'token'
     );
 
-    const formattedTokens = tokens.map((token: any) => ({
-      currencyId: token.currencyId,
-      currency: token.currency,
-      blockchain: token.blockchain,
-      balance: token.balance,
-      address: token.address,
-      isUsdtTrc20: token.currencyId === usdtTrc20?.currencyId
+    const formattedCurrencies = currencies.map((currency: any) => ({
+      currencyId: currency._id,  // MongoDB ID - this is what CPAY requires!
+      name: currency.name,
+      nodeType: currency.nodeType,
+      blockchain: currency.blockchain,
+      currencyType: currency.currencyType,
+      isUsdtTrc20: currency._id === usdtTrc20?._id
     }));
 
     // ============================================================
@@ -297,28 +296,31 @@ Deno.serve(async (req) => {
     // ============================================================
     const result = {
       success: true,
-      source: 'wallet_api',
+      source: 'currency_api',
       walletId: CPAY_WALLET_ID,
-      totalTokens: tokens.length,
+      totalTokens: currencies.length,
       usdtTrc20Token: usdtTrc20 ? {
-        currencyId: usdtTrc20.currencyId,
-        balance: usdtTrc20.balance,
-        address: usdtTrc20.address,
+        currencyId: usdtTrc20._id,  // MongoDB ID from /api/public/currency
+        name: usdtTrc20.name,
+        nodeType: usdtTrc20.nodeType,
         blockchain: usdtTrc20.blockchain,
-        message: '✅ THIS IS YOUR USDT TRC20 TOKEN ID - Use this as CPAY_USDT_TOKEN_ID'
+        currencyType: usdtTrc20.currencyType,
+        message: '✅ THIS IS YOUR USDT TRC20 CURRENCY ID - Use this as CPAY_USDT_TOKEN_ID'
       } : null,
-      allTokens: formattedTokens,
+      allCurrencies: formattedCurrencies,
       instructions: [
-        '1. Look for the token marked with isUsdtTrc20: true',
-        '2. Copy the currencyId value (24-character hex ID)',
-        '3. Update the secret CPAY_USDT_TOKEN_ID with this value',
+        '1. Look for the currency marked with isUsdtTrc20: true',
+        '2. Copy the currencyId value (this is the MongoDB _id from CPAY)',
+        '3. Update the secret CPAY_USDT_TOKEN_ID with this exact 24-character hex value',
         '4. Retry the pending withdrawal from Admin > Withdrawals'
       ]
     };
 
-    console.log('[GET-CPAY-WALLET-INFO] 🎉 SUCCESS - Token info retrieved');
+    console.log('[GET-CPAY-WALLET-INFO] 🎉 SUCCESS - Currency info retrieved');
     if (usdtTrc20) {
-      console.log('[GET-CPAY-WALLET-INFO] 🎯 USDT TRC20 currencyId:', usdtTrc20.currencyId);
+      console.log('[GET-CPAY-WALLET-INFO] 🎯 USDT TRC20 currencyId (MongoDB _id):', usdtTrc20._id);
+    } else {
+      console.log('[GET-CPAY-WALLET-INFO] ⚠️ WARNING - USDT TRC20 not found in currency list');
     }
 
     return new Response(JSON.stringify(result, null, 2), {

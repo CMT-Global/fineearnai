@@ -919,12 +919,9 @@ export default function Withdrawals() {
                       </Button>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div><strong>Balance:</strong> {walletInfo.usdtTrc20Token?.balance || walletInfo.token?.balance || 'N/A'}</div>
-                      <div><strong>Currency:</strong> {walletInfo.usdtTrc20Token?.currency || walletInfo.token?.currency}</div>
-                      <div><strong>Blockchain:</strong> {walletInfo.usdtTrc20Token?.blockchain || walletInfo.token?.blockchain}</div>
-                      {walletInfo.token?.address && (
-                        <div><strong>Address:</strong> <code className="text-xs">{walletInfo.token.address}</code></div>
-                      )}
+                      <div><strong>Name:</strong> {walletInfo.usdtTrc20Token?.name || walletInfo.token?.currency || walletInfo.token?.name}</div>
+                      <div><strong>Network:</strong> {walletInfo.usdtTrc20Token?.nodeType || walletInfo.usdtTrc20Token?.blockchain || walletInfo.token?.blockchain}</div>
+                      <div><strong>Type:</strong> {walletInfo.usdtTrc20Token?.currencyType || 'token'}</div>
                     </div>
                   </AlertDescription>
                 </Alert>
@@ -953,20 +950,20 @@ export default function Withdrawals() {
                 </ol>
               </div>
 
-              {/* All Tokens (Collapsible) - only show for wallet mode */}
-              {walletInfo.allTokens && walletInfo.allTokens.length > 0 && (
+              {/* All Currencies (Collapsible) - show for wallet/currency mode */}
+              {(walletInfo.allCurrencies || walletInfo.allTokens) && (walletInfo.allCurrencies?.length > 0 || walletInfo.allTokens?.length > 0) && (
                 <details className="border rounded p-3">
                   <summary className="cursor-pointer font-semibold text-sm">
-                    All Available Tokens ({walletInfo.allTokens.length})
+                    All Available Currencies ({walletInfo.allCurrencies?.length || walletInfo.allTokens?.length})
                   </summary>
                   <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                    {walletInfo.allTokens.map((token: any, idx: number) => (
+                    {(walletInfo.allCurrencies || walletInfo.allTokens)?.map((item: any, idx: number) => (
                       <div key={idx} className="text-xs bg-muted p-2 rounded font-mono">
-                        <div><strong>currencyId:</strong> {token.currencyId}</div>
-                        <div><strong>Currency:</strong> {token.currency}</div>
-                        <div><strong>Blockchain:</strong> {token.blockchain || 'N/A'}</div>
-                        <div><strong>Balance:</strong> {token.balance}</div>
-                        {token.isUsdtTrc20 && <Badge variant="default" className="mt-1">← Recommended</Badge>}
+                        <div><strong>currencyId:</strong> {item.currencyId}</div>
+                        <div><strong>Name:</strong> {item.name || item.currency}</div>
+                        <div><strong>Network:</strong> {item.nodeType || item.blockchain || 'N/A'}</div>
+                        {item.currencyType && <div><strong>Type:</strong> {item.currencyType}</div>}
+                        {item.isUsdtTrc20 && <Badge variant="default" className="mt-1">← Recommended for USDT TRC20</Badge>}
                       </div>
                     ))}
                   </div>
