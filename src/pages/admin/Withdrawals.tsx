@@ -508,6 +508,20 @@ export default function Withdrawals() {
                       </Alert>
                     )}
 
+                    {withdrawal.status === "pending" && (withdrawal as any).api_response?.error && (
+                      <Alert variant="destructive" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Previous API Attempt Failed</AlertTitle>
+                        <AlertDescription>
+                          <strong>Error:</strong> {(withdrawal as any).api_response.error}
+                          <br />
+                          <span className="text-xs mt-2 block">
+                            This withdrawal remains pending. You can retry the API payment after resolving the issue (e.g., insufficient balance, incorrect address) or reject this withdrawal manually if needed.
+                          </span>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                     {withdrawal.status === "pending" && (
                       <div className="flex gap-2 mt-4">
                         <Button
