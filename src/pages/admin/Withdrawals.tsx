@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Clock, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle, XCircle, Clock, DollarSign, Copy, AlertCircle, ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
 
@@ -22,6 +24,8 @@ interface WithdrawalRequest {
   payment_method: string;
   status: string;
   rejection_reason?: string;
+  admin_notes?: string;
+  manual_txn_hash?: string;
   processed_at?: string;
   created_at: string;
   profiles?: {
@@ -41,6 +45,9 @@ export default function Withdrawals() {
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [txnHash, setTxnHash] = useState("");
+  const [completionNotes, setCompletionNotes] = useState("");
+  const [completingWithdrawal, setCompletingWithdrawal] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -161,9 +168,64 @@ export default function Withdrawals() {
     setDialogOpen(true);
   };
 
+  const handleCompleteManualWithdrawal = async (withdrawalId: string) => {
+    if (!txnHash.trim()) {
+      toast({
+        title: "Error",
+        description: "Transaction hash is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setCompletingWithdrawal(withdrawalId);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("complete-manual-withdrawal", {
+        body: {
+          withdrawal_request_id: withdrawalId,
+          transaction_hash: txnHash,
+          notes: completionNotes || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: data.message || "Withdrawal marked as completed successfully",
+      });
+
+      setTxnHash("");
+      setCompletionNotes("");
+      await loadWithdrawals();
+    } catch (error) {
+      console.error("Error completing withdrawal:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to complete withdrawal",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletingWithdrawal(null);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: "Address copied to clipboard",
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       pending: { label: "Pending", variant: "secondary" },
+      approved_manual: { label: "Awaiting Manual Payout", variant: "outline" },
       processing: { label: "Processing", variant: "default" },
       completed: { label: "Completed", variant: "default" },
       rejected: { label: "Rejected", variant: "destructive" },
@@ -175,16 +237,16 @@ export default function Withdrawals() {
   };
 
   const filteredWithdrawals = withdrawals.filter(w => {
-    if (selectedTab === "pending") return w.status === "pending";
+    if (selectedTab === "pending") return ["pending", "approved_manual"].includes(w.status);
     if (selectedTab === "completed") return ["completed", "processing"].includes(w.status);
     if (selectedTab === "rejected") return ["rejected", "failed"].includes(w.status);
     return true;
   });
 
   const stats = {
-    pending: withdrawals.filter(w => w.status === "pending").length,
+    pending: withdrawals.filter(w => ["pending", "approved_manual"].includes(w.status)).length,
     pendingAmount: withdrawals
-      .filter(w => w.status === "pending")
+      .filter(w => ["pending", "approved_manual"].includes(w.status))
       .reduce((sum, w) => sum + parseFloat(w.amount.toString()), 0),
     completed: withdrawals.filter(w => w.status === "completed").length,
     rejected: withdrawals.filter(w => ["rejected", "failed"].includes(w.status)).length,
@@ -316,7 +378,96 @@ export default function Withdrawals() {
                           <p className="text-sm text-red-600">{withdrawal.rejection_reason}</p>
                         </div>
                       )}
+                      {withdrawal.admin_notes && (
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-muted-foreground">Admin Notes</p>
+                          <p className="text-sm">{withdrawal.admin_notes}</p>
+                        </div>
+                      )}
+                      {withdrawal.manual_txn_hash && (
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-muted-foreground">Transaction Hash</p>
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm bg-muted px-2 py-1 rounded">{withdrawal.manual_txn_hash}</code>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(withdrawal.manual_txn_hash!)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.open(`https://tronscan.org/#/transaction/${withdrawal.manual_txn_hash}`, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
+
+                    {withdrawal.status === "approved_manual" && (
+                      <Alert className="mt-4 border-orange-500 bg-orange-50">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <AlertTitle>Manual Payout Required</AlertTitle>
+                        <AlertDescription>
+                          <div className="space-y-2 mt-2">
+                            <p><strong>Network:</strong> TRC20 (USDT)</p>
+                            <p><strong>Amount:</strong> {formatCurrency(withdrawal.net_amount)} USDT</p>
+                            <p className="flex items-center gap-2">
+                              <strong>Address:</strong> 
+                              <code className="ml-2 bg-white px-2 py-1 rounded text-xs">
+                                {withdrawal.payout_address}
+                              </code>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => copyToClipboard(withdrawal.payout_address)}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Send crypto manually from your external wallet, then enter transaction hash below.
+                            </p>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {withdrawal.status === "approved_manual" && (
+                      <div className="space-y-3 mt-4">
+                        <div>
+                          <label className="text-sm font-medium">Blockchain Transaction Hash *</label>
+                          <Input 
+                            placeholder="Enter transaction hash (e.g., 0xabc123...)" 
+                            value={txnHash}
+                            onChange={(e) => setTxnHash(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Completion Notes (Optional)</label>
+                          <Textarea
+                            placeholder="Add any notes about the completion..."
+                            value={completionNotes}
+                            onChange={(e) => setCompletionNotes(e.target.value)}
+                            className="mt-1"
+                            rows={2}
+                          />
+                        </div>
+                        <Button 
+                          onClick={() => handleCompleteManualWithdrawal(withdrawal.id)}
+                          disabled={completingWithdrawal === withdrawal.id || !txnHash.trim()}
+                          className="w-full"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          {completingWithdrawal === withdrawal.id ? "Marking as Completed..." : "Mark as Completed"}
+                        </Button>
+                      </div>
+                    )}
 
                     {withdrawal.status === "pending" && (
                       <div className="flex gap-2 mt-4">
@@ -355,7 +506,7 @@ export default function Withdrawals() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialogAction === "approve"
-                ? "This will process the payment and mark the withdrawal as completed."
+                ? "This will approve the withdrawal for manual processing. You will need to send the crypto manually and then mark it as completed."
                 : "This will refund the amount to the user's earnings wallet."}
             </AlertDialogDescription>
           </AlertDialogHeader>
