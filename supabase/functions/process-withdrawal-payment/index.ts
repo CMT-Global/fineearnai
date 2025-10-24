@@ -418,45 +418,109 @@ function detectPaymentProvider(paymentMethod: string): string {
   return 'manual';
 }
 
-// Process CPAY withdrawal via API
+// Process CPAY withdrawal via API with proper authentication flow
 async function processCPAYWithdrawal(withdrawal: any) {
-  const cpayApiKey = Deno.env.get('CPAY_API_PRIVATE_KEY');
-  const cpayAccountId = Deno.env.get('CPAY_ACCOUNT_ID');
+  // Get all required CPAY credentials
+  const cpayPublicKey = Deno.env.get('CPAY_API_PUBLIC_KEY');
+  const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY');
+  const cpayWalletId = Deno.env.get('CPAY_WALLET_ID');
+  const cpayPassphrase = Deno.env.get('CPAY_WALLET_PASSPHRASE');
 
-  if (!cpayApiKey || !cpayAccountId) {
-    throw new Error('CPAY credentials not configured');
+  // Validate all credentials are present
+  if (!cpayPublicKey || !cpayPrivateKey || !cpayWalletId || !cpayPassphrase) {
+    const missing = [];
+    if (!cpayPublicKey) missing.push('CPAY_API_PUBLIC_KEY');
+    if (!cpayPrivateKey) missing.push('CPAY_API_PRIVATE_KEY');
+    if (!cpayWalletId) missing.push('CPAY_WALLET_ID');
+    if (!cpayPassphrase) missing.push('CPAY_WALLET_PASSPHRASE');
+    throw new Error(`Missing CPAY credentials: ${missing.join(', ')}`);
   }
 
-  console.log('Calling CPAY withdrawal API...');
+  console.log('[CPAY-WITHDRAWAL] Starting two-step authentication flow...');
+  console.log('[CPAY-WITHDRAWAL] Withdrawal ID:', withdrawal.id);
+  console.log('[CPAY-WITHDRAWAL] Amount:', withdrawal.net_amount, 'USDT');
+  console.log('[CPAY-WITHDRAWAL] Address:', withdrawal.payout_address);
 
-  // Call CPAY withdrawal API
-  const response = await fetch('https://api.cpay.world/api/v1/withdrawal', {
+  // STEP 1: Authenticate with CPAY to get Bearer token
+  console.log('[CPAY-WITHDRAWAL] Step 1: Authenticating with CPAY...');
+  
+  const authResponse = await fetch('https://api.cpay.world/api/public/auth', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${cpayApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      account_id: cpayAccountId,
-      amount: withdrawal.net_amount,
-      currency: 'USDT',
-      network: 'TRC20',
-      address: withdrawal.payout_address,
-      order_id: withdrawal.id,
+      publicKey: cpayPublicKey,
+      privateKey: cpayPrivateKey,
+      walletId: cpayWalletId,
+      passphrase: cpayPassphrase,
     }),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errorData.message || `CPAY API error: ${response.status}`);
+  // Enhanced error logging for authentication
+  if (!authResponse.ok) {
+    const errorText = await authResponse.text();
+    console.error('[CPAY-WITHDRAWAL] Authentication failed:', {
+      status: authResponse.status,
+      statusText: authResponse.statusText,
+      body: errorText,
+      headers: Object.fromEntries(authResponse.headers.entries()),
+    });
+    throw new Error(`CPAY authentication failed: ${authResponse.status} - ${errorText}`);
   }
 
-  const data = await response.json();
-  console.log('CPAY API response:', data);
+  const authData = await authResponse.json();
+  const bearerToken = authData.token || authData.access_token || authData.bearerToken;
+
+  if (!bearerToken) {
+    console.error('[CPAY-WITHDRAWAL] No bearer token in auth response:', authData);
+    throw new Error('CPAY authentication succeeded but no bearer token received');
+  }
+
+  console.log('[CPAY-WITHDRAWAL] ✓ Authentication successful, token received');
+
+  // STEP 2: Call withdrawal API with Bearer token
+  console.log('[CPAY-WITHDRAWAL] Step 2: Processing withdrawal...');
+
+  const withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${bearerToken}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': withdrawal.id, // Prevent duplicate transactions
+    },
+    body: JSON.stringify({
+      to: withdrawal.payout_address,
+      amount: parseFloat(withdrawal.net_amount),
+      currencyToken: 'USDT', // Specify the token explicitly
+      comment: `Withdrawal ${withdrawal.id}`, // Optional tracking comment
+    }),
+  });
+
+  // Enhanced error logging for withdrawal
+  if (!withdrawalResponse.ok) {
+    const errorText = await withdrawalResponse.text();
+    console.error('[CPAY-WITHDRAWAL] Withdrawal API failed:', {
+      status: withdrawalResponse.status,
+      statusText: withdrawalResponse.statusText,
+      body: errorText,
+      headers: Object.fromEntries(withdrawalResponse.headers.entries()),
+      request: {
+        to: withdrawal.payout_address,
+        amount: withdrawal.net_amount,
+        currencyToken: 'USDT',
+      },
+    });
+    
+    throw new Error(`CPAY withdrawal failed: ${withdrawalResponse.status} - ${errorText}`);
+  }
+
+  const withdrawalData = await withdrawalResponse.json();
+  console.log('[CPAY-WITHDRAWAL] ✓ Withdrawal successful:', withdrawalData);
 
   return {
-    transaction_hash: data.txn_hash || data.transaction_id || data.id,
-    ...data
+    transaction_hash: withdrawalData.txn_hash || withdrawalData.transaction_id || withdrawalData.txHash || withdrawalData.id,
+    ...withdrawalData,
   };
 }
 
