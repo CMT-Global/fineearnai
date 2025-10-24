@@ -381,50 +381,6 @@ export type Database = {
         }
         Relationships: []
       }
-      manual_withdrawal_tracking: {
-        Row: {
-          admin_id: string
-          approved_at: string
-          blockchain_txn_hash: string | null
-          completed_at: string | null
-          created_at: string
-          id: string
-          notes: string | null
-          processing_time_minutes: number | null
-          withdrawal_request_id: string
-        }
-        Insert: {
-          admin_id: string
-          approved_at: string
-          blockchain_txn_hash?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          processing_time_minutes?: number | null
-          withdrawal_request_id: string
-        }
-        Update: {
-          admin_id?: string
-          approved_at?: string
-          blockchain_txn_hash?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          processing_time_minutes?: number | null
-          withdrawal_request_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "manual_withdrawal_tracking_withdrawal_request_id_fkey"
-            columns: ["withdrawal_request_id"]
-            isOneToOne: false
-            referencedRelation: "withdrawal_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       master_login_sessions: {
         Row: {
           admin_id: string
@@ -1232,6 +1188,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           amount: number
+          api_response: Json | null
           created_at: string
           fee: number
           id: string
@@ -1239,6 +1196,7 @@ export type Database = {
           net_amount: number
           payment_method: string
           payment_processor_id: string | null
+          payment_provider: string | null
           payout_address: string
           processed_at: string | null
           processed_by: string | null
@@ -1250,6 +1208,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           amount: number
+          api_response?: Json | null
           created_at?: string
           fee?: number
           id?: string
@@ -1257,6 +1216,7 @@ export type Database = {
           net_amount: number
           payment_method: string
           payment_processor_id?: string | null
+          payment_provider?: string | null
           payout_address: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1268,6 +1228,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           amount?: number
+          api_response?: Json | null
           created_at?: string
           fee?: number
           id?: string
@@ -1275,6 +1236,7 @@ export type Database = {
           net_amount?: number
           payment_method?: string
           payment_processor_id?: string | null
+          payment_provider?: string | null
           payout_address?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1353,19 +1315,6 @@ export type Database = {
           nodeport?: number | null
           schedule?: string | null
           username?: string | null
-        }
-        Relationships: []
-      }
-      manual_withdrawal_metrics: {
-        Row: {
-          avg_processing_time_minutes: number | null
-          completed_this_month: number | null
-          completed_this_week: number | null
-          completed_today: number | null
-          oldest_pending_at: string | null
-          pending_manual_amount: number | null
-          pending_manual_count: number | null
-          volume_today: number | null
         }
         Relationships: []
       }
