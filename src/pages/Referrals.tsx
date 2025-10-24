@@ -93,13 +93,13 @@ const Referrals = () => {
             <div className="mt-4 pt-4 border-t space-y-4">
               <div className="flex gap-2">
                 <ReferralQRCode
-                  referralUrl={`${window.location.origin}?ref=${profile.referral_code}`}
+                  referralUrl={`${window.location.origin}/signup?ref=${profile.referral_code}`}
                   username={profile.username}
                 />
               </div>
 
               <SocialShareButtons
-                referralUrl={`${window.location.origin}?ref=${profile.referral_code}`}
+                referralUrl={`${window.location.origin}/signup?ref=${profile.referral_code}`}
                 username={profile.username}
               />
             </div>
