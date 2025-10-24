@@ -47,8 +47,18 @@ Deno.serve(async (req) => {
     // STEP 2: GET CPAY CREDENTIALS & CHECK MODE
     // ============================================================
     const { searchParams } = new URL(req.url);
-    const mode = searchParams.get('mode') || 'wallet'; // 'wallet' or 'deposit'
-
+    let mode = searchParams.get('mode') || 'wallet'; // 'wallet' or 'deposit'
+    // Also accept JSON body { mode } since frontend uses invoke with body
+    if (req.method !== 'GET') {
+      try {
+        const maybeBody = await req.json();
+        if (maybeBody && typeof maybeBody.mode !== 'undefined') {
+          mode = String(maybeBody.mode);
+        }
+      } catch (_) {
+        // ignore body parse errors
+      }
+    }
     const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
     const CPAY_API_PUBLIC_KEY = Deno.env.get('CPAY_API_PUBLIC_KEY');
     const CPAY_API_PRIVATE_KEY = Deno.env.get('CPAY_API_PRIVATE_KEY');
@@ -78,40 +88,55 @@ Deno.serve(async (req) => {
     // STEP 3: PERFORM WALLET AUTHENTICATION (using public/auth flow)
     // ============================================================
     console.log('[GET-CPAY-WALLET-INFO] 🔐 Using wallet-auth flow (same as withdrawals)...');
-    console.log('[GET-CPAY-WALLET-INFO] 📡 Step 1: Authenticating wallet with CPAY...');
-
-    // Use the working /api/public/auth endpoint with wallet credentials
-    const authResponse = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
+    
+    // Step 1/2: Account authentication to mirror reliable flow
+    console.log('[GET-CPAY-WALLET-INFO] 📡 Step 1/2: Account authentication...');
+    const accountAuthRes = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      publicKey: CPAY_API_PUBLIC_KEY,
-      privateKey: CPAY_API_PRIVATE_KEY,
-      walletId: CPAY_WALLET_ID,
-      passphrase: CPAY_WALLET_PASSPHRASE
-    })
+      body: JSON.stringify({
+        publicKey: CPAY_API_PUBLIC_KEY,
+        privateKey: CPAY_API_PRIVATE_KEY,
+      })
+    });
+    const accountAuthText = await accountAuthRes.text();
+    console.log('[GET-CPAY-WALLET-INFO] Step 1 response status:', accountAuthRes.status);
+    if (!accountAuthRes.ok) {
+      console.error('[GET-CPAY-WALLET-INFO] ❌ Account auth failed:', accountAuthText);
+      return new Response(JSON.stringify({
+        error: 'CPAY account authentication failed',
+        status: accountAuthRes.status,
+        details: accountAuthText
+      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Step 2/2: Wallet authentication with passphrase
+    console.log('[GET-CPAY-WALLET-INFO] 📡 Step 2/2: Wallet authentication...');
+    const walletAuthRes = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        walletId: CPAY_WALLET_ID,
+        passphrase: CPAY_WALLET_PASSPHRASE,
+        publicKey: CPAY_API_PUBLIC_KEY,
+        privateKey: CPAY_API_PRIVATE_KEY,
+      })
     });
 
-    console.log('[GET-CPAY-WALLET-INFO] Response status:', authResponse.status);
-
-    if (!authResponse.ok) {
-      const errorText = await authResponse.text();
+    console.log('[GET-CPAY-WALLET-INFO] Step 2 response status:', walletAuthRes.status);
+    if (!walletAuthRes.ok) {
+      const errorText = await walletAuthRes.text();
       console.error('[GET-CPAY-WALLET-INFO] ❌ Wallet auth failed:', errorText);
       return new Response(JSON.stringify({
         error: 'CPAY wallet authentication failed',
-        status: authResponse.status,
+        status: walletAuthRes.status,
         details: errorText,
-        hint: 'Using the same auth flow that works for deposits. Check CPAY_WALLET_ID and CPAY_WALLET_PASSPHRASE.'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+        hint: 'Ensure walletId and passphrase are correct. The key is "passphrase" (not walletPassphrase).'
+      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const authData = await authResponse.json();
-    console.log('[GET-CPAY-WALLET-INFO] Response body:', JSON.stringify(authData).substring(0, 200));
-
-    const walletToken = authData.token;
+    const authData = await walletAuthRes.json();
+    const walletToken = authData.token || authData.access_token || authData.jwt;
     if (!walletToken) {
       console.error('[GET-CPAY-WALLET-INFO] ❌ No wallet token received');
       return new Response(JSON.stringify({
