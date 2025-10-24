@@ -550,15 +550,19 @@ async function processCPAYWithdrawal(withdrawal: any) {
 
     // Construct minimal withdrawal payload (CPAY auto-detects USDT TRC20)
     // ✅ LASER FIX: Remove dependency on unreliable currency API
+    // ✅ CRITICAL: CPAY requires amount as STRING, not number
+    // Documentation: Lines 1360, 672-680 in CPAY_WITHDRAWALS_API-2.docx
+    // Example: "28.1" not 28.1
     const withdrawalPayload: any = {
       to: withdrawal.payout_address,              // ✅ Correct field name
-      amount: parseFloat(withdrawal.net_amount),  // ✅ Number type
+      amount: String(parseFloat(withdrawal.net_amount)),  // ✅ String type (CPAY requirement)
       // ❌ currencyToken REMOVED - CPAY should auto-detect for USDT TRC20
     };
 
     console.log('[CPAY-WITHDRAWAL] 📦 Minimal withdrawal payload:', {
       to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
       amount: withdrawalPayload.amount,
+      amountType: typeof withdrawalPayload.amount,  // ✅ Verify it's "string"
       currencyTokenIncluded: 'currencyToken' in withdrawalPayload
     });
 
@@ -610,6 +614,7 @@ async function processCPAYWithdrawal(withdrawal: any) {
           console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload:', {
             to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
             amount: withdrawalPayload.amount,
+            amountType: typeof withdrawalPayload.amount,  // ✅ Verify it's "string"
             currencyToken: CPAY_USDT_TOKEN_ID
           });
 
