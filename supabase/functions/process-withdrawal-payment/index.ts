@@ -572,6 +572,15 @@ async function processCPAYWithdrawal(withdrawal: any) {
       currencyTokenIncluded: 'currencyToken' in withdrawalPayload
     });
 
+    // 🔍 DETAILED LOGGING: Verify payload structure
+    console.log('[CPAY-WITHDRAWAL] 🔍 Payload keys:', Object.keys(withdrawalPayload));
+    console.log('[CPAY-WITHDRAWAL] 🔍 Payload values:', Object.values(withdrawalPayload));
+    
+    // 🔍 DETAILED LOGGING: Log exact request body
+    const requestBody = JSON.stringify(withdrawalPayload);
+    console.log('[CPAY-WITHDRAWAL] 📤 EXACT REQUEST BODY:', requestBody);
+    console.log('[CPAY-WITHDRAWAL] 📤 REQUEST BODY LENGTH:', requestBody.length);
+
     // Attempt withdrawal with minimal payload
     let withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
       method: 'POST',
@@ -587,6 +596,10 @@ async function processCPAYWithdrawal(withdrawal: any) {
     let responseText = await withdrawalResponse.text();
     console.log('[CPAY-WITHDRAWAL] Withdrawal response status:', withdrawalResponse.status);
     console.log('[CPAY-WITHDRAWAL] Withdrawal response body (truncated):', responseText.substring(0, 500));
+    
+    // 🔍 DETAILED LOGGING: Log exact response headers
+    console.log('[CPAY-WITHDRAWAL] 📥 EXACT RESPONSE BODY:', responseText);
+    console.log('[CPAY-WITHDRAWAL] 📥 RESPONSE HEADERS:', Object.fromEntries(withdrawalResponse.headers.entries()));
 
     // ============================================================
     // FALLBACK 1: Retry with 6 decimal precision if amount format error
@@ -620,6 +633,10 @@ async function processCPAYWithdrawal(withdrawal: any) {
           currencyTokenIncluded: 'currencyToken' in withdrawalPayload
         });
 
+        // 🔍 DETAILED LOGGING: Log exact retry request body
+        const retryRequestBody = JSON.stringify(withdrawalPayload);
+        console.log('[CPAY-WITHDRAWAL] 📤 EXACT RETRY REQUEST BODY (6dp):', retryRequestBody);
+
         // Retry withdrawal with 6dp amount
         withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
           method: 'POST',
@@ -635,6 +652,7 @@ async function processCPAYWithdrawal(withdrawal: any) {
         responseText = await withdrawalResponse.text();
         console.log('[CPAY-WITHDRAWAL] 🔄 Retry response status (6dp):', withdrawalResponse.status);
         console.log('[CPAY-WITHDRAWAL] 🔄 Retry response body (truncated):', responseText.substring(0, 500));
+        console.log('[CPAY-WITHDRAWAL] 📥 EXACT RETRY RESPONSE BODY (6dp):', responseText);
       }
     }
 
@@ -667,12 +685,16 @@ async function processCPAYWithdrawal(withdrawal: any) {
           // Add currencyToken to payload
           withdrawalPayload.currencyToken = CPAY_USDT_TOKEN_ID;
           
-          console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload (with currency):', {
-            to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
-            amount: withdrawalPayload.amount,
-            amountType: typeof withdrawalPayload.amount,
-            currencyToken: CPAY_USDT_TOKEN_ID
-          });
+        console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload (with currency):', {
+          to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
+          amount: withdrawalPayload.amount,
+          amountType: typeof withdrawalPayload.amount,
+          currencyToken: CPAY_USDT_TOKEN_ID
+        });
+
+        // 🔍 DETAILED LOGGING: Log exact retry request body with currency
+        const currencyRetryRequestBody = JSON.stringify(withdrawalPayload);
+        console.log('[CPAY-WITHDRAWAL] 📤 EXACT RETRY REQUEST BODY (currency):', currencyRetryRequestBody);
 
           // Retry withdrawal with currencyToken
           withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
