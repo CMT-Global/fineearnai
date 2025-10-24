@@ -548,13 +548,23 @@ async function processCPAYWithdrawal(withdrawal: any) {
     // ============================================================
     console.log('[CPAY-WITHDRAWAL] 📡 Step 3: Calling CPAY withdrawal endpoint...');
 
+    // Construct withdrawal payload according to CPAY API specification
+    // ✅ PHASE 2 COMPLETE: Correct payload structure implemented
     const withdrawalPayload = {
-      to: withdrawal.payout_address,
-      amount: parseFloat(withdrawal.net_amount),
-      currencyToken: 'USDT',
+      to: withdrawal.payout_address,              // ✅ Correct field name (not 'address')
+      amount: parseFloat(withdrawal.net_amount),  // ✅ Number type (not string)
+      currencyToken: 'USDT',                      // ⚠️ PHASE 3: Needs MongoDB ObjectId
+      // ✅ walletId and walletPassphrase removed (auth via Bearer token)
     };
 
     console.log('[CPAY-WITHDRAWAL] Withdrawal payload:', withdrawalPayload);
+    console.log('[CPAY-WITHDRAWAL] 📝 Payload validation:', {
+      hasTo: !!withdrawalPayload.to,
+      isAmountNumber: typeof withdrawalPayload.amount === 'number',
+      walletIdRemoved: !('walletId' in withdrawalPayload),
+      passphraseRemoved: !('walletPassphrase' in withdrawalPayload),
+      addressFieldRemoved: !('address' in withdrawalPayload)
+    });
 
     const withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
       method: 'POST',
@@ -579,27 +589,38 @@ async function processCPAYWithdrawal(withdrawal: any) {
         errorData = { message: responseText };
       }
 
-      const errorMessage = errorData.data?.message || errorData.message || responseText;
+      // Extract error message (handle both string and array formats)
+      let errorMessage = errorData.data?.message || errorData.message || responseText;
+      
+      // Convert array to string for easier processing
+      const errorString = Array.isArray(errorMessage) 
+        ? errorMessage.join('; ') 
+        : String(errorMessage);
+      
+      const lowerError = errorString.toLowerCase();
       
       // Provide specific error messages based on error content
       let errorMsg = `CPAY withdrawal failed (${withdrawalResponse.status})`;
       
-      if (errorMessage.toLowerCase().includes('address') && errorMessage.toLowerCase().includes('invalid')) {
+      if (lowerError.includes('address') && lowerError.includes('invalid')) {
         errorMsg = `Invalid recipient address format: ${withdrawal.payout_address}. Please verify the USDT (TRC20) address.`;
-      } else if (errorMessage.toLowerCase().includes('insufficient')) {
+      } else if (lowerError.includes('insufficient')) {
         errorMsg = `Insufficient wallet balance. CPAY wallet does not have enough funds to process this withdrawal.`;
-      } else if (errorMessage.toLowerCase().includes('currencytoken') || errorMessage.toLowerCase().includes('mongodb')) {
-        errorMsg = `Invalid currency token ID. The 'USDT' value may need to be a MongoDB ObjectId. Contact CPAY support for the correct USDT token ID.`;
-      } else if (errorMessage.toLowerCase().includes('should not exist')) {
-        errorMsg = `Payload validation error: ${errorMessage}. Check withdrawal payload structure matches CPAY API requirements.`;
+      } else if (lowerError.includes('currencytoken') || lowerError.includes('mongodb')) {
+        errorMsg = `Invalid currency token ID. The 'USDT' string must be replaced with a MongoDB ObjectId. Add CPAY_USDT_TOKEN_ID secret with the correct ObjectId from CPAY support.`;
+      } else if (lowerError.includes('should not exist')) {
+        errorMsg = `Payload validation error: ${errorString}. The withdrawal payload structure does not match CPAY API requirements.`;
+      } else if (lowerError.includes('to must be a string')) {
+        errorMsg = `Invalid 'to' address field. Ensure the recipient address is a valid string.`;
       } else if (withdrawalResponse.status === 401 || withdrawalResponse.status === 403) {
         errorMsg = `Authentication error: Wallet token may be invalid or expired. Verify wallet credentials in secrets.`;
       } else {
-        errorMsg = `${errorMsg}: ${errorMessage}`;
+        errorMsg = `${errorMsg}: ${errorString}`;
       }
       
       console.error('[CPAY-WITHDRAWAL] ❌ Withdrawal failed:', errorMsg);
       console.error('[CPAY-WITHDRAWAL] ❌ Full error response:', responseText);
+      console.error('[CPAY-WITHDRAWAL] ❌ Parsed error messages:', errorString);
       throw new Error(errorMsg);
     }
 
