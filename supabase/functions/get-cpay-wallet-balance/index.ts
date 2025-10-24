@@ -228,66 +228,104 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================
-    // STEP 5: FETCH CURRENCY LIST FOR ENRICHMENT
+    // STEP 5: FETCH CURRENCY LIST FOR ENRICHMENT (BEST-EFFORT)
     // ============================================================
     console.log('[GET-CPAY-WALLET-BALANCE] 📋 Fetching currency details...');
 
-    const currencyResponse = await fetch(`${CPAY_BASE_URL}/api/public/currency`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${walletToken}`,
-        'Content-Type': 'application/json'
+    // Helper: Defensive currency extraction from various payload shapes
+    function extractCurrencies(payload: any): { arr: CPAYCurrency[]; source: string } {
+      // Try direct array
+      if (Array.isArray(payload)) {
+        return { arr: payload, source: 'direct_array' };
       }
-    });
-
-    console.log('[GET-CPAY-WALLET-BALANCE] Currency API status:', currencyResponse.status);
-
-    if (!currencyResponse.ok) {
-      const errorText = await currencyResponse.text();
-      console.error('[GET-CPAY-WALLET-BALANCE] ❌ Currency fetch failed:', errorText);
-      return new Response(JSON.stringify({
-        error: 'Failed to fetch currency list',
-        status: currencyResponse.status,
-        details: errorText
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      
+      // Try payload.data (most common wrapper)
+      if (payload?.data && Array.isArray(payload.data)) {
+        return { arr: payload.data, source: 'payload.data' };
+      }
+      
+      // Try payload.currencies
+      if (payload?.currencies && Array.isArray(payload.currencies)) {
+        return { arr: payload.currencies, source: 'payload.currencies' };
+      }
+      
+      // Try payload.data.currencies
+      if (payload?.data?.currencies && Array.isArray(payload.data.currencies)) {
+        return { arr: payload.data.currencies, source: 'payload.data.currencies' };
+      }
+      
+      // Try payload.result
+      if (payload?.result && Array.isArray(payload.result)) {
+        return { arr: payload.result, source: 'payload.result' };
+      }
+      
+      // Give up - return empty array (graceful degradation)
+      return { arr: [], source: 'none_found' };
     }
 
-    const currencyPayload = await currencyResponse.json();
-    console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload type:', typeof currencyPayload);
-    console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload structure:', JSON.stringify(currencyPayload).substring(0, 200));
-    
-    // CRITICAL FIX: Handle both direct array and { data: [...] } wrapped responses
-    const currencies: CPAYCurrency[] = Array.isArray(currencyPayload) 
-      ? currencyPayload 
-      : (currencyPayload.data || []);
+    const warnings: string[] = [];
+    let currencies: CPAYCurrency[] = [];
+    let currencySource = 'unknown';
 
-    console.log('[GET-CPAY-WALLET-BALANCE] ✅ Currency list retrieved:', currencies.length, 'currencies');
-    
-    if (!Array.isArray(currencies)) {
-      console.error('[GET-CPAY-WALLET-BALANCE] ❌ currencies is not an array:', typeof currencies);
-      return new Response(JSON.stringify({
-        error: 'Invalid currency data format',
-        details: 'Expected array but got ' + typeof currencies
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    try {
+      const currencyResponse = await fetch(`${CPAY_BASE_URL}/api/public/currency`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${walletToken}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      console.log('[GET-CPAY-WALLET-BALANCE] Currency API status:', currencyResponse.status);
+
+      if (!currencyResponse.ok) {
+        const errorText = await currencyResponse.text();
+        console.warn('[GET-CPAY-WALLET-BALANCE] ⚠️  Currency fetch failed (non-fatal):', errorText);
+        warnings.push('Currency enrichment unavailable: API returned ' + currencyResponse.status);
+        // Continue with empty currencies array
+      } else {
+        const currencyPayload = await currencyResponse.json();
+        console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload type:', typeof currencyPayload);
+        console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload preview:', JSON.stringify(currencyPayload).substring(0, 200));
+        
+        const extracted = extractCurrencies(currencyPayload);
+        currencies = extracted.arr;
+        currencySource = extracted.source;
+        
+        if (currencies.length === 0) {
+          console.warn('[GET-CPAY-WALLET-BALANCE] ⚠️  No currencies extracted from payload (source: ' + currencySource + ')');
+          warnings.push('Currency enrichment skipped: unrecognized payload structure');
+        } else {
+          console.log('[GET-CPAY-WALLET-BALANCE] ✅ Currency list extracted:', currencies.length, 'currencies (source: ' + currencySource + ')');
+        }
+      }
+    } catch (currencyError) {
+      console.warn('[GET-CPAY-WALLET-BALANCE] ⚠️  Currency fetch error (non-fatal):', currencyError);
+      warnings.push('Currency enrichment unavailable: ' + (currencyError instanceof Error ? currencyError.message : 'fetch failed'));
     }
 
     // ============================================================
-    // STEP 6: ENRICH TOKEN DATA WITH CURRENCY DETAILS
+    // STEP 6: ENRICH TOKEN DATA WITH CURRENCY DETAILS (BEST-EFFORT)
     // ============================================================
     console.log('[GET-CPAY-WALLET-BALANCE] 🔗 Enriching token data...');
+    
+    // Build currency map for O(1) lookups (prevents "find is not a function" errors)
+    const currencyMap: Record<string, CPAYCurrency> = Object.create(null);
+    for (const c of currencies) {
+      if (c?._id) {
+        currencyMap[c._id] = c;
+      }
+    }
 
     const enrichedTokens = (wallet.tokens || []).map((token: CPAYToken) => {
-      const currency = currencies.find((c: CPAYCurrency) => c._id === token.currencyId);
+      const currency = currencyMap[token.currencyId];
       
-      const isUsdtTrc20 = currency?.name?.toUpperCase() === 'USDT' && 
-                          currency?.nodeType?.toLowerCase() === 'tron' &&
-                          currency?.currencyType === 'token';
+      // Best-effort USDT TRC20 detection (only when currency data available)
+      const isUsdtTrc20 = currency 
+        ? (currency.name?.toUpperCase() === 'USDT' && 
+           currency.nodeType?.toLowerCase() === 'tron' &&
+           currency.currencyType === 'token')
+        : false;
 
       return {
         currencyId: token.currencyId,
@@ -305,6 +343,8 @@ Deno.serve(async (req) => {
     console.log('[GET-CPAY-WALLET-BALANCE] 🎯 USDT TRC20 found:', !!usdtTrc20Token);
     if (usdtTrc20Token) {
       console.log('[GET-CPAY-WALLET-BALANCE] 💎 USDT TRC20 currencyId:', usdtTrc20Token.currencyId);
+    } else if (warnings.length > 0) {
+      console.log('[GET-CPAY-WALLET-BALANCE] ⚠️  USDT TRC20 not detected (enrichment unavailable)');
     }
 
     // ============================================================
@@ -323,6 +363,7 @@ Deno.serve(async (req) => {
       },
       tokens: enrichedTokens,
       usdtTrc20: usdtTrc20Token || null,
+      warnings: warnings.length > 0 ? warnings : undefined,
       tips: [
         'Use the currencyId from USDT TRC20 token as CPAY_USDT_TOKEN_ID',
         'Ensure you have sufficient TRX balance for miner fees',
@@ -330,6 +371,9 @@ Deno.serve(async (req) => {
       ]
     };
 
+    if (warnings.length > 0) {
+      console.log('[GET-CPAY-WALLET-BALANCE] ⚠️  Completed with warnings:', warnings.length);
+    }
     console.log('[GET-CPAY-WALLET-BALANCE] 🎉 SUCCESS - Wallet balance retrieved');
 
     return new Response(JSON.stringify(result, null, 2), {
