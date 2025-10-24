@@ -273,50 +273,27 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
   } catch (apiError: any) {
     console.error('API payment failed:', apiError);
 
-    // Update status to failed
+    // CRITICAL: Keep withdrawal as PENDING (do NOT refund user or mark as failed)
+    // This allows admin to retry payment or manually reject if needed
     await supabase
       .from('withdrawal_requests')
       .update({
-        status: 'failed',
+        status: 'pending', // Keep as pending for admin retry
         api_response: { 
           error: apiError.message,
-          details: apiError.details || apiError.toString()
+          details: apiError.details || apiError.toString(),
+          failed_at: new Date().toISOString(),
+          provider: provider
         },
         updated_at: new Date().toISOString(),
       })
       .eq('id', withdrawal.id);
 
-    // Refund user's earnings wallet
-    await supabase
-      .from('profiles')
-      .update({
-        earnings_wallet_balance: withdrawal.profiles.earnings_wallet_balance + withdrawal.amount
-      })
-      .eq('id', withdrawal.user_id);
+    // DO NOT refund user's wallet - funds already deducted, waiting for successful payout
+    // DO NOT update transaction to failed - keep as pending
+    // DO NOT send failure notification to user - withdrawal is still being processed
 
-    // Update transaction to failed
-    await supabase
-      .from('transactions')
-      .update({ status: 'failed' })
-      .eq('user_id', withdrawal.user_id)
-      .eq('type', 'withdrawal')
-      .eq('amount', withdrawal.amount)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    // Send failure notification
-    await supabase.functions.invoke('send-cpay-notification', {
-      body: {
-        user_id: withdrawal.user_id,
-        type: 'withdrawal_failed',
-        withdrawal_id: withdrawal.id,
-        amount: withdrawal.net_amount,
-        message: `Your withdrawal failed: ${apiError.message}. Funds have been refunded to your earnings wallet.`
-      }
-    }).catch((err: any) => console.error('Notification error:', err));
-
-    // Audit log
+    // Audit log for admin awareness
     await supabase
       .from('audit_logs')
       .insert({
@@ -326,20 +303,28 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
         details: {
           withdrawal_id: withdrawal.id,
           amount: withdrawal.amount,
+          net_amount: withdrawal.net_amount,
           provider: provider,
-          error: apiError.message
+          error: apiError.message,
+          error_details: apiError.details || apiError.toString(),
+          note: 'API call failed - withdrawal remains PENDING for admin retry or manual rejection'
         }
       });
 
+    console.log(`Withdrawal ${withdrawal.id} API failed but remains PENDING for retry`);
+
+    // Return success=true with api_failed flag for frontend handling
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        status: 'failed',
+        success: true,  // Action completed successfully (error was handled properly)
+        api_failed: true, // But API call failed
         error_message: apiError.message,
-        message: 'API payment failed. Funds refunded to user.' 
+        status: 'pending',
+        provider: provider,
+        message: `API payment failed: ${apiError.message}. Withdrawal remains PENDING - you can retry or reject manually.`
       }),
       { 
-        status: 200, // Return 200 to allow frontend to handle gracefully
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
