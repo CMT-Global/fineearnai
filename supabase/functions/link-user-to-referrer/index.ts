@@ -20,19 +20,28 @@ Deno.serve(async (req) => {
 
     const { userId, referralCode }: LinkReferrerRequest = await req.json();
 
-    console.log(`Linking user ${userId} to referrer with code: ${referralCode}`);
+    console.log(`[REFERRAL-LINK] 🚀 Request received:`, {
+      userId,
+      referralCode,
+      timestamp: new Date().toISOString()
+    });
 
     // Validate inputs
     if (!userId || !referralCode) {
+      console.error('[REFERRAL-LINK] ❌ Missing required fields:', { userId: !!userId, referralCode: !!referralCode });
       throw new Error('Missing required fields: userId and referralCode');
     }
 
     // Validate referral code format (8 alphanumeric characters)
     if (!/^[A-Z0-9]{8}$/.test(referralCode)) {
+      console.error('[REFERRAL-LINK] ❌ Invalid referral code format:', referralCode);
       throw new Error('Invalid referral code format');
     }
 
+    console.log('[REFERRAL-LINK] ✅ Validation passed');
+
     // Get the user being referred
+    console.log('[REFERRAL-LINK] 🔍 Fetching referred user profile...');
     const { data: referredUser, error: userError } = await supabaseClient
       .from('profiles')
       .select('id, username, email, referred_by, referral_code, account_status')
@@ -40,13 +49,18 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (userError || !referredUser) {
-      console.error('Error fetching user:', userError);
+      console.error('[REFERRAL-LINK] ❌ Error fetching user:', userError);
       throw new Error('User not found');
     }
 
+    console.log('[REFERRAL-LINK] ✅ Found referred user:', {
+      username: referredUser.username,
+      hasExistingReferrer: !!referredUser.referred_by
+    });
+
     // Check if user is already linked to a referrer
     if (referredUser.referred_by) {
-      console.log('User already has a referrer, skipping');
+      console.log('[REFERRAL-LINK] ⚠️ User already has a referrer, skipping');
       return new Response(
         JSON.stringify({ success: true, message: 'User already has a referrer' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,10 +69,12 @@ Deno.serve(async (req) => {
 
     // Prevent self-referral
     if (referredUser.referral_code === referralCode) {
+      console.error('[REFERRAL-LINK] ❌ Self-referral attempt detected');
       throw new Error('You cannot use your own referral code');
     }
 
     // Find the referrer by referral code
+    console.log('[REFERRAL-LINK] 🔍 Looking up referrer by code...');
     const { data: referrer, error: referrerError } = await supabaseClient
       .from('profiles')
       .select('id, username, email, referral_code, account_status, membership_plan')
@@ -66,12 +82,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (referrerError || !referrer) {
-      console.error('Error fetching referrer:', referrerError);
+      console.error('[REFERRAL-LINK] ❌ Error fetching referrer:', referrerError);
       throw new Error('Invalid referral code - referrer not found');
     }
 
+    console.log('[REFERRAL-LINK] ✅ Found referrer:', {
+      username: referrer.username,
+      accountStatus: referrer.account_status,
+      membershipPlan: referrer.membership_plan
+    });
+
     // Check if referrer account is active
     if (referrer.account_status !== 'active') {
+      console.error('[REFERRAL-LINK] ❌ Referrer account not active:', referrer.account_status);
       throw new Error('Referrer account is not active');
     }
 
@@ -83,6 +106,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (circularCheck && circularCheck.referred_by === userId) {
+      console.error('[REFERRAL-LINK] ❌ Circular referral detected');
       throw new Error('Circular referral detected - referrer was referred by this user');
     }
 
@@ -95,7 +119,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingReferral) {
-      console.log('Referral relationship already exists');
+      console.log('[REFERRAL-LINK] ⚠️ Referral relationship already exists');
       return new Response(
         JSON.stringify({ success: true, message: 'Referral already exists' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -103,6 +127,7 @@ Deno.serve(async (req) => {
     }
 
     // Create referral relationship record
+    console.log('[REFERRAL-LINK] 📝 Creating referral record...');
     const { error: referralError } = await supabaseClient
       .from('referrals')
       .insert({
@@ -114,20 +139,25 @@ Deno.serve(async (req) => {
       });
 
     if (referralError) {
-      console.error('Error creating referral record:', referralError);
+      console.error('[REFERRAL-LINK] ❌ Error creating referral record:', referralError);
       throw new Error(`Failed to create referral: ${referralError.message}`);
     }
 
+    console.log('[REFERRAL-LINK] ✅ Referral record created');
+
     // Update referred user's referred_by field
+    console.log('[REFERRAL-LINK] 📝 Updating user profile...');
     const { error: updateError } = await supabaseClient
       .from('profiles')
       .update({ referred_by: referrer.id })
       .eq('id', userId);
 
     if (updateError) {
-      console.error('Error updating user referred_by:', updateError);
+      console.error('[REFERRAL-LINK] ❌ Error updating user referred_by:', updateError);
       throw new Error(`Failed to update user: ${updateError.message}`);
     }
+
+    console.log('[REFERRAL-LINK] ✅ User profile updated');
 
     // Get referral program config to check for signup bonus
     const { data: config } = await supabaseClient
@@ -176,8 +206,12 @@ Deno.serve(async (req) => {
           });
 
         signupBonusApplied = true;
-        console.log(`Applied signup bonus of $${signupBonusAmount} to new user`);
+        console.log(`[REFERRAL-LINK] 💰 Applied signup bonus of $${signupBonusAmount} to new user`);
+      } else {
+        console.error('[REFERRAL-LINK] ❌ Failed to apply signup bonus:', bonusError);
       }
+    } else {
+      console.log('[REFERRAL-LINK] ℹ️ Signup bonus not configured or disabled');
     }
 
     // Log user activity
@@ -210,7 +244,11 @@ Deno.serve(async (req) => {
       console.log('Note: Could not create notification (table may not exist):', notifError);
     }
 
-    console.log(`Successfully linked user ${userId} to referrer ${referrer.id}`);
+    console.log(`[REFERRAL-LINK] ✅ Successfully linked user ${userId} to referrer ${referrer.id}`, {
+      referrerUsername: referrer.username,
+      signupBonusApplied,
+      signupBonusAmount
+    });
 
     return new Response(
       JSON.stringify({
@@ -229,9 +267,16 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in link-user-to-referrer:', error);
+    console.error('[REFERRAL-LINK] 💥 Exception:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

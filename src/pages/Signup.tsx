@@ -32,14 +32,17 @@ const Signup = () => {
   useEffect(() => {
     if (referralCodeFromUrl) {
       const upperCode = referralCodeFromUrl.toUpperCase();
+      console.log('[REFERRAL] 🔗 Detected referral code from URL:', upperCode);
       
       // Validate format
       if (validateReferralCode(upperCode)) {
         localStorage.setItem("pending_referral_code", upperCode);
+        console.log('[REFERRAL] ✅ Valid referral code stored in localStorage');
         
         // Fetch and display referrer info
         fetchReferrerInfo(upperCode);
       } else {
+        console.error('[REFERRAL] ❌ Invalid referral code format:', upperCode);
         toast({
           title: "Invalid referral code",
           description: "The referral code format is invalid.",
@@ -51,6 +54,8 @@ const Signup = () => {
 
   const fetchReferrerInfo = async (code: string) => {
     try {
+      console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("username")
@@ -58,6 +63,7 @@ const Signup = () => {
         .single();
 
       if (error || !data) {
+        console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
         toast({
           title: "Referral code not found",
           description: "The referral code you entered does not exist.",
@@ -67,9 +73,10 @@ const Signup = () => {
         return;
       }
 
+      console.log('[REFERRAL] ✅ Found referrer:', data.username);
       setReferrerUsername(data.username);
     } catch (error) {
-      console.error("Error fetching referrer info:", error);
+      console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
     }
   };
 
@@ -135,6 +142,12 @@ const Signup = () => {
 
       // If signup successful and we have a referral code, link the user to referrer
       if (authData.user && referralCode) {
+        console.log('[REFERRAL] 🚀 Starting referral linking process:', {
+          userId: authData.user.id,
+          referralCode: referralCode,
+          referrerUsername: referrerUsername
+        });
+
         try {
           const { data: linkData, error: linkError } = await supabase.functions.invoke(
             "link-user-to-referrer",
@@ -146,26 +159,47 @@ const Signup = () => {
             }
           );
 
+          console.log('[REFERRAL] 📡 Edge function response:', {
+            success: linkData?.success,
+            error: linkError,
+            data: linkData
+          });
+
           if (linkError) {
-            console.error("Error linking referral:", linkError);
+            console.error('[REFERRAL] ❌ Edge function error:', {
+              message: linkError.message,
+              status: linkError.status,
+              details: linkError
+            });
             toast({
               title: "Referral link failed",
               description: "Your account was created, but we couldn't link the referral code.",
               variant: "destructive",
             });
           } else if (linkData?.success) {
+            console.log('[REFERRAL] ✅ Referral link successful:', {
+              referrer: linkData?.referrer,
+              signupBonus: linkData?.signupBonus
+            });
             toast({
               title: "Account created!",
               description: referrerUsername 
                 ? `Welcome to FineEarn! You've been referred by ${referrerUsername}.`
                 : "Welcome to FineEarn! Referral link successful.",
             });
+          } else {
+            console.warn('[REFERRAL] ⚠️ Unexpected response format:', linkData);
           }
         } catch (linkErr) {
-          console.error("Exception linking referral:", linkErr);
+          console.error('[REFERRAL] 💥 Exception during referral linking:', {
+            error: linkErr,
+            message: linkErr instanceof Error ? linkErr.message : 'Unknown error',
+            stack: linkErr instanceof Error ? linkErr.stack : undefined
+          });
           // Don't block the signup flow for referral errors
         } finally {
           // Clear the stored referral code
+          console.log('[REFERRAL] 🧹 Clearing stored referral code from localStorage');
           localStorage.removeItem("pending_referral_code");
         }
       } else {
