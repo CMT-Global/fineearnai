@@ -577,7 +577,16 @@ async function processCPAYWithdrawal(withdrawal: any) {
       currencyTokenLength: CPAY_USDT_TOKEN_ID.length
     });
     
-    // 🔍 DETAILED LOGGING: Log exact request details
+    // ============================================================
+    // STEP 3.1: Generate Unique Idempotency Key for This Attempt
+    // ============================================================
+    // This ensures each admin retry gets a fresh API call (not cached by CPAY)
+    const attemptKeyBase = `${withdrawal.id}-${Date.now()}`;
+    console.log('[CPAY-WITHDRAWAL] 🔑 Idempotency key for this attempt:', attemptKeyBase);
+    
+    // ============================================================
+    // STEP 3.2: Log FULL REQUEST Before Sending
+    // ============================================================
     const requestBody = JSON.stringify(withdrawalPayload);
     console.log('[CPAY-WITHDRAWAL] 📤 FULL REQUEST:', {
       url: 'https://api.cpay.world/api/public/withdrawal',
@@ -585,21 +594,24 @@ async function processCPAYWithdrawal(withdrawal: any) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ***',
-        'Idempotency-Key': withdrawal.id
+        'Idempotency-Key': attemptKeyBase
       },
       body: requestBody,
-      bodyLength: requestBody.length
+      bodyLength: requestBody.length,
+      parsedBody: withdrawalPayload
     });
 
-    // Attempt withdrawal with minimal payload
+    // ============================================================
+    // STEP 3.3: Make Primary Withdrawal Request
+    // ============================================================
     let withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${walletBearerToken}`,
-        'Idempotency-Key': withdrawal.id,
+        'Idempotency-Key': attemptKeyBase,
       },
-      body: JSON.stringify(withdrawalPayload),
+      body: requestBody,
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
@@ -635,17 +647,30 @@ async function processCPAYWithdrawal(withdrawal: any) {
         // Update amount to 6 decimal precision
         withdrawalPayload.amount = formatAmount(parseFloat(withdrawal.net_amount), 6);
         
+        const retryIdempotencyKey = `${attemptKeyBase}-6dp`;
+        
         console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload (6dp):', {
           to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
           amount: withdrawalPayload.amount,
           amountType: typeof withdrawalPayload.amount,
           amountPrecision: '6dp',
-          currencyTokenIncluded: 'currencyToken' in withdrawalPayload
+          currencyTokenIncluded: 'currencyToken' in withdrawalPayload,
+          idempotencyKey: retryIdempotencyKey
         });
 
-        // 🔍 DETAILED LOGGING: Log exact retry request body
+        // 🔍 DETAILED LOGGING: Log exact retry request
         const retryRequestBody = JSON.stringify(withdrawalPayload);
-        console.log('[CPAY-WITHDRAWAL] 📤 EXACT RETRY REQUEST BODY (6dp):', retryRequestBody);
+        console.log('[CPAY-WITHDRAWAL] 📤 FULL RETRY REQUEST (6dp):', {
+          url: 'https://api.cpay.world/api/public/withdrawal',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ***',
+            'Idempotency-Key': retryIdempotencyKey
+          },
+          body: retryRequestBody,
+          parsedBody: withdrawalPayload
+        });
 
         // Retry withdrawal with 6dp amount
         withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
@@ -653,9 +678,9 @@ async function processCPAYWithdrawal(withdrawal: any) {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${walletBearerToken}`,
-            'Idempotency-Key': `${withdrawal.id}-retry-6dp`,
+            'Idempotency-Key': retryIdempotencyKey,
           },
-          body: JSON.stringify(withdrawalPayload),
+          body: retryRequestBody,
           signal: AbortSignal.timeout(30000),
         });
 
