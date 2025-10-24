@@ -83,7 +83,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           return true;
         });
       
-      const withdrawals = (data || []).filter(p => p.processor_type === 'withdrawal');
+      const withdrawals = (data || []).filter(p => 
+        p.processor_type === 'withdrawal' || p.processor_type === 'manual'
+      );
 
       setDepositProcessors(deposits);
       setWithdrawalProcessors(withdrawals);
