@@ -544,117 +544,26 @@ async function processCPAYWithdrawal(withdrawal: any) {
     console.log('[CPAY-WITHDRAWAL] 🔑 Using wallet-specific Bearer token for withdrawal');
 
     // ============================================================
-    // STEP 3: Get USDT Currency Token ID (MongoDB ObjectId)
+    // STEP 3: Perform Withdrawal (minimal payload - no currencyToken)
     // ============================================================
-    console.log('[CPAY-WITHDRAWAL] 📡 Step 3/4: Fetching currency list from CPAY...');
-    
-    // Check if manual token ID is configured (fallback option)
-    const MANUAL_USDT_TOKEN_ID = Deno.env.get('CPAY_USDT_TOKEN_ID');
-    let usdtTokenId: string | null = null;
+    console.log('[CPAY-WITHDRAWAL] 📡 Step 3/3: Calling CPAY withdrawal endpoint...');
 
-    if (MANUAL_USDT_TOKEN_ID) {
-      console.log('[CPAY-WITHDRAWAL] ✅ Using manually configured CPAY_USDT_TOKEN_ID');
-      usdtTokenId = MANUAL_USDT_TOKEN_ID;
-    } else {
-      // Dynamically fetch from CPAY API
-      console.log('[CPAY-WITHDRAWAL] 🔍 Querying CPAY currency endpoint...');
-      
-      const currencyResponse = await fetch('https://api.cpay.world/api/public/currency', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${walletBearerToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const currencyResponseText = await currencyResponse.text();
-      console.log('[CPAY-WITHDRAWAL] Currency API response status:', currencyResponse.status);
-
-      if (!currencyResponse.ok) {
-        const errorMsg = `Failed to fetch currency list from CPAY (${currencyResponse.status}): ${currencyResponseText}`;
-        console.error('[CPAY-WITHDRAWAL] ❌', errorMsg);
-        throw new Error(errorMsg);
-      }
-
-      let currencyData;
-      try {
-        currencyData = JSON.parse(currencyResponseText);
-      } catch (e) {
-        throw new Error(`CPAY currency response is not valid JSON: ${currencyResponseText}`);
-      }
-
-      console.log('[CPAY-WITHDRAWAL] 📋 Total currencies available:', currencyData.data?.length || 0);
-
-      // Find USDT (TRC20) in the currency list
-      const currencies = currencyData.data || [];
-      const usdtCurrency = currencies.find((c: any) => {
-        const isUSDT = c.name?.toUpperCase() === 'USDT' || c.symbol?.toUpperCase() === 'USDT';
-        const isTRC20 = c.nodeType?.toLowerCase() === 'trc20' || c.network?.toLowerCase() === 'trc20';
-        return isUSDT && isTRC20;
-      });
-
-      if (!usdtCurrency) {
-        // Try finding any USDT if TRC20 specific not found
-        const anyUSDT = currencies.find((c: any) => 
-          c.name?.toUpperCase() === 'USDT' || c.symbol?.toUpperCase() === 'USDT'
-        );
-        
-        if (anyUSDT) {
-          console.warn('[CPAY-WITHDRAWAL] ⚠️ TRC20 USDT not found, using first USDT currency found:', anyUSDT);
-          usdtTokenId = anyUSDT._id;
-        } else {
-          console.error('[CPAY-WITHDRAWAL] ❌ Available currencies:', currencies.map((c: any) => ({
-            name: c.name,
-            symbol: c.symbol,
-            network: c.nodeType || c.network,
-            _id: c._id
-          })));
-          throw new Error('USDT currency not found in CPAY currency list. Please contact CPAY support or manually configure CPAY_USDT_TOKEN_ID secret.');
-        }
-      } else {
-        usdtTokenId = usdtCurrency._id;
-        console.log('[CPAY-WITHDRAWAL] ✅ Found USDT (TRC20) currency:', {
-          name: usdtCurrency.name,
-          symbol: usdtCurrency.symbol,
-          network: usdtCurrency.nodeType || usdtCurrency.network,
-          _id: usdtTokenId
-        });
-      }
-    }
-
-    if (!usdtTokenId) {
-      throw new Error('Failed to obtain USDT currency token ID. Please configure CPAY_USDT_TOKEN_ID secret manually.');
-    }
-
-    console.log('[CPAY-WITHDRAWAL] 🎯 Using USDT Token ID:', usdtTokenId);
-
-    // ============================================================
-    // STEP 4: Perform Withdrawal (using wallet token + currency ID)
-    // ============================================================
-    console.log('[CPAY-WITHDRAWAL] 📡 Step 4/4: Calling CPAY withdrawal endpoint...');
-
-    // Construct withdrawal payload according to CPAY API specification
-    // ✅ PHASE 2 COMPLETE: Correct payload structure implemented
-    // ✅ PHASE 3 COMPLETE: Dynamic currency token ID from CPAY API
-    const withdrawalPayload = {
-      to: withdrawal.payout_address,              // ✅ Correct field name (not 'address')
-      amount: parseFloat(withdrawal.net_amount),  // ✅ Number type (not string)
-      currencyToken: usdtTokenId,                 // ✅ MongoDB ObjectId from CPAY API
-      // ✅ walletId and walletPassphrase removed (auth via Bearer token)
+    // Construct minimal withdrawal payload (CPAY auto-detects USDT TRC20)
+    // ✅ LASER FIX: Remove dependency on unreliable currency API
+    const withdrawalPayload: any = {
+      to: withdrawal.payout_address,              // ✅ Correct field name
+      amount: parseFloat(withdrawal.net_amount),  // ✅ Number type
+      // ❌ currencyToken REMOVED - CPAY should auto-detect for USDT TRC20
     };
 
-    console.log('[CPAY-WITHDRAWAL] Withdrawal payload:', withdrawalPayload);
-    console.log('[CPAY-WITHDRAWAL] 📝 Payload validation:', {
-      hasTo: !!withdrawalPayload.to,
-      isAmountNumber: typeof withdrawalPayload.amount === 'number',
-      hasCurrencyTokenId: !!withdrawalPayload.currencyToken,
-      isTokenIdValid: withdrawalPayload.currencyToken?.length === 24, // MongoDB ObjectId is 24 chars
-      walletIdRemoved: !('walletId' in withdrawalPayload),
-      passphraseRemoved: !('walletPassphrase' in withdrawalPayload),
-      addressFieldRemoved: !('address' in withdrawalPayload)
+    console.log('[CPAY-WITHDRAWAL] 📦 Minimal withdrawal payload:', {
+      to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
+      amount: withdrawalPayload.amount,
+      currencyTokenIncluded: 'currencyToken' in withdrawalPayload
     });
 
-    const withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
+    // Attempt withdrawal with minimal payload
+    let withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -662,14 +571,17 @@ async function processCPAYWithdrawal(withdrawal: any) {
         'Idempotency-Key': withdrawal.id,
       },
       body: JSON.stringify(withdrawalPayload),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
-    const responseText = await withdrawalResponse.text();
+    let responseText = await withdrawalResponse.text();
     console.log('[CPAY-WITHDRAWAL] Withdrawal response status:', withdrawalResponse.status);
-    console.log('[CPAY-WITHDRAWAL] Withdrawal response body:', responseText);
+    console.log('[CPAY-WITHDRAWAL] Withdrawal response body (truncated):', responseText.substring(0, 500));
 
+    // ============================================================
+    // FALLBACK: Retry with currencyToken if CPAY requires it
+    // ============================================================
     if (!withdrawalResponse.ok) {
-      // Parse error response for detailed error messages
       let errorData;
       try {
         errorData = JSON.parse(responseText);
@@ -677,38 +589,81 @@ async function processCPAYWithdrawal(withdrawal: any) {
         errorData = { message: responseText };
       }
 
-      // Extract error message (handle both string and array formats)
-      let errorMessage = errorData.data?.message || errorData.message || responseText;
-      
-      // Convert array to string for easier processing
-      const errorString = Array.isArray(errorMessage) 
-        ? errorMessage.join('; ') 
-        : String(errorMessage);
-      
+      const errorMessage = errorData.data?.message || errorData.message || responseText;
+      const errorString = Array.isArray(errorMessage) ? errorMessage.join('; ') : String(errorMessage);
+      const lowerError = errorString.toLowerCase();
+
+      // Check if error is about missing currency token
+      const isCurrencyError = 
+        lowerError.includes('currency') && 
+        (lowerError.includes('required') || lowerError.includes('must') || lowerError.includes('missing'));
+
+      if (isCurrencyError) {
+        const CPAY_USDT_TOKEN_ID = Deno.env.get('CPAY_USDT_TOKEN_ID');
+        
+        if (CPAY_USDT_TOKEN_ID) {
+          console.log('[CPAY-WITHDRAWAL] ⚠️ Currency required by CPAY, retrying with CPAY_USDT_TOKEN_ID...');
+          
+          // Add currencyToken to payload
+          withdrawalPayload.currencyToken = CPAY_USDT_TOKEN_ID;
+          
+          console.log('[CPAY-WITHDRAWAL] 🔄 Retry payload:', {
+            to: `${withdrawalPayload.to.substring(0, 8)}...${withdrawalPayload.to.substring(withdrawalPayload.to.length - 8)}`,
+            amount: withdrawalPayload.amount,
+            currencyToken: CPAY_USDT_TOKEN_ID
+          });
+
+          // Retry withdrawal with currencyToken
+          withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${walletBearerToken}`,
+              'Idempotency-Key': `${withdrawal.id}-retry`,
+            },
+            body: JSON.stringify(withdrawalPayload),
+            signal: AbortSignal.timeout(30000),
+          });
+
+          responseText = await withdrawalResponse.text();
+          console.log('[CPAY-WITHDRAWAL] 🔄 Retry response status:', withdrawalResponse.status);
+          console.log('[CPAY-WITHDRAWAL] 🔄 Retry response body (truncated):', responseText.substring(0, 500));
+        } else {
+          console.error('[CPAY-WITHDRAWAL] ❌ Currency required but CPAY_USDT_TOKEN_ID not configured');
+          throw new Error(`CPAY requires currencyToken but CPAY_USDT_TOKEN_ID secret is not set. Original error: ${errorString}`);
+        }
+      }
+    }
+
+    // Parse final response
+    if (!withdrawalResponse.ok) {
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        errorData = { message: responseText };
+      }
+
+      const errorMessage = errorData.data?.message || errorData.message || responseText;
+      const errorString = Array.isArray(errorMessage) ? errorMessage.join('; ') : String(errorMessage);
       const lowerError = errorString.toLowerCase();
       
-      // Provide specific error messages based on error content
+      // Provide specific error messages
       let errorMsg = `CPAY withdrawal failed (${withdrawalResponse.status})`;
       
       if (lowerError.includes('address') && lowerError.includes('invalid')) {
-        errorMsg = `Invalid recipient address format: ${withdrawal.payout_address}. Please verify the USDT (TRC20) address.`;
+        errorMsg = `Invalid USDT (TRC20) address: ${withdrawal.payout_address}`;
       } else if (lowerError.includes('insufficient')) {
-        errorMsg = `Insufficient wallet balance. CPAY wallet does not have enough funds to process this withdrawal.`;
-      } else if (lowerError.includes('currencytoken') || lowerError.includes('mongodb')) {
-        errorMsg = `Invalid currency token ID. The 'USDT' string must be replaced with a MongoDB ObjectId. Add CPAY_USDT_TOKEN_ID secret with the correct ObjectId from CPAY support.`;
-      } else if (lowerError.includes('should not exist')) {
-        errorMsg = `Payload validation error: ${errorString}. The withdrawal payload structure does not match CPAY API requirements.`;
-      } else if (lowerError.includes('to must be a string')) {
-        errorMsg = `Invalid 'to' address field. Ensure the recipient address is a valid string.`;
+        errorMsg = `Insufficient CPAY wallet balance to process withdrawal`;
+      } else if (lowerError.includes('currency')) {
+        errorMsg = `Currency configuration error: ${errorString}`;
       } else if (withdrawalResponse.status === 401 || withdrawalResponse.status === 403) {
-        errorMsg = `Authentication error: Wallet token may be invalid or expired. Verify wallet credentials in secrets.`;
+        errorMsg = `CPAY authentication error - verify wallet credentials`;
       } else {
         errorMsg = `${errorMsg}: ${errorString}`;
       }
       
-      console.error('[CPAY-WITHDRAWAL] ❌ Withdrawal failed:', errorMsg);
-      console.error('[CPAY-WITHDRAWAL] ❌ Full error response:', responseText);
-      console.error('[CPAY-WITHDRAWAL] ❌ Parsed error messages:', errorString);
+      console.error('[CPAY-WITHDRAWAL] ❌ Final error:', errorMsg);
       throw new Error(errorMsg);
     }
 
