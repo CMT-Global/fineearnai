@@ -40,6 +40,141 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// ============= WITHDRAWAL WEBHOOK HANDLERS =============
+
+async function handleWithdrawalCompletion(
+  supabase: any,
+  withdrawal: any,
+  cpayId: string,
+  webhookData: any,
+  clientIP: string
+) {
+  console.log(`[CPAY-WEBHOOK] 💚 Processing withdrawal completion: ${withdrawal.id}`);
+  
+  const txHash = webhookData.hash || webhookData.transactionHash || webhookData.txHash || null;
+  const completedAt = new Date().toISOString();
+  
+  // 1. Update withdrawal_requests to completed
+  const { error: wrUpdateError } = await supabase
+    .from('withdrawal_requests')
+    .update({
+      status: 'completed',
+      processed_at: completedAt,
+      manual_txn_hash: txHash,
+      api_response: {
+        ...withdrawal.api_response,
+        status: 'completed',
+        transaction_hash: txHash,
+        webhook_received_at: completedAt,
+        cpay_status: webhookData.systemStatus || webhookData.chargeStatus,
+        webhook_ip: clientIP
+      }
+    })
+    .eq('id', withdrawal.id)
+    .eq('status', 'processing'); // Safety check
+  
+  if (wrUpdateError) {
+    console.error('[CPAY-WEBHOOK] ❌ Failed to update withdrawal_requests:', wrUpdateError);
+    throw new Error('Failed to update withdrawal status');
+  }
+  
+  // 2. Update corresponding transaction to completed
+  const { error: txUpdateError } = await supabase
+    .from('transactions')
+    .update({ 
+      status: 'completed',
+      gateway_transaction_id: cpayId,
+      metadata: {
+        completed_via_webhook: true,
+        webhook_received_at: completedAt,
+        transaction_hash: txHash,
+        withdrawal_request_id: withdrawal.id
+      }
+    })
+    .eq('type', 'withdrawal')
+    .eq('user_id', withdrawal.user_id)
+    .contains('metadata', { withdrawal_request_id: withdrawal.id })
+    .eq('status', 'pending');
+  
+  if (txUpdateError) {
+    console.warn('[CPAY-WEBHOOK] ⚠️ Failed to update transaction (withdrawal still marked complete):', txUpdateError);
+  }
+  
+  // 3. Send user notification
+  try {
+    await supabase.functions.invoke('send-cpay-notification', {
+      body: {
+        user_id: withdrawal.user_id,
+        type: 'withdrawal_completed',
+        data: {
+          amount: withdrawal.amount,
+          net_amount: withdrawal.net_amount,
+          transaction_hash: txHash,
+          withdrawal_id: withdrawal.id
+        }
+      }
+    });
+  } catch (notifError) {
+    console.warn('[CPAY-WEBHOOK] ⚠️ Notification failed (non-critical):', notifError);
+  }
+  
+  console.log(
+    `[CPAY-WEBHOOK] ✅ WITHDRAWAL COMPLETED: ` +
+    `User ${withdrawal.profiles.username}, Amount: $${withdrawal.amount}, ` +
+    `TxHash: ${txHash || 'N/A'}`
+  );
+}
+
+async function handleWithdrawalFailure(
+  supabase: any,
+  withdrawal: any,
+  cpayId: string,
+  webhookData: any,
+  clientIP: string
+) {
+  console.log(`[CPAY-WEBHOOK] ⚠️ Processing withdrawal failure: ${withdrawal.id}`);
+  
+  const failureReason = webhookData.failureReason || 
+                       webhookData.error || 
+                       'CPAY withdrawal failed - status: ' + (webhookData.systemStatus || webhookData.chargeStatus);
+  const failedAt = new Date().toISOString();
+  
+  // Update withdrawal back to pending (NOT rejected - admin must review)
+  const { error: wrUpdateError } = await supabase
+    .from('withdrawal_requests')
+    .update({
+      status: 'pending', // Back to queue for admin review
+      rejection_reason: `CPAY API Failure: ${failureReason}`,
+      api_response: {
+        ...withdrawal.api_response,
+        status: 'failed',
+        failure_reason: failureReason,
+        webhook_received_at: failedAt,
+        cpay_status: webhookData.systemStatus || webhookData.chargeStatus,
+        webhook_ip: clientIP,
+        requires_admin_review: true
+      }
+    })
+    .eq('id', withdrawal.id)
+    .eq('status', 'processing');
+  
+  if (wrUpdateError) {
+    console.error('[CPAY-WEBHOOK] ❌ Failed to update withdrawal_requests:', wrUpdateError);
+    throw new Error('Failed to update withdrawal failure status');
+  }
+  
+  // DO NOT UPDATE TRANSACTION - Keep as pending so admin sees it in queue
+  // DO NOT REFUND - Admin must manually reject to trigger refund
+  
+  console.log(
+    `[CPAY-WEBHOOK] ⚠️ WITHDRAWAL FAILED (returned to pending): ` +
+    `User ${withdrawal.profiles.username}, Amount: $${withdrawal.amount}, ` +
+    `Reason: ${failureReason}`
+  );
+}
+
+// ============================================
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -236,7 +371,47 @@ serve(async (req) => {
       .single();
 
     if (txError || !transaction) {
-      console.error(`[CPAY-WEBHOOK] ❌ Transaction not found for clickId=${trackingId}, payment_id=${payment_id}`, txError);
+      console.log(`[CPAY-WEBHOOK] ℹ️ No deposit found for clickId=${trackingId}, checking withdrawals...`);
+      
+      // === WITHDRAWAL LOOKUP FALLBACK ===
+      if (payment_id) {
+        console.log('[CPAY-WEBHOOK] 🔍 Searching for withdrawal with cpay_withdrawal_id:', payment_id);
+        
+        // Search withdrawal_requests by cpay_withdrawal_id in api_response
+        const { data: withdrawalRequest, error: wrError } = await supabase
+          .from('withdrawal_requests')
+          .select('*, profiles!inner(id, earnings_wallet_balance, username, email)')
+          .eq('status', 'processing')
+          .eq('payment_provider', 'cpay')
+          .contains('api_response', { cpay_withdrawal_id: payment_id })
+          .single();
+        
+        if (!wrError && withdrawalRequest) {
+          console.log('[CPAY-WEBHOOK] ✅ Found withdrawal request:', withdrawalRequest.id);
+          
+          // Handle based on webhook status
+          if (status === 'completed') {
+            await handleWithdrawalCompletion(supabase, withdrawalRequest, payment_id, webhookData, clientIP);
+          } else if (status === 'failed') {
+            await handleWithdrawalFailure(supabase, withdrawalRequest, payment_id, webhookData, clientIP);
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Withdrawal status updated via webhook',
+              withdrawal_id: withdrawalRequest.id,
+              new_status: status
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          console.log('[CPAY-WEBHOOK] ℹ️ No processing withdrawal found for payment_id:', payment_id);
+        }
+      }
+      // === END WITHDRAWAL LOOKUP ===
+      
+      console.error(`[CPAY-WEBHOOK] ❌ No matching transaction or withdrawal found for clickId=${trackingId}, payment_id=${payment_id}`, txError);
       
       // Log all pending CPAY transactions for debugging
       const { data: pendingTxs } = await supabase
@@ -248,7 +423,7 @@ serve(async (req) => {
         .limit(10);
       
       console.log('[CPAY-WEBHOOK] 📋 Recent pending CPAY transactions:', JSON.stringify(pendingTxs, null, 2));
-      throw new Error('Transaction not found - clickId/order_id does not match any pending deposit');
+      throw new Error('Transaction/Withdrawal not found - clickId/order_id does not match any pending deposit or processing withdrawal');
     }
 
     console.log(`[CPAY-WEBHOOK] ✓ Transaction found: ${transaction.id}, User: ${transaction.profiles.username} (${transaction.profiles.email})`);
