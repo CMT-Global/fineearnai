@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     console.log('[GET-CPAY-WALLET-INFO] 🔐 Step 1/2: Initial login...');
 
     // Step 1: Initial login
-    const loginResponse = await fetch(`${CPAY_BASE_URL}/api/public/auth/login`, {
+    const loginResponse = await fetch(`${CPAY_BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     const signature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
 
     // Complete 2FA
-    const twoFaResponse = await fetch(`${CPAY_BASE_URL}/api/public/auth/2fa`, {
+    const twoFaResponse = await fetch(`${CPAY_BASE_URL}/api/v1/auth/2fa`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
     // ============================================================
     console.log('[GET-CPAY-WALLET-INFO] 💼 Fetching wallet info...');
 
-    const walletResponse = await fetch(`${CPAY_BASE_URL}/api/public/wallet`, {
+    const walletResponse = await fetch(`${CPAY_BASE_URL}/api/v1/wallet`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
