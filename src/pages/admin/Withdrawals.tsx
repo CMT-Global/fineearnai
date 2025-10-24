@@ -28,6 +28,13 @@ interface WithdrawalRequest {
   manual_txn_hash?: string;
   processed_at?: string;
   created_at: string;
+  payment_provider?: string;
+  api_response?: {
+    error?: string;
+    details?: string;
+    provider?: string;
+    failed_at?: string;
+  };
   profiles?: {
     username: string;
     email: string;
@@ -593,16 +600,25 @@ export default function Withdrawals() {
                       </Alert>
                     )}
 
-                    {withdrawal.status === "pending" && (withdrawal as any).api_response?.error && (
+                    {withdrawal.status === "pending" && withdrawal.api_response?.error && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Previous API Attempt Failed</AlertTitle>
-                        <AlertDescription>
-                          <strong>Error:</strong> {(withdrawal as any).api_response.error}
-                          <br />
-                          <span className="text-xs mt-2 block">
-                            This withdrawal remains pending. You can retry the API payment after resolving the issue (e.g., insufficient balance, incorrect address) or reject this withdrawal manually if needed.
-                          </span>
+                        <AlertDescription className="space-y-2">
+                          <div>
+                            <strong>Provider:</strong> {withdrawal.api_response.provider?.toUpperCase() || withdrawal.payment_provider?.toUpperCase() || 'Unknown'}
+                          </div>
+                          <div>
+                            <strong>Error:</strong> {withdrawal.api_response.error}
+                          </div>
+                          {withdrawal.api_response.failed_at && (
+                            <div className="text-xs text-muted-foreground">
+                              Last attempt: {new Date(withdrawal.api_response.failed_at).toLocaleString()}
+                            </div>
+                          )}
+                          <div className="text-xs mt-2 pt-2 border-t border-destructive/20">
+                            💡 <strong>Next steps:</strong> Check {withdrawal.api_response.provider?.toUpperCase() || 'provider'} credentials/balance, then click "Clear Error & Retry" or manually reject if needed.
+                          </div>
                         </AlertDescription>
                       </Alert>
                     )}
