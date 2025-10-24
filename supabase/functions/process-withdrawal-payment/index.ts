@@ -450,10 +450,12 @@ async function processCPAYWithdrawal(withdrawal: any) {
   console.log('[CPAY-WITHDRAWAL] ✅ All credentials present, proceeding with two-step auth...');
 
   try {
-    // Step 1: Authenticate and get Bearer token
-    console.log('[CPAY-WITHDRAWAL] 📡 Step 1: Calling CPAY auth endpoint...');
+    // ============================================================
+    // STEP 1: Account Authentication
+    // ============================================================
+    console.log('[CPAY-WITHDRAWAL] 📡 Step 1/2: Account authentication...');
     
-    const authResponse = await fetch('https://api.cpay.world/api/public/auth', {
+    const accountAuthResponse = await fetch('https://api.cpay.world/api/public/auth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -464,55 +466,101 @@ async function processCPAYWithdrawal(withdrawal: any) {
       }),
     });
 
-    const authResponseText = await authResponse.text();
-    console.log('[CPAY-WITHDRAWAL] Auth response status:', authResponse.status);
-    console.log('[CPAY-WITHDRAWAL] Auth response body:', authResponseText);
+    const accountAuthText = await accountAuthResponse.text();
+    console.log('[CPAY-WITHDRAWAL] Step 1 response status:', accountAuthResponse.status);
+    console.log('[CPAY-WITHDRAWAL] Step 1 response body:', accountAuthText);
 
-    if (!authResponse.ok) {
-      const errorMsg = authResponse.status === 401 || authResponse.status === 403
-        ? 'Invalid CPAY API credentials (check publicKey/privateKey)'
-        : `CPAY authentication failed (${authResponse.status}): ${authResponseText}`;
-      console.error('[CPAY-WITHDRAWAL] ❌ Auth failed:', errorMsg);
+    if (!accountAuthResponse.ok) {
+      const errorMsg = accountAuthResponse.status === 401 || accountAuthResponse.status === 403
+        ? 'Invalid CPAY API credentials (check publicKey/privateKey in secrets)'
+        : `CPAY account authentication failed (${accountAuthResponse.status}): ${accountAuthText}`;
+      console.error('[CPAY-WITHDRAWAL] ❌ Account auth failed:', errorMsg);
       throw new Error(errorMsg);
     }
 
-    let authData;
+    let accountAuthData;
     try {
-      authData = JSON.parse(authResponseText);
+      accountAuthData = JSON.parse(accountAuthText);
     } catch (e) {
-      throw new Error(`CPAY auth response is not valid JSON: ${authResponseText}`);
+      throw new Error(`CPAY account auth response is not valid JSON: ${accountAuthText}`);
     }
 
-    const bearerToken = authData.token || authData.access_token || authData.jwt;
+    const accountToken = accountAuthData.token || accountAuthData.access_token || accountAuthData.jwt;
 
-    if (!bearerToken) {
-      console.error('[CPAY-WITHDRAWAL] ❌ No token in auth response:', authData);
-      throw new Error('CPAY auth response missing token field');
+    if (!accountToken) {
+      console.error('[CPAY-WITHDRAWAL] ❌ No token in account auth response:', accountAuthData);
+      throw new Error('CPAY account auth response missing token field');
     }
 
-    console.log('[CPAY-WITHDRAWAL] ✅ Authentication successful, token received');
+    console.log('[CPAY-WITHDRAWAL] ✅ Step 1 complete: Account authenticated');
 
-    // Step 2: Perform withdrawal using Bearer token
-    console.log('[CPAY-WITHDRAWAL] 📡 Step 2: Calling CPAY withdrawal endpoint...');
+    // ============================================================
+    // STEP 2: Wallet Authentication
+    // ============================================================
+    console.log('[CPAY-WITHDRAWAL] 📡 Step 2/2: Wallet authentication...');
+    
+    const walletAuthResponse = await fetch('https://api.cpay.world/api/public/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletId: CPAY_WALLET_ID,
+        passphrase: CPAY_WALLET_PASSPHRASE,
+        publicKey: CPAY_API_PUBLIC_KEY,
+        privateKey: CPAY_API_PRIVATE_KEY,
+      }),
+    });
+
+    const walletAuthText = await walletAuthResponse.text();
+    console.log('[CPAY-WITHDRAWAL] Step 2 response status:', walletAuthResponse.status);
+    console.log('[CPAY-WITHDRAWAL] Step 2 response body:', walletAuthText);
+
+    if (!walletAuthResponse.ok) {
+      const errorMsg = walletAuthResponse.status === 401
+        ? 'Invalid wallet credentials (check walletId/passphrase in secrets)'
+        : walletAuthResponse.status === 403
+        ? 'Wallet access forbidden (check wallet permissions in CPAY dashboard)'
+        : `CPAY wallet authentication failed (${walletAuthResponse.status}): ${walletAuthText}`;
+      console.error('[CPAY-WITHDRAWAL] ❌ Wallet auth failed:', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    let walletAuthData;
+    try {
+      walletAuthData = JSON.parse(walletAuthText);
+    } catch (e) {
+      throw new Error(`CPAY wallet auth response is not valid JSON: ${walletAuthText}`);
+    }
+
+    const walletBearerToken = walletAuthData.token || walletAuthData.access_token || walletAuthData.jwt;
+
+    if (!walletBearerToken) {
+      console.error('[CPAY-WITHDRAWAL] ❌ No token in wallet auth response:', walletAuthData);
+      throw new Error('CPAY wallet auth response missing token field');
+    }
+
+    console.log('[CPAY-WITHDRAWAL] ✅ Step 2 complete: Wallet authenticated');
+    console.log('[CPAY-WITHDRAWAL] 🔑 Using wallet-specific Bearer token for withdrawal');
+
+    // ============================================================
+    // STEP 3: Perform Withdrawal (using wallet token)
+    // ============================================================
+    console.log('[CPAY-WITHDRAWAL] 📡 Step 3: Calling CPAY withdrawal endpoint...');
 
     const withdrawalPayload = {
-      walletId: CPAY_WALLET_ID,
-      walletPassphrase: CPAY_WALLET_PASSPHRASE,
-      address: withdrawal.payout_address,
-      amount: withdrawal.net_amount.toString(),
+      to: withdrawal.payout_address,
+      amount: parseFloat(withdrawal.net_amount),
       currencyToken: 'USDT',
     };
 
-    console.log('[CPAY-WITHDRAWAL] Withdrawal payload:', {
-      ...withdrawalPayload,
-      walletPassphrase: '***REDACTED***'
-    });
+    console.log('[CPAY-WITHDRAWAL] Withdrawal payload:', withdrawalPayload);
 
     const withdrawalResponse = await fetch('https://api.cpay.world/api/public/withdrawal', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${bearerToken}`,
+        'Authorization': `Bearer ${walletBearerToken}`,
         'Idempotency-Key': withdrawal.id,
       },
       body: JSON.stringify(withdrawalPayload),
@@ -523,12 +571,35 @@ async function processCPAYWithdrawal(withdrawal: any) {
     console.log('[CPAY-WITHDRAWAL] Withdrawal response body:', responseText);
 
     if (!withdrawalResponse.ok) {
-      const errorMsg = withdrawalResponse.status === 401 || withdrawalResponse.status === 403
-        ? 'Invalid CPAY wallet credentials (check walletId/walletPassphrase)'
-        : withdrawalResponse.status === 400
-        ? `CPAY withdrawal rejected: ${responseText} (check address/amount/balance)`
-        : `CPAY withdrawal failed (${withdrawalResponse.status}): ${responseText}`;
+      // Parse error response for detailed error messages
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        errorData = { message: responseText };
+      }
+
+      const errorMessage = errorData.data?.message || errorData.message || responseText;
+      
+      // Provide specific error messages based on error content
+      let errorMsg = `CPAY withdrawal failed (${withdrawalResponse.status})`;
+      
+      if (errorMessage.toLowerCase().includes('address') && errorMessage.toLowerCase().includes('invalid')) {
+        errorMsg = `Invalid recipient address format: ${withdrawal.payout_address}. Please verify the USDT (TRC20) address.`;
+      } else if (errorMessage.toLowerCase().includes('insufficient')) {
+        errorMsg = `Insufficient wallet balance. CPAY wallet does not have enough funds to process this withdrawal.`;
+      } else if (errorMessage.toLowerCase().includes('currencytoken') || errorMessage.toLowerCase().includes('mongodb')) {
+        errorMsg = `Invalid currency token ID. The 'USDT' value may need to be a MongoDB ObjectId. Contact CPAY support for the correct USDT token ID.`;
+      } else if (errorMessage.toLowerCase().includes('should not exist')) {
+        errorMsg = `Payload validation error: ${errorMessage}. Check withdrawal payload structure matches CPAY API requirements.`;
+      } else if (withdrawalResponse.status === 401 || withdrawalResponse.status === 403) {
+        errorMsg = `Authentication error: Wallet token may be invalid or expired. Verify wallet credentials in secrets.`;
+      } else {
+        errorMsg = `${errorMsg}: ${errorMessage}`;
+      }
+      
       console.error('[CPAY-WITHDRAWAL] ❌ Withdrawal failed:', errorMsg);
+      console.error('[CPAY-WITHDRAWAL] ❌ Full error response:', responseText);
       throw new Error(errorMsg);
     }
 
