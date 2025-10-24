@@ -206,9 +206,65 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
     }
 
     // API call succeeded
-    console.log('API payment successful:', apiResponse);
+    console.log('API payment response:', apiResponse);
 
-    // Update withdrawal to completed
+    // Check if withdrawal is fully completed or just initiated (processing)
+    if (apiResponse.status === 'processing') {
+      // Withdrawal initiated but awaiting confirmation
+      console.log(`Withdrawal ${withdrawal.id} initiated with ${provider}, awaiting confirmation`);
+      
+      await supabase
+        .from('withdrawal_requests')
+        .update({
+          status: 'processing',
+          processed_by: adminId,
+          api_response: apiResponse,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', withdrawal.id);
+
+      // Update transaction to processing
+      await supabase
+        .from('transactions')
+        .update({ 
+          status: 'processing',
+          gateway_transaction_id: apiResponse.cpay_withdrawal_id
+        })
+        .eq('user_id', withdrawal.user_id)
+        .eq('type', 'withdrawal')
+        .eq('amount', withdrawal.amount)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Audit log
+      await supabase
+        .from('audit_logs')
+        .insert({
+          admin_id: adminId,
+          action_type: 'withdrawal_initiated_via_api',
+          target_user_id: withdrawal.user_id,
+          details: {
+            withdrawal_id: withdrawal.id,
+            amount: withdrawal.amount,
+            provider: provider,
+            cpay_withdrawal_id: apiResponse.cpay_withdrawal_id,
+            note: 'Withdrawal initiated, awaiting blockchain confirmation'
+          }
+        });
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          status: 'processing',
+          cpay_withdrawal_id: apiResponse.cpay_withdrawal_id,
+          message: `Withdrawal initiated with ${provider}. ID: ${apiResponse.cpay_withdrawal_id}. Awaiting confirmation.`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Withdrawal fully completed with transaction hash
     await supabase
       .from('withdrawal_requests')
       .update({
@@ -479,7 +535,13 @@ function detectPaymentProvider(paymentMethod: string): string {
 }
 
 // Process CPAY withdrawal via API with proper authentication flow
-async function processCPAYWithdrawal(withdrawal: any) {
+async function processCPAYWithdrawal(withdrawal: any): Promise<{ 
+  transaction_hash: string | null; 
+  cpay_withdrawal_id?: string;
+  provider: string; 
+  success: boolean;
+  status: string;
+}> {
   // Helper function to format amount with fixed decimal places
   function formatAmount(value: number, decimals: number): string {
     return value.toFixed(decimals);
@@ -791,17 +853,34 @@ async function processCPAYWithdrawal(withdrawal: any) {
       throw new Error(`CPAY withdrawal response is not valid JSON: ${responseText}`);
     }
 
+    // Check for completed withdrawal (has transaction hash)
     if (data.success !== false && (data.transactionHash || data.txHash || data.hash)) {
       const txHash = data.transactionHash || data.txHash || data.hash;
-      console.log('[CPAY-WITHDRAWAL] ✅ Withdrawal successful, transaction hash:', txHash);
+      console.log('[CPAY-WITHDRAWAL] ✅ Withdrawal completed with transaction hash:', txHash);
       return {
         transaction_hash: txHash,
+        cpay_withdrawal_id: data.data?.id,
         provider: 'cpay',
-        success: true
+        success: true,
+        status: 'completed'
       };
-    } else {
-      throw new Error(data.error || data.message || 'CPAY withdrawal failed with no transaction hash');
     }
+    
+    // Check for initiated withdrawal (has withdrawal ID but no hash yet)
+    if (data.success !== false && data.data?.id) {
+      const withdrawalId = data.data.id;
+      console.log('[CPAY-WITHDRAWAL] ⏳ Withdrawal initiated with CPAY, ID:', withdrawalId);
+      return {
+        transaction_hash: null,
+        cpay_withdrawal_id: withdrawalId,
+        provider: 'cpay',
+        success: true,
+        status: 'processing'
+      };
+    }
+    
+    // Neither hash nor ID - actual failure
+    throw new Error(data.error || data.message || 'CPAY withdrawal failed - no transaction hash or withdrawal ID received');
 
   } catch (error) {
     console.error('[CPAY-WITHDRAWAL] ❌ Exception:', error);
@@ -811,7 +890,13 @@ async function processCPAYWithdrawal(withdrawal: any) {
 
 
 // Process Payeer withdrawal via API (placeholder for future implementation)
-async function processPayeerWithdrawal(withdrawal: any): Promise<{ transaction_hash: string; provider: string; success: boolean }> {
+async function processPayeerWithdrawal(withdrawal: any): Promise<{ 
+  transaction_hash: string | null; 
+  cpay_withdrawal_id?: string;
+  provider: string; 
+  success: boolean;
+  status: string;
+}> {
   // TODO: Implement Payeer API integration
   throw new Error('Payeer API integration not yet implemented');
 }
