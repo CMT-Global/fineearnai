@@ -80,6 +80,8 @@ serve(async (req) => {
       amount: withdrawal.net_amount
     });
 
+    const completedAt = new Date().toISOString();
+
     // Update withdrawal request to 'completed'
     await supabase
       .from('withdrawal_requests')
@@ -87,7 +89,7 @@ serve(async (req) => {
         status: 'completed',
         manual_txn_hash: transaction_hash,
         admin_notes: notes ? `${withdrawal.admin_notes || ''}\n\nCompletion notes: ${notes}` : withdrawal.admin_notes,
-        processed_at: new Date().toISOString(),
+        processed_at: completedAt,
       })
       .eq('id', withdrawal_request_id);
 
@@ -102,6 +104,38 @@ serve(async (req) => {
       .eq('user_id', withdrawal.user_id)
       .eq('metadata->>withdrawal_request_id', withdrawal_request_id)
       .eq('status', 'pending_manual');
+
+    // Get tracking record to calculate processing time
+    const { data: trackingRecord } = await supabase
+      .from('manual_withdrawal_tracking')
+      .select('approved_at')
+      .eq('withdrawal_request_id', withdrawal_request_id)
+      .single();
+
+    // Calculate processing time in minutes
+    let processingTimeMinutes = null;
+    if (trackingRecord?.approved_at) {
+      const approvedTime = new Date(trackingRecord.approved_at);
+      const completedTime = new Date(completedAt);
+      processingTimeMinutes = Math.round((completedTime.getTime() - approvedTime.getTime()) / (1000 * 60));
+    }
+
+    // Update tracking record with completion details
+    await supabase
+      .from('manual_withdrawal_tracking')
+      .update({
+        completed_at: completedAt,
+        blockchain_txn_hash: transaction_hash,
+        processing_time_minutes: processingTimeMinutes,
+        notes: notes ? `${trackingRecord ? 'Approved for manual processing. ' : ''}Completion notes: ${notes}` : undefined,
+      })
+      .eq('withdrawal_request_id', withdrawal_request_id);
+
+    console.log('Manual withdrawal tracking updated:', {
+      withdrawalRequestId: withdrawal_request_id,
+      processingTimeMinutes,
+      completedAt
+    });
 
     // Send completion notification to user
     await supabase.functions.invoke('send-cpay-notification', {

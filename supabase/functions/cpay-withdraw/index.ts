@@ -240,7 +240,16 @@ serve(async (req) => {
       },
     });
 
-    // Step 6: Audit log for approval
+    // Step 6: Create manual withdrawal tracking record
+    const approvedAt = new Date().toISOString();
+    await supabase.from('manual_withdrawal_tracking').insert({
+      withdrawal_request_id,
+      approved_at: approvedAt,
+      admin_id: user.id,
+      notes: 'Withdrawal approved for manual processing',
+    });
+
+    // Step 7: Audit log for approval
     await supabase.from('audit_logs').insert({
       admin_id: user.id,
       action_type: 'withdrawal_approve_manual',

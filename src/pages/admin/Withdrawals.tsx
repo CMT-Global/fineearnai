@@ -48,10 +48,12 @@ export default function Withdrawals() {
   const [txnHash, setTxnHash] = useState("");
   const [completionNotes, setCompletionNotes] = useState("");
   const [completingWithdrawal, setCompletingWithdrawal] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<any>(null);
 
   useEffect(() => {
     checkAuth();
     loadWithdrawals();
+    loadMetrics();
   }, []);
 
   const checkAuth = async () => {
@@ -75,6 +77,24 @@ export default function Withdrawals() {
         description: "Admin access required",
         variant: "destructive",
       });
+    }
+  };
+
+  const loadMetrics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("manual_withdrawal_metrics")
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Error loading metrics:", error);
+        return;
+      }
+
+      setMetrics(data);
+    } catch (error) {
+      console.error("Error loading metrics:", error);
     }
   };
 
@@ -146,6 +166,7 @@ export default function Withdrawals() {
       });
 
       await loadWithdrawals();
+      await loadMetrics();
     } catch (error) {
       console.error("Error processing withdrawal:", error);
       toast({
@@ -202,6 +223,7 @@ export default function Withdrawals() {
       setTxnHash("");
       setCompletionNotes("");
       await loadWithdrawals();
+      await loadMetrics();
     } catch (error) {
       console.error("Error completing withdrawal:", error);
       toast({
@@ -266,6 +288,58 @@ export default function Withdrawals() {
         <h1 className="text-3xl font-bold mb-2">Withdrawal Management</h1>
         <p className="text-muted-foreground">Process and manage user withdrawal requests</p>
       </div>
+
+      {/* Manual Withdrawal Tracking Metrics */}
+      {metrics && (
+        <Card className="mb-6 border-orange-500 bg-orange-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              Manual Processing Metrics
+            </CardTitle>
+            <CardDescription>Real-time tracking of manual withdrawal processing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Manual</p>
+                <p className="text-2xl font-bold text-orange-600">{metrics.pending_manual_count}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(metrics.pending_manual_amount)} total
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Processing Time</p>
+                <p className="text-2xl font-bold">{Math.round(metrics.avg_processing_time_minutes || 0)} min</p>
+                <p className="text-xs text-muted-foreground">From approval to completion</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Completed Today</p>
+                <p className="text-2xl font-bold text-green-600">{metrics.completed_today}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(metrics.volume_today)} volume
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">This Month</p>
+                <p className="text-2xl font-bold">{metrics.completed_this_month}</p>
+                <p className="text-xs text-muted-foreground">
+                  Week: {metrics.completed_this_week}
+                </p>
+              </div>
+            </div>
+            {metrics.oldest_pending_at && (
+              <Alert className="mt-4 border-yellow-500 bg-yellow-50">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="text-sm">
+                  <strong>Oldest pending:</strong> {new Date(metrics.oldest_pending_at).toLocaleString()} 
+                  {' '}({Math.round((Date.now() - new Date(metrics.oldest_pending_at).getTime()) / (1000 * 60 * 60))} hours ago)
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card>
