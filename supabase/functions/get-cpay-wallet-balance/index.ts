@@ -297,6 +297,30 @@ Deno.serve(async (req) => {
           warnings.push('Currency enrichment skipped: unrecognized payload structure');
         } else {
           console.log('[GET-CPAY-WALLET-BALANCE] ✅ Currency list extracted:', currencies.length, 'currencies (source: ' + currencySource + ')');
+          
+          // Log all USDT tokens for easy token ID extraction
+          console.log('[GET-CPAY-WALLET-BALANCE] 🔍 Filtering USDT tokens...');
+          const usdtTokens = currencies.filter((c: CPAYCurrency) => 
+            c?.name?.toUpperCase().includes('USDT')
+          );
+          
+          console.log('[GET-CPAY-WALLET-BALANCE] 💎 FULL USDT TOKEN DATA (Copy these IDs):');
+          console.log('[GET-CPAY-WALLET-BALANCE] =====================================');
+          usdtTokens.forEach((token: CPAYCurrency) => {
+            console.log(JSON.stringify({
+              _id: token._id,
+              name: token.name,
+              nodeType: token.nodeType,
+              currencyType: token.currencyType,
+              blockchain: token.blockchain
+            }, null, 2));
+            console.log('[GET-CPAY-WALLET-BALANCE] -------------------------------------');
+          });
+          console.log('[GET-CPAY-WALLET-BALANCE] =====================================');
+          
+          // Also log your wallet tokens
+          console.log('[GET-CPAY-WALLET-BALANCE] 💰 YOUR WALLET TOKENS:');
+          console.log(JSON.stringify(wallet.tokens, null, 2));
         }
       }
     } catch (currencyError) {
