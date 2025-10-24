@@ -176,8 +176,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    const currencies = await currencyResponse.json();
+    const currencyPayload = await currencyResponse.json();
+    console.log('[GET-CPAY-WALLET-INFO] 📦 Currency payload type:', typeof currencyPayload);
+    console.log('[GET-CPAY-WALLET-INFO] 📦 Currency payload structure:', JSON.stringify(currencyPayload).substring(0, 200));
+    
+    // CRITICAL FIX: Handle both direct array and { data: [...] } wrapped responses
+    const currencies = Array.isArray(currencyPayload) 
+      ? currencyPayload 
+      : (currencyPayload.data || []);
+    
     console.log('[GET-CPAY-WALLET-INFO] ✅ Currency list received:', currencies.length, 'currencies');
+    
+    if (!Array.isArray(currencies) || currencies.length === 0) {
+      console.error('[GET-CPAY-WALLET-INFO] ❌ No currencies found in response');
+      return new Response(JSON.stringify({
+        error: 'No currencies found in CPAY response',
+        details: 'The currency list is empty or malformed',
+        rawPayload: currencyPayload
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // ============================================================
     // STEP 5: HANDLE DIFFERENT MODES
@@ -227,6 +247,18 @@ Deno.serve(async (req) => {
 
       console.log('[GET-CPAY-WALLET-INFO] 📋 Deposit wallet ID:', depositWalletId);
       console.log('[GET-CPAY-WALLET-INFO] 💰 Currency:', depositCurrency, '| Blockchain:', depositBlockchain);
+
+      // Guard: Ensure currencies is valid array before searching
+      if (!Array.isArray(currencies) || currencies.length === 0) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Currency list is empty or invalid',
+          suggestion: 'Enable currencies in your CPAY account or try mode=wallet'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
       // Find matching currency in the currency list
       const matchingCurrency = currencies.find((c: any) => 
