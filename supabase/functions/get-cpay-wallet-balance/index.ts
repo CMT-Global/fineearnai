@@ -211,6 +211,21 @@ Deno.serve(async (req) => {
     console.log('[GET-CPAY-WALLET-BALANCE] ✅ Wallet balance retrieved');
     console.log('[GET-CPAY-WALLET-BALANCE] 💰 Balance:', wallet.balance, '| USD:', wallet.balanceUSD);
     console.log('[GET-CPAY-WALLET-BALANCE] 🪙 Tokens found:', wallet.tokens?.length || 0);
+    
+    if (!wallet.tokens || !Array.isArray(wallet.tokens)) {
+      console.error('[GET-CPAY-WALLET-BALANCE] ❌ No tokens array in wallet response');
+      return new Response(JSON.stringify({
+        error: 'No tokens found in wallet',
+        details: 'Your CPAY wallet returned no token entries. Enable USDT TRC20 in your CPAY account.',
+        wallet: {
+          balance: wallet.balance,
+          balanceUSD: wallet.balanceUSD
+        }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // ============================================================
     // STEP 5: FETCH CURRENCY LIST FOR ENRICHMENT
@@ -241,11 +256,26 @@ Deno.serve(async (req) => {
     }
 
     const currencyPayload = await currencyResponse.json();
+    console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload type:', typeof currencyPayload);
+    console.log('[GET-CPAY-WALLET-BALANCE] 📦 Currency payload structure:', JSON.stringify(currencyPayload).substring(0, 200));
+    
+    // CRITICAL FIX: Handle both direct array and { data: [...] } wrapped responses
     const currencies: CPAYCurrency[] = Array.isArray(currencyPayload) 
       ? currencyPayload 
       : (currencyPayload.data || []);
 
     console.log('[GET-CPAY-WALLET-BALANCE] ✅ Currency list retrieved:', currencies.length, 'currencies');
+    
+    if (!Array.isArray(currencies)) {
+      console.error('[GET-CPAY-WALLET-BALANCE] ❌ currencies is not an array:', typeof currencies);
+      return new Response(JSON.stringify({
+        error: 'Invalid currency data format',
+        details: 'Expected array but got ' + typeof currencies
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // ============================================================
     // STEP 6: ENRICH TOKEN DATA WITH CURRENCY DETAILS
