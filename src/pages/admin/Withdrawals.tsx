@@ -192,19 +192,31 @@ export default function Withdrawals() {
       
       if (error) throw error;
       
-      // Check for API failures in response
-      if (data.status === 'failed') {
+      // Check for API-specific failures (API called but failed - withdrawal stays pending)
+      if (data.api_failed) {
         toast({
-          title: "API Error",
-          description: data.error_message || data.error || "Payment processing failed",
+          title: "⚠️ API Payment Failed",
+          description: `${data.error_message || 'API call failed'}. Withdrawal remains PENDING - you can retry after fixing the issue (e.g., topping up ${data.provider?.toUpperCase() || 'provider'} balance) or reject it manually.`,
+          variant: "destructive",
+          duration: 10000, // Longer duration for important admin message
+        });
+      } 
+      // Check for general errors (should not happen with new logic, but kept for safety)
+      else if (!data.success) {
+        toast({
+          title: "Error",
+          description: data.error || data.error_message || "Failed to process payment",
           variant: "destructive",
         });
-      } else {
+      } 
+      // Success - payment sent
+      else {
         toast({
-          title: "Success",
+          title: "✅ Payment Sent Successfully",
           description: data.transaction_hash 
-            ? `Payment sent! Provider: ${data.provider || 'Unknown'}. Txn: ${data.transaction_hash.substring(0, 16)}...`
-            : "Payment sent successfully via API"
+            ? `Provider: ${data.provider?.toUpperCase() || 'Unknown'}. Transaction: ${data.transaction_hash.substring(0, 20)}...`
+            : "Payment processed successfully via API",
+          duration: 6000,
         });
       }
       
