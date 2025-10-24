@@ -21,10 +21,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const cpayPublicKey = Deno.env.get('CPAY_API_PUBLIC_KEY')!;
-    const cpayPrivateKey = Deno.env.get('CPAY_API_PRIVATE_KEY')!;
-    const cpayAccountId = Deno.env.get('CPAY_ACCOUNT_ID')!;
-    const CPAY_API_BASE = Deno.env.get('CPAY_API_BASE') || 'https://api.cpay.com/v1';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -174,129 +170,97 @@ serve(async (req) => {
       );
     }
 
-    // Handle approval - Process payout via CPAY
-    const payoutData = {
-      account: cpayAccountId,
-      amount: withdrawal.net_amount.toString(),
+    // Handle approval - Manual processing workflow
+    // Step 1: Prepare withdrawal details for manual processing
+    const withdrawalDetails = {
+      user: withdrawal.profiles.username,
+      email: withdrawal.profiles.email,
+      amount: withdrawal.net_amount,
       currency: 'USDT',
-      address: withdrawal.payout_address,
       network: 'TRC20',
-      order_id: `WD-${withdrawal.id}-${Date.now()}`,
+      address: withdrawal.payout_address,
+      fee: withdrawal.fee,
+      total_amount: withdrawal.amount,
     };
 
-    // Sign the request
-    const signString = Object.keys(payoutData)
-      .sort()
-      .map(key => `${key}=${payoutData[key as keyof typeof payoutData]}`)
-      .join('&') + cpayPrivateKey;
-
-    const encoder = new TextEncoder();
-    const data = encoder.encode(signString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // Make API request to CPAY for payout using configurable endpoint
-    const cpayResponse = await fetch(`${CPAY_API_BASE}/payout/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': cpayPublicKey,
-      },
-      body: JSON.stringify({
-        ...payoutData,
-        signature,
-      }),
+    console.log('Withdrawal approved for manual processing:', {
+      withdrawalRequestId: withdrawal_request_id,
+      userId: withdrawal.user_id,
+      details: withdrawalDetails
     });
 
-    const cpayResult = await cpayResponse.json();
-
-    if (!cpayResponse.ok || cpayResult.status !== 'success') {
-      console.error('CPAY Payout Error:', cpayResult);
-      
-      // Mark as failed but don't refund yet (manual review needed)
-      await supabase
-        .from('withdrawal_requests')
-        .update({
-          status: 'failed',
-          rejection_reason: cpayResult.message || 'Payout failed',
-          processed_by: user.id,
-          processed_at: new Date().toISOString(),
-        })
-        .eq('id', withdrawal_request_id);
-
-      throw new Error(cpayResult.message || 'Payout creation failed');
-    }
-
-    // Update withdrawal request as completed
+    // Step 2: Update withdrawal request status to 'approved_manual'
     await supabase
       .from('withdrawal_requests')
       .update({
-        status: 'completed',
+        status: 'approved_manual',
         processed_by: user.id,
         processed_at: new Date().toISOString(),
+        admin_notes: 'Approved for manual processing. Admin must send crypto manually from external wallet.',
       })
       .eq('id', withdrawal_request_id);
 
-    // Create transaction record
+    // Step 3: Get current balance for transaction record
     const { data: profile } = await supabase
       .from('profiles')
       .select('earnings_wallet_balance')
       .eq('id', withdrawal.user_id)
       .single();
 
+    // Step 4: Create transaction record with 'pending_manual' status
     await supabase.from('transactions').insert({
       user_id: withdrawal.user_id,
       type: 'withdrawal',
       amount: withdrawal.amount,
       wallet_type: 'earnings',
-      status: 'completed',
-      payment_gateway: 'cpay',
-      gateway_transaction_id: cpayResult.data.payout_id,
+      status: 'pending_manual',
+      payment_gateway: 'manual',
       new_balance: profile?.earnings_wallet_balance || 0,
-      description: 'CPAY withdrawal completed',
+      description: 'Withdrawal approved - awaiting manual crypto transfer',
       metadata: {
         withdrawal_request_id,
-        payout_id: cpayResult.data.payout_id,
-        order_id: payoutData.order_id,
-        net_amount: withdrawal.net_amount,
-        fee: withdrawal.fee,
+        payout_details: withdrawalDetails,
+        approved_by: user.id,
+        approved_at: new Date().toISOString(),
       },
     });
 
-    // Send completion notification
+    // Step 5: Send notification to user about approval
     await supabase.functions.invoke('send-cpay-notification', {
       body: {
         user_id: withdrawal.user_id,
-        type: 'withdrawal_completed',
+        type: 'withdrawal_approved',
         data: {
           amount: withdrawal.net_amount,
           currency: 'USDT',
           payout_address: withdrawal.payout_address,
-          transaction_id: cpayResult.data.payout_id,
+          status: 'approved_manual',
+          note: 'Your withdrawal has been approved and will be processed manually by our team.',
         },
       },
     });
 
-    // Audit log for approval
+    // Step 6: Audit log for approval
     await supabase.from('audit_logs').insert({
       admin_id: user.id,
-      action_type: 'withdrawal_approve',
+      action_type: 'withdrawal_approve_manual',
       target_user_id: withdrawal.user_id,
       details: {
         withdrawal_id: withdrawal_request_id,
         amount: withdrawal.amount,
         net_amount: withdrawal.net_amount,
         payment_method: withdrawal.payment_method,
-        payout_id: cpayResult.data.payout_id,
+        payout_details: withdrawalDetails,
+        processing_type: 'manual',
       },
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Withdrawal processed successfully',
-        payout_id: cpayResult.data.payout_id,
+        message: 'Withdrawal approved. Manual processing required.',
+        payout_details: withdrawalDetails,
+        instructions: 'Please send crypto manually from your external wallet and then mark as completed in the admin panel.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
