@@ -212,6 +212,21 @@ serve(async (req) => {
     
     console.log('[CPAY-WEBHOOK] 📥 Webhook received from IP:', clientIP);
     console.log('[CPAY-WEBHOOK] 📦 Raw payload:', JSON.stringify(rawPayload, null, 2));
+    
+    // PHASE 2: Comprehensive debug logging for all possible payment ID fields
+    if (rawPayload) {
+      console.log('[CPAY-WEBHOOK] 🔍 PHASE 2 - All possible ID fields:', {
+        orderId: rawPayload.orderId,
+        chargeId: rawPayload.chargeId,
+        hash: rawPayload.hash,
+        payment_id: rawPayload.payment_id,
+        withdrawalId: rawPayload.withdrawalId,
+        id: rawPayload.id,
+        'data.id': rawPayload.data?.id,
+        'data.withdrawalId': rawPayload.data?.withdrawalId,
+        'data.orderId': rawPayload.data?.orderId
+      });
+    }
 
     // Known CPAY IPs for logging (not blocking)
     const knownCPAYIPs = ['195.201.62.123'];
@@ -330,9 +345,20 @@ serve(async (req) => {
       throw new Error('Unknown webhook payload format');
     }
 
-    // Normalize webhook fields (CPAY sends different field names)
+    // PHASE 2: Enhanced payment ID extraction - check 8 possible fields
     const trackingId = webhookData.outsideOrderId || webhookData.clickId || webhookData.order_id;
-    const payment_id = webhookData.orderId || webhookData.chargeId || webhookData.hash || webhookData.payment_id;
+    const payment_id = 
+      webhookData.orderId ||           // Deposit field
+      webhookData.chargeId ||          // Deposit field  
+      webhookData.hash ||              // Transaction hash
+      webhookData.payment_id ||        // Generic field
+      webhookData.withdrawalId ||      // 🆕 Withdrawal-specific field
+      webhookData.id ||                // 🆕 Top-level ID
+      webhookData.data?.id ||          // 🆕 Nested ID (common in CPAY responses)
+      webhookData.data?.withdrawalId;  // 🆕 Nested withdrawal ID
+    
+    console.log('[CPAY-WEBHOOK] 🆔 PHASE 2 - Extracted payment_id:', payment_id);
+    
     const webhookAmount = parseFloat(webhookData.amountUSD || webhookData.amount || '0');
     const currency = webhookData.currency || 'USD';
     
