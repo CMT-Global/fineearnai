@@ -223,9 +223,9 @@ export default function Withdrawals() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "warning" }> = {
       pending: { label: "Pending", variant: "secondary" },
-      approved_manual: { label: "Awaiting Manual Payout", variant: "outline" },
+      approved_manual: { label: "Awaiting Manual Payout", variant: "warning" },
       processing: { label: "Processing", variant: "default" },
       completed: { label: "Completed", variant: "default" },
       rejected: { label: "Rejected", variant: "destructive" },
