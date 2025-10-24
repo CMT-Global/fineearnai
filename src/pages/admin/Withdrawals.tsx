@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, XCircle, Clock, DollarSign, Copy, AlertCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, Clock, DollarSign, Copy, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
 
@@ -154,6 +154,91 @@ export default function Withdrawals() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to mark withdrawal as paid",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+      setActionType(null);
+    }
+  };
+
+  const handleClearErrorAndRetry = async (withdrawalId: string) => {
+    const withdrawal = withdrawals.find(w => w.id === withdrawalId);
+    if (!withdrawal) {
+      toast({
+        title: "Error",
+        description: "Withdrawal not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm("Clear previous API error and retry payment?")) return;
+    
+    try {
+      setProcessing(withdrawalId);
+      setActionType('api');
+
+      toast({
+        title: "Clearing Error",
+        description: "Clearing previous API error and retrying payment...",
+      });
+
+      // Step 1: Clear the api_response error field
+      const { error: clearError } = await supabase
+        .from('withdrawal_requests')
+        .update({ 
+          api_response: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', withdrawalId);
+
+      if (clearError) {
+        throw clearError;
+      }
+
+      // Step 2: Immediately retry the API payment
+      const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
+        body: {
+          withdrawal_request_id: withdrawalId,
+          action: "pay_via_api"
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Check for API-specific failures
+      if (data.api_failed) {
+        toast({
+          title: "⚠️ API Payment Failed Again",
+          description: `${data.error_message || 'API call failed'}. Withdrawal remains PENDING - please check ${data.provider?.toUpperCase() || 'provider'} configuration and balance.`,
+          variant: "destructive",
+          duration: 10000,
+        });
+      } 
+      else if (!data.success) {
+        toast({
+          title: "Error",
+          description: data.error || data.error_message || "Failed to process payment",
+          variant: "destructive",
+        });
+      } 
+      else {
+        toast({
+          title: "✅ Payment Sent Successfully",
+          description: data.transaction_hash 
+            ? `Provider: ${data.provider?.toUpperCase() || 'Unknown'}. Transaction: ${data.transaction_hash.substring(0, 20)}...`
+            : "Payment processed successfully via API after clearing error",
+          duration: 6000,
+        });
+      }
+      
+      await loadWithdrawals();
+    } catch (error) {
+      console.error("Error clearing error and retrying:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to clear error and retry",
         variant: "destructive",
       });
     } finally {
@@ -542,23 +627,47 @@ export default function Withdrawals() {
                             </>
                           )}
                         </Button>
-                        <Button
-                          onClick={() => handlePayViaAPI(withdrawal.id)}
-                          disabled={processing !== null}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          {processing === withdrawal.id && actionType === 'api' ? (
-                            <>
-                              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <DollarSign className="mr-2 h-4 w-4" />
-                              Approve & Pay Via API
-                            </>
-                          )}
-                        </Button>
+
+                        {/* Show Clear Error & Retry button if API error exists, otherwise show regular Pay Via API */}
+                        {(withdrawal as any).api_response?.error ? (
+                          <Button
+                            onClick={() => handleClearErrorAndRetry(withdrawal.id)}
+                            disabled={processing !== null}
+                            className="flex-1 bg-orange-600 hover:bg-orange-700"
+                            title="Clear previous API error and retry payment"
+                          >
+                            {processing === withdrawal.id && actionType === 'api' ? (
+                              <>
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                Retrying...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Clear Error & Retry
+                              </>
+                            )}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handlePayViaAPI(withdrawal.id)}
+                            disabled={processing !== null}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                          >
+                            {processing === withdrawal.id && actionType === 'api' ? (
+                              <>
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Approve & Pay Via API
+                              </>
+                            )}
+                          </Button>
+                        )}
+
                         <Button
                           onClick={() => openRejectDialog(withdrawal.id)}
                           disabled={processing !== null}
