@@ -110,6 +110,3 @@ verify_jwt = false
 
 [functions.convert-usd-to-local]
 verify_jwt = true
-
-[functions.complete-manual-withdrawal]
-verify_jwt = true
