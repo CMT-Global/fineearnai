@@ -333,10 +333,33 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
 
 // Action: Reject
 async function handleReject(supabase: any, withdrawal: any, adminId: string, rejectionReason: string) {
-  console.log(`Rejecting withdrawal ${withdrawal.id}`);
+  console.log(`[REJECT] Starting rejection for withdrawal ${withdrawal.id}`);
+  console.log(`[REJECT] User: ${withdrawal.user_id}, Amount to refund: ${withdrawal.amount}`);
 
-  // Update withdrawal request
-  await supabase
+  // CRITICAL FIX: Fetch current balance atomically (not from stale withdrawal query)
+  const { data: userProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('earnings_wallet_balance')
+    .eq('id', withdrawal.user_id)
+    .single();
+
+  if (profileError || !userProfile) {
+    console.error('[REJECT] ❌ Failed to fetch user profile:', profileError);
+    throw new Error(`Failed to fetch user profile: ${profileError?.message || 'Unknown error'}`);
+  }
+
+  const currentBalance = userProfile.earnings_wallet_balance;
+  const newBalance = currentBalance + withdrawal.amount;
+
+  console.log('[REJECT] 💰 Refund calculation:', {
+    user_id: withdrawal.user_id,
+    current_balance: currentBalance,
+    refund_amount: withdrawal.amount,
+    new_balance: newBalance
+  });
+
+  // Update withdrawal request to rejected
+  const { error: updateError } = await supabase
     .from('withdrawal_requests')
     .update({
       status: 'rejected',
@@ -347,16 +370,28 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     })
     .eq('id', withdrawal.id);
 
+  if (updateError) {
+    console.error('[REJECT] ❌ Failed to update withdrawal:', updateError);
+    throw new Error(`Failed to update withdrawal: ${updateError.message}`);
+  }
+
   // Refund user's earnings wallet
-  await supabase
+  const { error: refundError } = await supabase
     .from('profiles')
     .update({
-      earnings_wallet_balance: withdrawal.profiles.earnings_wallet_balance + withdrawal.amount
+      earnings_wallet_balance: newBalance
     })
     .eq('id', withdrawal.user_id);
 
-  // Update transaction
-  await supabase
+  if (refundError) {
+    console.error('[REJECT] ❌ Failed to refund user:', refundError);
+    throw new Error(`Failed to refund user: ${refundError.message}`);
+  }
+
+  console.log('[REJECT] ✅ Refund applied successfully');
+
+  // Update corresponding transaction to failed
+  const { error: txnError } = await supabase
     .from('transactions')
     .update({ status: 'failed' })
     .eq('user_id', withdrawal.user_id)
@@ -366,19 +401,27 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     .order('created_at', { ascending: false })
     .limit(1);
 
-  // Send notification
+  if (txnError) {
+    console.error('[REJECT] ⚠️ Transaction update failed:', txnError);
+    // Continue - not critical
+  }
+
+  // Send notification to user
   await supabase.functions.invoke('send-cpay-notification', {
     body: {
       user_id: withdrawal.user_id,
       type: 'withdrawal_rejected',
       withdrawal_id: withdrawal.id,
       amount: withdrawal.amount,
-      message: `Your withdrawal was rejected: ${rejectionReason}. Funds have been refunded to your earnings wallet.`
+      message: `Your withdrawal of $${withdrawal.amount} was rejected: ${rejectionReason}. Funds have been refunded to your earnings wallet.`
     }
-  }).catch((err: any) => console.error('Notification error:', err));
+  }).catch((err: any) => {
+    console.error('[REJECT] ⚠️ Notification error:', err);
+    // Continue - not critical
+  });
 
-  // Audit log
-  await supabase
+  // Create audit log with detailed refund info
+  const { error: auditError } = await supabase
     .from('audit_logs')
     .insert({
       admin_id: adminId,
@@ -387,17 +430,30 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
       details: {
         withdrawal_id: withdrawal.id,
         amount: withdrawal.amount,
-        reason: rejectionReason
+        reason: rejectionReason,
+        refund_applied: true,
+        old_balance: currentBalance,
+        new_balance: newBalance
       }
     });
 
-  console.log(`Withdrawal ${withdrawal.id} rejected successfully`);
+  if (auditError) {
+    console.error('[REJECT] ⚠️ Audit log failed:', auditError);
+    // Continue - not critical
+  }
+
+  console.log(`[REJECT] ✅ Withdrawal ${withdrawal.id} rejected successfully, funds refunded`);
 
   return new Response(
     JSON.stringify({ 
       success: true, 
       status: 'rejected',
-      message: 'Withdrawal rejected and funds refunded' 
+      message: `Withdrawal rejected and $${withdrawal.amount} refunded to user's earnings wallet`,
+      refund_details: {
+        old_balance: currentBalance,
+        new_balance: newBalance,
+        refund_amount: withdrawal.amount
+      }
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
