@@ -135,14 +135,15 @@ async function handleMarkPaidManually(supabase: any, withdrawal: any, adminId: s
 
   if (txnError) console.error('Transaction update error:', txnError);
 
-  // Send notification
+  // Send notification (fixed payload structure)
   await supabase.functions.invoke('send-cpay-notification', {
     body: {
       user_id: withdrawal.user_id,
       type: 'withdrawal_completed',
-      withdrawal_id: withdrawal.id,
-      amount: withdrawal.net_amount,
-      message: 'Your withdrawal has been processed successfully.'
+      data: {
+        amount: withdrawal.net_amount,
+        payout_address: withdrawal.payout_address
+      }
     }
   }).catch((err: any) => console.error('Notification error:', err));
 
@@ -234,14 +235,16 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
       .order('created_at', { ascending: false })
       .limit(1);
 
-    // Send success notification
+    // Send success notification (fixed payload structure)
     await supabase.functions.invoke('send-cpay-notification', {
       body: {
         user_id: withdrawal.user_id,
         type: 'withdrawal_completed',
-        withdrawal_id: withdrawal.id,
-        amount: withdrawal.net_amount,
-        message: `Your withdrawal has been sent successfully. Transaction ID: ${apiResponse.transaction_hash}`
+        data: {
+          amount: withdrawal.net_amount,
+          transaction_id: apiResponse.transaction_hash,
+          payout_address: withdrawal.payout_address
+        }
       }
     }).catch((err: any) => console.error('Notification error:', err));
 
@@ -406,14 +409,15 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     // Continue - not critical
   }
 
-  // Send notification to user
+  // Send notification to user (fixed payload structure)
   await supabase.functions.invoke('send-cpay-notification', {
     body: {
       user_id: withdrawal.user_id,
       type: 'withdrawal_rejected',
-      withdrawal_id: withdrawal.id,
-      amount: withdrawal.amount,
-      message: `Your withdrawal of $${withdrawal.amount} was rejected: ${rejectionReason}. Funds have been refunded to your earnings wallet.`
+      data: {
+        amount: withdrawal.amount,
+        reason: rejectionReason
+      }
     }
   }).catch((err: any) => {
     console.error('[REJECT] ⚠️ Notification error:', err);
