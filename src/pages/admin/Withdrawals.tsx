@@ -42,12 +42,8 @@ export default function Withdrawals() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState("pending");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [txnHash, setTxnHash] = useState("");
-  const [completionNotes, setCompletionNotes] = useState("");
-  const [completingWithdrawal, setCompletingWithdrawal] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -112,46 +108,120 @@ export default function Withdrawals() {
     }
   };
 
-  const handleProcessWithdrawal = async () => {
-    if (!selectedWithdrawal || !dialogAction) return;
-
+  const handleMarkAsPaidManually = async (withdrawalId: string) => {
+    const notes = prompt("Add notes (optional):");
+    
     try {
-      setProcessing(selectedWithdrawal);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const withdrawal = withdrawals.find(w => w.id === selectedWithdrawal);
-      if (!withdrawal) throw new Error("Withdrawal not found");
-
-      // All withdrawals now processed through cpay-withdraw (manual processing workflow)
-      console.log('Processing withdrawal:', {
-        withdrawalId: selectedWithdrawal,
-        paymentMethod: withdrawal.payment_method,
-        action: dialogAction
+      setProcessing(withdrawalId);
+      
+      const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
+        body: {
+          withdrawal_request_id: withdrawalId,
+          action: "mark_paid_manually",
+          manual_payment_notes: notes || "Marked as paid manually by admin"
+        }
       });
       
-      const { data, error } = await supabase.functions.invoke("cpay-withdraw", {
-        body: {
-          withdrawal_request_id: selectedWithdrawal,
-          action: dialogAction,
-          rejection_reason: dialogAction === "reject" ? rejectionReason : undefined,
-        },
-      });
-
       if (error) throw error;
-
+      
       toast({
         title: "Success",
-        description: data.message || `Withdrawal ${dialogAction}ed successfully`,
+        description: "Withdrawal marked as paid successfully"
       });
-
+      
       await loadWithdrawals();
     } catch (error) {
-      console.error("Error processing withdrawal:", error);
+      console.error("Error marking withdrawal as paid:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process withdrawal",
+        description: error instanceof Error ? error.message : "Failed to mark withdrawal as paid",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handlePayViaAPI = async (withdrawalId: string) => {
+    if (!confirm("Process this withdrawal via payment API?")) return;
+    
+    try {
+      setProcessing(withdrawalId);
+      
+      const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
+        body: {
+          withdrawal_request_id: withdrawalId,
+          action: "pay_via_api"
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Check for API failures in response
+      if (data.status === 'failed') {
+        toast({
+          title: "API Error",
+          description: data.error_message || "Payment processing failed",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: data.transaction_hash 
+            ? `Payment sent successfully! Txn: ${data.transaction_hash.substring(0, 16)}...`
+            : "Payment sent successfully via API"
+        });
+      }
+      
+      await loadWithdrawals();
+    } catch (error) {
+      console.error("Error processing API payment:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process payment",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedWithdrawal) return;
+    
+    if (!rejectionReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Rejection reason is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setProcessing(selectedWithdrawal);
+      
+      const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
+        body: {
+          withdrawal_request_id: selectedWithdrawal,
+          action: "reject",
+          rejection_reason: rejectionReason
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Withdrawal rejected and funds refunded"
+      });
+      
+      await loadWithdrawals();
+    } catch (error) {
+      console.error("Error rejecting withdrawal:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to reject withdrawal",
         variant: "destructive",
       });
     } finally {
@@ -159,60 +229,12 @@ export default function Withdrawals() {
       setDialogOpen(false);
       setSelectedWithdrawal(null);
       setRejectionReason("");
-      setDialogAction(null);
     }
   };
 
-  const openDialog = (withdrawalId: string, action: "approve" | "reject") => {
+  const openRejectDialog = (withdrawalId: string) => {
     setSelectedWithdrawal(withdrawalId);
-    setDialogAction(action);
     setDialogOpen(true);
-  };
-
-  const handleCompleteManualWithdrawal = async (withdrawalId: string) => {
-    if (!txnHash.trim()) {
-      toast({
-        title: "Error",
-        description: "Transaction hash is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setCompletingWithdrawal(withdrawalId);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const { data, error } = await supabase.functions.invoke("complete-manual-withdrawal", {
-        body: {
-          withdrawal_request_id: withdrawalId,
-          transaction_hash: txnHash,
-          notes: completionNotes || undefined,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: data.message || "Withdrawal marked as completed successfully",
-      });
-
-      setTxnHash("");
-      setCompletionNotes("");
-      await loadWithdrawals();
-    } catch (error) {
-      console.error("Error completing withdrawal:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to complete withdrawal",
-        variant: "destructive",
-      });
-    } finally {
-      setCompletingWithdrawal(null);
-    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -224,9 +246,8 @@ export default function Withdrawals() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "warning" }> = {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       pending: { label: "Pending", variant: "secondary" },
-      approved_manual: { label: "Awaiting Manual Payout", variant: "warning" },
       processing: { label: "Processing", variant: "default" },
       completed: { label: "Completed", variant: "default" },
       rejected: { label: "Rejected", variant: "destructive" },
@@ -238,16 +259,16 @@ export default function Withdrawals() {
   };
 
   const filteredWithdrawals = withdrawals.filter(w => {
-    if (selectedTab === "pending") return ["pending", "approved_manual"].includes(w.status);
+    if (selectedTab === "pending") return w.status === "pending";
     if (selectedTab === "completed") return ["completed", "processing"].includes(w.status);
     if (selectedTab === "rejected") return ["rejected", "failed"].includes(w.status);
     return true;
   });
 
   const stats = {
-    pending: withdrawals.filter(w => ["pending", "approved_manual"].includes(w.status)).length,
+    pending: withdrawals.filter(w => w.status === "pending").length,
     pendingAmount: withdrawals
-      .filter(w => ["pending", "approved_manual"].includes(w.status))
+      .filter(w => w.status === "pending")
       .reduce((sum, w) => sum + parseFloat(w.amount.toString()), 0),
     completed: withdrawals.filter(w => w.status === "completed").length,
     rejected: withdrawals.filter(w => ["rejected", "failed"].includes(w.status)).length,
@@ -410,79 +431,37 @@ export default function Withdrawals() {
                       )}
                     </div>
 
-                    {withdrawal.status === "approved_manual" && (
-                      <Alert className="mt-4 border-orange-500 bg-orange-50">
-                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                        <AlertTitle>Manual Payout Required</AlertTitle>
+                    {withdrawal.status === "failed" && (withdrawal as any).api_response?.error && (
+                      <Alert variant="destructive" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>API Payment Failed</AlertTitle>
                         <AlertDescription>
-                          <div className="space-y-2 mt-2">
-                            <p><strong>Network:</strong> TRC20 (USDT)</p>
-                            <p><strong>Amount:</strong> {formatCurrency(withdrawal.net_amount)} USDT</p>
-                            <p className="flex items-center gap-2">
-                              <strong>Address:</strong> 
-                              <code className="ml-2 bg-white px-2 py-1 rounded text-xs">
-                                {withdrawal.payout_address}
-                              </code>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => copyToClipboard(withdrawal.payout_address)}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Send crypto manually from your external wallet, then enter transaction hash below.
-                            </p>
-                          </div>
+                          {(withdrawal as any).api_response.error}
                         </AlertDescription>
                       </Alert>
-                    )}
-
-                    {withdrawal.status === "approved_manual" && (
-                      <div className="space-y-3 mt-4">
-                        <div>
-                          <label className="text-sm font-medium">Blockchain Transaction Hash *</label>
-                          <Input 
-                            placeholder="Enter transaction hash (e.g., 0xabc123...)" 
-                            value={txnHash}
-                            onChange={(e) => setTxnHash(e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Completion Notes (Optional)</label>
-                          <Textarea
-                            placeholder="Add any notes about the completion..."
-                            value={completionNotes}
-                            onChange={(e) => setCompletionNotes(e.target.value)}
-                            className="mt-1"
-                            rows={2}
-                          />
-                        </div>
-                        <Button 
-                          onClick={() => handleCompleteManualWithdrawal(withdrawal.id)}
-                          disabled={completingWithdrawal === withdrawal.id || !txnHash.trim()}
-                          className="w-full"
-                        >
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          {completingWithdrawal === withdrawal.id ? "Marking as Completed..." : "Mark as Completed"}
-                        </Button>
-                      </div>
                     )}
 
                     {withdrawal.status === "pending" && (
                       <div className="flex gap-2 mt-4">
                         <Button
-                          onClick={() => openDialog(withdrawal.id, "approve")}
+                          onClick={() => handleMarkAsPaidManually(withdrawal.id)}
                           disabled={processing === withdrawal.id}
+                          variant="outline"
                           className="flex-1"
                         >
                           <CheckCircle className="mr-2 h-4 w-4" />
-                          Approve
+                          Mark As Paid Manually
                         </Button>
                         <Button
-                          onClick={() => openDialog(withdrawal.id, "reject")}
+                          onClick={() => handlePayViaAPI(withdrawal.id)}
+                          disabled={processing === withdrawal.id}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Approve & Pay Via API
+                        </Button>
+                        <Button
+                          onClick={() => openRejectDialog(withdrawal.id)}
                           disabled={processing === withdrawal.id}
                           variant="destructive"
                           className="flex-1"
@@ -503,33 +482,27 @@ export default function Withdrawals() {
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {dialogAction === "approve" ? "Approve Withdrawal" : "Reject Withdrawal"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Reject Withdrawal</AlertDialogTitle>
             <AlertDialogDescription>
-              {dialogAction === "approve"
-                ? "This will approve the withdrawal for manual processing. You will need to send the crypto manually and then mark it as completed."
-                : "This will refund the amount to the user's earnings wallet."}
+              This will reject the withdrawal and refund the amount to the user's earnings wallet.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {dialogAction === "reject" && (
-            <div className="py-4">
-              <label className="text-sm font-medium">Rejection Reason</label>
-              <Textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Enter reason for rejection..."
-                className="mt-2"
-                rows={3}
-              />
-            </div>
-          )}
+          <div className="py-4">
+            <label className="text-sm font-medium">Rejection Reason *</label>
+            <Textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Enter reason for rejection..."
+              className="mt-2"
+              rows={3}
+            />
+          </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleProcessWithdrawal}>
-              {dialogAction === "approve" ? "Approve" : "Reject"}
+            <AlertDialogAction onClick={handleReject}>
+              Reject & Refund
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
