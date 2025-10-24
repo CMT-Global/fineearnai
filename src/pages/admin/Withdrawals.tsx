@@ -892,8 +892,8 @@ export default function Withdrawals() {
                 )}
               </div>
 
-              {/* Token Info - handle both usdtTrc20Token (wallet mode) and token (deposit mode) */}
-              {(walletInfo.usdtTrc20Token || walletInfo.token) ? (
+              {/* Token Info - show success only when we actually have a tokenId */}
+              {(walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId) ? (
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertTitle>✅ USDT TRC20 Token Found</AlertTitle>
@@ -908,8 +908,10 @@ export default function Withdrawals() {
                         variant="ghost"
                         onClick={() => {
                           const tokenId = walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId;
-                          navigator.clipboard.writeText(tokenId);
-                          toast({ title: "Copied!", description: "Token ID copied to clipboard" });
+                          if (tokenId) {
+                            navigator.clipboard.writeText(tokenId);
+                            toast({ title: "Copied!", description: "Token ID copied to clipboard" });
+                          }
                         }}
                         className="ml-2"
                       >
@@ -931,7 +933,9 @@ export default function Withdrawals() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{walletInfo.source === 'last_deposit' ? 'Token Not Found' : 'USDT TRC20 Not Found'}</AlertTitle>
                   <AlertDescription>
-                    {walletInfo.error || 'Could not find USDT on TRC20 blockchain'}
+                    {walletInfo.error || (walletInfo.totalTokens === 0
+                      ? 'Your CPAY wallet returned 0 tokens. Ensure USDT TRC20 is enabled for this wallet or try the "Use Token From Last Deposit" option.'
+                      : 'Could not find USDT on TRC20 blockchain in your wallet tokens')}
                     {walletInfo.suggestion && (
                       <div className="mt-2 text-xs">💡 {walletInfo.suggestion}</div>
                     )}

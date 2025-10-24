@@ -306,9 +306,7 @@ Deno.serve(async (req) => {
         address: usdtTrc20.address,
         blockchain: usdtTrc20.blockchain,
         message: '✅ THIS IS YOUR USDT TRC20 TOKEN ID - Use this as CPAY_USDT_TOKEN_ID'
-      } : {
-        message: '❌ USDT TRC20 not found in wallet'
-      },
+      } : null,
       allTokens: formattedTokens,
       instructions: [
         '1. Look for the token marked with isUsdtTrc20: true',
