@@ -208,26 +208,29 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
     // API call succeeded
     console.log('API payment response:', apiResponse);
 
-    // Check if withdrawal is fully completed or just initiated (processing)
-    if (apiResponse.status === 'processing') {
-      // Withdrawal initiated but awaiting confirmation
-      console.log(`Withdrawal ${withdrawal.id} initiated with ${provider}, awaiting confirmation`);
+    // PHASE 1: Treat CPAY withdrawal ID as immediate completion
+    // No more "processing" status - we complete immediately when we get the CPAY withdrawal ID
+    if (apiResponse.status === 'processing' && apiResponse.cpay_withdrawal_id) {
+      console.log(`✅ PHASE 1: Withdrawal ${withdrawal.id} completed immediately with CPAY ID: ${apiResponse.cpay_withdrawal_id}`);
       
+      // Mark withdrawal as COMPLETED immediately
       await supabase
         .from('withdrawal_requests')
         .update({
-          status: 'processing',
+          status: 'completed',
           processed_by: adminId,
+          processed_at: new Date().toISOString(),
+          manual_txn_hash: apiResponse.cpay_withdrawal_id, // Store CPAY ID as transaction reference
           api_response: apiResponse,
           updated_at: new Date().toISOString(),
         })
         .eq('id', withdrawal.id);
 
-      // Update transaction to processing
+      // Update transaction to COMPLETED with CPAY ID as official transaction ID
       await supabase
         .from('transactions')
         .update({ 
-          status: 'processing',
+          status: 'completed',
           gateway_transaction_id: apiResponse.cpay_withdrawal_id
         })
         .eq('user_id', withdrawal.user_id)
@@ -237,28 +240,41 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
         .order('created_at', { ascending: false })
         .limit(1);
 
-      // Audit log
+      // Send IMMEDIATE completion notification to user
+      await supabase.functions.invoke('send-cpay-notification', {
+        body: {
+          user_id: withdrawal.user_id,
+          type: 'withdrawal_completed',
+          data: {
+            amount: withdrawal.net_amount,
+            transaction_id: apiResponse.cpay_withdrawal_id,
+            payout_address: withdrawal.payout_address
+          }
+        }
+      }).catch((err: any) => console.error('Notification error:', err));
+
+      // Audit log with immediate completion action
       await supabase
         .from('audit_logs')
         .insert({
           admin_id: adminId,
-          action_type: 'withdrawal_initiated_via_api',
+          action_type: 'withdrawal_paid_via_api',
           target_user_id: withdrawal.user_id,
           details: {
             withdrawal_id: withdrawal.id,
             amount: withdrawal.amount,
             provider: provider,
             cpay_withdrawal_id: apiResponse.cpay_withdrawal_id,
-            note: 'Withdrawal initiated, awaiting blockchain confirmation'
+            note: 'PHASE 1: Withdrawal completed immediately with CPAY ID'
           }
         });
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          status: 'processing',
-          cpay_withdrawal_id: apiResponse.cpay_withdrawal_id,
-          message: `Withdrawal initiated with ${provider}. ID: ${apiResponse.cpay_withdrawal_id}. Awaiting confirmation.`
+          status: 'completed',
+          transaction_id: apiResponse.cpay_withdrawal_id,
+          message: `✅ Payment completed via ${provider}. Transaction ID: ${apiResponse.cpay_withdrawal_id}`
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
