@@ -407,15 +407,18 @@ export default function Withdrawals() {
     });
   };
 
-  const handleFetchCPAYWalletInfo = async () => {
+  const handleFetchCPAYWalletInfo = async (mode: 'wallet' | 'deposit' = 'wallet') => {
     try {
       setFetchingWalletInfo(true);
+      const modeLabel = mode === 'deposit' ? 'last deposit' : 'wallet API';
       toast({
-        title: "Fetching Wallet Info",
-        description: "Retrieving CPAY wallet token information...",
+        title: "Fetching Token Info",
+        description: `Retrieving CPAY token from ${modeLabel}...`,
       });
 
-      const { data, error } = await supabase.functions.invoke("get-cpay-wallet-info");
+      const { data, error } = await supabase.functions.invoke("get-cpay-wallet-info", {
+        body: { mode } // Pass mode as query param alternative
+      });
       
       if (error) throw error;
       
@@ -423,25 +426,26 @@ export default function Withdrawals() {
         setWalletInfo(data);
         setShowWalletInfoDialog(true);
         
-        if (data.usdtTrc20Token?.currencyId) {
+        const tokenId = data.usdtTrc20Token?.currencyId || data.token?.currencyId;
+        if (tokenId) {
           toast({
             title: "✅ Token ID Found",
-            description: `USDT TRC20 currencyId: ${data.usdtTrc20Token.currencyId}`,
+            description: `Source: ${data.source || mode}. currencyId: ${tokenId}`,
             duration: 10000,
           });
         }
       } else {
         toast({
           title: "Error",
-          description: data.error || "Failed to fetch wallet info",
+          description: data.error || "Failed to fetch token info",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Error fetching CPAY wallet info:", error);
+      console.error("Error fetching CPAY token info:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch wallet info",
+        description: error instanceof Error ? error.message : "Failed to fetch token info",
         variant: "destructive",
       });
     } finally {
@@ -536,35 +540,58 @@ export default function Withdrawals() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-blue-600" />
-            CPAY Configuration Helper
+            CPAY Token ID Helper
           </CardTitle>
           <CardDescription>
-            Get your correct USDT TRC20 Token ID from CPAY wallet
+            Get your correct USDT TRC20 Token ID from CPAY - choose your preferred method
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={handleFetchCPAYWalletInfo}
-              disabled={fetchingWalletInfo}
-              variant="outline"
-              className="border-blue-300 hover:bg-blue-100"
-            >
-              {fetchingWalletInfo ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Fetching...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Get CPAY Token ID
-                </>
-              )}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Click to retrieve your wallet's USDT TRC20 currencyToken for configuration
-            </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                onClick={() => handleFetchCPAYWalletInfo('wallet')}
+                disabled={fetchingWalletInfo}
+                variant="outline"
+                className="border-blue-300 hover:bg-blue-100"
+              >
+                {fetchingWalletInfo ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Fetching...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Get From Wallet API
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => handleFetchCPAYWalletInfo('deposit')}
+                disabled={fetchingWalletInfo}
+                variant="outline"
+                className="border-green-300 hover:bg-green-100"
+              >
+                {fetchingWalletInfo ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Fetching...
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Use Token From Last Deposit
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><strong>Wallet API:</strong> Fetches all tokens from your CPAY wallet</p>
+              <p><strong>Last Deposit:</strong> Extracts token ID from your most recent CPAY deposit (recommended if you've deposited)</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -842,16 +869,31 @@ export default function Withdrawals() {
       <AlertDialog open={showWalletInfoDialog} onOpenChange={setShowWalletInfoDialog}>
         <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>CPAY Wallet Information</AlertDialogTitle>
+            <AlertDialogTitle>CPAY Token Information</AlertDialogTitle>
             <AlertDialogDescription>
-              Your CPAY wallet tokens and configuration details
+              {walletInfo?.source === 'last_deposit' 
+                ? 'Token extracted from your most recent CPAY deposit'
+                : 'Tokens retrieved from your CPAY wallet'
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           {walletInfo && (
             <div className="space-y-4 py-4">
-              {/* USDT TRC20 Token (Primary) */}
-              {walletInfo.usdtTrc20Token ? (
+              {/* Source Badge */}
+              <div className="flex items-center gap-2">
+                <Badge variant={walletInfo.source === 'last_deposit' ? 'default' : 'secondary'}>
+                  {walletInfo.source === 'last_deposit' ? '📦 From Last Deposit' : '💼 From Wallet API'}
+                </Badge>
+                {walletInfo.depositDate && (
+                  <span className="text-xs text-muted-foreground">
+                    Deposit: {new Date(walletInfo.depositDate).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              {/* Token Info - handle both usdtTrc20Token (wallet mode) and token (deposit mode) */}
+              {(walletInfo.usdtTrc20Token || walletInfo.token) ? (
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertTitle>✅ USDT TRC20 Token Found</AlertTitle>
@@ -859,13 +901,14 @@ export default function Withdrawals() {
                     <div className="font-mono text-sm bg-white p-3 rounded border">
                       <strong>currencyId (Token ID):</strong><br/>
                       <code className="text-green-700 font-bold text-base">
-                        {walletInfo.usdtTrc20Token.currencyId}
+                        {walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId}
                       </code>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => {
-                          navigator.clipboard.writeText(walletInfo.usdtTrc20Token.currencyId);
+                          const tokenId = walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId;
+                          navigator.clipboard.writeText(tokenId);
                           toast({ title: "Copied!", description: "Token ID copied to clipboard" });
                         }}
                         className="ml-2"
@@ -874,18 +917,24 @@ export default function Withdrawals() {
                       </Button>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div><strong>Balance:</strong> {walletInfo.usdtTrc20Token.balance}</div>
-                      <div><strong>Currency:</strong> {walletInfo.usdtTrc20Token.currency}</div>
-                      <div><strong>Blockchain:</strong> {walletInfo.usdtTrc20Token.blockchain}</div>
+                      <div><strong>Balance:</strong> {walletInfo.usdtTrc20Token?.balance || walletInfo.token?.balance || 'N/A'}</div>
+                      <div><strong>Currency:</strong> {walletInfo.usdtTrc20Token?.currency || walletInfo.token?.currency}</div>
+                      <div><strong>Blockchain:</strong> {walletInfo.usdtTrc20Token?.blockchain || walletInfo.token?.blockchain}</div>
+                      {walletInfo.token?.address && (
+                        <div><strong>Address:</strong> <code className="text-xs">{walletInfo.token.address}</code></div>
+                      )}
                     </div>
                   </AlertDescription>
                 </Alert>
               ) : (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>USDT TRC20 Not Found</AlertTitle>
+                  <AlertTitle>{walletInfo.source === 'last_deposit' ? 'Token Not Found' : 'USDT TRC20 Not Found'}</AlertTitle>
                   <AlertDescription>
-                    Could not find USDT on TRC20 blockchain in your wallet
+                    {walletInfo.error || 'Could not find USDT on TRC20 blockchain'}
+                    {walletInfo.suggestion && (
+                      <div className="mt-2 text-xs">💡 {walletInfo.suggestion}</div>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
@@ -895,13 +944,12 @@ export default function Withdrawals() {
                 <h4 className="font-semibold mb-2">📋 Next Steps:</h4>
                 <ol className="text-sm space-y-2 list-decimal list-inside">
                   <li>Copy the <code className="bg-muted px-1">currencyId</code> value above</li>
-                  <li>Go to Settings → Environment Variables (or use the secrets update tool)</li>
                   <li>Update the secret <code className="bg-muted px-1">CPAY_USDT_TOKEN_ID</code> with this value</li>
                   <li>Return to this page and click "Clear Error & Retry" on the pending withdrawal</li>
                 </ol>
               </div>
 
-              {/* All Tokens (Collapsible) */}
+              {/* All Tokens (Collapsible) - only show for wallet mode */}
               {walletInfo.allTokens && walletInfo.allTokens.length > 0 && (
                 <details className="border rounded p-3">
                   <summary className="cursor-pointer font-semibold text-sm">
@@ -914,21 +962,24 @@ export default function Withdrawals() {
                         <div><strong>Currency:</strong> {token.currency}</div>
                         <div><strong>Blockchain:</strong> {token.blockchain || 'N/A'}</div>
                         <div><strong>Balance:</strong> {token.balance}</div>
+                        {token.isUsdtTrc20 && <Badge variant="default" className="mt-1">← Recommended</Badge>}
                       </div>
                     ))}
                   </div>
                 </details>
               )}
 
-              {/* Raw Wallet Data (Debug) */}
-              {walletInfo.wallet && (
+              {/* Deposit Info (for deposit mode) */}
+              {walletInfo.depositInfo && (
                 <details className="border rounded p-3">
                   <summary className="cursor-pointer font-semibold text-sm">
-                    Raw Wallet Data (Debug)
+                    Deposit Details
                   </summary>
-                  <pre className="mt-3 text-xs bg-muted p-3 rounded overflow-x-auto">
-                    {JSON.stringify(walletInfo.wallet, null, 2)}
-                  </pre>
+                  <div className="mt-3 text-xs space-y-1 bg-muted p-3 rounded">
+                    <div><strong>Wallet ID:</strong> {walletInfo.depositInfo.wallet}</div>
+                    <div><strong>Currency:</strong> {walletInfo.depositInfo.currency}</div>
+                    <div><strong>Blockchain:</strong> {walletInfo.depositInfo.blockchain}</div>
+                  </div>
                 </details>
               )}
             </div>
@@ -938,15 +989,16 @@ export default function Withdrawals() {
             <AlertDialogCancel>Close</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (walletInfo?.usdtTrc20Token?.currencyId) {
-                  navigator.clipboard.writeText(walletInfo.usdtTrc20Token.currencyId);
+                const tokenId = walletInfo?.usdtTrc20Token?.currencyId || walletInfo?.token?.currencyId;
+                if (tokenId) {
+                  navigator.clipboard.writeText(tokenId);
                   toast({
                     title: "Copied!",
                     description: "Token ID copied to clipboard",
                   });
                 }
               }}
-              disabled={!walletInfo?.usdtTrc20Token?.currencyId}
+              disabled={!walletInfo?.usdtTrc20Token?.currencyId && !walletInfo?.token?.currencyId}
             >
               <Copy className="mr-2 h-4 w-4" />
               Copy Token ID
