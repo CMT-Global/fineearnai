@@ -400,20 +400,67 @@ serve(async (req) => {
       console.log(`[CPAY-WEBHOOK] ℹ️ No deposit found for clickId=${trackingId}, checking withdrawals...`);
       
       // === WITHDRAWAL LOOKUP FALLBACK ===
+      // PHASE 3: Idempotent withdrawal lookup - check by CPAY ID regardless of status
       if (payment_id) {
-        console.log('[CPAY-WEBHOOK] 🔍 Searching for withdrawal with cpay_withdrawal_id:', payment_id);
+        console.log('[CPAY-WEBHOOK] 🔍 PHASE 3 - Searching for withdrawal with cpay_withdrawal_id:', payment_id);
         
-        // Search withdrawal_requests by cpay_withdrawal_id in api_response
+        // Search withdrawal_requests by cpay_withdrawal_id in api_response (no status filter)
         const { data: withdrawalRequest, error: wrError } = await supabase
           .from('withdrawal_requests')
           .select('*, profiles!inner(id, earnings_wallet_balance, username, email)')
-          .eq('status', 'processing')
           .eq('payment_provider', 'cpay')
           .contains('api_response', { cpay_withdrawal_id: payment_id })
-          .single();
+          .maybeSingle();
         
-        if (!wrError && withdrawalRequest) {
-          console.log('[CPAY-WEBHOOK] ✅ Found withdrawal request:', withdrawalRequest.id);
+        if (wrError) {
+          console.error('[CPAY-WEBHOOK] ❌ Error querying withdrawals:', wrError);
+        }
+        
+        if (withdrawalRequest) {
+          console.log('[CPAY-WEBHOOK] ✅ Found withdrawal request:', withdrawalRequest.id, 'Status:', withdrawalRequest.status);
+          
+          // PHASE 3: Make webhook non-authoritative - no-op if already in terminal state
+          if (withdrawalRequest.status === 'completed') {
+            console.log('[CPAY-WEBHOOK] ✓ PHASE 3 - Withdrawal already completed, ignoring webhook (idempotent)');
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                message: 'Withdrawal already completed - webhook ignored (idempotent)',
+                withdrawal_id: withdrawalRequest.id,
+                current_status: 'completed'
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          if (withdrawalRequest.status === 'rejected') {
+            console.log('[CPAY-WEBHOOK] ✓ PHASE 3 - Withdrawal already rejected, ignoring webhook (idempotent)');
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                message: 'Withdrawal already rejected - webhook ignored (idempotent)',
+                withdrawal_id: withdrawalRequest.id,
+                current_status: 'rejected'
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          if (withdrawalRequest.status === 'pending') {
+            console.log('[CPAY-WEBHOOK] ✓ PHASE 3 - Withdrawal in pending state, ignoring webhook (API completion is canonical)');
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                message: 'Withdrawal pending - webhook ignored (API completion is canonical)',
+                withdrawal_id: withdrawalRequest.id,
+                current_status: 'pending'
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          // Only process if still in legacy "processing" state (shouldn't happen after Phase 1)
+          console.log('[CPAY-WEBHOOK] ⚠️ PHASE 3 - Found legacy processing withdrawal, handling status:', status);
           
           // Handle based on webhook status
           if (status === 'completed') {
@@ -425,7 +472,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               success: true, 
-              message: 'Withdrawal status updated via webhook',
+              message: 'Legacy withdrawal status updated via webhook',
               withdrawal_id: withdrawalRequest.id,
               new_status: status
             }),
