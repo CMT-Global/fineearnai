@@ -688,7 +688,8 @@ async function processCPAYWithdrawal(withdrawal: any): Promise<{
     const withdrawalPayload: any = {
       to: withdrawal.payout_address,
       amount: formatAmount(parseFloat(withdrawal.net_amount), 2),  // Start with 2 decimals
-      currencyToken: CPAY_USDT_TOKEN_ID  // ✅ REQUIRED field for Account Wallet
+      currencyToken: CPAY_USDT_TOKEN_ID,  // ✅ REQUIRED field for Account Wallet
+      clickId: withdrawal.id  // 🔗 Link to our withdrawal request for webhook tracking
     };
 
     console.log('[CPAY-WITHDRAWAL] 📦 Withdrawal payload:', {
@@ -696,7 +697,8 @@ async function processCPAYWithdrawal(withdrawal: any): Promise<{
       amount: withdrawalPayload.amount,
       amountType: typeof withdrawalPayload.amount,
       currencyToken: CPAY_USDT_TOKEN_ID,
-      currencyTokenLength: CPAY_USDT_TOKEN_ID.length
+      currencyTokenLength: CPAY_USDT_TOKEN_ID.length,
+      clickId: withdrawal.id
     });
     
     // ============================================================
