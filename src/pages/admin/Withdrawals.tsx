@@ -40,6 +40,7 @@ export default function Withdrawals() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'manual' | 'api' | 'reject' | null>(null);
   const [selectedTab, setSelectedTab] = useState("pending");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<string | null>(null);
@@ -109,10 +110,20 @@ export default function Withdrawals() {
   };
 
   const handleMarkAsPaidManually = async (withdrawalId: string) => {
+    if (processing) {
+      toast({
+        title: "Please Wait",
+        description: "Another withdrawal is being processed",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const notes = prompt("Add notes (optional):");
     
     try {
       setProcessing(withdrawalId);
+      setActionType('manual');
       
       const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
         body: {
@@ -123,11 +134,19 @@ export default function Withdrawals() {
       });
       
       if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Withdrawal marked as paid successfully"
-      });
+
+      if (data?.success) {
+        toast({
+          title: "Success",
+          description: `Withdrawal marked as paid. Transaction hash: ${data.transaction_hash || 'N/A'}`
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data?.error || "Failed to mark withdrawal as paid",
+          variant: "destructive",
+        });
+      }
       
       await loadWithdrawals();
     } catch (error) {
@@ -139,14 +158,30 @@ export default function Withdrawals() {
       });
     } finally {
       setProcessing(null);
+      setActionType(null);
     }
   };
 
   const handlePayViaAPI = async (withdrawalId: string) => {
+    if (processing) {
+      toast({
+        title: "Please Wait",
+        description: "Another withdrawal is being processed",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!confirm("Process this withdrawal via payment API?")) return;
     
     try {
       setProcessing(withdrawalId);
+      setActionType('api');
+
+      toast({
+        title: "Processing",
+        description: "Sending payment request to API...",
+      });
       
       const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
         body: {
@@ -161,14 +196,14 @@ export default function Withdrawals() {
       if (data.status === 'failed') {
         toast({
           title: "API Error",
-          description: data.error_message || "Payment processing failed",
+          description: data.error_message || data.error || "Payment processing failed",
           variant: "destructive",
         });
       } else {
         toast({
           title: "Success",
           description: data.transaction_hash 
-            ? `Payment sent successfully! Txn: ${data.transaction_hash.substring(0, 16)}...`
+            ? `Payment sent! Provider: ${data.provider || 'Unknown'}. Txn: ${data.transaction_hash.substring(0, 16)}...`
             : "Payment sent successfully via API"
         });
       }
@@ -183,6 +218,7 @@ export default function Withdrawals() {
       });
     } finally {
       setProcessing(null);
+      setActionType(null);
     }
   };
 
@@ -197,9 +233,19 @@ export default function Withdrawals() {
       });
       return;
     }
+
+    if (rejectionReason.length < 10) {
+      toast({
+        title: "Error",
+        description: "Please provide a detailed reason (at least 10 characters)",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setProcessing(selectedWithdrawal);
+      setActionType('reject');
       
       const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
         body: {
@@ -210,11 +256,19 @@ export default function Withdrawals() {
       });
       
       if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Withdrawal rejected and funds refunded"
-      });
+
+      if (data?.success) {
+        toast({
+          title: "Success",
+          description: `Withdrawal rejected. Amount ${data.refunded_amount ? formatCurrency(data.refunded_amount) : ''} refunded to user's earnings wallet`
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data?.error || "Failed to reject withdrawal",
+          variant: "destructive",
+        });
+      }
       
       await loadWithdrawals();
     } catch (error) {
@@ -226,6 +280,7 @@ export default function Withdrawals() {
       });
     } finally {
       setProcessing(null);
+      setActionType(null);
       setDialogOpen(false);
       setSelectedWithdrawal(null);
       setRejectionReason("");
@@ -445,29 +500,56 @@ export default function Withdrawals() {
                       <div className="flex gap-2 mt-4">
                         <Button
                           onClick={() => handleMarkAsPaidManually(withdrawal.id)}
-                          disabled={processing === withdrawal.id}
+                          disabled={processing !== null}
                           variant="outline"
                           className="flex-1"
                         >
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Mark As Paid Manually
+                          {processing === withdrawal.id && actionType === 'manual' ? (
+                            <>
+                              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Mark As Paid Manually
+                            </>
+                          )}
                         </Button>
                         <Button
                           onClick={() => handlePayViaAPI(withdrawal.id)}
-                          disabled={processing === withdrawal.id}
+                          disabled={processing !== null}
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          Approve & Pay Via API
+                          {processing === withdrawal.id && actionType === 'api' ? (
+                            <>
+                              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Approve & Pay Via API
+                            </>
+                          )}
                         </Button>
                         <Button
                           onClick={() => openRejectDialog(withdrawal.id)}
-                          disabled={processing === withdrawal.id}
+                          disabled={processing !== null}
                           variant="destructive"
                           className="flex-1"
                         >
-                          <XCircle className="mr-2 h-4 w-4" />
-                          Reject
+                          {processing === withdrawal.id && actionType === 'reject' ? (
+                            <>
+                              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Reject
+                            </>
+                          )}
                         </Button>
                       </div>
                     )}
@@ -493,16 +575,30 @@ export default function Withdrawals() {
             <Textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Enter reason for rejection..."
+              placeholder="Enter detailed reason for rejection (minimum 10 characters)..."
               className="mt-2"
-              rows={3}
+              rows={4}
+              disabled={processing !== null}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              {rejectionReason.length}/10 characters minimum
+            </p>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReject}>
-              Reject & Refund
+            <AlertDialogCancel disabled={processing !== null}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleReject}
+              disabled={processing !== null || !rejectionReason.trim() || rejectionReason.length < 10}
+            >
+              {processing ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Rejecting...
+                </>
+              ) : (
+                "Reject & Refund"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
