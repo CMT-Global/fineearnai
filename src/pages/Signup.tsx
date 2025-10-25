@@ -18,7 +18,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 
 const Signup = () => {
@@ -26,7 +25,6 @@ const Signup = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingReferrer, setIsLoadingReferrer] = useState(false);
   const referralCodeFromUrl = searchParams.get("ref");
   const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
 
@@ -55,46 +53,17 @@ const Signup = () => {
   }, [referralCodeFromUrl]);
 
   const fetchReferrerInfo = async (code: string) => {
-    if (!code || code.trim().length === 0) {
-      console.log('[REFERRAL] ⚠️ Empty referral code, skipping fetch');
-      return;
-    }
-
-    setIsLoadingReferrer(true);
-    
     try {
-      // Normalize referral code: trim whitespace and convert to uppercase
-      const normalizedCode = code.trim().toUpperCase();
-      console.log('[REFERRAL] 🔍 Fetching referrer info:', {
-        original: code,
-        normalized: normalizedCode
-      });
+      console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
       
-      // Call secure RPC function that bypasses RLS
       const { data, error } = await supabase
-        .rpc("get_username_by_referral_code", { p_referral_code: normalizedCode });
+        .from("profiles")
+        .select("username")
+        .eq("referral_code", code)
+        .single();
 
-      console.log('[REFERRAL] 📦 RPC Response:', { data, error });
-
-      if (error) {
-        console.error('[REFERRAL] ❌ Database error while fetching referrer:', { code: normalizedCode, error });
-        setReferrerUsername(null);
-        setIsLoadingReferrer(false);
-        toast({
-          title: "Error loading referrer",
-          description: "Unable to verify referral code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if data is a valid non-empty string
-      const isValidUsername = typeof data === 'string' && data.trim().length > 0;
-      
-      if (!isValidUsername) {
-        console.warn('[REFERRAL] ⚠️ Referral code not found:', normalizedCode);
-        setReferrerUsername(null);
-        setIsLoadingReferrer(false);
+      if (error || !data) {
+        console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
         toast({
           title: "Referral code not found",
           description: "The referral code you entered does not exist.",
@@ -104,18 +73,10 @@ const Signup = () => {
         return;
       }
 
-      console.log('[REFERRAL] ✅ Found referrer:', data);
-      setReferrerUsername(data);
-      setIsLoadingReferrer(false);
+      console.log('[REFERRAL] ✅ Found referrer:', data.username);
+      setReferrerUsername(data.username);
     } catch (error) {
       console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
-      setReferrerUsername(null);
-      setIsLoadingReferrer(false);
-      toast({
-        title: "Unexpected error",
-        description: "Failed to load referrer information.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -353,53 +314,15 @@ const Signup = () => {
                       className="h-11"
                     />
                   </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Referred By Display Field */}
-        <FormItem>
-          <FormLabel>Referred By</FormLabel>
-          <FormControl>
-            <div className="relative">
-              <Input
-                disabled
-                value={
-                  isLoadingReferrer 
-                    ? "Loading..." 
-                    : referrerUsername 
-                    ? referrerUsername 
-                    : "No Upline"
-                }
-                className={
-                  isLoadingReferrer 
-                    ? "bg-muted text-muted-foreground" 
-                    : referrerUsername 
-                    ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800" 
-                    : "bg-muted text-muted-foreground"
-                }
-              />
-              {referrerUsername && !isLoadingReferrer && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-          </FormControl>
-          <FormDescription>
-            {referrerUsername 
-              ? `You were invited by ${referrerUsername}` 
-              : "You can still enter a referral code below"}
-          </FormDescription>
-        </FormItem>
-        
-        <FormField
-          control={form.control}
-          name="referralCode"
-          render={({ field }) => (
+            />
+
+            <FormField
+              control={form.control}
+              name="referralCode"
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Referral Code (Optional)</FormLabel>
                   <FormControl>

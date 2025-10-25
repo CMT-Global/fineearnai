@@ -1505,10 +1505,6 @@ export type Database = {
         }[]
       }
       get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }
-      get_username_by_referral_code: {
-        Args: { p_referral_code: string }
-        Returns: string
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
