@@ -28,7 +28,7 @@ interface MembershipPlan {
 interface PlanCardProps {
   plan: MembershipPlan;
   isCurrentPlan: boolean;
-  earningPotential: { daily: number; weekly: number; monthly: number } | null;
+  earningPotential: { daily: number; weekly: number; monthly: number; quarterly: number; annually: number } | null;
   depositBalance: number;
   upgrading: boolean;
   onUpgradeClick: (plan: MembershipPlan) => void;
@@ -79,16 +79,20 @@ export function PlanCard({
             </div>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Daily:</span>
-                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.daily} /></span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-muted-foreground">Weekly:</span>
                 <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.weekly} /></span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Monthly:</span>
                 <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quarterly:</span>
+                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.quarterly} /></span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Annually:</span>
+                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
               </div>
             </div>
           </div>
