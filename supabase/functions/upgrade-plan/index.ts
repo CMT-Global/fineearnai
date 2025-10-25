@@ -158,7 +158,10 @@ Deno.serve(async (req) => {
         plan_expires_at: expiryDate.toISOString(),
         deposit_wallet_balance: newDepositBalance,
         current_plan_start_date: now,
-        last_activity: now
+        last_activity: now,
+        // PHASE 2 FIX: Reset daily counters on upgrade so user can immediately use new plan's higher limits
+        tasks_completed_today: 0,
+        skips_today: 0
       })
       .eq('id', user.id);
 
@@ -191,7 +194,11 @@ Deno.serve(async (req) => {
           billing_period_unit: newPlan.billing_period_unit,
           billing_period_value: newPlan.billing_period_value,
           expires_at: expiryDate.toISOString(),
-          upgraded_at: now
+          upgraded_at: now,
+          // PHASE 2: Track that daily counters were reset
+          tasks_reset: true,
+          previous_tasks_completed: profile.tasks_completed_today,
+          previous_skips: profile.skips_today
         },
       });
 
