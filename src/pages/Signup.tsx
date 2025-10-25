@@ -18,6 +18,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 
 const Signup = () => {
@@ -25,6 +26,7 @@ const Signup = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingReferrer, setIsLoadingReferrer] = useState(false);
   const referralCodeFromUrl = searchParams.get("ref");
   const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
 
@@ -53,6 +55,7 @@ const Signup = () => {
   }, [referralCodeFromUrl]);
 
   const fetchReferrerInfo = async (code: string) => {
+    setIsLoadingReferrer(true);
     try {
       console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
       
@@ -64,6 +67,8 @@ const Signup = () => {
 
       if (error || !data) {
         console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
+        setReferrerUsername(null);
+        setIsLoadingReferrer(false);
         toast({
           title: "Referral code not found",
           description: "The referral code you entered does not exist.",
@@ -75,8 +80,11 @@ const Signup = () => {
 
       console.log('[REFERRAL] ✅ Found referrer:', data.username);
       setReferrerUsername(data.username);
+      setIsLoadingReferrer(false);
     } catch (error) {
       console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
+      setReferrerUsername(null);
+      setIsLoadingReferrer(false);
     }
   };
 
@@ -314,15 +322,53 @@ const Signup = () => {
                       className="h-11"
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <FormField
-              control={form.control}
-              name="referralCode"
-              render={({ field }) => (
+        {/* Referred By Display Field */}
+        <FormItem>
+          <FormLabel>Referred By</FormLabel>
+          <FormControl>
+            <div className="relative">
+              <Input
+                disabled
+                value={
+                  isLoadingReferrer 
+                    ? "Loading..." 
+                    : referrerUsername 
+                    ? referrerUsername 
+                    : "No Upline"
+                }
+                className={
+                  isLoadingReferrer 
+                    ? "bg-muted text-muted-foreground" 
+                    : referrerUsername 
+                    ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800" 
+                    : "bg-muted text-muted-foreground"
+                }
+              />
+              {referrerUsername && !isLoadingReferrer && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+              )}
+            </div>
+          </FormControl>
+          <FormDescription>
+            {referrerUsername 
+              ? `You were invited by ${referrerUsername}` 
+              : "You can still enter a referral code below"}
+          </FormDescription>
+        </FormItem>
+        
+        <FormField
+          control={form.control}
+          name="referralCode"
+          render={({ field }) => (
                 <FormItem>
                   <FormLabel>Referral Code (Optional)</FormLabel>
                   <FormControl>
