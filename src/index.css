@@ -129,4 +129,10 @@ All colors MUST be HSL.
     opacity: 1;
     transform: translateY(0);
   }
+  
+  /* Hide Reamaze widget on admin pages */
+  body[data-admin-mode="true"] #reamaze-widget,
+  body[data-admin-mode="true"] .reamaze-frame {
+    display: none !important;
+  }
 }
