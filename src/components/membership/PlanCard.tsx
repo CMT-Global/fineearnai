@@ -143,18 +143,6 @@ export function PlanCard({
             </div>
           )}
         </div>
-
-        {/* Additional Features */}
-        {Array.isArray(plan.features) && plan.features.length > 0 && (
-          <div className="border-t pt-4 space-y-1">
-            {plan.features.map((feature: string, idx: number) => (
-              <div key={idx} className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">{feature}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2">
