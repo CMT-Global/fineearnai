@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { WalletCard } from "@/components/wallet/WalletCard";
@@ -33,6 +34,9 @@ const Dashboard = () => {
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
   const { profile, referralStats, membershipPlan } = data || {};
+
+  // Enable real-time transaction updates
+  useRealtimeTransactions(user?.id);
 
   useEffect(() => {
     if (!loading && !user) {

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskStats } from "@/components/tasks/TaskStats";
@@ -58,6 +59,9 @@ const Tasks = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Enable real-time transaction updates
+  useRealtimeTransactions(user?.id);
 
   // Redirect if not authenticated
   useEffect(() => {

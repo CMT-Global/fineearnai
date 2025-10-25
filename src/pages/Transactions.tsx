@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,9 @@ const Transactions = () => {
     to: undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // Enable real-time transaction updates
+  useRealtimeTransactions(user?.id);
 
   useEffect(() => {
     if (!loading && !user) {

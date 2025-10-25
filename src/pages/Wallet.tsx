@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WalletCard } from "@/components/wallet/WalletCard";
@@ -16,6 +17,9 @@ const Wallet = () => {
 
   // ✅ NEW: React Query hooks for all data
   const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
+
+  // Enable real-time transaction updates
+  useRealtimeTransactions(user?.id);
 
   useEffect(() => {
     if (!loading && !user) {

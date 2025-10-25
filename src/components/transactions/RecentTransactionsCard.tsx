@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalRequests } from "@/hooks/useWithdrawalRequests";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,6 +61,9 @@ export const RecentTransactionsCard = ({
 }: RecentTransactionsCardProps) => {
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Enable real-time transaction updates
+  useRealtimeTransactions(userId);
 
   const { data: transactionsData, isLoading: isTransactionsLoading } = useTransactions(userId, currentPage, maxItems);
   const { data: withdrawalRequests, isLoading: isWithdrawalsLoading } = useWithdrawalRequests(userId);
