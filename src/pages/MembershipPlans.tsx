@@ -296,6 +296,12 @@ export default function MembershipPlans() {
     p.account_type === 'business'
   );
 
+  // Calculate free plan daily earning for comparison
+  const freePlan = plans.find(p => p.name === 'free');
+  const freePlanDailyEarning = freePlan 
+    ? freePlan.earning_per_task * freePlan.daily_task_limit 
+    : 0;
+
   // Render plan cards function with optional variant
   const renderPlanCards = (planList: MembershipPlan[], variant: 'vertical' | 'horizontal' = 'vertical') => {
     if (loading && planList.length === 0) {
@@ -312,6 +318,7 @@ export default function MembershipPlans() {
         onUpgradeClick={handleUpgradeClick}
         hasProfile={!!profile}
         variant={variant}
+        freePlanEarning={freePlanDailyEarning}
       />
     ));
   };

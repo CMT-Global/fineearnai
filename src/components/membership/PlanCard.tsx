@@ -34,6 +34,7 @@ interface PlanCardProps {
   onUpgradeClick: (plan: MembershipPlan) => void;
   hasProfile: boolean;
   variant?: 'vertical' | 'horizontal';
+  freePlanEarning?: number; // For comparison calculations
 }
 
 export function PlanCard({
@@ -44,10 +45,24 @@ export function PlanCard({
   upgrading,
   onUpgradeClick,
   hasProfile,
-  variant = 'vertical'
+  variant = 'vertical',
+  freePlanEarning = 0
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
+
+  // Calculate break even days for paid plans
+  const breakEvenDays = plan.name !== 'free' && plan.price > 0 && plan.earning_per_task > 0 && plan.daily_task_limit > 0
+    ? Math.ceil(plan.price / (plan.earning_per_task * plan.daily_task_limit))
+    : null;
+
+  // Calculate annual savings vs free plan
+  const annualSavingsVsFree = plan.name !== 'free' && freePlanEarning > 0 && earningPotential
+    ? earningPotential.annually - (freePlanEarning * 365)
+    : null;
+
+  // Calculate daily cost
+  const dailyCost = plan.price > 0 ? (plan.price / plan.billing_period_days).toFixed(2) : null;
 
   // Plan-specific gradient themes with animations
   const getCardStyles = () => {
@@ -131,6 +146,13 @@ export function PlanCard({
               <div className="text-sm text-muted-foreground mt-1">
                 /{plan.billing_period_days} days
               </div>
+
+              {/* Daily cost breakdown for paid plans */}
+              {dailyCost && plan.name !== 'free' && (
+                <div className="text-xs text-muted-foreground mt-2 animate-fade-in">
+                  Just <span className="font-semibold text-primary">${dailyCost}</span> per day
+                </div>
+              )}
               
               {/* Warning Badge */}
               {plan.name === 'free' && (
@@ -147,6 +169,18 @@ export function PlanCard({
 
             {/* Middle Section - Features */}
             <div className="flex-1 lg:w-1/2">
+              {/* Break Even Calculator for Paid Plans - Horizontal */}
+              {breakEvenDays && plan.name !== 'free' && (
+                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 mb-4 animate-fade-in">
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <DollarSign className="h-4 w-4 animate-pulse" />
+                    <span className="font-semibold text-sm">
+                      💰 Break even in {breakEvenDays} days, then pure profit!
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-blue-500" />
@@ -191,6 +225,16 @@ export function PlanCard({
                   </div>
                 )}
               </div>
+
+              {/* Savings Comparison vs Free Plan - Horizontal */}
+              {annualSavingsVsFree && annualSavingsVsFree > 0 && (
+                <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30 rounded-lg p-3 mt-4 text-center animate-fade-in">
+                  <div className="text-xs text-muted-foreground mb-1">Annual Advantage</div>
+                  <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                    Earn <CurrencyDisplay amountUSD={annualSavingsVsFree} /> more per year
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Section - Earning Potential & CTA */}
@@ -267,17 +311,37 @@ export function PlanCard({
           {plan.name !== 'free' && '👑 '}
           {plan.display_name}
         </CardTitle>
-        <CardDescription className="text-4xl font-extrabold mt-2">
-          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            <CurrencyDisplay amountUSD={plan.price} />
-          </span>
-          <span className="text-sm font-normal text-muted-foreground ml-2">
-            /{plan.billing_period_days} days
-          </span>
+        <CardDescription className="space-y-1">
+          <div className="text-4xl font-extrabold mt-2">
+            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <CurrencyDisplay amountUSD={plan.price} />
+            </span>
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              /{plan.billing_period_days} days
+            </span>
+          </div>
+          {/* Daily cost breakdown */}
+          {dailyCost && plan.name !== 'free' && (
+            <div className="text-xs text-muted-foreground animate-fade-in">
+              Just <span className="font-semibold text-primary">${dailyCost}</span> per day
+            </div>
+          )}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1">
+        {/* Break Even Calculator for Paid Plans */}
+        {breakEvenDays && plan.name !== 'free' && (
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 animate-fade-in">
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <DollarSign className="h-4 w-4 animate-pulse" />
+              <span className="font-semibold text-sm">
+                💰 Break even in {breakEvenDays} days, then pure profit!
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Earning Potential with Glassmorphism */}
         {earningPotential && (
           <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg hover:scale-105 transition-all duration-300">
@@ -354,6 +418,16 @@ export function PlanCard({
             </div>
           )}
         </div>
+
+        {/* Savings Comparison vs Free Plan */}
+        {annualSavingsVsFree && annualSavingsVsFree > 0 && (
+          <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30 rounded-lg p-3 text-center animate-fade-in">
+            <div className="text-xs text-muted-foreground mb-1">Annual Advantage</div>
+            <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              Earn <CurrencyDisplay amountUSD={annualSavingsVsFree} /> more per year than Free Trial
+            </div>
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2">
