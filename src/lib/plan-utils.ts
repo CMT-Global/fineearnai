@@ -70,6 +70,7 @@ export interface EarningPotential {
   weekly: number;
   monthly: number;
   quarterly: number;
+  sixMonthly: number;
   annually: number;
 }
 
@@ -83,6 +84,7 @@ export const calculateEarningPotential = (plan: {
     weekly: daily * 7,
     monthly: daily * 30,
     quarterly: daily * 90,
+    sixMonthly: daily * 180,
     annually: daily * 365,
   };
 };

@@ -105,7 +105,7 @@ export function useMembershipPlans() {
 
   // Calculate earning potentials for all plans
   const earningPotentials = useMemo(() => {
-    const potentials: Record<string, { daily: number; weekly: number; monthly: number; quarterly: number; annually: number } | null> = {};
+    const potentials: Record<string, { daily: number; weekly: number; monthly: number; quarterly: number; sixMonthly: number; annually: number } | null> = {};
     
     plans.forEach(plan => {
       if (plan.name === 'free') {
@@ -117,6 +117,7 @@ export function useMembershipPlans() {
           weekly: daily * 7,
           monthly: daily * 30,
           quarterly: daily * 90,
+          sixMonthly: daily * 180,
           annually: daily * 365
         };
       }

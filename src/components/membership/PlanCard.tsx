@@ -29,7 +29,7 @@ interface MembershipPlan {
 interface PlanCardProps {
   plan: MembershipPlan;
   isCurrentPlan: boolean;
-  earningPotential: { daily: number; weekly: number; monthly: number; quarterly: number; annually: number } | null;
+  earningPotential: { daily: number; weekly: number; monthly: number; quarterly: number; sixMonthly: number; annually: number } | null;
   depositBalance: number;
   upgrading: boolean;
   onUpgradeClick: (plan: MembershipPlan) => void;
@@ -50,6 +50,7 @@ export function PlanCard({
   freePlanEarning = 0
 }: PlanCardProps) {
   const navigate = useNavigate();
+  const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
 
   // Calculate break even days for paid plans
@@ -327,8 +328,8 @@ export function PlanCard({
                         <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
                       </div>
                       <div className="flex justify-between items-center min-h-[32px] sm:min-h-0">
-                        <span className="text-muted-foreground">Annually:</span>
-                        <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                        <span className="text-muted-foreground">{isBusinessAccount ? '6 Months:' : 'Annually:'}</span>
+                        <span className="font-bold"><CurrencyDisplay amountUSD={isBusinessAccount ? earningPotential.sixMonthly : earningPotential.annually} /></span>
                       </div>
                     </div>
                   </div>
@@ -472,8 +473,8 @@ export function PlanCard({
                   <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.quarterly} /></span>
                 </div>
                 <div className="flex justify-between animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                  <span className="text-muted-foreground">Annually:</span>
-                  <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                  <span className="text-muted-foreground">{isBusinessAccount ? '6 Months:' : 'Annually:'}</span>
+                  <span className="font-bold"><CurrencyDisplay amountUSD={isBusinessAccount ? earningPotential.sixMonthly : earningPotential.annually} /></span>
                 </div>
               </div>
             </div>
