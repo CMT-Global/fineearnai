@@ -77,6 +77,7 @@ export function PlanCard({
       return "border-2 border-dashed border-muted-foreground/30 bg-muted/20 opacity-95 hover:opacity-100 transition-all duration-300";
     }
     
+    // Personal Account Plans
     if (planNameLower.includes('basic')) {
       return "border-2 border-transparent bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-blue-500/5 hover:from-blue-500/20 hover:via-cyan-500/20 hover:to-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
     }
@@ -85,8 +86,21 @@ export function PlanCard({
       return "border-2 border-transparent bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-purple-500/5 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/10 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1 animate-pulse";
     }
     
-    if (planNameLower.includes('pro')) {
+    if (planNameLower.includes('pro') && !planNameLower.includes('business')) {
       return "border-2 border-transparent bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 hover:from-amber-500/20 hover:via-orange-500/20 hover:to-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
+    }
+    
+    // Business Account Plans - Enhanced with vibrant gradients
+    if (planNameLower.includes('business level 1')) {
+      return "border-2 border-transparent bg-gradient-to-br from-amber-500/15 via-yellow-500/15 to-amber-500/10 hover:from-amber-500/25 hover:via-yellow-500/25 hover:to-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
+    }
+    
+    if (planNameLower.includes('business level 2')) {
+      return "border-2 border-transparent bg-gradient-to-br from-emerald-500/15 via-green-500/15 to-emerald-500/10 hover:from-emerald-500/25 hover:via-green-500/25 hover:to-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
+    }
+    
+    if (planNameLower.includes('business elite') || planNameLower.includes('business pro')) {
+      return "border-2 border-transparent bg-gradient-to-br from-violet-500/15 via-purple-500/15 to-violet-500/10 hover:from-violet-500/25 hover:via-purple-500/25 hover:to-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
     }
     
     return "border-2 border-border hover:shadow-xl transition-all duration-300";
