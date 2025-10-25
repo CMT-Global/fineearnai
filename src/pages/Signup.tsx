@@ -59,11 +59,9 @@ const Signup = () => {
     try {
       console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
       
+      // Call secure RPC function that bypasses RLS
       const { data, error } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("referral_code", code)
-        .maybeSingle();
+        .rpc("get_username_by_referral_code", { p_referral_code: code });
 
       if (error) {
         console.error('[REFERRAL] ❌ Database error while fetching referrer:', { code, error });
@@ -90,8 +88,8 @@ const Signup = () => {
         return;
       }
 
-      console.log('[REFERRAL] ✅ Found referrer:', data.username);
-      setReferrerUsername(data.username);
+      console.log('[REFERRAL] ✅ Found referrer:', data);
+      setReferrerUsername(data);
       setIsLoadingReferrer(false);
     } catch (error) {
       console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
