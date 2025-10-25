@@ -150,61 +150,124 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
 
-    // Update user profile with new plan
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        membership_plan: planName,
-        plan_expires_at: expiryDate.toISOString(),
-        deposit_wallet_balance: newDepositBalance,
-        current_plan_start_date: now,
-        last_activity: now,
-        // PHASE 2 FIX: Reset daily counters on upgrade so user can immediately use new plan's higher limits
-        tasks_completed_today: 0,
-        skips_today: 0
-      })
-      .eq('id', user.id);
+    // PHASE 3: Wrap profile update and transaction insert in explicit error handling
+    try {
+      // Update user profile with new plan
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          membership_plan: planName,
+          plan_expires_at: expiryDate.toISOString(),
+          deposit_wallet_balance: newDepositBalance,
+          current_plan_start_date: now,
+          last_activity: now,
+          // PHASE 2 FIX: Reset daily counters on upgrade so user can immediately use new plan's higher limits
+          tasks_completed_today: 0,
+          skips_today: 0
+        })
+        .eq('id', user.id);
 
-    if (updateError) {
-      console.error('Error updating profile:', updateError);
-      throw updateError;
-    }
+      if (updateError) {
+        console.error('❌ Error updating profile during upgrade:', updateError);
+        throw updateError;
+      }
 
-    // Create detailed transaction record
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'plan_upgrade',
-        amount: finalCost,
-        wallet_type: 'deposit',
-        new_balance: newDepositBalance,
-        description: `Upgraded from ${currentPlan?.display_name || profile.membership_plan} to ${newPlan.display_name}`,
-        status: 'completed',
-        metadata: {
-          previous_plan: profile.membership_plan,
-          previous_plan_display_name: currentPlan?.display_name || profile.membership_plan,
-          new_plan: planName,
-          new_plan_display_name: newPlan.display_name,
-          original_price: parseFloat(newPlan.price),
-          final_price: finalCost,
-          proration_applied: prorationDetails !== null,
-          proration_details: prorationDetails,
-          billing_period_days: billingPeriodDays,
-          billing_period_unit: newPlan.billing_period_unit,
-          billing_period_value: newPlan.billing_period_value,
-          expires_at: expiryDate.toISOString(),
-          upgraded_at: now,
-          // PHASE 2: Track that daily counters were reset
-          tasks_reset: true,
-          previous_tasks_completed: profile.tasks_completed_today,
-          previous_skips: profile.skips_today
-        },
+      console.log('✅ Profile updated successfully:', {
+        userId: user.id,
+        newPlan: planName,
+        newBalance: newDepositBalance,
+        tasksReset: true
       });
 
-    if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
-      throw transactionError;
+      // Create detailed transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'plan_upgrade',
+          amount: finalCost,
+          wallet_type: 'deposit',
+          new_balance: newDepositBalance,
+          description: `Upgraded from ${currentPlan?.display_name || profile.membership_plan} to ${newPlan.display_name}`,
+          status: 'completed',
+          metadata: {
+            previous_plan: profile.membership_plan,
+            previous_plan_display_name: currentPlan?.display_name || profile.membership_plan,
+            new_plan: planName,
+            new_plan_display_name: newPlan.display_name,
+            original_price: parseFloat(newPlan.price),
+            final_price: finalCost,
+            proration_applied: prorationDetails !== null,
+            proration_details: prorationDetails,
+            billing_period_days: billingPeriodDays,
+            billing_period_unit: newPlan.billing_period_unit,
+            billing_period_value: newPlan.billing_period_value,
+            expires_at: expiryDate.toISOString(),
+            upgraded_at: now,
+            // PHASE 2: Track that daily counters were reset
+            tasks_reset: true,
+            previous_tasks_completed: profile.tasks_completed_today,
+            previous_skips: profile.skips_today
+          },
+        });
+
+      if (transactionError) {
+        console.error('❌ CRITICAL: Transaction insert failed after profile update!', {
+          error: transactionError,
+          userId: user.id,
+          planName: planName,
+          finalCost: finalCost
+        });
+        console.error('⚠️ Data consistency issue - profile was updated but transaction was not recorded');
+        
+        // PHASE 3: Log to edge function metrics for monitoring
+        try {
+          await supabase.from('edge_function_metrics').insert({
+            function_name: 'upgrade-plan',
+            success: false,
+            user_id: user.id,
+            execution_time_ms: 0,
+            error_message: `Transaction insert failed: ${transactionError.message}`,
+            metadata: {
+              error_code: transactionError.code,
+              error_details: transactionError.details,
+              error_hint: transactionError.hint,
+              planName: planName,
+              finalCost: finalCost,
+              phase: 'transaction_insert',
+              profile_updated: true
+            }
+          });
+        } catch (metricsError) {
+          console.error('Failed to log metrics:', metricsError);
+        }
+        
+        throw new Error('Failed to record transaction. Please contact support with your transaction details.');
+      }
+
+      console.log('✅ Transaction recorded successfully:', {
+        userId: user.id,
+        transactionType: 'plan_upgrade',
+        amount: finalCost
+      });
+
+    } catch (upgradeError) {
+      console.error('❌ Error in upgrade transaction flow:', upgradeError);
+      
+      // Log detailed error for debugging
+      const errorMessage = upgradeError instanceof Error ? upgradeError.message : 'Unknown error during upgrade';
+      const errorStack = upgradeError instanceof Error ? upgradeError.stack : undefined;
+      
+      console.error('Error details:', {
+        message: errorMessage,
+        stack: errorStack,
+        userId: user.id,
+        planName: planName,
+        phase: 'upgrade_transaction'
+      });
+      
+      // Re-throw to be caught by outer try-catch
+      throw upgradeError;
     }
 
     // Log to user activity log
