@@ -6,17 +6,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, DollarSign, TrendingUp, Eye, UserCog } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface ReferralsTabProps {
   userId: string;
   userData: any;
-  onChangeUpline: () => void;
 }
 
-export const ReferralsTab = ({ userId, userData, onChangeUpline }: ReferralsTabProps) => {
+export const ReferralsTab = ({ userId, userData }: ReferralsTabProps) => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -58,7 +57,6 @@ export const ReferralsTab = ({ userId, userData, onChangeUpline }: ReferralsTabP
   }
 
   const stats = userData.stats;
-  const upline = userData.upline;
 
   return (
     <div className="space-y-6">
@@ -109,53 +107,6 @@ export const ReferralsTab = ({ userId, userData, onChangeUpline }: ReferralsTabP
           </CardContent>
         </Card>
       </div>
-
-      {/* Upline Information */}
-      {upline && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Upline / Referrer</CardTitle>
-              <Button variant="outline" size="sm" onClick={onChangeUpline}>
-                <UserCog className="h-4 w-4 mr-2" />
-                Change Upline
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Username</p>
-                <p className="font-medium">{upline.username}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{upline.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Plan</p>
-                <Badge variant="outline">{upline.membership_plan}</Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <Badge variant={upline.account_status === 'active' ? 'default' : 'secondary'}>
-                  {upline.account_status}
-                </Badge>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate(`/admin/users/${upline.id}`)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Upline Profile
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Referrals List */}
       <Card>

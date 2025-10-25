@@ -173,7 +173,6 @@ function UserDetailContent() {
             <ReferralsTab 
               userId={userId!} 
               userData={userDetail}
-              onChangeUpline={() => toast.info("Change upline dialog coming soon")}
             />
           </TabsContent>
 

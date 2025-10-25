@@ -140,68 +140,24 @@ const Signup = () => {
         }
       }
 
-      // If signup successful and we have a referral code, link the user to referrer
+      // If signup successful and we have a referral code, link will be handled by database trigger
       if (authData.user && referralCode) {
-        console.log('[REFERRAL] 🚀 Starting referral linking process:', {
+        console.log('[REFERRAL] ✅ Account created with referral code:', {
           userId: authData.user.id,
           referralCode: referralCode,
           referrerUsername: referrerUsername
         });
-
-        try {
-          const { data: linkData, error: linkError } = await supabase.functions.invoke(
-            "link-user-to-referrer",
-            {
-              body: {
-                userId: authData.user.id,
-                referralCode: referralCode.toUpperCase(),
-              },
-            }
-          );
-
-          console.log('[REFERRAL] 📡 Edge function response:', {
-            success: linkData?.success,
-            error: linkError,
-            data: linkData
-          });
-
-          if (linkError) {
-            console.error('[REFERRAL] ❌ Edge function error:', {
-              message: linkError.message,
-              status: linkError.status,
-              details: linkError
-            });
-            toast({
-              title: "Referral link failed",
-              description: "Your account was created, but we couldn't link the referral code.",
-              variant: "destructive",
-            });
-          } else if (linkData?.success) {
-            console.log('[REFERRAL] ✅ Referral link successful:', {
-              referrer: linkData?.referrer,
-              signupBonus: linkData?.signupBonus
-            });
-            toast({
-              title: "Account created!",
-              description: referrerUsername 
-                ? `Welcome to FineEarn! You've been referred by ${referrerUsername}.`
-                : "Welcome to FineEarn! Referral link successful.",
-            });
-          } else {
-            console.warn('[REFERRAL] ⚠️ Unexpected response format:', linkData);
-          }
-        } catch (linkErr) {
-          console.error('[REFERRAL] 💥 Exception during referral linking:', {
-            error: linkErr,
-            message: linkErr instanceof Error ? linkErr.message : 'Unknown error',
-            stack: linkErr instanceof Error ? linkErr.stack : undefined
-          });
-          // Don't block the signup flow for referral errors
-        } finally {
-          // Clear the stored referral code
-          console.log('[REFERRAL] 🧹 Clearing stored referral code from localStorage');
-          localStorage.removeItem("pending_referral_code");
-        }
+        
+        toast({
+          title: "Account created!",
+          description: referrerUsername 
+            ? `Welcome to FineEarn! You've been referred by ${referrerUsername}.`
+            : "Welcome to FineEarn! Referral link applied.",
+        });
+        
+        // Clear the stored referral code
+        console.log('[REFERRAL] 🧹 Clearing stored referral code from localStorage');
+        localStorage.removeItem("pending_referral_code");
       } else {
         toast({
           title: "Account created!",

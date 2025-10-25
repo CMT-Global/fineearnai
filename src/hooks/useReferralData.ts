@@ -8,10 +8,9 @@ export const useReferralData = (userId: string | undefined) => {
       if (!userId) throw new Error('User ID is required');
       
       // ⚡ ALL queries run in parallel
-      const [profile, stats, upline, earnings] = await Promise.all([
+      const [profile, stats, earnings] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.rpc('get_referral_stats', { user_uuid: userId }),
-        supabase.functions.invoke('get-referrer-info'),
         supabase.from('referral_earnings')
           .select('*')
           .eq('referrer_id', userId)
@@ -22,7 +21,6 @@ export const useReferralData = (userId: string | undefined) => {
       return { 
         profile: profile.data,
         stats: stats.data?.[0],
-        upline: upline.data,
         earnings: earnings.data,
       };
     },

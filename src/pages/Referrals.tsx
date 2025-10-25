@@ -11,7 +11,6 @@ import { ReferralCodeCard } from "@/components/referrals/ReferralCodeCard";
 import { ReferralStatsCard } from "@/components/referrals/ReferralStatsCard";
 import { ReferralQRCode } from "@/components/referrals/ReferralQRCode";
 import { SocialShareButtons } from "@/components/referrals/SocialShareButtons";
-import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
 import { Users, ChevronLeft, ChevronRight } from "lucide-react";
@@ -33,7 +32,7 @@ const Referrals = () => {
 
   // ✅ NEW: Single React Query hook for all referral data
   const { data: referralData, isLoading: isReferralDataLoading } = useReferralData(user?.id);
-  const { profile, stats, upline } = referralData || {};
+  const { profile, stats } = referralData || {};
 
   // ✅ NEW: Separate hook for paginated referrals
   const { data: paginatedData, isLoading: isReferralsLoading } = usePaginatedReferrals(user?.id, currentPage);
@@ -66,9 +65,6 @@ const Referrals = () => {
               Invite friends and earn commissions from their activities.
             </p>
           </div>
-
-          {/* Upline Info - Compact Banner */}
-          <UplineInfoCard userId={user?.id || ""} />
 
           {/* Stats */}
           <ReferralStatsCard

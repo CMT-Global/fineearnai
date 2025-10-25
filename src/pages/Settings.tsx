@@ -61,7 +61,7 @@ const Settings = () => {
     queryFn: async () => {
       const [tasksResult, referralsResult] = await Promise.all([
         supabase.from("user_tasks").select("id", { count: "exact", head: true }).eq("user_id", user?.id).eq("status", "completed"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", user?.id),
+        supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user?.id),
       ]);
       
       return {

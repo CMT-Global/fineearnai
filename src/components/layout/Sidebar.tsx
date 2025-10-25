@@ -109,10 +109,9 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         queryClient.prefetchQuery({
           queryKey: ['referral-complete-data', userId],
           queryFn: async () => {
-            const [profileRes, statsRes, uplineRes, earningsRes, referralsRes] = await Promise.all([
+            const [profileRes, statsRes, earningsRes, referralsRes] = await Promise.all([
               supabase.from('profiles').select('*').eq('id', userId).single(),
               supabase.rpc('get_referral_stats', { user_uuid: userId }),
-              supabase.functions.invoke('get-referrer-info'),
               supabase.from('referral_earnings')
                 .select('*')
                 .eq('referrer_id', userId)
@@ -126,7 +125,6 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             return { 
               profile: profileRes.data,
               stats: statsRes.data?.[0],
-              upline: uplineRes.data,
               earnings: earningsRes.data,
               referrals: referralsRes.data
             };
