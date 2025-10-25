@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
 import { PlanCard } from "@/components/membership/PlanCard";
+import { PlanTabs } from "@/components/membership/PlanTabs";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import {
@@ -287,6 +288,33 @@ export default function MembershipPlans() {
     );
   }
 
+  // Separate plans by account type
+  const personalPlans = plans.filter(p => 
+    p.account_type === 'free' || p.account_type === 'personal'
+  );
+  const businessPlans = plans.filter(p => 
+    p.account_type === 'business'
+  );
+
+  // Render plan cards function
+  const renderPlanCards = (planList: MembershipPlan[]) => {
+    if (loading && planList.length === 0) {
+      return [1, 2, 3, 4].map((i) => <PlanCardSkeleton key={i} />);
+    }
+    return planList.map((plan) => (
+      <PlanCard
+        key={plan.id}
+        plan={plan}
+        isCurrentPlan={plan.name === currentPlan}
+        earningPotential={earningPotentials[plan.id]}
+        depositBalance={depositBalance}
+        upgrading={upgrading === plan.id}
+        onUpgradeClick={handleUpgradeClick}
+        hasProfile={!!profile}
+      />
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar profile={profile || null} isAdmin={isAdmin} onSignOut={signOut} />
@@ -335,25 +363,11 @@ export default function MembershipPlans() {
             </Alert>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {loading && plans.length === 0 ? (
-              // Show skeleton loaders during initial data fetch
-              [1, 2, 3, 4].map((i) => <PlanCardSkeleton key={i} />)
-            ) : (
-              plans.map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  isCurrentPlan={plan.name === currentPlan}
-                  earningPotential={earningPotentials[plan.id]}
-                  depositBalance={depositBalance}
-                  upgrading={upgrading === plan.id}
-                  onUpgradeClick={handleUpgradeClick}
-                  hasProfile={!!profile}
-                />
-              ))
-            )}
-          </div>
+          <PlanTabs
+            personalPlans={personalPlans}
+            businessPlans={businessPlans}
+            renderPlanCards={renderPlanCards}
+          />
         </div>
 
         {/* Upgrade Confirmation Dialog with Proration */}
