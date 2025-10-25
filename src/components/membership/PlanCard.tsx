@@ -144,38 +144,38 @@ export function PlanCard({
         {/* START HERE Banner */}
         {plan.name === 'free' && (
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
-            <span className="font-bold text-sm uppercase tracking-wider">🎯 Start Here - Free Trial</span>
+            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider">🎯 Start Here - Free Trial</span>
           </div>
         )}
 
         {/* Prominent Limitation Badge for Free Trial */}
         {plan.name === 'free' && (
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-4 py-2 text-sm font-bold shadow-lg animate-pulse">
+            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold shadow-lg animate-pulse">
               ⚠️ LIMITED EARNINGS
             </Badge>
           </div>
         )}
         
         {isCurrentPlan && (
-          <Badge className="absolute top-4 right-4">
+          <Badge className="absolute top-4 right-4 text-xs">
             Current Plan
           </Badge>
         )}
 
-        <div className="p-6">
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            {/* Left Section - Price & Title */}
-            <div className="flex-shrink-0 lg:w-1/4">
-              <CardTitle className="text-2xl mb-2">
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+            {/* Left Section - Price & Title - Stack on Mobile */}
+            <div className="flex-shrink-0 w-full lg:w-1/4">
+              <CardTitle className="text-xl sm:text-2xl mb-2">
                 {plan.display_name}
               </CardTitle>
-              <div className="text-4xl font-extrabold">
+              <div className="text-3xl sm:text-4xl font-extrabold">
                 <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   <CurrencyDisplay amountUSD={plan.price} />
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">
                 /{plan.billing_period_days} days
               </div>
 
@@ -189,7 +189,7 @@ export function PlanCard({
               {/* Warning Badge */}
               {plan.name === 'free' && (
                 <div className="mt-4 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950 dark:to-orange-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3 animate-pulse">
-                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-xs sm:text-sm">
                     ⚠️ Limited Earnings - Upgrade to Unlock
                   </div>
                   <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
@@ -199,8 +199,8 @@ export function PlanCard({
               )}
             </div>
 
-            {/* Middle Section - Features */}
-            <div className="flex-1 lg:w-1/2">
+            {/* Middle Section - Features - Full Width on Mobile */}
+            <div className="flex-1 w-full lg:w-1/2">
               {/* Break Even Calculator for Paid Plans - Horizontal */}
               {breakEvenDays && plan.name !== 'free' && (
                 <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 mb-4 animate-fade-in">
@@ -226,28 +226,28 @@ export function PlanCard({
                 </div>
               )}
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-blue-500" />
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
                   <span className="text-sm">{plan.daily_task_limit} tasks/day</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
+                <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
                   <span className="text-sm"><CurrencyDisplay amountUSD={plan.earning_per_task} /> per task</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-orange-500" />
+                <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
                   <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
                 </div>
                 {plan.task_commission_rate > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-purple-500" />
+                  <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
                     <span className="text-sm">{(plan.task_commission_rate * 100).toFixed(1)}% task commission</span>
                   </div>
                 )}
                 {plan.deposit_commission_rate > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-purple-500" />
+                  <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
                     <span className="text-sm">{(plan.deposit_commission_rate * 100).toFixed(1)}% deposit commission</span>
                   </div>
                 )}
@@ -305,10 +305,10 @@ export function PlanCard({
               )}
             </div>
 
-            {/* Right Section - Earning Potential & CTA */}
-            <div className="flex-shrink-0 lg:w-1/4 space-y-4">
+            {/* Right Section - Earning Potential & CTA - Stack on Mobile */}
+            <div className="flex-shrink-0 w-full lg:w-1/4 space-y-4">
               {earningPotential && (
-                <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg transition-shadow duration-300">
+                <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 hover:shadow-lg transition-shadow duration-300">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
                   <div className="relative z-10">
                     <div className="flex items-center gap-2 text-primary mb-2">
@@ -316,11 +316,11 @@ export function PlanCard({
                       <span className="font-semibold text-xs">Earning Potential</span>
                     </div>
                     <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center min-h-[32px] sm:min-h-0">
                         <span className="text-muted-foreground">Monthly:</span>
                         <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center min-h-[32px] sm:min-h-0">
                         <span className="text-muted-foreground">Annually:</span>
                         <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
                       </div>
@@ -331,21 +331,21 @@ export function PlanCard({
 
               {/* Upgrade CTA for Free Trial - Prominent Button */}
               {plan.name === 'free' && (
-                <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 mt-4">
+                <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30">
                   <AlertDescription className="flex items-center justify-between gap-3">
                     <div className="flex-1">
-                      <div className="font-semibold text-sm mb-1">🚀 Unlock Full Potential</div>
+                      <div className="font-semibold text-xs sm:text-sm mb-1">🚀 Unlock Full Potential</div>
                       <div className="text-xs text-muted-foreground">
                         See how much more you could earn with premium plans
                       </div>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-primary animate-bounce" style={{ animationDirection: 'alternate' }} />
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-bounce flex-shrink-0" style={{ animationDirection: 'alternate' }} />
                   </AlertDescription>
                 </Alert>
               )}
 
               <Button
-                className="w-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                className="w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 hover:scale-105 hover:shadow-xl touch-manipulation"
                 onClick={() => onUpgradeClick(plan)}
                 disabled={
                   !hasProfile ||
@@ -392,17 +392,17 @@ export function PlanCard({
       {/* Social Proof Badge */}
       {!isCurrentPlan && plan.name !== 'free' && getSocialProofBadge()}
       
-      <CardHeader>
-        <CardTitle className="text-2xl">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-xl sm:text-2xl">
           {plan.name !== 'free' && '👑 '}
           {plan.display_name}
         </CardTitle>
         <CardDescription className="space-y-1">
-          <div className="text-4xl font-extrabold mt-2">
+          <div className="text-3xl sm:text-4xl font-extrabold mt-2">
             <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               <CurrencyDisplay amountUSD={plan.price} />
             </span>
-            <span className="text-sm font-normal text-muted-foreground ml-2">
+            <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-2">
               /{plan.billing_period_days} days
             </span>
           </div>
@@ -415,7 +415,7 @@ export function PlanCard({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4 flex-1">
+      <CardContent className="space-y-4 flex-1 pb-20 sm:pb-4">
         {/* Break Even Calculator with ROI Timeline for Paid Plans */}
         {breakEvenDays && plan.name !== 'free' && (
           <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 animate-fade-in">
@@ -490,29 +490,29 @@ export function PlanCard({
           </div>
         )}
 
-        {/* Features */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-blue-500" />
+        {/* Features - Touch-optimized */}
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
             <span className="text-sm">{plan.daily_task_limit} tasks/day</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500" />
+          <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
             <span className="text-sm"><CurrencyDisplay amountUSD={plan.earning_per_task} /> per task</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-orange-500" />
+          <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
             <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
           </div>
           {plan.task_commission_rate > 0 && (
-            <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-500" />
+            <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+              <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
               <span className="text-sm">{(plan.task_commission_rate * 100).toFixed(1)}% task commission</span>
             </div>
           )}
           {plan.deposit_commission_rate > 0 && (
-            <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-500" />
+            <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+              <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
               <span className="text-sm">{(plan.deposit_commission_rate * 100).toFixed(1)}% deposit commission</span>
             </div>
           )}
@@ -552,30 +552,30 @@ export function PlanCard({
         )}
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-2">
+      <CardFooter className="flex flex-col gap-2 fixed sm:relative bottom-0 left-0 right-0 bg-card border-t sm:border-t-0 p-4 sm:p-6 z-20 shadow-lg sm:shadow-none">
         {/* Upgrade CTA for Free Trial - Prominent Alert (Vertical) */}
         {plan.name === 'free' && (
           <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 w-full">
             <AlertDescription className="flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="font-semibold text-sm mb-1">🚀 Unlock Full Potential</div>
+                <div className="font-semibold text-xs sm:text-sm mb-1">🚀 Unlock Full Potential</div>
                 <div className="text-xs text-muted-foreground">
                   See how much more you could earn below
                 </div>
               </div>
-              <ArrowRight className="h-5 w-5 text-primary animate-bounce" style={{ animationDirection: 'alternate' }} />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-bounce flex-shrink-0" style={{ animationDirection: 'alternate' }} />
             </AlertDescription>
           </Alert>
         )}
 
         {isInsufficientBalance && (
-          <div className="text-xs text-destructive text-center space-y-1">
+          <div className="text-xs text-destructive text-center space-y-1 w-full">
             <p>Insufficient balance</p>
             <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
             <Button
               variant="link"
               size="sm"
-              className="h-auto p-0 text-xs"
+              className="h-auto p-0 text-xs touch-manipulation"
               onClick={() => navigate("/wallet")}
             >
               Go to Wallet
@@ -583,7 +583,7 @@ export function PlanCard({
           </div>
         )}
         <Button
-          className="w-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          className="w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 hover:scale-105 hover:shadow-xl touch-manipulation"
           onClick={() => onUpgradeClick(plan)}
           disabled={
             !hasProfile ||
