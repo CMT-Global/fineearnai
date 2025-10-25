@@ -15,7 +15,17 @@ import {
 import { 
   ArrowUpRight, 
   ArrowDownRight,
+  Wallet,
+  CreditCard,
 } from "lucide-react";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WithdrawalHistoryCard } from "@/components/wallet/WithdrawalHistoryCard";
@@ -175,53 +185,79 @@ export const RecentTransactionsCard = ({
         </div>
       ) : (
         <>
-          <div className="space-y-3">
-            {filteredTransactions.map((tx) => (
-              <div 
-                key={tx.id} 
-                className="p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        isCredit(tx.type) 
-                          ? 'bg-[hsl(var(--wallet-earnings))]/10' 
-                          : 'bg-destructive/10'
-                      }`}
-                    >
-                      {isCredit(tx.type) ? (
-                        <ArrowDownRight className="h-5 w-5 text-[hsl(var(--wallet-earnings))]" />
-                      ) : (
-                        <ArrowUpRight className="h-5 w-5 text-destructive" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{getTransactionTypeLabel(tx.type)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(tx.created_at), "MMM dd, yyyy 'at' hh:mm a")}
-                      </p>
-                      {tx.description && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {maskTransactionDescription(tx.description, false)}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-left">Details</TableHead>
+                  <TableHead className="text-left">Wallet</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.map((tx) => (
+                  <TableRow key={tx.id} className="hover:bg-muted/50">
+                    {/* Details Column */}
+                    <TableCell className="py-4" data-label="Details">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-sm">{getTransactionTypeLabel(tx.type)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(tx.created_at), "MMM dd, yyyy 'at' hh:mm a")}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-lg font-bold ${getTransactionTypeColor(tx.type)}`}>
-                      {isCredit(tx.type) ? '+' : '-'}<CurrencyDisplay amountUSD={Math.abs(tx.amount)} />
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Balance: <CurrencyDisplay amountUSD={tx.new_balance} />
-                    </p>
-                    <p className={`text-xs capitalize ${getTransactionStatusColor(tx.status)}`}>
-                      {tx.status}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+                        {tx.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {maskTransactionDescription(tx.description, false)}
+                          </p>
+                        )}
+                        <p className={`text-xs capitalize ${getTransactionStatusColor(tx.status)}`}>
+                          {tx.status}
+                        </p>
+                      </div>
+                    </TableCell>
+
+                    {/* Wallet Column */}
+                    <TableCell className="py-4" data-label="Wallet">
+                      <div className="flex items-center gap-2">
+                        {tx.wallet_type === 'earnings' ? (
+                          <>
+                            <Wallet className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
+                            <span className="text-sm">Earnings</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4 text-[hsl(var(--wallet-deposit))]" />
+                            <span className="text-sm">Deposit</span>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Amount Column */}
+                    <TableCell className="py-4 text-right" data-label="Amount">
+                      <div className="flex items-center justify-end gap-1">
+                        {isCredit(tx.type) ? (
+                          <ArrowDownRight className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4 text-destructive" />
+                        )}
+                        <span className={`font-bold ${getTransactionTypeColor(tx.type)}`}>
+                          {isCredit(tx.type) ? '+' : '-'}
+                          <CurrencyDisplay amountUSD={Math.abs(tx.amount)} />
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    {/* Balance Column */}
+                    <TableCell className="py-4 text-right" data-label="Balance">
+                      <span className="text-sm text-muted-foreground">
+                        <CurrencyDisplay amountUSD={tx.new_balance} />
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination Controls */}
