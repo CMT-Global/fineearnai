@@ -4,82 +4,73 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Real-time Transaction Updates Hook
- * - Single shared channel per user (module-level)
- * - Listens to INSERT and UPDATE events
- * - Invalidates transactions and profile caches on change
+ * Subscribes to ALL transaction changes (INSERT, UPDATE, DELETE) and invalidates cache
+ * This ensures Recent Transactions Card updates instantly for:
+ * - Task completions (task_earning)
+ * - Deposits (deposit)
+ * - Withdrawals (withdrawal)
+ * - Referral commissions (referral_commission)
+ * - Balance adjustments (adjustment)
  */
-
-// Module-level registry to prevent duplicate channels across components
-const activeChannels: Record<string, { count: number }> = {};
-
 export const useRealtimeTransactions = (userId: string | undefined) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!userId) return;
 
-    const channelName = `rt-transactions-${userId}`;
-
-    // If already active, just increase ref count and return a cleanup that decrements
-    if (activeChannels[channelName]) {
-      activeChannels[channelName].count += 1;
-      return () => {
-        activeChannels[channelName].count -= 1;
-        if (activeChannels[channelName].count <= 0) {
-          delete activeChannels[channelName];
-          // Channel removal is handled by the instance that created it
-        }
-      };
-    }
-
-    // Mark as active and create the channel
-    activeChannels[channelName] = { count: 1 };
     console.log('🔴 Setting up real-time subscription for transactions:', userId);
 
     const channel = supabase
-      .channel(channelName)
+      .channel(`transaction-changes-${userId}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT and UPDATE
+          event: '*', // Listen to INSERT, UPDATE, DELETE
           schema: 'public',
           table: 'transactions',
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          try {
-            const action = payload.eventType || 'change';
-            console.log(`🔴 Realtime ${action} for transactions:`, {
-              userId,
-              type: (payload.new as any)?.type,
-              status: (payload.new as any)?.status,
-              amount: (payload.new as any)?.amount,
-            });
-          } catch {}
+          console.log('🔴 Real-time transaction event received:', {
+            event: payload.eventType,
+            userId,
+            type: (payload.new as any)?.type || (payload.old as any)?.type,
+            status: (payload.new as any)?.status || (payload.old as any)?.status,
+            amount: (payload.new as any)?.amount || (payload.old as any)?.amount,
+            timestamp: new Date().toISOString()
+          });
 
-          // Invalidate transactions and profile queries (prefix match)
-          queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
-          queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+          // Invalidate transactions cache to trigger refetch
+          queryClient.invalidateQueries({ 
+            queryKey: ['transactions', userId] 
+          });
+
+          // Also invalidate profile to update wallet balances
+          queryClient.invalidateQueries({ 
+            queryKey: ['profile', userId] 
+          });
+
+          // Invalidate dashboard data for comprehensive update
+          queryClient.invalidateQueries({ 
+            queryKey: ['dashboard-data', userId] 
+          });
+          
+          console.log('✅ Transaction caches invalidated - UI will update automatically');
         }
       )
       .subscribe((status) => {
         console.log('🔴 Real-time transactions subscription status:', status);
-        if (status === 'CHANNEL_ERROR') {
-          // Light retry: invalidate to keep UI reasonably fresh even if realtime fails
-          queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to transaction updates');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Real-time subscription error:', status);
         }
       });
 
     return () => {
-      // Decrement and cleanup if this was the last subscriber
-      if (activeChannels[channelName]) {
-        activeChannels[channelName].count -= 1;
-        if (activeChannels[channelName].count <= 0) {
-          console.log('🔴 Cleaning up real-time subscription for transactions:', userId);
-          delete activeChannels[channelName];
-          supabase.removeChannel(channel);
-        }
-      }
+      console.log('🔴 Cleaning up real-time subscription for transactions:', userId);
+      supabase.removeChannel(channel);
     };
   }, [userId, queryClient]);
 };
