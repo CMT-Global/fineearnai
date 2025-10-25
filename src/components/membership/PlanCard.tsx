@@ -186,7 +186,7 @@ export function PlanCard({
               {/* Daily cost breakdown for paid plans */}
               {dailyCost && plan.name !== 'free' && (
                 <div className="text-xs text-muted-foreground mt-2 animate-fade-in">
-                  Costs just <span className="font-semibold text-primary">${dailyCost}</span> per day
+                  Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
                 </div>
               )}
               
@@ -413,7 +413,7 @@ export function PlanCard({
           {/* Daily cost breakdown */}
           {dailyCost && plan.name !== 'free' && (
             <div className="text-xs text-muted-foreground animate-fade-in">
-              Just <span className="font-semibold text-primary">${dailyCost}</span> per day
+              Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
             </div>
           )}
         </CardDescription>
