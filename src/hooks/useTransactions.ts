@@ -67,5 +67,8 @@ export const useTransactions = (
     staleTime: 10000, // 10 seconds (fresh financial data)
     refetchOnMount: false, // Prevent redundant fetches
     placeholderData: (previousData) => previousData, // Keep old data while fetching
+    // PHASE 4 FIX: Force refetch when window gains focus (catches admin adjustments)
+    refetchOnWindowFocus: true,
+    refetchInterval: false, // Don't poll continuously
   });
 };

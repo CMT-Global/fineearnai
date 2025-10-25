@@ -103,6 +103,19 @@ Deno.serve(async (req) => {
 
     if (transactionError) throw transactionError;
 
+    // PHASE 4 FIX: Explicitly invalidate user cache to force UI refresh
+    // This ensures the transaction appears immediately in user's transaction history
+    console.log('✅ Transaction created, invalidating user cache for immediate UI update');
+    try {
+      await supabaseClient.functions.invoke('invalidate-user-cache', {
+        body: { userId: userId, cacheKeys: ['transactions', 'profile'] }
+      });
+      console.log('✅ User cache invalidated successfully');
+    } catch (cacheError: any) {
+      // Non-blocking - log but don't fail the adjustment
+      console.warn('⚠️ Failed to invalidate user cache:', cacheError.message);
+    }
+
     // Create audit log
     await supabaseClient
       .from('audit_logs')

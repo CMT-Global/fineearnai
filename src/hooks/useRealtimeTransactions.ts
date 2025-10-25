@@ -49,13 +49,30 @@ export const useRealtimeTransactions = (userId: string | undefined) => {
         (payload) => {
           try {
             const action = payload.eventType || 'change';
+            const txType = (payload.new as any)?.type;
+            const txStatus = (payload.new as any)?.status;
+            const txAmount = (payload.new as any)?.amount;
+            
             console.log(`🔴 Realtime ${action} for transactions:`, {
               userId,
-              type: (payload.new as any)?.type,
-              status: (payload.new as any)?.status,
-              amount: (payload.new as any)?.amount,
+              type: txType,
+              status: txStatus,
+              amount: txAmount,
             });
-          } catch {}
+            
+            // PHASE 4: EXPLICIT CHECK - Log if this is an adjustment transaction
+            if (txType === 'adjustment') {
+              console.log('🔵 ADJUSTMENT TRANSACTION DETECTED via real-time:', {
+                id: (payload.new as any)?.id,
+                amount: txAmount,
+                description: (payload.new as any)?.description,
+                wallet_type: (payload.new as any)?.wallet_type,
+                new_balance: (payload.new as any)?.new_balance
+              });
+            }
+          } catch (error) {
+            console.error('Error processing real-time transaction event:', error);
+          }
 
           // Invalidate transactions and profile queries (prefix match)
           queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
