@@ -144,7 +144,7 @@ export function PlanCard({
         {/* START HERE Banner */}
         {plan.name === 'free' && (
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
-            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider">🎯 Start Here - Free Trial</span>
+            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider">🎯 Free Trial Account</span>
           </div>
         )}
 
@@ -182,7 +182,7 @@ export function PlanCard({
               {/* Daily cost breakdown for paid plans */}
               {dailyCost && plan.name !== 'free' && (
                 <div className="text-xs text-muted-foreground mt-2 animate-fade-in">
-                  Just <span className="font-semibold text-primary">${dailyCost}</span> per day
+                  Costs just <span className="font-semibold text-primary">${dailyCost}</span> per day
                 </div>
               )}
               
@@ -288,7 +288,7 @@ export function PlanCard({
                     </div>
                     <div className="flex items-center gap-2 opacity-60">
                       <X className="h-4 w-4 text-red-500" />
-                      <span className="text-sm line-through">Unlimited daily tasks</span>
+                      <span className="text-sm line-through">More daily tasks</span>
                     </div>
                   </div>
                 )}
