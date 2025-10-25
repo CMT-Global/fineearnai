@@ -1,13 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Briefcase } from "lucide-react";
+import { Users, Briefcase, ArrowDown } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PlanTabsProps {
   personalPlans: any[];
   businessPlans: any[];
-  renderPlanCards: (plans: any[]) => React.ReactNode;
+  renderPlanCards: (plans: any[], variant?: 'vertical' | 'horizontal') => React.ReactNode;
 }
 
 export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: PlanTabsProps) {
+  // Separate free plan from paid personal plans
+  const freePlan = personalPlans.find(p => p.account_type === 'free');
+  const paidPersonalPlans = personalPlans.filter(p => p.account_type === 'personal');
+  
   return (
     <Tabs defaultValue="personal" className="w-full">
       <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
@@ -28,8 +33,41 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
             Start with our free trial or upgrade for higher limits and better earnings.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {renderPlanCards(personalPlans)}
+
+        {/* Free Trial Card - Horizontal Layout */}
+        {freePlan && (
+          <div className="max-w-7xl mx-auto mb-8">
+            {renderPlanCards([freePlan], 'horizontal')}
+          </div>
+        )}
+
+        {/* Comparison Callout with Animated Arrow */}
+        <Alert className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-2 border-blue-200 dark:border-blue-800">
+          <AlertDescription className="flex items-center justify-center gap-3 text-center">
+            <span className="font-semibold text-blue-900 dark:text-blue-100">
+              Compare with paid plans below to earn up to 4X more!
+            </span>
+            <ArrowDown className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-bounce" />
+          </AlertDescription>
+        </Alert>
+
+        {/* Separator */}
+        <div className="max-w-7xl mx-auto">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t-2 border-dashed border-muted-foreground/30" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-4 py-2 text-muted-foreground font-semibold">
+                Upgrade to Premium Plans
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Paid Personal Plans - 3 Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+          {renderPlanCards(paidPersonalPlans)}
         </div>
       </TabsContent>
 

@@ -33,6 +33,7 @@ interface PlanCardProps {
   upgrading: boolean;
   onUpgradeClick: (plan: MembershipPlan) => void;
   hasProfile: boolean;
+  variant?: 'vertical' | 'horizontal';
 }
 
 export function PlanCard({
@@ -42,7 +43,8 @@ export function PlanCard({
   depositBalance,
   upgrading,
   onUpgradeClick,
-  hasProfile
+  hasProfile,
+  variant = 'vertical'
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
@@ -60,6 +62,155 @@ export function PlanCard({
     return "border-border";
   };
 
+  // Horizontal layout for Free Trial card
+  if (variant === 'horizontal') {
+    return (
+      <Card className={`relative ${getBorderColorClass()} border-2 border-dashed`}>
+        {/* START HERE Banner */}
+        {plan.name === 'free' && (
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
+            <span className="font-bold text-sm uppercase tracking-wider">🎯 Start Here - Free Trial</span>
+          </div>
+        )}
+        
+        {isCurrentPlan && (
+          <Badge className="absolute top-4 right-4">
+            Current Plan
+          </Badge>
+        )}
+
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* Left Section - Price & Title */}
+            <div className="flex-shrink-0 lg:w-1/4">
+              <CardTitle className="text-2xl mb-2">
+                {plan.display_name}
+              </CardTitle>
+              <div className="text-4xl font-extrabold">
+                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  <CurrencyDisplay amountUSD={plan.price} />
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                /{plan.billing_period_days} days
+              </div>
+              
+              {/* Warning Badge */}
+              {plan.name === 'free' && (
+                <div className="mt-4 bg-amber-100 dark:bg-amber-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
+                    ⚠️ Limited Earnings
+                  </div>
+                  <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    Upgrade to earn more
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Middle Section - Features */}
+            <div className="flex-1 lg:w-1/2">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">{plan.daily_task_limit} tasks/day</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-sm"><CurrencyDisplay amountUSD={plan.earning_per_task} /> per task</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
+                </div>
+                {plan.task_commission_rate > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">{(plan.task_commission_rate * 100).toFixed(1)}% task commission</span>
+                  </div>
+                )}
+                {plan.deposit_commission_rate > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">{(plan.deposit_commission_rate * 100).toFixed(1)}% deposit commission</span>
+                  </div>
+                )}
+
+                {/* Free Plan Specifics */}
+                {plan.name === 'free' && (
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm mt-4">
+                    {plan.free_plan_expiry_days && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        <span>Free trial: {plan.free_plan_expiry_days} days</span>
+                      </div>
+                    )}
+                    {plan.free_unlock_withdrawal_enabled && plan.free_unlock_withdrawal_days && (
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-3 w-3" />
+                        <span>Withdrawals unlock after {plan.free_unlock_withdrawal_days} active days</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Section - Earning Potential & CTA */}
+            <div className="flex-shrink-0 lg:w-1/4 space-y-4">
+              {earningPotential && (
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-primary mb-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="font-semibold text-xs">Earning Potential</span>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Monthly:</span>
+                      <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Annually:</span>
+                      <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                className="w-full"
+                onClick={() => onUpgradeClick(plan)}
+                disabled={
+                  !hasProfile ||
+                  isCurrentPlan || 
+                  upgrading || 
+                  isInsufficientBalance ||
+                  plan.name === "free"
+                }
+              >
+                {upgrading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Upgrading...
+                  </>
+                ) : isCurrentPlan ? (
+                  "Current Plan"
+                ) : plan.name === "free" ? (
+                  "Cannot Downgrade"
+                ) : !hasProfile ? (
+                  "Loading..."
+                ) : (
+                  "Upgrade Now"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Vertical layout (default)
   return (
     <Card className={`relative flex flex-col ${getBorderColorClass()}`}>
       {isCurrentPlan && (

@@ -296,8 +296,8 @@ export default function MembershipPlans() {
     p.account_type === 'business'
   );
 
-  // Render plan cards function
-  const renderPlanCards = (planList: MembershipPlan[]) => {
+  // Render plan cards function with optional variant
+  const renderPlanCards = (planList: MembershipPlan[], variant: 'vertical' | 'horizontal' = 'vertical') => {
     if (loading && planList.length === 0) {
       return [1, 2, 3, 4].map((i) => <PlanCardSkeleton key={i} />);
     }
@@ -311,6 +311,7 @@ export default function MembershipPlans() {
         upgrading={upgrading === plan.id}
         onUpgradeClick={handleUpgradeClick}
         hasProfile={!!profile}
+        variant={variant}
       />
     ));
   };
