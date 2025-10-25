@@ -20,9 +20,12 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
           <Users className="h-4 w-4" />
           Personal & Free
         </TabsTrigger>
-        <TabsTrigger value="business" className="flex items-center gap-2">
+        <TabsTrigger 
+          value="business" 
+          className="flex items-center gap-2 relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 data-[state=inactive]:animate-pulse data-[state=inactive]:border-2 data-[state=inactive]:border-purple-400/50"
+        >
           <Briefcase className="h-4 w-4" />
-          Business Accounts
+          <span className="font-semibold">Business Accounts</span>
         </TabsTrigger>
       </TabsList>
 
