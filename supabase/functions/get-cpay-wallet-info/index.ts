@@ -48,15 +48,23 @@ Deno.serve(async (req) => {
     // ============================================================
     const { searchParams } = new URL(req.url);
     let mode = searchParams.get('mode') || 'wallet'; // 'wallet' or 'deposit'
+    
     // Also accept JSON body { mode } since frontend uses invoke with body
-    if (req.method !== 'GET') {
+    if (req.method === 'POST') {
       try {
-        const maybeBody = await req.json();
-        if (maybeBody && typeof maybeBody.mode !== 'undefined') {
-          mode = String(maybeBody.mode);
+        const contentType = req.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const bodyText = await req.text();
+          if (bodyText) {
+            const maybeBody = JSON.parse(bodyText);
+            if (maybeBody && typeof maybeBody.mode !== 'undefined') {
+              mode = String(maybeBody.mode);
+            }
+          }
         }
-      } catch (_) {
+      } catch (err) {
         // ignore body parse errors
+        console.log('[GET-CPAY-WALLET-INFO] ⚠️ Body parse warning:', err);
       }
     }
     const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
