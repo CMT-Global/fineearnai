@@ -65,9 +65,13 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
           </div>
         </div>
 
-        {/* Paid Personal Plans - 3 Column Grid */}
+        {/* Paid Personal Plans - 3 Column Grid with Staggered Animation */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {renderPlanCards(paidPersonalPlans)}
+          {paidPersonalPlans.map((plan, index) => (
+            <div key={plan.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              {renderPlanCards([plan])}
+            </div>
+          ))}
         </div>
       </TabsContent>
 

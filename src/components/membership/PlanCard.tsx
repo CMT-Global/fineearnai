@@ -49,23 +49,60 @@ export function PlanCard({
   const navigate = useNavigate();
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
 
-  // Plan-specific gradient border colors
-  const getBorderColorClass = () => {
-    if (isCurrentPlan) return "border-primary shadow-lg";
-    
+  // Plan-specific gradient themes with animations
+  const getCardStyles = () => {
     const planNameLower = plan.name.toLowerCase();
-    if (planNameLower === 'free') return "border-border";
-    if (planNameLower.includes('basic')) return "border-blue-500 shadow-blue-100 dark:shadow-blue-900/20";
-    if (planNameLower.includes('premium')) return "border-purple-500 shadow-purple-100 dark:shadow-purple-900/20";
-    if (planNameLower.includes('pro')) return "border-amber-500 shadow-amber-100 dark:shadow-amber-900/20";
     
-    return "border-border";
+    if (isCurrentPlan) {
+      return "border-2 border-primary shadow-lg bg-gradient-to-br from-primary/5 to-primary/10";
+    }
+    
+    if (planNameLower === 'free') {
+      return "border-2 border-dashed border-muted-foreground/30 bg-muted/20 opacity-95 hover:opacity-100 transition-all duration-300";
+    }
+    
+    if (planNameLower.includes('basic')) {
+      return "border-2 border-transparent bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-blue-500/5 hover:from-blue-500/20 hover:via-cyan-500/20 hover:to-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
+    }
+    
+    if (planNameLower.includes('premium')) {
+      return "border-2 border-transparent bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-purple-500/5 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/10 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1 animate-pulse";
+    }
+    
+    if (planNameLower.includes('pro')) {
+      return "border-2 border-transparent bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 hover:from-amber-500/20 hover:via-orange-500/20 hover:to-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
+    }
+    
+    return "border-2 border-border hover:shadow-xl transition-all duration-300";
+  };
+
+  // Get badge for special plans
+  const getSpecialBadge = () => {
+    const planNameLower = plan.name.toLowerCase();
+    
+    if (planNameLower.includes('premium')) {
+      return (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse">
+          ⭐ Most Popular
+        </Badge>
+      );
+    }
+    
+    if (planNameLower.includes('pro')) {
+      return (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+          🏆 Best Value
+        </Badge>
+      );
+    }
+    
+    return null;
   };
 
   // Horizontal layout for Free Trial card
   if (variant === 'horizontal') {
     return (
-      <Card className={`relative ${getBorderColorClass()} border-2 border-dashed`}>
+      <Card className={`relative ${getCardStyles()} animate-fade-in`}>
         {/* START HERE Banner */}
         {plan.name === 'free' && (
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
@@ -159,26 +196,29 @@ export function PlanCard({
             {/* Right Section - Earning Potential & CTA */}
             <div className="flex-shrink-0 lg:w-1/4 space-y-4">
               {earningPotential && (
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg p-3 space-y-2">
-                  <div className="flex items-center gap-2 text-primary mb-2">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="font-semibold text-xs">Earning Potential</span>
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Monthly:</span>
-                      <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
+                <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg transition-shadow duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 text-primary mb-2">
+                      <TrendingUp className="h-4 w-4 animate-pulse" />
+                      <span className="font-semibold text-xs">Earning Potential</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Annually:</span>
-                      <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Monthly:</span>
+                        <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Annually:</span>
+                        <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
               <Button
-                className="w-full"
+                className="w-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 onClick={() => onUpgradeClick(plan)}
                 disabled={
                   !hasProfile ||
@@ -212,12 +252,15 @@ export function PlanCard({
 
   // Vertical layout (default)
   return (
-    <Card className={`relative flex flex-col ${getBorderColorClass()}`}>
+    <Card className={`relative flex flex-col ${getCardStyles()} animate-fade-in`}>
       {isCurrentPlan && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-primary/70">
           Current Plan
         </Badge>
       )}
+      
+      {/* Special badges for Premium/Pro plans */}
+      {!isCurrentPlan && getSpecialBadge()}
       
       <CardHeader>
         <CardTitle className="text-2xl">
@@ -235,29 +278,32 @@ export function PlanCard({
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1">
-        {/* Earning Potential */}
+        {/* Earning Potential with Glassmorphism */}
         {earningPotential && (
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-2 text-primary mb-2">
-              <TrendingUp className="h-4 w-4" />
-              <span className="font-semibold text-sm">Earning Potential</span>
-            </div>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Weekly:</span>
-                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.weekly} /></span>
+          <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 text-primary mb-2">
+                <TrendingUp className="h-4 w-4 animate-pulse" />
+                <span className="font-semibold text-sm">Earning Potential</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Monthly:</span>
-                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Quarterly:</span>
-                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.quarterly} /></span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Annually:</span>
-                <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between animate-fade-in">
+                  <span className="text-muted-foreground">Weekly:</span>
+                  <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.weekly} /></span>
+                </div>
+                <div className="flex justify-between animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                  <span className="text-muted-foreground">Monthly:</span>
+                  <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.monthly} /></span>
+                </div>
+                <div className="flex justify-between animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <span className="text-muted-foreground">Quarterly:</span>
+                  <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.quarterly} /></span>
+                </div>
+                <div className="flex justify-between animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                  <span className="text-muted-foreground">Annually:</span>
+                  <span className="font-bold"><CurrencyDisplay amountUSD={earningPotential.annually} /></span>
+                </div>
               </div>
             </div>
           </div>
@@ -326,7 +372,7 @@ export function PlanCard({
           </div>
         )}
         <Button
-          className="w-full"
+          className="w-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
           onClick={() => onUpgradeClick(plan)}
           disabled={
             !hasProfile ||
