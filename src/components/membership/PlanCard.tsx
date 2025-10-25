@@ -176,13 +176,13 @@ export function PlanCard({
                 {plan.display_name}
               </CardTitle>
               <div className="flex items-baseline gap-1 flex-wrap">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
                   <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     <CurrencyDisplay amountUSD={plan.price} />
                   </span>
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                  /{plan.billing_period_days} days
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Subscription Valid: {plan.billing_period_days} days
                 </div>
               </div>
 
@@ -406,13 +406,13 @@ export function PlanCard({
         </CardTitle>
         <CardDescription className="space-y-1">
           <div className="flex items-baseline gap-1 flex-wrap mt-2">
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold">
+            <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 <CurrencyDisplay amountUSD={plan.price} />
               </span>
             </div>
-            <span className="text-xs sm:text-sm font-normal text-muted-foreground whitespace-nowrap">
-              /{plan.billing_period_days} days
+            <span className="text-xs sm:text-sm font-normal text-muted-foreground">
+              Subscription Valid: {plan.billing_period_days} days
             </span>
           </div>
           {/* Daily cost breakdown */}
