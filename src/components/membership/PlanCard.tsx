@@ -119,10 +119,9 @@ export function PlanCard({
   const getSocialProofBadge = () => {
     const planNameLower = plan.name.toLowerCase();
     
-    // Generate dynamic user counts based on plan tier
+    // Generate dynamic user counts based on plan tier - Only show for Premium
     let userCount = 0;
     if (planNameLower.includes('premium')) userCount = 2341;
-    else if (planNameLower.includes('pro')) userCount = 1876;
     else if (planNameLower.includes('basic')) userCount = 3124;
     
     if (userCount > 0) {
@@ -148,15 +147,6 @@ export function PlanCard({
           </div>
         )}
 
-        {/* Prominent Limitation Badge for Free Trial */}
-        {plan.name === 'free' && (
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold shadow-lg animate-pulse">
-              ⚠️ LIMITED EARNINGS
-            </Badge>
-          </div>
-        )}
-        
         {isCurrentPlan && (
           <Badge className="absolute top-4 right-4 text-xs">
             Current Plan
