@@ -47,12 +47,21 @@ export function PlanCard({
   const navigate = useNavigate();
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
 
+  // Plan-specific gradient border colors
+  const getBorderColorClass = () => {
+    if (isCurrentPlan) return "border-primary shadow-lg";
+    
+    const planNameLower = plan.name.toLowerCase();
+    if (planNameLower === 'free') return "border-border";
+    if (planNameLower.includes('basic')) return "border-blue-500 shadow-blue-100 dark:shadow-blue-900/20";
+    if (planNameLower.includes('premium')) return "border-purple-500 shadow-purple-100 dark:shadow-purple-900/20";
+    if (planNameLower.includes('pro')) return "border-amber-500 shadow-amber-100 dark:shadow-amber-900/20";
+    
+    return "border-border";
+  };
+
   return (
-    <Card
-      className={`relative flex flex-col ${
-        isCurrentPlan ? "border-primary shadow-lg" : ""
-      }`}
-    >
+    <Card className={`relative flex flex-col ${getBorderColorClass()}`}>
       {isCurrentPlan && (
         <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
           Current Plan
@@ -60,10 +69,15 @@ export function PlanCard({
       )}
       
       <CardHeader>
-        <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
-        <CardDescription className="text-3xl font-bold mt-2">
-          <CurrencyDisplay amountUSD={plan.price} />
-          <span className="text-sm font-normal text-muted-foreground">
+        <CardTitle className="text-2xl">
+          {plan.name !== 'free' && '👑 '}
+          {plan.display_name}
+        </CardTitle>
+        <CardDescription className="text-4xl font-extrabold mt-2">
+          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <CurrencyDisplay amountUSD={plan.price} />
+          </span>
+          <span className="text-sm font-normal text-muted-foreground ml-2">
             /{plan.billing_period_days} days
           </span>
         </CardDescription>
@@ -72,7 +86,7 @@ export function PlanCard({
       <CardContent className="space-y-4 flex-1">
         {/* Earning Potential */}
         {earningPotential && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2 text-primary mb-2">
               <TrendingUp className="h-4 w-4" />
               <span className="font-semibold text-sm">Earning Potential</span>
@@ -119,26 +133,26 @@ export function PlanCard({
         {/* Features */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-primary" />
+            <Check className="h-4 w-4 text-blue-500" />
             <span className="text-sm">{plan.daily_task_limit} tasks/day</span>
           </div>
           <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-primary" />
+            <Check className="h-4 w-4 text-green-500" />
             <span className="text-sm"><CurrencyDisplay amountUSD={plan.earning_per_task} /> per task</span>
           </div>
           <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-primary" />
+            <Check className="h-4 w-4 text-orange-500" />
             <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
           </div>
           {plan.task_commission_rate > 0 && (
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-primary" />
+              <Check className="h-4 w-4 text-purple-500" />
               <span className="text-sm">{(plan.task_commission_rate * 100).toFixed(1)}% task commission</span>
             </div>
           )}
           {plan.deposit_commission_rate > 0 && (
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-primary" />
+              <Check className="h-4 w-4 text-purple-500" />
               <span className="text-sm">{(plan.deposit_commission_rate * 100).toFixed(1)}% deposit commission</span>
             </div>
           )}
