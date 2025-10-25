@@ -34,37 +34,6 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
           </p>
         </div>
 
-        {/* Free Trial Card - Horizontal Layout */}
-        {freePlan && (
-          <div className="max-w-7xl mx-auto mb-8">
-            {renderPlanCards([freePlan], 'horizontal')}
-          </div>
-        )}
-
-        {/* Comparison Callout with Animated Arrow */}
-        <Alert className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-2 border-blue-200 dark:border-blue-800">
-          <AlertDescription className="flex items-center justify-center gap-3 text-center">
-            <span className="font-semibold text-blue-900 dark:text-blue-100">
-              Compare with paid plans below to earn up to 4X more!
-            </span>
-            <ArrowDown className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-bounce" />
-          </AlertDescription>
-        </Alert>
-
-        {/* Separator */}
-        <div className="max-w-7xl mx-auto">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t-2 border-dashed border-muted-foreground/30" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-4 py-2 text-muted-foreground font-semibold">
-                Upgrade to Premium Plans
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Paid Personal Plans - Responsive 3 Column Grid with Staggered Animation */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-7xl mx-auto">
           {paidPersonalPlans.map((plan, index) => (
@@ -73,6 +42,37 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
             </div>
           ))}
         </div>
+
+        {/* Separator */}
+        <div className="max-w-7xl mx-auto mt-12">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t-2 border-dashed border-muted-foreground/30" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-4 py-2 text-muted-foreground font-semibold">
+                Or start with Free Trial
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison Callout with Animated Arrow Pointing Up */}
+        <Alert className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-2 border-blue-200 dark:border-blue-800">
+          <AlertDescription className="flex items-center justify-center gap-3 text-center">
+            <ArrowDown className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-bounce rotate-180" />
+            <span className="font-semibold text-blue-900 dark:text-blue-100">
+              Compare with paid plans above to earn up to 4X more!
+            </span>
+          </AlertDescription>
+        </Alert>
+
+        {/* Free Trial Card - Horizontal Layout at Bottom */}
+        {freePlan && (
+          <div className="max-w-7xl mx-auto">
+            {renderPlanCards([freePlan], 'horizontal')}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="business" className="space-y-6">
