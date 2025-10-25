@@ -65,57 +65,30 @@ export const RecentTransactionsCard = ({
   // Enable real-time transaction updates
   useRealtimeTransactions(userId);
 
-  const { data: transactionsData, isLoading: isTransactionsLoading } = useTransactions(userId, currentPage, maxItems);
+  // Build filters object for server-side filtering
+  const transactionFilters = {
+    walletType: filter !== "all" ? filter as "deposit" | "earnings" : undefined,
+    type: externalFilter?.typeFilter && externalFilter.typeFilter !== "all" ? externalFilter.typeFilter : undefined,
+    status: externalFilter?.statusFilter && externalFilter.statusFilter !== "all" ? externalFilter.statusFilter as "completed" | "pending" | "failed" | "cancelled" : undefined,
+    dateRange: externalFilter?.dateRange,
+    searchQuery: externalFilter?.searchQuery,
+  };
+
+  const { data: transactionsData, isLoading: isTransactionsLoading } = useTransactions(
+    userId, 
+    currentPage, 
+    maxItems, 
+    true, 
+    transactionFilters
+  );
   const { data: withdrawalRequests, isLoading: isWithdrawalsLoading } = useWithdrawalRequests(userId);
 
   const transactions = transactionsData?.transactions || [];
   const totalPages = transactionsData?.totalPages || 1;
   const totalCount = transactionsData?.totalCount || 0;
 
+  // Apply only client-side sorting (server-side filtering is now in useTransactions)
   const filteredTransactions = transactions
-    .filter((tx) => {
-      // Apply tab filter (if not using external filter)
-      if (!externalFilter && filter !== "all" && tx.wallet_type !== filter) return false;
-      
-      // Apply external filters if provided
-      if (externalFilter) {
-        // Wallet type filter (from tabs)
-        if (filter !== "all" && tx.wallet_type !== filter) return false;
-        
-        // Transaction type filter
-        if (externalFilter.typeFilter && externalFilter.typeFilter !== "all" && tx.type !== externalFilter.typeFilter) return false;
-        
-        // Status filter
-        if (externalFilter.statusFilter && externalFilter.statusFilter !== "all" && tx.status !== externalFilter.statusFilter) return false;
-        
-        // Search filter
-        if (externalFilter.searchQuery) {
-          const query = externalFilter.searchQuery.toLowerCase();
-          const matchesDescription = tx.description?.toLowerCase().includes(query);
-          const matchesId = tx.id.toLowerCase().includes(query);
-          const matchesType = getTransactionTypeLabel(tx.type).toLowerCase().includes(query);
-          const matchesGateway = tx.payment_gateway?.toLowerCase().includes(query);
-          const matchesGatewayId = tx.gateway_transaction_id?.toLowerCase().includes(query);
-          
-          if (!matchesDescription && !matchesId && !matchesType && !matchesGateway && !matchesGatewayId) {
-            return false;
-          }
-        }
-        
-        // Date range filter
-        if (externalFilter.dateRange?.from || externalFilter.dateRange?.to) {
-          const txDate = new Date(tx.created_at);
-          if (externalFilter.dateRange.from && txDate < externalFilter.dateRange.from) return false;
-          if (externalFilter.dateRange.to) {
-            const endOfDay = new Date(externalFilter.dateRange.to);
-            endOfDay.setHours(23, 59, 59, 999);
-            if (txDate > endOfDay) return false;
-          }
-        }
-      }
-      
-      return true;
-    })
     .sort((a, b) => {
       // Apply external sort if provided
       if (externalFilter?.sortBy) {
