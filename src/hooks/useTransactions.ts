@@ -26,7 +26,7 @@ export const useTransactions = (
       
       // Filter out pending deposits (these are placeholders waiting for webhook confirmation)
       // Users should only see completed transactions
-      const filteredTransactions = (data || []).filter(tx => {
+      let filteredTransactions = (data || []).filter(tx => {
         // Hide pending deposits - they're placeholders that will be replaced by completed deposits from webhook
         if (tx.type === 'deposit' && tx.status === 'pending') {
           return false;
@@ -35,8 +35,28 @@ export const useTransactions = (
         return true;
       });
       
+      // Client-side deduplication safety net (Phase 3)
+      // This prevents duplicate transactions from appearing in UI even if they somehow slip through database constraints
+      const uniqueTransactions = filteredTransactions.reduce((acc, tx) => {
+        // Create unique key using gateway_transaction_id or fallback to transaction id
+        const uniqueKey = tx.gateway_transaction_id || tx.id;
+        
+        // Check if we already have a transaction with this key
+        const isDuplicate = acc.some(existing => {
+          const existingKey = existing.gateway_transaction_id || existing.id;
+          return existingKey === uniqueKey;
+        });
+        
+        // Only add if not duplicate
+        if (!isDuplicate) {
+          acc.push(tx);
+        }
+        
+        return acc;
+      }, [] as typeof filteredTransactions);
+      
       return {
-        transactions: filteredTransactions,
+        transactions: uniqueTransactions,
         totalCount: count || 0,
         hasMore: (count || 0) > to + 1,
         currentPage: page,
