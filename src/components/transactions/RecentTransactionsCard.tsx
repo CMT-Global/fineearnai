@@ -70,10 +70,6 @@ export const RecentTransactionsCard = ({
 
   const filteredTransactions = transactions
     .filter((tx) => {
-      // Hide only failed and cancelled withdrawals from user view
-      // These are internal states that don't represent user-facing actions
-      if (['failed', 'cancelled'].includes(tx.status)) return false;
-      
       // Apply tab filter (if not using external filter)
       if (!externalFilter && filter !== "all" && tx.wallet_type !== filter) return false;
       
