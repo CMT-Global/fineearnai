@@ -81,9 +81,6 @@ verify_jwt = true
 [functions.process-referral-earnings]
 verify_jwt = false
 
-[functions.link-user-to-referrer]
-verify_jwt = false
-
 [functions.track-user-registration]
 verify_jwt = false
 
@@ -91,9 +88,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-paginated-referrals]
-verify_jwt = true
-
-[functions.get-referrer-info]
 verify_jwt = true
 
 [functions.manage-membership-plan]
