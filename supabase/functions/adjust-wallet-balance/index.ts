@@ -66,24 +66,12 @@ Deno.serve(async (req) => {
         throw new Error('Insufficient balance');
       }
       newBalance = parseFloat(currentBalance) - amount;
-      transactionType = 'adjustment';
+      transactionType = 'transfer';
     } else {
       throw new Error('Invalid action type');
     }
 
-    // Update wallet balance
-    const updateField = walletType === 'deposit' 
-      ? 'deposit_wallet_balance' 
-      : 'earnings_wallet_balance';
-
-    const { error: updateError } = await supabaseClient
-      .from('profiles')
-      .update({ [updateField]: newBalance })
-      .eq('id', userId);
-
-    if (updateError) throw updateError;
-
-    // Create transaction record
+    // Create transaction record FIRST (before balance update) so balance validation trigger passes
     const { error: transactionError } = await supabaseClient
       .from('transactions')
       .insert({
@@ -103,9 +91,20 @@ Deno.serve(async (req) => {
 
     if (transactionError) throw transactionError;
 
+    // Update wallet balance AFTER transaction insert
+    const updateField = walletType === 'deposit' 
+      ? 'deposit_wallet_balance' 
+      : 'earnings_wallet_balance';
+
+    const { error: updateError } = await supabaseClient
+      .from('profiles')
+      .update({ [updateField]: newBalance, last_activity: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+
     // PHASE 4 FIX: Explicitly invalidate user cache to force UI refresh
-    // This ensures the transaction appears immediately in user's transaction history
-    console.log('✅ Transaction created, invalidating user cache for immediate UI update');
+    console.log('✅ Adjustment completed, invalidating user cache for immediate UI update');
     try {
       await supabaseClient.functions.invoke('invalidate-user-cache', {
         body: { userId: userId, cacheKeys: ['transactions', 'profile'] }
