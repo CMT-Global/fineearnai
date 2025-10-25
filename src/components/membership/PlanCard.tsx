@@ -96,11 +96,11 @@ export function PlanCard({
     }
     
     if (planNameLower.includes('business level 2')) {
-      return "border-2 border-transparent bg-gradient-to-br from-emerald-500/15 via-green-500/15 to-emerald-500/10 hover:from-emerald-500/25 hover:via-green-500/25 hover:to-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
+      return "border-2 border-transparent bg-gradient-to-br from-emerald-500/15 via-green-500/15 to-emerald-500/10 hover:from-emerald-500/25 hover:via-green-500/25 hover:to-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1";
     }
     
     if (planNameLower.includes('business elite') || planNameLower.includes('business pro')) {
-      return "border-2 border-transparent bg-gradient-to-br from-violet-500/15 via-purple-500/15 to-violet-500/10 hover:from-violet-500/25 hover:via-purple-500/25 hover:to-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
+      return "border-2 border-transparent bg-gradient-to-br from-violet-500/15 via-purple-500/15 to-violet-500/10 hover:from-violet-500/25 hover:via-purple-500/25 hover:to-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1";
     }
     
     return "border-2 border-border hover:shadow-xl transition-all duration-300";
