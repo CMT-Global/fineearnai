@@ -450,7 +450,37 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     throw new Error(`Failed to update withdrawal: ${updateError.message}`);
   }
 
-  // Refund user's earnings wallet
+  // CRITICAL FIX: Insert refund transaction FIRST (before balance update)
+  // This ensures validate_transaction_balance() trigger can verify:
+  // new_balance == current_balance + amount
+  console.log('[REJECT] 📝 Creating refund transaction BEFORE balance update');
+  const { error: refundTxnError } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: withdrawal.user_id,
+      type: 'adjustment',
+      amount: withdrawal.amount, // Positive amount (credit)
+      wallet_type: 'earnings',
+      status: 'completed',
+      description: `Withdrawal rejected - funds refunded. Reason: ${rejectionReason}`,
+      new_balance: newBalance, // newBalance = currentBalance + withdrawal.amount
+      payment_gateway: 'internal',
+      metadata: {
+        withdrawal_request_id: withdrawal.id,
+        refund_type: 'withdrawal_rejection',
+        original_amount: withdrawal.amount,
+        rejection_reason: rejectionReason
+      }
+    });
+
+  if (refundTxnError) {
+    console.error('[REJECT] ❌ CRITICAL: Refund transaction creation failed:', refundTxnError);
+    throw new Error(`Failed to create refund transaction: ${refundTxnError.message}`);
+  }
+
+  console.log('[REJECT] ✅ Refund transaction created successfully');
+
+  // NOW update user's earnings wallet to match the transaction's new_balance
   const { error: refundError } = await supabase
     .from('profiles')
     .update({
@@ -459,13 +489,13 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     .eq('id', withdrawal.user_id);
 
   if (refundError) {
-    console.error('[REJECT] ❌ Failed to refund user:', refundError);
-    throw new Error(`Failed to refund user: ${refundError.message}`);
+    console.error('[REJECT] ❌ Failed to refund user balance:', refundError);
+    throw new Error(`Failed to update user balance: ${refundError.message}`);
   }
 
-  console.log('[REJECT] ✅ Refund applied successfully');
+  console.log('[REJECT] ✅ User balance refunded successfully');
 
-  // Mark original withdrawal transaction as completed (withdrawal was successfully created)
+  // Mark original withdrawal transaction as completed
   const { error: txnError } = await supabase
     .from('transactions')
     .update({ status: 'completed' })
@@ -477,32 +507,7 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     .limit(1);
 
   if (txnError) {
-    console.error('[REJECT] ⚠️ Transaction update failed:', txnError);
-    // Continue - not critical
-  }
-
-  // Create NEW refund transaction showing money being returned
-  const { error: refundTxnError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: withdrawal.user_id,
-      type: 'adjustment',
-      amount: withdrawal.amount, // Positive amount (credit)
-      wallet_type: 'earnings',
-      status: 'completed',
-      description: `Withdrawal rejected - funds refunded. Reason: ${rejectionReason}`,
-      new_balance: newBalance,
-      payment_gateway: 'internal',
-      metadata: {
-        withdrawal_request_id: withdrawal.id,
-        refund_type: 'withdrawal_rejection',
-        original_amount: withdrawal.amount,
-        rejection_reason: rejectionReason
-      }
-    });
-
-  if (refundTxnError) {
-    console.error('[REJECT] ⚠️ Refund transaction creation failed:', refundTxnError);
+    console.error('[REJECT] ⚠️ Original withdrawal transaction update failed:', txnError);
     // Continue - not critical
   }
 
