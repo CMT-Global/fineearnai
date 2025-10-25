@@ -161,9 +161,7 @@ Deno.serve(async (req) => {
           deposit_wallet_balance: newDepositBalance,
           current_plan_start_date: now,
           last_activity: now,
-          // PHASE 2 FIX: Reset daily counters on upgrade so user can immediately use new plan's higher limits
-          tasks_completed_today: 0,
-          skips_today: 0
+          // ✅ FIXED: Preserve task progress - user keeps completed count and gains access to extra tasks from new plan
         })
         .eq('id', user.id);
 
@@ -176,7 +174,7 @@ Deno.serve(async (req) => {
         userId: user.id,
         newPlan: planName,
         newBalance: newDepositBalance,
-        tasksReset: true
+        tasksPreserved: true
       });
 
       // Create detailed transaction record
@@ -204,10 +202,10 @@ Deno.serve(async (req) => {
             billing_period_value: newPlan.billing_period_value,
             expires_at: expiryDate.toISOString(),
             upgraded_at: now,
-            // PHASE 2: Track that daily counters were reset
-            tasks_reset: true,
-            previous_tasks_completed: profile.tasks_completed_today,
-            previous_skips: profile.skips_today
+            // ✅ FIXED: Track that counters were preserved
+            tasks_preserved: true,
+            tasks_completed_at_upgrade: profile.tasks_completed_today,
+            skips_used_at_upgrade: profile.skips_today
           },
         });
 
