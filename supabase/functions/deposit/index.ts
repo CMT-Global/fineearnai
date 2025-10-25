@@ -108,12 +108,20 @@ Deno.serve(async (req) => {
     const newBalance = atomicResult.new_balance;
 
     // Queue referral commission on deposit if user was referred (async processing)
-    if (profile.referred_by) {
+    // Phase 2: Use referrals table instead of profile.referred_by
+    const { data: referralRecord } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referred_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (referralRecord) {
       // Get referrer's membership plan to check THEIR commission rate
       const { data: referrerProfile } = await supabase
         .from('profiles')
         .select('id, membership_plan')
-        .eq('id', profile.referred_by)
+        .eq('id', referralRecord.referrer_id)
         .single();
 
       if (referrerProfile) {
@@ -124,7 +132,7 @@ Deno.serve(async (req) => {
           const { error: queueError } = await supabase
             .from('commission_queue')
             .insert({
-              referrer_id: profile.referred_by,
+              referrer_id: referralRecord.referrer_id,
               referred_user_id: user.id,
               event_type: 'deposit',
               amount: depositAmount,
@@ -139,7 +147,7 @@ Deno.serve(async (req) => {
             console.error('Error queueing deposit commission:', queueError);
             // Don't block user response - log and continue
           } else {
-            console.log('Deposit commission queued:', { referrerId: profile.referred_by, amount: depositAmount, referrerPlan: referrerProfile.membership_plan });
+            console.log('Deposit commission queued:', { referrerId: referralRecord.referrer_id, amount: depositAmount, referrerPlan: referrerProfile.membership_plan });
           }
         }
       }

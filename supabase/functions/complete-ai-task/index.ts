@@ -285,11 +285,19 @@ Deno.serve(async (req) => {
     });
 
     // Queue referral commission if user was referred (async processing)
-    if (profile.referred_by && earningsAmount > 0) {
+    // Phase 2: Use referrals table instead of profile.referred_by
+    const { data: referralRecord } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referred_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (referralRecord && earningsAmount > 0) {
       const { data: referrer, error: referrerError } = await supabase
         .from('profiles')
         .select('id, membership_plan')
-        .eq('id', profile.referred_by)
+        .eq('id', referralRecord.referrer_id)
         .maybeSingle();
 
       if (!referrerError && referrer) {

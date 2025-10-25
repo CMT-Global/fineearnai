@@ -156,14 +156,22 @@ Deno.serve(async (req) => {
     }
 
     // Handle referral commission if user was referred
-    if (profile.referred_by && plan.task_commission_rate > 0) {
+    // Phase 2: Use referrals table instead of profile.referred_by
+    const { data: referralRecord } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referred_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (referralRecord && plan.task_commission_rate > 0) {
       const commissionAmount = earnedAmount * (plan.task_commission_rate / 100);
       
       // Get referrer's profile (optimized - only fetch needed fields)
       const { data: referrerProfile, error: referrerError } = await supabase
         .from('profiles')
         .select('id, membership_plan, earnings_wallet_balance')
-        .eq('id', profile.referred_by)
+        .eq('id', referralRecord.referrer_id)
         .single();
 
       if (!referrerError && referrerProfile) {
@@ -173,10 +181,10 @@ Deno.serve(async (req) => {
         if (referrerMembershipPlan && referrerMembershipPlan.task_commission_rate > 0) {
           // Check max active referrals limit
           const { count: activeReferralsCount } = await supabase
-            .from('profiles')
+            .from('referrals')
             .select('*', { count: 'exact', head: true })
-            .eq('referred_by', profile.referred_by)
-            .gte('tasks_completed_today', 1);
+            .eq('referrer_id', referralRecord.referrer_id)
+            .eq('status', 'active');
 
           const isWithinLimit = (activeReferralsCount || 0) <= referrerMembershipPlan.max_active_referrals;
 
@@ -187,13 +195,13 @@ Deno.serve(async (req) => {
             await supabase
               .from('profiles')
               .update({ earnings_wallet_balance: newReferrerBalance })
-              .eq('id', profile.referred_by);
+              .eq('id', referralRecord.referrer_id);
 
             // Record referral earning
             await supabase
               .from('referral_earnings')
               .insert({
-                referrer_id: profile.referred_by,
+                referrer_id: referralRecord.referrer_id,
                 referred_user_id: user.id,
                 earning_type: 'task_commission',
                 base_amount: earnedAmount,
@@ -209,7 +217,7 @@ Deno.serve(async (req) => {
             await supabase
               .from('transactions')
               .insert({
-                user_id: profile.referred_by,
+                user_id: referralRecord.referrer_id,
                 type: 'referral_commission',
                 amount: commissionAmount,
                 wallet_type: 'earnings',
@@ -222,7 +230,7 @@ Deno.serve(async (req) => {
                 },
               });
 
-            console.log('Referral commission paid:', { referrerId: profile.referred_by, amount: commissionAmount });
+            console.log('Referral commission paid:', { referrerId: referralRecord.referrer_id, amount: commissionAmount });
           }
         }
       }

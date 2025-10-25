@@ -284,7 +284,15 @@ Deno.serve(async (req) => {
       });
 
     // Queue referral commission if user has a referrer (async processing)
-    if (profile.referred_by) {
+    // Phase 2: Use referrals table instead of profile.referred_by
+    const { data: referralRecord } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referred_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (referralRecord) {
       console.log('Checking referral commission for plan upgrade');
       
       try {
@@ -292,7 +300,7 @@ Deno.serve(async (req) => {
         const { data: referrerProfile } = await supabase
           .from('profiles')
           .select('membership_plan')
-          .eq('id', profile.referred_by)
+          .eq('id', referralRecord.referrer_id)
           .single();
 
         if (referrerProfile) {
@@ -308,7 +316,7 @@ Deno.serve(async (req) => {
             const { error: queueError } = await supabase
               .from('commission_queue')
               .insert({
-                referrer_id: profile.referred_by,
+                referrer_id: referralRecord.referrer_id,
                 referred_user_id: user.id,
                 event_type: 'upgrade',
                 amount: finalCost,
