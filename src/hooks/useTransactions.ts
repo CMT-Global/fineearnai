@@ -24,8 +24,19 @@ export const useTransactions = (
       
       if (error) throw error;
       
+      // Filter out pending deposits (these are placeholders waiting for webhook confirmation)
+      // Users should only see completed transactions
+      const filteredTransactions = (data || []).filter(tx => {
+        // Hide pending deposits - they're placeholders that will be replaced by completed deposits from webhook
+        if (tx.type === 'deposit' && tx.status === 'pending') {
+          return false;
+        }
+        // Show everything else (completed deposits, withdrawals, task earnings, etc.)
+        return true;
+      });
+      
       return {
-        transactions: data || [],
+        transactions: filteredTransactions,
         totalCount: count || 0,
         hasMore: (count || 0) > to + 1,
         currentPage: page,
