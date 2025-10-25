@@ -357,6 +357,19 @@ export default function MembershipPlans() {
             </Alert>
           )}
 
+          {/* Urgency Banner for Free Users */}
+          {user && profile && currentPlan === 'free' && (
+            <Alert className="mb-8 max-w-4xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
+              <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <AlertTitle className="text-amber-900 dark:text-amber-100 text-lg font-bold">
+                🎉 Limited Time: Get Pro-Rated Pricing on All Upgrades!
+              </AlertTitle>
+              <AlertDescription className="text-amber-800 dark:text-amber-200 mt-2">
+                Upgrade now and only pay for the remaining days of your billing period. Start earning more immediately with higher task limits and better rates!
+              </AlertDescription>
+            </Alert>
+          )}
+
           {user && profile && (
             <Alert className="mb-8 max-w-3xl mx-auto">
               <Info className="h-4 w-4" />
