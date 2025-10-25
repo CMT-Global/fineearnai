@@ -46,7 +46,7 @@ export const getTransactionTypeLabel = (type: string): string => {
     task_earning: 'Task Earning',
     referral_commission: 'Referral Commission',
     plan_upgrade: 'Plan Upgrade',
-    transfer: 'Transfer',
+    transfer: 'Admin Deduction',
     adjustment: 'Balance Adjustment',
   };
   return labels[type] || type;
