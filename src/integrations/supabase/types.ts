@@ -636,7 +636,6 @@ export type Database = {
           plan_expires_at: string | null
           preferred_currency: string
           referral_code: string
-          referred_by: string | null
           registration_country: string | null
           registration_country_name: string | null
           registration_ip: string | null
@@ -668,7 +667,6 @@ export type Database = {
           plan_expires_at?: string | null
           preferred_currency?: string
           referral_code: string
-          referred_by?: string | null
           registration_country?: string | null
           registration_country_name?: string | null
           registration_ip?: string | null
@@ -700,7 +698,6 @@ export type Database = {
           plan_expires_at?: string | null
           preferred_currency?: string
           referral_code?: string
-          referred_by?: string | null
           registration_country?: string | null
           registration_country_name?: string | null
           registration_ip?: string | null
@@ -709,22 +706,7 @@ export type Database = {
           total_earned?: number
           username?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_referred_by_fkey"
-            columns: ["referred_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_referred_by_fkey"
-            columns: ["referred_by"]
-            isOneToOne: false
-            referencedRelation: "user_daily_stats"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       referral_earnings: {
         Row: {
