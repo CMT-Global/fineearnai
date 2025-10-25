@@ -450,33 +450,7 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     throw new Error(`Failed to update withdrawal: ${updateError.message}`);
   }
 
-  // Create NEW refund transaction first (before updating profile)
-  // This order ensures the balance validation trigger sees the pre-refund balance
-  const { error: refundTxnError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: withdrawal.user_id,
-      type: 'adjustment',
-      amount: withdrawal.amount, // Positive amount (credit)
-      wallet_type: 'earnings',
-      status: 'completed',
-      description: `Withdrawal rejected - funds refunded. Reason: ${rejectionReason}`,
-      new_balance: newBalance, // oldBalance + refund
-      payment_gateway: 'internal',
-      metadata: {
-        withdrawal_request_id: withdrawal.id,
-        refund_type: 'withdrawal_rejection',
-        original_amount: withdrawal.amount,
-        rejection_reason: rejectionReason
-      }
-    });
-
-  if (refundTxnError) {
-    console.error('[REJECT] ⚠️ Refund transaction creation failed:', refundTxnError);
-    // Continue to refund wallet anyway to protect user funds
-  }
-
-  // Now refund user's earnings wallet to match the transaction's new_balance
+  // Refund user's earnings wallet
   const { error: refundError } = await supabase
     .from('profiles')
     .update({
@@ -504,6 +478,31 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
 
   if (txnError) {
     console.error('[REJECT] ⚠️ Transaction update failed:', txnError);
+    // Continue - not critical
+  }
+
+  // Create NEW refund transaction showing money being returned
+  const { error: refundTxnError } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: withdrawal.user_id,
+      type: 'adjustment',
+      amount: withdrawal.amount, // Positive amount (credit)
+      wallet_type: 'earnings',
+      status: 'completed',
+      description: `Withdrawal rejected - funds refunded. Reason: ${rejectionReason}`,
+      new_balance: newBalance,
+      payment_gateway: 'internal',
+      metadata: {
+        withdrawal_request_id: withdrawal.id,
+        refund_type: 'withdrawal_rejection',
+        original_amount: withdrawal.amount,
+        rejection_reason: rejectionReason
+      }
+    });
+
+  if (refundTxnError) {
+    console.error('[REJECT] ⚠️ Refund transaction creation failed:', refundTxnError);
     // Continue - not critical
   }
 
