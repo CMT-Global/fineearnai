@@ -1,0 +1,1 @@
+ALTER TABLE public.transactions REPLICA IDENTITY FULL;

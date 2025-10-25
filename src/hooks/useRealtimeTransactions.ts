@@ -1,71 +1,85 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Phase 7: Real-time Transaction Updates Hook
- * 
- * Subscribes to new transactions and automatically updates React Query cache
- * Provides instant UI updates when new transactions occur
- * Prevents duplicate subscriptions across multiple components
+ * Real-time Transaction Updates Hook
+ * - Single shared channel per user (module-level)
+ * - Listens to INSERT and UPDATE events
+ * - Invalidates transactions and profile caches on change
  */
+
+// Module-level registry to prevent duplicate channels across components
+const activeChannels: Record<string, { count: number }> = {};
+
 export const useRealtimeTransactions = (userId: string | undefined) => {
   const queryClient = useQueryClient();
-  const channelRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
 
-    const channelName = `transactions-${userId}`;
-    
-    // Prevent duplicate subscriptions
-    if (channelRef.current === channelName) {
-      console.log('🔴 Subscription already exists for:', channelName);
-      return;
+    const channelName = `rt-transactions-${userId}`;
+
+    // If already active, just increase ref count and return a cleanup that decrements
+    if (activeChannels[channelName]) {
+      activeChannels[channelName].count += 1;
+      return () => {
+        activeChannels[channelName].count -= 1;
+        if (activeChannels[channelName].count <= 0) {
+          delete activeChannels[channelName];
+          // Channel removal is handled by the instance that created it
+        }
+      };
     }
 
+    // Mark as active and create the channel
+    activeChannels[channelName] = { count: 1 };
     console.log('🔴 Setting up real-time subscription for transactions:', userId);
-    channelRef.current = channelName;
 
     const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // INSERT and UPDATE
           schema: 'public',
           table: 'transactions',
-          filter: `user_id=eq.${userId}`
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('🔴 Real-time transaction insert received:', {
-            userId,
-            type: payload.new.type,
-            amount: payload.new.amount,
-            newBalance: payload.new.new_balance
-          });
+          try {
+            const action = payload.eventType || 'change';
+            console.log(`🔴 Realtime ${action} for transactions:`, {
+              userId,
+              type: (payload.new as any)?.type,
+              status: (payload.new as any)?.status,
+              amount: (payload.new as any)?.amount,
+            });
+          } catch {}
 
-          // Invalidate transactions query to refetch
-          queryClient.invalidateQueries({ 
-            queryKey: ['transactions', userId] 
-          });
-
-          // Also invalidate profile to update wallet balances
-          queryClient.invalidateQueries({ 
-            queryKey: ['profile', userId] 
-          });
-          
-          console.log('✅ Transaction cache invalidated via real-time subscription');
+          // Invalidate transactions and profile queries (prefix match)
+          queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
+          queryClient.invalidateQueries({ queryKey: ['profile', userId] });
         }
       )
       .subscribe((status) => {
         console.log('🔴 Real-time transactions subscription status:', status);
+        if (status === 'CHANNEL_ERROR') {
+          // Light retry: invalidate to keep UI reasonably fresh even if realtime fails
+          queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
+        }
       });
 
     return () => {
-      console.log('🔴 Cleaning up real-time subscription for transactions:', userId);
-      channelRef.current = null;
-      supabase.removeChannel(channel);
+      // Decrement and cleanup if this was the last subscriber
+      if (activeChannels[channelName]) {
+        activeChannels[channelName].count -= 1;
+        if (activeChannels[channelName].count <= 0) {
+          console.log('🔴 Cleaning up real-time subscription for transactions:', userId);
+          delete activeChannels[channelName];
+          supabase.removeChannel(channel);
+        }
+      }
     };
   }, [userId, queryClient]);
 };
