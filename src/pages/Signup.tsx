@@ -55,16 +55,29 @@ const Signup = () => {
   }, [referralCodeFromUrl]);
 
   const fetchReferrerInfo = async (code: string) => {
+    if (!code || code.trim().length === 0) {
+      console.log('[REFERRAL] ⚠️ Empty referral code, skipping fetch');
+      return;
+    }
+
     setIsLoadingReferrer(true);
+    
     try {
-      console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
+      // Normalize referral code: trim whitespace and convert to uppercase
+      const normalizedCode = code.trim().toUpperCase();
+      console.log('[REFERRAL] 🔍 Fetching referrer info:', {
+        original: code,
+        normalized: normalizedCode
+      });
       
       // Call secure RPC function that bypasses RLS
       const { data, error } = await supabase
-        .rpc("get_username_by_referral_code", { p_referral_code: code });
+        .rpc("get_username_by_referral_code", { p_referral_code: normalizedCode });
+
+      console.log('[REFERRAL] 📦 RPC Response:', { data, error });
 
       if (error) {
-        console.error('[REFERRAL] ❌ Database error while fetching referrer:', { code, error });
+        console.error('[REFERRAL] ❌ Database error while fetching referrer:', { code: normalizedCode, error });
         setReferrerUsername(null);
         setIsLoadingReferrer(false);
         toast({
@@ -75,8 +88,11 @@ const Signup = () => {
         return;
       }
 
-      if (!data) {
-        console.error('[REFERRAL] ❌ Referral code not found in database:', code);
+      // Check if data is a valid non-empty string
+      const isValidUsername = typeof data === 'string' && data.trim().length > 0;
+      
+      if (!isValidUsername) {
+        console.warn('[REFERRAL] ⚠️ Referral code not found:', normalizedCode);
         setReferrerUsername(null);
         setIsLoadingReferrer(false);
         toast({
