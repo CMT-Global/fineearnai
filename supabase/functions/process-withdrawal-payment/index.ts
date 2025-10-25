@@ -465,10 +465,10 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
 
   console.log('[REJECT] ✅ Refund applied successfully');
 
-  // Update corresponding transaction to failed
+  // Mark original withdrawal transaction as completed (withdrawal was successfully created)
   const { error: txnError } = await supabase
     .from('transactions')
-    .update({ status: 'failed' })
+    .update({ status: 'completed' })
     .eq('user_id', withdrawal.user_id)
     .eq('type', 'withdrawal')
     .eq('amount', withdrawal.amount)
@@ -478,6 +478,31 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
 
   if (txnError) {
     console.error('[REJECT] ⚠️ Transaction update failed:', txnError);
+    // Continue - not critical
+  }
+
+  // Create NEW refund transaction showing money being returned
+  const { error: refundTxnError } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: withdrawal.user_id,
+      type: 'adjustment',
+      amount: withdrawal.amount, // Positive amount (credit)
+      wallet_type: 'earnings',
+      status: 'completed',
+      description: `Withdrawal rejected - funds refunded. Reason: ${rejectionReason}`,
+      new_balance: newBalance,
+      payment_gateway: 'internal',
+      metadata: {
+        withdrawal_request_id: withdrawal.id,
+        refund_type: 'withdrawal_rejection',
+        original_amount: withdrawal.amount,
+        rejection_reason: rejectionReason
+      }
+    });
+
+  if (refundTxnError) {
+    console.error('[REJECT] ⚠️ Refund transaction creation failed:', refundTxnError);
     // Continue - not critical
   }
 
