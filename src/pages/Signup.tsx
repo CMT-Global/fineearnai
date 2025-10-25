@@ -63,10 +63,22 @@ const Signup = () => {
         .from("profiles")
         .select("username")
         .eq("referral_code", code)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
-        console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
+      if (error) {
+        console.error('[REFERRAL] ❌ Database error while fetching referrer:', { code, error });
+        setReferrerUsername(null);
+        setIsLoadingReferrer(false);
+        toast({
+          title: "Error loading referrer",
+          description: "Unable to verify referral code. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
+        console.error('[REFERRAL] ❌ Referral code not found in database:', code);
         setReferrerUsername(null);
         setIsLoadingReferrer(false);
         toast({
@@ -85,6 +97,11 @@ const Signup = () => {
       console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
       setReferrerUsername(null);
       setIsLoadingReferrer(false);
+      toast({
+        title: "Unexpected error",
+        description: "Failed to load referrer information.",
+        variant: "destructive",
+      });
     }
   };
 
