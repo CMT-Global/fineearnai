@@ -463,6 +463,11 @@ Deno.serve(async (req) => {
           throw new Error('Wallet type, amount, and reason are required');
         }
 
+        // Validate amount is not zero
+        if (amount === 0) {
+          throw new Error('Amount cannot be zero');
+        }
+
         // Get current balance
         const { data: profile } = await supabaseClient
           .from('profiles')
@@ -474,54 +479,110 @@ Deno.serve(async (req) => {
           throw new Error('User not found');
         }
 
-        const walletField = wallet_type === 'deposit' ? 'deposit_wallet_balance' : 'earnings_wallet_balance';
-        const currentBalance = wallet_type === 'deposit' ? profile.deposit_wallet_balance : profile.earnings_wallet_balance;
-        const newBalance = Number(currentBalance) + Number(amount);
+        const currentBalance = wallet_type === 'deposit' 
+          ? parseFloat(profile.deposit_wallet_balance) 
+          : parseFloat(profile.earnings_wallet_balance);
 
-        if (newBalance < 0) {
-          throw new Error('Insufficient balance for this adjustment');
+        // Determine transaction type and calculate new balance based on sign
+        let transactionType: string;
+        let actualAmount: number;
+        let newBalance: number;
+
+        if (amount > 0) {
+          // CREDIT operation
+          transactionType = 'adjustment';
+          actualAmount = amount;
+          newBalance = currentBalance + amount;
+        } else {
+          // DEBIT operation (amount is negative)
+          transactionType = 'transfer';
+          actualAmount = Math.abs(amount);
+          
+          // Check sufficient balance for debit
+          if (currentBalance < actualAmount) {
+            throw new Error(`Insufficient balance. Current: ${currentBalance}, Required: ${actualAmount}`);
+          }
+          
+          newBalance = currentBalance - actualAmount;
         }
 
-        // Update wallet balance
-        const { error: updateError } = await supabaseClient
-          .from('profiles')
-          .update({ [walletField]: newBalance })
-          .eq('id', userId);
+        console.log(`Admin wallet adjustment - Type: ${transactionType}, Amount: ${actualAmount}, Old: ${currentBalance}, New: ${newBalance}`);
 
-        if (updateError) {
-          throw new Error(`Failed to adjust wallet: ${updateError.message}`);
-        }
-
-        // Create transaction record
-        await supabaseClient
+        // STEP 1: INSERT TRANSACTION FIRST (critical for validation trigger)
+        const { error: transactionError } = await supabaseClient
           .from('transactions')
           .insert({
             user_id: userId,
-            type: 'adjustment',
-            amount: Math.abs(Number(amount)),
+            type: transactionType,
             wallet_type: wallet_type,
-            status: 'completed',
+            amount: actualAmount,
             new_balance: newBalance,
-            description: `Admin adjustment: ${reason}`,
-            metadata: { adjusted_by: user.id, reason }
+            status: 'completed',
+            description: `Admin ${amount > 0 ? 'credit' : 'debit'}: ${reason}`,
+            metadata: { 
+              admin_id: user.id, 
+              reason: reason,
+              action_type: amount > 0 ? 'credit' : 'debit',
+              old_balance: currentBalance
+            }
           });
 
-        // Log to audit
+        if (transactionError) {
+          console.error('Transaction insert failed:', transactionError);
+          throw new Error(`Failed to create transaction: ${transactionError.message}`);
+        }
+
+        // STEP 2: UPDATE PROFILE BALANCE AFTER successful transaction insert
+        const walletField = wallet_type === 'deposit' ? 'deposit_wallet_balance' : 'earnings_wallet_balance';
+        
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ 
+            [walletField]: newBalance,
+            last_activity: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Profile update failed after transaction insert:', updateError);
+          throw new Error(`Failed to update balance: ${updateError.message}`);
+        }
+
+        // STEP 3: INVALIDATE CACHE (force UI refresh)
+        try {
+          await supabaseClient.functions.invoke('invalidate-user-cache', {
+            body: { userId: userId, cacheKeys: ['transactions', 'profile'] }
+          });
+        } catch (cacheError) {
+          console.warn('Cache invalidation failed (non-critical):', cacheError);
+        }
+
+        // STEP 4: LOG TO AUDIT
         await supabaseClient
           .from('audit_logs')
           .insert({
             admin_id: user.id,
             action_type: 'adjust_wallet_balance',
             target_user_id: userId,
-            details: { wallet_type, amount, reason, new_balance: newBalance }
+            details: { 
+              wallet_type, 
+              amount, 
+              reason, 
+              old_balance: currentBalance,
+              new_balance: newBalance,
+              transaction_type: transactionType
+            }
           });
 
         result = { 
           success: true, 
           message: 'Wallet balance adjusted successfully',
-          new_balance: newBalance
+          old_balance: currentBalance,
+          new_balance: newBalance,
+          transaction_type: transactionType
         };
-        console.log(`Adjusted ${wallet_type} wallet for user ${userId} by ${amount}`);
+        
+        console.log(`✅ Adjusted ${wallet_type} wallet for user ${userId} by ${amount} (${transactionType})`);
         break;
       }
 
