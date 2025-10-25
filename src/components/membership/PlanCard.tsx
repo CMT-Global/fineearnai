@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { Check, Loader2, Clock, TrendingUp, DollarSign, X, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface MembershipPlan {
   id: string;
@@ -124,6 +125,15 @@ export function PlanCard({
             <span className="font-bold text-sm uppercase tracking-wider">🎯 Start Here - Free Trial</span>
           </div>
         )}
+
+        {/* Prominent Limitation Badge for Free Trial */}
+        {plan.name === 'free' && (
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-4 py-2 text-sm font-bold shadow-lg animate-pulse">
+              ⚠️ LIMITED EARNINGS
+            </Badge>
+          </div>
+        )}
         
         {isCurrentPlan && (
           <Badge className="absolute top-4 right-4">
@@ -156,12 +166,12 @@ export function PlanCard({
               
               {/* Warning Badge */}
               {plan.name === 'free' && (
-                <div className="mt-4 bg-amber-100 dark:bg-amber-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3">
+                <div className="mt-4 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950 dark:to-orange-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3 animate-pulse">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
-                    ⚠️ Limited Earnings
+                    ⚠️ Limited Earnings - Upgrade to Unlock
                   </div>
                   <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                    Upgrade to earn more
+                    You're missing out on higher rates & commissions
                   </div>
                 </div>
               )}
@@ -224,6 +234,29 @@ export function PlanCard({
                     )}
                   </div>
                 )}
+
+                {/* What Free Users DON'T Get - Strikethrough Features */}
+                {plan.name === 'free' && (
+                  <div className="mt-4 space-y-2 border-t pt-3">
+                    <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
+                    <div className="flex items-center gap-2 opacity-60">
+                      <X className="h-4 w-4 text-red-500" />
+                      <span className="text-sm line-through">Higher earning rates</span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-60">
+                      <X className="h-4 w-4 text-red-500" />
+                      <span className="text-sm line-through">Referral commissions from tasks</span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-60">
+                      <X className="h-4 w-4 text-red-500" />
+                      <span className="text-sm line-through">Deposit commissions from referrals</span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-60">
+                      <X className="h-4 w-4 text-red-500" />
+                      <span className="text-sm line-through">Unlimited daily tasks</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Savings Comparison vs Free Plan - Horizontal */}
@@ -259,6 +292,21 @@ export function PlanCard({
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Upgrade CTA for Free Trial - Prominent Button */}
+              {plan.name === 'free' && (
+                <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 mt-4">
+                  <AlertDescription className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm mb-1">🚀 Unlock Full Potential</div>
+                      <div className="text-xs text-muted-foreground">
+                        See how much more you could earn with premium plans
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-primary animate-bounce" style={{ animationDirection: 'alternate' }} />
+                  </AlertDescription>
+                </Alert>
               )}
 
               <Button
@@ -419,6 +467,29 @@ export function PlanCard({
           )}
         </div>
 
+        {/* What Free Users DON'T Get - Strikethrough Features (Vertical) */}
+        {plan.name === 'free' && (
+          <div className="mt-4 space-y-2 border-t pt-3">
+            <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
+            <div className="flex items-center gap-2 opacity-60">
+              <X className="h-4 w-4 text-red-500" />
+              <span className="text-sm line-through">Higher earning rates</span>
+            </div>
+            <div className="flex items-center gap-2 opacity-60">
+              <X className="h-4 w-4 text-red-500" />
+              <span className="text-sm line-through">Referral commissions from tasks</span>
+            </div>
+            <div className="flex items-center gap-2 opacity-60">
+              <X className="h-4 w-4 text-red-500" />
+              <span className="text-sm line-through">Deposit commissions from referrals</span>
+            </div>
+            <div className="flex items-center gap-2 opacity-60">
+              <X className="h-4 w-4 text-red-500" />
+              <span className="text-sm line-through">Unlimited daily tasks</span>
+            </div>
+          </div>
+        )}
+
         {/* Savings Comparison vs Free Plan */}
         {annualSavingsVsFree && annualSavingsVsFree > 0 && (
           <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30 rounded-lg p-3 text-center animate-fade-in">
@@ -431,6 +502,21 @@ export function PlanCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2">
+        {/* Upgrade CTA for Free Trial - Prominent Alert (Vertical) */}
+        {plan.name === 'free' && (
+          <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 w-full">
+            <AlertDescription className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <div className="font-semibold text-sm mb-1">🚀 Unlock Full Potential</div>
+                <div className="text-xs text-muted-foreground">
+                  See how much more you could earn below
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary animate-bounce" style={{ animationDirection: 'alternate' }} />
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isInsufficientBalance && (
           <div className="text-xs text-destructive text-center space-y-1">
             <p>Insufficient balance</p>
