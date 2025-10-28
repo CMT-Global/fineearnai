@@ -98,7 +98,7 @@ const Signup = () => {
       // Get referral code from form or localStorage
       const referralCode = data.referralCode || localStorage.getItem("pending_referral_code");
 
-      // Create the account
+      // Create the account - referral code passed in metadata for trigger processing
       const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -107,6 +107,7 @@ const Signup = () => {
           data: {
             username: data.username,
             full_name: data.fullName,
+            referral_code: referralCode || undefined, // Passed to handle_new_user trigger
           },
         },
       });
