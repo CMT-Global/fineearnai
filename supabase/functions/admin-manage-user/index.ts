@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         // Get target user
         const { data: targetUser, error: userError } = await supabaseClient
           .from('profiles')
-          .select('id, username, email, referred_by, referral_code')
+          .select('id, username, email, referral_code')
           .eq('id', userId)
           .maybeSingle();
 
@@ -114,12 +114,13 @@ Deno.serve(async (req) => {
 
         // Check if new upline is not already referred by target user (circular referral prevention)
         const { data: circularCheck } = await supabaseClient
-          .from('profiles')
-          .select('referred_by')
-          .eq('id', newUpline.id)
+          .from('referrals')
+          .select('referrer_id')
+          .eq('referred_id', newUpline.id)
+          .eq('status', 'active')
           .maybeSingle();
 
-        if (circularCheck && circularCheck.referred_by === targetUser.id) {
+        if (circularCheck && circularCheck.referrer_id === targetUser.id) {
           throw new Error('Circular referral detected: New upline is already referred by this user');
         }
 
@@ -128,8 +129,15 @@ Deno.serve(async (req) => {
           throw new Error('New upline account must be active');
         }
 
-        // Store old upline ID for audit
-        const oldUplineId = targetUser.referred_by;
+        // Get old upline ID from referrals table
+        const { data: oldReferral } = await supabaseClient
+          .from('referrals')
+          .select('referrer_id')
+          .eq('referred_id', targetUser.id)
+          .eq('status', 'active')
+          .maybeSingle();
+        
+        const oldUplineId = oldReferral?.referrer_id;
 
         // Deactivate old referral relationship if it exists
         if (oldUplineId) {
@@ -167,15 +175,8 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Update target user's referred_by
-        const { error: updateError } = await supabaseClient
-          .from('profiles')
-          .update({ referred_by: newUpline.id })
-          .eq('id', targetUser.id);
-
-        if (updateError) {
-          throw new Error(`Failed to update user's upline: ${updateError.message}`);
-        }
+        // Referral relationship already updated in referrals table above
+        // No need to update profiles.referred_by as that column has been removed
 
         // Log to audit_logs
         await supabaseClient
@@ -230,22 +231,23 @@ Deno.serve(async (req) => {
           throw new Error('Invalid referral status. Must be active, inactive, or pending');
         }
 
-        // Get the referral relationship
-        const { data: targetUser } = await supabaseClient
-          .from('profiles')
-          .select('referred_by')
-          .eq('id', userId)
+        // Get the referral relationship directly from referrals table
+        const { data: referralRecord } = await supabaseClient
+          .from('referrals')
+          .select('referrer_id')
+          .eq('referred_id', userId)
+          .eq('status', 'active')
           .maybeSingle();
 
-        if (!targetUser || !targetUser.referred_by) {
-          throw new Error('User has no referrer');
+        if (!referralRecord || !referralRecord.referrer_id) {
+          throw new Error('User has no active referrer');
         }
 
         // Update referral status
         const { data: updatedReferral, error: updateError } = await supabaseClient
           .from('referrals')
           .update({ status: referralStatus })
-          .eq('referrer_id', targetUser.referred_by)
+          .eq('referrer_id', referralRecord.referrer_id)
           .eq('referred_id', userId)
           .select()
           .single();
@@ -262,7 +264,7 @@ Deno.serve(async (req) => {
             action_type: 'update_referral_status',
             target_user_id: userId,
             details: {
-              referrer_id: targetUser.referred_by,
+              referrer_id: referralRecord.referrer_id,
               new_status: referralStatus
             }
           });

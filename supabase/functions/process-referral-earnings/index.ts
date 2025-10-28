@@ -40,10 +40,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the referred user's profile to find their referrer
+    // Get the referred user's profile
     const { data: referredUser, error: userError } = await supabaseClient
       .from('profiles')
-      .select('id, referred_by, username, email')
+      .select('id, username, email')
       .eq('id', referredUserId)
       .maybeSingle();
 
@@ -52,15 +52,32 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch referred user: ${userError.message}`);
     }
 
-    if (!referredUser || !referredUser.referred_by) {
-      console.log('User has no referrer, skipping commission processing');
+    if (!referredUser) {
+      throw new Error('Referred user not found');
+    }
+
+    // Get referrer from referrals table
+    const { data: referralRecord, error: referralError } = await supabaseClient
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referred_id', referredUserId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (referralError) {
+      console.error('Error fetching referral:', referralError);
+      throw new Error(`Failed to fetch referral: ${referralError.message}`);
+    }
+
+    if (!referralRecord || !referralRecord.referrer_id) {
+      console.log('User has no active referrer, skipping commission processing');
       return new Response(
-        JSON.stringify({ success: true, message: 'No referrer found for user' }),
+        JSON.stringify({ success: true, message: 'No active referrer found for user' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const referrerId = referredUser.referred_by;
+    const referrerId = referralRecord.referrer_id;
 
     // Check for idempotency - prevent duplicate commission processing
     const idempotencyKey = `${referredUserId}_${eventType}_${eventId}`;
