@@ -1302,10 +1302,10 @@ export type Database = {
       }
       mv_platform_stats: {
         Row: {
-          active_tasks_count: number | null
+          active_tasks: number | null
           active_users_30d: number | null
+          captured_at: string | null
           pending_withdrawals: number | null
-          today_platform_earnings: number | null
           total_referrals: number | null
           total_tasks_completed: number | null
           total_users: number | null
