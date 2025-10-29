@@ -144,13 +144,28 @@ async function processCommission(
     // Calculate commission amount with 4-decimal precision for accurate small commissions
     const commissionAmount = Number((job.amount * job.commission_rate).toFixed(4));
 
+    // PHASE 3: Map event types to valid earning_type values
+    // The database function appends '_commission' to the event_type
+    // 'upgrade' → 'deposit' → 'deposit_commission' ✅
+    // 'task' → 'task' → 'task_commission' ✅
+    // 'deposit' → 'deposit' → 'deposit_commission' ✅
+    const eventTypeMapping: Record<string, string> = {
+      'upgrade': 'deposit',   // Map upgrade to deposit (upgrade is a type of deposit)
+      'task': 'task',         // Keep task as task
+      'deposit': 'deposit'    // Keep deposit as deposit
+    };
+
+    const mappedEventType = eventTypeMapping[job.event_type] || job.event_type;
+
+    console.log(`Event type mapping: ${job.event_type} → ${mappedEventType} → ${mappedEventType}_commission`);
+
     // Use database function for atomic commission processing
     const { data: result, error: processError } = await supabase
       .rpc('process_commission_atomic', {
         p_referrer_id: job.referrer_id,
         p_commission_amount: commissionAmount,
         p_referred_user_id: job.referred_user_id,
-        p_event_type: job.event_type,
+        p_event_type: mappedEventType,  // Use mapped event type
         p_base_amount: job.amount,
         p_commission_rate: job.commission_rate, // Already stored as decimal (0.07), not percentage
         p_metadata: job.metadata
