@@ -3,6 +3,7 @@ import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { getOptimalDecimals } from '@/lib/wallet-utils';
 
 /**
  * Currency Display Component
@@ -27,7 +28,7 @@ interface CurrencyDisplayProps {
   showLoadingState?: boolean;
   /** Custom class name */
   className?: string;
-  /** Number of decimal places (default: 4) */
+  /** Number of decimal places (default: auto-detect based on value) */
   decimals?: number;
   /** Show tooltip with original USD amount (default: true) */
   showTooltip?: boolean;
@@ -39,7 +40,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
   showSeparator = true,
   showLoadingState = true,
   className,
-  decimals = 4,
+  decimals, // Optional - will auto-detect if not provided
   showTooltip = true,
 }) => {
   const { convertAmount, userCurrency, isLoading, error } = useCurrencyConversion();
@@ -51,14 +52,19 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
 
   // Convert amount
   const { amount: convertedAmount, currency } = convertAmount(amountUSD);
+  
+  // Auto-determine optimal decimals if not explicitly provided
+  const optimalDecimals = decimals ?? getOptimalDecimals(convertedAmount);
 
   // Format the converted amount
-  const formatCurrency = (value: number, currencyCode: string): string => {
+  const formatCurrency = (value: number, currencyCode: string, decimalPlaces?: number): string => {
+    const effectiveDecimals = decimalPlaces ?? optimalDecimals;
+    
     try {
       const options: Intl.NumberFormatOptions = {
         style: showSymbol ? 'currency' : 'decimal',
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
+        minimumFractionDigits: effectiveDecimals,
+        maximumFractionDigits: effectiveDecimals,
         useGrouping: showSeparator,
       };
       
@@ -71,15 +77,16 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
     } catch (formatError) {
       // Fallback formatting if currency is not supported
       console.error(`Error formatting currency ${currencyCode}:`, formatError);
-      const formattedValue = value.toFixed(decimals);
+      const formattedValue = value.toFixed(effectiveDecimals);
       return showSymbol ? `${currencyCode} ${formattedValue}` : formattedValue;
     }
   };
 
   const formattedAmount = formatCurrency(convertedAmount, currency);
 
-  // Format original USD amount for tooltip
-  const formattedUSD = formatCurrency(amountUSD, 'USD');
+  // Format original USD amount for tooltip (also with smart decimals)
+  const usdDecimals = decimals ?? getOptimalDecimals(amountUSD);
+  const formattedUSD = formatCurrency(amountUSD, 'USD', usdDecimals);
 
   // If there's an error and currency is not USD, show fallback
   if (error && currency !== 'USD') {

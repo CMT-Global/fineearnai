@@ -1,4 +1,19 @@
 /**
+ * Determine optimal decimal places for display (2 or 4)
+ * Returns 4 if there are significant digits in the 3rd or 4th decimal place
+ * Returns 2 otherwise for cleaner display
+ */
+export const getOptimalDecimals = (amount: number): number => {
+  if (amount === 0) return 2; // Always show 2 decimals for zero
+  
+  const fixed4 = amount.toFixed(4);
+  const lastTwoDigits = fixed4.slice(-2);
+  
+  // If last two digits are "00", we only need 2 decimals
+  return lastTwoDigits === '00' ? 2 : 4;
+};
+
+/**
  * Format currency amount in USD (legacy function for backward compatibility)
  * For new code, use CurrencyDisplay component instead
  */
