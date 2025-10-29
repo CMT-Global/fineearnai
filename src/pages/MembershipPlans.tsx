@@ -11,6 +11,7 @@ import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
 import { PlanCard } from "@/components/membership/PlanCard";
 import { PlanTabs } from "@/components/membership/PlanTabs";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import {
@@ -374,7 +375,7 @@ export default function MembershipPlans() {
             <Alert className="mb-8 max-w-3xl mx-auto">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Your current deposit wallet balance: <strong>${depositBalance.toFixed(2)}</strong>
+                Your current deposit wallet balance: <strong><CurrencyDisplay amountUSD={depositBalance} /></strong>
                 {depositBalance === 0 && (
                   <span className="text-muted-foreground">
                     {" "}- Please <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>deposit funds</Button> to upgrade your plan.
@@ -404,7 +405,7 @@ export default function MembershipPlans() {
             <div className="space-y-4 py-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Current Balance:</span>
-                <span className="font-semibold">${depositBalance.toFixed(2)}</span>
+                <span className="font-semibold"><CurrencyDisplay amountUSD={depositBalance} /></span>
               </div>
 
               {prorationDetails ? (
@@ -418,21 +419,21 @@ export default function MembershipPlans() {
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Original Price:</span>
-                          <span className="line-through">${prorationDetails.originalPrice}</span>
+                          <span className="line-through"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.originalPrice)} /></span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Credit ({prorationDetails.daysRemaining} days unused):</span>
-                          <span className="text-green-600">-${prorationDetails.credit}</span>
+                          <span className="text-green-600">-<CurrencyDisplay amountUSD={parseFloat(prorationDetails.credit)} /></span>
                         </div>
                         <div className="flex justify-between font-bold text-base border-t pt-2">
                           <span>You Pay:</span>
-                          <span className="text-primary">${prorationDetails.newCost}</span>
+                          <span className="text-primary"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.newCost)} /></span>
                         </div>
                       </div>
                     </div>
                     <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-2 text-center">
                       <span className="text-sm text-green-700 dark:text-green-400 font-semibold">
-                        You save ${prorationDetails.savings} with proration!
+                        You save <CurrencyDisplay amountUSD={parseFloat(prorationDetails.savings)} /> with proration!
                       </span>
                     </div>
                   </div>
@@ -440,14 +441,14 @@ export default function MembershipPlans() {
               ) : (
                 <div className="flex justify-between items-center border-t pt-4">
                   <span className="text-muted-foreground">Upgrade Cost:</span>
-                  <span className="font-bold text-xl text-primary">${selectedPlan?.price.toFixed(2)}</span>
+                  <span className="font-bold text-xl text-primary"><CurrencyDisplay amountUSD={selectedPlan?.price || 0} /></span>
                 </div>
               )}
 
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Balance After:</span>
                 <span className="font-semibold">
-                  ${(depositBalance - parseFloat(prorationDetails?.newCost || selectedPlan?.price || 0)).toFixed(2)}
+                  <CurrencyDisplay amountUSD={depositBalance - parseFloat(prorationDetails?.newCost || selectedPlan?.price || 0)} />
                 </span>
               </div>
             </div>
