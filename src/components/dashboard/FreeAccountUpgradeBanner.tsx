@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 
 interface FreeAccountUpgradeBannerProps {
   userId: string;
@@ -9,6 +10,7 @@ interface FreeAccountUpgradeBannerProps {
 
 export const FreeAccountUpgradeBanner = ({ userId, onUpgrade }: FreeAccountUpgradeBannerProps) => {
   const [isDismissed, setIsDismissed] = useState(false);
+  const { formatAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
 
   useEffect(() => {
     const dismissed = localStorage.getItem(`freeAccountBannerDismissed_${userId}`);
@@ -42,7 +44,9 @@ export const FreeAccountUpgradeBanner = ({ userId, onUpgrade }: FreeAccountUpgra
           <p className="text-sm text-destructive-foreground/90">
             Free accounts have limited access to higher-paying tasks. 
             Upgrade to access Higher Paying AI Training tasks and earn up to{' '}
-            <strong className="font-bold text-destructive-foreground">$240/week</strong>.
+            <strong className="font-bold text-destructive-foreground">
+              {isCurrencyLoading ? "$240" : formatAmount(240)}/week
+            </strong>.
           </p>
           <p className="text-sm text-destructive-foreground/90 mt-1">
             💎 Don't miss out
