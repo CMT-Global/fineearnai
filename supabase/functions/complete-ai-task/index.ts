@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
               referred_user_id: user.id,
               event_type: 'task',
               amount: earningsAmount,
-              commission_rate: referrerPlan.task_commission_rate / 100,
+              commission_rate: referrerPlan.task_commission_rate,
               metadata: {
                 task_id: taskId,
                 category: task.category,
