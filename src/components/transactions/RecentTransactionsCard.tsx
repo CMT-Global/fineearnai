@@ -4,6 +4,7 @@ import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalRequests } from "@/hooks/useWithdrawalRequests";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Pagination,
   PaginationContent,
@@ -123,14 +124,32 @@ export const RecentTransactionsCard = ({
       )}
 
       {!hideTabs && (
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all">All Transactions</TabsTrigger>
-            <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
-            <TabsTrigger value="withdrawals">Withdrawal History</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <>
+          {/* Mobile Dropdown Filter */}
+          <div className="block md:hidden mb-6">
+            <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Select filter" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">All Transactions</SelectItem>
+                <SelectItem value="deposit">Deposit Wallet</SelectItem>
+                <SelectItem value="earnings">Earnings Wallet</SelectItem>
+                <SelectItem value="withdrawals">Withdrawal History</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop Tabs */}
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="hidden md:block mb-6">
+            <TabsList>
+              <TabsTrigger value="all">All Transactions</TabsTrigger>
+              <TabsTrigger value="deposit">Deposit Wallet</TabsTrigger>
+              <TabsTrigger value="earnings">Earnings Wallet</TabsTrigger>
+              <TabsTrigger value="withdrawals">Withdrawal History</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </>
       )}
 
       {filter === "withdrawals" ? (
