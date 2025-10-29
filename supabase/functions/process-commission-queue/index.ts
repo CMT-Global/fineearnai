@@ -141,8 +141,8 @@ async function processCommission(
       .update({ status: 'processing' })
       .eq('id', jobId);
 
-    // Calculate commission amount
-    const commissionAmount = Number((job.amount * job.commission_rate).toFixed(2));
+    // Calculate commission amount with 4-decimal precision for accurate small commissions
+    const commissionAmount = Number((job.amount * job.commission_rate).toFixed(4));
 
     // Use database function for atomic commission processing
     const { data: result, error: processError } = await supabase

@@ -27,7 +27,7 @@ interface CurrencyDisplayProps {
   showLoadingState?: boolean;
   /** Custom class name */
   className?: string;
-  /** Number of decimal places (default: 2) */
+  /** Number of decimal places (default: 4) */
   decimals?: number;
   /** Show tooltip with original USD amount (default: true) */
   showTooltip?: boolean;
@@ -39,7 +39,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
   showSeparator = true,
   showLoadingState = true,
   className,
-  decimals = 2,
+  decimals = 4,
   showTooltip = true,
 }) => {
   const { convertAmount, userCurrency, isLoading, error } = useCurrencyConversion();
