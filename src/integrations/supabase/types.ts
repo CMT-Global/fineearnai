@@ -1438,7 +1438,6 @@ export type Database = {
         Returns: Json
       }
       refresh_materialized_views: { Args: never; Returns: undefined }
-      test_commission_logic: { Args: { p_user_id: string }; Returns: Json }
       validate_payout_days: { Args: { config_value: Json }; Returns: boolean }
       validate_payout_schedule: {
         Args: { config_value: Json }
