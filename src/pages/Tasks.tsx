@@ -84,24 +84,48 @@ const Tasks = () => {
 
   // ✅ Phase 2: React Query handles ALL server data (user stats from get-next-task)
   // Database is the single source of truth for task resets
+  // ✅ Phase 2.3: Add retry logic for transient auth errors
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
     queryKey: ['next-task', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("get-next-task");
+      let lastError = null;
+      
+      // Retry up to 2 times with short delay for auth timing issues
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const { data, error } = await supabase.functions.invoke("get-next-task");
 
-      // Handle HTTP errors from edge function (auth errors, server errors, etc.)
-      if (error) {
-        console.error('❌ Error from get-next-task:', error);
-        throw error;
+          // Handle HTTP errors from edge function
+          if (error) {
+            // Check if it's a transient auth error worth retrying
+            if (error.message?.includes('AuthSessionMissingError') && attempt === 0) {
+              console.warn(`⚠️ AuthSessionMissingError on attempt ${attempt + 1}, retrying...`);
+              lastError = error;
+              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+              continue;
+            }
+            
+            console.error('❌ Error from get-next-task:', error);
+            throw error;
+          }
+
+          // Success - return data
+          return data;
+        } catch (err) {
+          lastError = err;
+          if (attempt < 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
       }
-
-      // Edge function returns 200 with success: false for expected scenarios
-      // (daily limit, no tasks, plan expired, etc.)
-      return data;
+      
+      // All retries failed
+      throw lastError;
     },
     enabled: !!user,
     staleTime: 10000,    // Cache for 10 seconds
     gcTime: 60000,       // Keep in cache for 1 minute
+    retry: false,        // Disable automatic retry since we handle it manually
   });
 
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
