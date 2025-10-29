@@ -152,7 +152,7 @@ async function processCommission(
         p_referred_user_id: job.referred_user_id,
         p_event_type: job.event_type,
         p_base_amount: job.amount,
-        p_commission_rate: job.commission_rate * 100, // Convert back to percentage for storage
+        p_commission_rate: job.commission_rate, // Already stored as decimal (0.07), not percentage
         p_metadata: job.metadata
       });
 
