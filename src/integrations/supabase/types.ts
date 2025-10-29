@@ -1414,6 +1414,17 @@ export type Database = {
         Returns: boolean
       }
       is_withdrawal_allowed: { Args: never; Returns: boolean }
+      process_plan_upgrade_atomic: {
+        Args: {
+          p_expiry_date: string
+          p_final_cost: number
+          p_metadata?: Json
+          p_plan_name: string
+          p_previous_plan?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       process_withdrawal_request_atomic: {
         Args: {
           p_amount: number
