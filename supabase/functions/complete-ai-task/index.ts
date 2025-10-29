@@ -293,7 +293,8 @@ Deno.serve(async (req) => {
       .eq('status', 'active')
       .single();
 
-    if (referralRecord && earningsAmount > 0) {
+    // Block free accounts from generating upline commissions
+    if (referralRecord && earningsAmount > 0 && profile.membership_plan !== 'free') {
       const { data: referrer, error: referrerError } = await supabase
         .from('profiles')
         .select('id, membership_plan')
