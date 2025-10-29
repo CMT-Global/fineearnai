@@ -30,6 +30,7 @@ import {
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WithdrawalHistoryCard } from "@/components/wallet/WithdrawalHistoryCard";
+import { TransactionListItem } from "@/components/transactions/TransactionListItem";
 import { getTransactionTypeLabel, getTransactionStatusColor, getTransactionTypeColor } from "@/lib/wallet-utils";
 import { maskTransactionDescription } from "@/lib/payment-processor-utils";
 import { format } from "date-fns";
@@ -158,7 +159,8 @@ export const RecentTransactionsCard = ({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Desktop Table View - Hidden on Mobile */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -231,6 +233,13 @@ export const RecentTransactionsCard = ({
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card View - Hidden on Desktop */}
+          <div className="block md:hidden space-y-3">
+            {filteredTransactions.map((tx) => (
+              <TransactionListItem key={tx.id} transaction={tx} />
+            ))}
           </div>
 
           {/* Pagination Controls */}
