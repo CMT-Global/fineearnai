@@ -137,49 +137,11 @@ All colors MUST be HSL.
   }
   
   /* Transaction table mobile responsiveness */
+  /* Mobile responsiveness handled by component-based approach */
   @media (max-width: 767px) {
-    .overflow-x-auto table {
-      display: block;
-    }
-    
-    .overflow-x-auto thead {
-      display: none;
-    }
-    
-    .overflow-x-auto tbody {
-      display: block;
-    }
-    
-    .overflow-x-auto tr {
-      display: block;
-      margin-bottom: 1rem;
-      border: 1px solid hsl(var(--border));
-      border-radius: 0.5rem;
-      padding: 1rem;
-      background: hsl(var(--card));
-    }
-    
-    .overflow-x-auto td {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 0.5rem 0 !important;
-      border: none !important;
-      text-align: left !important;
-    }
-    
-    .overflow-x-auto td::before {
-      content: attr(data-label);
-      font-weight: 600;
-      width: 80px;
-      flex-shrink: 0;
-      color: hsl(var(--foreground));
-    }
-    
-    .overflow-x-auto td > div,
-    .overflow-x-auto td > span {
-      flex: 1;
-      text-align: left !important;
+    /* Ensure smooth scrolling on mobile */
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
     }
   }
 }
