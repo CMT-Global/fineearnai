@@ -150,123 +150,59 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
 
-    // PHASE 3: Wrap profile update and transaction insert in explicit error handling
-    try {
-      // Update user profile with new plan
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          membership_plan: planName,
-          plan_expires_at: expiryDate.toISOString(),
-          deposit_wallet_balance: newDepositBalance,
-          current_plan_start_date: now,
-          last_activity: now,
-          // ✅ FIXED: Preserve task progress - user keeps completed count and gains access to extra tasks from new plan
-        })
-        .eq('id', user.id);
+    // ============================================================================
+    // PHASE 1: USE ATOMIC FUNCTION TO PROCESS UPGRADE + COMMISSION
+    // ============================================================================
+    
+    console.log('Calling atomic plan upgrade function:', { 
+      userId: user.id, 
+      planName, 
+      finalCost,
+      expiryDate: expiryDate.toISOString()
+    });
 
-      if (updateError) {
-        console.error('❌ Error updating profile during upgrade:', updateError);
-        throw updateError;
+    const { data: atomicResult, error: atomicError } = await supabase.rpc('process_plan_upgrade_atomic', {
+      p_user_id: user.id,
+      p_plan_name: planName,
+      p_final_cost: finalCost,
+      p_expiry_date: expiryDate.toISOString(),
+      p_previous_plan: profile.membership_plan,
+      p_metadata: {
+        previous_plan: profile.membership_plan,
+        previous_plan_display_name: currentPlan?.display_name || profile.membership_plan,
+        new_plan: planName,
+        new_plan_display_name: newPlan.display_name,
+        original_price: parseFloat(newPlan.price),
+        final_price: finalCost,
+        proration_applied: prorationDetails !== null,
+        proration_details: prorationDetails,
+        billing_period_days: billingPeriodDays,
+        billing_period_unit: newPlan.billing_period_unit,
+        billing_period_value: newPlan.billing_period_value,
+        expires_at: expiryDate.toISOString(),
+        upgraded_at: now,
+        tasks_preserved: true,
+        tasks_completed_at_upgrade: profile.tasks_completed_today,
+        skips_used_at_upgrade: profile.skips_today
       }
+    });
 
-      console.log('✅ Profile updated successfully:', {
-        userId: user.id,
-        newPlan: planName,
-        newBalance: newDepositBalance,
-        tasksPreserved: true
-      });
-
-      // Create detailed transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: user.id,
-          type: 'plan_upgrade',
-          amount: finalCost,
-          wallet_type: 'deposit',
-          new_balance: newDepositBalance,
-          description: `Upgraded from ${currentPlan?.display_name || profile.membership_plan} to ${newPlan.display_name}`,
-          status: 'completed',
-          metadata: {
-            previous_plan: profile.membership_plan,
-            previous_plan_display_name: currentPlan?.display_name || profile.membership_plan,
-            new_plan: planName,
-            new_plan_display_name: newPlan.display_name,
-            original_price: parseFloat(newPlan.price),
-            final_price: finalCost,
-            proration_applied: prorationDetails !== null,
-            proration_details: prorationDetails,
-            billing_period_days: billingPeriodDays,
-            billing_period_unit: newPlan.billing_period_unit,
-            billing_period_value: newPlan.billing_period_value,
-            expires_at: expiryDate.toISOString(),
-            upgraded_at: now,
-            // ✅ FIXED: Track that counters were preserved
-            tasks_preserved: true,
-            tasks_completed_at_upgrade: profile.tasks_completed_today,
-            skips_used_at_upgrade: profile.skips_today
-          },
-        });
-
-      if (transactionError) {
-        console.error('❌ CRITICAL: Transaction insert failed after profile update!', {
-          error: transactionError,
-          userId: user.id,
-          planName: planName,
-          finalCost: finalCost
-        });
-        console.error('⚠️ Data consistency issue - profile was updated but transaction was not recorded');
-        
-        // PHASE 3: Log to edge function metrics for monitoring
-        try {
-          await supabase.from('edge_function_metrics').insert({
-            function_name: 'upgrade-plan',
-            success: false,
-            user_id: user.id,
-            execution_time_ms: 0,
-            error_message: `Transaction insert failed: ${transactionError.message}`,
-            metadata: {
-              error_code: transactionError.code,
-              error_details: transactionError.details,
-              error_hint: transactionError.hint,
-              planName: planName,
-              finalCost: finalCost,
-              phase: 'transaction_insert',
-              profile_updated: true
-            }
-          });
-        } catch (metricsError) {
-          console.error('Failed to log metrics:', metricsError);
-        }
-        
-        throw new Error('Failed to record transaction. Please contact support with your transaction details.');
-      }
-
-      console.log('✅ Transaction recorded successfully:', {
-        userId: user.id,
-        transactionType: 'plan_upgrade',
-        amount: finalCost
-      });
-
-    } catch (upgradeError) {
-      console.error('❌ Error in upgrade transaction flow:', upgradeError);
-      
-      // Log detailed error for debugging
-      const errorMessage = upgradeError instanceof Error ? upgradeError.message : 'Unknown error during upgrade';
-      const errorStack = upgradeError instanceof Error ? upgradeError.stack : undefined;
-      
-      console.error('Error details:', {
-        message: errorMessage,
-        stack: errorStack,
-        userId: user.id,
-        planName: planName,
-        phase: 'upgrade_transaction'
-      });
-      
-      // Re-throw to be caught by outer try-catch
-      throw upgradeError;
+    if (atomicError) {
+      console.error('❌ Atomic plan upgrade failed:', atomicError);
+      throw new Error('Failed to process plan upgrade atomically: ' + atomicError.message);
     }
+
+    if (!atomicResult.success) {
+      console.error('❌ Atomic plan upgrade returned error:', atomicResult);
+      throw new Error(atomicResult.error || 'Plan upgrade processing failed');
+    }
+
+    console.log('✅ Atomic plan upgrade successful:', {
+      transactionId: atomicResult.transaction_id,
+      newBalance: atomicResult.new_deposit_balance,
+      commissionProcessed: atomicResult.commission_processed,
+      commissionAmount: atomicResult.commission_amount
+    });
 
     // Log to user activity log
     await supabase
@@ -279,70 +215,18 @@ Deno.serve(async (req) => {
           to_plan: planName,
           amount_paid: finalCost,
           proration_applied: prorationDetails !== null,
-          savings: prorationDetails?.savings || 0
+          savings: prorationDetails?.savings || 0,
+          commission_processed: atomicResult.commission_processed,
+          commission_amount: atomicResult.commission_amount
         }
       });
 
-    // Queue referral commission if user has a referrer (async processing)
-    // Phase 2: Use referrals table instead of profile.referred_by
-    const { data: referralRecord } = await supabase
-      .from('referrals')
-      .select('referrer_id')
-      .eq('referred_id', user.id)
-      .eq('status', 'active')
-      .single();
-
-    if (referralRecord) {
-      console.log('Checking referral commission for plan upgrade');
-      
-      try {
-        // Get referrer's membership plan to check THEIR commission rate
-        const { data: referrerProfile } = await supabase
-          .from('profiles')
-          .select('membership_plan')
-          .eq('id', referralRecord.referrer_id)
-          .single();
-
-        if (referrerProfile) {
-          const referrerPlan = await getMembershipPlan(supabase, referrerProfile.membership_plan);
-
-          // Only queue commission if referrer's plan has deposit commission enabled
-          if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
-            console.log('Queueing referral commission for plan upgrade', { 
-              referrerPlan: referrerProfile.membership_plan, 
-              commissionRate: referrerPlan.deposit_commission_rate 
-            });
-            // Queue commission for async processing (non-blocking)
-            const { error: queueError } = await supabase
-              .from('commission_queue')
-              .insert({
-                referrer_id: referralRecord.referrer_id,
-                referred_user_id: user.id,
-                event_type: 'upgrade',
-                amount: finalCost,
-                commission_rate: referrerPlan.deposit_commission_rate / 100,
-                metadata: {
-                  source: 'plan_upgrade',
-                  plan_name: planName,
-                  original_amount: parseFloat(newPlan.price),
-                  proration_applied: prorationDetails !== null
-                }
-              });
-
-            if (queueError) {
-              console.error('Error queueing upgrade commission:', queueError);
-              // Don't fail the upgrade if queue insertion fails
-            } else {
-              console.log('Upgrade commission queued successfully');
-            }
-          } else {
-            console.log('No commission: referrer plan has 0% deposit commission rate');
-          }
-        }
-      } catch (commissionError) {
-        console.error('Exception processing referral commission:', commissionError);
-        // Don't fail the upgrade if commission processing fails
-      }
+    // ============================================================================
+    // PHASE 1: COMMISSION NOW PROCESSED ATOMICALLY IN DATABASE
+    // No queue needed - commission credited instantly in same transaction
+    // ============================================================================
+    if (atomicResult.commission_processed) {
+      console.log(`💰 Referral commission processed atomically: $${atomicResult.commission_amount}`);
     }
 
     // Send plan upgrade notification (if notifications table exists)

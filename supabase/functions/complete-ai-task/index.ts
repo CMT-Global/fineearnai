@@ -281,60 +281,17 @@ Deno.serve(async (req) => {
     console.log(`✅ [${requestId}] Atomic task completion succeeded (${processingTime}ms):`, {
       tasksCompleted: result.tasks_completed_today,
       remainingTasks: result.remaining_tasks,
-      newBalance: result.new_earnings_balance
+      newBalance: result.new_earnings_balance,
+      commissionProcessed: result.commission_processed,
+      commissionAmount: result.commission_amount
     });
 
-    // Queue referral commission if user was referred (async processing)
-    // Phase 2: Use referrals table instead of profile.referred_by
-    const { data: referralRecord } = await supabase
-      .from('referrals')
-      .select('referrer_id')
-      .eq('referred_id', user.id)
-      .eq('status', 'active')
-      .single();
-
-    // Block free accounts from generating upline commissions
-    if (referralRecord && earningsAmount > 0 && profile.membership_plan !== 'free') {
-      const { data: referrer, error: referrerError } = await supabase
-        .from('profiles')
-        .select('id, membership_plan')
-        .eq('id', referralRecord.referrer_id)
-        .maybeSingle();
-
-      if (!referrerError && referrer) {
-        // Fetch referrer's membership plan
-        const { data: referrerPlan, error: planError } = await supabase
-          .from('membership_plans')
-          .select('task_commission_rate')
-          .eq('name', referrer.membership_plan)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (!planError && referrerPlan && referrerPlan.task_commission_rate > 0) {
-          // Queue commission for async processing (non-blocking)
-          const { error: queueError } = await supabase
-            .from('commission_queue')
-            .insert({
-              referrer_id: referrer.id,
-              referred_user_id: user.id,
-              event_type: 'task',
-              amount: earningsAmount,
-              commission_rate: referrerPlan.task_commission_rate,
-              metadata: {
-                task_id: taskId,
-                category: task.category,
-                username: profile.username
-              }
-            });
-
-          if (queueError) {
-            console.error(`⚠️ [${requestId}] Error queueing task commission:`, queueError);
-            // Don't block user response - log and continue
-          } else {
-            console.log(`💰 [${requestId}] Task commission queued:`, { referrerId: referrer.id, amount: earningsAmount, rate: referrerPlan.task_commission_rate });
-          }
-        }
-      }
+    // ============================================================================
+    // PHASE 1: COMMISSION NOW PROCESSED ATOMICALLY IN DATABASE
+    // No queue needed - commission credited instantly in same transaction
+    // ============================================================================
+    if (result.commission_processed) {
+      console.log(`💰 [${requestId}] Referral commission processed atomically: $${result.commission_amount}`);
     }
 
     // ============================================================================

@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
-import { getMembershipPlan } from '../_shared/cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,50 +106,12 @@ Deno.serve(async (req) => {
     const transaction = { id: atomicResult.transaction_id };
     const newBalance = atomicResult.new_balance;
 
-    // Queue referral commission on deposit if user was referred (async processing)
-    // Phase 2: Use referrals table instead of profile.referred_by
-    const { data: referralRecord } = await supabase
-      .from('referrals')
-      .select('referrer_id')
-      .eq('referred_id', user.id)
-      .eq('status', 'active')
-      .single();
-
-    if (referralRecord) {
-      // Get referrer's membership plan to check THEIR commission rate
-      const { data: referrerProfile } = await supabase
-        .from('profiles')
-        .select('id, membership_plan')
-        .eq('id', referralRecord.referrer_id)
-        .single();
-
-      if (referrerProfile) {
-        const referrerPlan = await getMembershipPlan(supabase, referrerProfile.membership_plan);
-
-        if (referrerPlan && referrerPlan.deposit_commission_rate > 0) {
-          // Queue commission for async processing (non-blocking)
-          const { error: queueError } = await supabase
-            .from('commission_queue')
-            .insert({
-              referrer_id: referralRecord.referrer_id,
-              referred_user_id: user.id,
-              event_type: 'deposit',
-              amount: depositAmount,
-              commission_rate: referrerPlan.deposit_commission_rate / 100,
-              metadata: {
-                transaction_id: transaction.id,
-                username: profile.username
-              }
-            });
-
-          if (queueError) {
-            console.error('Error queueing deposit commission:', queueError);
-            // Don't block user response - log and continue
-          } else {
-            console.log('Deposit commission queued:', { referrerId: referralRecord.referrer_id, amount: depositAmount, referrerPlan: referrerProfile.membership_plan });
-          }
-        }
-      }
+    // ============================================================================
+    // PHASE 1: COMMISSION NOW PROCESSED ATOMICALLY IN DATABASE
+    // No queue needed - commission credited instantly in same transaction
+    // ============================================================================
+    if (atomicResult.commission_processed) {
+      console.log(`💰 Deposit commission processed atomically: $${atomicResult.commission_amount}`);
     }
 
     console.log('Deposit completed successfully:', { userId: user.id, amount: depositAmount });
