@@ -203,11 +203,11 @@ const Dashboard = () => {
                   FineEarn is an AI training platform that allows you and your team to earn online by training AI. You mainly earn in 2 ways:
                 </p>
                 <ol className="text-sm text-foreground/80 space-y-1 ml-4 list-decimal">
-                  <li>You earn from the AI Training tasks you do yourself. The tasks are simple as long as you understand English and only take 30 to 40 minutes daily.</li>
-                  <li>You also earn a commission from every AI task completed by people you invite if you have an upgraded account.</li>
+                  <li>You <strong>earn from the AI Training tasks you do yourself</strong>. The tasks are simple as long as you understand English and only take 30 to 40 minutes daily.</li>
+                  <li>You also <strong>earn a commission from every AI task completed by people you invite</strong> if you have an upgraded account.</li>
                 </ol>
                 <p className="text-sm text-foreground/80 mt-2">
-                  This allows you to earn yourself and also to create a team and employ people under you.
+                  This allows you to earn yourself and also to <strong>create a team and employ people under you</strong>.
                 </p>
               </div>
             </div>
