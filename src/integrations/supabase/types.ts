@@ -83,80 +83,6 @@ export type Database = {
         }
         Relationships: []
       }
-      commission_queue: {
-        Row: {
-          amount: number
-          commission_rate: number
-          created_at: string
-          error_message: string | null
-          event_type: string
-          id: string
-          metadata: Json | null
-          processed_at: string | null
-          referred_user_id: string
-          referrer_id: string
-          retry_count: number
-          status: string
-        }
-        Insert: {
-          amount: number
-          commission_rate: number
-          created_at?: string
-          error_message?: string | null
-          event_type: string
-          id?: string
-          metadata?: Json | null
-          processed_at?: string | null
-          referred_user_id: string
-          referrer_id: string
-          retry_count?: number
-          status?: string
-        }
-        Update: {
-          amount?: number
-          commission_rate?: number
-          created_at?: string
-          error_message?: string | null
-          event_type?: string
-          id?: string
-          metadata?: Json | null
-          processed_at?: string | null
-          referred_user_id?: string
-          referrer_id?: string
-          retry_count?: number
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commission_queue_referred_user_id_fkey"
-            columns: ["referred_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commission_queue_referred_user_id_fkey"
-            columns: ["referred_user_id"]
-            isOneToOne: false
-            referencedRelation: "user_daily_stats"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "commission_queue_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commission_queue_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "user_daily_stats"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       cpay_checkouts: {
         Row: {
           checkout_id: string
@@ -1253,17 +1179,6 @@ export type Database = {
       }
     }
     Views: {
-      commission_queue_health: {
-        Row: {
-          avg_retry_count: number | null
-          count: number | null
-          newest_job: string | null
-          oldest_job: string | null
-          oldest_job_age_seconds: number | null
-          status: string | null
-        }
-        Relationships: []
-      }
       cron_job_status: {
         Row: {
           active: boolean | null
@@ -1499,18 +1414,6 @@ export type Database = {
         Returns: boolean
       }
       is_withdrawal_allowed: { Args: never; Returns: boolean }
-      process_commission_atomic: {
-        Args: {
-          p_base_amount: number
-          p_commission_amount: number
-          p_commission_rate: number
-          p_event_type: string
-          p_metadata: Json
-          p_referred_user_id: string
-          p_referrer_id: string
-        }
-        Returns: Json
-      }
       process_withdrawal_request_atomic: {
         Args: {
           p_amount: number

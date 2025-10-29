@@ -27,9 +27,6 @@ verify_jwt = true
 [functions.reset-daily-counters]
 verify_jwt = false
 
-[functions.process-commission-queue]
-verify_jwt = false
-
 [functions.monitor-task-pool]
 verify_jwt = false
 
@@ -77,9 +74,6 @@ verify_jwt = true
 
 [functions.send-bulk-email]
 verify_jwt = true
-
-[functions.process-referral-earnings]
-verify_jwt = false
 
 [functions.track-user-registration]
 verify_jwt = false
