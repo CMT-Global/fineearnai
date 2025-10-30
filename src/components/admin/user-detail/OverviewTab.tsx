@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle } from "lucide-react";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface OverviewTabProps {
   userData: any;
@@ -46,6 +47,9 @@ export const OverviewTab = ({
   const profile = userData.profile;
   const stats = userData.stats;
   const planInfo = userData.plan_info;
+  const upline = userData.upline;
+  const referralDetails = userData.referral_details;
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -108,6 +112,96 @@ export const OverviewTab = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Upline Information Card */}
+      {upline ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Upline Information
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate(`/admin/users/${upline.id}`)}
+              >
+                View Upline Profile
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Upline Username</p>
+                <p className="font-medium">{upline.username}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Upline Email</p>
+                <p className="font-medium">{upline.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Upline Plan</p>
+                <Badge variant="outline">{upline.membership_plan}</Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Upline Status</p>
+                <Badge
+                  variant={
+                    upline.account_status === "active"
+                      ? "default"
+                      : upline.account_status === "suspended"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                >
+                  {upline.account_status}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Referral Code Used</p>
+                <p className="font-mono font-medium">{referralDetails?.referral_code_used || upline.referral_code}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Commission Earned by Upline</p>
+                <p className="font-medium text-lg text-green-600">
+                  ${(referralDetails?.total_commission_earned || 0).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Referral Status</p>
+                <Badge variant={referralDetails?.status === "active" ? "default" : "secondary"}>
+                  {referralDetails?.status || "unknown"}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Referred On</p>
+                <p className="font-medium">
+                  {referralDetails?.created_at 
+                    ? format(new Date(referralDetails.created_at), "PPP")
+                    : "-"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Upline Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Link2 className="h-4 w-4" />
+              <p className="text-sm">This user signed up without a referral link</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Location & Security Information */}
       <Card>
