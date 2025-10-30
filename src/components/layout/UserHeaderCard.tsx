@@ -109,8 +109,21 @@ const ExpiryCountdown = ({ expiryDate }: { expiryDate?: string | null }) => {
 // This component is temporarily preserved but not used in the UI
 
 export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
+  // Runtime type guard - validate profile structure
+  const isValidProfile = (p: any): p is NonNullable<UserHeaderCardProps['profile']> => {
+    return p && 
+           typeof p.username === 'string' && 
+           typeof p.membership_plan === 'string' &&
+           typeof p.account_status === 'string';
+  };
+
   // Early return with loading skeleton if profile is not available
-  if (!profile) {
+  if (!profile || !isValidProfile(profile)) {
+    // Dev mode warning
+    if (import.meta.env.DEV && profile) {
+      console.warn('[UserHeaderCard] Invalid profile structure:', profile);
+    }
+    
     return (
       <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-start gap-3 mb-3">

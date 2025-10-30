@@ -29,8 +29,21 @@ const isPlanExpiringSoon = (expiryDate?: string | null): boolean => {
 };
 
 export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
+  // Runtime type guard - validate profile structure
+  const isValidProfile = (p: any): p is NonNullable<MobileUserBadgeProps['profile']> => {
+    return p && 
+           typeof p.username === 'string' && 
+           typeof p.membership_plan === 'string' &&
+           typeof p.account_status === 'string';
+  };
+
   // Early return with loading skeleton if profile is not available
-  if (!profile) {
+  if (!profile || !isValidProfile(profile)) {
+    // Dev mode warning
+    if (import.meta.env.DEV && profile) {
+      console.warn('[MobileUserBadge] Invalid profile structure:', profile);
+    }
+    
     return (
       <button className="relative flex items-center justify-center" disabled>
         <div className="h-8 w-8 rounded-full bg-muted animate-pulse border-2 border-primary/20" />
