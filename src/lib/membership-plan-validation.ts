@@ -23,6 +23,7 @@ export interface MembershipPlanData {
   min_daily_withdrawal?: number;
   max_daily_withdrawal?: number;
   billing_period_days?: number;
+  free_plan_expiry_days?: number | null;
 }
 
 /**
@@ -116,6 +117,13 @@ export const FIELD_CONSTRAINTS = {
     step: 1,
     label: 'Billing Period (days)',
     help: 'Number of days in billing cycle'
+  },
+  free_plan_expiry_days: { 
+    min: 0, 
+    max: 365, 
+    step: 1,
+    label: 'Free Plan Expiry Days',
+    help: 'Number of days before free plan expires (leave empty for lifetime access)'
   }
 } as const;
 
@@ -242,6 +250,14 @@ export function validateMembershipPlan(planData: MembershipPlanData): Validation
     if (planData.billing_period_days < FIELD_CONSTRAINTS.billing_period_days.min || 
         planData.billing_period_days > FIELD_CONSTRAINTS.billing_period_days.max) {
       errors.push(`Billing period must be between ${FIELD_CONSTRAINTS.billing_period_days.min} and ${FIELD_CONSTRAINTS.billing_period_days.max} days`);
+    }
+  }
+
+  // ========== Free Plan Expiry Validation ==========
+  if (planData.free_plan_expiry_days !== undefined && planData.free_plan_expiry_days !== null) {
+    if (planData.free_plan_expiry_days < FIELD_CONSTRAINTS.free_plan_expiry_days.min || 
+        planData.free_plan_expiry_days > FIELD_CONSTRAINTS.free_plan_expiry_days.max) {
+      errors.push(`Free plan expiry days must be between ${FIELD_CONSTRAINTS.free_plan_expiry_days.min} and ${FIELD_CONSTRAINTS.free_plan_expiry_days.max} days`);
     }
   }
 

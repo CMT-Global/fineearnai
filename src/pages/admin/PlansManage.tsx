@@ -36,6 +36,7 @@ interface MembershipPlan {
   min_withdrawal: number;
   min_daily_withdrawal: number;
   max_daily_withdrawal: number;
+  free_plan_expiry_days: number | null;
   is_active: boolean;
   features: any;
   subscriber_count?: number;
@@ -65,6 +66,7 @@ const PlansManage = () => {
     min_withdrawal: 10,
     min_daily_withdrawal: 10,
     max_daily_withdrawal: 1000,
+    free_plan_expiry_days: null as number | null,
     is_active: true,
     features: "[]",
   });
@@ -167,6 +169,7 @@ const PlansManage = () => {
         min_withdrawal: formData.min_withdrawal,
         min_daily_withdrawal: formData.min_daily_withdrawal,
         max_daily_withdrawal: formData.max_daily_withdrawal,
+        free_plan_expiry_days: formData.free_plan_expiry_days,
         is_active: formData.is_active,
         features,
       };
@@ -257,6 +260,7 @@ const PlansManage = () => {
       min_withdrawal: 10,
       min_daily_withdrawal: 10,
       max_daily_withdrawal: 1000,
+      free_plan_expiry_days: null as number | null,
       is_active: true,
       features: "[]",
     });
@@ -281,6 +285,7 @@ const PlansManage = () => {
       min_withdrawal: plan.min_withdrawal,
       min_daily_withdrawal: plan.min_daily_withdrawal,
       max_daily_withdrawal: plan.max_daily_withdrawal,
+      free_plan_expiry_days: plan.free_plan_expiry_days,
       is_active: plan.is_active,
       features: JSON.stringify(plan.features || [], null, 2),
     });
@@ -700,6 +705,32 @@ const PlansManage = () => {
                         </p>
                       </div>
                     </div>
+
+                    {/* Free Plan Expiry Days - Only shown for free accounts */}
+                    {(formData.account_type === 'free' || formData.name === 'free') && (
+                      <div>
+                        <Label htmlFor="free_plan_expiry_days">Free Plan Expiry Days</Label>
+                        <Input
+                          id="free_plan_expiry_days"
+                          type="number"
+                          min="0"
+                          max="365"
+                          step="1"
+                          value={formData.free_plan_expiry_days ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setFormData({
+                              ...formData,
+                              free_plan_expiry_days: value === '' ? null : parseInt(value) || 0,
+                            });
+                          }}
+                          placeholder="Leave empty for lifetime access"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Number of days before free plan expires. Leave empty for lifetime access.
+                        </p>
+                      </div>
+                    )}
 
                     <div>
                       <Label htmlFor="features">Features (JSON Array)</Label>

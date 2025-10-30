@@ -172,6 +172,15 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
     }
   }
 
+  // ========== Free Plan Expiry Validation ==========
+  if (planData.free_plan_expiry_days !== undefined && planData.free_plan_expiry_days !== null) {
+    if (typeof planData.free_plan_expiry_days !== 'number' || isNaN(planData.free_plan_expiry_days)) {
+      errors.push("Free plan expiry days must be a valid number");
+    } else if (planData.free_plan_expiry_days < 0 || planData.free_plan_expiry_days > 365) {
+      errors.push("Free plan expiry days must be between 0 and 365 days");
+    }
+  }
+
   // ========== Business Logic Rules ==========
   if (planData.account_type === 'free' && planData.price && planData.price > 0) {
     errors.push("Free account type cannot have a price greater than 0");
