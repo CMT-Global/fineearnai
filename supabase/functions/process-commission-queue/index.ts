@@ -144,13 +144,11 @@ async function processCommission(
     // Calculate commission amount with 4-decimal precision for accurate small commissions
     const commissionAmount = Number((job.amount * job.commission_rate).toFixed(4));
 
-    // PHASE 3: Map event types to valid earning_type values
+    // Map event types to valid earning_type values
     // The database function appends '_commission' to the event_type
-    // 'upgrade' → 'deposit' → 'deposit_commission' ✅
     // 'task' → 'task' → 'task_commission' ✅
     // 'deposit' → 'deposit' → 'deposit_commission' ✅
     const eventTypeMapping: Record<string, string> = {
-      'upgrade': 'deposit',   // Map upgrade to deposit (upgrade is a type of deposit)
       'task': 'task',         // Keep task as task
       'deposit': 'deposit'    // Keep deposit as deposit
     };

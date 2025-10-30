@@ -199,9 +199,7 @@ Deno.serve(async (req) => {
 
     console.log('✅ Atomic plan upgrade successful:', {
       transactionId: atomicResult.transaction_id,
-      newBalance: atomicResult.new_deposit_balance,
-      commissionProcessed: atomicResult.commission_processed,
-      commissionAmount: atomicResult.commission_amount
+      newBalance: atomicResult.new_deposit_balance
     });
 
     // Log to user activity log
@@ -215,19 +213,9 @@ Deno.serve(async (req) => {
           to_plan: planName,
           amount_paid: finalCost,
           proration_applied: prorationDetails !== null,
-          savings: prorationDetails?.savings || 0,
-          commission_processed: atomicResult.commission_processed,
-          commission_amount: atomicResult.commission_amount
+          savings: prorationDetails?.savings || 0
         }
       });
-
-    // ============================================================================
-    // PHASE 1: COMMISSION NOW PROCESSED ATOMICALLY IN DATABASE
-    // No queue needed - commission credited instantly in same transaction
-    // ============================================================================
-    if (atomicResult.commission_processed) {
-      console.log(`💰 Referral commission processed atomically: $${atomicResult.commission_amount}`);
-    }
 
     // Send plan upgrade notification (if notifications table exists)
     try {
