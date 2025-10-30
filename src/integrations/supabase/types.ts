@@ -363,6 +363,7 @@ export type Database = {
           name: string
           price: number
           priority_support: boolean
+          referral_eligible: boolean
           sub_account_earning_commission_rate: number | null
           task_commission_rate: number
           task_skip_limit_per_day: number
@@ -393,6 +394,7 @@ export type Database = {
           name: string
           price?: number
           priority_support?: boolean
+          referral_eligible?: boolean
           sub_account_earning_commission_rate?: number | null
           task_commission_rate?: number
           task_skip_limit_per_day?: number
@@ -423,6 +425,7 @@ export type Database = {
           name?: string
           price?: number
           priority_support?: boolean
+          referral_eligible?: boolean
           sub_account_earning_commission_rate?: number | null
           task_commission_rate?: number
           task_skip_limit_per_day?: number
