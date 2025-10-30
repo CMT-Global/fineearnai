@@ -45,7 +45,7 @@ const Referrals = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || isReferralDataLoading || !profile) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
@@ -68,12 +68,21 @@ const Referrals = () => {
           </div>
 
           {/* Stats */}
-          <ReferralStatsCard
-            totalReferrals={stats?.total_referrals || 0}
-            activeReferrals={stats?.active_referrals || 0}
-            totalEarnings={Number(stats?.total_earnings || 0)}
-            taskCommissionEarnings={Number(stats?.task_commission_earnings || 0)}
-          />
+          {isReferralDataLoading || !profile ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="animate-pulse bg-muted rounded-lg h-24" />
+              <div className="animate-pulse bg-muted rounded-lg h-24" />
+              <div className="animate-pulse bg-muted rounded-lg h-24" />
+              <div className="animate-pulse bg-muted rounded-lg h-24" />
+            </div>
+          ) : (
+            <ReferralStatsCard
+              totalReferrals={stats?.total_referrals || 0}
+              activeReferrals={stats?.active_referrals || 0}
+              totalEarnings={Number(stats?.total_earnings || 0)}
+              taskCommissionEarnings={Number(stats?.task_commission_earnings || 0)}
+            />
+          )}
         </header>
 
         {/* Main Content */}
