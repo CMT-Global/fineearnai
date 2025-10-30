@@ -1,8 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, Wallet } from "lucide-react";
-import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 
@@ -106,30 +105,8 @@ const ExpiryCountdown = ({ expiryDate }: { expiryDate?: string | null }) => {
   );
 };
 
-// Sub-component: Wallet Quick View
-const WalletQuickView = ({ 
-  label, 
-  amountUSD,
-  icon: Icon 
-}: { 
-  label: string; 
-  amountUSD: number;
-  icon: typeof Wallet;
-}) => {
-  const { formatAmount } = useCurrencyConversion();
-  
-  return (
-    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{label}</p>
-        <p className="text-sm font-semibold tabular-nums truncate">
-          {formatAmount(amountUSD)}
-        </p>
-      </div>
-    </div>
-  );
-};
+// Sub-component: Wallet Quick View (kept for backward compatibility - not rendered)
+// This component is temporarily preserved but not used in the UI
 
 export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
   const initial = profile.username?.charAt(0).toUpperCase() || 'U';
@@ -180,20 +157,6 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
             <ExpiryCountdown expiryDate={profile.plan_expires_at} />
           </div>
         </div>
-      </div>
-      
-      {/* Dual Wallet Balances */}
-      <div className="grid grid-cols-2 gap-2">
-        <WalletQuickView
-          label="Earnings"
-          amountUSD={profile.earnings_wallet_balance}
-          icon={Wallet}
-        />
-        <WalletQuickView
-          label="Deposit"
-          amountUSD={profile.deposit_wallet_balance}
-          icon={Wallet}
-        />
       </div>
     </div>
   );
