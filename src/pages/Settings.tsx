@@ -168,11 +168,8 @@ const Settings = () => {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-background flex">
-          <Sidebar profile={profile} onSignOut={signOut} />
-          <div className="flex-1 flex items-center justify-center">
-            <LoadingSpinner size="lg" text="Loading settings..." />
-          </div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading settings..." />
         </div>
       </ProtectedRoute>
     );
