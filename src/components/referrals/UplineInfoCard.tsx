@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { UserPlus, Link2, Calendar, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 
@@ -88,7 +89,7 @@ export const UplineInfoCard = ({ upline, isLoading }: UplineInfoCardProps) => {
         <div>
           <p className="text-sm text-muted-foreground mb-1">Total Commission Earned by Upline</p>
           <p className="font-medium text-lg text-green-600">
-            ${upline.totalCommissionEarned.toFixed(2)}
+            <CurrencyDisplay amountUSD={upline.totalCommissionEarned} />
           </p>
         </div>
         
