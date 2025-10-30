@@ -16,20 +16,21 @@ export const useReferralData = (userId: string | undefined) => {
           .eq('referrer_id', userId)
           .order('created_at', { ascending: false })
           .limit(20),
-        // Step 1: Fetch referral relationship data
+        // Fetch active referral relationship data
         supabase
           .from('referrals')
           .select('referrer_id, status, total_commission_earned, created_at, referral_code_used')
           .eq('referred_id', userId)
+          .eq('status', 'active')
           .maybeSingle()
       ]);
       
-      // Step 2: Fetch upline profile if referrer exists
+      // Fetch upline profile if referrer exists
       let uplineData = null;
       if (referralData.data?.referrer_id) {
         const uplineProfile = await supabase
           .from('profiles')
-          .select('id, username, email, membership_plan, account_status')
+          .select('id, username, membership_plan, account_status')
           .eq('id', referralData.data.referrer_id)
           .maybeSingle();
         
@@ -51,7 +52,6 @@ export const useReferralData = (userId: string | undefined) => {
         upline: uplineData ? {
           id: uplineData.id,
           username: uplineData.username,
-          email: uplineData.email,
           membership_plan: uplineData.membership_plan,
           account_status: uplineData.account_status,
           referralCodeUsed: uplineData.referral_code_used,
