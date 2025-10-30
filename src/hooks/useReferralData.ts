@@ -7,8 +7,8 @@ export const useReferralData = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      // ⚡ ALL queries run in parallel - including upline data
-      const [profile, stats, earnings, uplineData] = await Promise.all([
+      // ⚡ ALL queries run in parallel - Step 1: Fetch core data
+      const [profile, stats, earnings, referralData] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.rpc('get_referral_stats', { user_uuid: userId }),
         supabase.from('referral_earnings')
@@ -16,41 +16,48 @@ export const useReferralData = (userId: string | undefined) => {
           .eq('referrer_id', userId)
           .order('created_at', { ascending: false })
           .limit(20),
-        // Fetch upline information from referrals table
+        // Step 1: Fetch referral relationship data
         supabase
           .from('referrals')
-          .select(`
-            id,
-            status,
-            total_commission_earned,
-            created_at,
-            referral_code_used,
-            referrer:profiles!referrals_referrer_id_fkey (
-              id,
-              username,
-              email,
-              membership_plan,
-              account_status
-            )
-          `)
+          .select('referrer_id, status, total_commission_earned, created_at, referral_code_used')
           .eq('referred_id', userId)
           .maybeSingle()
       ]);
+      
+      // Step 2: Fetch upline profile if referrer exists
+      let uplineData = null;
+      if (referralData.data?.referrer_id) {
+        const uplineProfile = await supabase
+          .from('profiles')
+          .select('id, username, email, membership_plan, account_status')
+          .eq('id', referralData.data.referrer_id)
+          .maybeSingle();
+        
+        if (uplineProfile.data) {
+          uplineData = {
+            ...uplineProfile.data,
+            referral_code_used: referralData.data.referral_code_used,
+            total_commission_earned: referralData.data.total_commission_earned,
+            status: referralData.data.status,
+            created_at: referralData.data.created_at
+          };
+        }
+      }
       
       return { 
         profile: profile.data,
         stats: stats.data?.[0],
         earnings: earnings.data,
-        upline: uplineData.data && uplineData.data.referrer ? {
-          id: uplineData.data.referrer.id,
-          username: uplineData.data.referrer.username,
-          email: uplineData.data.referrer.email,
-          membership_plan: uplineData.data.referrer.membership_plan,
-          account_status: uplineData.data.referrer.account_status,
-          referralCodeUsed: uplineData.data.referral_code_used,
-          totalCommissionEarned: uplineData.data.total_commission_earned,
-          referralStatus: uplineData.data.status,
-          referredOn: uplineData.data.created_at
+        upline: uplineData ? {
+          id: uplineData.id,
+          username: uplineData.username,
+          email: uplineData.email,
+          membership_plan: uplineData.membership_plan,
+          account_status: uplineData.account_status,
+          referralCodeUsed: uplineData.referral_code_used,
+          totalCommissionEarned: uplineData.total_commission_earned,
+          referralStatus: uplineData.status,
+          referredOn: uplineData.created_at
         } : null,
       };
     },
