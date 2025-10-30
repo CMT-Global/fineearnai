@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { useMemo } from "react";
 
 interface UserHeaderCardProps {
-  profile: {
+  profile?: {
     username: string;
     full_name?: string | null;
     membership_plan: string;
@@ -14,7 +14,7 @@ interface UserHeaderCardProps {
     account_status: string;
     earnings_wallet_balance: number;
     deposit_wallet_balance: number;
-  };
+  } | null;
 }
 
 // Utility: Calculate days until expiry with human-readable format
@@ -109,14 +109,32 @@ const ExpiryCountdown = ({ expiryDate }: { expiryDate?: string | null }) => {
 // This component is temporarily preserved but not used in the UI
 
 export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
+  // Early return with loading skeleton if profile is not available
+  if (!profile) {
+    return (
+      <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-transparent">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-20 bg-muted animate-pulse rounded" />
+              <div className="h-5 w-16 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const initial = profile.username?.charAt(0).toUpperCase() || 'U';
   const displayName = profile.full_name || profile.username;
   
   // Format membership plan name for display
   const planDisplayName = profile.membership_plan
-    .split('_')
+    ?.split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(' ') || 'Free';
   
   return (
     <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-transparent">

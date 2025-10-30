@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 
 interface MobileUserBadgeProps {
-  profile: {
+  profile?: {
     username: string;
     full_name?: string | null;
     membership_plan: string;
@@ -13,7 +13,7 @@ interface MobileUserBadgeProps {
     account_status: string;
     earnings_wallet_balance: number;
     deposit_wallet_balance: number;
-  };
+  } | null;
 }
 
 // Check if plan is expiring soon (< 7 days)
@@ -29,10 +29,19 @@ const isPlanExpiringSoon = (expiryDate?: string | null): boolean => {
 };
 
 export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
+  // Early return with loading skeleton if profile is not available
+  if (!profile) {
+    return (
+      <button className="relative flex items-center justify-center" disabled>
+        <div className="h-8 w-8 rounded-full bg-muted animate-pulse border-2 border-primary/20" />
+      </button>
+    );
+  }
+
   const initial = profile.username?.charAt(0).toUpperCase() || 'U';
   const showNotification = useMemo(
-    () => isPlanExpiringSoon(profile.plan_expires_at),
-    [profile.plan_expires_at]
+    () => isPlanExpiringSoon(profile?.plan_expires_at),
+    [profile?.plan_expires_at]
   );
 
   return (
