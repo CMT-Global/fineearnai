@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useReferralData } from "@/hooks/useReferralData";
+import { useRealtimeReferrals } from "@/hooks/useRealtimeReferrals";
 import { usePaginatedReferrals } from "@/hooks/usePaginatedReferrals";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,10 @@ const Referrals = () => {
 
   // ✅ NEW: Single React Query hook for all referral data (including upline)
   const { data: referralData, isLoading: isReferralDataLoading } = useReferralData(user?.id);
+  
+  // ✅ Enable real-time referral updates (matches transaction pattern)
+  useRealtimeReferrals(user?.id);
+  
   const { profile, stats, upline } = referralData || {};
 
   // ✅ NEW: Separate hook for paginated referrals
