@@ -22,6 +22,7 @@ import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
+import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 
 interface SidebarProps {
   profile: any;
@@ -266,18 +267,24 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           <Sparkles className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
           <span className="font-bold">FineEarn</span>
         </div>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-              <NavContent />
-            </div>
-          </SheetContent>
-        </Sheet>
+        
+        <div className="flex items-center gap-2">
+          {/* Mobile Currency Badge */}
+          <MobileCurrencyBadge />
+          
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
+                <NavContent />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
