@@ -1,16 +1,23 @@
 /**
- * Determine optimal decimal places for display (2 or 4)
- * Returns 4 if there are significant digits in the 3rd or 4th decimal place
- * Returns 2 otherwise for cleaner display
+ * Display Strategy (2-Decimal Display, 4-Decimal Storage):
+ * 
+ * DISPLAY (Frontend):
+ * - Always show 2 decimals for clean, professional look
+ * - Users see: "KES 13,852.63" instead of "KES 13,852.6290"
+ * 
+ * STORAGE (Database):
+ * - Always store 4 decimals for precision
+ * - Commissions like 5% of $0.2583 = $0.0129 are accurate
+ * - Rounding only happens at display time, never in calculations
+ * 
+ * WHY?
+ * - User Experience: Clean numbers build trust
+ * - Accuracy: Math operations use full precision
+ * - Scalability: No rounding errors accumulate over millions of transactions
  */
 export const getOptimalDecimals = (amount: number): number => {
-  if (amount === 0) return 2; // Always show 2 decimals for zero
-  
-  const fixed4 = amount.toFixed(4);
-  const lastTwoDigits = fixed4.slice(-2);
-  
-  // If last two digits are "00", we only need 2 decimals
-  return lastTwoDigits === '00' ? 2 : 4;
+  // Force 2 decimals for all user-facing displays
+  return 2;
 };
 
 /**
