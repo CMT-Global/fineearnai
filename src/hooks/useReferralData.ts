@@ -25,7 +25,7 @@ export const useReferralData = (userId: string | undefined) => {
             total_commission_earned,
             created_at,
             referral_code_used,
-            profiles!referrals_referrer_id_fkey (
+            referrer:profiles!referrals_referrer_id_fkey (
               id,
               username,
               email,
@@ -34,19 +34,19 @@ export const useReferralData = (userId: string | undefined) => {
             )
           `)
           .eq('referred_id', userId)
-          .single()
+          .maybeSingle()
       ]);
       
       return { 
         profile: profile.data,
         stats: stats.data?.[0],
         earnings: earnings.data,
-        upline: uplineData.data && uplineData.data.profiles ? {
-          id: uplineData.data.profiles.id,
-          username: uplineData.data.profiles.username,
-          email: uplineData.data.profiles.email,
-          membership_plan: uplineData.data.profiles.membership_plan,
-          account_status: uplineData.data.profiles.account_status,
+        upline: uplineData.data && uplineData.data.referrer ? {
+          id: uplineData.data.referrer.id,
+          username: uplineData.data.referrer.username,
+          email: uplineData.data.referrer.email,
+          membership_plan: uplineData.data.referrer.membership_plan,
+          account_status: uplineData.data.referrer.account_status,
           referralCodeUsed: uplineData.data.referral_code_used,
           totalCommissionEarned: uplineData.data.total_commission_earned,
           referralStatus: uplineData.data.status,
