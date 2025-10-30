@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Link2, Calendar } from "lucide-react";
+import { UserPlus, Link2, Calendar, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 
 interface UplineInfoCardProps {
@@ -38,9 +38,12 @@ export const UplineInfoCard = ({ upline }: UplineInfoCardProps) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+        <div className="col-span-full mb-2">
           <p className="text-sm text-muted-foreground mb-1">Upline Username</p>
-          <p className="font-medium text-lg">{upline.username}</p>
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-6 w-6 text-primary" />
+            <p className="font-bold text-2xl text-primary">{upline.username}</p>
+          </div>
         </div>
         
         <div>
