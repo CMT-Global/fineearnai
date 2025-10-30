@@ -7,21 +7,51 @@ export const useReferralData = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      // ⚡ ALL queries run in parallel
-      const [profile, stats, earnings] = await Promise.all([
+      // ⚡ ALL queries run in parallel - including upline data
+      const [profile, stats, earnings, uplineData] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.rpc('get_referral_stats', { user_uuid: userId }),
         supabase.from('referral_earnings')
           .select('*')
           .eq('referrer_id', userId)
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(20),
+        // Fetch upline information from referrals table
+        supabase
+          .from('referrals')
+          .select(`
+            id,
+            status,
+            total_commission_earned,
+            created_at,
+            referral_code_used,
+            profiles!referrals_referrer_id_fkey (
+              id,
+              username,
+              email,
+              membership_plan,
+              account_status
+            )
+          `)
+          .eq('referred_id', userId)
+          .single()
       ]);
       
       return { 
         profile: profile.data,
         stats: stats.data?.[0],
         earnings: earnings.data,
+        upline: uplineData.data && uplineData.data.profiles ? {
+          id: uplineData.data.profiles.id,
+          username: uplineData.data.profiles.username,
+          email: uplineData.data.profiles.email,
+          membership_plan: uplineData.data.profiles.membership_plan,
+          account_status: uplineData.data.profiles.account_status,
+          referralCodeUsed: uplineData.data.referral_code_used,
+          totalCommissionEarned: uplineData.data.total_commission_earned,
+          referralStatus: uplineData.data.status,
+          referredOn: uplineData.data.created_at
+        } : null,
       };
     },
     enabled: !!userId,

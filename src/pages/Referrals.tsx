@@ -13,6 +13,7 @@ import { ReferralQRCode } from "@/components/referrals/ReferralQRCode";
 import { SocialShareButtons } from "@/components/referrals/SocialShareButtons";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
+import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import {
@@ -30,9 +31,9 @@ const Referrals = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // ✅ NEW: Single React Query hook for all referral data
+  // ✅ NEW: Single React Query hook for all referral data (including upline)
   const { data: referralData, isLoading: isReferralDataLoading } = useReferralData(user?.id);
-  const { profile, stats } = referralData || {};
+  const { profile, stats, upline } = referralData || {};
 
   // ✅ NEW: Separate hook for paginated referrals
   const { data: paginatedData, isLoading: isReferralsLoading } = usePaginatedReferrals(user?.id, currentPage);
@@ -77,6 +78,9 @@ const Referrals = () => {
 
         {/* Main Content */}
         <div className="p-4 lg:p-8">
+          {/* My Upline Card */}
+          <UplineInfoCard upline={upline} />
+
           {/* Referral Code Card - Full Width */}
           <Card className="p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Your Referral Link & Commission</h2>
