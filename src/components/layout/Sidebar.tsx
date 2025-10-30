@@ -21,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { CurrencySelector } from "@/components/layout/CurrencySelector";
 
 interface SidebarProps {
   profile: any;
@@ -204,6 +205,9 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           </button>
         ))}
       </nav>
+
+      {/* Currency Selector - Global Access */}
+      <CurrencySelector />
 
       {/* Switch to Admin Button - Highly Visible */}
       {isAdmin && (
