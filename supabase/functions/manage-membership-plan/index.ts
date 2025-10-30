@@ -28,6 +28,7 @@ interface ManagePlanRequest {
     max_group_members?: number;
     priority_support?: boolean;
     custom_categories?: boolean;
+    referral_eligible?: boolean; // Phase 3: Control commission generation
     features?: string[];
     is_active?: boolean;
   };
@@ -184,6 +185,16 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
   // ========== Business Logic Rules ==========
   if (planData.account_type === 'free' && planData.price && planData.price > 0) {
     errors.push("Free account type cannot have a price greater than 0");
+  }
+
+  // Phase 3: Free plans must have referral_eligible = false
+  if (planData.account_type === 'free' && planData.referral_eligible === true) {
+    errors.push("Free account type must have referral_eligible set to false");
+  }
+
+  // Phase 3: Enforce referral_eligible for free plans
+  if (planData.account_type === 'free') {
+    planData.referral_eligible = false; // Force to false for free plans
   }
 
   // Validate billing period unit if provided

@@ -37,6 +37,7 @@ interface MembershipPlan {
   min_daily_withdrawal: number;
   max_daily_withdrawal: number;
   free_plan_expiry_days: number | null;
+  referral_eligible: boolean; // Phase 3: Control commission generation
   is_active: boolean;
   features: any;
   subscriber_count?: number;
@@ -67,6 +68,7 @@ const PlansManage = () => {
     min_daily_withdrawal: 10,
     max_daily_withdrawal: 1000,
     free_plan_expiry_days: null as number | null,
+    referral_eligible: true, // Phase 3: Default to true for new plans
     is_active: true,
     features: "[]",
   });
@@ -154,6 +156,9 @@ const PlansManage = () => {
         return;
       }
 
+      // Phase 3: Enforce referral_eligible = false for free plans
+      const referralEligible = formData.account_type === 'free' ? false : formData.referral_eligible;
+
       const planData = {
         name: formData.name,
         display_name: formData.display_name,
@@ -170,6 +175,7 @@ const PlansManage = () => {
         min_daily_withdrawal: formData.min_daily_withdrawal,
         max_daily_withdrawal: formData.max_daily_withdrawal,
         free_plan_expiry_days: formData.free_plan_expiry_days,
+        referral_eligible: referralEligible, // Phase 3: Control commission generation
         is_active: formData.is_active,
         features,
       };
@@ -261,6 +267,7 @@ const PlansManage = () => {
       min_daily_withdrawal: 10,
       max_daily_withdrawal: 1000,
       free_plan_expiry_days: null as number | null,
+      referral_eligible: true, // Phase 3: Default to true
       is_active: true,
       features: "[]",
     });
@@ -286,6 +293,7 @@ const PlansManage = () => {
       min_daily_withdrawal: plan.min_daily_withdrawal,
       max_daily_withdrawal: plan.max_daily_withdrawal,
       free_plan_expiry_days: plan.free_plan_expiry_days,
+      referral_eligible: plan.referral_eligible, // Phase 3: Load existing value
       is_active: plan.is_active,
       features: JSON.stringify(plan.features || [], null, 2),
     });
@@ -753,6 +761,35 @@ const PlansManage = () => {
                       />
                       <Label htmlFor="is_active">Active</Label>
                     </div>
+
+                    {/* Phase 3: Referral Eligible Toggle */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="referral_eligible"
+                          checked={formData.referral_eligible}
+                          disabled={formData.account_type === 'free'} // Disable for free plans
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, referral_eligible: checked })
+                          }
+                        />
+                        <Label htmlFor="referral_eligible">Referral Eligible</Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.account_type === 'free' 
+                          ? "Free plans cannot generate referral commissions for their upline"
+                          : "When enabled, users on this plan can generate referral commissions for their upline. Disable to prevent commission generation."
+                        }
+                      </p>
+                      {formData.referral_eligible === false && formData.account_type !== 'free' && (
+                        <Alert className="mt-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            Users on this plan will NOT generate commissions for their upline, even if the upline has a paid plan.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
                   </div>
 
                   <DialogFooter>
@@ -819,13 +856,22 @@ const PlansManage = () => {
                           {formatCurrency(plan.total_revenue || 0)}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={plan.is_active}
-                              onCheckedChange={() => handleToggleActive(plan)}
-                            />
-                            <Badge variant={plan.is_active ? "default" : "secondary"}>
-                              {plan.is_active ? "Active" : "Inactive"}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={plan.is_active}
+                                onCheckedChange={() => handleToggleActive(plan)}
+                              />
+                              <Badge variant={plan.is_active ? "default" : "secondary"}>
+                                {plan.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                            {/* Phase 3: Referral Eligible Badge */}
+                            <Badge 
+                              variant={plan.referral_eligible ? "outline" : "destructive"}
+                              className="text-xs w-fit"
+                            >
+                              {plan.referral_eligible ? "✓ Can Generate Commissions" : "✗ No Commissions"}
                             </Badge>
                           </div>
                         </TableCell>
