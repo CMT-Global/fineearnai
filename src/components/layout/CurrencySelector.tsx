@@ -62,7 +62,7 @@ export function CurrencySelector() {
             <div className="flex items-center gap-2 min-w-0">
               <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="flex flex-col items-start min-w-0">
-                <span className="text-xs text-muted-foreground">Currency</span>
+                <span className="text-xs text-muted-foreground">Your Currency</span>
                 <span className="text-sm font-medium truncate">
                   {currentCurrencySymbol} {userCurrency}
                 </span>
@@ -75,10 +75,17 @@ export function CurrencySelector() {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Search currency..." />
-            <CommandList>
+        <PopoverContent 
+          className="w-[300px] p-0 bg-popover z-50" 
+          align="start"
+          sideOffset={4}
+        >
+          <Command className="bg-popover">
+            <CommandInput 
+              placeholder="Search currency..." 
+              className="bg-popover"
+            />
+            <CommandList className="bg-popover">
               <CommandEmpty>No currency found.</CommandEmpty>
               <CommandGroup>
                 {CURRENCIES.map((currency) => {
@@ -121,7 +128,7 @@ export function CurrencySelector() {
           </Command>
           
           {/* Live Conversion Preview */}
-          <div className="border-t border-border p-3 bg-muted/50">
+          <div className="border-t border-border p-3 bg-muted/50 backdrop-blur-sm">
             <div className="text-xs text-muted-foreground mb-1">
               Conversion Preview
             </div>
