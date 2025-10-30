@@ -79,7 +79,7 @@ const Referrals = () => {
         {/* Main Content */}
         <div className="p-4 lg:p-8">
           {/* My Upline Card */}
-          <UplineInfoCard upline={upline} />
+          <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
 
           {/* Referral Code Card - Full Width */}
           <Card className="p-6 mb-8">

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserPlus, Link2, Calendar, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 
@@ -12,9 +13,28 @@ interface UplineInfoCardProps {
     referralStatus: string;
     referredOn: string;
   } | null;
+  isLoading?: boolean;
 }
 
-export const UplineInfoCard = ({ upline }: UplineInfoCardProps) => {
+export const UplineInfoCard = ({ upline, isLoading }: UplineInfoCardProps) => {
+  if (isLoading) {
+    return (
+      <Card className="p-6 mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <UserPlus className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">My Upline</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-20 col-span-full" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </div>
+      </Card>
+    );
+  }
+
   if (!upline) {
     return (
       <Card className="p-6 mb-8">
