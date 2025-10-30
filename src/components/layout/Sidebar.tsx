@@ -23,6 +23,7 @@ import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
+import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 
 interface SidebarProps {
   profile: any;
@@ -189,6 +190,12 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         </div>
       </div>
 
+      {/* User Header Card - Top Position */}
+      <UserHeaderCard profile={profile} />
+
+      {/* Currency Selector - Top Position */}
+      <CurrencySelector />
+
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
           <button
@@ -207,9 +214,6 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         ))}
       </nav>
 
-      {/* Currency Selector - Global Access */}
-      <CurrencySelector />
-
       {/* Switch to Admin Button - Highly Visible */}
       {isAdmin && (
         <div className="px-4 pb-4">
@@ -224,23 +228,8 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         </div>
       )}
 
-      {/* User Profile & Logout */}
-      <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3">
-        <div className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--sidebar-accent))]/30 rounded-lg">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold flex-shrink-0">
-            {profile?.username?.charAt(0).toUpperCase() || "U"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{profile?.username || "User"}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="text-xs px-2 py-0 capitalize">
-                {profile?.membership_plan || "free"}
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* Logout Button - Highly Visible Red Style */}
+      {/* Logout Section - Bottom */}
+      <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
         <Button
           onClick={handleLogoutClick}
           variant="destructive"
