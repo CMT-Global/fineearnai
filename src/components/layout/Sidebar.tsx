@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
+import { MobileUserBadge } from "@/components/layout/MobileUserBadge";
 
 interface SidebarProps {
   profile: any;
@@ -258,6 +259,9 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Mobile User Badge */}
+          <MobileUserBadge profile={profile} />
+          
           {/* Mobile Currency Badge */}
           <MobileCurrencyBadge />
           

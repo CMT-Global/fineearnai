@@ -1,0 +1,78 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
+import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+
+interface MobileUserBadgeProps {
+  profile: {
+    username: string;
+    full_name?: string | null;
+    membership_plan: string;
+    plan_expires_at?: string | null;
+    account_status: string;
+    earnings_wallet_balance: number;
+    deposit_wallet_balance: number;
+  };
+}
+
+// Check if plan is expiring soon (< 7 days)
+const isPlanExpiringSoon = (expiryDate?: string | null): boolean => {
+  if (!expiryDate) return false;
+  
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays >= 0 && diffDays <= 7;
+};
+
+export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
+  const initial = profile.username?.charAt(0).toUpperCase() || 'U';
+  const showNotification = useMemo(
+    () => isPlanExpiringSoon(profile.plan_expires_at),
+    [profile.plan_expires_at]
+  );
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button className="relative flex items-center justify-center">
+          <Avatar className="h-8 w-8 border-2 border-primary/20">
+            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-semibold">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
+          
+          {/* Notification Dot - Plan Expiring Soon */}
+          {showNotification && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500 border border-background"></span>
+            </span>
+          )}
+        </button>
+      </SheetTrigger>
+      
+      <SheetContent 
+        side="top" 
+        className="h-auto max-h-[90vh] overflow-y-auto p-0"
+      >
+        <div className="bg-background">
+          {/* Full User Details Card */}
+          <UserHeaderCard profile={profile} />
+          
+          {/* Expiry Warning Banner if needed */}
+          {showNotification && (
+            <div className="px-4 pb-4">
+              <Badge variant="warning" className="w-full justify-center py-2">
+                ⚠️ Your plan is expiring soon! Renew to continue earning.
+              </Badge>
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
