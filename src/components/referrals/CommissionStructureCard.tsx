@@ -95,7 +95,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
             <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
               <p className="text-sm text-muted-foreground mb-1">Task Commission</p>
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {commissions?.taskCommissionRate}%
+                {(commissions?.taskCommissionRate * 100).toFixed(1)}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Earn from every task your referrals complete
@@ -105,7 +105,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
             <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
               <p className="text-sm text-muted-foreground mb-1">Deposit Commission</p>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {commissions?.depositCommissionRate}%
+                {(commissions?.depositCommissionRate * 100).toFixed(1)}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Earn when referrals upgrade their plans
