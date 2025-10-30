@@ -62,6 +62,9 @@ export const useReferralData = (userId: string | undefined) => {
       };
     },
     enabled: !!userId,
-    staleTime: 30000, // 30 seconds
+    staleTime: 1000, // 1 second - real-time subscription keeps cache fresh
+    gcTime: 5 * 60 * 1000, // 5 minutes in memory
+    refetchOnWindowFocus: false, // Real-time handles updates
+    refetchOnMount: false, // Real-time handles updates
   });
 };
