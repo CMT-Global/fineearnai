@@ -590,8 +590,22 @@ serve(async (req) => {
         transactionId: atomicResult.transaction_id,
         oldBalance: atomicResult.old_balance,
         newBalance: atomicResult.new_balance,
-        amountCredited: atomicResult.amount_credited
+        amountCredited: atomicResult.amount_credited,
+        commissionProcessed: atomicResult.commission_processed,
+        commissionAmount: atomicResult.commission_amount,
+        commissionTransactionId: atomicResult.commission_transaction_id,
+        referralEarningId: atomicResult.referral_earning_id
       });
+
+      // Log commission processing result
+      if (atomicResult.commission_processed) {
+        console.log(
+          `[CPAY-WEBHOOK] 💰 COMMISSION PROCESSED: Referrer earned $${atomicResult.commission_amount} ` +
+          `from deposit by ${transaction.profiles.username}`
+        );
+      } else {
+        console.log('[CPAY-WEBHOOK] ℹ️ No commission processed (user has no active referrer or commission rate is 0)');
+      }
 
       // Update the original pending transaction to mark it as completed
       const { error: txUpdateError } = await supabase
@@ -629,7 +643,8 @@ serve(async (req) => {
       console.log(
         `[CPAY-WEBHOOK] ✅ DEPOSIT COMPLETED: ` +
         `User ${transaction.profiles.username} (${transaction.profiles.id}) ` +
-        `credited ${actualAmount} ${currency}. New balance: ${newBalance}`
+        `credited ${actualAmount} ${currency}. New balance: ${newBalance}` +
+        (atomicResult.commission_processed ? ` | Commission: $${atomicResult.commission_amount} paid to referrer` : '')
       );
 
       // Send success notification
