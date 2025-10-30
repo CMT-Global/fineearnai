@@ -64,11 +64,7 @@ const Signup = () => {
 
       if (error || !data) {
         console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
-        toast({
-          title: "Referral code not found",
-          description: "The referral code you entered does not exist.",
-          variant: "destructive",
-        });
+        // Silently handle - the database trigger will validate during signup
         localStorage.removeItem("pending_referral_code");
         return;
       }
