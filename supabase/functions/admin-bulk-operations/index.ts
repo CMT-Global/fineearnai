@@ -82,10 +82,18 @@ Deno.serve(async (req) => {
           throw new Error('Invalid or inactive plan');
         }
 
-        // Calculate expiry date
+        // Calculate expiry date using billing_period_days as single source of truth
+        const billingPeriodDays = plan.billing_period_days;
+        
+        if (!billingPeriodDays || billingPeriodDays <= 0) {
+          throw new Error(`Invalid billing_period_days for plan ${planName}: ${billingPeriodDays}`);
+        }
+        
         const now = new Date();
-        now.setDate(now.getDate() + plan.billing_period_days);
+        now.setDate(now.getDate() + billingPeriodDays);
         const expiresAt = now.toISOString();
+        
+        console.log(`✅ Bulk expiry calculation: Plan=${planName}, billing_period_days=${billingPeriodDays}, expiry=${expiresAt}`);
 
         const results = {
           successful: [] as string[],

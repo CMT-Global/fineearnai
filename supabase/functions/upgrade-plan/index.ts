@@ -134,19 +134,18 @@ Deno.serve(async (req) => {
     // Calculate new balance
     const newDepositBalance = depositBalance - finalCost;
 
-    // Calculate plan expiry date based on billing period
+    // Calculate plan expiry date using billing_period_days as single source of truth
     const expiryDate = new Date();
-    const billingPeriodDays = newPlan.billing_period_days || 30;
+    const billingPeriodDays = newPlan.billing_period_days;
     
-    // Handle different billing period units
-    if (newPlan.billing_period_unit === 'month') {
-      expiryDate.setMonth(expiryDate.getMonth() + (newPlan.billing_period_value || 1));
-    } else if (newPlan.billing_period_unit === 'year') {
-      expiryDate.setFullYear(expiryDate.getFullYear() + (newPlan.billing_period_value || 1));
-    } else {
-      // Default to days
-      expiryDate.setDate(expiryDate.getDate() + billingPeriodDays);
+    if (!billingPeriodDays || billingPeriodDays <= 0) {
+      throw new Error(`Invalid billing_period_days for plan ${planName}: ${billingPeriodDays}`);
     }
+    
+    // ALWAYS use billing_period_days - no fallbacks, no unit conversions
+    expiryDate.setDate(expiryDate.getDate() + billingPeriodDays);
+    
+    console.log(`✅ Expiry calculation: Plan=${planName}, billing_period_days=${billingPeriodDays}, expiry=${expiryDate.toISOString()}`);
 
     const now = new Date().toISOString();
 
