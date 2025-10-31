@@ -247,19 +247,34 @@ const Signup = () => {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel className="flex items-center justify-between">
+                          <span>Username</span>
+                          {usernameValue && usernameValue.length >= 3 && (
+                            <span className={cn(
+                              "text-xs font-normal",
+                              isChecking && "text-blue-500",
+                              !isChecking && isAvailable === true && "text-green-600",
+                              !isChecking && isAvailable === false && "text-destructive"
+                            )}>
+                              {isChecking && "Checking..."}
+                              {!isChecking && isAvailable === true && "✓ Available"}
+                              {!isChecking && isAvailable === false && "✗ Taken"}
+                            </span>
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               {...field}
-                              placeholder="Choose a unique username (3-30 characters)"
+                              placeholder="Choose a unique username"
                               disabled={isLoading}
                               className={cn(
-                                "h-11 pr-10",
-                                usernameValue && usernameValue.length >= 3 && isAvailable === true && "border-green-500 focus-visible:ring-green-500",
-                                usernameValue && usernameValue.length >= 3 && isAvailable === false && "border-destructive focus-visible:ring-destructive",
-                                isChecking && "border-blue-500"
+                                "h-11 pr-10 transition-all duration-200",
+                                usernameValue && usernameValue.length >= 3 && isAvailable === true && "border-green-500 bg-green-50/50 focus-visible:ring-green-500 dark:bg-green-950/20",
+                                usernameValue && usernameValue.length >= 3 && isAvailable === false && "border-destructive bg-destructive/5 focus-visible:ring-destructive",
+                                isChecking && "border-blue-500 bg-blue-50/50 dark:bg-blue-950/20"
                               )}
+                              autoComplete="username"
                             />
                             {usernameValue && usernameValue.length >= 3 && (
                               <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -267,24 +282,40 @@ const Signup = () => {
                                   <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                                 )}
                                 {!isChecking && isAvailable === true && (
-                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 animate-in fade-in zoom-in duration-200" />
                                 )}
                                 {!isChecking && isAvailable === false && (
-                                  <XCircle className="h-4 w-4 text-destructive" />
+                                  <XCircle className="h-4 w-4 text-destructive animate-in fade-in zoom-in duration-200" />
                                 )}
                               </div>
                             )}
                           </div>
                         </FormControl>
+                        
+                        {/* Helper text - always visible */}
+                        {(!usernameValue || usernameValue.length < 3) && !usernameError && (
+                          <p className="text-xs text-muted-foreground">
+                            3-30 characters • Letters, numbers, and underscores only
+                          </p>
+                        )}
+                        
+                        {/* Validation feedback */}
                         {usernameValue && usernameValue.length >= 3 && !isChecking && usernameError && (
-                          <p className="text-sm text-destructive">{usernameError}</p>
+                          <p className="text-sm text-destructive font-medium animate-in slide-in-from-top-1 duration-200">
+                            {usernameError}
+                          </p>
                         )}
                         {usernameValue && usernameValue.length >= 3 && !isChecking && isAvailable === true && (
-                          <p className="text-sm text-green-600">Username is available!</p>
+                          <p className="text-sm text-green-600 font-medium animate-in slide-in-from-top-1 duration-200">
+                            ✓ Great choice! This username is available
+                          </p>
                         )}
                         {isChecking && (
-                          <p className="text-sm text-muted-foreground">Checking availability...</p>
+                          <p className="text-sm text-blue-600 font-medium animate-pulse">
+                            ⏳ Checking availability...
+                          </p>
                         )}
+                        
                         <FormMessage />
                       </FormItem>
                     )}
@@ -370,8 +401,14 @@ const Signup = () => {
 
             <Button 
               type="submit" 
-              className="w-full h-11 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
+              className="w-full h-11 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90 transition-all duration-200"
               disabled={isLoading || isChecking || (usernameValue?.length >= 3 && isAvailable === false)}
+              title={
+                isLoading ? "Creating your account..." :
+                isChecking ? "Checking username availability..." :
+                (usernameValue?.length >= 3 && isAvailable === false) ? "Please choose an available username" :
+                "Create your FineEarn account"
+              }
             >
               {isLoading ? (
                 <>
@@ -381,10 +418,13 @@ const Signup = () => {
               ) : isChecking ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking username...
+                  Validating username...
                 </>
               ) : (
-                "Create Account"
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Create Account
+                </>
               )}
             </Button>
           </form>
