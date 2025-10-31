@@ -253,6 +253,70 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     </>
   );
 
+  // Mobile hamburger menu content - only secondary items
+  const MobileMenuContent = () => (
+    <>
+      <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
+          <span className="text-xl font-bold">FineEarn</span>
+        </div>
+      </div>
+
+      {/* User Header Card */}
+      <UserHeaderCard profile={profile} />
+
+      {/* Currency Selector */}
+      <CurrencySelector />
+
+      {/* Only secondary navigation items in mobile menu */}
+      <nav className="flex-1 p-4 space-y-1">
+        {secondaryNavItems.map((item) => (
+          <button
+            key={item.path}
+            onClick={() => handleNavigation(item.path)}
+            onMouseEnter={() => handlePrefetch(item.path)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+              isActive(item.path)
+                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+            }`}
+          >
+            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Switch to Admin Button - Highly Visible */}
+      {isAdmin && (
+        <div className="px-4 pb-4">
+          <Button
+            onClick={handleSwitchToAdmin}
+            className="w-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90 transition-opacity font-bold py-6"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            Switch to Admin Panel
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {/* Logout Section - Bottom */}
+      <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
+        <Button
+          onClick={handleLogoutClick}
+          variant="destructive"
+          size="lg"
+          className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <>
       <LogoutConfirmDialog
@@ -282,7 +346,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-                <NavContent />
+                <MobileMenuContent />
               </div>
             </SheetContent>
           </Sheet>

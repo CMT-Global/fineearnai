@@ -15,7 +15,8 @@ import {
   UserPlus,
   Zap,
   AlertCircle,
-  Clock
+  Clock,
+  Settings
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -350,6 +351,14 @@ const Dashboard = () => {
               >
                 <Crown className="h-4 w-4 text-[hsl(var(--wallet-deposit))]" />
                 Upgrade Plan
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => navigate("/settings")}
+              >
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                Account Settings
               </Button>
             </div>
           </Card>
