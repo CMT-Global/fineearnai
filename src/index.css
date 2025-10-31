@@ -149,6 +149,51 @@ All colors MUST be HSL.
     display: none !important;
   }
   
+  /* Reposition Reamaze widget on mobile to avoid bottom nav collision */
+  @media (max-width: 1023px) {
+    #reamaze-widget,
+    .reamaze-frame,
+    ._hj-widget-container {
+      bottom: 80px !important;
+      right: 16px !important;
+      z-index: 50 !important;
+      transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    /* Make Reamaze button smaller on mobile */
+    #reamaze-widget button,
+    .reamaze-frame button {
+      width: 56px !important;
+      height: 56px !important;
+    }
+    
+    /* Active state feedback */
+    #reamaze-widget button:active,
+    .reamaze-frame button:active {
+      transform: scale(0.95) !important;
+    }
+  }
+  
+  /* Safe area support for devices with notches/home indicators */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 1023px) {
+      #reamaze-widget,
+      .reamaze-frame,
+      ._hj-widget-container {
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+    }
+  }
+  
+  /* Desktop positioning remains default */
+  @media (min-width: 1024px) {
+    #reamaze-widget,
+    .reamaze-frame {
+      bottom: 20px !important;
+      right: 20px !important;
+    }
+  }
+  
   /* Transaction table mobile responsiveness */
   /* Mobile responsiveness handled by component-based approach */
   @media (max-width: 767px) {
