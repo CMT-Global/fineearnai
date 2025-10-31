@@ -274,27 +274,38 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Validate minimum withdrawal
+      // Convert local currency to USD for backend processing
+      const amountUSD = convertLocalToUSD(amount);
+
+      console.log('💱 Currency Conversion for Withdrawal:', {
+        inputAmount: amount,
+        inputCurrency: userCurrency,
+        exchangeRate,
+        convertedUSD: amountUSD,
+        timestamp: new Date().toISOString()
+      });
+
+      // Validate minimum withdrawal (using USD)
       const minWithdrawal = typeof plan.min_withdrawal === 'number' 
         ? plan.min_withdrawal 
         : parseFloat(plan.min_withdrawal as string);
-      if (amount < minWithdrawal) {
-        toast.error(`Minimum withdrawal is $${minWithdrawal.toFixed(2)}`);
+      if (amountUSD < minWithdrawal) {
+        toast.error(`Minimum withdrawal is $${minWithdrawal.toFixed(2)} USD`);
         return;
       }
 
-      // Validate minimum daily withdrawal
+      // Validate minimum daily withdrawal (using USD)
       if (plan.min_daily_withdrawal) {
         const minDailyWithdrawal = typeof plan.min_daily_withdrawal === 'number'
           ? plan.min_daily_withdrawal
           : parseFloat(plan.min_daily_withdrawal as string);
-        if (minDailyWithdrawal > 0 && amount < minDailyWithdrawal) {
-          toast.error(`Minimum daily withdrawal is $${minDailyWithdrawal.toFixed(2)}`);
+        if (minDailyWithdrawal > 0 && amountUSD < minDailyWithdrawal) {
+          toast.error(`Minimum daily withdrawal is $${minDailyWithdrawal.toFixed(2)} USD`);
           return;
         }
       }
 
-      // Check daily withdrawal limit
+      // Check daily withdrawal limit (using USD)
       const today = new Date().toISOString().split('T')[0];
       const { data: todayWithdrawals, error: todayError } = await supabase
         .from('withdrawal_requests')
@@ -318,9 +329,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       const maxDailyWithdrawal = typeof plan.max_daily_withdrawal === 'number'
         ? plan.max_daily_withdrawal
         : parseFloat(plan.max_daily_withdrawal as string);
-      if (totalWithdrawnToday + amount > maxDailyWithdrawal) {
+      if (totalWithdrawnToday + amountUSD > maxDailyWithdrawal) {
         const remainingLimit = maxDailyWithdrawal - totalWithdrawnToday;
-        toast.error(`Daily withdrawal limit exceeded. You can withdraw up to $${remainingLimit.toFixed(2)} more today.`);
+        toast.error(`Daily withdrawal limit exceeded. You can withdraw up to $${remainingLimit.toFixed(2)} USD more today.`);
         return;
       }
 
@@ -344,16 +355,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      console.log('Processing withdrawal with processor:', {
+      console.log('🔄 Processing withdrawal with processor:', {
         id: selectedProcessor.id,
         name: selectedProcessor.name,
         feeFixed: selectedProcessor.fee_fixed,
-        feePercentage: selectedProcessor.fee_percentage
+        feePercentage: selectedProcessor.fee_percentage,
+        amountUSD,
+        originalAmount: amount,
+        currency: userCurrency
       });
       
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
-          amount,
+          amount: amountUSD,
           paymentMethod: withdrawMethod,
           payoutAddress: accountDetails,
           paymentProcessorId: selectedProcessor.id, // UUID passed correctly
