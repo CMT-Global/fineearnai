@@ -100,6 +100,20 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
   };
 
+  /**
+   * Convert local currency amount to USD
+   * @param localAmount - Amount in user's preferred currency
+   * @returns Amount in USD (4 decimal precision)
+   */
+  const convertLocalToUSD = (localAmount: number): number => {
+    if (userCurrency === 'USD' || exchangeRate === 1) {
+      return localAmount;
+    }
+    // Reverse conversion: local / rate = USD
+    const usdAmount = localAmount / exchangeRate;
+    return parseFloat(usdAmount.toFixed(4)); // 4-decimal precision for backend
+  };
+
   const handleDeposit = async () => {
     if (!depositAmount || !depositMethod) {
       toast.error("Please fill in all fields");
