@@ -70,10 +70,10 @@ Deno.serve(async (req) => {
 
     console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod, paymentProcessorId });
 
-    // Get user profile and membership plan
+    // Get user profile and membership plan (including daily withdrawal bypass flag)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*, membership_plan')
+      .select('*, membership_plan, allow_daily_withdrawals')
       .eq('id', user.id)
       .single();
 
@@ -161,110 +161,134 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if withdrawal is currently allowed (using time-aware schedule)
-    const { data: isAllowed, error: scheduleError } = await supabase
-      .rpc('is_withdrawal_allowed');
+    // PHASE 2: Check if user has daily withdrawal bypass enabled
+    // This allows VIP users to bypass payout schedule restrictions
+    const allowDailyWithdrawals = profile.allow_daily_withdrawals || false;
 
-    if (scheduleError) {
-      console.error('Error checking withdrawal schedule:', scheduleError);
+    if (!allowDailyWithdrawals) {
+      // Standard users: Check if withdrawal is currently allowed (using time-aware schedule)
+      console.log('Checking withdrawal schedule for user:', user.id);
       
-      // Log validation failure
-      await supabase.from('withdrawal_attempt_logs').insert({
-        user_id: user.id,
-        amount: withdrawalAmount,
-        attempt_status: 'error',
-        failure_reason: 'Schedule validation error: ' + scheduleError.message,
-      });
-      
-      return new Response(
-        JSON.stringify({ error: 'Failed to validate withdrawal schedule' }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+      const { data: isAllowed, error: scheduleError } = await supabase
+        .rpc('is_withdrawal_allowed');
 
-    if (!isAllowed) {
-      console.log('Withdrawal blocked by schedule:', { 
-        userId: user.id, 
-        amount: withdrawalAmount,
-        timestamp: new Date().toISOString() 
-      });
-      
-      // Get next available withdrawal window
-      const { data: nextWindowData } = await supabase
-        .rpc('get_next_withdrawal_window')
-        .single();
-      
-      const nextWindow = nextWindowData as {
-        next_day: string;
-        next_date: string;
-        start_time: string;
-        end_time: string;
-        hours_until: number;
-      } | null;
-      
-      // Get current UTC day and time for logging
-      const { data: currentDay } = await supabase.rpc('get_current_utc_day');
-      const { data: currentTime } = await supabase.rpc('get_current_utc_time');
-      
-      // Log blocked attempt
-      await supabase.from('withdrawal_attempt_logs').insert({
-        user_id: user.id,
-        amount: withdrawalAmount,
-        attempt_status: 'blocked_schedule',
-        failure_reason: 'Withdrawal attempted outside allowed schedule',
-        blocked_by_schedule: true,
-        current_day: currentDay as number,
-        current_time: currentTime as string,
-      });
-      
-      // Get schedule details for error message
-      const { data: scheduleConfig } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'payout_schedule')
-        .single();
-
-      let errorMessage = 'Withdrawals are not allowed at this time';
-      let nextWindowMessage = '';
-      
-      if (nextWindow) {
-        const hoursText = nextWindow.hours_until === 1 ? 'hour' : 'hours';
-        nextWindowMessage = `\n\nNext available: ${nextWindow.next_day}, ${nextWindow.next_date} at ${nextWindow.start_time}-${nextWindow.end_time} UTC (in ${nextWindow.hours_until} ${hoursText})`;
+      if (scheduleError) {
+        console.error('Error checking withdrawal schedule:', scheduleError);
+        
+        // Log validation failure
+        await supabase.from('withdrawal_attempt_logs').insert({
+          user_id: user.id,
+          amount: withdrawalAmount,
+          attempt_status: 'error',
+          failure_reason: 'Schedule validation error: ' + scheduleError.message,
+        });
+        
+        return new Response(
+          JSON.stringify({ error: 'Failed to validate withdrawal schedule' }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
-      
-      if (scheduleConfig && scheduleConfig.value) {
-        const schedule = scheduleConfig.value as Array<{
-          day: number;
-          enabled: boolean;
+
+      if (!isAllowed) {
+        console.log('Withdrawal blocked by schedule:', { 
+          userId: user.id, 
+          amount: withdrawalAmount,
+          timestamp: new Date().toISOString() 
+        });
+        
+        // Get next available withdrawal window
+        const { data: nextWindowData } = await supabase
+          .rpc('get_next_withdrawal_window')
+          .single();
+        
+        const nextWindow = nextWindowData as {
+          next_day: string;
+          next_date: string;
           start_time: string;
           end_time: string;
-        }>;
+          hours_until: number;
+        } | null;
         
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const enabledDays = schedule
-          .filter(s => s.enabled)
-          .map(s => `${dayNames[s.day]} (${s.start_time}-${s.end_time} UTC)`)
-          .join(', ');
+        // Get current UTC day and time for logging
+        const { data: currentDay } = await supabase.rpc('get_current_utc_day');
+        const { data: currentTime } = await supabase.rpc('get_current_utc_time');
         
-        if (enabledDays) {
-          errorMessage = `Withdrawals are only allowed during: ${enabledDays}${nextWindowMessage}`;
+        // Log blocked attempt
+        await supabase.from('withdrawal_attempt_logs').insert({
+          user_id: user.id,
+          amount: withdrawalAmount,
+          attempt_status: 'blocked_schedule',
+          failure_reason: 'Withdrawal attempted outside allowed schedule',
+          blocked_by_schedule: true,
+          current_day: currentDay as number,
+          current_time: currentTime as string,
+        });
+        
+        // Get schedule details for error message
+        const { data: scheduleConfig } = await supabase
+          .from('platform_config')
+          .select('value')
+          .eq('key', 'payout_schedule')
+          .single();
+
+        let errorMessage = 'Withdrawals are not allowed at this time';
+        let nextWindowMessage = '';
+        
+        if (nextWindow) {
+          const hoursText = nextWindow.hours_until === 1 ? 'hour' : 'hours';
+          nextWindowMessage = `\n\nNext available: ${nextWindow.next_day}, ${nextWindow.next_date} at ${nextWindow.start_time}-${nextWindow.end_time} UTC (in ${nextWindow.hours_until} ${hoursText})`;
         }
+        
+        if (scheduleConfig && scheduleConfig.value) {
+          const schedule = scheduleConfig.value as Array<{
+            day: number;
+            enabled: boolean;
+            start_time: string;
+            end_time: string;
+          }>;
+          
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const enabledDays = schedule
+            .filter(s => s.enabled)
+            .map(s => `${dayNames[s.day]} (${s.start_time}-${s.end_time} UTC)`)
+            .join(', ');
+          
+          if (enabledDays) {
+            errorMessage = `Withdrawals are only allowed during: ${enabledDays}${nextWindowMessage}`;
+          }
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: errorMessage,
+            code: 'WITHDRAWAL_TIME_RESTRICTED',
+            nextWindow: nextWindow || null
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
+    } else {
+      // VIP users with daily withdrawal bypass: Skip schedule check entirely
+      console.log('✅ BYPASS ACTIVE: User has daily withdrawal bypass enabled:', {
+        userId: user.id,
+        username: profile.username,
+        amount: withdrawalAmount,
+        timestamp: new Date().toISOString()
+      });
       
-      return new Response(
-        JSON.stringify({ 
-          error: errorMessage,
-          code: 'WITHDRAWAL_TIME_RESTRICTED',
-          nextWindow: nextWindow || null
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      // Log bypass usage for audit trail
+      await supabase.from('withdrawal_attempt_logs').insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        attempt_status: 'bypass_used',
+        failure_reason: 'VIP bypass - schedule check skipped',
+      });
     }
 
     // Check daily withdrawal limits

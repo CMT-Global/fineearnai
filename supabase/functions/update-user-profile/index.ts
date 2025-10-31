@@ -45,6 +45,26 @@ Deno.serve(async (req) => {
       .eq('id', userId)
       .single();
 
+    if (!oldProfile) {
+      throw new Error('User profile not found');
+    }
+
+    // PHASE 2: Special logging for daily withdrawal bypass changes
+    if ('allow_daily_withdrawals' in updates) {
+      const oldValue = oldProfile.allow_daily_withdrawals || false;
+      const newValue = updates.allow_daily_withdrawals;
+      
+      console.log('🛡️ WITHDRAWAL BYPASS CHANGE:', {
+        userId,
+        username: oldProfile.username,
+        adminId: adminUser.id,
+        oldValue,
+        newValue,
+        action: newValue ? 'ENABLED' : 'DISABLED',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Update profile
     const { error: updateError } = await supabaseClient
       .from('profiles')
@@ -53,17 +73,25 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Create audit log
+    // Create detailed audit log
+    const auditDetails: any = {
+      old_values: oldProfile,
+      new_values: updates
+    };
+
+    // Add special flag for withdrawal bypass changes for easy filtering
+    if ('allow_daily_withdrawals' in updates) {
+      auditDetails.withdrawal_bypass_changed = true;
+      auditDetails.bypass_enabled = updates.allow_daily_withdrawals;
+    }
+
     await supabaseClient
       .from('audit_logs')
       .insert({
         admin_id: adminUser.id,
         action_type: 'profile_update',
         target_user_id: userId,
-        details: {
-          old_values: oldProfile,
-          new_values: updates
-        }
+        details: auditDetails
       });
 
     return new Response(
