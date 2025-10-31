@@ -104,6 +104,71 @@ export const OverviewTab = ({
     syncBypassValue();
   }, [userData?.profile?.allow_daily_withdrawals, userData?.profile?.id]);
 
+  // PHASE 4: Realtime sync for multi-tab consistency
+  useEffect(() => {
+    if (!userData?.profile?.id) return;
+
+    console.log('🔴 PHASE 4: Setting up realtime subscription:', {
+      timestamp: new Date().toISOString(),
+      userId: userData.profile.id,
+      username: userData.profile.username,
+      table: 'profiles',
+      event: 'UPDATE'
+    });
+
+    const channel = supabase
+      .channel(`profile-updates-${userData.profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userData.profile.id}`
+        },
+        (payload) => {
+          console.log('📡 PHASE 4: Realtime update received:', {
+            timestamp: new Date().toISOString(),
+            userId: userData.profile.id,
+            username: userData.profile.username,
+            newValue: payload.new.allow_daily_withdrawals,
+            oldValue: payload.old.allow_daily_withdrawals,
+            payload
+          });
+
+          // Only update if allow_daily_withdrawals actually changed
+          if (payload.new.allow_daily_withdrawals !== undefined) {
+            const newValue = payload.new.allow_daily_withdrawals;
+            setCurrentBypassValue(newValue);
+            
+            console.log('✅ PHASE 4: Local state updated from realtime:', {
+              timestamp: new Date().toISOString(),
+              newLocalState: newValue,
+              source: 'realtime_subscription'
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔴 PHASE 4: Subscription status:', {
+          timestamp: new Date().toISOString(),
+          userId: userData.profile.id,
+          status,
+          channelName: `profile-updates-${userData.profile.id}`
+        });
+      });
+
+    // Cleanup: Remove channel on unmount
+    return () => {
+      console.log('🧹 PHASE 4: Cleaning up realtime subscription:', {
+        timestamp: new Date().toISOString(),
+        userId: userData.profile.id,
+        channelName: `profile-updates-${userData.profile.id}`
+      });
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.profile?.id]);
+
   // PHASE 3: Fetch last bypass update info with two-step safe query
   useEffect(() => {
     const fetchLastBypassUpdate = async () => {
