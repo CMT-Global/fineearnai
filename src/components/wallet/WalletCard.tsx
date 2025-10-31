@@ -15,6 +15,7 @@ import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
 import { WithdrawalCountdown } from "./WithdrawalCountdown";
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface PaymentProcessor {
   id: string;
@@ -57,6 +58,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [cpayCurrency, setCpayCurrency] = useState("");
   
   const { data: validation } = useWithdrawalValidation();
+  const { convertAmount, userCurrency, exchangeRate } = useCurrencyConversion();
 
   useEffect(() => {
     loadPaymentProcessors();
