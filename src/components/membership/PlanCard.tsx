@@ -36,6 +36,7 @@ interface PlanCardProps {
   hasProfile: boolean;
   variant?: 'vertical' | 'horizontal';
   freePlanEarning?: number; // For comparison calculations
+  currentPlan?: string; // Current plan name for downgrade detection
 }
 
 export function PlanCard({
@@ -47,11 +48,29 @@ export function PlanCard({
   onUpgradeClick,
   hasProfile,
   variant = 'vertical',
-  freePlanEarning = 0
+  freePlanEarning = 0,
+  currentPlan
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
+
+  // Plan tier hierarchy for downgrade detection
+  const planTiers: Record<string, number> = {
+    'free': 0,
+    'basic': 1,
+    'premium': 2,
+    'pro': 3,
+    'business level 1': 4,
+    'business level 2': 5,
+    'business elite': 6,
+    'business pro': 6
+  };
+
+  // Determine if this is a downgrade
+  const currentPlanTier = currentPlan ? (planTiers[currentPlan.toLowerCase()] || 0) : 0;
+  const targetPlanTier = planTiers[plan.name.toLowerCase()] || 0;
+  const isDowngrade = !isCurrentPlan && currentPlan && targetPlanTier < currentPlanTier;
 
   // Calculate break even days for paid plans
   const breakEvenDays = plan.name !== 'free' && plan.price > 0 && plan.earning_per_task > 0 && plan.daily_task_limit > 0
@@ -334,15 +353,20 @@ export function PlanCard({
               )}
 
               <Button
-                className="w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 hover:scale-105 hover:shadow-xl touch-manipulation"
-                onClick={() => onUpgradeClick(plan)}
+                className={`w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation ${
+                  isDowngrade 
+                    ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none' 
+                    : 'hover:scale-105 hover:shadow-xl'
+                }`}
+                onClick={() => !isDowngrade && onUpgradeClick(plan)}
                 disabled={
                   !hasProfile ||
                   isCurrentPlan || 
                   upgrading || 
                   isInsufficientBalance ||
-                  plan.name === "free"
+                  isDowngrade
                 }
+                variant={isDowngrade ? "secondary" : "default"}
               >
                 {upgrading ? (
                   <>
@@ -351,7 +375,7 @@ export function PlanCard({
                   </>
                 ) : isCurrentPlan ? (
                   "Current Plan"
-                ) : plan.name === "free" ? (
+                ) : isDowngrade ? (
                   "Cannot Downgrade"
                 ) : !hasProfile ? (
                   "Loading..."
@@ -573,15 +597,20 @@ export function PlanCard({
           </div>
         )}
         <Button
-          className="w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 hover:scale-105 hover:shadow-xl touch-manipulation"
-          onClick={() => onUpgradeClick(plan)}
+          className={`w-full h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation ${
+            isDowngrade 
+              ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none' 
+              : 'hover:scale-105 hover:shadow-xl'
+          }`}
+          onClick={() => !isDowngrade && onUpgradeClick(plan)}
           disabled={
             !hasProfile ||
             isCurrentPlan || 
             upgrading || 
             isInsufficientBalance ||
-            plan.name === "free"
+            isDowngrade
           }
+          variant={isDowngrade ? "secondary" : "default"}
         >
           {upgrading ? (
             <>
@@ -590,7 +619,7 @@ export function PlanCard({
             </>
           ) : isCurrentPlan ? (
             "Current Plan"
-          ) : plan.name === "free" ? (
+          ) : isDowngrade ? (
             "Cannot Downgrade"
           ) : !hasProfile ? (
             "Loading..."

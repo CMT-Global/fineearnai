@@ -313,6 +313,7 @@ export default function MembershipPlans() {
         hasProfile={!!profile}
         variant={variant}
         freePlanEarning={freePlanDailyEarning}
+        currentPlan={currentPlan}
       />
     ));
   };
