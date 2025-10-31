@@ -664,17 +664,27 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="deposit-amount">Amount</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="deposit-amount">
+                      Amount ({userCurrency})
+                    </Label>
                     <Input
                       id="deposit-amount"
                       type="number"
-                      placeholder="Enter amount"
+                      placeholder={`Enter amount in ${userCurrency}`}
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="0"
                       step="0.01"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Available: <CurrencyDisplay amountUSD={depositBalance} />
+                      {userCurrency !== 'USD' && depositAmount && parseFloat(depositAmount) > 0 && (
+                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                          ≈ ${convertLocalToUSD(parseFloat(depositAmount)).toFixed(2)} USD
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="deposit-method">Payment Method</Label>
