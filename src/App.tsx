@@ -54,8 +54,8 @@ const CPAYCheckouts = lazy(() => import("@/pages/admin/CPAYCheckouts"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30000, // 30 seconds (data stays fresh)
-      gcTime: 5 * 60 * 1000, // 5 minutes (cache time)
+      staleTime: 5 * 60 * 1000, // 5 minutes (data stays fresh)
+      gcTime: 30 * 60 * 1000, // 30 minutes (cache time)
       refetchOnWindowFocus: false, // Don't refetch on tab switch
       retry: 1, // Retry failed requests once
     },

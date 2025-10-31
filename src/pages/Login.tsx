@@ -9,6 +9,7 @@ import { loginSchema, type LoginFormData } from "@/lib/auth-schema";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Form,
   FormControl,
@@ -21,6 +22,7 @@ import {
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const referralCode = searchParams.get("ref");
@@ -81,6 +83,36 @@ const Login = () => {
         supabase.functions.invoke("track-user-login", {
           body: { userId: session.user.id }
         }).catch(err => console.error("Failed to track login:", err));
+        
+        // Prefetch profile data immediately after login
+        queryClient.prefetchQuery({
+          queryKey: ['profile', session.user.id],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (error) throw error;
+            
+            // Cache in localStorage for instant future loads
+            try {
+              const cacheData = {
+                userId: session.user.id,
+                data,
+                timestamp: Date.now(),
+                version: '1.0'
+              };
+              localStorage.setItem(`fineearn_profile_cache_${session.user.id}`, JSON.stringify(cacheData));
+            } catch (err) {
+              console.error('Error caching profile:', err);
+            }
+            
+            return data;
+          },
+          staleTime: 5 * 60 * 1000,
+        });
       }
 
       toast({
