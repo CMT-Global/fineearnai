@@ -24,12 +24,49 @@ interface WithdrawalValidation {
   currentTime: string;
   message: string;
   countdownSeconds: number | null; // NEW: Seconds until next window
+  hasBypass: boolean; // PHASE 4: User has daily withdrawal bypass
 }
 
 export const useWithdrawalValidation = () => {
   return useQuery<WithdrawalValidation>({
     queryKey: ['withdrawal-validation'],
     queryFn: async () => {
+      // PHASE 4: Check if user has daily withdrawal bypass enabled
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Fetch user's bypass status
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('allow_daily_withdrawals')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user bypass status:', profileError);
+      }
+
+      const hasBypass = profile?.allow_daily_withdrawals || false;
+
+      // If user has bypass enabled, return immediately with allowed status
+      if (hasBypass) {
+        console.log('✅ VIP Bypass Active: User has daily withdrawal access');
+        return {
+          isAllowed: true,
+          schedule: null,
+          nextWindow: null,
+          currentDay: 0,
+          currentTime: '00:00',
+          message: '✅ VIP Access: Withdrawals available 24/7',
+          countdownSeconds: null,
+          hasBypass: true,
+        };
+      }
+
+      // Standard users: Check schedule as usual
       // Get current UTC day and time
       const { data: currentDay, error: dayError } = await supabase
         .rpc('get_current_utc_day');
@@ -145,6 +182,7 @@ export const useWithdrawalValidation = () => {
         currentTime: currentTime || '00:00',
         message,
         countdownSeconds,
+        hasBypass: false,
       };
     },
     refetchInterval: 60000, // Refetch every minute

@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
@@ -200,8 +201,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
     
-    // Frontend pre-validation
-    if (validation && !validation.isAllowed) {
+    // Frontend pre-validation (skip schedule check for VIP bypass)
+    if (!validation?.hasBypass && validation && !validation.isAllowed) {
       toast.error(validation.message);
       return;
     }
@@ -307,8 +308,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Check withdrawal schedule using the validation hook data
-      if (!validation?.isAllowed) {
+      // Check withdrawal schedule using the validation hook data (skip for VIP bypass)
+      if (!validation?.hasBypass && !validation?.isAllowed) {
         toast.error(
           validation?.message || "Withdrawals are not currently available",
           {
@@ -486,15 +487,35 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                  {validation && !validation.isAllowed && (
+                  {/* PHASE 4: VIP Bypass Badge */}
+                  {validation?.hasBypass && (
+                    <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                        <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                      </div>
+                      <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                        VIP Withdrawal Access
+                        <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+                          Unrestricted
+                        </Badge>
+                      </AlertTitle>
+                      <AlertDescription className="text-amber-800 dark:text-amber-200">
+                        Your account has 24/7 withdrawal access. You can withdraw any day at any time without schedule restrictions.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Standard users: Show schedule restrictions */}
+                  {!validation?.hasBypass && validation && !validation.isAllowed && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{validation.message}</AlertDescription>
                     </Alert>
                   )}
                   
-                  {/* Display countdown timer when withdrawals are closed */}
-                  {validation && !validation.isAllowed && validation.countdownSeconds !== null && validation.nextWindow && (
+                  {/* Display countdown timer when withdrawals are closed (only for non-VIP) */}
+                  {!validation?.hasBypass && validation && !validation.isAllowed && validation.countdownSeconds !== null && validation.nextWindow && (
                     <WithdrawalCountdown
                       secondsUntilNext={validation.countdownSeconds}
                       nextWindowDay={validation.nextWindow.next_day}

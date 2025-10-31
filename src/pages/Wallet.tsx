@@ -4,11 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
+import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
-import { Wallet as WalletIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Wallet as WalletIcon, Crown, Sparkles } from "lucide-react";
 
 const Wallet = () => {
   const { user, loading, signOut } = useAuth();
@@ -17,6 +20,9 @@ const Wallet = () => {
 
   // ✅ NEW: React Query hooks for all data
   const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
+  
+  // PHASE 4: Check withdrawal validation (includes VIP bypass status)
+  const { data: validation } = useWithdrawalValidation();
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -62,6 +68,25 @@ const Wallet = () => {
         </header>
 
         <div className="p-4 lg:p-8 space-y-6">
+          {/* PHASE 4: VIP Withdrawal Access Banner */}
+          {validation?.hasBypass && (
+            <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+              </div>
+              <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                VIP Withdrawal Access Enabled
+                <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+                  24/7 Access
+                </Badge>
+              </AlertTitle>
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                Your account has unrestricted withdrawal access. You can withdraw any day at any time without schedule restrictions.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Wallet Balances */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <WalletCard 
