@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, Clock, TrendingUp, DollarSign, X, ArrowRight, Users } from "lucide-react";
+import { Check, Loader2, Clock, TrendingUp, DollarSign, X, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -130,26 +130,6 @@ export function PlanCard({
     return null;
   };
 
-  // Get social proof badge
-  const getSocialProofBadge = () => {
-    const planNameLower = plan.name.toLowerCase();
-    
-    // Generate dynamic user counts based on plan tier - Only show for Premium
-    let userCount = 0;
-    if (planNameLower.includes('premium')) userCount = 2341;
-    else if (planNameLower.includes('basic')) userCount = 3124;
-    
-    if (userCount > 0) {
-      return (
-        <Badge className="absolute top-4 right-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 text-xs">
-          <Users className="h-3 w-3 mr-1" />
-          {userCount.toLocaleString()}+ users
-        </Badge>
-      );
-    }
-    
-    return null;
-  };
 
   // Horizontal layout for Free Trial card
   if (variant === 'horizontal') {
@@ -395,9 +375,6 @@ export function PlanCard({
       
       {/* Special badges for Premium/Pro plans */}
       {!isCurrentPlan && getSpecialBadge()}
-      
-      {/* Social Proof Badge */}
-      {!isCurrentPlan && plan.name !== 'free' && getSocialProofBadge()}
       
       <CardHeader className="pb-3 sm:pb-6">
         <CardTitle className="text-xl sm:text-2xl">
