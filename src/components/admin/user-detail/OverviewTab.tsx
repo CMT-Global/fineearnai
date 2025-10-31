@@ -39,22 +39,69 @@ export const OverviewTab = ({
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [lastBypassUpdate, setLastBypassUpdate] = useState<{ admin: string; timestamp: string } | null>(null);
   
-  // PHASE 1: Local state for optimistic updates
+  // PHASE 1 & 2: Local state for optimistic updates
   const [currentBypassValue, setCurrentBypassValue] = useState(false);
-  // PHASE 1: Sync local state with profile data
+  
+  // PHASE 2: Smart sync with tri-state guard and fallback fetch
   useEffect(() => {
-    if (userData?.profile) {
-      const dbValue = userData.profile.allow_daily_withdrawals || false;
-      setCurrentBypassValue(dbValue);
+    const syncBypassValue = async () => {
+      if (!userData?.profile?.id) return;
       
-      console.log('🔄 Syncing bypass state with database:', {
+      const aggregatedValue = userData.profile.allow_daily_withdrawals;
+      
+      // Tri-state guard: only proceed if value is explicitly boolean
+      if (typeof aggregatedValue === 'boolean') {
+        setCurrentBypassValue(aggregatedValue);
+        console.log('✅ PHASE 2: Using aggregated value:', {
+          timestamp: new Date().toISOString(),
+          userId: userData.profile.id,
+          username: userData.profile.username,
+          source: 'aggregated_function',
+          value: aggregatedValue
+        });
+        return;
+      }
+      
+      // Fallback: If undefined, fetch directly from profiles table
+      console.log('⚠️ PHASE 2: Aggregated value undefined, fetching fallback:', {
         timestamp: new Date().toISOString(),
         userId: userData.profile.id,
         username: userData.profile.username,
-        databaseValue: dbValue,
-        localStateUpdated: true
+        aggregatedValue,
+        action: 'lightweight_fallback_fetch'
       });
-    }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('allow_daily_withdrawals')
+          .eq('id', userData.profile.id)
+          .single();
+        
+        if (error) throw error;
+        
+        const fallbackValue = data?.allow_daily_withdrawals ?? false;
+        setCurrentBypassValue(fallbackValue);
+        
+        console.log('✅ PHASE 2: Fallback fetch successful:', {
+          timestamp: new Date().toISOString(),
+          userId: userData.profile.id,
+          source: 'direct_profiles_query',
+          value: fallbackValue,
+          rawData: data
+        });
+      } catch (error: any) {
+        console.error('❌ PHASE 2: Fallback fetch failed:', {
+          timestamp: new Date().toISOString(),
+          userId: userData.profile.id,
+          error: error.message,
+          defaultingTo: false
+        });
+        setCurrentBypassValue(false);
+      }
+    };
+    
+    syncBypassValue();
   }, [userData?.profile?.allow_daily_withdrawals, userData?.profile?.id]);
 
   // Fetch last bypass update info
