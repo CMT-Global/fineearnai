@@ -104,30 +104,81 @@ export const OverviewTab = ({
     syncBypassValue();
   }, [userData?.profile?.allow_daily_withdrawals, userData?.profile?.id]);
 
-  // Fetch last bypass update info
+  // PHASE 3: Fetch last bypass update info with two-step safe query
   useEffect(() => {
     const fetchLastBypassUpdate = async () => {
       if (!userData?.profile?.id) return;
       
+      console.log('📋 PHASE 3: Fetching audit log history:', {
+        timestamp: new Date().toISOString(),
+        userId: userData.profile.id,
+        action: 'two_step_safe_query'
+      });
+      
       try {
-        const { data, error } = await supabase
+        // Step 1: Fetch the latest audit log entry (no FK join)
+        const { data: auditLog, error: auditError } = await supabase
           .from('audit_logs')
-          .select('admin_id, created_at, profiles!audit_logs_admin_id_fkey(username)')
+          .select('admin_id, created_at')
           .eq('target_user_id', userData.profile.id)
           .eq('action_type', 'profile_update')
           .like('details', '%withdrawal_bypass_changed%')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (data && !error) {
+        if (auditError) {
+          console.error('❌ PHASE 3: Audit log query failed:', auditError);
+          return;
+        }
+
+        if (!auditLog) {
+          console.log('ℹ️ PHASE 3: No audit log history found');
+          return;
+        }
+
+        console.log('✅ PHASE 3: Audit log found:', {
+          adminId: auditLog.admin_id,
+          createdAt: auditLog.created_at
+        });
+
+        // Step 2: If admin_id exists, fetch the admin's username separately
+        if (auditLog.admin_id) {
+          const { data: adminProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', auditLog.admin_id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error('❌ PHASE 3: Admin profile query failed:', profileError);
+            setLastBypassUpdate({
+              admin: 'Admin',
+              timestamp: auditLog.created_at
+            });
+            return;
+          }
+
+          console.log('✅ PHASE 3: Admin profile found:', {
+            username: adminProfile?.username || 'Admin'
+          });
+
           setLastBypassUpdate({
-            admin: (data.profiles as any)?.username || 'Admin',
-            timestamp: data.created_at
+            admin: adminProfile?.username || 'Admin',
+            timestamp: auditLog.created_at
+          });
+        } else {
+          console.log('ℹ️ PHASE 3: No admin_id in audit log');
+          setLastBypassUpdate({
+            admin: 'System',
+            timestamp: auditLog.created_at
           });
         }
-      } catch (err) {
-        console.log('No bypass update history found');
+      } catch (err: any) {
+        console.error('❌ PHASE 3: Unexpected error:', {
+          error: err.message,
+          stack: err.stack
+        });
       }
     };
 
