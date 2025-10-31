@@ -50,56 +50,60 @@ const Wallet = () => {
       isLoading={isProfileLoading || !profile}
       loadingText="Loading wallet..."
     >
-      {/* Header */}
-      <header className="bg-card border-b px-4 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
-              <WalletIcon className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Wallet</h1>
-              <p className="text-muted-foreground">Manage your deposits, earnings, and transactions</p>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-4 lg:p-8 space-y-6">
-          {/* PHASE 4: VIP Withdrawal Access Banner */}
-          {validation?.hasBypass && (
-            <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
-              <div className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+      {profile && (
+        <>
+          {/* Header */}
+          <header className="bg-card border-b px-4 lg:px-8 py-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
+                  <WalletIcon className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">Wallet</h1>
+                  <p className="text-muted-foreground">Manage your deposits, earnings, and transactions</p>
+                </div>
               </div>
-              <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                VIP Withdrawal Access Enabled
-                <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
-                  24/7 Access
-                </Badge>
-              </AlertTitle>
-              <AlertDescription className="text-amber-800 dark:text-amber-200">
-                Your account has unrestricted withdrawal access. You can withdraw any day at any time without schedule restrictions.
-              </AlertDescription>
-            </Alert>
-          )}
+            </header>
 
-          {/* Wallet Balances */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <WalletCard 
-              depositBalance={Number(profile.deposit_wallet_balance)}
-              earningsBalance={Number(profile.earnings_wallet_balance)}
-              onBalanceUpdate={refetchProfile}
-            />
-          </div>
+            <div className="p-4 lg:p-8 space-y-6">
+              {/* PHASE 4: VIP Withdrawal Access Banner */}
+              {validation?.hasBypass && (
+                <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                  </div>
+                  <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                    VIP Withdrawal Access Enabled
+                    <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+                      24/7 Access
+                    </Badge>
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-800 dark:text-amber-200">
+                    Your account has unrestricted withdrawal access. You can withdraw any day at any time without schedule restrictions.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-          {/* Recent Transactions */}
-          <RecentTransactionsCard 
-            userId={user?.id || ''} 
-            maxItems={10} 
-            showPagination={true} 
-            title="Recent Transactions"
-          />
-        </div>
+              {/* Wallet Balances */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <WalletCard 
+                  depositBalance={Number(profile.deposit_wallet_balance)}
+                  earningsBalance={Number(profile.earnings_wallet_balance)}
+                  onBalanceUpdate={refetchProfile}
+                />
+              </div>
+
+              {/* Recent Transactions */}
+              <RecentTransactionsCard 
+                userId={user?.id || ''} 
+                maxItems={10} 
+                showPagination={true} 
+                title="Recent Transactions"
+              />
+            </div>
+        </>
+      )}
     </PageLayout>
   );
 };
