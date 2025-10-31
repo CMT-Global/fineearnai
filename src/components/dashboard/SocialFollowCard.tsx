@@ -9,7 +9,7 @@ export const SocialFollowCard = () => {
       url: "https://facebook.com/fineearn",
       icon: Facebook,
       color: "bg-[#1877F2] hover:bg-[#0d65d9]",
-      description: "Join 10k+ members"
+      description: "Join other members"
     },
     {
       name: "Instagram", 
@@ -23,7 +23,7 @@ export const SocialFollowCard = () => {
       url: "https://t.me/fineearn",
       icon: Send,
       color: "bg-[#0088cc] hover:bg-[#0077b5]",
-      description: "Real-time support"
+      description: "Get Daily Updates"
     },
     {
       name: "TikTok",
