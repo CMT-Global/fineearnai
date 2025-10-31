@@ -44,25 +44,60 @@ function UserDetailContent() {
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, refetch } = useUserDetail(userId || '');
 
-  // PHASE 1: Enhanced user update handler with proper invalidation
+  // PHASE 5: Enhanced query invalidation with comprehensive cache management
   const handleUserUpdated = async () => {
-    console.log('🔄 handleUserUpdated triggered:', {
+    console.log('🔄 PHASE 5: handleUserUpdated triggered:', {
       timestamp: new Date().toISOString(),
       userId,
-      action: 'invalidating_cache_and_refetching'
+      action: 'comprehensive_cache_invalidation'
     });
 
-    // Wait for database to commit
+    // Wait for database to commit (200ms proven sufficient)
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // Invalidate all related queries
-    await queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+    console.log('📦 PHASE 5: Invalidating related query caches:', {
+      timestamp: new Date().toISOString(),
+      queries: [
+        'user-detail (primary)',
+        'users (list cache)',
+        'user-transactions',
+        'user-referrals',
+        'admin-stats (if affected)'
+      ]
+    });
+
+    // Invalidate all queries related to this user
+    await Promise.all([
+      // Primary user detail cache
+      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] }),
+      
+      // Users list cache (in case user appears in listings)
+      queryClient.invalidateQueries({ queryKey: ['users'] }),
+      
+      // User-specific transaction cache
+      queryClient.invalidateQueries({ queryKey: ['transactions', userId] }),
+      
+      // User-specific referral cache
+      queryClient.invalidateQueries({ queryKey: ['referrals', userId] }),
+      
+      // Admin dashboard stats (might include this user's data)
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] }),
+      
+      // Withdrawal requests if they exist
+      queryClient.invalidateQueries({ queryKey: ['withdrawal-requests'] }),
+    ]);
     
-    // Force hard refetch
+    console.log('✅ PHASE 5: All related caches invalidated:', {
+      timestamp: new Date().toISOString(),
+      action: 'forcing_refetch'
+    });
+
+    // Force hard refetch of primary query
     await refetch();
 
-    console.log('✅ Cache invalidated and refetch complete:', {
-      timestamp: new Date().toISOString()
+    console.log('✅ PHASE 5: Cache invalidation and refetch complete:', {
+      timestamp: new Date().toISOString(),
+      status: 'success'
     });
   };
 
