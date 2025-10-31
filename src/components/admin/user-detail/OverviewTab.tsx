@@ -38,6 +38,25 @@ export const OverviewTab = ({
   const [isTogglingBypass, setIsTogglingBypass] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [lastBypassUpdate, setLastBypassUpdate] = useState<{ admin: string; timestamp: string } | null>(null);
+  
+  // PHASE 1: Local state for optimistic updates
+  const [currentBypassValue, setCurrentBypassValue] = useState(false);
+  // PHASE 1: Sync local state with profile data
+  useEffect(() => {
+    if (userData?.profile) {
+      const dbValue = userData.profile.allow_daily_withdrawals || false;
+      setCurrentBypassValue(dbValue);
+      
+      console.log('🔄 Syncing bypass state with database:', {
+        timestamp: new Date().toISOString(),
+        userId: userData.profile.id,
+        username: userData.profile.username,
+        databaseValue: dbValue,
+        localStateUpdated: true
+      });
+    }
+  }, [userData?.profile?.allow_daily_withdrawals, userData?.profile?.id]);
+
   // Fetch last bypass update info
   useEffect(() => {
     const fetchLastBypassUpdate = async () => {
@@ -92,28 +111,51 @@ export const OverviewTab = ({
   const referralDetails = userData.referral_details;
   const navigate = useNavigate();
 
-  // PHASE 3: Handler for toggling daily withdrawal bypass
+  // PHASE 1: Handler for toggling daily withdrawal bypass with optimistic update
   const handleToggleDailyWithdrawals = async (enabled: boolean) => {
+    console.log('🎯 Toggle Initiated:', {
+      timestamp: new Date().toISOString(),
+      userId: profile.id,
+      username: profile.username,
+      previousLocalState: currentBypassValue,
+      previousDatabaseValue: profile.allow_daily_withdrawals,
+      requestedValue: enabled,
+      action: enabled ? 'ENABLE' : 'DISABLE'
+    });
+
     // Show confirmation dialog when disabling (security-critical action)
-    if (!enabled && profile.allow_daily_withdrawals) {
+    if (!enabled && currentBypassValue) {
+      console.log('⚠️ Showing confirmation dialog for DISABLE action');
       setShowDisableDialog(true);
       return;
     }
+
+    // PHASE 1: Optimistic update - immediately update UI
+    setCurrentBypassValue(enabled);
+    console.log('⚡ Optimistic update applied:', {
+      newLocalState: enabled,
+      uiUpdated: true
+    });
 
     await performBypassToggle(enabled);
   };
 
   const performBypassToggle = async (enabled: boolean) => {
+    // PHASE 1: Save previous value for rollback on error
+    const previousValue = currentBypassValue;
     setIsTogglingBypass(true);
     
+    console.log('🚀 API Call Starting:', {
+      timestamp: new Date().toISOString(),
+      userId: profile.id,
+      username: profile.username,
+      previousLocalState: previousValue,
+      databaseValue: profile.allow_daily_withdrawals,
+      targetValue: enabled,
+      isLoading: true
+    });
+    
     try {
-      console.log('Toggling daily withdrawal bypass:', { 
-        userId: profile.id, 
-        username: profile.username,
-        currentValue: profile.allow_daily_withdrawals,
-        newValue: enabled 
-      });
-
       const { data, error } = await supabase.functions.invoke('update-user-profile', {
         body: {
           userId: profile.id,
@@ -125,6 +167,13 @@ export const OverviewTab = ({
 
       if (error) throw error;
 
+      console.log('✅ API Call Successful:', {
+        timestamp: new Date().toISOString(),
+        userId: profile.id,
+        newValue: enabled,
+        response: data
+      });
+
       // Enhanced toast with larger text and longer duration
       toast({
         title: enabled ? "✅ VIP Bypass Enabled" : "🔒 Bypass Disabled",
@@ -135,20 +184,52 @@ export const OverviewTab = ({
         duration: 8000, // 8 seconds
       });
 
-      // Refetch user data to show updated status
+      // PHASE 1: Force query invalidation and refetch
+      console.log('🔄 Triggering data refetch...');
+      await new Promise(resolve => setTimeout(resolve, 200)); // Allow DB to commit
       onUserUpdated();
       
     } catch (error: any) {
-      console.error('Error toggling daily withdrawal bypass:', error);
+      // PHASE 1: Rollback optimistic update on error
+      console.error('❌ API Call Failed - Rolling back:', {
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        sqlState: error.code,
+        rollingBackTo: previousValue
+      });
+      
+      setCurrentBypassValue(previousValue);
+      
       toast({
-        title: "❌ Error",
-        description: error.message || "Failed to update withdrawal bypass setting. Please try again.",
+        title: "❌ Update Failed",
+        description: (
+          <div className="space-y-2">
+            <p>{error.message || "Failed to update withdrawal bypass setting."}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setCurrentBypassValue(enabled);
+                performBypassToggle(enabled);
+              }}
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          </div>
+        ),
         variant: "destructive",
-        duration: 8000,
+        duration: 10000,
       });
     } finally {
       setIsTogglingBypass(false);
       setShowDisableDialog(false);
+      
+      console.log('🏁 Toggle Operation Complete:', {
+        timestamp: new Date().toISOString(),
+        finalLocalState: currentBypassValue,
+        isLoading: false
+      });
     }
   };
 
@@ -504,16 +585,16 @@ export const OverviewTab = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Enhanced Toggle Switch with Clear Visual Feedback */}
+          {/* PHASE 1: Enhanced Toggle Switch with Clear Visual Feedback + Loading State */}
           <div 
             className={`relative p-5 border-2 rounded-lg transition-all duration-300 ${
-              profile.allow_daily_withdrawals 
+              currentBypassValue 
                 ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-500 dark:border-green-600 shadow-lg shadow-green-100 dark:shadow-green-900/20' 
                 : 'bg-muted/30 border-muted-foreground/20'
             }`}
           >
             {/* Pulsing indicator for active bypass */}
-            {profile.allow_daily_withdrawals && (
+            {currentBypassValue && (
               <div className="absolute top-3 right-3">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -526,10 +607,17 @@ export const OverviewTab = ({
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2">
                   <Label className="text-lg font-bold">Allow Daily Withdrawals</Label>
-                  {profile.allow_daily_withdrawals && (
+                  {currentBypassValue && (
                     <Badge variant="default" className="bg-green-600 hover:bg-green-700 gap-1">
                       <Crown className="h-3 w-3" />
                       VIP ACCESS
+                    </Badge>
+                  )}
+                  {/* PHASE 1: Loading Badge */}
+                  {isTogglingBypass && (
+                    <Badge variant="outline" className="animate-pulse gap-1">
+                      <Activity className="h-3 w-3 animate-spin" />
+                      Updating...
                     </Badge>
                   )}
                 </div>
@@ -542,23 +630,25 @@ export const OverviewTab = ({
                 {/* Visual Status Label */}
                 <div className="text-right">
                   <div className={`text-sm font-bold ${
-                    profile.allow_daily_withdrawals 
+                    currentBypassValue 
                       ? 'text-green-700 dark:text-green-400' 
                       : 'text-muted-foreground'
                   }`}>
-                    {profile.allow_daily_withdrawals ? 'ENABLED' : 'DISABLED'}
+                    {currentBypassValue ? 'ENABLED' : 'DISABLED'}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {profile.allow_daily_withdrawals ? 'Active Now' : 'Standard Mode'}
+                    {currentBypassValue ? 'Active Now' : 'Standard Mode'}
                   </div>
                 </div>
                 
-                {/* Toggle Switch */}
+                {/* PHASE 1: Toggle Switch bound to local state */}
                 <Switch
-                  checked={profile.allow_daily_withdrawals || false}
+                  checked={currentBypassValue}
                   onCheckedChange={handleToggleDailyWithdrawals}
                   disabled={isTogglingBypass}
-                  className="data-[state=checked]:bg-green-600 scale-125"
+                  className={`data-[state=checked]:bg-green-600 scale-125 transition-opacity ${
+                    isTogglingBypass ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 />
               </div>
             </div>
@@ -567,7 +657,7 @@ export const OverviewTab = ({
             <div className="mt-4 pt-4 border-t border-current/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {profile.allow_daily_withdrawals ? (
+                  {currentBypassValue ? (
                     <>
                       <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                       <span className="text-sm font-semibold text-green-700 dark:text-green-400">

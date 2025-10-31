@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ function UserDetailContent() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { useUserDetail } = useUserManagement();
+  const queryClient = useQueryClient();
 
   // Dialog states
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
@@ -41,6 +43,28 @@ function UserDetailContent() {
 
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, refetch } = useUserDetail(userId || '');
+
+  // PHASE 1: Enhanced user update handler with proper invalidation
+  const handleUserUpdated = async () => {
+    console.log('🔄 handleUserUpdated triggered:', {
+      timestamp: new Date().toISOString(),
+      userId,
+      action: 'invalidating_cache_and_refetching'
+    });
+
+    // Wait for database to commit
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Invalidate all related queries
+    await queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+    
+    // Force hard refetch
+    await refetch();
+
+    console.log('✅ Cache invalidated and refetch complete:', {
+      timestamp: new Date().toISOString()
+    });
+  };
 
   // Master login generation
   const handleGenerateMasterLogin = async () => {
@@ -155,7 +179,7 @@ function UserDetailContent() {
               onBan={() => setBanDialogOpen(true)}
               onResetLimits={() => toast.info("Reset limits coming soon")}
               onMasterLogin={handleGenerateMasterLogin}
-              onUserUpdated={refetch}
+              onUserUpdated={handleUserUpdated}
             />
           </TabsContent>
 
