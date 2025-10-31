@@ -8,6 +8,7 @@ import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgr
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
+import { SocialFollowCard } from "@/components/dashboard/SocialFollowCard";
 import { 
   Crown, 
   Sparkles,
@@ -268,6 +269,11 @@ const Dashboard = () => {
               View Details
             </Button>
           </Card>
+        </div>
+
+        {/* Social Media Follow Section */}
+        <div className="px-4 lg:px-8 pb-6">
+          <SocialFollowCard />
         </div>
 
         {/* Two Column Layout */}
