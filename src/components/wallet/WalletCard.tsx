@@ -501,7 +501,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         </Badge>
                       </AlertTitle>
                       <AlertDescription className="text-amber-800 dark:text-amber-200">
-                        Your account has 24/7 withdrawal access. You can withdraw any day at any time without schedule restrictions.
+                        Your account has Daily withdrawals access. You can withdraw any day at any time without schedule restrictions.
                       </AlertDescription>
                     </Alert>
                   )}
