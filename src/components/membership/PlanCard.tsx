@@ -56,20 +56,31 @@ export function PlanCard({
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
 
   // Plan tier hierarchy for downgrade detection
+  // Supports both display names (with spaces) and database names (with underscores)
   const planTiers: Record<string, number> = {
     'free': 0,
     'basic': 1,
     'premium': 2,
     'pro': 3,
+    'business_level_1': 4,
     'business level 1': 4,
+    'business_level_2': 5,
     'business level 2': 5,
+    'business_elite': 6,
     'business elite': 6,
+    'business_pro': 6,
     'business pro': 6
   };
 
-  // Determine if this is a downgrade
-  const currentPlanTier = currentPlan ? (planTiers[currentPlan.toLowerCase()] || 0) : 0;
-  const targetPlanTier = planTiers[plan.name.toLowerCase()] || 0;
+  // Normalize plan name for comparison (handles spaces, underscores, case)
+  const normalizePlanName = (name: string) => 
+    name.toLowerCase().trim().replace(/\s+/g, '_');
+
+  // Determine if this is a downgrade using normalized plan names
+  const currentPlanNormalized = currentPlan ? normalizePlanName(currentPlan) : '';
+  const targetPlanNormalized = normalizePlanName(plan.name);
+  const currentPlanTier = planTiers[currentPlanNormalized] || 0;
+  const targetPlanTier = planTiers[targetPlanNormalized] || 0;
   const isDowngrade = !isCurrentPlan && currentPlan && targetPlanTier < currentPlanTier;
 
   // Calculate break even days for paid plans
