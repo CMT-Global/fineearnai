@@ -29,6 +29,46 @@ interface PaymentProcessor {
   config: any;
 }
 
+// Virtual withdrawal method options - all map to actual "Crypto Payout" processor
+const VIRTUAL_WITHDRAWAL_METHODS = [
+  {
+    id: 'gcrypto',
+    displayName: 'Gcrypto',
+    description: 'Withdraw to your Gcrypto wallet',
+    icon: '💳',
+  },
+  {
+    id: 'binance',
+    displayName: 'Binance',
+    description: 'Withdraw to your Binance account',
+    icon: '🔶',
+  },
+  {
+    id: 'coinsph',
+    displayName: 'Coins.Ph',
+    description: 'Withdraw to your Coins.Ph wallet',
+    icon: '🪙',
+  },
+  {
+    id: 'bybit',
+    displayName: 'ByBit',
+    description: 'Withdraw to your ByBit account',
+    icon: '📊',
+  },
+  {
+    id: 'coinbase',
+    displayName: 'CoinBase',
+    description: 'Withdraw to your CoinBase wallet',
+    icon: '🔷',
+  },
+  {
+    id: 'kucoin',
+    displayName: 'KuCoin',
+    description: 'Withdraw to your KuCoin account',
+    icon: '🟢',
+  },
+];
+
 interface WalletCardProps {
   depositBalance: number;
   earningsBalance: number;
@@ -49,6 +89,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [depositProcessors, setDepositProcessors] = useState<PaymentProcessor[]>([]);
   const [withdrawalProcessors, setWithdrawalProcessors] = useState<PaymentProcessor[]>([]);
   const [loadingProcessors, setLoadingProcessors] = useState(true);
+  const [actualCryptoProcessor, setActualCryptoProcessor] = useState<PaymentProcessor | null>(null);
   
   // CPAY iframe state
   const [showCpayIframe, setShowCpayIframe] = useState(false);
@@ -93,6 +134,22 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       setDepositProcessors(deposits);
       setWithdrawalProcessors(withdrawals);
+      
+      // ✅ NEW: Identify the actual "Crypto Payout" processor
+      // This will be used as the backend processor for all virtual methods
+      const cryptoProcessor = withdrawals.find(p => {
+        const config = p.config as any;
+        return p.name.toLowerCase().includes('crypto') || 
+          p.name.toLowerCase().includes('payout') ||
+          config?.display_name?.toLowerCase().includes('crypto');
+      });
+      
+      if (cryptoProcessor) {
+        setActualCryptoProcessor(cryptoProcessor);
+        console.log('✅ Crypto processor identified:', cryptoProcessor.name);
+      } else {
+        console.warn('⚠️ No crypto processor found. Virtual methods will not work.');
+      }
     } catch (error) {
       console.error("Error loading payment processors:", error);
       toast.error("Failed to load payment methods");
@@ -415,8 +472,27 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
 
       // All validations passed, proceed with withdrawal request
-      // Validate processor selection
-      const selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+      // ✅ NEW: Map virtual method to actual processor
+      const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+      
+      let selectedProcessor: PaymentProcessor | undefined;
+      let displayMethodName: string;
+      
+      if (virtualMethod && actualCryptoProcessor) {
+        // User selected a virtual method - use the actual crypto processor behind the scenes
+        selectedProcessor = actualCryptoProcessor;
+        displayMethodName = virtualMethod.displayName; // Store user-friendly name for tracking
+        console.log('🎭 Virtual method selected:', {
+          virtualMethodId: virtualMethod.id,
+          displayName: virtualMethod.displayName,
+          actualProcessorId: actualCryptoProcessor.id,
+          actualProcessorName: actualCryptoProcessor.name
+        });
+      } else {
+        // User selected an actual processor (fallback for backwards compatibility)
+        selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+        displayMethodName = withdrawMethod;
+      }
       
       if (!selectedProcessor) {
         toast.error("Please select a valid withdrawal method");
@@ -426,6 +502,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       console.log('🔄 Processing withdrawal with processor:', {
         id: selectedProcessor.id,
         name: selectedProcessor.name,
+        displayMethodName,
         feeFixed: selectedProcessor.fee_fixed,
         feePercentage: selectedProcessor.fee_percentage,
         amountUSD,
@@ -436,9 +513,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount: amountUSD,
-          paymentMethod: withdrawMethod,
+          paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
           payoutAddress: accountDetails,
-          paymentProcessorId: selectedProcessor.id, // UUID passed correctly
+          paymentProcessorId: selectedProcessor.id, // ✅ Use actual processor ID for fees/processing
         },
       });
 
@@ -674,8 +751,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </div>
                   
                   {/* Withdrawal Fee Breakdown */}
-                  {withdrawAmount && withdrawMethod && withdrawalProcessors.find(p => p.name === withdrawMethod) && parseFloat(withdrawAmount) > 0 && (() => {
-                    const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+                  {withdrawAmount && withdrawMethod && parseFloat(withdrawAmount) > 0 && (() => {
+                    // ✅ Find processor - could be virtual or actual
+                    const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                    const processor = virtualMethod && actualCryptoProcessor 
+                      ? actualCryptoProcessor 
+                      : withdrawalProcessors.find(p => p.name === withdrawMethod);
+                    
+                    if (!processor) return null;
+                    
                     const amountLocal = parseFloat(withdrawAmount);
                     
                     // Convert local currency amount to USD for fee calculations
@@ -731,7 +815,17 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select withdrawal method"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {withdrawalProcessors.length === 0 ? (
+                        {/* ✅ Show virtual methods if crypto processor exists */}
+                        {actualCryptoProcessor && VIRTUAL_WITHDRAWAL_METHODS.length > 0 ? (
+                          VIRTUAL_WITHDRAWAL_METHODS.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{method.icon}</span>
+                                <span>{method.displayName}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : withdrawalProcessors.length === 0 ? (
                           <SelectItem value="none" disabled>No withdrawal methods available</SelectItem>
                         ) : (
                           withdrawalProcessors.map((processor) => (
@@ -742,27 +836,71 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         )}
                       </SelectContent>
                     </Select>
-                    {withdrawMethod && withdrawalProcessors.find(p => p.name === withdrawMethod) && (
-                      <Alert className="mt-2">
-                        <InfoIcon className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          {withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.description}
-                          <br />
-                          <strong>Fee:</strong> ${withdrawalProcessors.find(p => p.name === withdrawMethod)?.fee_fixed || 0}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    {/* ✅ Display method-specific description and fee */}
+                    {withdrawMethod && (() => {
+                      const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                      const processor = virtualMethod && actualCryptoProcessor 
+                        ? actualCryptoProcessor 
+                        : withdrawalProcessors.find(p => p.name === withdrawMethod);
+                      
+                      if (!processor) return null;
+                      
+                      return (
+                        <Alert className="mt-2">
+                          <InfoIcon className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            {virtualMethod ? virtualMethod.description : processor.config?.description}
+                            <br />
+                            <strong>Fee:</strong> ${processor.fee_fixed || 0}
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()}
                   </div>
                   <div>
                     <Label htmlFor="account-details">
-                      {withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_label || "Account Details"}
+                      {(() => {
+                        const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                        if (virtualMethod) {
+                          // Method-specific labels for virtual methods
+                          const labels: Record<string, string> = {
+                            'gcrypto': 'Gcrypto Wallet Address',
+                            'binance': 'Binance Account Details',
+                            'coinsph': 'Coins.Ph Wallet Address',
+                            'bybit': 'ByBit Account Details',
+                            'coinbase': 'CoinBase Wallet Address',
+                            'kucoin': 'KuCoin Account Details',
+                          };
+                          return labels[virtualMethod.id] || 'Account Details';
+                        }
+                        
+                        // Fallback to actual processor label
+                        const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+                        return processor?.config?.address_label || "Account Details";
+                      })()}
                     </Label>
                     <Textarea
                       id="account-details"
-                      placeholder={
-                        withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_placeholder ||
-                        "Enter your USDT TRC20( Tron Network) Details. You can copy the USDT address directly from any crypto wallet, Gcrypto, Binance account or any exchange then paste here. Your Earnings will be sent to this address, then you can cashout to your local bank or mobile money."
-                      }
+                      placeholder={(() => {
+                        const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                        if (virtualMethod) {
+                          // Method-specific placeholders for virtual methods
+                          const placeholders: Record<string, string> = {
+                            'gcrypto': 'Enter your Gcrypto USDT TRC20 wallet address. Log into your Gcrypto app, copy your USDT address, and paste it here.',
+                            'binance': 'Enter your Binance USDT TRC20 deposit address. Go to Binance > Wallet > Deposit > USDT (TRC20), copy the address, and paste it here.',
+                            'coinsph': 'Enter your Coins.Ph USDT wallet address. Open Coins.Ph app, go to your crypto wallet, copy your USDT address, and paste it here.',
+                            'bybit': 'Enter your ByBit USDT TRC20 deposit address. Go to ByBit > Assets > Deposit > USDT (TRC20), copy the address, and paste it here.',
+                            'coinbase': 'Enter your CoinBase USDT wallet address. Open CoinBase, go to your USDT wallet, copy the receive address, and paste it here.',
+                            'kucoin': 'Enter your KuCoin USDT TRC20 deposit address. Go to KuCoin > Assets > Deposit > USDT (TRC20), copy the address, and paste it here.',
+                          };
+                          return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
+                        }
+                        
+                        // Fallback to actual processor placeholder or default
+                        const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+                        return processor?.config?.address_placeholder || 
+                          "Enter your USDT TRC20( Tron Network) Details. You can copy the USDT address directly from any crypto wallet, Gcrypto, Binance account or any exchange then paste here. Your Earnings will be sent to this address, then you can cashout to your local bank or mobile money.";
+                      })()}
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
                       rows={3}
