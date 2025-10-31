@@ -294,18 +294,29 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount <= 0) {
+    const amountLocal = parseFloat(depositAmount);
+    if (isNaN(amountLocal) || amountLocal <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
 
-    // Global deposit limits (prevents extreme values before processor checks)
+    // ✅ Convert local currency to USD for backend processing
+    const amountUSD = convertLocalToUSD(amountLocal);
+    
+    console.log(`💰 Deposit conversion: ${amountLocal} ${userCurrency} → $${amountUSD.toFixed(2)} USD`, {
+      inputAmount: amountLocal,
+      inputCurrency: userCurrency,
+      exchangeRate,
+      convertedUSD: amountUSD,
+      timestamp: new Date().toISOString()
+    });
+
+    // Global deposit limits (in USD after conversion)
     const MIN_DEPOSIT = 1;
     const MAX_DEPOSIT = 10000;
     
-    if (amount < MIN_DEPOSIT || amount > MAX_DEPOSIT) {
-      toast.error(`Deposit amount must be between $${MIN_DEPOSIT} and $${MAX_DEPOSIT}`);
+    if (amountUSD < MIN_DEPOSIT || amountUSD > MAX_DEPOSIT) {
+      toast.error(`Deposit amount must be between $${MIN_DEPOSIT} and $${MAX_DEPOSIT} USD`);
       return;
     }
 
@@ -323,7 +334,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         virtualMethodId: virtualMethod.id,
         displayName: virtualMethod.displayName,
         actualProcessorId: actualDepositProcessor.id,
-        actualProcessorName: actualDepositProcessor.name
+        actualProcessorName: actualDepositProcessor.name,
+        amountLocal: `${amountLocal} ${userCurrency}`,
+        amountUSD: `$${amountUSD.toFixed(2)} USD`
       });
     } else {
       // User selected an actual processor (fallback for backwards compatibility)
@@ -336,8 +349,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
-    if (amount < selectedProcessor.min_amount || amount > selectedProcessor.max_amount) {
-      toast.error(`Amount must be between $${selectedProcessor.min_amount} and $${selectedProcessor.max_amount}`);
+    // ✅ Validate against processor limits using USD amount
+    if (amountUSD < selectedProcessor.min_amount || amountUSD > selectedProcessor.max_amount) {
+      toast.error(`Amount must be between $${selectedProcessor.min_amount} and $${selectedProcessor.max_amount} USD`);
       return;
     }
 
@@ -348,7 +362,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       if ((selectedProcessor.config as any)?.processor === 'cpay') {
         const { data, error } = await supabase.functions.invoke("cpay-deposit", {
           body: { 
-            amount, 
+            amount: amountUSD, // ✅ Send USD amount to backend
             currency: (selectedProcessor.config as any).currency || 'USDT',
             processorId: selectedProcessor.id // ✅ Use actual processor ID
           },
@@ -361,7 +375,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           setCpayCheckoutUrl(data.checkout_url);
           setCpayTransactionId(data.transaction_id);
           setCpayOrderId(data.order_id);
-          setCpayAmount(amount);
+          setCpayAmount(amountUSD); // ✅ Store USD amount
           setCpayCurrency(data.currency || 'USDT');
           setDepositDialogOpen(false); // Close deposit dialog
           setShowCpayIframe(true); // Show iframe
@@ -373,7 +387,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         // Legacy deposit flow
         const { data, error } = await supabase.functions.invoke("deposit", {
           body: {
-            amount,
+            amount: amountUSD, // ✅ Send USD amount to backend
             paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
             gatewayTransactionId: `TXN-${Date.now()}`,
           },
