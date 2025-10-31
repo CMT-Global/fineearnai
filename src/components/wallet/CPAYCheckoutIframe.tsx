@@ -54,16 +54,34 @@ export const CPAYCheckoutIframe = ({
       });
 
       try {
-        const { data, error } = await supabase
+        // First check if original transaction was updated
+        const { data: originalTxn, error: originalError } = await supabase
           .from("transactions")
           .select("status, amount, new_balance")
           .eq("id", transactionId)
           .single();
 
-        if (error) {
-          console.error("[CPAY-IFRAME] Error polling transaction:", error);
+        if (originalError) {
+          console.error("[CPAY-IFRAME] Error polling transaction:", originalError);
           return;
         }
+
+        // Check for new completed transaction created by webhook
+        const { data: newTxnArray, error: newError } = await supabase
+          .from("transactions")
+          .select("status, amount, new_balance, metadata")
+          .eq("status", "completed")
+          .eq("payment_gateway", "cpay")
+          .contains("metadata", { original_transaction_id: transactionId })
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        // Use the new transaction if it exists and is completed, otherwise use original
+        const data = (newTxnArray && newTxnArray.length > 0) 
+          ? newTxnArray[0] 
+          : originalTxn;
+        
+        const wasNewTransaction = newTxnArray && newTxnArray.length > 0;
 
         if (data.status === "completed") {
           setShowingConfirmation(true); // ✅ Show our loading state immediately
@@ -77,6 +95,7 @@ export const CPAYCheckoutIframe = ({
             amount: data.amount,
             currency,
             newBalance: data.new_balance,
+            wasNewTransaction,
             timestamp: new Date().toISOString()
           });
           
