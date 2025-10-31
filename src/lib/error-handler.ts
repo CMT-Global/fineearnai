@@ -12,6 +12,18 @@ export const handleError = (error: any, context?: string) => {
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
+    } else if (error.message.includes("duplicate key") && error.message.includes("username")) {
+      message = "This username is already taken. Please choose a different one.";
+    } else if (error.message.includes("duplicate key") && error.message.includes("profiles_username_key")) {
+      message = "This username is already taken. Please choose a different one.";
+    } else if (error.message.includes("USERNAME_TAKEN")) {
+      // Extract username from error message if available
+      const usernameMatch = error.message.match(/Username "([^"]+)" is already registered/);
+      if (usernameMatch) {
+        message = `Username "${usernameMatch[1]}" is already taken. Please choose a different one.`;
+      } else {
+        message = "This username is already taken. Please choose a different one.";
+      }
     } else if (error.message.includes("network") || error.message.includes("fetch")) {
       message = "Network error. Please check your connection and try again.";
     } else if (error.message.includes("permission") || error.message.includes("policy")) {

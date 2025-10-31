@@ -189,11 +189,35 @@ const Signup = () => {
       setTimeout(() => navigate("/dashboard"), 2000);
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check for specific duplicate username error
+      const errorMessage = error?.message || "";
+      const isUsernameConflict = 
+        errorMessage.includes("duplicate key") && 
+        (errorMessage.includes("username") || errorMessage.includes("profiles_username_key"));
+      
+      const isUsernameTakenError = errorMessage.includes("USERNAME_TAKEN");
+      
+      if (isUsernameConflict || isUsernameTakenError) {
+        toast({
+          title: "Username already exists",
+          description: `The username "${data.username}" is already taken. Please try another.`,
+          variant: "destructive",
+        });
+        
+        // Focus the username field for user to retry
+        const usernameField = document.querySelector('input[name="username"]') as HTMLInputElement;
+        if (usernameField) {
+          usernameField.focus();
+          usernameField.select();
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
