@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Send } from "lucide-react";
+import { Facebook, Instagram, Send, Music } from "lucide-react";
 
 export const SocialFollowCard = () => {
   const socialLinks = [
@@ -24,6 +24,13 @@ export const SocialFollowCard = () => {
       icon: Send,
       color: "bg-[#0088cc] hover:bg-[#0077b5]",
       description: "Real-time support"
+    },
+    {
+      name: "TikTok",
+      url: "https://www.tiktok.com/@fineearn",
+      icon: Music,
+      color: "bg-black hover:bg-gray-900",
+      description: "Viral earning hacks"
     }
   ];
 
@@ -41,7 +48,7 @@ export const SocialFollowCard = () => {
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {socialLinks.map((social) => (
             <a
               key={social.name}
