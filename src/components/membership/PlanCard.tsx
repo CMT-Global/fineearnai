@@ -392,7 +392,6 @@ export function PlanCard({
                   !hasProfile ||
                   isCurrentPlan || 
                   upgrading || 
-                  isInsufficientBalance ||
                   isDowngrade
                 }
                 variant={isDowngrade ? "secondary" : "default"}
@@ -408,6 +407,10 @@ export function PlanCard({
                   "Cannot Downgrade"
                 ) : !hasProfile ? (
                   "Loading..."
+                ) : isInsufficientBalance ? (
+                  <>
+                    You Need <CurrencyDisplay amountUSD={plan.price - depositBalance} className="inline font-bold" /> More
+                  </>
                 ) : (
                   "Upgrade Now"
                 )}
@@ -640,7 +643,6 @@ export function PlanCard({
             !hasProfile ||
             isCurrentPlan || 
             upgrading || 
-            isInsufficientBalance ||
             isDowngrade
           }
           variant={isDowngrade ? "secondary" : "default"}
@@ -656,6 +658,10 @@ export function PlanCard({
             "Cannot Downgrade"
           ) : !hasProfile ? (
             "Loading..."
+          ) : isInsufficientBalance ? (
+            <>
+              You Need <CurrencyDisplay amountUSD={plan.price - depositBalance} className="inline font-bold" /> More
+            </>
           ) : (
             "Upgrade Now"
           )}
