@@ -134,15 +134,18 @@ export const CPAYCheckoutIframe = ({
           {transactionStatus === "completed" ? (
             <div className="h-full flex items-center justify-center p-6">
               <div className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                  <CheckCircle className="h-10 w-10 text-green-600" />
+                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mx-auto animate-in zoom-in">
+                  <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className="text-2xl font-bold">Payment Successful!</h3>
                 <p className="text-muted-foreground">
-                  Your deposit of ${amount} {currency} has been credited to your account.
+                  Your deposit of <span className="font-semibold text-green-600 dark:text-green-400">${amount.toFixed(2)} {currency}</span> has been credited to your Deposit Wallet.
                 </p>
-                <Button onClick={() => onOpenChange(false)}>
-                  Close
+                <p className="text-xs text-muted-foreground">
+                  Closing automatically...
+                </p>
+                <Button onClick={() => onOpenChange(false)} variant="outline">
+                  Close Now
                 </Button>
               </div>
             </div>
