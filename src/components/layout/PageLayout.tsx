@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarSkeleton } from "@/components/layout/SidebarSkeleton";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface PageLayoutProps {
   children: ReactNode;
-  profile: any;
+  profile: any | null | undefined;
   isAdmin?: boolean;
   onSignOut: () => void;
   isLoading?: boolean;
@@ -27,8 +28,12 @@ export const PageLayout = ({
 }: PageLayoutProps) => {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      {/* Sidebar - ALWAYS rendered, never disappears during loading */}
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={onSignOut} />
+      {/* Conditional Sidebar - Shows skeleton when profile is not loaded */}
+      {profile ? (
+        <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={onSignOut} />
+      ) : (
+        <SidebarSkeleton />
+      )}
       
       {/* Main Content - Shows loading state OR actual content */}
       <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
