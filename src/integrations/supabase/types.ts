@@ -544,6 +544,7 @@ export type Database = {
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
+          allow_daily_withdrawals: boolean
           auto_renew: boolean
           country: string | null
           created_at: string
@@ -575,6 +576,7 @@ export type Database = {
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          allow_daily_withdrawals?: boolean
           auto_renew?: boolean
           country?: string | null
           created_at?: string
@@ -606,6 +608,7 @@ export type Database = {
         }
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
+          allow_daily_withdrawals?: boolean
           auto_renew?: boolean
           country?: string | null
           created_at?: string
