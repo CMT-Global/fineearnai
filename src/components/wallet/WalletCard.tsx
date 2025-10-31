@@ -212,7 +212,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
-    if (amount > earningsBalance) {
+    // Convert local currency to USD immediately for all validations
+    const amountUSD = convertLocalToUSD(amount);
+
+    console.log('💱 Currency Conversion for Withdrawal (Early Check):', {
+      inputAmount: amount,
+      inputCurrency: userCurrency,
+      exchangeRate,
+      convertedUSD: amountUSD,
+      timestamp: new Date().toISOString()
+    });
+
+    // Validate against earnings balance (in USD)
+    if (amountUSD > earningsBalance) {
       toast.error("Insufficient balance");
       return;
     }
@@ -274,15 +286,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Convert local currency to USD for backend processing
-      const amountUSD = convertLocalToUSD(amount);
-
-      console.log('💱 Currency Conversion for Withdrawal:', {
-        inputAmount: amount,
-        inputCurrency: userCurrency,
-        exchangeRate,
-        convertedUSD: amountUSD,
-        timestamp: new Date().toISOString()
+      console.log('🔍 Withdrawal Validation (Using USD):', {
+        amountUSD,
+        minWithdrawal: plan.min_withdrawal,
+        minDailyWithdrawal: plan.min_daily_withdrawal,
+        maxDailyWithdrawal: plan.max_daily_withdrawal,
+        earningsBalance: profile.earnings_wallet_balance
       });
 
       // Validate minimum withdrawal (using USD)
