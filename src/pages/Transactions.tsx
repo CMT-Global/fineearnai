@@ -6,7 +6,8 @@ import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -87,20 +88,24 @@ const Transactions = () => {
     (dateRange.from || dateRange.to ? 1 : 0) +
     (sortBy !== "newest" ? 1 : 0);
 
-  if (loading || !user || !profile) {
+  // Early return ONLY for auth loading (before we have user)
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <LoadingSpinner size="lg" text="Authenticating..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
-      
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
-        <div className="container max-w-6xl mx-auto p-4 lg:p-8">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={!profile}
+      loadingText="Loading transactions..."
+    >
+      <div className="container max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Transaction History</h1>
           <p className="text-muted-foreground">
@@ -309,9 +314,8 @@ const Transactions = () => {
             sortBy
           }}
         />
-        </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

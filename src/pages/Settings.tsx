@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { countries, getCountryName } from "@/lib/countries";
@@ -26,12 +28,21 @@ import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 const Settings = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
+  const { isAdmin } = useAdmin();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
   const [isCurrencyPopoverOpen, setIsCurrencyPopoverOpen] = useState(false);
   const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
 
   // Fetch profile data
   const { data: profile, isLoading } = useQuery({
@@ -165,23 +176,24 @@ const Settings = () => {
   const previewAmount = 100; // USD
   const convertedPreview = convertAmount(previewAmount);
 
-  if (isLoading) {
+  // Early return ONLY for auth loading (before we have user)
+  if (authLoading || !user) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <LoadingSpinner size="lg" text="Loading settings..." />
-        </div>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Authenticating..." />
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background flex w-full">
-        <Sidebar profile={profile} onSignOut={signOut} />
-        
-        <main className="flex-1 p-8 overflow-auto pb-24 lg:pb-8">
-          <div className="max-w-4xl mx-auto space-y-8">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={isLoading || !profile}
+      loadingText="Loading settings..."
+    >
+      <div className="max-w-4xl mx-auto space-y-8 p-8">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Settings</h1>
               <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
@@ -622,13 +634,11 @@ const Settings = () => {
                       </div>
                     </form>
                   </Form>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    </ProtectedRoute>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+    </PageLayout>
   );
 };
 

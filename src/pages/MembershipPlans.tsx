@@ -5,14 +5,14 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useMembershipPlans } from "@/hooks/useMembershipPlans";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
 import { PlanCard } from "@/components/membership/PlanCard";
 import { PlanTabs } from "@/components/membership/PlanTabs";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import {
@@ -74,6 +74,13 @@ export default function MembershipPlans() {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [prorationDetails, setProrationDetails] = useState<any>(null);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     loadPlans();
@@ -198,11 +205,11 @@ export default function MembershipPlans() {
     }
   };
 
-  // Show skeleton loaders during initial load
-  if (authLoading || loading || !profile) {
+  // Show skeleton loaders during initial load or auth
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading membership plans..." />
+        <LoadingSpinner size="lg" text="Authenticating..." />
       </div>
     );
   }
@@ -311,11 +318,14 @@ export default function MembershipPlans() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile || null} isAdmin={isAdmin} onSignOut={signOut} />
-      
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
-        <div className="container mx-auto px-4 lg:px-8 py-8">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={loading || !profile}
+      loadingText="Loading membership plans..."
+    >
+      <div className="container mx-auto px-4 lg:px-8 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
             <p className="text-muted-foreground text-lg">
@@ -453,7 +463,6 @@ export default function MembershipPlans() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </main>
-    </div>
+    </PageLayout>
   );
 }

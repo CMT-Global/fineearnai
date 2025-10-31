@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { supabase } from "@/integrations/supabase/client";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
@@ -300,24 +300,28 @@ const Tasks = () => {
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
   }, [currentTask, startTime, submitMutation, isSubmitting]);
 
-  if (loading || !profile) {
+  // Early return ONLY for auth loading (before we have user)
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Authenticating...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
-
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
-        {/* Header */}
-        <header className="bg-card border-b px-4 lg:px-8 py-6">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={!profile}
+      loadingText="Loading tasks..."
+    >
+      {/* Header */}
+      <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div>
             <h1 className="text-2xl font-bold">AI Training Tasks</h1>
             <p className="text-muted-foreground">
@@ -383,8 +387,7 @@ const Tasks = () => {
             />
           </div>
         </div>
-      </main>
-    </div>
+    </PageLayout>
   );
 };
 
