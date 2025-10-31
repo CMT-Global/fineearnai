@@ -5,7 +5,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
@@ -33,29 +33,25 @@ const Wallet = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || !user || isProfileLoading) {
+  // Early return ONLY for auth loading (before we have user)
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading wallet..." />
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading profile..." />
+        <LoadingSpinner size="lg" text="Authenticating..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
-      
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
-        {/* Header */}
-        <header className="bg-card border-b px-4 lg:px-8 py-6">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={isProfileLoading || !profile}
+      loadingText="Loading wallet..."
+    >
+      {/* Header */}
+      <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
               <WalletIcon className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
@@ -104,8 +100,7 @@ const Wallet = () => {
             title="Recent Transactions"
           />
         </div>
-      </main>
-    </div>
+    </PageLayout>
   );
 };
 
