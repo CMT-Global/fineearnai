@@ -5,12 +5,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock, Crown, XCircle, Clock, Sparkles } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface OverviewTabProps {
   userData: any;
@@ -35,6 +36,38 @@ export const OverviewTab = ({
 }: OverviewTabProps) => {
   const { toast } = useToast();
   const [isTogglingBypass, setIsTogglingBypass] = useState(false);
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const [lastBypassUpdate, setLastBypassUpdate] = useState<{ admin: string; timestamp: string } | null>(null);
+  // Fetch last bypass update info
+  useEffect(() => {
+    const fetchLastBypassUpdate = async () => {
+      if (!userData?.profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('admin_id, created_at, profiles!audit_logs_admin_id_fkey(username)')
+          .eq('target_user_id', userData.profile.id)
+          .eq('action_type', 'profile_update')
+          .like('details', '%withdrawal_bypass_changed%')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (data && !error) {
+          setLastBypassUpdate({
+            admin: (data.profiles as any)?.username || 'Admin',
+            timestamp: data.created_at
+          });
+        }
+      } catch (err) {
+        console.log('No bypass update history found');
+      }
+    };
+
+    fetchLastBypassUpdate();
+  }, [userData?.profile?.id, userData?.profile?.allow_daily_withdrawals]);
+
   if (!userData) {
     return (
       <div className="space-y-4">
@@ -61,6 +94,16 @@ export const OverviewTab = ({
 
   // PHASE 3: Handler for toggling daily withdrawal bypass
   const handleToggleDailyWithdrawals = async (enabled: boolean) => {
+    // Show confirmation dialog when disabling (security-critical action)
+    if (!enabled && profile.allow_daily_withdrawals) {
+      setShowDisableDialog(true);
+      return;
+    }
+
+    await performBypassToggle(enabled);
+  };
+
+  const performBypassToggle = async (enabled: boolean) => {
     setIsTogglingBypass(true);
     
     try {
@@ -82,12 +125,14 @@ export const OverviewTab = ({
 
       if (error) throw error;
 
+      // Enhanced toast with larger text and longer duration
       toast({
-        title: enabled ? "Daily Withdrawal Bypass Enabled" : "Daily Withdrawal Bypass Disabled",
+        title: enabled ? "✅ VIP Bypass Enabled" : "🔒 Bypass Disabled",
         description: enabled 
-          ? `${profile.username} can now withdraw any day/time, bypassing schedule restrictions.`
-          : `${profile.username} must now follow the standard payout schedule.`,
-        variant: "default",
+          ? `${profile.username} can now withdraw ANY TIME, bypassing all schedule restrictions. This action has been logged.`
+          : `${profile.username} must now follow the standard payout schedule. All users will be notified.`,
+        variant: enabled ? "default" : "destructive",
+        duration: 8000, // 8 seconds
       });
 
       // Refetch user data to show updated status
@@ -96,12 +141,14 @@ export const OverviewTab = ({
     } catch (error: any) {
       console.error('Error toggling daily withdrawal bypass:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update withdrawal bypass setting",
+        title: "❌ Error",
+        description: error.message || "Failed to update withdrawal bypass setting. Please try again.",
         variant: "destructive",
+        duration: 8000,
       });
     } finally {
       setIsTogglingBypass(false);
+      setShowDisableDialog(false);
     }
   };
 
@@ -456,42 +503,101 @@ export const OverviewTab = ({
             Withdrawal Settings
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Toggle Switch */}
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-            <div className="space-y-1 flex-1">
-              <Label className="text-base font-semibold">Allow Daily Withdrawals</Label>
-              <p className="text-sm text-muted-foreground">
-                Bypass payout schedule restrictions for this user
-              </p>
-            </div>
-            <Switch
-              checked={profile.allow_daily_withdrawals || false}
-              onCheckedChange={handleToggleDailyWithdrawals}
-              disabled={isTogglingBypass}
-              className="ml-4"
-            />
-          </div>
+        <CardContent className="space-y-6">
+          {/* Enhanced Toggle Switch with Clear Visual Feedback */}
+          <div 
+            className={`relative p-5 border-2 rounded-lg transition-all duration-300 ${
+              profile.allow_daily_withdrawals 
+                ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-500 dark:border-green-600 shadow-lg shadow-green-100 dark:shadow-green-900/20' 
+                : 'bg-muted/30 border-muted-foreground/20'
+            }`}
+          >
+            {/* Pulsing indicator for active bypass */}
+            {profile.allow_daily_withdrawals && (
+              <div className="absolute top-3 right-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              </div>
+            )}
 
-          {/* Status Badge */}
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">Current Status:</p>
-            <Badge 
-              variant={profile.allow_daily_withdrawals ? "default" : "outline"}
-              className="flex items-center gap-1"
-            >
-              {profile.allow_daily_withdrawals ? (
-                <>
-                  <CheckCircle2 className="h-3 w-3" />
-                  Bypass Enabled
-                </>
-              ) : (
-                <>
-                  <Lock className="h-3 w-3" />
-                  Standard Schedule
-                </>
-              )}
-            </Badge>
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <Label className="text-lg font-bold">Allow Daily Withdrawals</Label>
+                  {profile.allow_daily_withdrawals && (
+                    <Badge variant="default" className="bg-green-600 hover:bg-green-700 gap-1">
+                      <Crown className="h-3 w-3" />
+                      VIP ACCESS
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Bypass payout schedule restrictions for this user
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {/* Visual Status Label */}
+                <div className="text-right">
+                  <div className={`text-sm font-bold ${
+                    profile.allow_daily_withdrawals 
+                      ? 'text-green-700 dark:text-green-400' 
+                      : 'text-muted-foreground'
+                  }`}>
+                    {profile.allow_daily_withdrawals ? 'ENABLED' : 'DISABLED'}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {profile.allow_daily_withdrawals ? 'Active Now' : 'Standard Mode'}
+                  </div>
+                </div>
+                
+                {/* Toggle Switch */}
+                <Switch
+                  checked={profile.allow_daily_withdrawals || false}
+                  onCheckedChange={handleToggleDailyWithdrawals}
+                  disabled={isTogglingBypass}
+                  className="data-[state=checked]:bg-green-600 scale-125"
+                />
+              </div>
+            </div>
+
+            {/* Status Indicator Icon */}
+            <div className="mt-4 pt-4 border-t border-current/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {profile.allow_daily_withdrawals ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <span className="text-sm font-semibold text-green-700 dark:text-green-400">
+                        Bypass Active - User can withdraw anytime
+                      </span>
+                      <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse" />
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Standard schedule applies
+                      </span>
+                    </>
+                  )}
+                </div>
+                
+                {/* Last Updated Info */}
+                {lastBypassUpdate && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>
+                      Modified {formatDistanceToNow(new Date(lastBypassUpdate.timestamp), { addSuffix: true })}
+                      {' by '}
+                      <span className="font-semibold">{lastBypassUpdate.admin}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Informational Alert */}
@@ -521,6 +627,52 @@ export const OverviewTab = ({
           </Alert>
         </CardContent>
       </Card>
+
+      {/* Confirmation Dialog for Disabling Bypass */}
+      <AlertDialog open={showDisableDialog} onOpenChange={setShowDisableDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Disable VIP Withdrawal Bypass?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2">
+              <p>
+                You are about to <strong>disable</strong> the daily withdrawal bypass for{' '}
+                <strong className="text-foreground">{profile.username}</strong>.
+              </p>
+              
+              <div className="p-3 bg-muted rounded-lg border border-muted-foreground/20">
+                <p className="text-sm font-semibold mb-2">This means:</p>
+                <ul className="text-sm space-y-1 list-disc list-inside">
+                  <li>User will <strong>only</strong> be able to withdraw during scheduled times</li>
+                  <li>Pending withdrawal requests may be affected</li>
+                  <li>User will see the standard withdrawal countdown timer</li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                  🔒 Security Note: This action will be logged in the audit trail.
+                </p>
+              </div>
+
+              <p className="text-sm font-medium">
+                Are you sure you want to proceed?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => performBypassToggle(false)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Yes, Disable Bypass
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Quick Actions */}
       <Card>
