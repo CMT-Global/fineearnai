@@ -68,13 +68,26 @@ export const CPAYCheckoutIframe = ({
           setLoading(false);
           clearInterval(pollInterval);
           
-          toast.success(`Deposit successful! $${data.amount} credited to your account.`);
+          console.log('✅ [CPAY-IFRAME] Deposit completed:', {
+            transactionId,
+            orderId,
+            amount: data.amount,
+            currency,
+            newBalance: data.new_balance,
+            timestamp: new Date().toISOString()
+          });
           
-          // Wait 2 seconds before closing and triggering refresh
+          // Enhanced success toast with detailed information
+          toast.success(
+            `Deposit successful! $${data.amount.toFixed(2)} ${currency} has been credited to your account.`,
+            { duration: 4000 }
+          );
+          
+          // ✅ Reduced delay for faster close (1.5s instead of 2s)
           setTimeout(() => {
-            onSuccess();
-            onOpenChange(false);
-          }, 2000);
+            onSuccess(); // Triggers balance refresh
+            onOpenChange(false); // Closes iframe
+          }, 1500);
         } else if (data.status === "failed") {
           setTransactionStatus("failed");
           setLoading(false);
