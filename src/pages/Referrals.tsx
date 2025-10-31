@@ -7,7 +7,8 @@ import { useRealtimeReferrals } from "@/hooks/useRealtimeReferrals";
 import { usePaginatedReferrals } from "@/hooks/usePaginatedReferrals";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ReferralCodeCard } from "@/components/referrals/ReferralCodeCard";
 import { ReferralStatsCard } from "@/components/referrals/ReferralStatsCard";
 import { ReferralQRCode } from "@/components/referrals/ReferralQRCode";
@@ -50,21 +51,25 @@ const Referrals = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || isReferralDataLoading || !profile) {
+  // Early return ONLY for auth loading (before we have user)
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <LoadingSpinner size="lg" text="Authenticating..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
-      
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
-        {/* Header */}
-        <header className="bg-card border-b px-4 lg:px-8 py-6">
+    <PageLayout
+      profile={profile}
+      isAdmin={isAdmin}
+      onSignOut={signOut}
+      isLoading={isReferralDataLoading || !profile}
+      loadingText="Loading referrals..."
+    >
+      {/* Header */}
+      <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div className="flex-1 mb-4">
             <h1 className="text-2xl font-bold">Referral Program</h1>
             <p className="text-muted-foreground">
@@ -264,9 +269,8 @@ const Referrals = () => {
 
         {/* Commission History */}
         <CommissionHistoryList userId={user?.id || ""} />
-        </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
