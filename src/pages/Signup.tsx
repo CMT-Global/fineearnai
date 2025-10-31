@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormData } from "@/lib/auth-schema";
@@ -11,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { validateReferralCode } from "@/lib/referral-utils";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -87,7 +88,30 @@ const Signup = () => {
     },
   });
 
+  // Real-time username validation
+  const usernameValue = form.watch("username");
+  const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(usernameValue);
+
   const onSubmit = async (data: SignupFormData) => {
+    // Block submission if username is not available
+    if (isChecking) {
+      toast({
+        title: "Please wait",
+        description: "Checking username availability...",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isAvailable === false) {
+      toast({
+        title: "Username unavailable",
+        description: "Please choose a different username",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -194,24 +218,53 @@ const Signup = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Choose a unique username"
-                      disabled={isLoading}
-                      className="h-11"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              placeholder="Choose a unique username (3-30 characters)"
+                              disabled={isLoading}
+                              className={cn(
+                                "h-11 pr-10",
+                                usernameValue && usernameValue.length >= 3 && isAvailable === true && "border-green-500 focus-visible:ring-green-500",
+                                usernameValue && usernameValue.length >= 3 && isAvailable === false && "border-destructive focus-visible:ring-destructive",
+                                isChecking && "border-blue-500"
+                              )}
+                            />
+                            {usernameValue && usernameValue.length >= 3 && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {isChecking && (
+                                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                                )}
+                                {!isChecking && isAvailable === true && (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                )}
+                                {!isChecking && isAvailable === false && (
+                                  <XCircle className="h-4 w-4 text-destructive" />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        {usernameValue && usernameValue.length >= 3 && !isChecking && usernameError && (
+                          <p className="text-sm text-destructive">{usernameError}</p>
+                        )}
+                        {usernameValue && usernameValue.length >= 3 && !isChecking && isAvailable === true && (
+                          <p className="text-sm text-green-600">Username is available!</p>
+                        )}
+                        {isChecking && (
+                          <p className="text-sm text-muted-foreground">Checking availability...</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
             <FormField
               control={form.control}
@@ -294,9 +347,21 @@ const Signup = () => {
             <Button 
               type="submit" 
               className="w-full h-11 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
-              disabled={isLoading}
+              disabled={isLoading || isChecking || (usernameValue?.length >= 3 && isAvailable === false)}
             >
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : isChecking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Checking username...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
         </Form>
