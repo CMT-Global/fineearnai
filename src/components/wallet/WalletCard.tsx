@@ -41,6 +41,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [depositMethod, setDepositMethod] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("");
   const [accountDetails, setAccountDetails] = useState("");
+  const [withdrawAmountError, setWithdrawAmountError] = useState<string | null>(null);
   const [depositLoading, setDepositLoading] = useState(false);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
@@ -112,6 +113,64 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     // Reverse conversion: local / rate = USD
     const usdAmount = localAmount / exchangeRate;
     return parseFloat(usdAmount.toFixed(4)); // 4-decimal precision for backend
+  };
+
+  /**
+   * Convert USD amount to local currency
+   * @param usdAmount - Amount in USD
+   * @returns Amount in user's preferred currency
+   */
+  const convertUSDToLocal = (usdAmount: number): number => {
+    if (userCurrency === 'USD' || exchangeRate === 1) {
+      return usdAmount;
+    }
+    return usdAmount * exchangeRate;
+  };
+
+  /**
+   * Real-time validation for withdrawal amount
+   */
+  const validateWithdrawAmountRealtime = (inputAmount: string): string | null => {
+    if (!inputAmount || inputAmount.trim() === '') {
+      return null; // No error for empty input
+    }
+    
+    const amount = parseFloat(inputAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return "Please enter a valid amount";
+    }
+    
+    // Convert to USD for comparison
+    const amountUSD = convertLocalToUSD(amount);
+    
+    // Check against balance
+    if (amountUSD > earningsBalance) {
+      const excessUSD = amountUSD - earningsBalance;
+      const excessLocal = convertUSDToLocal(excessUSD);
+      return `Insufficient balance. You are ${userCurrency} ${excessLocal.toFixed(2)} over your available balance.`;
+    }
+    
+    return null; // No error
+  };
+
+  /**
+   * Handler for "Withdraw All" button
+   */
+  const handleWithdrawAll = () => {
+    // Convert USD balance to user's local currency
+    const maxAmountLocal = convertUSDToLocal(earningsBalance);
+    
+    // Round to 2 decimal places for cleaner display
+    const roundedAmount = maxAmountLocal.toFixed(2);
+    
+    // Set the withdraw amount
+    setWithdrawAmount(roundedAmount);
+    
+    // Clear any validation errors since this is a valid amount
+    setWithdrawAmountError(null);
+    
+    // Show success feedback
+    toast.success(`Maximum amount set: ${userCurrency} ${roundedAmount}`);
   };
 
   const handleDeposit = async () => {
@@ -562,19 +621,37 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     />
                   )}
                   
-                  <div>
-                    <Label htmlFor="withdraw-amount">
-                      Amount ({userCurrency})
-                    </Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="withdraw-amount">
+                        Amount ({userCurrency})
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleWithdrawAll}
+                        disabled={earningsBalance === 0 || withdrawLoading}
+                        className="h-7 px-3 text-xs"
+                      >
+                        All
+                      </Button>
+                    </div>
                     <Input
                       id="withdraw-amount"
                       type="number"
                       placeholder={`Enter amount in ${userCurrency}`}
                       value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setWithdrawAmount(value);
+                        const error = validateWithdrawAmountRealtime(value);
+                        setWithdrawAmountError(error);
+                      }}
                       min="0"
                       step="0.01"
                       max={earningsBalance}
+                      className={withdrawAmountError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Available: <CurrencyDisplay amountUSD={earningsBalance} />
@@ -584,6 +661,16 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         </span>
                       )}
                     </p>
+
+                    {/* Real-time Balance Validation Error */}
+                    {withdrawAmountError && (
+                      <Alert variant="destructive" className="mt-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          {withdrawAmountError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   
                   {/* Withdrawal Fee Breakdown */}
@@ -684,7 +771,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </div>
                   <Button
                     onClick={handleWithdraw}
-                    disabled={withdrawLoading}
+                    disabled={withdrawLoading || !!withdrawAmountError || !withdrawAmount || !withdrawMethod || !accountDetails}
                     className="w-full"
                   >
                     {withdrawLoading ? (
