@@ -110,7 +110,7 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to continue earning</p>
+          <p className="text-muted-foreground">Sign in to FineEarn - Continue earning with AI tasks</p>
         </div>
 
         <Form {...form}>

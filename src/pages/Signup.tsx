@@ -187,8 +187,8 @@ const Signup = () => {
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-muted-foreground">
             {referrerUsername 
-              ? `Invited by ${referrerUsername}. Start earning in minutes!`
-              : "Start earning in minutes"}
+              ? `Invited by ${referrerUsername}. Join FineEarn and start earning!`
+              : "Join FineEarn - Start earning with AI tasks in minutes"}
           </p>
         </div>
 
