@@ -325,144 +325,148 @@ export default function MembershipPlans() {
       isLoading={loading || !profile}
       loadingText="Loading membership plans..."
     >
-      <div className="container mx-auto px-4 lg:px-8 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
-            <p className="text-muted-foreground text-lg">
-              Choose the perfect plan to maximize your earnings
-            </p>
-          </div>
-
-          {/* Plan Expiry Alerts */}
-          {planStatus && planStatus.status === 'expired' && (
-            <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Plan Expired</AlertTitle>
-              <AlertDescription>
-                Your {currentPlan} plan has expired. Upgrade now to continue enjoying premium benefits.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {planStatus && planStatus.status === 'expiring_soon' && (
-            <Alert className="mb-6 max-w-3xl mx-auto bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-900 dark:text-amber-100">Plan Expiring Soon</AlertTitle>
-              <AlertDescription className="text-amber-800 dark:text-amber-200">
-                Your {currentPlan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew your account to avoid losing access.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Urgency Banner for Free Users */}
-          {user && profile && currentPlan === 'free' && (
-            <Alert className="mb-8 max-w-4xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
-              <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              <AlertTitle className="text-amber-900 dark:text-amber-100 text-lg font-bold">
-                🎉 Limited Time: Get Pro-Rated Pricing on All Upgrades!
-              </AlertTitle>
-              <AlertDescription className="text-amber-800 dark:text-amber-200 mt-2">
-                Upgrade now and only pay for the remaining days of your billing period. Start earning more immediately with higher task limits and better rates!
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {user && profile && (
-            <Alert className="mb-8 max-w-3xl mx-auto">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Your current deposit wallet balance: <strong><CurrencyDisplay amountUSD={depositBalance} /></strong>
-                {depositBalance === 0 && (
-                  <span className="text-muted-foreground">
-                    {" "}- Please <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>deposit funds</Button> to upgrade your plan.
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <PlanTabs
-            personalPlans={personalPlans}
-            businessPlans={businessPlans}
-            renderPlanCards={renderPlanCards}
-          />
-        </div>
-
-        {/* Upgrade Confirmation Dialog with Proration */}
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Plan Upgrade</DialogTitle>
-              <DialogDescription>
-                You are about to upgrade to {selectedPlan?.display_name}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Current Balance:</span>
-                <span className="font-semibold"><CurrencyDisplay amountUSD={depositBalance} /></span>
+      {profile && (
+        <>
+          <div className="container mx-auto px-4 lg:px-8 py-8">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
+                <p className="text-muted-foreground text-lg">
+                  Choose the perfect plan to maximize your earnings
+                </p>
               </div>
 
-              {prorationDetails ? (
-                <>
-                  <div className="border-t pt-4 space-y-3">
-                    <div className="bg-primary/5 rounded-lg p-3 space-y-2">
-                      <div className="font-semibold text-sm flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        Proration Applied
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Original Price:</span>
-                          <span className="line-through"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.originalPrice)} /></span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Credit ({prorationDetails.daysRemaining} days unused):</span>
-                          <span className="text-green-600">-<CurrencyDisplay amountUSD={parseFloat(prorationDetails.credit)} /></span>
-                        </div>
-                        <div className="flex justify-between font-bold text-base border-t pt-2">
-                          <span>You Pay:</span>
-                          <span className="text-primary"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.newCost)} /></span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-2 text-center">
-                      <span className="text-sm text-green-700 dark:text-green-400 font-semibold">
-                        You save <CurrencyDisplay amountUSD={parseFloat(prorationDetails.savings)} /> with proration!
-                      </span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex justify-between items-center border-t pt-4">
-                  <span className="text-muted-foreground">Upgrade Cost:</span>
-                  <span className="font-bold text-xl text-primary"><CurrencyDisplay amountUSD={selectedPlan?.price || 0} /></span>
-                </div>
+              {/* Plan Expiry Alerts */}
+              {planStatus && planStatus.status === 'expired' && (
+                <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Plan Expired</AlertTitle>
+                  <AlertDescription>
+                    Your {currentPlan} plan has expired. Upgrade now to continue enjoying premium benefits.
+                  </AlertDescription>
+                </Alert>
               )}
 
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Balance After:</span>
-                <span className="font-semibold">
-                  <CurrencyDisplay amountUSD={depositBalance - parseFloat(prorationDetails?.newCost || selectedPlan?.price || 0)} />
-                </span>
-              </div>
+              {planStatus && planStatus.status === 'expiring_soon' && (
+                <Alert className="mb-6 max-w-3xl mx-auto bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                  <Clock className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-900 dark:text-amber-100">Plan Expiring Soon</AlertTitle>
+                  <AlertDescription className="text-amber-800 dark:text-amber-200">
+                    Your {currentPlan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew your account to avoid losing access.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Urgency Banner for Free Users */}
+              {user && profile && currentPlan === 'free' && (
+                <Alert className="mb-8 max-w-4xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-700 animate-fade-in">
+                  <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <AlertTitle className="text-amber-900 dark:text-amber-100 text-lg font-bold">
+                    🎉 Limited Time: Get Pro-Rated Pricing on All Upgrades!
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-800 dark:text-amber-200 mt-2">
+                    Upgrade now and only pay for the remaining days of your billing period. Start earning more immediately with higher task limits and better rates!
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {user && profile && (
+                <Alert className="mb-8 max-w-3xl mx-auto">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Your current deposit wallet balance: <strong><CurrencyDisplay amountUSD={depositBalance} /></strong>
+                    {depositBalance === 0 && (
+                      <span className="text-muted-foreground">
+                        {" "}- Please <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>deposit funds</Button> to upgrade your plan.
+                      </span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <PlanTabs
+                personalPlans={personalPlans}
+                businessPlans={businessPlans}
+                renderPlanCards={renderPlanCards}
+              />
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setShowUpgradeDialog(false);
-                setSelectedPlan(null);
-                setProrationDetails(null);
-              }}>
-                Cancel
-              </Button>
-              <Button onClick={confirmUpgrade}>
-                Confirm Upgrade
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            {/* Upgrade Confirmation Dialog with Proration */}
+            <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Plan Upgrade</DialogTitle>
+                  <DialogDescription>
+                    You are about to upgrade to {selectedPlan?.display_name}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Current Balance:</span>
+                    <span className="font-semibold"><CurrencyDisplay amountUSD={depositBalance} /></span>
+                  </div>
+
+                  {prorationDetails ? (
+                    <>
+                      <div className="border-t pt-4 space-y-3">
+                        <div className="bg-primary/5 rounded-lg p-3 space-y-2">
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-primary" />
+                            Proration Applied
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Original Price:</span>
+                              <span className="line-through"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.originalPrice)} /></span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Credit ({prorationDetails.daysRemaining} days unused):</span>
+                              <span className="text-green-600">-<CurrencyDisplay amountUSD={parseFloat(prorationDetails.credit)} /></span>
+                            </div>
+                            <div className="flex justify-between font-bold text-base border-t pt-2">
+                              <span>You Pay:</span>
+                              <span className="text-primary"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.newCost)} /></span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-2 text-center">
+                          <span className="text-sm text-green-700 dark:text-green-400 font-semibold">
+                            You save <CurrencyDisplay amountUSD={parseFloat(prorationDetails.savings)} /> with proration!
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center border-t pt-4">
+                      <span className="text-muted-foreground">Upgrade Cost:</span>
+                      <span className="font-bold text-xl text-primary"><CurrencyDisplay amountUSD={selectedPlan?.price || 0} /></span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Balance After:</span>
+                    <span className="font-semibold">
+                      <CurrencyDisplay amountUSD={depositBalance - parseFloat(prorationDetails?.newCost || selectedPlan?.price || 0)} />
+                    </span>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => {
+                    setShowUpgradeDialog(false);
+                    setSelectedPlan(null);
+                    setProrationDetails(null);
+                  }}>
+                    Cancel
+                  </Button>
+                  <Button onClick={confirmUpgrade}>
+                    Confirm Upgrade
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+        </>
+      )}
     </PageLayout>
   );
 }
