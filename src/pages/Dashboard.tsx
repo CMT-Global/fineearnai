@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
+import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
 import { 
   Crown, 
   Sparkles,
@@ -373,6 +374,9 @@ const Dashboard = () => {
             title="Recent Activity"
           />
         </div>
+
+        {/* Floating Telegram Button */}
+        <FloatingTelegramButton />
       </main>
     </div>
   );
