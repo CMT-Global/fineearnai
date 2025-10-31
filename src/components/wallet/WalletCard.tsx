@@ -69,6 +69,46 @@ const VIRTUAL_WITHDRAWAL_METHODS = [
   },
 ];
 
+// Virtual deposit method options - all map to actual "CRYPTO Deposit" processor
+const VIRTUAL_DEPOSIT_METHODS = [
+  {
+    id: 'gcrypto-deposit',
+    displayName: 'Gcrypto',
+    description: 'Deposit via your Gcrypto wallet',
+    icon: '💳',
+  },
+  {
+    id: 'binance-deposit',
+    displayName: 'Binance',
+    description: 'Deposit from your Binance account',
+    icon: '🔶',
+  },
+  {
+    id: 'coinsph-deposit',
+    displayName: 'Coins.Ph',
+    description: 'Deposit from your Coins.Ph wallet',
+    icon: '🪙',
+  },
+  {
+    id: 'bybit-deposit',
+    displayName: 'ByBit',
+    description: 'Deposit from your ByBit account',
+    icon: '📊',
+  },
+  {
+    id: 'coinbase-deposit',
+    displayName: 'CoinBase',
+    description: 'Deposit from your CoinBase wallet',
+    icon: '🔷',
+  },
+  {
+    id: 'kucoin-deposit',
+    displayName: 'KuCoin',
+    description: 'Deposit from your KuCoin account',
+    icon: '🟢',
+  },
+];
+
 interface WalletCardProps {
   depositBalance: number;
   earningsBalance: number;
@@ -90,6 +130,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [withdrawalProcessors, setWithdrawalProcessors] = useState<PaymentProcessor[]>([]);
   const [loadingProcessors, setLoadingProcessors] = useState(true);
   const [actualCryptoProcessor, setActualCryptoProcessor] = useState<PaymentProcessor | null>(null);
+  const [actualDepositProcessor, setActualDepositProcessor] = useState<PaymentProcessor | null>(null);
   
   // CPAY iframe state
   const [showCpayIframe, setShowCpayIframe] = useState(false);
@@ -135,8 +176,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       setDepositProcessors(deposits);
       setWithdrawalProcessors(withdrawals);
       
-      // ✅ NEW: Identify the actual "Crypto Payout" processor
-      // This will be used as the backend processor for all virtual methods
+      // ✅ Identify the actual "Crypto Payout" processor for withdrawals
+      // This will be used as the backend processor for all virtual withdrawal methods
       const cryptoProcessor = withdrawals.find(p => {
         const config = p.config as any;
         return p.name.toLowerCase().includes('crypto') || 
@@ -146,9 +187,26 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       
       if (cryptoProcessor) {
         setActualCryptoProcessor(cryptoProcessor);
-        console.log('✅ Crypto processor identified:', cryptoProcessor.name);
+        console.log('✅ Crypto withdrawal processor identified:', cryptoProcessor.name);
       } else {
-        console.warn('⚠️ No crypto processor found. Virtual methods will not work.');
+        console.warn('⚠️ No crypto withdrawal processor found. Virtual withdrawal methods will not work.');
+      }
+
+      // ✅ NEW: Identify the actual "CRYPTO Deposit" processor for deposits
+      // This will be used as the backend processor for all virtual deposit methods
+      const depositProcessor = deposits.find(p => {
+        const config = p.config as any;
+        return p.name.toLowerCase().includes('crypto') || 
+          p.name.toLowerCase().includes('deposit') ||
+          config?.display_name?.toLowerCase().includes('crypto') ||
+          config?.processor === 'cpay'; // Also match CPAY processors
+      });
+      
+      if (depositProcessor) {
+        setActualDepositProcessor(depositProcessor);
+        console.log('✅ Crypto deposit processor identified:', depositProcessor.name);
+      } else {
+        console.warn('⚠️ No crypto deposit processor found. Virtual deposit methods will not work.');
       }
     } catch (error) {
       console.error("Error loading payment processors:", error);
@@ -251,14 +309,35 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
-    const processor = depositProcessors.find(p => p.name === depositMethod);
-    if (!processor) {
+    // ✅ NEW: Map virtual method to actual processor
+    const virtualMethod = VIRTUAL_DEPOSIT_METHODS.find(vm => vm.id === depositMethod);
+    
+    let selectedProcessor: PaymentProcessor | undefined;
+    let displayMethodName: string;
+    
+    if (virtualMethod && actualDepositProcessor) {
+      // User selected a virtual method - use the actual crypto processor behind the scenes
+      selectedProcessor = actualDepositProcessor;
+      displayMethodName = virtualMethod.displayName; // Store user-friendly name for tracking
+      console.log('🎭 Virtual deposit method selected:', {
+        virtualMethodId: virtualMethod.id,
+        displayName: virtualMethod.displayName,
+        actualProcessorId: actualDepositProcessor.id,
+        actualProcessorName: actualDepositProcessor.name
+      });
+    } else {
+      // User selected an actual processor (fallback for backwards compatibility)
+      selectedProcessor = depositProcessors.find(p => p.name === depositMethod);
+      displayMethodName = depositMethod;
+    }
+    
+    if (!selectedProcessor) {
       toast.error("Invalid payment method");
       return;
     }
 
-    if (amount < processor.min_amount || amount > processor.max_amount) {
-      toast.error(`Amount must be between $${processor.min_amount} and $${processor.max_amount}`);
+    if (amount < selectedProcessor.min_amount || amount > selectedProcessor.max_amount) {
+      toast.error(`Amount must be between $${selectedProcessor.min_amount} and $${selectedProcessor.max_amount}`);
       return;
     }
 
@@ -266,12 +345,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       setDepositLoading(true);
 
       // Check if it's a CPAY processor
-      if (processor.config?.processor === 'cpay') {
+      if ((selectedProcessor.config as any)?.processor === 'cpay') {
         const { data, error } = await supabase.functions.invoke("cpay-deposit", {
           body: { 
             amount, 
-            currency: processor.config.currency || 'USDT',
-            processorId: processor.id
+            currency: (selectedProcessor.config as any).currency || 'USDT',
+            processorId: selectedProcessor.id // ✅ Use actual processor ID
           },
         });
 
@@ -295,7 +374,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         const { data, error } = await supabase.functions.invoke("deposit", {
           body: {
             amount,
-            paymentMethod: depositMethod,
+            paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
             gatewayTransactionId: `TXN-${Date.now()}`,
           },
         });
@@ -604,23 +683,47 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select payment method"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {depositProcessors.length === 0 ? (
+                        {/* ✅ Show virtual methods if deposit processor exists */}
+                        {actualDepositProcessor && VIRTUAL_DEPOSIT_METHODS.length > 0 ? (
+                          VIRTUAL_DEPOSIT_METHODS.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{method.icon}</span>
+                                <span>{method.displayName}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : depositProcessors.length === 0 ? (
                           <SelectItem value="none" disabled>No payment methods available</SelectItem>
                         ) : (
                           depositProcessors.map((processor) => (
                             <SelectItem key={processor.id} value={processor.name}>
                               {processor.config?.display_name || processor.name}
-                              {processor.fee_fixed > 0 && ` (Fee: $${processor.fee_fixed})`}
                             </SelectItem>
                           ))
                         )}
                       </SelectContent>
                     </Select>
-                    {depositMethod && depositProcessors.find(p => p.name === depositMethod)?.config?.description && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {depositProcessors.find(p => p.name === depositMethod)?.config?.description}
-                      </p>
-                    )}
+                    {/* ✅ Display method-specific description */}
+                    {depositMethod && (() => {
+                      const virtualMethod = VIRTUAL_DEPOSIT_METHODS.find(vm => vm.id === depositMethod);
+                      const processor = virtualMethod && actualDepositProcessor 
+                        ? actualDepositProcessor 
+                        : depositProcessors.find(p => p.name === depositMethod);
+                      
+                      if (!processor) return null;
+                      
+                      return (
+                        <Alert className="mt-2">
+                          <InfoIcon className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            {virtualMethod ? virtualMethod.description : processor.config?.description}
+                            <br />
+                            <strong>Processing:</strong> Instant confirmation
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()}
                   </div>
                   <Button
                     onClick={handleDeposit}
