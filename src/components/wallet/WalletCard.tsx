@@ -540,11 +540,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   )}
                   
                   <div>
-                    <Label htmlFor="withdraw-amount">Amount</Label>
+                    <Label htmlFor="withdraw-amount">
+                      Amount ({userCurrency})
+                    </Label>
                     <Input
                       id="withdraw-amount"
                       type="number"
-                      placeholder="Enter amount"
+                      placeholder={`Enter amount in ${userCurrency}`}
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                       min="0"
@@ -553,6 +555,11 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Available: <CurrencyDisplay amountUSD={earningsBalance} />
+                      {userCurrency !== 'USD' && withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                          ≈ ${convertLocalToUSD(parseFloat(withdrawAmount)).toFixed(2)} USD
+                        </span>
+                      )}
                     </p>
                   </div>
                   
