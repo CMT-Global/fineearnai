@@ -222,7 +222,7 @@ const Signup = () => {
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter your full name"
+                      placeholder="Enter your first name"
                       disabled={isLoading}
                       className="h-11"
                     />
