@@ -589,11 +589,16 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   {/* Withdrawal Fee Breakdown */}
                   {withdrawAmount && withdrawMethod && withdrawalProcessors.find(p => p.name === withdrawMethod) && parseFloat(withdrawAmount) > 0 && (() => {
                     const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                    const amount = parseFloat(withdrawAmount);
+                    const amountLocal = parseFloat(withdrawAmount);
+                    
+                    // Convert local currency amount to USD for fee calculations
+                    const amountUSD = convertLocalToUSD(amountLocal);
+                    
+                    // Calculate fees in USD
                     const fixedFee = processor?.fee_fixed || 0;
-                    const percentageFee = (amount * (processor?.fee_percentage || 0)) / 100;
+                    const percentageFee = (amountUSD * (processor?.fee_percentage || 0)) / 100;
                     const totalFee = fixedFee + percentageFee;
-                    const netAmount = amount - totalFee;
+                    const netAmountUSD = amountUSD - totalFee;
                     
                     return (
                       <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
@@ -603,7 +608,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Withdrawal Amount:</span>
                               <span className="font-semibold">
-                                <CurrencyDisplay amountUSD={amount} />
+                                <CurrencyDisplay amountUSD={amountUSD} />
                               </span>
                             </div>
                             <div className="flex justify-between">
@@ -623,7 +628,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                             <div className="flex justify-between">
                               <span className="font-semibold text-muted-foreground">You will receive:</span>
                               <span className="font-bold text-green-600 dark:text-green-400 text-sm">
-                                <CurrencyDisplay amountUSD={netAmount} />
+                                <CurrencyDisplay amountUSD={netAmountUSD} />
                               </span>
                             </div>
                           </div>
