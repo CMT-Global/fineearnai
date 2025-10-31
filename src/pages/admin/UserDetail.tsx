@@ -155,6 +155,7 @@ function UserDetailContent() {
               onBan={() => setBanDialogOpen(true)}
               onResetLimits={() => toast.info("Reset limits coming soon")}
               onMasterLogin={handleGenerateMasterLogin}
+              onUserUpdated={refetch}
             />
           </TabsContent>
 

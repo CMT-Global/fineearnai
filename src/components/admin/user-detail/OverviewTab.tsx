@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface OverviewTabProps {
   userData: any;
@@ -16,6 +20,7 @@ interface OverviewTabProps {
   onBan: () => void;
   onResetLimits: () => void;
   onMasterLogin: () => void;
+  onUserUpdated: () => void;
 }
 
 export const OverviewTab = ({
@@ -26,7 +31,10 @@ export const OverviewTab = ({
   onBan,
   onResetLimits,
   onMasterLogin,
+  onUserUpdated,
 }: OverviewTabProps) => {
+  const { toast } = useToast();
+  const [isTogglingBypass, setIsTogglingBypass] = useState(false);
   if (!userData) {
     return (
       <div className="space-y-4">
@@ -50,6 +58,52 @@ export const OverviewTab = ({
   const upline = userData.upline;
   const referralDetails = userData.referral_details;
   const navigate = useNavigate();
+
+  // PHASE 3: Handler for toggling daily withdrawal bypass
+  const handleToggleDailyWithdrawals = async (enabled: boolean) => {
+    setIsTogglingBypass(true);
+    
+    try {
+      console.log('Toggling daily withdrawal bypass:', { 
+        userId: profile.id, 
+        username: profile.username,
+        currentValue: profile.allow_daily_withdrawals,
+        newValue: enabled 
+      });
+
+      const { data, error } = await supabase.functions.invoke('update-user-profile', {
+        body: {
+          userId: profile.id,
+          updates: {
+            allow_daily_withdrawals: enabled
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: enabled ? "Daily Withdrawal Bypass Enabled" : "Daily Withdrawal Bypass Disabled",
+        description: enabled 
+          ? `${profile.username} can now withdraw any day/time, bypassing schedule restrictions.`
+          : `${profile.username} must now follow the standard payout schedule.`,
+        variant: "default",
+      });
+
+      // Refetch user data to show updated status
+      onUserUpdated();
+      
+    } catch (error: any) {
+      console.error('Error toggling daily withdrawal bypass:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update withdrawal bypass setting",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTogglingBypass(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -391,6 +445,80 @@ export const OverviewTab = ({
               </Badge>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* PHASE 3: Withdrawal Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Withdrawal Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Toggle Switch */}
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-1 flex-1">
+              <Label className="text-base font-semibold">Allow Daily Withdrawals</Label>
+              <p className="text-sm text-muted-foreground">
+                Bypass payout schedule restrictions for this user
+              </p>
+            </div>
+            <Switch
+              checked={profile.allow_daily_withdrawals || false}
+              onCheckedChange={handleToggleDailyWithdrawals}
+              disabled={isTogglingBypass}
+              className="ml-4"
+            />
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">Current Status:</p>
+            <Badge 
+              variant={profile.allow_daily_withdrawals ? "default" : "outline"}
+              className="flex items-center gap-1"
+            >
+              {profile.allow_daily_withdrawals ? (
+                <>
+                  <CheckCircle2 className="h-3 w-3" />
+                  Bypass Enabled
+                </>
+              ) : (
+                <>
+                  <Lock className="h-3 w-3" />
+                  Standard Schedule
+                </>
+              )}
+            </Badge>
+          </div>
+
+          {/* Informational Alert */}
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>How This Feature Works</AlertTitle>
+            <AlertDescription className="space-y-2 mt-2">
+              <p><strong>When Enabled:</strong></p>
+              <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+                <li>User can withdraw <strong>any day, any time</strong> (bypasses payout schedule)</li>
+                <li>Schedule restrictions like "Friday 00:00-13:00 UTC" are ignored</li>
+                <li>Useful for VIP users, special cases, or customer support resolutions</li>
+              </ul>
+              
+              <p className="pt-2"><strong>Limits That Still Apply:</strong></p>
+              <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+                <li>Minimum withdrawal amount (from membership plan)</li>
+                <li>Maximum daily withdrawal limit</li>
+                <li>Account balance checks</li>
+                <li>Rate limiting (10 requests per hour)</li>
+              </ul>
+
+              <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
+                <strong>⚠️ Security:</strong> All bypass usage is logged in audit trail for compliance and monitoring.
+              </div>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
