@@ -59,6 +59,7 @@ const Tasks = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -216,9 +217,12 @@ const Tasks = () => {
     skipMutation.mutate();
   }, [userStats, skipMutation]);
 
-  // Submit mutation with optimistic updates
+  // Submit mutation - Phase 1: No optimistic updates, server response is single source of truth
   const submitMutation = useMutation({
     mutationFn: async ({ taskId, response, timeTaken }: { taskId: string; response: string; timeTaken: number }) => {
+      // Set submitting state to prevent double-clicks
+      setIsSubmitting(true);
+      
       const { data, error } = await supabase.functions.invoke("complete-ai-task", {
         body: {
           taskId,
@@ -230,28 +234,6 @@ const Tasks = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
       return data;
-    },
-    onMutate: async (variables) => {
-      // Optimistic update: immediately update UI before server response
-      const previousTaskData = queryClient.getQueryData(['next-task', user?.id]);
-      
-      if (previousTaskData && userStats) {
-        // Optimistically update the task stats
-        queryClient.setQueryData(['next-task', user?.id], (old: any) => {
-          if (!old) return old;
-          
-          return {
-            ...old,
-            userStats: {
-              ...old.userStats,
-              tasksCompletedToday: old.userStats.tasksCompletedToday + 1,
-              remainingTasks: Math.max(0, old.userStats.remainingTasks - 1),
-            }
-          };
-        });
-      }
-      
-      return { previousTaskData };
     },
     onSuccess: (data) => {
       setFeedback(data);
@@ -289,6 +271,8 @@ const Tasks = () => {
         setTimeout(() => {
           setFeedback(null);
           setSelectedResponse("");
+          // Release submission lock after 1-second cooldown
+          setIsSubmitting(false);
         }, 2000);
       } else {
         // More tasks available - invalidate and refetch
@@ -298,24 +282,23 @@ const Tasks = () => {
           setFeedback(null);
           setSelectedResponse("");
           refetchTask();
+          // Release submission lock after 1-second cooldown
+          setIsSubmitting(false);
         }, 2000);
       }
     },
-    onError: (error: any, variables, context) => {
+    onError: (error: any) => {
       toast.error(error.message || "Failed to submit answer");
-      
-      // Rollback optimistic update on error
-      if (context?.previousTaskData) {
-        queryClient.setQueryData(['next-task', user?.id], context.previousTaskData);
-      }
+      // Release submission lock on error
+      setIsSubmitting(false);
     },
   });
 
   const handleSubmitAnswer = useCallback(async (response: string) => {
-    if (!currentTask) return;
+    if (!currentTask || isSubmitting) return; // Prevent submission if already submitting
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
-  }, [currentTask, startTime, submitMutation]);
+  }, [currentTask, startTime, submitMutation, isSubmitting]);
 
   if (loading || !profile) {
     return (
@@ -381,7 +364,7 @@ const Tasks = () => {
               task={currentTask}
               onSubmit={handleSubmitAnswer}
               onSkip={handleSkipTask}
-              isSubmitting={submitMutation.isPending}
+              isSubmitting={isSubmitting || submitMutation.isPending}
               feedback={feedback}
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
