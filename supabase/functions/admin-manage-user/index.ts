@@ -550,16 +550,10 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to update balance: ${updateError.message}`);
         }
 
-        // STEP 3: INVALIDATE CACHE (force UI refresh)
-        try {
-          await supabaseClient.functions.invoke('invalidate-user-cache', {
-            body: { userId: userId, cacheKeys: ['transactions', 'profile'] }
-          });
-        } catch (cacheError) {
-          console.warn('Cache invalidation failed (non-critical):', cacheError);
-        }
+        // Phase 2: Database as single source of truth - realtime subscriptions handle UI updates
+        console.log('✅ Wallet adjustment completed, realtime subscriptions will update UI automatically');
 
-        // STEP 4: LOG TO AUDIT
+        // STEP 3: LOG TO AUDIT
         await supabaseClient
           .from('audit_logs')
           .insert({

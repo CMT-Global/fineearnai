@@ -103,17 +103,8 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // PHASE 4 FIX: Explicitly invalidate user cache to force UI refresh
-    console.log('✅ Adjustment completed, invalidating user cache for immediate UI update');
-    try {
-      await supabaseClient.functions.invoke('invalidate-user-cache', {
-        body: { userId: userId, cacheKeys: ['transactions', 'profile'] }
-      });
-      console.log('✅ User cache invalidated successfully');
-    } catch (cacheError: any) {
-      // Non-blocking - log but don't fail the adjustment
-      console.warn('⚠️ Failed to invalidate user cache:', cacheError.message);
-    }
+    // Phase 2: Database as single source of truth - realtime subscriptions handle UI updates
+    console.log('✅ Adjustment completed, realtime subscriptions will update UI automatically');
 
     // Create audit log
     await supabaseClient

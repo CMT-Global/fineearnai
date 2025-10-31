@@ -5,14 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Shared cache reference (same as get-next-task)
-const statsCache = new Map<string, { data: any; expiresAt: number }>();
-
 /**
- * Invalidate User Cache Edge Function
+ * Invalidate User Cache Edge Function (Phase 2: No-Op)
  * 
- * Purpose: Invalidate the user stats cache after task completion or profile updates
- * Called by: complete-ai-task, upgrade-plan, adjust-wallet-balance edge functions
+ * Purpose: Legacy endpoint - now a no-op since Phase 2 removed all caching
+ * Database is the single source of truth - no cache to invalidate
+ * Kept for backward compatibility in case any code still calls this
  */
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -72,18 +70,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Invalidate cache
-    const cacheKey = `stats_${userId}`;
-    const hadCache = statsCache.has(cacheKey);
-    statsCache.delete(cacheKey);
-
-    console.log(`🗑️ Cache invalidated for user: ${userId} (cache existed: ${hadCache})`);
+    // Phase 2: No-op - no cache to invalidate
+    // Database is the single source of truth
+    console.log(`ℹ️ Cache invalidation no-op for user: ${userId} (caching removed in Phase 2)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         userId,
-        cacheInvalidated: hadCache,
+        cacheInvalidated: false,
+        message: 'No-op: Caching removed in Phase 2. Database is single source of truth.',
         timestamp: new Date().toISOString()
       }),
       {

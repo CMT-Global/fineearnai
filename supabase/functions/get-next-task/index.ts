@@ -5,25 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// In-memory cache for user stats (5 second TTL - Phase 1 optimization)
-const statsCache = new Map<string, { data: any; expiresAt: number }>();
-
-// In-memory cache for membership plan data (5 minute TTL)
-const planCache = new Map<string, { data: any; expiresAt: number }>();
-
-// Cache invalidation helper
-export function invalidateUserStatsCache(userId: string) {
-  const cacheKey = `stats_${userId}`;
-  statsCache.delete(cacheKey);
-  console.log('🗑️ Cache invalidated for user:', userId);
-}
-
 /**
- * Get Next Task Edge Function
+ * Get Next Task Edge Function (Phase 2: No Caching)
  * 
  * Purpose: Efficiently retrieve the next available task for a user with all necessary stats
- * Performance: Single edge function call replaces 5-7 sequential queries
- * Expected execution time: < 200ms (warm), < 500ms (cold start)
+ * Database as Single Source of Truth: All data is fetched fresh on every request
+ * Performance: Single edge function call with optimized queries
+ * Expected execution time: < 300ms (warm), < 600ms (cold start)
  */
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -71,101 +59,84 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================================
-    // STEP 2: GET USER STATS (Direct DB query - no materialized view)
+    // STEP 2: GET USER STATS (Phase 2: Direct DB query - Database as Single Source of Truth)
     // ============================================================================
-    const cacheKey = `stats_${user.id}`;
-    const now = Date.now();
-    let userStats: any;
+    console.log('🔍 Fetching fresh user stats from database (no cache) for user:', user.id);
+    
+    // Fetch the profile - always fresh from database
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-    // Check cache first
-    const cached = statsCache.get(cacheKey);
-    if (cached && cached.expiresAt > now) {
-      console.log('Cache hit for user stats:', user.id);
-      userStats = cached.data;
-    } else {
-      // Always fetch fresh data from profiles + membership_plans
-      console.log('Cache miss - fetching fresh user stats from database');
-      
-      // Fetch the profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('Error fetching profile:', profileError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'stats_error',
-            message: 'Failed to fetch user statistics' 
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
-          }
-        );
-      }
-
-      // Fetch the membership plan separately
-      const { data: plan, error: planError } = await supabase
-        .from('membership_plans')
-        .select('*')
-        .eq('name', profile.membership_plan)
-        .single();
-
-      if (planError || !plan) {
-        console.error('Error fetching membership plan:', planError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'stats_error',
-            message: 'Failed to fetch membership plan' 
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
-          }
-        );
-      }
-
-      // Map profile and plan data to stats format
-      userStats = {
-        user_id: profile.id,
-        username: profile.username,
-        tasks_completed_today: profile.tasks_completed_today,
-        skips_today: profile.skips_today,
-        membership_plan: profile.membership_plan,
-        earnings_wallet_balance: profile.earnings_wallet_balance,
-        deposit_wallet_balance: profile.deposit_wallet_balance,
-        total_earned: profile.total_earned,
-        last_task_date: profile.last_task_date,
-        plan_expires_at: profile.plan_expires_at,
-        account_status: profile.account_status,
-        daily_task_limit: plan.daily_task_limit,
-        earning_per_task: plan.earning_per_task,
-        task_skip_limit_per_day: plan.task_skip_limit_per_day,
-        task_commission_rate: plan.task_commission_rate,
-        deposit_commission_rate: plan.deposit_commission_rate,
-        min_withdrawal: plan.min_withdrawal,
-        min_daily_withdrawal: plan.min_daily_withdrawal,
-        max_daily_withdrawal: plan.max_daily_withdrawal,
-        remaining_tasks: plan.daily_task_limit - profile.tasks_completed_today,
-        remaining_skips: plan.task_skip_limit_per_day - profile.skips_today,
-      };
-      
-      // Cache for 5 seconds (Phase 1 optimization)
-      statsCache.set(cacheKey, {
-        data: userStats,
-        expiresAt: now + 5000 // 5 seconds
-      });
-
-      console.log('✅ Fresh user stats fetched and cached:', {
-        userId: user.id,
-        tasksCompletedToday: userStats.tasks_completed_today,
-        earningsBalance: userStats.earnings_wallet_balance,
-        remainingTasks: userStats.remaining_tasks
-      });
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'stats_error',
+          message: 'Failed to fetch user statistics' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
+
+    // Fetch the membership plan - always fresh from database
+    const { data: plan, error: planError } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('name', profile.membership_plan)
+      .single();
+
+    if (planError || !plan) {
+      console.error('Error fetching membership plan:', planError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'stats_error',
+          message: 'Failed to fetch membership plan' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
+    }
+
+    // Map profile and plan data to stats format
+    const userStats = {
+      user_id: profile.id,
+      username: profile.username,
+      tasks_completed_today: profile.tasks_completed_today,
+      skips_today: profile.skips_today,
+      membership_plan: profile.membership_plan,
+      earnings_wallet_balance: profile.earnings_wallet_balance,
+      deposit_wallet_balance: profile.deposit_wallet_balance,
+      total_earned: profile.total_earned,
+      last_task_date: profile.last_task_date,
+      plan_expires_at: profile.plan_expires_at,
+      account_status: profile.account_status,
+      daily_task_limit: plan.daily_task_limit,
+      earning_per_task: plan.earning_per_task,
+      task_skip_limit_per_day: plan.task_skip_limit_per_day,
+      task_commission_rate: plan.task_commission_rate,
+      deposit_commission_rate: plan.deposit_commission_rate,
+      min_withdrawal: plan.min_withdrawal,
+      min_daily_withdrawal: plan.min_daily_withdrawal,
+      max_daily_withdrawal: plan.max_daily_withdrawal,
+      remaining_tasks: plan.daily_task_limit - profile.tasks_completed_today,
+      remaining_skips: plan.task_skip_limit_per_day - profile.skips_today,
+    };
+    
+    console.log('✅ Fresh user stats fetched from database:', {
+      userId: user.id,
+      tasksCompletedToday: userStats.tasks_completed_today,
+      dailyLimit: userStats.daily_task_limit,
+      earningsBalance: userStats.earnings_wallet_balance,
+      remainingTasks: userStats.remaining_tasks
+    });
 
     // ============================================================================
     // STEP 2.5: SAFETY NET - AUTO-RESET IF DATE HAS CHANGED (Phase 3)
@@ -199,17 +170,28 @@ Deno.serve(async (req) => {
       } else {
         console.log('✅ Daily counters auto-reset successfully for user:', user.id);
         
-        // Update cached stats to reflect reset
-        userStats.tasks_completed_today = 0;
-        userStats.skips_today = 0;
-        userStats.last_task_date = currentDate;
-        userStats.remaining_tasks = userStats.daily_task_limit; // Full limit available
-        userStats.remaining_skips = userStats.task_skip_limit_per_day; // Full skips available
+        // Re-fetch fresh stats from database after reset
+        console.log('🔄 Refetching stats after auto-reset');
         
-        // Invalidate cache to force fresh fetch on next request
-        statsCache.delete(cacheKey);
+        // Re-fetch profile to get updated values
+        const { data: updatedProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
         
-        console.log('🔄 Cache invalidated after auto-reset');
+        if (updatedProfile) {
+          userStats.tasks_completed_today = updatedProfile.tasks_completed_today;
+          userStats.skips_today = updatedProfile.skips_today;
+          userStats.last_task_date = updatedProfile.last_task_date;
+          userStats.remaining_tasks = userStats.daily_task_limit - updatedProfile.tasks_completed_today;
+          userStats.remaining_skips = userStats.task_skip_limit_per_day - updatedProfile.skips_today;
+        }
+        
+        console.log('✅ Stats refetched after auto-reset:', {
+          tasksCompletedToday: userStats.tasks_completed_today,
+          remainingTasks: userStats.remaining_tasks
+        });
       }
     }
 
