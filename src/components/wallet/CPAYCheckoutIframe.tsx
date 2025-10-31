@@ -30,6 +30,7 @@ export const CPAYCheckoutIframe = ({
   const [transactionStatus, setTransactionStatus] = useState<"pending" | "completed" | "failed">("pending");
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
+  const [showingConfirmation, setShowingConfirmation] = useState(false); // ✅ NEW: Loading state during transition
   const MAX_POLLS = 120; // Poll for 6 minutes (120 * 3 seconds) - increased for webhook processing time
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export const CPAYCheckoutIframe = ({
       setTransactionStatus("pending");
       setLoading(true);
       setPollingCount(0);
+      setShowingConfirmation(false); // ✅ Reset confirmation state
       return;
     }
 
@@ -64,6 +66,7 @@ export const CPAYCheckoutIframe = ({
         }
 
         if (data.status === "completed") {
+          setShowingConfirmation(true); // ✅ Show our loading state immediately
           setTransactionStatus("completed");
           setLoading(false);
           clearInterval(pollInterval);
@@ -131,7 +134,14 @@ export const CPAYCheckoutIframe = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
-          {transactionStatus === "completed" ? (
+          {showingConfirmation && transactionStatus !== "completed" ? (
+            <div className="h-full flex items-center justify-center p-6">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+                <p className="text-muted-foreground">Processing confirmation...</p>
+              </div>
+            </div>
+          ) : transactionStatus === "completed" ? (
             <div className="h-full flex items-center justify-center p-6">
               <div className="text-center space-y-4">
                 <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mx-auto animate-in zoom-in">
