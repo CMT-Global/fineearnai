@@ -737,7 +737,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           withdrawalProcessors.map((processor) => (
                             <SelectItem key={processor.id} value={processor.name}>
                               {processor.config?.display_name || processor.name}
-                              {processor.fee_fixed > 0 && ` (Fee: $${processor.fee_fixed})`}
                             </SelectItem>
                           ))
                         )}
@@ -762,7 +761,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       id="account-details"
                       placeholder={
                         withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_placeholder ||
-                        "Enter Your USDT TRC20 (Tron Network) details. You can copy them directly from any crypto wallet, Binance account or any exchange then paste here. Your Earnings will be sent to this address which you can then cashout to your local bank or mobile money."
+                        "Enter your USDT TRC20( Tron Network) Details. You can copy the USDT address directly from any crypto wallet, Gcrypto, Binance account or any exchange then paste here. Your Earnings will be sent to this address, then you can cashout to your local bank or mobile money."
                       }
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
