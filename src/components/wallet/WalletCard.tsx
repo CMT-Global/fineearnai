@@ -670,7 +670,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       id="account-details"
                       placeholder={
                         withdrawalProcessors.find(p => p.name === withdrawMethod)?.config?.address_placeholder ||
-                        "Enter your account details (bank account number, PayPal email, crypto address, etc.)"
+                        "Enter Your USDT TRC20 (Tron Network) details. You can copy them directly from any crypto wallet, Binance account or any exchange then paste here. Your Earnings will be sent to this address which you can then cashout to your local bank or mobile money."
                       }
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
