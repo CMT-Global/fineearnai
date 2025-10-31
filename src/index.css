@@ -130,6 +130,19 @@ All colors MUST be HSL.
     transform: translateY(0);
   }
   
+  /* Touch optimization for mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* iOS safe area support */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+    }
+  }
+  
   /* Hide Reamaze widget on admin pages */
   body[data-admin-mode="true"] #reamaze-widget,
   body[data-admin-mode="true"] .reamaze-frame {
