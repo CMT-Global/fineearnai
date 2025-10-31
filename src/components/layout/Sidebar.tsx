@@ -25,6 +25,7 @@ import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { MobileUserBadge } from "@/components/layout/MobileUserBadge";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 interface SidebarProps {
   profile: any;
@@ -40,15 +41,23 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const [open, setOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
-  const navItems = [
+  // Primary navigation items (shown in bottom nav on mobile + sidebar)
+  const primaryNavItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Zap, label: "Tasks", path: "/tasks" },
     { icon: Wallet, label: "Wallet", path: "/wallet" },
     { icon: Users, label: "Referrals", path: "/referrals" },
     { icon: Crown, label: "Membership", path: "/plans" },
+  ];
+
+  // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
+  const secondaryNavItems = [
     { icon: History, label: "Transactions", path: "/transactions" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
+
+  // Combined nav items for desktop sidebar
+  const navItems = [...primaryNavItems, ...secondaryNavItems];
 
   const isActive = (path: string) => location.pathname === path;
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -284,6 +293,9 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <aside className="hidden lg:flex w-64 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col">
         <NavContent />
       </aside>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav profile={profile} />
     </>
   );
 };

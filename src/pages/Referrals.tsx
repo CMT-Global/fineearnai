@@ -62,7 +62,7 @@ const Referrals = () => {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
       
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
         {/* Header */}
         <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div className="flex-1 mb-4">

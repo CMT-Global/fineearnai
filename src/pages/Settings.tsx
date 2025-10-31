@@ -180,7 +180,7 @@ const Settings = () => {
       <div className="min-h-screen bg-background flex w-full">
         <Sidebar profile={profile} onSignOut={signOut} />
         
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 p-8 overflow-auto pb-24 lg:pb-8">
           <div className="max-w-4xl mx-auto space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Settings</h1>

@@ -314,7 +314,7 @@ export default function MembershipPlans() {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar profile={profile || null} isAdmin={isAdmin} onSignOut={signOut} />
       
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16">
+      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
         <div className="container mx-auto px-4 lg:px-8 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
