@@ -87,6 +87,13 @@ const Dashboard = () => {
       // Reset on logout
       if (event === 'SIGNED_OUT') {
         setShowLoginMessage(false);
+        
+        // ✅ NEW: Clean up any leftover trigger flags
+        if (session?.user?.id) {
+          const triggerKey = `loginMessageTrigger_${session.user.id}`;
+          sessionStorage.removeItem(triggerKey);
+          console.info(`[LoginMessage] Trigger cleaned up on logout for user ${session.user.id}`);
+        }
       }
     });
 
