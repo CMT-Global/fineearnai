@@ -19,36 +19,67 @@ serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header present:', !!authHeader);
+    
+    if (!authHeader) {
+      console.error('No Authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create Supabase client with user's JWT
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
     // Verify admin authentication
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    console.log('Auth check - User ID:', user?.id, 'Error:', userError?.message);
+    
     if (userError || !user) {
+      console.error('Authentication failed:', userError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ 
+          error: 'Unauthorized', 
+          details: userError?.message || 'User not authenticated' 
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if user is admin
-    const { data: roles } = await supabaseClient
+    // Check if user is admin using service role for reliable RLS bypass
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    const { data: roles, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
+    
+    console.log('Role check - Has admin role:', !!roles, 'Error:', roleError?.message);
 
-    if (!roles) {
+    if (roleError || !roles) {
+      console.error('Admin check failed:', roleError);
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
+        JSON.stringify({ 
+          error: 'Forbidden: Admin access required',
+          details: roleError?.message || 'User is not an admin'
+        }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
