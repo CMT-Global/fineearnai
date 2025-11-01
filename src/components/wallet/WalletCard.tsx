@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles, HelpCircle } from "lucide-react";
@@ -1039,6 +1040,22 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       );
                     })()}
                   </div>
+
+                  {/* Currency & Network Badge */}
+                  <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                    <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                      Withdrawal Currency & Network
+                      <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
+                        USDC Solana (SPL)
+                      </Badge>
+                    </AlertTitle>
+                    <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                      Your withdrawal will be sent as <strong>USDC</strong> on the <strong>Solana (SPL)</strong> network. 
+                      Make sure your wallet supports USDC on Solana.
+                    </AlertDescription>
+                  </Alert>
+
                   <div>
                     <Label htmlFor="account-details">
                       {(() => {
