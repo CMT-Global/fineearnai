@@ -70,6 +70,10 @@ export default function MembershipPlans() {
     setCurrentPlan
   } = useUserProfile(user);
 
+  // Get current plan price for downgrade detection
+  const currentPlanObj = plans.find(p => p.name === currentPlan);
+  const currentPlanPrice = currentPlanObj?.price ?? 0;
+
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -100,7 +104,14 @@ export default function MembershipPlans() {
       return;
     }
 
-    if (plan.name === "free") {
+    // ✅ CRITICAL: Price-based downgrade prevention
+    if (currentPlanObj && plan.price < currentPlanObj.price) {
+      toast.error(`Cannot downgrade to a cheaper plan. Your current plan (${currentPlanObj.display_name}) costs $${currentPlanObj.price.toFixed(2)}, and ${plan.display_name} costs $${plan.price.toFixed(2)}.`);
+      return;
+    }
+
+    // Explicit free plan check (redundant but clear)
+    if (plan.name === "free" && currentPlanPrice > 0) {
       toast.error("Cannot downgrade to free plan. Please contact support.");
       return;
     }
@@ -314,6 +325,7 @@ export default function MembershipPlans() {
         variant={variant}
         freePlanEarning={freePlanDailyEarning}
         currentPlan={currentPlan}
+        currentPlanPrice={currentPlanPrice}
       />
     ));
   };

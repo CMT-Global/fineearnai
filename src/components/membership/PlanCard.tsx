@@ -37,6 +37,7 @@ interface PlanCardProps {
   variant?: 'vertical' | 'horizontal';
   freePlanEarning?: number; // For comparison calculations
   currentPlan?: string; // Current plan name for downgrade detection
+  currentPlanPrice?: number; // Current plan price for downgrade detection
 }
 
 export function PlanCard({
@@ -49,7 +50,8 @@ export function PlanCard({
   hasProfile,
   variant = 'vertical',
   freePlanEarning = 0,
-  currentPlan
+  currentPlan,
+  currentPlanPrice = 0
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
