@@ -569,9 +569,20 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
 function detectPaymentProvider(paymentMethod: string): string {
   const method = paymentMethod.toLowerCase();
   
-  if (method.includes('cpay') || method.includes('crypto payout')) {
+  // Match CPAY-related payment methods
+  // Includes: cpay, crypto payout, and all branded wallet options
+  if (method.includes('cpay') || 
+      method.includes('crypto payout') ||
+      method.includes('gcrypto') ||
+      method.includes('binance') ||
+      method.includes('coins.ph') ||
+      method.includes('bybit') ||
+      method.includes('coinbase') ||
+      method.includes('kucoin')) {
     return 'cpay';
   }
+  
+  // Match Payeer-related payment methods
   if (method.includes('payeer')) {
     return 'payeer';
   }
