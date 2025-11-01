@@ -38,6 +38,7 @@ const Dashboard = () => {
   
   // State to track fresh login for login message dialog
   const [showLoginMessage, setShowLoginMessage] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
@@ -46,22 +47,37 @@ const Dashboard = () => {
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
 
-  // ✅ Phase 3: Detect fresh authentication for login message
+  // ✅ Phase 3: Detect fresh authentication for login message with improved auth tracking
   useEffect(() => {
+    // Check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      // If there's already a session on initial load, mark as initial load (not fresh login)
+      if (session?.user) {
+        setIsInitialLoad(true);
+      }
+    });
+
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only trigger on SIGNED_IN event (fresh login)
-      // Not on TOKEN_REFRESHED, USER_UPDATED, or initial session load
-      if (event === 'SIGNED_IN' && session?.user) {
+      // Only trigger on SIGNED_IN event (fresh login), not on initial page load
+      // Differentiate between initial session load vs actual fresh login
+      if (event === 'SIGNED_IN' && session?.user && !isInitialLoad) {
         // Small delay to ensure smooth transition after auth
         setTimeout(() => {
           setShowLoginMessage(true);
         }, 500);
       }
       
+      // After first auth event, mark initial load as complete
+      if (isInitialLoad && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+        setIsInitialLoad(false);
+      }
+      
       // Reset trigger state on logout to ensure clean state for next login
       if (event === 'SIGNED_OUT') {
         setShowLoginMessage(false);
+        // Reset initial load flag to allow login message on next sign in
+        setIsInitialLoad(false);
       }
     });
 
@@ -70,7 +86,7 @@ const Dashboard = () => {
       subscription.unsubscribe();
       setShowLoginMessage(false);
     };
-  }, []);
+  }, [isInitialLoad]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -113,12 +129,15 @@ const Dashboard = () => {
       isLoading={isLoading || !profile}
       loadingText="Loading dashboard..."
     >
-      {/* Login Message Dialog - Phase 3 */}
+      {/* Login Message Dialog - Phase 3 with proper trigger reset */}
       {user && (
         <LoginMessageDialog 
           userId={user.id}
           trigger={showLoginMessage}
-          onOpenChange={setShowLoginMessage}
+          onOpenChange={(open) => {
+            // Reset trigger state when dialog is dismissed
+            setShowLoginMessage(open);
+          }}
         />
       )}
 
