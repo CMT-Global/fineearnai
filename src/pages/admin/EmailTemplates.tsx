@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Info } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 interface EmailTemplate {
   id: string;
@@ -25,6 +28,40 @@ interface EmailTemplate {
   variables: string[];
   is_active: boolean;
 }
+
+// Predefined auth template types with descriptions and available variables
+const AUTH_TEMPLATE_TYPES = [
+  {
+    value: "auth_password_reset",
+    label: "Password Reset",
+    description: "Sent when user requests a password reset",
+    variables: ["username", "email", "reset_link", "token_hash", "redirect_to"]
+  },
+  {
+    value: "auth_email_confirmation",
+    label: "Email Confirmation",
+    description: "Sent to verify user's email address",
+    variables: ["username", "email", "confirmation_link", "token_hash", "redirect_to"]
+  },
+  {
+    value: "auth_magic_link",
+    label: "Magic Link Login",
+    description: "Sent for passwordless authentication",
+    variables: ["username", "email", "magic_link", "token_hash", "redirect_to"]
+  },
+  {
+    value: "auth_email_change",
+    label: "Email Change Confirmation",
+    description: "Sent when user changes their email address",
+    variables: ["username", "old_email", "new_email", "confirmation_link", "token_hash"]
+  },
+  {
+    value: "custom",
+    label: "Custom Template",
+    description: "Create a custom email template",
+    variables: []
+  }
+] as const;
 
 const EmailTemplates = () => {
   const { user, loading: authLoading } = useAuth();
@@ -44,6 +81,13 @@ const EmailTemplates = () => {
     variables: "",
     is_active: true,
   });
+  
+  // Get template info based on selected type
+  const getTemplateInfo = (type: string) => {
+    return AUTH_TEMPLATE_TYPES.find(t => t.value === type);
+  };
+  
+  const selectedTemplateInfo = getTemplateInfo(formData.template_type);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -184,6 +228,22 @@ const EmailTemplates = () => {
       is_active: true,
     });
   };
+  
+  const handleTemplateTypeChange = (value: string) => {
+    setFormData({ ...formData, template_type: value });
+    
+    // Auto-populate variables for auth templates
+    const templateInfo = getTemplateInfo(value);
+    if (templateInfo && templateInfo.variables.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        template_type: value,
+        variables: JSON.stringify(templateInfo.variables, null, 2)
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, template_type: value }));
+    }
+  };
 
   const openEditDialog = (template: EmailTemplate) => {
     setEditingTemplate(template);
@@ -266,22 +326,48 @@ const EmailTemplates = () => {
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="e.g., welcome_email"
+                          placeholder="e.g., password_reset_notification"
                         />
                       </div>
 
                       <div>
                         <Label htmlFor="type">Template Type *</Label>
-                        <Input
-                          id="type"
-                          value={formData.template_type}
-                          onChange={(e) =>
-                            setFormData({ ...formData, template_type: e.target.value })
-                          }
-                          placeholder="e.g., user_onboarding"
-                        />
+                        <Select value={formData.template_type} onValueChange={handleTemplateTypeChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select template type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AUTH_TEMPLATE_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
+                    
+                    {/* Template Type Info */}
+                    {selectedTemplateInfo && (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>{selectedTemplateInfo.label}:</strong> {selectedTemplateInfo.description}
+                          {selectedTemplateInfo.variables.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium">Available variables:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {selectedTemplateInfo.variables.map((variable) => (
+                                  <Badge key={variable} variant="secondary" className="text-xs">
+                                    {`{{${variable}}}`}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
                     <div>
                       <Label htmlFor="subject">Email Subject *</Label>
@@ -291,19 +377,24 @@ const EmailTemplates = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, subject: e.target.value })
                         }
-                        placeholder="e.g., Welcome to Our Platform!"
+                        placeholder="e.g., Reset Your Password"
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        You can use variables like {`{{username}}`} in the subject
+                      </p>
                     </div>
 
                     <div>
-                      <Label htmlFor="body">Email Body (HTML) *</Label>
-                      <Textarea
-                        id="body"
+                      <Label htmlFor="body">Email Body *</Label>
+                      <RichTextEditor
                         value={formData.body}
-                        onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-                        placeholder="Enter email HTML content. Use {{variable}} for placeholders."
-                        rows={10}
+                        onChange={(html) => setFormData({ ...formData, body: html })}
+                        placeholder="Compose your email content here. Use {{variable}} for placeholders."
+                        maxLength={10000}
                       />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💡 Tip: Use variables like {`{{username}}`}, {`{{reset_link}}`}, etc. in your content
+                      </p>
                     </div>
 
                     <div>
@@ -314,11 +405,12 @@ const EmailTemplates = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, variables: e.target.value })
                         }
-                        placeholder='["username", "email", "amount"]'
+                        placeholder='["username", "email"]'
                         rows={3}
+                        className="font-mono text-sm"
                       />
                       <p className="text-sm text-muted-foreground mt-1">
-                        Use double curly braces like variable in the body to insert dynamic content
+                        Variables are auto-populated for auth templates. Add custom variables if needed.
                       </p>
                     </div>
 
@@ -330,7 +422,7 @@ const EmailTemplates = () => {
                           setFormData({ ...formData, is_active: checked })
                         }
                       />
-                      <Label htmlFor="is_active">Active</Label>
+                      <Label htmlFor="is_active">Active Template</Label>
                     </div>
                   </div>
 
