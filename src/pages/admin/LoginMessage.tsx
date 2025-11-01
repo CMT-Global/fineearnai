@@ -25,6 +25,7 @@ import {
   AlertCircle,
   Sparkles,
   Info,
+  Code,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -56,6 +57,7 @@ const LoginMessage = () => {
 
   const [config, setConfig] = useState<LoginMessageConfig>(DEFAULT_CONFIG);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSourceCode, setShowSourceCode] = useState(false);
   const [characterCount, setCharacterCount] = useState(0);
 
   // Fetch current login message config
@@ -396,14 +398,16 @@ const LoginMessage = () => {
                   )}
                   Live Preview
                 </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="h-9 touch-manipulation"
-                >
-                  {showPreview ? "Hide" : "Show"} Preview
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="h-9 touch-manipulation"
+                  >
+                    {showPreview ? "Hide" : "Show"} Preview
+                  </Button>
+                </div>
               </div>
               <CardDescription className="text-sm">
                 See how the message will appear to users
@@ -412,36 +416,85 @@ const LoginMessage = () => {
             {showPreview && (
               <CardContent>
                 {config.enabled ? (
-                  <div className="border-2 border-dashed border-muted rounded-lg p-3 sm:p-4 bg-muted/10">
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-                          <h3 className="text-base sm:text-lg font-bold truncate">{config.title}</h3>
-                        </div>
-                        {config.dismissible && (
-                          <Badge variant="secondary" className="text-xs flex-shrink-0">
-                            Dismissible
-                          </Badge>
-                        )}
-                      </div>
-                      <Separator />
-                      <div
-                        className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm"
-                        dangerouslySetInnerHTML={{ __html: config.body }}
-                      />
-                      {config.show_once_per_session && (
-                        <p className="text-xs text-muted-foreground italic">
-                          ℹ️ Will only show once per 24-hour period
-                        </p>
-                      )}
-                      <Badge
-                        variant="outline"
-                        className="capitalize text-xs"
+                  <div className="space-y-4">
+                    {/* View Toggle Buttons */}
+                    <div className="flex items-center gap-2 border-b pb-3">
+                      <Button
+                        variant={!showSourceCode ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowSourceCode(false)}
+                        className="h-8 text-xs touch-manipulation"
                       >
-                        Priority: {config.priority}
-                      </Badge>
+                        <Eye className="h-3 w-3 mr-1" />
+                        Visual
+                      </Button>
+                      <Button
+                        variant={showSourceCode ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowSourceCode(true)}
+                        className="h-8 text-xs touch-manipulation"
+                      >
+                        <Code className="h-3 w-3 mr-1" />
+                        Source Code
+                      </Button>
                     </div>
+
+                    {/* Preview Content */}
+                    {!showSourceCode ? (
+                      <div className="border-2 border-dashed border-muted rounded-lg p-3 sm:p-4 bg-muted/10">
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                              <h3 className="text-base sm:text-lg font-bold truncate">{config.title}</h3>
+                            </div>
+                            {config.dismissible && (
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                Dismissible
+                              </Badge>
+                            )}
+                          </div>
+                          <Separator />
+                          <div
+                            className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm"
+                            dangerouslySetInnerHTML={{ __html: config.body }}
+                          />
+                          {config.show_once_per_session && (
+                            <p className="text-xs text-muted-foreground italic">
+                              ℹ️ Will only show once per 24-hour period
+                            </p>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className="capitalize text-xs"
+                          >
+                            Priority: {config.priority}
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-lg bg-muted/30 p-4 max-h-[400px] overflow-auto">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium text-muted-foreground">HTML Source Code</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(config.body);
+                                toast.success("HTML copied to clipboard!");
+                              }}
+                              className="h-7 text-xs"
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <pre className="text-xs bg-background p-3 rounded border overflow-x-auto">
+                            <code className="font-mono text-xs">{config.body}</code>
+                          </pre>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <Alert>
