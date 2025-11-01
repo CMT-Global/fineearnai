@@ -47,37 +47,28 @@ const Dashboard = () => {
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
 
-  // ✅ Phase 3: Detect fresh authentication for login message with improved auth tracking
+  // ✅ Phase 2: Simplified auth state logic with local variable tracking
   useEffect(() => {
-    // Check for existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // If there's already a session on initial load, mark as initial load (not fresh login)
-      if (session?.user) {
-        setIsInitialLoad(true);
-      }
-    });
+    let hasSeenFirstEvent = false;
 
-    // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only trigger on SIGNED_IN event (fresh login), not on initial page load
-      // Differentiate between initial session load vs actual fresh login
-      if (event === 'SIGNED_IN' && session?.user && !isInitialLoad) {
-        // Small delay to ensure smooth transition after auth
+      // First event is always INITIAL_SESSION or existing session
+      // Don't show login message on first event (page load with existing session)
+      if (!hasSeenFirstEvent) {
+        hasSeenFirstEvent = true;
+        return;
+      }
+
+      // Any subsequent SIGNED_IN event is a fresh login
+      if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(() => {
           setShowLoginMessage(true);
         }, 500);
       }
       
-      // After first auth event, mark initial load as complete
-      if (isInitialLoad && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-        setIsInitialLoad(false);
-      }
-      
-      // Reset trigger state on logout to ensure clean state for next login
+      // Reset on logout
       if (event === 'SIGNED_OUT') {
         setShowLoginMessage(false);
-        // Reset initial load flag to allow login message on next sign in
-        setIsInitialLoad(false);
       }
     });
 
