@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,7 +141,15 @@ const LoginMessage = () => {
       return;
     }
 
-    saveMutation.mutate(config);
+    // Sanitize HTML body before saving (additional security layer)
+    const sanitizedBody = DOMPurify.sanitize(config.body, {
+      ALLOWED_TAGS: ['p', 'h1', 'h2', 'h3', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'br'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style'],
+      ALLOW_DATA_ATTR: false,
+    });
+
+    // Save with sanitized body
+    saveMutation.mutate({ ...config, body: sanitizedBody });
   };
 
   const handleReset = () => {
