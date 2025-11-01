@@ -1046,19 +1046,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         if (virtualMethod) {
                           // Method-specific labels for virtual methods
                           const labels: Record<string, string> = {
-                            'gcrypto': 'Gcrypto Wallet Address',
-                            'binance': 'Binance Account Details',
-                            'coinsph': 'Coins.Ph Wallet Address',
-                            'bybit': 'ByBit Account Details',
-                            'coinbase': 'CoinBase Wallet Address',
-                            'kucoin': 'KuCoin Account Details',
+                            'gcrypto': 'USDC Solana (SPL) Wallet Address',
+                            'binance': 'USDC Solana (SPL) Wallet Address',
+                            'coinsph': 'USDC Solana (SPL) Wallet Address',
+                            'bybit': 'USDC Solana (SPL) Wallet Address',
+                            'coinbase': 'USDC Solana (SPL) Wallet Address',
+                            'kucoin': 'USDC Solana (SPL) Wallet Address',
                           };
                           return labels[virtualMethod.id] || 'Account Details';
                         }
                         
                         // Fallback to actual processor label
                         const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                        return processor?.config?.address_label || "Account Details";
+                        return processor?.config?.address_label || "USDC Solana (SPL) Wallet Address *";
                       })()}
                     </Label>
                     <Textarea
@@ -1068,12 +1068,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         if (virtualMethod) {
                           // Method-specific placeholders for virtual methods
                           const placeholders: Record<string, string> = {
-                            'gcrypto': 'Enter your Gcrypto USDT TRC20 wallet address. Log into your Gcrypto app, copy your USDT address, and paste it here.',
-                            'binance': 'Enter your Binance USDT TRC20 deposit address. Go to Binance > Wallet > Deposit > USDT (TRC20), copy the address, and paste it here.',
-                            'coinsph': 'Enter your Coins.Ph USDT wallet address. Open Coins.Ph app, go to your crypto wallet, copy your USDT address, and paste it here.',
-                            'bybit': 'Enter your ByBit USDT TRC20 deposit address. Go to ByBit > Assets > Deposit > USDT (TRC20), copy the address, and paste it here.',
-                            'coinbase': 'Enter your CoinBase USDT wallet address. Open CoinBase, go to your USDT wallet, copy the receive address, and paste it here.',
-                            'kucoin': 'Enter your KuCoin USDT TRC20 deposit address. Go to KuCoin > Assets > Deposit > USDT (TRC20), copy the address, and paste it here.',
+                            'gcrypto': 'Enter your Gcrypto USDC Solana address. Log into Gcrypto, tap Wallet → USDC → Select Solana (SPL) Network → Copy Address → Paste here.',
+                            'binance': 'Enter your Binance USDC Solana address. Go to Binance → Wallet → Deposit → Search "USDC" → Select Solana Network → Copy Address → Paste here.',
+                            'coinsph': 'Enter your Coins.Ph USDC Solana address. Open Coins.Ph → Crypto Wallet → USDC → Select Solana Network → Copy Address → Paste here.',
+                            'bybit': 'Enter your ByBit USDC Solana address. Go to ByBit → Assets → Deposit → Search "USDC" → Select Solana Network → Copy Address → Paste here.',
+                            'coinbase': 'Enter your CoinBase USDC Solana address. Open CoinBase → USDC Wallet → Receive → Select Solana Network → Copy Address → Paste here.',
+                            'kucoin': 'Enter your KuCoin USDC Solana address. Go to KuCoin → Assets → Deposit → Search "USDC" → Select Solana (SPL) → Copy Address → Paste here.',
                           };
                           return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
                         }
@@ -1081,7 +1081,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         // Fallback to actual processor placeholder or default
                         const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
                         return processor?.config?.address_placeholder || 
-                          "Enter your USDT TRC20( Tron Network) Details. You can copy the USDT address directly from any crypto wallet, Gcrypto, Binance account or any exchange then paste here. Your Earnings will be sent to this address, then you can cashout to your local bank or mobile money.";
+                          "Enter your USDC Solana (SPL Network) address. Copy your USDC address from any exchange (Binance, Gcrypto, etc.). Make sure you select the Solana (SPL) network when copying the address. Paste it here.";
                       })()}
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
