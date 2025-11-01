@@ -78,12 +78,18 @@ export function PlanCard({
   const normalizePlanName = (name: string) => 
     name.toLowerCase().trim().replace(/\s+/g, '_');
 
-  // Determine if this is a downgrade using normalized plan names
+  // ✅ PRIMARY: Price-based downgrade detection (single source of truth)
+  const isPriceDowngrade = currentPlanPrice > 0 && plan.price < currentPlanPrice;
+
+  // ✅ FALLBACK: Tier-based detection (for edge cases where price unavailable)
   const currentPlanNormalized = currentPlan ? normalizePlanName(currentPlan) : '';
   const targetPlanNormalized = normalizePlanName(plan.name);
   const currentPlanTier = planTiers[currentPlanNormalized] || 0;
   const targetPlanTier = planTiers[targetPlanNormalized] || 0;
-  const isDowngrade = !isCurrentPlan && currentPlan && targetPlanTier < currentPlanTier;
+  const isTierDowngrade = !isCurrentPlan && currentPlan && targetPlanTier < currentPlanTier;
+
+  // ✅ COMBINED: Prefer price check, fallback to tier
+  const isDowngrade = !isCurrentPlan && (isPriceDowngrade || (isTierDowngrade && !isPriceDowngrade));
 
   // Calculate break even days for paid plans
   const breakEvenDays = plan.name !== 'free' && plan.price > 0 && plan.earning_per_task > 0 && plan.daily_task_limit > 0
