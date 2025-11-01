@@ -6,20 +6,134 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Trash2, Plus, Shield, Globe, Ban, Crown, Activity, Clock, AlertTriangle } from "lucide-react";
+import { Trash2, Plus, Shield, Globe, Ban, Crown, Activity, Clock, AlertTriangle, MessageSquare, Eye, Save, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Separator } from "@/components/ui/separator";
 
 export default function SecuritySettings() {
+  const queryClient = useQueryClient();
+  
+  // Migration banner states
+  const [bannerEnabled, setBannerEnabled] = useState(true);
+  const [bannerDismissible, setBannerDismissible] = useState(true);
+  const [bannerTitle, setBannerTitle] = useState("⚠️ Important Update for Existing Users");
+  const [bannerSubtitle, setBannerSubtitle] = useState("FineEarn has moved to a new upgraded platform!");
+  const [bannerStep1, setBannerStep1] = useState("Sign up here using the same email you used on old platform.");
+  const [bannerStep2, setBannerStep2] = useState("Contact Support so we can transfer your previous data to your new account.");
+  const [bannerStep3, setBannerStep3] = useState("Our team will migrate your funds & data to new platform for best experience.");
+  const [bannerCutoffDate, setBannerCutoffDate] = useState("2025-11-01");
+  const [bannerSupportLink, setBannerSupportLink] = useState("/settings");
+  const [showPreview, setShowPreview] = useState(false);
+  
+  // Security states
   const [blockedCountries, setBlockedCountries] = useState<string[]>(['CN', 'RU']);
   const [blockedIPs, setBlockedIPs] = useState<string[]>(['192.168.1.1']);
   const [newCountry, setNewCountry] = useState("");
   const [newIP, setNewIP] = useState("");
   const [enableCountryBlocking, setEnableCountryBlocking] = useState(true);
   const [enableIPBlocking, setEnableIPBlocking] = useState(true);
+  
+  // Fetch current migration banner config
+  const { data: bannerConfig, isLoading: isLoadingBanner } = useQuery({
+    queryKey: ['migration-banner-config-admin'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "migration_banner")
+        .single();
+
+      if (error) throw error;
+      
+      const config = data?.value as any;
+      
+      // Populate form with existing values
+      if (config) {
+        setBannerEnabled(config.enabled ?? true);
+        setBannerDismissible(config.dismissible ?? true);
+        setBannerTitle(config.message?.title ?? "");
+        setBannerSubtitle(config.message?.subtitle ?? "");
+        setBannerStep1(config.message?.steps?.[0] ?? "");
+        setBannerStep2(config.message?.steps?.[1] ?? "");
+        setBannerStep3(config.message?.steps?.[2] ?? "");
+        setBannerCutoffDate(config.cutoff_date ?? "2025-11-01");
+        setBannerSupportLink(config.support_link ?? "/settings");
+      }
+      
+      return config;
+    },
+    staleTime: 30000,
+  });
+  
+  // Mutation to save banner config
+  const saveBannerMutation = useMutation({
+    mutationFn: async () => {
+      const newConfig = {
+        enabled: bannerEnabled,
+        dismissible: bannerDismissible,
+        display_priority: "high",
+        cutoff_date: bannerCutoffDate,
+        support_link: bannerSupportLink,
+        message: {
+          title: bannerTitle,
+          subtitle: bannerSubtitle,
+          steps: [bannerStep1, bannerStep2, bannerStep3]
+        }
+      };
+      
+      const { error } = await supabase
+        .from("platform_config")
+        .update({ 
+          value: newConfig,
+          updated_at: new Date().toISOString()
+        })
+        .eq("key", "migration_banner");
+
+      if (error) throw error;
+      
+      return newConfig;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['migration-banner-config-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['migration-banner-config'] });
+      toast.success("Migration banner settings saved successfully");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to save banner settings: ${error.message}`);
+    },
+  });
+  
+  const handleSaveBanner = () => {
+    if (!bannerTitle.trim() || !bannerSubtitle.trim()) {
+      toast.error("Title and subtitle are required");
+      return;
+    }
+    if (!bannerStep1.trim() || !bannerStep2.trim() || !bannerStep3.trim()) {
+      toast.error("All three steps are required");
+      return;
+    }
+    saveBannerMutation.mutate();
+  };
+  
+  const handleResetBanner = () => {
+    if (bannerConfig) {
+      setBannerEnabled(bannerConfig.enabled ?? true);
+      setBannerDismissible(bannerConfig.dismissible ?? true);
+      setBannerTitle(bannerConfig.message?.title ?? "");
+      setBannerSubtitle(bannerConfig.message?.subtitle ?? "");
+      setBannerStep1(bannerConfig.message?.steps?.[0] ?? "");
+      setBannerStep2(bannerConfig.message?.steps?.[1] ?? "");
+      setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
+      setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
+      setBannerSupportLink(bannerConfig.support_link ?? "/settings");
+      toast.info("Banner settings reset to saved values");
+    }
+  };
 
   // Fetch withdrawal bypass audit logs
   const { data: bypassAuditLogs, isLoading: isLoadingAudit } = useQuery({
@@ -128,6 +242,249 @@ export default function SecuritySettings() {
         </div>
 
         <div className="grid gap-6">
+          {/* Migration Banner Management */}
+          <Card className="border-blue-200 dark:border-blue-900">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <CardTitle>Platform Migration Banner</CardTitle>
+                    <CardDescription>
+                      Manage the migration notification banner displayed on the login page
+                    </CardDescription>
+                  </div>
+                </div>
+                <Switch
+                  checked={bannerEnabled}
+                  onCheckedChange={setBannerEnabled}
+                  disabled={isLoadingBanner}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Banner Controls */}
+              <div className="grid gap-4">
+                {/* Dismissible Toggle */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Allow Users to Dismiss</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Users can close the banner and it won't show again
+                    </p>
+                  </div>
+                  <Switch
+                    checked={bannerDismissible}
+                    onCheckedChange={setBannerDismissible}
+                    disabled={!bannerEnabled || isLoadingBanner}
+                  />
+                </div>
+
+                {/* Message Editor */}
+                <div className="space-y-4">
+                  <Separator />
+                  <h3 className="font-semibold text-sm">Banner Content</h3>
+                  
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="banner-title">Title *</Label>
+                    <Input
+                      id="banner-title"
+                      placeholder="e.g., ⚠️ Important Update for Existing Users"
+                      value={bannerTitle}
+                      onChange={(e) => setBannerTitle(e.target.value)}
+                      disabled={!bannerEnabled || isLoadingBanner}
+                      maxLength={100}
+                    />
+                    <p className="text-xs text-muted-foreground">{bannerTitle.length}/100 characters</p>
+                  </div>
+
+                  {/* Subtitle */}
+                  <div className="space-y-2">
+                    <Label htmlFor="banner-subtitle">Subtitle *</Label>
+                    <Input
+                      id="banner-subtitle"
+                      placeholder="e.g., FineEarn has moved to a new upgraded platform!"
+                      value={bannerSubtitle}
+                      onChange={(e) => setBannerSubtitle(e.target.value)}
+                      disabled={!bannerEnabled || isLoadingBanner}
+                      maxLength={150}
+                    />
+                    <p className="text-xs text-muted-foreground">{bannerSubtitle.length}/150 characters</p>
+                  </div>
+
+                  {/* Steps */}
+                  <div className="space-y-3">
+                    <Label>Action Steps (3 required) *</Label>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg flex-shrink-0 mt-1">1️⃣</span>
+                        <Textarea
+                          placeholder="First step..."
+                          value={bannerStep1}
+                          onChange={(e) => setBannerStep1(e.target.value)}
+                          disabled={!bannerEnabled || isLoadingBanner}
+                          rows={2}
+                          maxLength={200}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-right">{bannerStep1.length}/200</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg flex-shrink-0 mt-1">2️⃣</span>
+                        <Textarea
+                          placeholder="Second step..."
+                          value={bannerStep2}
+                          onChange={(e) => setBannerStep2(e.target.value)}
+                          disabled={!bannerEnabled || isLoadingBanner}
+                          rows={2}
+                          maxLength={200}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-right">{bannerStep2.length}/200</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg flex-shrink-0 mt-1">3️⃣</span>
+                        <Textarea
+                          placeholder="Third step..."
+                          value={bannerStep3}
+                          onChange={(e) => setBannerStep3(e.target.value)}
+                          disabled={!bannerEnabled || isLoadingBanner}
+                          rows={2}
+                          maxLength={200}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-right">{bannerStep3.length}/200</p>
+                    </div>
+                  </div>
+
+                  {/* Cutoff Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="banner-cutoff">Cutoff Date</Label>
+                    <Input
+                      id="banner-cutoff"
+                      type="date"
+                      value={bannerCutoffDate}
+                      onChange={(e) => setBannerCutoffDate(e.target.value)}
+                      disabled={!bannerEnabled || isLoadingBanner}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Users who joined before this date will see the banner
+                    </p>
+                  </div>
+
+                  {/* Support Link */}
+                  <div className="space-y-2">
+                    <Label htmlFor="banner-link">Support Link</Label>
+                    <Input
+                      id="banner-link"
+                      placeholder="e.g., /settings or https://support.fineearn.com"
+                      value={bannerSupportLink}
+                      onChange={(e) => setBannerSupportLink(e.target.value)}
+                      disabled={!bannerEnabled || isLoadingBanner}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Link shown as "Contact Support" in the banner
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    onClick={handleSaveBanner}
+                    disabled={!bannerEnabled || isLoadingBanner || saveBannerMutation.isPending}
+                    className="flex-1"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {saveBannerMutation.isPending ? "Saving..." : "Save Banner Settings"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleResetBanner}
+                    disabled={!bannerEnabled || isLoadingBanner || saveBannerMutation.isPending}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowPreview(!showPreview)}
+                    disabled={!bannerEnabled || isLoadingBanner}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    {showPreview ? "Hide" : "Show"} Preview
+                  </Button>
+                </div>
+
+                {/* Live Preview */}
+                {showPreview && bannerEnabled && (
+                  <div className="space-y-2 pt-4">
+                    <Separator />
+                    <Label className="text-base">Live Preview</Label>
+                    <div className="rounded-lg border-2 border-dashed p-4">
+                      <Alert className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-2 border-amber-500/50">
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        <div className="ml-2">
+                          <AlertTitle className="text-lg font-bold text-amber-700 dark:text-amber-400 mb-2">
+                            {bannerTitle || "(Title will appear here)"}
+                          </AlertTitle>
+                          <AlertDescription className="space-y-3">
+                            <p className="text-base font-semibold text-foreground">
+                              {bannerSubtitle || "(Subtitle will appear here)"}
+                            </p>
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                If you joined before {bannerCutoffDate}, please:
+                              </p>
+                              <ol className="space-y-2 ml-2">
+                                {[bannerStep1, bannerStep2, bannerStep3].map((step, index) => (
+                                  <li key={index} className="flex items-start gap-2 text-sm text-foreground">
+                                    <span className="flex-shrink-0 text-base">
+                                      {["1️⃣", "2️⃣", "3️⃣"][index]}
+                                    </span>
+                                    <span>{step || `(Step ${index + 1} will appear here)`}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                            {bannerSupportLink && (
+                              <div className="pt-2">
+                                <span className="text-sm font-medium text-amber-600 dark:text-amber-400 underline underline-offset-4">
+                                  Contact Support →
+                                </span>
+                              </div>
+                            )}
+                          </AlertDescription>
+                        </div>
+                      </Alert>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        This is how the banner will appear on the login page
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Information Alert */}
+              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
+                <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <AlertTitle>Banner Information</AlertTitle>
+                <AlertDescription className="text-sm space-y-1">
+                  <p>• Banner appears ONLY on the login page (before users sign in)</p>
+                  <p>• Once dismissed, users won't see it again (stored in localStorage)</p>
+                  <p>• Changes take effect immediately after saving</p>
+                  <p>• Toggle off to disable banner site-wide without losing content</p>
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+
           {/* Withdrawal Bypass Monitoring Section */}
           <Card className="border-amber-200 dark:border-amber-900">
             <CardHeader>
