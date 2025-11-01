@@ -181,7 +181,7 @@ serve(async (req) => {
 
     // PHASE 2: Prepare email payload with verified Resend domain
     const emailPayload = {
-      from: 'FineEarn <onboarding@resend.dev>', // PHASE 2 FIX: Using verified Resend test domain
+      from: 'FineEarn <noreply@mail.fineearn.com>', // Using verified domain mail.fineearn.com
       to: [test_email],
       subject: `[TEST] ${personalizedSubject}`,
       html: personalizedBody,
