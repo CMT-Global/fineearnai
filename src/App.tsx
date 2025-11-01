@@ -45,6 +45,7 @@ const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemMana
 const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
 const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
+const LoginMessage = lazy(() => import("@/pages/admin/LoginMessage"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
 const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
@@ -340,6 +341,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <EmailTemplates />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/communications/login-message"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <LoginMessage />
             </AdminLayout>
           </AdminRoute>
         }
