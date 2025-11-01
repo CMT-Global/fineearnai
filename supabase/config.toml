@@ -1,5 +1,10 @@
 project_id = "mobikymhzchzakwzpqep"
 
+[auth.hook.send_email]
+enabled = true
+uri = "https://mobikymhzchzakwzpqep.supabase.co/functions/v1/send-auth-email"
+secrets = ["HOOK_SECRET"]
+
 [functions.send-auth-email]
 verify_jwt = false
 
