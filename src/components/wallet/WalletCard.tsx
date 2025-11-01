@@ -739,14 +739,26 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       <SelectContent>
                         {/* ✅ Show virtual methods if deposit processor exists */}
                         {actualDepositProcessor && VIRTUAL_DEPOSIT_METHODS.length > 0 ? (
-                          VIRTUAL_DEPOSIT_METHODS.map((method) => (
-                            <SelectItem key={method.id} value={method.id}>
-                              <div className="flex items-center gap-2">
-                                <span>{method.icon}</span>
-                                <span>{method.displayName}</span>
-                              </div>
-                            </SelectItem>
-                          ))
+                          VIRTUAL_DEPOSIT_METHODS.map((method) => {
+                            // ✅ Mark GCrypto, Binance, and CoinBase as recommended for USDC
+                            const isRecommended = ['gcrypto-deposit', 'binance-deposit', 'coinbase-deposit'].includes(method.id);
+                            
+                            return (
+                              <SelectItem key={method.id} value={method.id}>
+                                <div className="flex items-center justify-between gap-2 w-full">
+                                  <div className="flex items-center gap-2">
+                                    <span>{method.icon}</span>
+                                    <span>{method.displayName}</span>
+                                  </div>
+                                  {isRecommended && (
+                                    <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-[10px] px-1.5 py-0 shrink-0">
+                                      ⚡ Low Fees
+                                    </Badge>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })
                         ) : depositProcessors.length === 0 ? (
                           <SelectItem value="none" disabled>No payment methods available</SelectItem>
                         ) : (
