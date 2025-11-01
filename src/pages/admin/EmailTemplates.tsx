@@ -14,7 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle, Monitor, Smartphone, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
@@ -71,6 +72,7 @@ const EmailTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [testEmailDialog, setTestEmailDialog] = useState(false);
@@ -86,6 +88,37 @@ const EmailTemplates = () => {
     variables: "",
     is_active: true,
   });
+  
+  // Helper function to populate sample data in preview
+  const populateSampleData = (content: string): string => {
+    const sampleData: Record<string, string> = {
+      username: "JohnDoe",
+      email: "john.doe@example.com",
+      full_name: "John Doe",
+      amount: "$250.00",
+      transaction_id: "TXN-2025-001234",
+      new_balance: "$1,250.00",
+      plan_name: "Premium Plan",
+      expiry_date: "March 15, 2025",
+      milestone: "50",
+      total_earnings: "$500.00",
+      rejection_reason: "Insufficient funds in wallet",
+      reset_link: "https://fineearn.com/reset-password?token=sample",
+      confirmation_link: "https://fineearn.com/confirm-email?token=sample",
+      magic_link: "https://fineearn.com/magic-link?token=sample",
+      token_hash: "abc123def456",
+      redirect_to: "https://fineearn.com/dashboard",
+      old_email: "old.email@example.com",
+      new_email: "new.email@example.com"
+    };
+
+    let populatedContent = content;
+    Object.entries(sampleData).forEach(([key, value]) => {
+      const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+      populatedContent = populatedContent.replace(regex, value);
+    });
+    return populatedContent;
+  };
   
   // Get template info based on selected type
   const getTemplateInfo = (type: string) => {
@@ -448,10 +481,20 @@ const EmailTemplates = () => {
                         onChange={(html) => setFormData({ ...formData, body: html })}
                         placeholder="Compose your email content here. Use {{variable}} for placeholders."
                         maxLength={10000}
+                        enableProfessionalTemplate={true}
+                        templateTitle="FineEarn"
                       />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        💡 Tip: Use variables like {`{{username}}`}, {`{{reset_link}}`}, etc. in your content
-                      </p>
+                      <Alert className="mt-3">
+                        <Sparkles className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Pro Tips:</strong>
+                          <ul className="list-disc list-inside text-xs mt-2 space-y-1">
+                            <li>Toggle "Professional Template" above for beautiful email styling</li>
+                            <li>Use the ✨ button in toolbar to insert styled buttons</li>
+                            <li>Use variables like {`{{username}}`}, {`{{amount}}`}, {`{{reset_link}}`}</li>
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
                     </div>
 
                     <div>
@@ -595,44 +638,154 @@ const EmailTemplates = () => {
           </CardContent>
         </Card>
 
-        {/* Preview Dialog */}
+        {/* Enhanced Preview Dialog with Desktop/Mobile Toggle */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Template Preview</DialogTitle>
-              <DialogDescription>
-                {previewTemplate?.name} - {previewTemplate?.subject}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label>Subject</Label>
-                <div className="p-3 bg-muted rounded">{previewTemplate?.subject}</div>
-              </div>
-
-              <div>
-                <Label>Body</Label>
-                <div
-                  className="p-4 bg-white border rounded"
-                  dangerouslySetInnerHTML={{ __html: previewTemplate?.body || "" }}
-                />
-              </div>
-
-              <div>
-                <Label>Variables</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {previewTemplate?.variables?.map((variable) => (
-                    <Badge key={variable} variant="outline">
-                      {`{{${variable}}}`}
-                    </Badge>
-                  ))}
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Template Preview
+                  </DialogTitle>
+                  <DialogDescription>
+                    {previewTemplate?.name} - {previewTemplate?.subject}
+                  </DialogDescription>
+                </div>
+                {/* Desktop/Mobile Toggle */}
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                  <Button
+                    variant={previewMode === 'desktop' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPreviewMode('desktop')}
+                    className="h-8 gap-2"
+                  >
+                    <Monitor className="h-4 w-4" />
+                    <span className="hidden sm:inline">Desktop</span>
+                  </Button>
+                  <Button
+                    variant={previewMode === 'mobile' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPreviewMode('mobile')}
+                    className="h-8 gap-2"
+                  >
+                    <Smartphone className="h-4 w-4" />
+                    <span className="hidden sm:inline">Mobile</span>
+                  </Button>
                 </div>
               </div>
-            </div>
+            </DialogHeader>
+
+            <Tabs defaultValue="preview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="preview">Visual Preview</TabsTrigger>
+                <TabsTrigger value="code">HTML Code</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="preview" className="space-y-4">
+                {/* Subject Preview */}
+                <div>
+                  <Label className="text-sm font-semibold">Email Subject</Label>
+                  <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border rounded-lg">
+                    <p className="font-medium text-sm">
+                      {previewTemplate ? populateSampleData(previewTemplate.subject) : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Email Body Preview */}
+                <div>
+                  <Label className="text-sm font-semibold mb-2 block">Email Body</Label>
+                  <div className="relative">
+                    {/* Preview Container with Device Frame */}
+                    <div 
+                      className={`
+                        mx-auto transition-all duration-300 border rounded-lg overflow-hidden
+                        ${previewMode === 'mobile' ? 'max-w-[375px]' : 'max-w-full'}
+                      `}
+                      style={{
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                      }}
+                    >
+                      {/* Device Header (for mobile view) */}
+                      {previewMode === 'mobile' && (
+                        <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-white text-xs font-medium">Gmail</span>
+                          </div>
+                          <div className="text-white text-xs">9:41 AM</div>
+                        </div>
+                      )}
+                      
+                      {/* Email Content */}
+                      <div 
+                        className="bg-white p-4 overflow-auto"
+                        style={{ 
+                          maxHeight: previewMode === 'mobile' ? '600px' : '700px',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif'
+                        }}
+                        dangerouslySetInnerHTML={{ 
+                          __html: previewTemplate ? populateSampleData(previewTemplate.body) : "" 
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Preview Info Badge */}
+                    <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <Info className="h-3 w-3" />
+                      <span>Preview shows sample data for all variables</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Variables Used */}
+                {previewTemplate?.variables && previewTemplate.variables.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-semibold">Variables Used</Label>
+                    <div className="mt-2 flex gap-2 flex-wrap p-3 bg-muted/50 rounded-lg border">
+                      {previewTemplate.variables.map((variable) => (
+                        <Badge key={variable} variant="secondary" className="font-mono text-xs">
+                          {`{{${variable}}}`}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="code" className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold mb-2 block">Raw HTML Code</Label>
+                  <Textarea
+                    value={previewTemplate?.body || ''}
+                    readOnly
+                    className="font-mono text-xs h-[500px] bg-slate-950 text-green-400 border-slate-800"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(previewTemplate?.body || '');
+                      toast.success('HTML code copied to clipboard!');
+                    }}
+                  >
+                    Copy HTML Code
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <DialogFooter>
-              <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>Close</Button>
+              <Button onClick={() => {
+                setPreviewOpen(false);
+                if (previewTemplate) openEditDialog(previewTemplate);
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Template
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
