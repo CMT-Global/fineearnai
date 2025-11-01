@@ -9,6 +9,7 @@ import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanne
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
 import { SocialFollowCard } from "@/components/dashboard/SocialFollowCard";
+import { GCashGuideCard } from "@/components/dashboard/GCashGuideCard";
 import { 
   Crown, 
   Sparkles,
@@ -324,6 +325,11 @@ const Dashboard = () => {
                 View Details
               </Button>
             </Card>
+          </div>
+
+          {/* GCash Quick Guides Section */}
+          <div className="px-4 lg:px-8 pb-6">
+            <GCashGuideCard />
           </div>
 
           {/* Social Media Follow Section */}
