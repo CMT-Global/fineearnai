@@ -80,14 +80,67 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ✅ CRITICAL: Server-side downgrade prevention
+    if (currentPlan && parseFloat(currentPlan.price) > 0) {
+      const currentPrice = parseFloat(currentPlan.price);
+      const newPrice = parseFloat(newPlan.price);
+      
+      if (newPrice < currentPrice) {
+        console.error('❌ Downgrade attempt blocked:', {
+          userId: user.id,
+          currentPlan: currentPlan.name,
+          currentPrice,
+          targetPlan: planName,
+          targetPrice: newPrice
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'Cannot downgrade to a cheaper plan',
+            code: 'DOWNGRADE_NOT_ALLOWED',
+            currentPlan: currentPlan.display_name,
+            currentPrice: currentPrice,
+            targetPlan: newPlan.display_name,
+            targetPrice: newPrice
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      console.log('✅ Price validation passed: upgrade allowed', {
+        currentPrice,
+        newPrice,
+        difference: newPrice - currentPrice
+      });
+    }
+
+    // Explicit free plan downgrade block (extra safety)
+    if (newPlan.name === 'free' && currentPlan && parseFloat(currentPlan.price) > 0) {
+      console.error('❌ Downgrade to free plan blocked');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Cannot downgrade to free plan. Please contact support.',
+          code: 'FREE_PLAN_DOWNGRADE_NOT_ALLOWED'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     let finalCost = parseFloat(newPlan.price);
     let prorationDetails = null;
     
-    // Calculate proration if upgrading from a paid plan (convert price string to number)
+    // Calculate proration ONLY for genuine upgrades (newPrice > currentPrice)
     if (currentPlan && 
         profile.current_plan_start_date && 
         parseFloat(currentPlan.price as string) > 0 && 
-        profile.membership_plan !== 'free') {
+        profile.membership_plan !== 'free' &&
+        parseFloat(newPlan.price) > parseFloat(currentPlan.price)) {
       
       console.log('Calculating proration for upgrade from paid plan');
       
