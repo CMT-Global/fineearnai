@@ -782,10 +782,23 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       return (
                         <Alert className="mt-2">
                           <InfoIcon className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            {virtualMethod ? virtualMethod.description : processor.config?.description}
-                            <br />
-                            <strong>Processing:</strong> Instant confirmation
+                          <AlertDescription className="text-xs space-y-1">
+                            <div>
+                              {virtualMethod ? virtualMethod.description : processor.config?.description}
+                            </div>
+                            
+                            {/* ✅ USDC guidance for recommended methods */}
+                            {virtualMethod && ['gcrypto-deposit', 'binance-deposit', 'coinbase-deposit'].includes(virtualMethod.id) && (
+                              <div className="mt-2 pt-2 border-t border-muted">
+                                <p className="font-semibold text-amber-600 dark:text-amber-400">
+                                  💡 Tip: Use USDC (Solana) for lowest fees!
+                                </p>
+                              </div>
+                            )}
+                            
+                            <div className="mt-1">
+                              <strong>Processing:</strong> Instant confirmation
+                            </div>
                           </AlertDescription>
                         </Alert>
                       );
