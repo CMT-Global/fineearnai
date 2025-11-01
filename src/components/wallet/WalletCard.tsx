@@ -1056,6 +1056,32 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     </AlertDescription>
                   </Alert>
 
+                  {/* Expandable Help Guide */}
+                  <Collapsible className="w-full">
+                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <HelpCircle className="h-4 w-4" />
+                      <span className="underline">How to get your USDC Solana address?</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-3">
+                      <div className="text-sm space-y-3 bg-muted/50 p-4 rounded-lg border border-border">
+                        <p className="font-semibold text-foreground">Step-by-Step Guide:</p>
+                        <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                          <li>Open your crypto wallet or exchange (Binance, Gcrypto, Coinbase, etc.)</li>
+                          <li>Navigate to <strong className="text-foreground">Deposit</strong> or <strong className="text-foreground">Receive</strong> section</li>
+                          <li>Search for <strong className="text-foreground">USDC</strong> (not USDT)</li>
+                          <li>When prompted to select a network, choose <strong className="text-foreground">Solana (SPL)</strong></li>
+                          <li>Copy the displayed wallet address</li>
+                          <li>Paste the address in the field below</li>
+                        </ol>
+                        <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-3">
+                          <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium text-xs">
+                            ⚠️ <strong>Important:</strong> Always verify you've selected Solana (SPL) network, not TRC20, ERC20, or other networks! Sending to the wrong network will result in loss of funds.
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+
                   <div>
                     <Label htmlFor="account-details">
                       {(() => {
