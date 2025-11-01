@@ -58,9 +58,18 @@ const Dashboard = () => {
           setShowLoginMessage(true);
         }, 500);
       }
+      
+      // Reset trigger state on logout to ensure clean state for next login
+      if (event === 'SIGNED_OUT') {
+        setShowLoginMessage(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Cleanup function to reset trigger state when component unmounts
+    return () => {
+      subscription.unsubscribe();
+      setShowLoginMessage(false);
+    };
   }, []);
 
   useEffect(() => {
