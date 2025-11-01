@@ -141,9 +141,10 @@ export const LoginMessageDialog = ({
               text-xl sm:text-2xl 
               font-bold
               text-foreground
+              pr-8
             ">
-              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse" />
-              {config.title}
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse flex-shrink-0" />
+              <span className="truncate">{config.title}</span>
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -171,6 +172,7 @@ export const LoginMessageDialog = ({
                 [&>ol]:text-foreground
                 [&>a]:text-primary [&>a]:underline
                 [&>a:hover]:text-primary/80
+                touch-manipulation
               "
               dangerouslySetInnerHTML={{ __html: config.body }}
             />
@@ -186,7 +188,7 @@ export const LoginMessageDialog = ({
           ">
             <Button 
               onClick={() => handleOpenChange(false)}
-              className="w-full"
+              className="w-full h-12 sm:h-11 text-base touch-manipulation"
               size="lg"
             >
               Got it, thanks! 🎉

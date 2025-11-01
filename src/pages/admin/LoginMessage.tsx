@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   MessageSquare,
   Eye,
@@ -25,8 +26,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface LoginMessageConfig {
@@ -171,14 +170,14 @@ const LoginMessage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <MessageSquare className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Login Message Configuration</h1>
+          <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-bold">Login Message Configuration</h1>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Customize the welcome message displayed to users after they log in
         </p>
       </div>
@@ -186,7 +185,7 @@ const LoginMessage = () => {
       {/* Info Alert */}
       <Alert className="mb-6">
         <Info className="h-4 w-4" />
-        <AlertDescription className="text-sm">
+        <AlertDescription className="text-xs sm:text-sm">
           <strong>How it works:</strong> This message appears as a pop-up dialog immediately after users log in.
           You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session.
           Use HTML tags for formatting: <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;p&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;strong&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;ul&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;li&gt;</code>, etc.
@@ -195,25 +194,25 @@ const LoginMessage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Editor Panel */}
-        <div className="space-y-6">
+        <div className="space-y-6 order-2 lg:order-1">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <MessageSquare className="h-5 w-5" />
                 Message Configuration
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Configure the login message content and behavior
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Enable/Disable Toggle */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5 flex-1 min-w-0">
                   <Label htmlFor="enabled" className="text-base font-medium">
                     Enable Login Message
                   </Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Show message to users after they log in
                   </p>
                 </div>
@@ -223,6 +222,7 @@ const LoginMessage = () => {
                   onCheckedChange={(checked) =>
                     setConfig({ ...config, enabled: checked })
                   }
+                  className="flex-shrink-0"
                 />
               </div>
 
@@ -231,7 +231,7 @@ const LoginMessage = () => {
               {/* Title Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="title">
+                  <Label htmlFor="title" className="text-sm sm:text-base">
                     Title <span className="text-destructive">*</span>
                   </Label>
                   <span className="text-xs text-muted-foreground">
@@ -244,7 +244,10 @@ const LoginMessage = () => {
                   value={config.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   maxLength={100}
-                  className={characterCount > 90 ? "border-amber-500" : ""}
+                  className={cn(
+                    "text-base",
+                    characterCount > 90 && "border-amber-500"
+                  )}
                 />
                 <p className="text-xs text-muted-foreground">
                   A short, catchy title for the message (max 100 characters)
@@ -253,7 +256,7 @@ const LoginMessage = () => {
 
               {/* Body Textarea */}
               <div className="space-y-2">
-                <Label htmlFor="body">
+                <Label htmlFor="body" className="text-sm sm:text-base">
                   Message Body <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
@@ -263,7 +266,7 @@ const LoginMessage = () => {
                   onChange={(e) => setConfig({ ...config, body: e.target.value })}
                   rows={10}
                   maxLength={5000}
-                  className="font-mono text-sm"
+                  className="font-mono text-xs sm:text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
                   HTML content (max 5000 chars). Supported tags: &lt;p&gt;, &lt;h1-h3&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;a&gt;, &lt;br&gt;
@@ -274,11 +277,11 @@ const LoginMessage = () => {
 
               {/* Behavior Options */}
               <div className="space-y-4">
-                <h3 className="font-medium">Behavior Options</h3>
+                <h3 className="font-medium text-sm sm:text-base">Behavior Options</h3>
 
                 {/* Dismissible */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="dismissible" className="text-sm font-medium">
                       Allow Dismissal
                     </Label>
@@ -292,12 +295,13 @@ const LoginMessage = () => {
                     onCheckedChange={(checked) =>
                       setConfig({ ...config, dismissible: checked })
                     }
+                    className="flex-shrink-0"
                   />
                 </div>
 
                 {/* Show Once Per Session */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="show_once" className="text-sm font-medium">
                       Show Once Per Session
                     </Label>
@@ -311,19 +315,20 @@ const LoginMessage = () => {
                     onCheckedChange={(checked) =>
                       setConfig({ ...config, show_once_per_session: checked })
                     }
+                    className="flex-shrink-0"
                   />
                 </div>
 
                 {/* Priority */}
                 <div className="space-y-2">
-                  <Label htmlFor="priority">Display Priority</Label>
+                  <Label htmlFor="priority" className="text-sm sm:text-base">Display Priority</Label>
                   <Select
                     value={config.priority}
                     onValueChange={(value: "low" | "medium" | "high") =>
                       setConfig({ ...config, priority: value })
                     }
                   >
-                    <SelectTrigger id="priority">
+                    <SelectTrigger id="priority" className="h-11 touch-manipulation">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -341,11 +346,11 @@ const LoginMessage = () => {
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleSave}
               disabled={saveMutation.isPending}
-              className="flex-1"
+              className="flex-1 h-12 touch-manipulation"
               size="lg"
             >
               {saveMutation.isPending ? (
@@ -365,6 +370,7 @@ const LoginMessage = () => {
               variant="outline"
               size="lg"
               disabled={saveMutation.isPending}
+              className="h-12 touch-manipulation"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset
@@ -373,11 +379,11 @@ const LoginMessage = () => {
         </div>
 
         {/* Preview Panel */}
-        <div className="space-y-6">
-          <Card className="sticky top-8">
+        <div className="space-y-6 order-1 lg:order-2">
+          <Card className="lg:sticky lg:top-8">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   {showPreview ? (
                     <Eye className="h-5 w-5" />
                   ) : (
@@ -389,33 +395,34 @@ const LoginMessage = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowPreview(!showPreview)}
+                  className="h-9 touch-manipulation"
                 >
                   {showPreview ? "Hide" : "Show"} Preview
                 </Button>
               </div>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 See how the message will appear to users
               </CardDescription>
             </CardHeader>
             {showPreview && (
               <CardContent>
                 {config.enabled ? (
-                  <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/10">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                          <h3 className="text-lg font-bold">{config.title}</h3>
+                  <div className="border-2 border-dashed border-muted rounded-lg p-3 sm:p-4 bg-muted/10">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                          <h3 className="text-base sm:text-lg font-bold truncate">{config.title}</h3>
                         </div>
                         {config.dismissible && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs flex-shrink-0">
                             Dismissible
                           </Badge>
                         )}
                       </div>
                       <Separator />
                       <div
-                        className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                        className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm"
                         dangerouslySetInnerHTML={{ __html: config.body }}
                       />
                       {config.show_once_per_session && (
@@ -434,28 +441,11 @@ const LoginMessage = () => {
                 ) : (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
+                    <AlertDescription className="text-sm">
                       Login message is currently <strong>disabled</strong>.
                       Enable it to show a preview.
                     </AlertDescription>
                   </Alert>
-                )}
-
-                {config.enabled && (
-                  <div className="mt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        // Open full preview dialog
-                        const dialog = document.createElement("div");
-                        dialog.innerHTML = "Full preview would appear here";
-                      }}
-                    >
-                      View Full-Size Preview
-                    </Button>
-                  </div>
                 )}
               </CardContent>
             )}
@@ -464,9 +454,9 @@ const LoginMessage = () => {
           {/* Tips Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">💡 Best Practices</CardTitle>
+              <CardTitle className="text-base sm:text-lg">💡 Best Practices</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <CardContent className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <ul className="space-y-2 list-disc list-inside">
                 <li>Keep the title short and welcoming (under 50 chars is ideal)</li>
                 <li>Use simple HTML for better readability</li>
