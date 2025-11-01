@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Info } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
@@ -73,6 +73,11 @@ const EmailTemplates = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
+  const [testEmailDialog, setTestEmailDialog] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [testingTemplateId, setTestingTemplateId] = useState<string | null>(null);
+  const [testingTemplate, setTestingTemplate] = useState<EmailTemplate | null>(null);
+  const [sendingTest, setSendingTest] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
@@ -267,6 +272,58 @@ const EmailTemplates = () => {
   const openPreview = (template: EmailTemplate) => {
     setPreviewTemplate(template);
     setPreviewOpen(true);
+  };
+
+  const openTestEmailDialog = (template: EmailTemplate) => {
+    setTestingTemplateId(template.id);
+    setTestingTemplate(template);
+    setTestEmailDialog(true);
+  };
+
+  const handleSendTest = async () => {
+    if (!testingTemplateId || !testEmailAddress) return;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmailAddress)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-test-email', {
+        body: {
+          template_id: testingTemplateId,
+          test_email: testEmailAddress,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast.error(data.error, {
+          description: data.details || "Failed to send test email",
+        });
+        return;
+      }
+
+      toast.success(`Test email sent to ${testEmailAddress}!`, {
+        description: "Check your inbox to verify the email.",
+      });
+      
+      setTestEmailDialog(false);
+      setTestEmailAddress("");
+      setTestingTemplateId(null);
+      setTestingTemplate(null);
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      toast.error("Failed to send test email", {
+        description: error.message || "An unexpected error occurred",
+      });
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   if (authLoading || adminLoading || loading) {
@@ -495,24 +552,35 @@ const EmailTemplates = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openPreview(template)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditDialog(template)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openPreview(template)}
+                        title="Preview Template"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openTestEmailDialog(template)}
+                        title="Send Test Email"
+                      >
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(template)}
+                        title="Edit Template"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(template.id)}
+                              title="Delete Template"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -566,6 +634,118 @@ const EmailTemplates = () => {
             <DialogFooter>
               <Button onClick={() => setPreviewOpen(false)}>Close</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Test Email Dialog */}
+        <Dialog open={testEmailDialog} onOpenChange={setTestEmailDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Send Test Email - {testingTemplate?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {testingTemplate && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{testingTemplate.template_type}</Badge>
+                    {testingTemplate.is_active ? (
+                      <Badge variant="default">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactive</Badge>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Subject Preview</Label>
+                    <p className="text-sm text-muted-foreground border rounded-md p-3 bg-muted/50">
+                      {testingTemplate.subject}
+                    </p>
+                  </div>
+
+                  {testingTemplate.variables && testingTemplate.variables.length > 0 && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <div className="ml-2">
+                        <p className="text-sm font-medium">Available Variables:</p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {testingTemplate.variables.map((variable) => (
+                            <Badge key={variable} variant="secondary">
+                              {`{{${variable}}}`}
+                            </Badge>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          These variables will be replaced with sample data in the test email.
+                        </p>
+                      </div>
+                    </Alert>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="test-email">Test Email Address *</Label>
+                    <Input
+                      id="test-email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                      disabled={sendingTest}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the email address where you want to receive the test email.
+                    </p>
+                  </div>
+
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <div className="ml-2">
+                      <p className="text-sm font-medium">Sample Data</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        The test email will use predefined sample data for all variables:
+                      </p>
+                      <ul className="text-xs text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                        <li>Username: TestUser</li>
+                        <li>Email: {testEmailAddress || "your email"}</li>
+                        <li>Full Name: Test User</li>
+                        <li>Links: Sample URLs with test tokens</li>
+                        <li>Plan details: Premium Plan, $500.00 earnings</li>
+                      </ul>
+                    </div>
+                  </Alert>
+                </>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTestEmailDialog(false);
+                    setTestEmailAddress("");
+                    setTestingTemplateId(null);
+                    setTestingTemplate(null);
+                  }}
+                  disabled={sendingTest}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendTest}
+                  disabled={!testEmailAddress || sendingTest}
+                >
+                  {sendingTest ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Test Email
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
