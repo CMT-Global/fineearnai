@@ -11,9 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Clock, Eye } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 interface EmailTemplate {
   id: string;
@@ -45,8 +48,10 @@ const BulkEmail = () => {
     scheduledDate: "",
     scheduledTime: "",
   });
-
+  
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [recipientCount, setRecipientCount] = useState(0);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,8 +120,18 @@ const BulkEmail = () => {
   };
 
   const handleTemplateSelect = (templateId: string) => {
+    if (!templateId) {
+      setSelectedTemplate(null);
+      setFormData({
+        ...formData,
+        templateId: "",
+      });
+      return;
+    }
+    
     const template = templates.find((t) => t.id === templateId);
     if (template) {
+      setSelectedTemplate(template);
       setFormData({
         ...formData,
         templateId,
@@ -124,6 +139,17 @@ const BulkEmail = () => {
         body: template.body,
       });
     }
+  };
+  
+  const getPreviewContent = () => {
+    let content = formData.body;
+    
+    // Replace common variables for preview
+    content = content.replace(/{{username}}/g, '<strong>[Username]</strong>');
+    content = content.replace(/{{email}}/g, '<strong>[user@example.com]</strong>');
+    content = content.replace(/{{full_name}}/g, '<strong>[Full Name]</strong>');
+    
+    return content;
   };
 
   const handleSend = async () => {
@@ -313,45 +339,47 @@ const BulkEmail = () => {
                   />
                 </div>
 
+                {/* Template Variables Info */}
+                {selectedTemplate && selectedTemplate.variables.length > 0 && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Available Variables:</strong> These will be automatically replaced for each recipient.
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedTemplate.variables.map((variable) => (
+                          <Badge key={variable} variant="secondary" className="text-xs">
+                            {`{{${variable}}}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Body */}
                 <div>
-                  <Label htmlFor="body">Email Body (HTML Supported) *</Label>
-                  <Textarea
-                    id="body"
+                  <Label htmlFor="body">Email Body *</Label>
+                  <RichTextEditor
                     value={formData.body}
-                    onChange={(e) =>
-                      setFormData({ ...formData, body: e.target.value })
-                    }
-                    placeholder="Enter email content (HTML tags supported)"
-                    rows={12}
+                    onChange={(html) => setFormData({ ...formData, body: html })}
+                    placeholder="Compose your email content. Use {{variable}} for personalization."
+                    maxLength={20000}
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    You can use HTML tags like &lt;h1&gt;, &lt;p&gt;, &lt;strong&gt;, etc.
+                    💡 Use variables like {`{{username}}`}, {`{{email}}`}, {`{{full_name}}`} for personalization
                   </p>
                 </div>
 
                 {/* Preview Button */}
                 <Button
                   variant="outline"
-                  onClick={() => setShowPreview(!showPreview)}
+                  onClick={() => setPreviewDialogOpen(true)}
                   className="w-full"
+                  disabled={!formData.subject || !formData.body}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  {showPreview ? "Hide Preview" : "Show Preview"}
+                  Preview Email
                 </Button>
-
-                {/* Preview */}
-                {showPreview && (
-                  <Card className="p-4 bg-muted">
-                    <h3 className="font-semibold mb-2">Email Preview</h3>
-                    <div className="border rounded bg-white p-4">
-                      <div className="font-bold mb-2">Subject: {formData.subject}</div>
-                      <div
-                        dangerouslySetInnerHTML={{ __html: formData.body }}
-                      />
-                    </div>
-                  </Card>
-                )}
 
                 {/* Recipient Selection */}
                 <div>
@@ -558,6 +586,94 @@ const BulkEmail = () => {
             </Card>
           </div>
         </div>
+        
+        {/* Preview Dialog */}
+        <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Email Preview</DialogTitle>
+              <DialogDescription>
+                This is how your email will appear to recipients. Variables are shown with sample data.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Subject Preview */}
+              <div>
+                <Label className="text-sm font-medium">Subject</Label>
+                <div className="mt-1 p-3 bg-muted rounded-lg">
+                  <p className="font-medium">{formData.subject}</p>
+                </div>
+              </div>
+              
+              {/* Recipient Info */}
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Note:</strong> Variables like {`{{username}}`} and {`{{email}}`} will be replaced with actual recipient data when sent.
+                </AlertDescription>
+              </Alert>
+              
+              {/* Body Preview */}
+              <div>
+                <Label className="text-sm font-medium">Email Body</Label>
+                <div className="mt-1 border rounded-lg bg-white p-6">
+                  <div
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: getPreviewContent() }}
+                  />
+                </div>
+              </div>
+              
+              {/* Template Variables Used */}
+              {selectedTemplate && selectedTemplate.variables.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium">Variables in Use</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedTemplate.variables.map((variable) => (
+                      <Badge key={variable} variant="secondary">
+                        {`{{${variable}}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Send Info */}
+              <Alert variant="default">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  This email will be sent to <strong>{recipientCount}</strong> recipient{recipientCount !== 1 ? 's' : ''}.
+                  {formData.scheduleType === 'scheduled' && formData.scheduledDate && formData.scheduledTime && (
+                    <> Scheduled for: <strong>{new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString()}</strong></>
+                  )}
+                </AlertDescription>
+              </Alert>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
+                Close Preview
+              </Button>
+              <Button onClick={() => {
+                setPreviewDialogOpen(false);
+                handleSend();
+              }} disabled={sending || recipientCount === 0}>
+                {formData.scheduleType === 'scheduled' ? (
+                  <>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Schedule Now
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Now
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

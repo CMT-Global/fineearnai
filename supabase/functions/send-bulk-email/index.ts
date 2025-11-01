@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending bulk email:", { subject, recipientType, plan, country });
 
     // Get recipients based on criteria
-    let query = supabase.from("profiles").select("email, username, id");
+    let query = supabase.from("profiles").select("email, username, id, full_name");
 
     if (recipientType === "plan" && plan) {
       query = query.eq("membership_plan", plan);
@@ -85,32 +85,48 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send emails to all recipients
     const emailPromises = recipients.map(async (recipient) => {
-      try {
-        // Replace variables in body
-        let personalizedBody = body;
-        personalizedBody = personalizedBody.replace(/{{username}}/g, recipient.username || "User");
-        personalizedBody = personalizedBody.replace(/{{email}}/g, recipient.email || "");
+    try {
+      // Replace variables in body
+      let personalizedBody = body;
+      let personalizedSubject = subject;
+      
+      // Replace all common variables
+      const replacements: Record<string, string> = {
+        'username': recipient.username || 'User',
+        'email': recipient.email || '',
+        'full_name': recipient.full_name || recipient.username || 'User',
+      };
+      
+      // Perform replacements
+      Object.entries(replacements).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        personalizedBody = personalizedBody.replace(regex, value);
+        personalizedSubject = personalizedSubject.replace(regex, value);
+      });
 
-        const emailResponse = await resend.emails.send({
-          from: "Platform <onboarding@resend.dev>",
-          to: [recipient.email!],
-          subject: subject,
-          html: personalizedBody,
-        });
+      const emailResponse = await resend.emails.send({
+        from: "FineEarn <onboarding@resend.dev>",
+        to: [recipient.email!],
+        subject: personalizedSubject,
+        html: personalizedBody,
+      });
 
-        // Log the email
-        await supabase.from("email_logs").insert([
-          {
-            recipient_email: recipient.email,
-            recipient_user_id: recipient.id,
-            subject: subject,
-            body: personalizedBody,
-            status: "sent",
-            sent_at: new Date().toISOString(),
-            sent_by: user.id,
-            metadata: { resend_id: emailResponse.data?.id },
+      // Log the email
+      await supabase.from("email_logs").insert([
+        {
+          recipient_email: recipient.email,
+          recipient_user_id: recipient.id,
+          subject: personalizedSubject,
+          body: personalizedBody,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+          sent_by: user.id,
+          metadata: { 
+            resend_id: emailResponse.data?.id,
+            variables_used: Object.keys(replacements)
           },
-        ]);
+        },
+      ]);
 
         return { success: true, email: recipient.email };
       } catch (error: any) {
