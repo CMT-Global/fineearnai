@@ -164,9 +164,12 @@ serve(async (req) => {
       personalizedBody = personalizedBody.replace(regex, value);
     });
 
-    // Check if RESEND_API_KEY is configured
+    // PHASE 2: Check if RESEND_API_KEY is configured
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    console.log('[PHASE 2] Resend API Key configured:', !!RESEND_API_KEY);
+    
     if (!RESEND_API_KEY) {
+      console.error('[PHASE 2] ERROR: RESEND_API_KEY not configured');
       return new Response(
         JSON.stringify({ 
           error: 'RESEND_API_KEY not configured. Please add it to your secrets.',
@@ -176,35 +179,54 @@ serve(async (req) => {
       );
     }
 
-    // Send email via Resend
+    // PHASE 2: Prepare email payload with verified Resend domain
+    const emailPayload = {
+      from: 'FineEarn <onboarding@resend.dev>', // PHASE 2 FIX: Using verified Resend test domain
+      to: [test_email],
+      subject: `[TEST] ${personalizedSubject}`,
+      html: personalizedBody,
+    };
+    
+    console.log('[PHASE 2] Sending email via Resend API...');
+    console.log('[PHASE 2] Email payload:', {
+      from: emailPayload.from,
+      to: emailPayload.to,
+      subject: emailPayload.subject,
+      body_length: personalizedBody.length
+    });
+
+    // PHASE 2: Send email via Resend with comprehensive error tracking
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'FineEarn <noreply@yourdomain.com>',
-        to: [test_email],
-        subject: `[TEST] ${personalizedSubject}`,
-        html: personalizedBody,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
+    console.log('[PHASE 2] Resend API response status:', resendResponse.status, resendResponse.statusText);
+
     const resendData = await resendResponse.json();
+    console.log('[PHASE 2] Resend API response data:', resendData);
 
     if (!resendResponse.ok) {
-      console.error('Resend API error:', resendData);
+      console.error('[PHASE 2] ERROR: Resend API request failed');
+      console.error('[PHASE 2] Error details:', resendData);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to send test email via Resend',
-          details: resendData.message || 'Unknown error from Resend API'
+          details: resendData.message || resendData.error || 'Unknown error from Resend API',
+          resend_error: resendData
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('[PHASE 2] ✅ Email sent successfully via Resend - ID:', resendData.id);
 
     // Log test email to email_logs
+    console.log('[PHASE 2] Logging email to database...');
     await supabaseClient.from('email_logs').insert({
       recipient_email: test_email,
       subject: personalizedSubject,
@@ -223,7 +245,8 @@ serve(async (req) => {
       },
     });
 
-    console.log(`Test email sent successfully to ${test_email} using template ${template.name}`);
+    console.log('[PHASE 2] ✅ Email logged to database successfully');
+    console.log(`[PHASE 2] ✅✅ COMPLETE: Test email sent successfully to ${test_email} using template ${template.name}`);
 
     return new Response(
       JSON.stringify({ 
