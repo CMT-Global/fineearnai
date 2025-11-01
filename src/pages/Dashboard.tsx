@@ -38,7 +38,6 @@ const Dashboard = () => {
   
   // State to track fresh login for login message dialog
   const [showLoginMessage, setShowLoginMessage] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
