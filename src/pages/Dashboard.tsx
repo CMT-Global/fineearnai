@@ -46,6 +46,25 @@ const Dashboard = () => {
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
 
+  // ✅ NEW: Check for login trigger flag on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const triggerKey = `loginMessageTrigger_${user.id}`;
+    const hasTrigger = sessionStorage.getItem(triggerKey);
+    
+    if (hasTrigger === 'true') {
+      // Remove trigger flag (one-time use)
+      sessionStorage.removeItem(triggerKey);
+      console.info(`[LoginMessage] Trigger consumed for user ${user.id}`);
+      
+      // Show login message after smooth transition
+      setTimeout(() => {
+        setShowLoginMessage(true);
+      }, 300);
+    }
+  }, [user?.id]);
+
   // ✅ Phase 2: Simplified auth state logic with local variable tracking
   useEffect(() => {
     let hasSeenFirstEvent = false;
