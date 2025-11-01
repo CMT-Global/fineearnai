@@ -19,14 +19,26 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header
+    // PHASE 1: Extract and validate authorization header
     const authHeader = req.headers.get('Authorization');
-    console.log('Authorization header present:', !!authHeader);
+    console.log('[PHASE 1] Authorization header present:', !!authHeader);
     
     if (!authHeader) {
-      console.error('No Authorization header provided');
+      console.error('[PHASE 1] ERROR: No Authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Unauthorized: No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // PHASE 1: Extract JWT token from "Bearer <token>" format
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    console.log('[PHASE 1] Token extracted, length:', token.length);
+    
+    if (!token) {
+      console.error('[PHASE 1] ERROR: Token extraction failed');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token format' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -42,13 +54,14 @@ serve(async (req) => {
       }
     );
 
-    // Verify admin authentication
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // PHASE 1: Verify authentication by passing token explicitly to getUser()
+    console.log('[PHASE 1] Calling auth.getUser() with explicit token...');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
-    console.log('Auth check - User ID:', user?.id, 'Error:', userError?.message);
+    console.log('[PHASE 1] Auth result - User ID:', user?.id, 'Error:', userError?.message);
     
     if (userError || !user) {
-      console.error('Authentication failed:', userError);
+      console.error('[PHASE 1] ERROR: Authentication failed:', userError);
       return new Response(
         JSON.stringify({ 
           error: 'Unauthorized', 
@@ -57,6 +70,9 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    // PHASE 1: Authentication successful
+    console.log('[PHASE 1] ✅ User authenticated successfully - ID:', user.id, 'Email:', user.email);
 
     // Check if user is admin using service role for reliable RLS bypass
     const supabaseAdmin = createClient(
