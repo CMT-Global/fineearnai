@@ -19,18 +19,22 @@ import {
   AlignRight,
   Link2,
   Unlink,
-  RemoveFormatting
+  RemoveFormatting,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { wrapInProfessionalTemplate, extractContentFromTemplate, createStyledButton } from '@/lib/email-template-wrapper';
 
 interface RichTextEditorProps {
   value: string;
@@ -39,6 +43,8 @@ interface RichTextEditorProps {
   maxLength?: number;
   className?: string;
   disabled?: boolean;
+  enableProfessionalTemplate?: boolean;
+  templateTitle?: string;
 }
 
 interface ToolbarButtonProps {
@@ -84,7 +90,10 @@ export const RichTextEditor = ({
   maxLength = 5000,
   className,
   disabled = false,
+  enableProfessionalTemplate = true,
+  templateTitle = 'FineEarn',
 }: RichTextEditorProps) => {
+  const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -158,6 +167,46 @@ export const RichTextEditor = ({
     editor.chain().focus().clearNodes().unsetAllMarks().run();
   }, [editor]);
 
+  // Handle professional template toggle
+  const handleTemplateToggle = useCallback((checked: boolean) => {
+    setUseProfessionalTemplate(checked);
+    
+    if (editor) {
+      const currentContent = editor.getHTML();
+      
+      if (checked) {
+        // Wrap current content in professional template
+        const wrappedContent = wrapInProfessionalTemplate(currentContent, {
+          title: templateTitle,
+          headerGradient: true,
+          includeFooter: true,
+        });
+        onChange(wrappedContent);
+      } else {
+        // Extract plain content from template
+        const plainContent = extractContentFromTemplate(currentContent);
+        editor.commands.setContent(plainContent);
+        onChange(plainContent);
+      }
+    }
+  }, [editor, onChange, templateTitle]);
+
+  // Insert styled button
+  const handleInsertButton = useCallback(() => {
+    if (editor) {
+      const buttonHtml = createStyledButton('Click Here', 'https://fineearn.com', 'primary');
+      editor.commands.insertContent(buttonHtml);
+      
+      // Update the value with wrapped template if enabled
+      const updatedContent = editor.getHTML();
+      if (useProfessionalTemplate) {
+        onChange(wrapInProfessionalTemplate(updatedContent, { title: templateTitle }));
+      } else {
+        onChange(updatedContent);
+      }
+    }
+  }, [editor, onChange, useProfessionalTemplate, templateTitle]);
+
   if (!editor) {
     return null;
   }
@@ -167,6 +216,31 @@ export const RichTextEditor = ({
 
   return (
     <div className={cn("border rounded-lg bg-background", className)}>
+      {/* Professional Template Toggle */}
+      {enableProfessionalTemplate && (
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <Label htmlFor="professional-template" className="text-sm font-medium cursor-pointer">
+                Use Professional Email Template
+              </Label>
+            </div>
+            <Switch
+              id="professional-template"
+              checked={useProfessionalTemplate}
+              onCheckedChange={handleTemplateToggle}
+              disabled={disabled}
+            />
+          </div>
+          {useProfessionalTemplate && (
+            <p className="text-xs text-muted-foreground mt-2">
+              ✨ Your content will be wrapped in a beautiful email template with gradient header and footer
+            </p>
+          )}
+        </div>
+      )}
+      
       {/* Toolbar - Mobile Optimized with Horizontal Scroll */}
       <div className="border-b bg-muted/30 sticky top-0 z-10">
         <div className="overflow-x-auto">
@@ -304,6 +378,16 @@ export const RichTextEditor = ({
               disabled={disabled}
               icon={<RemoveFormatting className="h-4 w-4" />}
               tooltip="Clear Formatting"
+            />
+
+            <Separator orientation="vertical" className="h-6 mx-1" />
+
+            {/* Insert Styled Button */}
+            <ToolbarButton
+              onClick={handleInsertButton}
+              disabled={disabled}
+              icon={<Sparkles className="h-4 w-4" />}
+              tooltip="Insert Styled Button"
             />
           </div>
         </div>
