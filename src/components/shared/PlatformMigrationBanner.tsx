@@ -139,24 +139,33 @@ export const PlatformMigrationBanner = () => {
                 </ol>
               </div>
 
-              {/* Support Link */}
-              {config.support_link && (
-                <div className="pt-2">
+              {/* Login to Old Platform Button */}
+              <div className="pt-3 flex items-center gap-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="
+                    border-2 border-amber-500 
+                    bg-amber-50 dark:bg-amber-950
+                    hover:bg-amber-100 dark:hover:bg-amber-900
+                    text-amber-700 dark:text-amber-300
+                    font-semibold
+                    shadow-sm
+                    transition-all
+                  "
+                >
                   <a
-                    href={config.support_link}
-                    className="
-                      inline-flex items-center gap-2
-                      text-sm font-medium
-                      text-amber-600 dark:text-amber-400
-                      hover:text-amber-700 dark:hover:text-amber-300
-                      underline underline-offset-4
-                      transition-colors
-                    "
+                    href="https://legacy.fineearn.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    Contact Support →
+                    Login to Old Platform →
                   </a>
-                </div>
-              )}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  (Opens in new tab)
+                </span>
+              </div>
             </AlertDescription>
           </div>
         </Alert>
