@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { getLocationFromIP, extractClientIP } from '../_shared/ipstack.ts';
+import { sendTemplateEmail } from '../_shared/email-sender.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -238,6 +239,27 @@ Deno.serve(async (req) => {
     const executionTime = Date.now() - startTime;
     console.log(`✅ [Registration Tracking] Completed for ${userId} in ${executionTime}ms`);
     console.log(`📊 [Registration Tracking] Data: ${locationData.country_name} (${locationData.country_code}) | IP: ${clientIP}`);
+
+    // Send welcome email (non-blocking)
+    console.log(`📧 [Registration Tracking] Sending welcome email to user ${userId}`);
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email, username, full_name')
+      .eq('id', userId)
+      .single();
+
+    if (userProfile?.email) {
+      sendTemplateEmail({
+        templateType: 'user_onboarding',
+        recipientEmail: userProfile.email,
+        recipientUserId: userId,
+        variables: {
+          username: userProfile.username || userProfile.full_name || 'there',
+          email: userProfile.email,
+        },
+        supabaseClient: supabase,
+      }).catch((err) => console.warn('⚠️ [Registration Tracking] Welcome email failed:', err));
+    }
 
     return new Response(
       JSON.stringify({

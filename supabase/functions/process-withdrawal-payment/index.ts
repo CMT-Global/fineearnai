@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendTemplateEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -146,6 +147,20 @@ async function handleMarkPaidManually(supabase: any, withdrawal: any, adminId: s
       }
     }
   }).catch((err: any) => console.error('Notification error:', err));
+
+  // Send withdrawal processed email (non-blocking)
+  sendTemplateEmail({
+    templateType: 'transaction',
+    recipientEmail: withdrawal.profiles.email,
+    recipientUserId: withdrawal.user_id,
+    variables: {
+      username: withdrawal.profiles.username,
+      amount: withdrawal.net_amount,
+      transaction_id: withdrawal.id,
+      payout_address: withdrawal.payout_address,
+    },
+    supabaseClient: supabase,
+  }).catch((err) => console.warn('⚠️ Withdrawal email failed:', err));
 
   // Audit log
   await supabase

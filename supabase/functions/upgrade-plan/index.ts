@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { getMembershipPlan } from '../_shared/cache.ts';
+import { sendTemplateEmail } from '../_shared/email-sender.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -286,7 +287,29 @@ Deno.serve(async (req) => {
       console.log('Note: Could not create notification (table may not exist):', notifError);
     }
 
-    console.log('Plan upgraded successfully:', { 
+    // Send plan upgrade email (non-blocking)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email, username, full_name')
+      .eq('id', user.id)
+      .single();
+
+    if (userProfile?.email) {
+      sendTemplateEmail({
+        templateType: 'membership',
+        recipientEmail: userProfile.email,
+        recipientUserId: user.id,
+        variables: {
+          username: userProfile.username || userProfile.full_name || 'there',
+          plan_name: newPlan.display_name,
+          amount: finalCost,
+          expiry_date: new Date(expiryDate).toLocaleDateString(),
+        },
+        supabaseClient: supabase,
+      }).catch((err) => console.warn('⚠️ Plan upgrade email failed:', err));
+    }
+
+    console.log('Plan upgraded successfully:', {
       userId: user.id, 
       planName, 
       finalCost,
