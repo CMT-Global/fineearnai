@@ -8,6 +8,9 @@ secrets = ["HOOK_SECRET"]
 [functions.send-auth-email]
 verify_jwt = false
 
+[functions.process-scheduled-emails]
+verify_jwt = false
+
 [functions.get-cpay-wallet-info]
 verify_jwt = true
 

@@ -112,6 +112,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "Login Message", path: "/admin/communications/login-message" },
         { label: "Bulk Email", path: "/admin/communications/email" },
         { label: "Email Templates", path: "/admin/communications/templates" },
+        { label: "Scheduled Emails", path: "/admin/communications/scheduled" },
       ],
     },
     {
