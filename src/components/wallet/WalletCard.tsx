@@ -16,6 +16,7 @@ import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
 import { WithdrawalCountdown } from "./WithdrawalCountdown";
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { USDCFeeSavingsBanner } from "./USDCFeeSavingsBanner";
 
 interface PaymentProcessor {
   id: string;
@@ -677,6 +678,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     Add funds to your deposit wallet
                   </DialogDescription>
                 </DialogHeader>
+                
+                {/* ✅ USDC Fee Savings Inline Alert */}
+                <USDCFeeSavingsBanner variant="inline" className="mt-2" />
+                
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="deposit-amount">
