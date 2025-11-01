@@ -36,6 +36,7 @@ interface MembershipPlan {
   daily_task_limit: number;
   earning_per_task: number;
   task_skip_limit_per_day: number;
+  min_withdrawal: number;
   features: any;
   task_commission_rate: number;
   deposit_commission_rate: number;

@@ -18,6 +18,7 @@ interface MembershipPlan {
   daily_task_limit: number;
   earning_per_task: number;
   task_skip_limit_per_day: number;
+  min_withdrawal: number;
   features: any;
   task_commission_rate: number;
   deposit_commission_rate: number;
@@ -264,11 +265,15 @@ export function PlanCard({
                   <Check className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
                   <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
                 </div>
+                <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+                  <span className="text-sm">Min withdrawal: <CurrencyDisplay amountUSD={plan.min_withdrawal} /></span>
+                </div>
                 {plan.task_commission_rate > 0 && (
                   <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
                     <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
                     <span className="text-sm">
-                      {(plan.task_commission_rate * 100).toFixed(1)}% task commission (Earn <CurrencyDisplay amountUSD={plan.earning_per_task * plan.task_commission_rate} /> per task completed by a referral on this plan)
+                      {(plan.task_commission_rate * 100).toFixed(1)}% task commission
                     </span>
                   </div>
                 )}
@@ -556,11 +561,15 @@ export function PlanCard({
             <Check className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
             <span className="text-sm">{plan.task_skip_limit_per_day} skips/day</span>
           </div>
+          <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
+            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+            <span className="text-sm">Min withdrawal: <CurrencyDisplay amountUSD={plan.min_withdrawal} /></span>
+          </div>
           {plan.task_commission_rate > 0 && (
             <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
               <Check className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
               <span className="text-sm">
-                {(plan.task_commission_rate * 100).toFixed(1)}% task commission (Earn <CurrencyDisplay amountUSD={plan.earning_per_task * plan.task_commission_rate} /> per task completed by a referral on this plan)
+                {(plan.task_commission_rate * 100).toFixed(1)}% task commission
               </span>
             </div>
           )}
