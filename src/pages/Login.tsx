@@ -81,6 +81,11 @@ const Login = () => {
       
       // Track login location (non-blocking)
       if (session?.user) {
+        // ✅ NEW: Set login message trigger flag for Dashboard
+        const triggerKey = `loginMessageTrigger_${session.user.id}`;
+        sessionStorage.setItem(triggerKey, 'true');
+        console.info(`[LoginMessage] Trigger set for user ${session.user.id}`);
+        
         supabase.functions.invoke("track-user-login", {
           body: { userId: session.user.id }
         }).catch(err => console.error("Failed to track login:", err));
