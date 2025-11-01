@@ -24,15 +24,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { LoginMessageDialog } from "@/components/shared/LoginMessageDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  
+  // State to track fresh login for login message dialog
+  const [showLoginMessage, setShowLoginMessage] = useState(false);
   
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
@@ -40,6 +45,23 @@ const Dashboard = () => {
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
+
+  // ✅ Phase 3: Detect fresh authentication for login message
+  useEffect(() => {
+    // Set up listener for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only trigger on SIGNED_IN event (fresh login)
+      // Not on TOKEN_REFRESHED, USER_UPDATED, or initial session load
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Small delay to ensure smooth transition after auth
+        setTimeout(() => {
+          setShowLoginMessage(true);
+        }, 500);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -82,6 +104,15 @@ const Dashboard = () => {
       isLoading={isLoading || !profile}
       loadingText="Loading dashboard..."
     >
+      {/* Login Message Dialog - Phase 3 */}
+      {user && (
+        <LoginMessageDialog 
+          userId={user.id}
+          trigger={showLoginMessage}
+          onOpenChange={setShowLoginMessage}
+        />
+      )}
+
       {profile && (
         <>
           {/* Header */}
