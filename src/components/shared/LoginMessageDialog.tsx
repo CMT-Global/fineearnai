@@ -34,6 +34,7 @@ export const LoginMessageDialog = ({
 }: LoginMessageDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
+  const [lastTriggerValue, setLastTriggerValue] = useState(trigger);
 
   // Fetch login message config from platform_config
   const { data: config, isLoading } = useQuery({
@@ -51,37 +52,56 @@ export const LoginMessageDialog = ({
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Get localStorage key for this user
-  const getStorageKey = () => `loginMessageShown_v1_${userId}`;
+  // Get storage key for this user
+  const getSessionStorageKey = () => `loginMessageShown_session_${userId}`;
 
   // Check if message has been shown this session
   const hasShownThisSession = () => {
-    if (!config?.show_once_per_session) return false;
+    // If show_once_per_session is false, ALWAYS allow showing (never block)
+    if (!config?.show_once_per_session) {
+      return false;
+    }
     
-    const storageKey = getStorageKey();
-    const shownAt = localStorage.getItem(storageKey);
+    // If show_once_per_session is true, check sessionStorage
+    const storageKey = getSessionStorageKey();
+    const shownInSession = sessionStorage.getItem(storageKey);
     
-    if (!shownAt) return false;
-    
-    // Check if it was shown during this session (within last 24 hours)
-    const shownTimestamp = parseInt(shownAt, 10);
-    const now = Date.now();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-    
-    return (now - shownTimestamp) < twentyFourHours;
+    // Return true if already shown in this browser session
+    return shownInSession === 'true';
   };
 
-  // Mark message as shown in localStorage
+  // Mark message as shown in sessionStorage (only if show_once_per_session is enabled)
   const markAsShown = () => {
     if (config?.show_once_per_session) {
-      const storageKey = getStorageKey();
-      localStorage.setItem(storageKey, Date.now().toString());
+      const storageKey = getSessionStorageKey();
+      sessionStorage.setItem(storageKey, 'true');
     }
   };
 
+  // Clear the shown flag (for when show_once_per_session is false or dialog dismissed)
+  const clearShownFlag = () => {
+    const storageKey = getSessionStorageKey();
+    sessionStorage.removeItem(storageKey);
+  };
+
+  // Reset hasCheckedStorage when trigger changes from false to true (new login)
+  useEffect(() => {
+    if (trigger !== lastTriggerValue) {
+      setLastTriggerValue(trigger);
+      
+      // If trigger changed from false to true, reset the check flag
+      if (trigger && !lastTriggerValue) {
+        setHasCheckedStorage(false);
+      }
+    }
+  }, [trigger, lastTriggerValue]);
+
   // Handle dialog open state
   useEffect(() => {
-    if (isLoading || !config || !userId || hasCheckedStorage) return;
+    if (isLoading || !config || !userId) return;
+    
+    // Only check once per trigger cycle
+    if (hasCheckedStorage) return;
 
     // Check all conditions to show dialog
     const shouldShow = 
@@ -93,7 +113,10 @@ export const LoginMessageDialog = ({
       // Small delay for smooth transition after auth
       setTimeout(() => {
         setIsOpen(true);
-        markAsShown();
+        // Only mark as shown if show_once_per_session is enabled
+        if (config.show_once_per_session) {
+          markAsShown();
+        }
       }, 500);
     }
 
@@ -105,6 +128,11 @@ export const LoginMessageDialog = ({
     // Only allow closing if dismissible
     if (!open && !config?.dismissible) {
       return;
+    }
+    
+    // If closing and show_once_per_session is false, clear the flag so it can show again
+    if (!open && !config?.show_once_per_session) {
+      clearShownFlag();
     }
     
     setIsOpen(open);
