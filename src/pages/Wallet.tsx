@@ -12,6 +12,7 @@ import { RecentTransactionsCard } from "@/components/transactions/RecentTransact
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Wallet as WalletIcon, Crown, Sparkles } from "lucide-react";
+import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
 
 const Wallet = () => {
   const { user, loading, signOut } = useAuth();
@@ -84,6 +85,9 @@ const Wallet = () => {
                   </AlertDescription>
                 </Alert>
               )}
+
+              {/* USDC Fee Savings Banner */}
+              <USDCFeeSavingsBanner variant="banner" className="mb-6" />
 
               {/* Wallet Balances */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
