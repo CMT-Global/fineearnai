@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -188,7 +189,7 @@ const LoginMessage = () => {
         <AlertDescription className="text-xs sm:text-sm">
           <strong>How it works:</strong> This message appears as a pop-up dialog immediately after users log in.
           You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session.
-          Use HTML tags for formatting: <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;p&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;strong&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;ul&gt;</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">&lt;li&gt;</code>, etc.
+          Use the rich text editor toolbar to format your message with bold, italic, headings, lists, and links.
         </AlertDescription>
       </Alert>
 
@@ -254,23 +255,18 @@ const LoginMessage = () => {
                 </p>
               </div>
 
-              {/* Body Textarea */}
+              {/* Body Rich Text Editor */}
               <div className="space-y-2">
                 <Label htmlFor="body" className="text-sm sm:text-base">
                   Message Body <span className="text-destructive">*</span>
                 </Label>
-                <Textarea
-                  id="body"
-                  placeholder="<p>We're excited to have you here. Start earning today!</p>"
+                <RichTextEditor
                   value={config.body}
-                  onChange={(e) => setConfig({ ...config, body: e.target.value })}
-                  rows={10}
+                  onChange={(html) => setConfig({ ...config, body: html })}
+                  placeholder="We're excited to have you here. Start earning today by completing AI training tasks!"
                   maxLength={5000}
-                  className="font-mono text-xs sm:text-sm"
+                  className="min-h-[300px]"
                 />
-                <p className="text-xs text-muted-foreground">
-                  HTML content (max 5000 chars). Supported tags: &lt;p&gt;, &lt;h1-h3&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;a&gt;, &lt;br&gt;
-                </p>
               </div>
 
               <Separator />
@@ -459,8 +455,9 @@ const LoginMessage = () => {
             <CardContent className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <ul className="space-y-2 list-disc list-inside">
                 <li>Keep the title short and welcoming (under 50 chars is ideal)</li>
-                <li>Use simple HTML for better readability</li>
+                <li>Use formatting sparingly for better readability</li>
                 <li>Include emojis to make it more engaging</li>
+                <li>Preview your changes before saving</li>
                 <li>Test with "Show Preview" before saving</li>
                 <li>Enable "Show Once Per Session" to avoid annoying users</li>
                 <li>Make it dismissible unless it's critical information</li>
