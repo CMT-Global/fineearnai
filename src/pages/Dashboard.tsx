@@ -86,7 +86,7 @@ const Dashboard = () => {
       subscription.unsubscribe();
       setShowLoginMessage(false);
     };
-  }, [isInitialLoad]);
+  }, []); // Run once on mount only - prevents circular dependency that breaks logout
 
   useEffect(() => {
     if (!loading && !user) {
