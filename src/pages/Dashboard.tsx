@@ -65,30 +65,14 @@ const Dashboard = () => {
     }
   }, [user?.id]);
 
-  // ✅ Phase 2: Simplified auth state logic with local variable tracking
+  // ✅ SIMPLIFIED: Auth state listener (cleanup only)
   useEffect(() => {
-    let hasSeenFirstEvent = false;
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // First event is always INITIAL_SESSION or existing session
-      // Don't show login message on first event (page load with existing session)
-      if (!hasSeenFirstEvent) {
-        hasSeenFirstEvent = true;
-        return;
-      }
-
-      // Any subsequent SIGNED_IN event is a fresh login
-      if (event === 'SIGNED_IN' && session?.user) {
-        setTimeout(() => {
-          setShowLoginMessage(true);
-        }, 500);
-      }
-      
-      // Reset on logout
+      // Reset on logout and cleanup trigger flags
       if (event === 'SIGNED_OUT') {
         setShowLoginMessage(false);
         
-        // ✅ NEW: Clean up any leftover trigger flags
+        // Clean up any leftover trigger flags
         if (session?.user?.id) {
           const triggerKey = `loginMessageTrigger_${session.user.id}`;
           sessionStorage.removeItem(triggerKey);
@@ -97,12 +81,12 @@ const Dashboard = () => {
       }
     });
 
-    // Cleanup function to reset trigger state when component unmounts
+    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
       setShowLoginMessage(false);
     };
-  }, []); // Run once on mount only - prevents circular dependency that breaks logout
+  }, []); // Run once on mount only
 
   useEffect(() => {
     if (!loading && !user) {
