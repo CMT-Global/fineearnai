@@ -60,16 +60,17 @@ const ToolbarButton = ({ onClick, isActive, disabled, icon, tooltip }: ToolbarBu
           onClick={onClick}
           disabled={disabled}
           className={cn(
-            "h-9 w-9 p-0 touch-manipulation",
+            "h-10 w-10 p-0 touch-manipulation flex-shrink-0", // Minimum 40px touch target
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:ring-2 focus-visible:ring-ring",
+            "active:scale-95 transition-transform", // Visual feedback on tap
             isActive && "bg-accent text-accent-foreground"
           )}
         >
           {icon}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">
+      <TooltipContent side="bottom" className="text-xs hidden sm:block">
         <p>{tooltip}</p>
       </TooltipContent>
     </Tooltip>
@@ -166,45 +167,46 @@ export const RichTextEditor = ({
 
   return (
     <div className={cn("border rounded-lg bg-background", className)}>
-      {/* Toolbar */}
-      <div className="border-b bg-muted/30 p-2 overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max flex-wrap sm:flex-nowrap">
-          {/* Text Formatting */}
-          <div className="flex items-center gap-1">
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              isActive={editor.isActive('bold')}
-              disabled={disabled}
-              icon={<Bold className="h-4 w-4" />}
-              tooltip="Bold (Ctrl+B)"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              isActive={editor.isActive('italic')}
-              disabled={disabled}
-              icon={<Italic className="h-4 w-4" />}
-              tooltip="Italic (Ctrl+I)"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              isActive={editor.isActive('underline')}
-              disabled={disabled}
-              icon={<UnderlineIcon className="h-4 w-4" />}
-              tooltip="Underline (Ctrl+U)"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              isActive={editor.isActive('strike')}
-              disabled={disabled}
-              icon={<Strikethrough className="h-4 w-4" />}
-              tooltip="Strikethrough"
-            />
-          </div>
+      {/* Toolbar - Mobile Optimized with Horizontal Scroll */}
+      <div className="border-b bg-muted/30 sticky top-0 z-10">
+        <div className="overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-max p-2">
+            {/* Text Formatting */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                isActive={editor.isActive('bold')}
+                disabled={disabled}
+                icon={<Bold className="h-4 w-4" />}
+                tooltip="Bold (Ctrl+B)"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                isActive={editor.isActive('italic')}
+                disabled={disabled}
+                icon={<Italic className="h-4 w-4" />}
+                tooltip="Italic (Ctrl+I)"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                isActive={editor.isActive('underline')}
+                disabled={disabled}
+                icon={<UnderlineIcon className="h-4 w-4" />}
+                tooltip="Underline (Ctrl+U)"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                isActive={editor.isActive('strike')}
+                disabled={disabled}
+                icon={<Strikethrough className="h-4 w-4" />}
+                tooltip="Strikethrough"
+              />
+            </div>
 
-          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Headings */}
-          <div className="flex items-center gap-1">
+            {/* Headings */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
               isActive={editor.isActive('heading', { level: 1 })}
@@ -228,10 +230,10 @@ export const RichTextEditor = ({
             />
           </div>
 
-          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Lists */}
-          <div className="flex items-center gap-1">
+            {/* Lists */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               isActive={editor.isActive('bulletList')}
@@ -248,10 +250,10 @@ export const RichTextEditor = ({
             />
           </div>
 
-          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Alignment */}
-          <div className="flex items-center gap-1">
+            {/* Alignment */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
             <ToolbarButton
               onClick={() => editor.chain().focus().setTextAlign('left').run()}
               isActive={editor.isActive({ textAlign: 'left' })}
@@ -275,10 +277,10 @@ export const RichTextEditor = ({
             />
           </div>
 
-          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Links */}
-          <div className="flex items-center gap-1">
+            {/* Links */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
             <ToolbarButton
               onClick={setLink}
               isActive={editor.isActive('link')}
@@ -294,37 +296,44 @@ export const RichTextEditor = ({
             />
           </div>
 
-          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Clear Formatting */}
-          <ToolbarButton
-            onClick={clearFormatting}
-            disabled={disabled}
-            icon={<RemoveFormatting className="h-4 w-4" />}
-            tooltip="Clear Formatting"
-          />
+            {/* Clear Formatting */}
+            <ToolbarButton
+              onClick={clearFormatting}
+              disabled={disabled}
+              icon={<RemoveFormatting className="h-4 w-4" />}
+              tooltip="Clear Formatting"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Editor Content */}
+      {/* Editor Content - Mobile Optimized */}
       <div className="relative">
         <EditorContent
           editor={editor}
           className={cn(
-            "prose prose-sm sm:prose-base max-w-none p-4 focus:outline-none min-h-[300px] max-h-[500px] overflow-y-auto",
+            "prose prose-sm sm:prose-base max-w-none p-3 sm:p-4 focus:outline-none min-h-[300px] max-h-[500px] overflow-y-auto",
+            "touch-manipulation", // Better touch handling on mobile
+            "[&_.ProseMirror]:min-h-[280px] [&_.ProseMirror]:focus:outline-none",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none",
             disabled && "opacity-50 cursor-not-allowed"
           )}
         />
       </div>
 
-      {/* Character Counter */}
-      <div className="border-t p-2 flex items-center justify-between bg-muted/20">
-        <p className="text-xs text-muted-foreground">
+      {/* Character Counter - Mobile Optimized */}
+      <div className="border-t p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 bg-muted/20">
+        <p className="text-xs text-muted-foreground hidden sm:block">
           Use the toolbar above to format your message
+        </p>
+        <p className="text-xs text-muted-foreground sm:hidden">
+          Format with toolbar
         </p>
         <p
           className={cn(
-            "text-xs font-medium",
+            "text-xs font-medium tabular-nums",
             isOverLimit ? "text-destructive" : "text-muted-foreground"
           )}
         >
