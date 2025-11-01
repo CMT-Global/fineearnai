@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { PlatformMigrationBanner } from "@/components/shared/PlatformMigrationBanner";
 import {
   Form,
   FormControl,
@@ -133,8 +134,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 space-y-6">
+    <>
+      {/* Platform Migration Banner - Only visible on login page before authentication */}
+      <PlatformMigrationBanner />
+      
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4 pt-8">
+        <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center">
@@ -217,6 +222,7 @@ const Login = () => {
         </p>
       </Card>
     </div>
+    </>
   );
 };
 
