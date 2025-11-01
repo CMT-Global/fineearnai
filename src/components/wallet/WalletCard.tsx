@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles, HelpCircle } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
@@ -706,7 +707,31 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     </p>
                   </div>
                   <div>
-                    <Label htmlFor="deposit-method">Payment Method</Label>
+                    <TooltipProvider>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Label htmlFor="deposit-method">Payment Method</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" className="inline-flex">
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-semibold text-amber-600 dark:text-amber-400">
+                                💡 Save on Fees!
+                              </p>
+                              <p className="text-sm">
+                                For <strong>GCash/GCrypto</strong> users: Use <strong>USDC (Solana network)</strong> for the lowest transaction fees and fastest confirmations.
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                All other coins work normally too.
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
                     <Select value={depositMethod} onValueChange={setDepositMethod} disabled={loadingProcessors}>
                       <SelectTrigger id="deposit-method">
                         <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select payment method"} />
