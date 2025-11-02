@@ -537,19 +537,21 @@ serve(async (req) => {
 
     // Handle payment status
     if (status === 'completed') {
-      // Credit user with ACTUAL amount paid using atomic function (race-condition safe)
+      // Credit user with ACTUAL amount paid using atomic function V2 (race-condition safe + tracking_id based idempotency)
       console.log(
-        `[CPAY-WEBHOOK] 💰 Calling atomic deposit function for user ${transaction.profiles.id}: ` +
-        `Current balance: ${transaction.profiles.deposit_wallet_balance}, Amount to credit: ${actualAmount}`
+        `[CPAY-WEBHOOK] 💰 Calling atomic deposit function V2 for user ${transaction.profiles.id}: ` +
+        `Current balance: ${transaction.profiles.deposit_wallet_balance}, Amount to credit: ${actualAmount}, ` +
+        `tracking_id: ${trackingId}, payment_id: ${payment_id}`
       );
       
-      const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic', {
+      const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic_v2', {
         p_user_id: transaction.profiles.id,
         p_amount: actualAmount,
-        p_order_id: payment_id, // Use payment_id as order_id for idempotency
+        p_tracking_id: trackingId, // CRITICAL: Use tracking_id (original order ID like DEP-xxx) for idempotency
+        p_payment_id: payment_id, // CPAY's payment_id (can be different per webhook for same order)
         p_payment_method: 'cpay',
-        p_gateway_transaction_id: payment_id,
         p_metadata: {
+          tracking_id: trackingId, // Store in metadata for idempotency check
           webhook_received_at: new Date().toISOString(),
           cpay_status: status,
           cpay_payment_id: payment_id,
@@ -559,8 +561,7 @@ serve(async (req) => {
           actual_amount_paid: actualAmount,
           amount_discrepancy: actualAmount - requestedAmount,
           webhook_received_from_ip: clientIP,
-          original_transaction_id: transaction.id,
-          tracking_id: trackingId
+          original_transaction_id: transaction.id
         }
       });
 
@@ -572,12 +573,18 @@ serve(async (req) => {
       // Check if atomic function detected duplicate or failed
       if (!atomicResult.success) {
         if (atomicResult.error === 'duplicate_transaction') {
-          console.log('[CPAY-WEBHOOK] ⚠️ Duplicate detected by atomic function (another webhook already processed this payment_id)');
+          console.log(
+            `[CPAY-WEBHOOK] ⚠️ DUPLICATE PREVENTED by atomic function V2: ` +
+            `tracking_id=${atomicResult.tracking_id} already processed in tx=${atomicResult.transaction_id}. ` +
+            `Current payment_id=${atomicResult.duplicate_payment_id} ignored to prevent double-credit.`
+          );
           return new Response(
             JSON.stringify({ 
               success: true, 
-              message: 'Transaction already processed by atomic function',
-              transaction_id: atomicResult.transaction_id 
+              message: 'Duplicate webhook prevented - transaction already processed',
+              transaction_id: atomicResult.transaction_id,
+              tracking_id: atomicResult.tracking_id,
+              duplicate_payment_id: atomicResult.duplicate_payment_id
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
@@ -587,8 +594,10 @@ serve(async (req) => {
         throw new Error(atomicResult.message || 'Atomic deposit processing failed');
       }
 
-      console.log('[CPAY-WEBHOOK] ✅ Atomic deposit successful:', {
+      console.log('[CPAY-WEBHOOK] ✅ Atomic deposit V2 successful:', {
         transactionId: atomicResult.transaction_id,
+        trackingId: atomicResult.tracking_id,
+        paymentId: atomicResult.payment_id,
         oldBalance: atomicResult.old_balance,
         newBalance: atomicResult.new_balance,
         amountCredited: atomicResult.amount_credited,
