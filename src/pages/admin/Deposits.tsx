@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -189,6 +189,21 @@ const Deposits = () => {
     new Set(deposits.map((d) => d.payment_gateway).filter(Boolean))
   );
 
+  // Calculate filtered deposit totals in real-time
+  const filteredDepositTotals = useMemo(() => {
+    const regularDeposits = filteredDeposits.filter(d => d.type === 'deposit');
+    const adminAdjustments = filteredDeposits.filter(d => d.type !== 'deposit');
+    
+    return {
+      regularAmount: regularDeposits.reduce((sum, d) => sum + Number(d.amount), 0),
+      regularCount: regularDeposits.length,
+      adminAmount: adminAdjustments.reduce((sum, d) => sum + Number(d.amount), 0),
+      adminCount: adminAdjustments.length,
+      totalAmount: filteredDeposits.reduce((sum, d) => sum + Number(d.amount), 0),
+      totalCount: filteredDeposits.length,
+    };
+  }, [filteredDeposits]);
+
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
@@ -326,6 +341,45 @@ const Deposits = () => {
                 Export CSV
               </Button>
             </div>
+
+            {/* Filtered Totals Summary */}
+            <Card className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Regular Deposits</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatCurrency(filteredDepositTotals.regularAmount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {filteredDepositTotals.regularCount} transaction{filteredDepositTotals.regularCount !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  
+                  {depositTypeFilter === 'all' && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Admin Adjustments</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(filteredDepositTotals.adminAmount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {filteredDepositTotals.adminCount} adjustment{filteredDepositTotals.adminCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total (Filtered View)</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(filteredDepositTotals.totalAmount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {filteredDepositTotals.totalCount} item{filteredDepositTotals.totalCount !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Table */}
             <div className="rounded-md border">
