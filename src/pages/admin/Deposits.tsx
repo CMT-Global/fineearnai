@@ -18,6 +18,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 interface Deposit {
   id: string;
   user_id: string;
+  type: string;
   amount: number;
   status: string;
   payment_gateway: string | null;
@@ -38,7 +39,16 @@ const Deposits = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("completed"); // Default to completed only
   const [methodFilter, setMethodFilter] = useState<string>("all");
-  const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0, failed: 0 });
+  const [depositTypeFilter, setDepositTypeFilter] = useState<string>("regular"); // "regular", "admin_adjustments", "all"
+  const [stats, setStats] = useState({ 
+    total: 0, 
+    totalAmount: 0,
+    completed: 0, 
+    pending: 0, 
+    failed: 0,
+    adminAdjustments: 0,
+    adminAdjustmentsAmount: 0,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -57,18 +67,19 @@ const Deposits = () => {
     if (isAdmin) {
       loadDeposits();
     }
-  }, [isAdmin, statusFilter]); // Reload when status filter changes
+  }, [isAdmin, statusFilter, depositTypeFilter]); // Reload when status or deposit type filter changes
 
   const loadDeposits = async () => {
     try {
       setLoading(true);
 
-      // Build query with status filter applied server-side
+      // Build query based on deposit type filter
       let query = supabase
         .from("transactions")
         .select(`
           id,
           user_id,
+          type,
           amount,
           status,
           payment_gateway,
@@ -78,8 +89,17 @@ const Deposits = () => {
             username,
             email
           )
-        `)
-        .eq("type", "deposit");
+        `);
+
+      // Apply deposit type filter
+      if (depositTypeFilter === "regular") {
+        query = query.eq("type", "deposit");
+      } else if (depositTypeFilter === "admin_adjustments") {
+        query = query.in("type", ["adjustment", "transfer"]).eq("wallet_type", "deposit");
+      } else {
+        // "all" - show both deposits and admin adjustments to deposit wallet
+        query = query.or(`type.eq.deposit,and(type.in.(adjustment,transfer),wallet_type.eq.deposit)`);
+      }
 
       // Apply status filter if not "all"
       if (statusFilter !== "all") {
@@ -94,18 +114,28 @@ const Deposits = () => {
 
       setDeposits(data || []);
 
-      // Load stats for summary card
-      const { data: statsData, error: statsError } = await supabase
+      // Load separate stats for regular deposits
+      const { data: regularDeposits, error: regularError } = await supabase
         .from("transactions")
-        .select("status")
+        .select("amount, status")
         .eq("type", "deposit");
 
-      if (!statsError && statsData) {
+      // Load stats for admin adjustments
+      const { data: adminAdjustments, error: adminError } = await supabase
+        .from("transactions")
+        .select("amount")
+        .in("type", ["adjustment", "transfer"])
+        .eq("wallet_type", "deposit");
+
+      if (!regularError && regularDeposits) {
         const statsCount = {
-          total: statsData.length,
-          completed: statsData.filter(t => t.status === "completed").length,
-          pending: statsData.filter(t => t.status === "pending").length,
-          failed: statsData.filter(t => t.status === "failed").length,
+          total: regularDeposits.length,
+          totalAmount: regularDeposits.reduce((sum, t) => sum + Number(t.amount), 0),
+          completed: regularDeposits.filter(t => t.status === "completed").length,
+          pending: regularDeposits.filter(t => t.status === "pending").length,
+          failed: regularDeposits.filter(t => t.status === "failed").length,
+          adminAdjustments: adminAdjustments?.length || 0,
+          adminAdjustmentsAmount: adminAdjustments?.reduce((sum, t) => sum + Number(t.amount), 0) || 0,
         };
         setStats(statsCount);
       }
@@ -183,11 +213,14 @@ const Deposits = () => {
         </div>
 
         {/* Stats Summary Card */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Total Deposits</CardDescription>
+              <CardDescription>Total Regular Deposits</CardDescription>
               <CardTitle className="text-2xl">{stats.total}</CardTitle>
+              <p className="text-sm font-semibold text-green-600 mt-1">
+                {formatCurrency(stats.totalAmount)}
+              </p>
             </CardHeader>
           </Card>
           <Card>
@@ -206,6 +239,18 @@ const Deposits = () => {
             <CardHeader className="pb-3">
               <CardDescription>Failed</CardDescription>
               <CardTitle className="text-2xl text-red-600">{stats.failed}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Admin Adjustments</CardDescription>
+              <CardTitle className="text-2xl text-blue-600">{stats.adminAdjustments}</CardTitle>
+              <p className="text-sm font-semibold text-blue-600 mt-1">
+                {formatCurrency(stats.adminAdjustmentsAmount)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                (Excluded from revenue)
+              </p>
             </CardHeader>
           </Card>
         </div>
@@ -237,6 +282,17 @@ const Deposits = () => {
                   />
                 </div>
               </div>
+
+              <Select value={depositTypeFilter} onValueChange={setDepositTypeFilter}>
+                <SelectTrigger className="w-full md:w-[220px]">
+                  <SelectValue placeholder="Deposit Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">💳 Regular Deposits</SelectItem>
+                  <SelectItem value="admin_adjustments">⚙️ Admin Adjustments</SelectItem>
+                  <SelectItem value="all">📊 All Transactions</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
@@ -279,6 +335,7 @@ const Deposits = () => {
                     <TableHead>Date</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Transaction ID</TableHead>
                     <TableHead>Status</TableHead>
@@ -287,7 +344,7 @@ const Deposits = () => {
                 <TableBody>
                   {filteredDeposits.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
                         No deposits found
                       </TableCell>
                     </TableRow>
@@ -309,12 +366,17 @@ const Deposits = () => {
                           {formatCurrency(deposit.amount)}
                         </TableCell>
                         <TableCell>
+                          <Badge variant={deposit.type === 'deposit' ? 'default' : 'secondary'}>
+                            {deposit.type === 'deposit' ? '💳 Regular' : '⚙️ Admin'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <Badge variant="outline">
-                            {deposit.payment_gateway || "N/A"}
+                            {deposit.payment_gateway || "Admin Panel"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
-                          {deposit.gateway_transaction_id || "N/A"}
+                          {deposit.gateway_transaction_id || deposit.id.slice(0, 8)}
                         </TableCell>
                         <TableCell>
                           <Badge
