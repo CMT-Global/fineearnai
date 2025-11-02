@@ -6,9 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, DollarSign, TrendingUp, Eye } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Eye, UserCog } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { ChangeUplineDialog } from "@/components/admin/dialogs/ChangeUplineDialog";
 
 interface ReferralsTabProps {
   userId: string;
@@ -18,6 +19,7 @@ interface ReferralsTabProps {
 export const ReferralsTab = ({ userId, userData }: ReferralsTabProps) => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [changeUplineOpen, setChangeUplineOpen] = useState(false);
   const limit = 20;
 
   // Fetch referrals list
@@ -58,8 +60,62 @@ export const ReferralsTab = ({ userId, userData }: ReferralsTabProps) => {
 
   const stats = userData.stats;
 
+  // Extract current upline data from userData
+  const currentUpline = userData.upline ? {
+    id: userData.upline.id,
+    username: userData.upline.username,
+    email: userData.upline.email,
+    membership_plan: userData.upline.membership_plan
+  } : null;
+
+  const handleUplineChangeSuccess = () => {
+    setChangeUplineOpen(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Upline Information Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>Upline Information</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setChangeUplineOpen(true)}
+          >
+            <UserCog className="h-4 w-4 mr-2" />
+            Change Upline
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {currentUpline ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Current Upline:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{currentUpline.username}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {currentUpline.membership_plan}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Email:</span>
+                <span className="text-sm">{currentUpline.email}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">User ID:</span>
+                <span className="text-sm font-mono text-xs">{currentUpline.id}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No upline assigned. This user doesn't have a referrer yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Referral Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -178,6 +234,15 @@ export const ReferralsTab = ({ userId, userData }: ReferralsTabProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Change Upline Dialog */}
+      <ChangeUplineDialog
+        open={changeUplineOpen}
+        onOpenChange={setChangeUplineOpen}
+        userId={userId}
+        currentUpline={currentUpline}
+        onSuccess={handleUplineChangeSuccess}
+      />
     </div>
   );
 };

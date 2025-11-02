@@ -317,8 +317,12 @@ export const useUserManagement = () => {
       return data;
     },
     onSuccess: (_, variables) => {
+      // Invalidate ALL related caches
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
-      toast.success('Upline changed successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-user-referrals'] });
+      queryClient.invalidateQueries({ queryKey: ['referral-complete-data', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('Upline changed successfully. Future commissions will go to the new upline.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to change upline');
