@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -102,6 +102,11 @@ export function useMembershipPlans() {
       setRetrying(false);
     }
   }, [errorType]);
+
+  // Auto-load plans on mount
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans]);
 
   // Calculate earning potentials for all plans
   const earningPotentials = useMemo(() => {
