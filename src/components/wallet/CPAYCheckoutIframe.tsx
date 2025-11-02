@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, InfoIcon } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, InfoIcon, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CPAYCheckoutIframeProps {
   open: boolean;
@@ -31,6 +32,8 @@ export const CPAYCheckoutIframe = ({
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
   const [showingConfirmation, setShowingConfirmation] = useState(false); // ✅ NEW: Loading state during transition
+  const [showScrollHint, setShowScrollHint] = useState(true);
+  const isMobile = useIsMobile();
   const MAX_POLLS = 120; // Poll for 6 minutes (120 * 3 seconds) - increased for webhook processing time
 
   useEffect(() => {
@@ -40,6 +43,7 @@ export const CPAYCheckoutIframe = ({
       setLoading(true);
       setPollingCount(0);
       setShowingConfirmation(false); // ✅ Reset confirmation state
+      setShowScrollHint(true);
       return;
     }
 
@@ -139,9 +143,9 @@ export const CPAYCheckoutIframe = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="flex items-center justify-between">
+      <DialogContent className={`${isMobile ? 'max-w-full h-[95vh]' : 'max-w-4xl h-[90vh]'} flex flex-col p-0`}>
+        <DialogHeader className={`${isMobile ? 'px-3 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b`}>
+          <DialogTitle className={`flex items-center justify-between ${isMobile ? 'text-lg' : ''}`}>
             <span>Complete Your Deposit</span>
             {transactionStatus === "pending" && (
               <span className="text-sm font-normal text-muted-foreground flex items-center gap-2">
@@ -195,28 +199,57 @@ export const CPAYCheckoutIframe = ({
             </div>
           ) : (
             <div className="h-full flex flex-col">
-              <Alert className="mx-6 mt-4">
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Order ID:</strong> {orderId}
-                  <br />
-                  <strong>Amount:</strong> ${amount} {currency}
-                  <br />
-                  <span className="text-xs text-muted-foreground">
-                    Select your preferred cryptocurrency and complete the payment. 
-                    You can pay any amount - we'll credit the exact amount received.
-                  </span>
+              <Alert className={`${isMobile ? 'mx-3 mt-2' : 'mx-6 mt-4'}`}>
+                <InfoIcon className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
+                <AlertDescription className={isMobile ? 'text-[10px]' : ''}>
+                  {isMobile ? (
+                    <>
+                      <div className="flex gap-1.5">
+                        <strong>Order:</strong> <span className="font-mono text-[9px]">{orderId}</span>
+                      </div>
+                      <div className="flex gap-1.5 mt-0.5">
+                        <strong>Amount:</strong> <span>${amount} {currency}</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground mt-1 block">
+                        Select crypto & pay. We credit exact amount received.
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>Order ID:</strong> {orderId}
+                      <br />
+                      <strong>Amount:</strong> ${amount} {currency}
+                      <br />
+                      <span className="text-xs text-muted-foreground">
+                        Select your preferred cryptocurrency and complete the payment. 
+                        You can pay any amount - we'll credit the exact amount received.
+                      </span>
+                    </>
+                  )}
                 </AlertDescription>
               </Alert>
+
+              {isMobile && showScrollHint && (
+                <div className="mx-3 mt-2 flex items-center justify-center gap-1 text-[10px] text-muted-foreground animate-bounce">
+                  <ChevronDown className="h-3 w-3" />
+                  <span>Scroll to see all payment options</span>
+                  <ChevronDown className="h-3 w-3" />
+                </div>
+              )}
               
-              <div className="flex-1 p-6 pt-4 relative">
+              <div className={`flex-1 relative ${isMobile ? 'p-2 pt-2' : 'p-6 pt-4'}`}>
                 <iframe
                   src={checkoutUrl}
                   className="w-full h-full border-0 rounded-lg"
                   title="CPAY Checkout"
                   sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
                   allow="clipboard-read; clipboard-write"
-                  onLoad={() => setLoading(false)}
+                  onLoad={() => {
+                    setLoading(false);
+                    if (isMobile) {
+                      setTimeout(() => setShowScrollHint(false), 3000);
+                    }
+                  }}
                 />
                 
                 {loading && (
