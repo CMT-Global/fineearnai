@@ -143,7 +143,7 @@ const Login = () => {
       {/* Platform Migration Banner - Only visible on login page before authentication */}
       <PlatformMigrationBanner />
       
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4 pt-8">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4 pt-24 sm:pt-8">
         <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
