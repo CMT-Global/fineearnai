@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
-import { Download, Search, Filter } from "lucide-react";
+import { Download, Search, Filter, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -40,7 +40,10 @@ const Deposits = () => {
   const [statusFilter, setStatusFilter] = useState<string>("completed"); // Default to completed only
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [depositTypeFilter, setDepositTypeFilter] = useState<string>("regular"); // "regular", "admin_adjustments", "all"
-  const [stats, setStats] = useState({ 
+  const [dateFilter, setDateFilter] = useState<string>("all"); // "today", "yesterday", "last7", "last30", "last60", "last90", "custom", "all"
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [stats, setStats] = useState({
     total: 0, 
     totalAmount: 0,
     completed: 0, 
@@ -147,6 +150,44 @@ const Deposits = () => {
     }
   };
 
+  // Helper function to calculate date ranges
+  const getDateRange = (filter: string): { start: Date | null; end: Date | null } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (filter) {
+      case "today":
+        return { start: today, end: now };
+      case "yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return { start: yesterday, end: today };
+      case "last7":
+        const last7 = new Date(today);
+        last7.setDate(last7.getDate() - 7);
+        return { start: last7, end: now };
+      case "last30":
+        const last30 = new Date(today);
+        last30.setDate(last30.getDate() - 30);
+        return { start: last30, end: now };
+      case "last60":
+        const last60 = new Date(today);
+        last60.setDate(last60.getDate() - 60);
+        return { start: last60, end: now };
+      case "last90":
+        const last90 = new Date(today);
+        last90.setDate(last90.getDate() - 90);
+        return { start: last90, end: now };
+      case "custom":
+        return { 
+          start: customStartDate ? new Date(customStartDate) : null,
+          end: customEndDate ? new Date(customEndDate + "T23:59:59") : null 
+        };
+      default:
+        return { start: null, end: null };
+    }
+  };
+
   const exportToCSV = () => {
     const csv = [
       ["Date", "Username", "Email", "Amount", "Method", "Transaction ID", "Status"],
@@ -182,7 +223,16 @@ const Deposits = () => {
     const matchesStatus = statusFilter === "all" || deposit.status === statusFilter;
     const matchesMethod = methodFilter === "all" || deposit.payment_gateway === methodFilter;
 
-    return matchesSearch && matchesStatus && matchesMethod;
+    // Date range filter
+    const dateRange = getDateRange(dateFilter);
+    const depositDate = new Date(deposit.created_at);
+    
+    const matchesDateRange = 
+      dateRange.start === null || 
+      (depositDate >= dateRange.start && 
+       (dateRange.end === null || depositDate <= dateRange.end));
+
+    return matchesSearch && matchesStatus && matchesMethod && matchesDateRange;
   });
 
   const uniqueMethods = Array.from(
@@ -336,11 +386,61 @@ const Deposits = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">📅 All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="last7">Last 7 Days</SelectItem>
+                  <SelectItem value="last30">Last 30 Days</SelectItem>
+                  <SelectItem value="last60">Last 60 Days</SelectItem>
+                  <SelectItem value="last90">Last 90 Days</SelectItem>
+                  <SelectItem value="custom">🗓️ Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Button onClick={exportToCSV} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
             </div>
+
+            {/* Custom Date Range Inputs */}
+            {dateFilter === "custom" && (
+              <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    placeholder="Start Date"
+                    className="w-full sm:w-[160px]"
+                  />
+                  <span className="text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    placeholder="End Date"
+                    className="w-full sm:w-[160px]"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setCustomStartDate("");
+                    setCustomEndDate("");
+                  }}
+                >
+                  Clear Dates
+                </Button>
+              </div>
+            )}
 
             {/* Filtered Totals Summary */}
             <Card className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800">
