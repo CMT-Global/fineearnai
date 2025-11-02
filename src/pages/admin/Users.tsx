@@ -165,93 +165,95 @@ function UsersContent() {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Filters */}
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by username, email, or name..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={planFilter} onValueChange={(value) => {
-                  setPlanFilter(value);
-                  setCurrentPage(1);
-                }}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Plans</SelectItem>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="vip">VIP</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={(value) => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                    <SelectItem value="banned">Banned</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={countryFilter} onValueChange={(value) => {
-                  setCountryFilter(value);
-                  setCurrentPage(1);
-                }}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Filter by country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
-                    {countries
-                      ?.filter(c => c.registration_country && c.registration_country_name)
-                      ?.map((c) => (
-                        <SelectItem key={c.registration_country} value={c.registration_country}>
-                          {c.registration_country_name} ({c.registration_country})
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-                <Select value={roleFilter} onValueChange={(value) => {
-                  setRoleFilter(value);
-                  setCurrentPage(1);
-                }}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="moderator">Moderator</SelectItem>
-                    <SelectItem value="user">User Only</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkExport()}
-                  disabled={users.length === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export All
-                </Button>
+            {/* Search Input - Full Width */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search by username, email, or name..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 h-12 text-base"
+                />
               </div>
+            </div>
+
+            {/* Filters Row */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <Select value={planFilter} onValueChange={(value) => {
+                setPlanFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="vip">VIP</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="banned">Banned</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={countryFilter} onValueChange={(value) => {
+                setCountryFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Filter by country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {countries
+                    ?.filter(c => c.registration_country && c.registration_country_name)
+                    ?.map((c) => (
+                      <SelectItem key={c.registration_country} value={c.registration_country}>
+                        {c.registration_country_name} ({c.registration_country})
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+              <Select value={roleFilter} onValueChange={(value) => {
+                setRoleFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="moderator">Moderator</SelectItem>
+                  <SelectItem value="user">User Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkExport()}
+                disabled={users.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export All
+              </Button>
             </div>
 
             {isLoading ? (
