@@ -214,7 +214,7 @@ export const CPAYCheckoutIframe = ({
                   src={checkoutUrl}
                   className="w-full h-full border-0 rounded-lg"
                   title="CPAY Checkout"
-                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-clipboard-write allow-clipboard-read"
                   onLoad={() => setLoading(false)}
                 />
                 
