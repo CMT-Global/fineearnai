@@ -46,9 +46,12 @@ const Deposits = () => {
   const [stats, setStats] = useState({
     total: 0, 
     totalAmount: 0,
-    completed: 0, 
-    pending: 0, 
+    completed: 0,
+    completedAmount: 0,
+    pending: 0,
+    pendingAmount: 0,
     failed: 0,
+    failedAmount: 0,
     adminAdjustments: 0,
     adminAdjustmentsAmount: 0,
   });
@@ -131,12 +134,19 @@ const Deposits = () => {
         .eq("wallet_type", "deposit");
 
       if (!regularError && regularDeposits) {
+        const completedDeposits = regularDeposits.filter(t => t.status === "completed");
+        const pendingDeposits = regularDeposits.filter(t => t.status === "pending");
+        const failedDeposits = regularDeposits.filter(t => t.status === "failed");
+        
         const statsCount = {
           total: regularDeposits.length,
           totalAmount: regularDeposits.reduce((sum, t) => sum + Number(t.amount), 0),
-          completed: regularDeposits.filter(t => t.status === "completed").length,
-          pending: regularDeposits.filter(t => t.status === "pending").length,
-          failed: regularDeposits.filter(t => t.status === "failed").length,
+          completed: completedDeposits.length,
+          completedAmount: completedDeposits.reduce((sum, t) => sum + Number(t.amount), 0),
+          pending: pendingDeposits.length,
+          pendingAmount: pendingDeposits.reduce((sum, t) => sum + Number(t.amount), 0),
+          failed: failedDeposits.length,
+          failedAmount: failedDeposits.reduce((sum, t) => sum + Number(t.amount), 0),
           adminAdjustments: adminAdjustments?.length || 0,
           adminAdjustmentsAmount: adminAdjustments?.reduce((sum, t) => sum + Number(t.amount), 0) || 0,
         };
@@ -292,18 +302,27 @@ const Deposits = () => {
             <CardHeader className="pb-3">
               <CardDescription>Completed</CardDescription>
               <CardTitle className="text-2xl text-green-600">{stats.completed}</CardTitle>
+              <p className="text-sm font-semibold text-green-600 mt-1">
+                {formatCurrency(stats.completedAmount)}
+              </p>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Pending</CardDescription>
               <CardTitle className="text-2xl text-yellow-600">{stats.pending}</CardTitle>
+              <p className="text-sm font-semibold text-yellow-600 mt-1">
+                {formatCurrency(stats.pendingAmount)}
+              </p>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Failed</CardDescription>
               <CardTitle className="text-2xl text-red-600">{stats.failed}</CardTitle>
+              <p className="text-sm font-semibold text-red-600 mt-1">
+                {formatCurrency(stats.failedAmount)}
+              </p>
             </CardHeader>
           </Card>
           <Card>
