@@ -21,6 +21,7 @@ export interface UserFilters {
   planFilter?: string;
   statusFilter?: string;
   countryFilter?: string;
+  roleFilter?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }
@@ -79,6 +80,29 @@ export const useUserManagement = () => {
           query = query.eq('registration_country', filters.countryFilter);
         }
 
+        // Apply role filter
+        if (filters.roleFilter && filters.roleFilter !== 'all') {
+          // Get user IDs with the specified role
+          const { data: roleUsers, error: roleError } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', filters.roleFilter as 'admin' | 'moderator' | 'user');
+          
+          if (roleError) throw roleError;
+          
+          const userIds = roleUsers?.map(r => r.user_id) || [];
+          if (userIds.length > 0) {
+            query = query.in('id', userIds);
+          } else {
+            // No users with this role, return empty result
+            return {
+              users: [],
+              totalCount: 0,
+              totalPages: 0
+            };
+          }
+        }
+
         // Apply sorting and pagination
         const { data, error, count } = await query
           .order(filters.sortBy || 'created_at', { ascending: filters.sortOrder === 'ASC' })
@@ -86,8 +110,33 @@ export const useUserManagement = () => {
 
         if (error) throw error;
         
+        // Fetch roles for all users in the result
+        const userIds = data?.map(u => u.id) || [];
+        let userRolesMap: { [key: string]: string[] } = {};
+        
+        if (userIds.length > 0) {
+          const { data: rolesData } = await supabase
+            .from('user_roles')
+            .select('user_id, role')
+            .in('user_id', userIds);
+          
+          // Build a map of user_id -> roles array
+          rolesData?.forEach(r => {
+            if (!userRolesMap[r.user_id]) {
+              userRolesMap[r.user_id] = [];
+            }
+            userRolesMap[r.user_id].push(r.role);
+          });
+        }
+        
+        // Add roles to each user
+        const usersWithRoles = data?.map(user => ({
+          ...user,
+          roles: userRolesMap[user.id] || ['user']
+        })) || [];
+        
         return {
-          users: data || [],
+          users: usersWithRoles,
           totalCount: count || 0,
           totalPages: Math.ceil((count || 0) / limit)
         };

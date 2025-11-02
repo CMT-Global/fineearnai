@@ -15,7 +15,7 @@ import { UserManagementStats } from "@/components/admin/UserManagementStats";
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar";
 import { BulkUpdatePlanDialog } from "@/components/admin/dialogs/BulkUpdatePlanDialog";
 import { BulkSuspendDialog } from "@/components/admin/dialogs/BulkSuspendDialog";
-import { Search, Eye, Download, RefreshCw, ArrowUpDown } from "lucide-react";
+import { Search, Eye, Download, RefreshCw, ArrowUpDown, Crown, Shield } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -28,6 +28,7 @@ function UsersContent() {
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +51,7 @@ function UsersContent() {
     planFilter,
     statusFilter,
     countryFilter,
+    roleFilter,
     sortBy,
     sortOrder,
   };
@@ -226,6 +228,20 @@ function UsersContent() {
                     }
                   </SelectContent>
                 </Select>
+                <Select value={roleFilter} onValueChange={(value) => {
+                  setRoleFilter(value);
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="moderator">Moderator</SelectItem>
+                    <SelectItem value="user">User Only</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   variant="outline"
                   size="sm"
@@ -276,6 +292,7 @@ function UsersContent() {
                           </Button>
                         </TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Roles</TableHead>
                         <TableHead>Country</TableHead>
                         <TableHead>
                           <Button 
@@ -329,6 +346,25 @@ function UsersContent() {
                               {user.account_status}
                             </Badge>
                           </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {user.roles?.includes('admin') && (
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <Crown className="h-3 w-3" />
+                                  Admin
+                                </Badge>
+                              )}
+                              {user.roles?.includes('moderator') && (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <Shield className="h-3 w-3" />
+                                  Mod
+                                </Badge>
+                              )}
+                              {(!user.roles || (user.roles.length === 1 && user.roles[0] === 'user')) && (
+                                <Badge variant="outline">User</Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{user.country || "-"}</TableCell>
                           <TableCell>${(user.total_earned || 0).toFixed(2)}</TableCell>
                           <TableCell>
@@ -347,7 +383,7 @@ function UsersContent() {
                       ))}
                       {users.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                             No users found
                           </TableCell>
                         </TableRow>
