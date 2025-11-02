@@ -4,7 +4,8 @@ import { corsHeaders } from '../_shared/cors.ts';
 interface AdminManageUserRequest {
   action: 'change_upline' | 'update_referral_status' | 'get_user_referral_summary' | 'get_detailed_user_referrals' |
           'get_user_detail' | 'update_user_profile' | 'update_user_email' | 'adjust_wallet_balance' | 
-          'change_membership_plan' | 'suspend_user' | 'ban_user' | 'reset_daily_limits';
+          'change_membership_plan' | 'suspend_user' | 'ban_user' | 'reset_daily_limits' |
+          'get_user_roles' | 'assign_role' | 'remove_role';
   userId: string;
   newUplineEmail?: string;
   referralStatus?: string;
@@ -28,6 +29,9 @@ interface AdminManageUserRequest {
   };
   banReason?: string;
   suspendReason?: string;
+  roleData?: {
+    role: 'admin' | 'moderator' | 'user';
+  };
 }
 
 Deno.serve(async (req) => {
@@ -68,7 +72,7 @@ Deno.serve(async (req) => {
 
     const { 
       action, userId, newUplineEmail, referralStatus, page = 1, limit = 20,
-      profileData, newEmail, walletAdjustment, planData, banReason, suspendReason
+      profileData, newEmail, walletAdjustment, planData, banReason, suspendReason, roleData
     }: AdminManageUserRequest = await req.json();
 
     console.log(`Admin ${user.id} performing action: ${action} on user ${userId}`);
@@ -771,6 +775,222 @@ Deno.serve(async (req) => {
           message: 'Daily limits reset successfully'
         };
         console.log(`Reset daily limits for user ${userId}`);
+        break;
+      }
+
+      case 'get_user_roles': {
+        // Fetch all roles for the target user
+        const { data: userRoles, error: rolesError } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+
+        if (rolesError) {
+          throw new Error(`Failed to fetch user roles: ${rolesError.message}`);
+        }
+
+        const roles = userRoles?.map(r => r.role) || [];
+
+        result = {
+          success: true,
+          roles: roles
+        };
+
+        console.log(`Retrieved roles for user ${userId}: ${roles.join(', ')}`);
+        break;
+      }
+
+      case 'assign_role': {
+        if (!roleData || !roleData.role) {
+          throw new Error('Role is required');
+        }
+
+        const { role } = roleData;
+
+        // Validate role
+        if (!['admin', 'moderator', 'user'].includes(role)) {
+          throw new Error('Invalid role. Must be admin, moderator, or user');
+        }
+
+        // Prevent admin from assigning role to themselves (security measure)
+        if (userId === user.id) {
+          throw new Error('Cannot assign role to yourself');
+        }
+
+        // Check if user already has this role
+        const { data: existingRole } = await supabaseClient
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', role)
+          .maybeSingle();
+
+        if (existingRole) {
+          throw new Error('User already has this role');
+        }
+
+        // Get current roles before assignment (for audit log)
+        const { data: currentRoles } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+
+        const previousRoles = currentRoles?.map(r => r.role) || [];
+
+        // Assign the role
+        const { error: insertError } = await supabaseClient
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: role
+          });
+
+        if (insertError) {
+          throw new Error(`Failed to assign role: ${insertError.message}`);
+        }
+
+        // Get target user info for audit log
+        const { data: targetUser } = await supabaseClient
+          .from('profiles')
+          .select('username, email')
+          .eq('id', userId)
+          .single();
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'assign_role',
+            target_user_id: userId,
+            details: {
+              role_assigned: role,
+              previous_roles: previousRoles,
+              new_roles: [...previousRoles, role],
+              target_username: targetUser?.username,
+              target_email: targetUser?.email
+            }
+          });
+
+        // Log user activity
+        await supabaseClient
+          .from('user_activity_log')
+          .insert({
+            user_id: userId,
+            activity_type: 'role_assigned',
+            details: {
+              role: role,
+              assigned_by: user.id
+            }
+          });
+
+        result = {
+          success: true,
+          message: `Role '${role}' assigned successfully`,
+          roles: [...previousRoles, role]
+        };
+
+        console.log(`Assigned role '${role}' to user ${userId} by admin ${user.id}`);
+        break;
+      }
+
+      case 'remove_role': {
+        if (!roleData || !roleData.role) {
+          throw new Error('Role is required');
+        }
+
+        const { role } = roleData;
+
+        // Validate role
+        if (!['admin', 'moderator', 'user'].includes(role)) {
+          throw new Error('Invalid role. Must be admin, moderator, or user');
+        }
+
+        // Prevent removing 'user' role - everyone must have base user role
+        if (role === 'user') {
+          throw new Error('Cannot remove \'user\' role - all users must have base role');
+        }
+
+        // Prevent admin from removing their own admin role (security measure)
+        if (userId === user.id && role === 'admin') {
+          throw new Error('Cannot remove your own admin role');
+        }
+
+        // Check if user has this role
+        const { data: existingRole } = await supabaseClient
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', role)
+          .maybeSingle();
+
+        if (!existingRole) {
+          throw new Error('User does not have this role');
+        }
+
+        // Get current roles before removal (for audit log)
+        const { data: currentRoles } = await supabaseClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+
+        const previousRoles = currentRoles?.map(r => r.role) || [];
+
+        // Remove the role
+        const { error: deleteError } = await supabaseClient
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', role);
+
+        if (deleteError) {
+          throw new Error(`Failed to remove role: ${deleteError.message}`);
+        }
+
+        // Get target user info for audit log
+        const { data: targetUser } = await supabaseClient
+          .from('profiles')
+          .select('username, email')
+          .eq('id', userId)
+          .single();
+
+        const newRoles = previousRoles.filter(r => r !== role);
+
+        // Log to audit
+        await supabaseClient
+          .from('audit_logs')
+          .insert({
+            admin_id: user.id,
+            action_type: 'remove_role',
+            target_user_id: userId,
+            details: {
+              role_removed: role,
+              previous_roles: previousRoles,
+              new_roles: newRoles,
+              target_username: targetUser?.username,
+              target_email: targetUser?.email
+            }
+          });
+
+        // Log user activity
+        await supabaseClient
+          .from('user_activity_log')
+          .insert({
+            user_id: userId,
+            activity_type: 'role_removed',
+            details: {
+              role: role,
+              removed_by: user.id
+            }
+          });
+
+        result = {
+          success: true,
+          message: `Role '${role}' removed successfully`,
+          roles: newRoles
+        };
+
+        console.log(`Removed role '${role}' from user ${userId} by admin ${user.id}`);
         break;
       }
 
