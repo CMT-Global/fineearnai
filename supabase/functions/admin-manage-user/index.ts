@@ -633,17 +633,23 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to change plan: ${updateError.message}`);
         }
 
-        // Create transaction record
+        // Create transaction record for audit trail only (no balance impact)
         await supabaseClient
           .from('transactions')
           .insert({
             user_id: userId,
-            type: 'plan_upgrade',
-            amount: plan.price,
+            type: 'plan_change',
+            amount: 0,
             wallet_type: 'deposit',
             status: 'completed',
-            description: `Admin plan change to ${plan.display_name}`,
-            metadata: { changed_by: user.id, plan_name: plan.name }
+            description: `Admin changed plan to ${plan.display_name}`,
+            metadata: { 
+              changed_by: user.id, 
+              plan_name: plan.name,
+              admin_action: true,
+              plan_price: plan.price,
+              previous_plan: planData.plan_name || 'unknown'
+            }
           });
 
         // Log to audit
