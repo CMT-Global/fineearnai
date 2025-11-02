@@ -390,6 +390,55 @@ export const useUserManagement = () => {
     }
   });
 
+  // Get user roles
+  const getUserRoles = async (userId: string) => {
+    const { data, error } = await supabase.functions.invoke('admin-manage-user', {
+      body: { action: 'get_user_roles', userId }
+    });
+    if (error) throw error;
+    return data.roles as string[];
+  };
+
+  // Assign role to user
+  const assignRole = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
+        body: { action: 'assign_role', userId, roleData: { role } }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-roles', variables.userId] });
+      toast.success('Role assigned successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to assign role');
+    }
+  });
+
+  // Remove role from user
+  const removeRole = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
+        body: { action: 'remove_role', userId, roleData: { role } }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-roles', variables.userId] });
+      toast.success('Role removed successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove role');
+    }
+  });
+
   return {
     // Hooks
     useUserList,
@@ -405,6 +454,11 @@ export const useUserManagement = () => {
     banUser,
     resetDailyLimits,
     changeUpline,
+    
+    // Role management
+    getUserRoles,
+    assignRole,
+    removeRole,
     
     // Bulk operations
     bulkUpdatePlan,

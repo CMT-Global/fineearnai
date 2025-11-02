@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
-import { ArrowLeft, Key, Activity } from "lucide-react";
+import { ArrowLeft, Key, Activity, Crown } from "lucide-react";
 
 // Import new tab components
 import { OverviewTab } from "@/components/admin/user-detail/OverviewTab";
@@ -26,6 +26,7 @@ import { WalletAdjustmentDialog } from "@/components/admin/dialogs/WalletAdjustm
 import { ChangePlanDialog } from "@/components/admin/dialogs/ChangePlanDialog";
 import { SuspendUserDialog } from "@/components/admin/dialogs/SuspendUserDialog";
 import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
+import { ManageRolesDialog } from "@/components/admin/dialogs/ManageRolesDialog";
 
 function UserDetailContent() {
   const navigate = useNavigate();
@@ -40,9 +41,37 @@ function UserDetailContent() {
   const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [manageRolesDialogOpen, setManageRolesDialogOpen] = useState(false);
+
+  // User roles state
+  const [userRoles, setUserRoles] = useState<string[]>(['user']);
 
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, refetch } = useUserDetail(userId || '');
+
+  // Fetch user roles when component mounts or userId changes
+  React.useEffect(() => {
+    const fetchUserRoles = async () => {
+      if (!userId) return;
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('admin-manage-user', {
+          body: { 
+            action: 'get_user_roles',
+            userId 
+          }
+        });
+
+        if (error) throw error;
+        setUserRoles(data?.roles || ['user']);
+      } catch (err) {
+        console.error('Error fetching user roles:', err);
+        setUserRoles(['user']); // Fallback to user role
+      }
+    };
+
+    fetchUserRoles();
+  }, [userId]);
 
   // PHASE 5: Enhanced query invalidation with comprehensive cache management
   const handleUserUpdated = async () => {
@@ -171,17 +200,28 @@ function UserDetailContent() {
               <h1 className="text-3xl font-bold">{profile.username}</h1>
               <p className="text-sm text-muted-foreground">{profile.email}</p>
             </div>
-            <Badge
-              variant={
-                profile.account_status === "active"
-                  ? "default"
-                  : profile.account_status === "suspended"
-                  ? "secondary"
-                  : "destructive"
-              }
-            >
-              {profile.account_status}
-            </Badge>
+            <div className="flex gap-2">
+              <Badge
+                variant={
+                  profile.account_status === "active"
+                    ? "default"
+                    : profile.account_status === "suspended"
+                    ? "secondary"
+                    : "destructive"
+                }
+              >
+                {profile.account_status}
+              </Badge>
+              {userRoles?.includes('admin') && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Crown className="h-3 w-3" />
+                  Admin
+                </Badge>
+              )}
+              {userRoles?.includes('moderator') && (
+                <Badge variant="outline">Moderator</Badge>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
@@ -214,6 +254,7 @@ function UserDetailContent() {
               onBan={() => setBanDialogOpen(true)}
               onResetLimits={() => toast.info("Reset limits coming soon")}
               onMasterLogin={handleGenerateMasterLogin}
+              onManageRoles={() => setManageRolesDialogOpen(true)}
               onUserUpdated={handleUserUpdated}
             />
           </TabsContent>
@@ -282,6 +323,26 @@ function UserDetailContent() {
               userId={userId!}
               username={profile.username}
               email={profile.email}
+            />
+
+            <ManageRolesDialog
+              open={manageRolesDialogOpen}
+              onOpenChange={setManageRolesDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              currentRoles={userRoles}
+              onSuccess={async () => {
+                await handleUserUpdated();
+                // Refetch roles after update
+                try {
+                  const { data } = await supabase.functions.invoke('admin-manage-user', {
+                    body: { action: 'get_user_roles', userId: userId! }
+                  });
+                  setUserRoles(data?.roles || ['user']);
+                } catch (err) {
+                  console.error('Error refetching roles:', err);
+                }
+              }}
             />
           </>
         )}

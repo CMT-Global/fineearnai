@@ -21,6 +21,7 @@ interface OverviewTabProps {
   onBan: () => void;
   onResetLimits: () => void;
   onMasterLogin: () => void;
+  onManageRoles: () => void;
   onUserUpdated: () => void;
 }
 
@@ -32,6 +33,7 @@ export const OverviewTab = ({
   onBan,
   onResetLimits,
   onMasterLogin,
+  onManageRoles,
   onUserUpdated,
 }: OverviewTabProps) => {
   const { toast } = useToast();
@@ -949,6 +951,10 @@ export const OverviewTab = ({
             </Button>
             <Button variant="secondary" size="sm" onClick={onMasterLogin}>
               Generate Master Login
+            </Button>
+            <Button variant="outline" size="sm" onClick={onManageRoles}>
+              <Shield className="h-4 w-4 mr-2" />
+              Manage Roles
             </Button>
           </div>
         </CardContent>
