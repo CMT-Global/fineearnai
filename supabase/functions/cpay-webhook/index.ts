@@ -520,6 +520,51 @@ serve(async (req) => {
     }
     // ============================================
     
+    // ============= SECONDARY DUPLICATE DETECTION (DEFENSE IN DEPTH) =============
+    // Check if we already have a COMPLETED transaction for this tracking_id
+    // This protects against race conditions where multiple webhooks arrive simultaneously
+    console.log(`[CPAY-WEBHOOK] 🔍 Checking for existing completed transaction with tracking_id=${trackingId}...`);
+    
+    const { data: existingCompletedTx, error: existingError } = await supabase
+      .from('transactions')
+      .select('id, amount, created_at, gateway_transaction_id, user_id')
+      .eq('type', 'deposit')
+      .eq('status', 'completed')
+      .contains('metadata', { tracking_id: trackingId })
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('[CPAY-WEBHOOK] ❌ Error checking for existing completed transaction:', existingError);
+      // Don't throw - continue processing, atomic function will handle duplicates
+    }
+
+    if (existingCompletedTx) {
+      console.log(
+        `[CPAY-WEBHOOK] ⚠️ DUPLICATE WEBHOOK DETECTED: ` +
+        `tracking_id=${trackingId} already processed in transaction ${existingCompletedTx.id}. ` +
+        `Previous payment_id=${existingCompletedTx.gateway_transaction_id}, ` +
+        `Current payment_id=${payment_id}. ` +
+        `User: ${existingCompletedTx.user_id}. ` +
+        `Ignoring duplicate webhook to prevent double-credit.`
+      );
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Duplicate webhook ignored - transaction already completed with this tracking_id',
+          transaction_id: existingCompletedTx.id,
+          tracking_id: trackingId,
+          previous_payment_id: existingCompletedTx.gateway_transaction_id,
+          current_payment_id: payment_id,
+          amount: existingCompletedTx.amount,
+          completed_at: existingCompletedTx.created_at
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log(`[CPAY-WEBHOOK] ✓ No existing completed transaction found for tracking_id=${trackingId}. Proceeding with processing.`);
+    // ============================================================================
+    
     // Extract requested amount from transaction metadata
     const requestedAmount = transaction.metadata?.requested_amount || transaction.amount;
     const actualAmount = webhookAmount; // Already parsed as number during normalization
