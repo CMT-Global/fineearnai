@@ -209,31 +209,21 @@ export const CPAYCheckoutIframe = ({
                 </AlertDescription>
               </Alert>
               
-              <div className="flex-1 p-6 pt-4 flex flex-col gap-3">
-                <div className="flex-1 relative">
-                  <iframe
-                    src={checkoutUrl}
-                    className="w-full h-full border-0 rounded-lg"
-                    title="CPAY Checkout"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
-                    allow="clipboard-read; clipboard-write"
-                    onLoad={() => setLoading(false)}
-                  />
-                  
-                  {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(checkoutUrl, "_blank", "noopener,noreferrer")}
-                  className="w-full"
-                >
-                  Open payment page in new window
-                </Button>
+              <div className="flex-1 p-6 pt-4 relative">
+                <iframe
+                  src={checkoutUrl}
+                  className="w-full h-full border-0 rounded-lg"
+                  title="CPAY Checkout"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  allow="clipboard-read; clipboard-write"
+                  onLoad={() => setLoading(false)}
+                />
+                
+                {loading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
           )}
