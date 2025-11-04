@@ -202,6 +202,7 @@ const Dashboard = () => {
             <div className="mx-4 lg:mx-8 mt-6">
               <FreeAccountUpgradeBanner 
                 userId={user.id}
+                planExpiresAt={profile.plan_expires_at}
                 onUpgrade={() => navigate("/plans")}
               />
             </div>

@@ -5,12 +5,26 @@ import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 
 interface FreeAccountUpgradeBannerProps {
   userId: string;
+  planExpiresAt: string | null;
   onUpgrade: () => void;
 }
 
-export const FreeAccountUpgradeBanner = ({ userId, onUpgrade }: FreeAccountUpgradeBannerProps) => {
+export const FreeAccountUpgradeBanner = ({ userId, planExpiresAt, onUpgrade }: FreeAccountUpgradeBannerProps) => {
   const [isDismissed, setIsDismissed] = useState(false);
   const { formatAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
+
+  const getDaysUntilExpiry = (): number | null => {
+    if (!planExpiresAt) return null;
+    
+    const expiryDate = new Date(planExpiresAt);
+    const now = new Date();
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 0 ? diffDays : null;
+  };
+
+  const daysRemaining = getDaysUntilExpiry();
 
   useEffect(() => {
     const dismissed = localStorage.getItem(`freeAccountBannerDismissed_${userId}`);
@@ -48,6 +62,12 @@ export const FreeAccountUpgradeBanner = ({ userId, onUpgrade }: FreeAccountUpgra
               {isCurrencyLoading ? "$240" : formatAmount(240)}/week
             </strong>.
           </p>
+          {daysRemaining && (
+            <p className="text-sm text-destructive-foreground/90 mt-2 font-semibold">
+              ⏰ Your account will expire in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. 
+              Make sure you upgrade your account before it expires to ensure you continue earning with us.
+            </p>
+          )}
           <p className="text-sm text-destructive-foreground/90 mt-1">
             💎 Don't miss out
           </p>
