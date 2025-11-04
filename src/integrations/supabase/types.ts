@@ -83,6 +83,78 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_audit_log: {
+        Row: {
+          commission_amount: number | null
+          commission_type: string
+          created_at: string
+          deposit_transaction_id: string | null
+          error_details: Json | null
+          id: string
+          referred_id: string | null
+          referrer_id: string | null
+          status: string
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_type: string
+          created_at?: string
+          deposit_transaction_id?: string | null
+          error_details?: Json | null
+          id?: string
+          referred_id?: string | null
+          referrer_id?: string | null
+          status: string
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_type?: string
+          created_at?: string
+          deposit_transaction_id?: string | null
+          error_details?: Json | null
+          id?: string
+          referred_id?: string | null
+          referrer_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_audit_log_deposit_transaction_id_fkey"
+            columns: ["deposit_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_audit_log_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_audit_log_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "commission_audit_log_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_audit_log_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       cpay_checkouts: {
         Row: {
           checkout_id: string
