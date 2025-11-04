@@ -149,18 +149,39 @@ async function handleMarkPaidManually(supabase: any, withdrawal: any, adminId: s
   }).catch((err: any) => console.error('Notification error:', err));
 
   // Send withdrawal processed email (non-blocking)
-  sendTemplateEmail({
-    templateType: 'transaction',
-    recipientEmail: withdrawal.profiles.email,
-    recipientUserId: withdrawal.user_id,
-    variables: {
-      username: withdrawal.profiles.username,
-      amount: withdrawal.net_amount,
-      transaction_id: withdrawal.id,
-      payout_address: withdrawal.payout_address,
-    },
-    supabaseClient: supabase,
-  }).catch((err) => console.warn('⚠️ Withdrawal email failed:', err));
+  try {
+    console.log('[WITHDRAWAL] 📧 Sending withdrawal processed email to:', withdrawal.profiles.email);
+    const emailResult = await sendTemplateEmail({
+      templateType: 'withdrawal_processed',
+      recipientEmail: withdrawal.profiles.email,
+      recipientUserId: withdrawal.user_id,
+      variables: {
+        username: withdrawal.profiles.username,
+        email: withdrawal.profiles.email,
+        amount: withdrawal.amount.toString(),
+        transaction_id: withdrawal.id,
+        new_balance: withdrawal.profiles.earnings_wallet_balance.toString(),
+        payment_method: withdrawal.payment_method,
+        payout_address: withdrawal.payout_address,
+        net_amount: withdrawal.net_amount.toString(),
+        fee: withdrawal.fee.toString(),
+        date: new Date().toLocaleString('en-US', { 
+          timeZone: 'UTC',
+          dateStyle: 'full',
+          timeStyle: 'long'
+        })
+      },
+      supabaseClient: supabase,
+    });
+    
+    if (emailResult.success) {
+      console.log('[WITHDRAWAL] ✅ Withdrawal processed email sent successfully. Message ID:', emailResult.messageId);
+    } else {
+      console.warn('[WITHDRAWAL] ⚠️ Withdrawal processed email failed:', emailResult.error);
+    }
+  } catch (emailError) {
+    console.warn('[WITHDRAWAL] ⚠️ Email sending failed (non-critical):', emailError);
+  }
 
   // Audit log
   await supabase
@@ -268,6 +289,41 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
         }
       }).catch((err: any) => console.error('Notification error:', err));
 
+      // Send withdrawal processed email (non-blocking)
+      try {
+        console.log('[WITHDRAWAL-API] 📧 Sending withdrawal processed email to:', withdrawal.profiles.email);
+        const emailResult = await sendTemplateEmail({
+          templateType: 'withdrawal_processed',
+          recipientEmail: withdrawal.profiles.email,
+          recipientUserId: withdrawal.user_id,
+          variables: {
+            username: withdrawal.profiles.username,
+            email: withdrawal.profiles.email,
+            amount: withdrawal.amount.toString(),
+            transaction_id: apiResponse.cpay_withdrawal_id,
+            new_balance: withdrawal.profiles.earnings_wallet_balance.toString(),
+            payment_method: withdrawal.payment_method,
+            payout_address: withdrawal.payout_address,
+            net_amount: withdrawal.net_amount.toString(),
+            fee: withdrawal.fee.toString(),
+            date: new Date().toLocaleString('en-US', { 
+              timeZone: 'UTC',
+              dateStyle: 'full',
+              timeStyle: 'long'
+            })
+          },
+          supabaseClient: supabase,
+        });
+        
+        if (emailResult.success) {
+          console.log('[WITHDRAWAL-API] ✅ Withdrawal processed email sent successfully. Message ID:', emailResult.messageId);
+        } else {
+          console.warn('[WITHDRAWAL-API] ⚠️ Withdrawal processed email failed:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.warn('[WITHDRAWAL-API] ⚠️ Email sending failed (non-critical):', emailError);
+      }
+
       // Audit log with immediate completion action
       await supabase
         .from('audit_logs')
@@ -334,6 +390,41 @@ async function handlePayViaAPI(supabase: any, withdrawal: any, adminId: string) 
         }
       }
     }).catch((err: any) => console.error('Notification error:', err));
+
+    // Send withdrawal processed email (non-blocking)
+    try {
+      console.log('[WITHDRAWAL-API] 📧 Sending withdrawal processed email to:', withdrawal.profiles.email);
+      const emailResult = await sendTemplateEmail({
+        templateType: 'withdrawal_processed',
+        recipientEmail: withdrawal.profiles.email,
+        recipientUserId: withdrawal.user_id,
+        variables: {
+          username: withdrawal.profiles.username,
+          email: withdrawal.profiles.email,
+          amount: withdrawal.amount.toString(),
+          transaction_id: apiResponse.transaction_hash,
+          new_balance: withdrawal.profiles.earnings_wallet_balance.toString(),
+          payment_method: withdrawal.payment_method,
+          payout_address: withdrawal.payout_address,
+          net_amount: withdrawal.net_amount.toString(),
+          fee: withdrawal.fee.toString(),
+          date: new Date().toLocaleString('en-US', { 
+            timeZone: 'UTC',
+            dateStyle: 'full',
+            timeStyle: 'long'
+          })
+        },
+        supabaseClient: supabase,
+      });
+      
+      if (emailResult.success) {
+        console.log('[WITHDRAWAL-API] ✅ Withdrawal processed email sent successfully. Message ID:', emailResult.messageId);
+      } else {
+        console.warn('[WITHDRAWAL-API] ⚠️ Withdrawal processed email failed:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.warn('[WITHDRAWAL-API] ⚠️ Email sending failed (non-critical):', emailError);
+    }
 
     // Audit log
     await supabase
