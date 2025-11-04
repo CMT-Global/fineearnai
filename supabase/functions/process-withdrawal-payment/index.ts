@@ -632,6 +632,42 @@ async function handleReject(supabase: any, withdrawal: any, adminId: string, rej
     // Continue - not critical
   });
 
+  // Send withdrawal rejected email (non-blocking)
+  try {
+    console.log('[REJECT] 📧 Sending withdrawal rejected email to:', withdrawal.profiles.email);
+    const emailResult = await sendTemplateEmail({
+      templateType: 'withdrawal_rejected',
+      recipientEmail: withdrawal.profiles.email,
+      recipientUserId: withdrawal.user_id,
+      variables: {
+        username: withdrawal.profiles.username,
+        email: withdrawal.profiles.email,
+        amount: withdrawal.amount.toString(),
+        transaction_id: withdrawal.id,
+        new_balance: newBalance.toString(),
+        payment_method: withdrawal.payment_method,
+        payout_address: withdrawal.payout_address,
+        rejection_reason: rejectionReason,
+        refund_amount: withdrawal.amount.toString(),
+        date: new Date().toLocaleString('en-US', { 
+          timeZone: 'UTC',
+          dateStyle: 'full',
+          timeStyle: 'long'
+        })
+      },
+      supabaseClient: supabase,
+    });
+    
+    if (emailResult.success) {
+      console.log('[REJECT] ✅ Withdrawal rejected email sent successfully. Message ID:', emailResult.messageId);
+    } else {
+      console.warn('[REJECT] ⚠️ Withdrawal rejected email failed:', emailResult.error);
+    }
+  } catch (emailError) {
+    console.warn('[REJECT] ⚠️ Email sending failed (non-critical):', emailError);
+    // Continue - email failure shouldn't fail the rejection
+  }
+
   // Create audit log with detailed refund info
   const { error: auditError } = await supabase
     .from('audit_logs')
