@@ -27,6 +27,8 @@ import {
 import { useState, useEffect } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminSidebarProps {
   profile: any;
@@ -55,6 +57,24 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(() => {
     const stored = localStorage.getItem("adminExpandedCategories");
     return stored ? JSON.parse(stored) : ["overview"];
+  });
+
+  // Fetch failed commission count for badge
+  const { data: failedCommissionCount } = useQuery({
+    queryKey: ['failed-commission-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('commission_audit_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'failed');
+      
+      if (error) {
+        console.error('Error fetching failed commission count:', error);
+        return 0;
+      }
+      return count || 0;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const navCategories: NavCategory[] = [
@@ -127,6 +147,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Activity,
       items: [
         { label: "Daily Reset Logs", path: "/admin/monitoring/daily-reset-logs" },
+        { label: "Commission Audit", path: "/admin/monitoring/commission-audit" },
       ],
     },
   ];
@@ -238,7 +259,13 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
                     }`}
                   >
                     {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {/* Show failed commission badge on Commission Audit menu item */}
+                    {item.path === "/admin/monitoring/commission-audit" && failedCommissionCount > 0 && (
+                      <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5 min-w-[20px]">
+                        {failedCommissionCount}
+                      </Badge>
+                    )}
                   </button>
                 ))}
               </CollapsibleContent>
