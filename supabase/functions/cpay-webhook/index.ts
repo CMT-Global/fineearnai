@@ -600,6 +600,58 @@ serve(async (req) => {
         console.log('[CPAY-WEBHOOK] ℹ️ No commission processed (user has no active referrer or commission rate is 0)');
       }
 
+      // PHASE 3: Commission Audit Logging
+      // Check if user has an active upline/referrer
+      const { data: referralData } = await supabase
+        .from('referrals')
+        .select('referrer_id, status')
+        .eq('referred_id', transaction.profiles.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const hasUpline = !!referralData?.referrer_id;
+      const referrerId = referralData?.referrer_id || null;
+
+      // Log commission outcome to audit table
+      const auditLogEntry = {
+        deposit_transaction_id: atomicResult.transaction_id,
+        referrer_id: referrerId,
+        referred_id: transaction.profiles.id,
+        commission_type: 'deposit',
+        status: atomicResult.commission_processed ? 'success' : 'failed',
+        commission_amount: atomicResult.commission_amount || 0,
+        error_details: atomicResult.commission_processed ? null : {
+          reason: 'Commission not processed by atomic function',
+          tracking_id: trackingId,
+          payment_id: payment_id,
+          has_upline: hasUpline,
+          username: transaction.profiles.username,
+          deposit_amount: actualAmount,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      const { error: auditLogError } = await supabase
+        .from('commission_audit_log')
+        .insert(auditLogEntry);
+      
+      if (auditLogError) {
+        console.warn('[CPAY-WEBHOOK] ⚠️ Failed to insert commission audit log (non-critical):', auditLogError);
+      } else {
+        console.log('[CPAY-WEBHOOK] ✓ Commission audit log created:', auditLogEntry.status);
+      }
+      
+      // CRITICAL ALERT: If commission failed but user has active upline
+      if (!atomicResult.commission_processed && hasUpline) {
+        console.error(
+          `🚨 COMMISSION FAILURE: User ${transaction.profiles.username} deposited $${actualAmount} ` +
+          `but commission NOT credited to upline (referrer_id: ${referrerId}). ` +
+          `TrackingId: ${trackingId}, PaymentId: ${payment_id}`
+        );
+      }
+
       // Update the original pending transaction to mark it as completed
       const { error: txUpdateError } = await supabase
         .from('transactions')
