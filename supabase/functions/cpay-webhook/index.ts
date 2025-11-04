@@ -658,6 +658,43 @@ serve(async (req) => {
         console.warn('[CPAY-WEBHOOK] ⚠️ Failed to send notification:', notifError);
         // Don't throw - notification failure shouldn't fail the webhook
       }
+      
+      // Send deposit confirmation email
+      try {
+        console.log('[CPAY-WEBHOOK] 📧 Sending deposit confirmation email to:', transaction.profiles.email);
+        const emailResult = await sendTemplateEmail({
+          templateType: 'deposit_confirmation',
+          recipientEmail: transaction.profiles.email,
+          recipientUserId: transaction.profiles.id,
+          variables: {
+            username: transaction.profiles.username,
+            email: transaction.profiles.email,
+            amount: actualAmount.toString(),
+            currency: currency,
+            transaction_id: atomicResult.transaction_id,
+            new_balance: newBalance.toString(),
+            payment_method: 'CPAY',
+            payment_id: payment_id || 'N/A',
+            tracking_id: trackingId || 'N/A',
+            commission_earned: atomicResult.commission_processed ? atomicResult.commission_amount.toString() : '0',
+            date: new Date().toLocaleString('en-US', { 
+              timeZone: 'UTC',
+              dateStyle: 'full',
+              timeStyle: 'long'
+            })
+          },
+          supabaseClient: supabase
+        });
+        
+        if (emailResult.success) {
+          console.log('[CPAY-WEBHOOK] ✅ Deposit confirmation email sent successfully. Message ID:', emailResult.messageId);
+        } else {
+          console.warn('[CPAY-WEBHOOK] ⚠️ Deposit confirmation email failed:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.warn('[CPAY-WEBHOOK] ⚠️ Email sending failed (non-critical):', emailError);
+        // Don't throw - email failure shouldn't fail the webhook
+      }
 
     } else if (status === 'failed') {
       // Update transaction as failed
