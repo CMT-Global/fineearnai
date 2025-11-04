@@ -452,7 +452,7 @@ export function PlanCard({
           {plan.name !== 'free' && '👑 '}
           {plan.display_name}
         </CardTitle>
-        <CardDescription className="space-y-1">
+        <div className="space-y-1 text-sm text-muted-foreground">
           <div className="flex items-baseline gap-1 flex-wrap mt-2">
             <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -469,7 +469,7 @@ export function PlanCard({
               Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
             </div>
           )}
-        </CardDescription>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1 pb-20 sm:pb-4">
