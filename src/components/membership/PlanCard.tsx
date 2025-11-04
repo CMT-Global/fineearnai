@@ -472,7 +472,7 @@ export function PlanCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 flex-1 pb-20 sm:pb-4">
+      <CardContent className="space-y-4 flex-1 pb-4">
         {/* Break Even Calculator with ROI Timeline for Paid Plans */}
         {breakEvenDays && plan.name !== 'free' && (
           <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 animate-fade-in">
@@ -615,7 +615,7 @@ export function PlanCard({
         )}
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-2 fixed sm:relative bottom-0 left-0 right-0 bg-card border-t sm:border-t-0 p-4 sm:p-6 z-20 shadow-lg sm:shadow-none">
+      <CardFooter className="flex flex-col gap-2 relative p-4 sm:p-6">
         {/* Upgrade CTA for Free Trial - Prominent Alert (Vertical) */}
         {plan.name === 'free' && (
           <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 w-full">
