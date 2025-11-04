@@ -382,12 +382,12 @@ export function PlanCard({
                   <AlertDescription className="text-xs text-center space-y-1">
                     <p>Insufficient balance</p>
                     <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="h-auto p-0 text-xs text-destructive-foreground underline touch-manipulation min-h-[32px]"
-                      onClick={() => navigate("/wallet")}
-                    >
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-destructive-foreground underline touch-manipulation min-h-[32px] active:opacity-70 [-webkit-tap-highlight-color:transparent]"
+                    onClick={() => navigate("/wallet")}
+                  >
                       Go to Wallet
                     </Button>
                   </AlertDescription>
@@ -395,10 +395,10 @@ export function PlanCard({
               )}
 
               <Button
-                className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation ${
+                className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation active:scale-95 [-webkit-tap-highlight-color:transparent] ${
                   isDowngrade 
-                    ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none' 
-                    : 'hover:scale-105 hover:shadow-xl'
+                    ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none active:scale-100' 
+                    : 'hover:scale-105 hover:shadow-xl active:shadow-lg'
                 }`}
                 onClick={() => !isDowngrade && onUpgradeClick(plan)}
                 disabled={
@@ -640,7 +640,7 @@ export function PlanCard({
               <Button
                 variant="link"
                 size="sm"
-                className="h-auto p-0 text-xs text-destructive-foreground underline touch-manipulation min-h-[32px]"
+                className="h-auto p-0 text-xs text-destructive-foreground underline touch-manipulation min-h-[32px] active:opacity-70 [-webkit-tap-highlight-color:transparent]"
                 onClick={() => navigate("/wallet")}
               >
                 Go to Wallet
@@ -650,10 +650,10 @@ export function PlanCard({
         )}
 
         <Button
-          className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation ${
+          className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation active:scale-95 [-webkit-tap-highlight-color:transparent] ${
             isDowngrade 
-              ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none' 
-              : 'hover:scale-105 hover:shadow-xl'
+              ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none active:scale-100' 
+              : 'hover:scale-105 hover:shadow-xl active:shadow-lg'
           }`}
           onClick={() => !isDowngrade && onUpgradeClick(plan)}
           disabled={
