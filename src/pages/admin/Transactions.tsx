@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { ArrowLeft, Download, Search, Filter, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
@@ -30,6 +38,14 @@ interface Transaction {
   };
 }
 
+// Helper function to calculate which page numbers to show in pagination
+const getPageNumber = (index: number, currentPage: number, totalPages: number): number => {
+  if (totalPages <= 5) return index + 1;
+  if (currentPage <= 3) return index + 1;
+  if (currentPage >= totalPages - 2) return totalPages - 4 + index;
+  return currentPage - 2 + index;
+};
+
 const Transactions = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -40,6 +56,10 @@ const Transactions = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [walletFilter, setWalletFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const limit = 50;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,13 +78,21 @@ const Transactions = () => {
     if (isAdmin) {
       loadTransactions();
     }
-  }, [isAdmin]);
+  }, [isAdmin, page]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [typeFilter, statusFilter, walletFilter, searchQuery]);
 
   const loadTransactions = async () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+
+      const { data, error, count } = await supabase
         .from("transactions")
         .select(`
           id,
@@ -80,13 +108,15 @@ const Transactions = () => {
             username,
             email
           )
-        `)
+        `, { count: 'exact' })
         .order("created_at", { ascending: false })
-        .limit(500);
+        .range(from, to);
 
       if (error) throw error;
 
       setTransactions(data || []);
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / limit));
     } catch (error: any) {
       console.error("Error loading transactions:", error);
       toast.error("Failed to load transactions");
@@ -312,6 +342,49 @@ const Transactions = () => {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-2 mt-4 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalCount)} of {totalCount} transactions
+                </div>
+                
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {/* Page numbers - show up to 5 pages */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum = getPageNumber(i, page, totalPages);
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            onClick={() => setPage(pageNum)}
+                            isActive={page === pageNum}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        className={page >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
