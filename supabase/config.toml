@@ -29,6 +29,9 @@ verify_jwt = false
 [functions.send-cpay-notification]
 verify_jwt = false
 
+[functions.send-referral-notification]
+verify_jwt = false
+
 [functions.send-test-email]
 verify_jwt = true
 
