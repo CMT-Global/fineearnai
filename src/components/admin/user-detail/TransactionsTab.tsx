@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,11 @@ export const TransactionsTab = ({ userId, userData, onChangeUpline }: Transactio
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const limit = 50;
+
+  // Auto-reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [typeFilter, statusFilter]);
 
   // Fetch transactions
   const { data: transactionsData, isLoading } = useQuery({
@@ -116,7 +121,14 @@ export const TransactionsTab = ({ userId, userData, onChangeUpline }: Transactio
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Transaction History</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>Transaction History</CardTitle>
+              {transactionsData && (
+                <Badge variant="secondary">
+                  {transactionsData.totalCount} total
+                </Badge>
+              )}
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -226,8 +238,13 @@ export const TransactionsTab = ({ userId, userData, onChangeUpline }: Transactio
             </p>
           )}
 
+          {/* Loading skeleton for pagination */}
+          {isLoading && (
+            <Skeleton className="h-10 w-full mt-4" />
+          )}
+
           {/* Pagination Controls */}
-          {transactionsData && transactionsData.totalPages > 1 && (
+          {!isLoading && transactionsData && transactionsData.totalPages > 1 && (
             <div className="flex items-center justify-between px-2 mt-4 pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, transactionsData.totalCount)} of {transactionsData.totalCount} transactions

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
@@ -197,7 +198,14 @@ const Transactions = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Transactions</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>All Transactions</CardTitle>
+              {totalCount > 0 && (
+                <Badge variant="secondary">
+                  {totalCount} total
+                </Badge>
+              )}
+            </div>
             <CardDescription>
               {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""} found
             </CardDescription>
@@ -343,8 +351,13 @@ const Transactions = () => {
               </Table>
             </div>
 
+            {/* Loading skeleton for pagination */}
+            {loading && (
+              <Skeleton className="h-10 w-full mt-4" />
+            )}
+
             {/* Pagination Controls */}
-            {totalPages > 1 && (
+            {!loading && totalPages > 1 && (
               <div className="flex items-center justify-between px-2 mt-4 pt-4 border-t">
                 <div className="text-sm text-muted-foreground">
                   Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalCount)} of {totalCount} transactions
