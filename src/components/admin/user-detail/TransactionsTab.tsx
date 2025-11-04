@@ -10,12 +10,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, Eye, UserCog } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { getTransactionTypeLabel } from "@/lib/wallet-utils";
 
 interface TransactionsTabProps {
   userId: string;
   userData?: any;
   onChangeUpline?: () => void;
 }
+
+// Helper function to determine if transaction is a credit (positive) or debit (negative)
+const isCredit = (type: string): boolean => {
+  return ['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type);
+};
 
 export const TransactionsTab = ({ userId, userData, onChangeUpline }: TransactionsTabProps) => {
   const navigate = useNavigate();
@@ -164,10 +170,10 @@ export const TransactionsTab = ({ userId, userData, onChangeUpline }: Transactio
                         {format(new Date(transaction.created_at), "PP p")}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{transaction.type}</Badge>
+                        <Badge variant="outline">{getTransactionTypeLabel(transaction.type)}</Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        ${(transaction.amount || 0).toFixed(2)}
+                      <TableCell className={`font-semibold ${isCredit(transaction.type) ? "text-green-600" : "text-red-600"}`}>
+                        {isCredit(transaction.type) ? "+" : "-"}${(transaction.amount || 0).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={transaction.wallet_type === 'deposit' ? 'default' : 'secondary'}>
