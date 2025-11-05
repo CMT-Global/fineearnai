@@ -647,8 +647,8 @@ const EmailTemplates = () => {
                     </div>
                     
                     {/* Right Side: Variable Sidebar */}
-                    <div className="w-80 bg-muted/30 p-4 overflow-y-auto">
-                      <div className="sticky top-0 bg-muted/30 pb-3 mb-3 border-b">
+                    <div className="w-80 bg-muted/30 flex flex-col overflow-hidden">
+                      <div className="flex-shrink-0 bg-muted/30 p-4 pb-3 border-b">
                         <h3 className="font-semibold text-sm flex items-center gap-2">
                           <Sparkles className="h-4 w-4" />
                           Available Variables
@@ -658,7 +658,7 @@ const EmailTemplates = () => {
                         </p>
                       </div>
                       
-                      <ScrollArea className="h-full">
+                      <ScrollArea className="flex-1 px-4">
                         <Accordion type="multiple" className="space-y-2">
                           {Object.entries(ALL_AVAILABLE_VARIABLES).map(([category, variables]) => (
                             <AccordionItem key={category} value={category}>
