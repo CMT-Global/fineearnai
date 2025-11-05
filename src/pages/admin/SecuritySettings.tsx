@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,7 +231,7 @@ export default function SecuritySettings() {
   };
 
   return (
-    <AdminLayout>
+    <div className="container mx-auto px-4 py-8">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Security Settings</h1>
@@ -771,6 +770,6 @@ export default function SecuritySettings() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 }
