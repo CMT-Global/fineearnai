@@ -46,6 +46,8 @@ interface RichTextEditorProps {
   disabled?: boolean;
   enableProfessionalTemplate?: boolean;
   templateTitle?: string;
+  initialWrapperState?: boolean; // Phase 3: Accept initial wrapper state
+  onWrapperStateChange?: (state: boolean) => void; // Phase 3: Notify parent of state changes
   onEditorReady?: (insertVariable: (variableName: string) => void) => void;
 }
 
@@ -94,9 +96,11 @@ export const RichTextEditor = ({
   disabled = false,
   enableProfessionalTemplate = true,
   templateTitle = 'FineEarn',
+  initialWrapperState = false, // Phase 3: Default to false
+  onWrapperStateChange, // Phase 3: Callback for state changes
   onEditorReady,
 }: RichTextEditorProps) => {
-  const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(false);
+  const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(initialWrapperState); // Phase 3: Initialize with passed value
   
   // Custom mark for highlighting variables
   const VariableMark = Mark.create({
@@ -202,6 +206,11 @@ export const RichTextEditor = ({
   const handleTemplateToggle = useCallback((checked: boolean) => {
     setUseProfessionalTemplate(checked);
     
+    // Phase 3: Notify parent of state change
+    if (onWrapperStateChange) {
+      onWrapperStateChange(checked);
+    }
+    
     if (editor) {
       const currentContent = editor.getHTML();
       
@@ -220,7 +229,7 @@ export const RichTextEditor = ({
         onChange(plainContent);
       }
     }
-  }, [editor, onChange, templateTitle]);
+  }, [editor, onChange, templateTitle, onWrapperStateChange]); // Phase 3: Add onWrapperStateChange to dependencies
 
   // Insert styled button
   const handleInsertButton = useCallback(() => {

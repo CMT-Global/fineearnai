@@ -174,6 +174,7 @@ const EmailTemplates = () => {
     template_type: "",
     variables: "",
     is_active: true,
+    use_wrapper_in_editor: false, // Phase 3: Track wrapper toggle state
   });
   
   // Ref to hold the insertVariable function from RichTextEditor
@@ -322,6 +323,7 @@ const EmailTemplates = () => {
         template_type: formData.template_type,
         variables,
         is_active: formData.is_active,
+        use_wrapper_in_editor: formData.use_wrapper_in_editor, // Phase 3: Save wrapper state
         created_by: user?.id,
       };
 
@@ -398,6 +400,7 @@ const EmailTemplates = () => {
       template_type: "",
       variables: "[]",
       is_active: true,
+      use_wrapper_in_editor: false, // Phase 3: Reset wrapper state
     });
   };
   
@@ -426,6 +429,7 @@ const EmailTemplates = () => {
       template_type: template.template_type,
       variables: JSON.stringify(template.variables || [], null, 2),
       is_active: template.is_active,
+      use_wrapper_in_editor: template.use_wrapper_in_editor || false, // Phase 3: Restore wrapper state
     });
     setDialogOpen(true);
   };
@@ -609,6 +613,8 @@ const EmailTemplates = () => {
                             maxLength={10000}
                             enableProfessionalTemplate={true}
                             templateTitle="FineEarn"
+                            initialWrapperState={formData.use_wrapper_in_editor} // Phase 3: Pass wrapper state
+                            onWrapperStateChange={(state) => setFormData({ ...formData, use_wrapper_in_editor: state })} // Phase 3: Handle wrapper changes
                             onEditorReady={handleEditorReady}
                           />
                           <Alert className="mt-3">
