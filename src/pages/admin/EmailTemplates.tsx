@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -175,6 +175,9 @@ const EmailTemplates = () => {
     is_active: true,
   });
   
+  // Ref to hold the insertVariable function from RichTextEditor
+  const insertVariableRef = useRef<((variableName: string) => void) | null>(null);
+  
   // Helper function to populate sample data in preview
   const populateSampleData = (content: string): string => {
     const sampleData: Record<string, string> = {
@@ -243,6 +246,19 @@ const EmailTemplates = () => {
     navigator.clipboard.writeText(formattedVariable);
     toast.success(`Copied ${formattedVariable} to clipboard!`);
   };
+
+  // Insert variable directly into editor
+  const insertVariableIntoEditor = useCallback((variableName: string) => {
+    if (insertVariableRef.current) {
+      insertVariableRef.current(variableName);
+      toast.success(`{{${variableName}}} added to editor`);
+    }
+  }, [toast]);
+
+  // Handle editor ready callback
+  const handleEditorReady = useCallback((insertFn: (variableName: string) => void) => {
+    insertVariableRef.current = insertFn;
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -591,6 +607,7 @@ const EmailTemplates = () => {
                             maxLength={10000}
                             enableProfessionalTemplate={true}
                             templateTitle="FineEarn"
+                            onEditorReady={handleEditorReady}
                           />
                           <Alert className="mt-3">
                             <Sparkles className="h-4 w-4" />
@@ -599,7 +616,7 @@ const EmailTemplates = () => {
                               <ul className="list-disc list-inside text-xs mt-2 space-y-1">
                                 <li>Toggle "Professional Template" above for beautiful email styling</li>
                                 <li>Use the ✨ button in toolbar to insert styled buttons</li>
-                                <li>Copy variables from the sidebar and paste them into your content</li>
+                                <li>Click variables to copy, or use + button to insert directly</li>
                               </ul>
                             </AlertDescription>
                           </Alert>
@@ -635,7 +652,7 @@ const EmailTemplates = () => {
                           Available Variables
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Click any variable to copy it
+                          Click to copy or use + to insert directly
                         </p>
                       </div>
                       
@@ -649,25 +666,36 @@ const EmailTemplates = () => {
                               <AccordionContent>
                                 <div className="space-y-1.5">
                                   {variables.map((variable) => (
-                                    <Button
-                                      key={variable.name}
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-full justify-start text-left h-auto py-2 px-3 hover:bg-accent"
-                                      onClick={() => copyVariableToClipboard(variable.name)}
-                                    >
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                          <code className="text-xs font-mono bg-primary/10 px-1.5 py-0.5 rounded">
-                                            {`{{${variable.name}}}`}
-                                          </code>
-                                          <Copy className="h-3 w-3 text-muted-foreground" />
+                                    <div key={variable.name} className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex-1 justify-start text-left h-auto py-2 px-3 hover:bg-accent"
+                                        onClick={() => copyVariableToClipboard(variable.name)}
+                                        title="Click to copy"
+                                      >
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <code className="text-xs font-mono bg-primary/10 px-1.5 py-0.5 rounded">
+                                              {`{{${variable.name}}}`}
+                                            </code>
+                                            <Copy className="h-3 w-3 text-muted-foreground" />
+                                          </div>
+                                          <p className="text-xs text-muted-foreground mt-0.5">
+                                            {variable.description}
+                                          </p>
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                          {variable.description}
-                                        </p>
-                                      </div>
-                                    </Button>
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8 flex-shrink-0"
+                                        onClick={() => insertVariableIntoEditor(variable.name)}
+                                        title="Insert into editor"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   ))}
                                 </div>
                               </AccordionContent>

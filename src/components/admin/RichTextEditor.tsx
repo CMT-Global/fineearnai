@@ -45,6 +45,7 @@ interface RichTextEditorProps {
   disabled?: boolean;
   enableProfessionalTemplate?: boolean;
   templateTitle?: string;
+  onEditorReady?: (insertVariable: (variableName: string) => void) => void;
 }
 
 interface ToolbarButtonProps {
@@ -92,6 +93,7 @@ export const RichTextEditor = ({
   disabled = false,
   enableProfessionalTemplate = true,
   templateTitle = 'FineEarn',
+  onEditorReady,
 }: RichTextEditorProps) => {
   const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(false);
   const editor = useEditor({
@@ -166,6 +168,20 @@ export const RichTextEditor = ({
     if (!editor) return;
     editor.chain().focus().clearNodes().unsetAllMarks().run();
   }, [editor]);
+
+  // Insert variable at cursor position
+  const insertVariable = useCallback((variableName: string) => {
+    if (!editor) return;
+    const formattedVariable = `{{${variableName}}}`;
+    editor.chain().focus().insertContent(formattedVariable + ' ').run();
+  }, [editor]);
+
+  // Expose insertVariable method to parent component
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(insertVariable);
+    }
+  }, [editor, onEditorReady, insertVariable]);
 
   // Handle professional template toggle
   const handleTemplateToggle = useCallback((checked: boolean) => {
