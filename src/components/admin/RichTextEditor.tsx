@@ -4,6 +4,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Mark } from '@tiptap/core';
 import { 
   Bold, 
   Italic, 
@@ -96,6 +97,19 @@ export const RichTextEditor = ({
   onEditorReady,
 }: RichTextEditorProps) => {
   const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(false);
+  
+  // Custom mark for highlighting variables
+  const VariableMark = Mark.create({
+    name: 'variable',
+    
+    parseHTML() {
+      return [{ tag: 'span.variable-token' }];
+    },
+    
+    renderHTML() {
+      return ['span', { class: 'variable-token' }, 0];
+    },
+  });
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -117,6 +131,7 @@ export const RichTextEditor = ({
       Placeholder.configure({
         placeholder,
       }),
+      VariableMark,
     ],
     content: value,
     editable: !disabled,
@@ -402,7 +417,7 @@ export const RichTextEditor = ({
         </div>
       </div>
 
-      {/* Editor Content - Enhanced Spacing & Focus States */}
+      {/* Editor Content - Enhanced Spacing & Focus States with Variable Highlighting */}
       <div className="relative">
         <EditorContent
           editor={editor}
@@ -412,6 +427,7 @@ export const RichTextEditor = ({
             "focus-within:bg-muted/5",
             "[&_.ProseMirror]:min-h-[320px] [&_.ProseMirror]:focus:outline-none",
             "[&_.ProseMirror]:leading-relaxed",
+            // Placeholder styles
             "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
             "[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground/60",
             "[&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left",
@@ -421,6 +437,64 @@ export const RichTextEditor = ({
             disabled && "opacity-50 cursor-not-allowed"
           )}
         />
+        
+        {/* Inline styles for variable highlighting */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Style for variable tokens when wrapped in span.variable-token */
+            .variable-token {
+              background: linear-gradient(135deg, hsl(48 96% 89%) 0%, hsl(48 96% 85%) 100%);
+              color: hsl(32 95% 30%);
+              padding: 0.125rem 0.375rem;
+              border-radius: 0.375rem;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: 0.875em;
+              font-weight: 600;
+              border: 1px solid hsl(48 96% 75%);
+              box-shadow: 0 1px 2px 0 hsl(48 96% 60% / 0.2);
+              white-space: nowrap;
+              transition: all 0.15s ease;
+            }
+            
+            .variable-token:hover {
+              background: linear-gradient(135deg, hsl(48 96% 85%) 0%, hsl(48 96% 80%) 100%);
+              border-color: hsl(48 96% 65%);
+              box-shadow: 0 2px 4px 0 hsl(48 96% 50% / 0.3);
+            }
+            
+            /* Dark mode support */
+            .dark .variable-token {
+              background: linear-gradient(135deg, hsl(48 50% 20%) 0%, hsl(48 50% 15%) 100%);
+              color: hsl(48 96% 85%);
+              border-color: hsl(48 50% 30%);
+              box-shadow: 0 1px 2px 0 hsl(48 50% 10% / 0.5);
+            }
+            
+            .dark .variable-token:hover {
+              background: linear-gradient(135deg, hsl(48 50% 25%) 0%, hsl(48 50% 20%) 100%);
+              border-color: hsl(48 50% 40%);
+              box-shadow: 0 2px 4px 0 hsl(48 50% 10% / 0.7);
+            }
+          `
+        }} />
+      </div>
+      
+      {/* Variable Pattern Guide - Shows below editor */}
+      <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-950/20 border-t border-amber-200/50 dark:border-amber-800/30">
+        <div className="flex items-start gap-2">
+          <div className="flex-shrink-0 mt-0.5">
+            <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
+              <span className="font-semibold">Tip:</span> Variables like{" "}
+              <code className="px-1.5 py-0.5 rounded-md text-xs font-mono bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
+                {`{{username}}`}
+              </code>{" "}
+              will be replaced with actual data when emails are sent. Use the sidebar to insert available variables.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Character Counter - Mobile Optimized */}
