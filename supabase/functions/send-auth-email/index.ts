@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -312,7 +313,9 @@ serve(async (req) => {
       htmlBody = fallback.body;
     }
     
-    // PHASE 4: Fetch dynamic email settings from platform_config
+    // ============================================
+    // FETCH DYNAMIC EMAIL SETTINGS (PHASE 4)
+    // ============================================
     console.log(`⚙️  [Auth Email Hook] Fetching dynamic email settings...`);
     const { data: configData } = await supabase
       .from('platform_config')
@@ -325,12 +328,37 @@ serve(async (req) => {
       from_name: 'FineEarn',
       reply_to_address: 'support@fineearn.com',
       reply_to_name: 'FineEarn Support',
+      platform_name: 'FineEarn',
     };
 
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`📧 [Auth Email Hook] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
     
-    // Send email via Resend
+    // ============================================
+    // APPLY PROFESSIONAL EMAIL WRAPPER (PHASE 3)
+    // ============================================
+    console.log(`🎨 [Auth Email Hook] Checking if email needs professional wrapper...`);
+    
+    const needsWrapper = !htmlBody.trim().toLowerCase().startsWith('<!doctype html');
+    
+    if (needsWrapper) {
+      console.log(`🎨 [Auth Email Hook] Template is HTML fragment - applying professional wrapper`);
+      
+      htmlBody = wrapInProfessionalTemplate(htmlBody, {
+        title: emailSettings.platform_name || 'FineEarn',
+        preheader: subject,
+        headerGradient: true,
+        includeFooter: true,
+      });
+      
+      console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);
+    } else {
+      console.log(`ℹ️  [Auth Email Hook] Template already has full HTML structure - skipping wrapper`);
+    }
+    
+    // ============================================
+    // SEND EMAIL VIA RESEND
+    // ============================================
     console.log(`📤 [Auth Email Hook] Sending email to ${user.email}`);
     
     try {
