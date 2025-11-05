@@ -135,7 +135,9 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, body, recipientType, plan, country, usernames }: BulkEmailRequest =
       await req.json();
 
-    console.log("Sending bulk email:", { subject, recipientType, plan, country });
+    // Generate unique batch ID for this bulk send operation
+    const batchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    console.log("Sending bulk email:", { subject, recipientType, plan, country, batchId });
 
     // Get recipients based on criteria
     let query = supabase.from("profiles").select("email, username, id, full_name");
@@ -225,7 +227,8 @@ const handler = async (req: Request): Promise<Response> => {
           metadata: { 
             resend_id: emailResponse.data?.id,
             variables_used: Object.keys(replacements),
-            email_type: 'bulk'
+            email_type: 'bulk',
+            batch_id: batchId
           },
         },
       ]);
@@ -244,6 +247,10 @@ const handler = async (req: Request): Promise<Response> => {
             status: "failed",
             error_message: error.message,
             sent_by: user.id,
+            metadata: {
+              email_type: 'bulk',
+              batch_id: batchId
+            },
           },
         ]);
 

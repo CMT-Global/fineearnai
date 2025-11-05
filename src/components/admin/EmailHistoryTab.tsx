@@ -30,6 +30,13 @@ interface EmailLog {
   sent_by: string;
 }
 
+interface BatchStats {
+  batch_id: string;
+  total: number;
+  successful: number;
+  failed: number;
+}
+
 interface EmailHistoryTabProps {
   emailType?: string; // For filtering specific email types (e.g., 'bulk', 'influencer_invite', 'user_invite')
 }
@@ -44,6 +51,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
   const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState<string | null>(null);
+  const [batchStats, setBatchStats] = useState<Record<string, BatchStats>>({});
   
   const ITEMS_PER_PAGE = 20;
 
@@ -85,6 +93,44 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
       setEmails(data || []);
       setTotalCount(count || 0);
+
+      // Load batch statistics for bulk emails
+      if (data && data.length > 0) {
+        const batchIds = [...new Set(
+          data
+            .filter(email => {
+              const metadata = email.metadata as any;
+              return metadata?.batch_id;
+            })
+            .map(email => (email.metadata as any).batch_id as string)
+        )];
+
+        if (batchIds.length > 0) {
+          const { data: allBatchEmails } = await supabase
+            .from("email_logs")
+            .select("status, metadata")
+            .in("metadata->>batch_id", batchIds);
+
+          if (allBatchEmails) {
+            const stats: Record<string, BatchStats> = {};
+            
+            batchIds.forEach(batchId => {
+              const batchEmails = allBatchEmails.filter(email => {
+                const metadata = email.metadata as any;
+                return metadata?.batch_id === batchId;
+              });
+              
+              const total = batchEmails.length;
+              const successful = batchEmails.filter(e => e.status === "sent").length;
+              const failed = batchEmails.filter(e => e.status === "failed").length;
+              
+              stats[batchId] = { batch_id: batchId, total, successful, failed };
+            });
+
+            setBatchStats(stats);
+          }
+        }
+      }
     } catch (error: any) {
       console.error("Error loading email history:", error);
       toast.error("Failed to load email history");
@@ -220,6 +266,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                   <TableHead>Recipient</TableHead>
                   <TableHead>Subject</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Success Rate</TableHead>
                   <TableHead>Resend ID</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -227,60 +274,75 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
               <TableBody>
                 {emails.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No emails found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  emails.map((email) => (
-                    <TableRow key={email.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {email.sent_at
-                          ? format(new Date(email.sent_at), "MMM dd, yyyy HH:mm")
-                          : "Not sent"}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {email.recipient_email}
-                      </TableCell>
-                      <TableCell className="max-w-[300px] truncate">
-                        {email.subject}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(email.status, email.metadata)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs max-w-[150px] truncate">
-                        {email.metadata?.resend_id || "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedEmail(email);
-                              setViewDialogOpen(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {email.metadata?.resend_id && email.status === "sent" && (
+                  emails.map((email) => {
+                    const metadata = email.metadata as any;
+                    const batchId = metadata?.batch_id;
+                    const stats = batchId ? batchStats[batchId] : null;
+                    
+                    return (
+                      <TableRow key={email.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {email.sent_at
+                            ? format(new Date(email.sent_at), "MMM dd, yyyy HH:mm")
+                            : "Not sent"}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {email.recipient_email}
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">
+                          {email.subject}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(email.status, email.metadata)}
+                        </TableCell>
+                        <TableCell>
+                          {stats ? (
+                            <Badge variant="outline" className="font-mono">
+                              {stats.successful}/{stats.total}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs max-w-[150px] truncate">
+                          {email.metadata?.resend_id || "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => checkDeliveryStatus(email.id)}
-                              disabled={checkingStatus === email.id}
+                              onClick={() => {
+                                setSelectedEmail(email);
+                                setViewDialogOpen(true);
+                              }}
                             >
-                              {checkingStatus === email.id ? (
-                                <LoadingSpinner size="sm" />
-                              ) : (
-                                <RefreshCw className="h-4 w-4" />
-                              )}
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {email.metadata?.resend_id && email.status === "sent" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => checkDeliveryStatus(email.id)}
+                                disabled={checkingStatus === email.id}
+                              >
+                                {checkingStatus === email.id ? (
+                                  <LoadingSpinner size="sm" />
+                                ) : (
+                                  <RefreshCw className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
