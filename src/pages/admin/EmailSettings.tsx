@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -200,23 +200,20 @@ export default function EmailSettings() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <AdminBreadcrumb
-          items={[
-            { label: "Communications" },
-            { label: "Email Settings" },
-          ]}
-        />
+    <div className="space-y-6">
+      <AdminBreadcrumb
+        items={[
+          { label: "Communications" },
+          { label: "Email Settings" },
+        ]}
+      />
 
         <div className="flex items-center justify-between">
           <div>
@@ -662,7 +659,6 @@ export default function EmailSettings() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }
