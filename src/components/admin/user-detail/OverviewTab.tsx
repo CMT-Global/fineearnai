@@ -6,12 +6,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock, Crown, XCircle, Clock, Sparkles } from "lucide-react";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock, Crown, XCircle, Clock, Sparkles, ShieldCheck } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { ManualEmailVerificationDialog } from "../dialogs/ManualEmailVerificationDialog";
 
 interface OverviewTabProps {
   userData: any;
@@ -40,6 +41,7 @@ export const OverviewTab = ({
   const [isTogglingBypass, setIsTogglingBypass] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [lastBypassUpdate, setLastBypassUpdate] = useState<{ admin: string; timestamp: string } | null>(null);
+  const [showEmailVerificationDialog, setShowEmailVerificationDialog] = useState(false);
   
   // PHASE 1 & 2: Local state for optimistic updates
   const [currentBypassValue, setCurrentBypassValue] = useState(false);
@@ -416,9 +418,9 @@ export const OverviewTab = ({
               <p className="text-sm text-muted-foreground">Username</p>
               <p className="font-medium">{profile.username}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <div className="flex items-center gap-2">
+            <div className="md:col-span-2">
+              <p className="text-sm text-muted-foreground mb-2">Email & Verification</p>
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-medium">{profile.email}</p>
                 {profile.email_verified === true ? (
                   <Badge variant="default" className="flex items-center gap-1">
@@ -436,16 +438,22 @@ export const OverviewTab = ({
                     Unknown
                   </Badge>
                 )}
+                {profile.email_verified_at && (
+                  <span className="text-xs text-muted-foreground">
+                    on {format(new Date(profile.email_verified_at), "PPp")}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant={profile.email_verified ? "outline" : "default"}
+                  onClick={() => setShowEmailVerificationDialog(true)}
+                  className="ml-auto"
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  {profile.email_verified ? "Unverify Email" : "Verify Email"}
+                </Button>
               </div>
             </div>
-            {profile.email_verified_at && (
-              <div>
-                <p className="text-sm text-muted-foreground">Email Verified At</p>
-                <p className="font-medium text-xs">
-                  {format(new Date(profile.email_verified_at), "PPpp")}
-                </p>
-              </div>
-            )}
             <div>
               <p className="text-sm text-muted-foreground">Full Name</p>
               <p className="font-medium">{profile.full_name || "-"}</p>
@@ -985,6 +993,35 @@ export const OverviewTab = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Email Verification Dialog */}
+      <ManualEmailVerificationDialog
+        open={showEmailVerificationDialog}
+        onOpenChange={setShowEmailVerificationDialog}
+        userId={profile.id}
+        username={profile.username}
+        currentStatus={profile.email_verified || false}
+        onSuccess={onUserUpdated}
+      />
+
+      {/* Confirmation Dialog for Disabling Bypass */}
+      <AlertDialog open={showDisableDialog} onOpenChange={setShowDisableDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disable VIP Withdrawal Bypass?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove {profile.username}'s ability to withdraw at any time. 
+              They will need to follow the standard payout schedule again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => performBypassToggle(false)}>
+              Confirm Disable
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
