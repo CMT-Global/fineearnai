@@ -267,6 +267,7 @@ export async function sendTemplateEmail(
       to: [recipientEmail],
       subject: populatedSubject,
       html: populatedBody,
+      reply_to: "support@fineearn.com",
     });
     const sendTime = Date.now() - sendStart;
 
