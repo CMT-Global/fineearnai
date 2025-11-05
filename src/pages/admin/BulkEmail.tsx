@@ -122,7 +122,7 @@ const BulkEmail = () => {
   };
 
   const handleTemplateSelect = (templateId: string) => {
-    if (!templateId) {
+    if (!templateId || templateId === "none") {
       setSelectedTemplate(null);
       setFormData({
         ...formData,
@@ -337,7 +337,7 @@ const BulkEmail = () => {
                       <SelectValue placeholder="Select a template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Template</SelectItem>
+                      <SelectItem value="none">No Template</SelectItem>
                       {templates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name} - {template.subject}
