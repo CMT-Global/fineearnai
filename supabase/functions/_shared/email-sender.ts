@@ -2,6 +2,71 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// ============================================
+// EMAIL SETTINGS CACHE (60-second TTL)
+// ============================================
+let emailSettingsCache: any = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 60000; // 1 minute cache
+
+/**
+ * Get email settings from platform_config with caching
+ * 
+ * PHASE 3 IMPLEMENTATION:
+ * - Fetches dynamic email settings from platform_config table
+ * - Implements 60-second in-memory cache to reduce database queries
+ * - Graceful fallback to hardcoded defaults if config not found
+ * - Performance optimized for high-volume email sending
+ * 
+ * @param supabaseClient - Supabase client instance
+ * @returns Email settings object
+ */
+async function getEmailSettings(supabaseClient: any) {
+  const now = Date.now();
+  
+  // Return cached settings if fresh (within TTL)
+  if (emailSettingsCache && (now - cacheTimestamp) < CACHE_TTL) {
+    console.log(`⚡ [Email Settings] Using cached settings (age: ${now - cacheTimestamp}ms)`);
+    return emailSettingsCache;
+  }
+  
+  console.log(`🔄 [Email Settings] Cache miss or expired, fetching from database...`);
+  
+  // Fetch from database
+  const { data, error } = await supabaseClient
+    .from('platform_config')
+    .select('value')
+    .eq('key', 'email_settings')
+    .maybeSingle();
+  
+  if (error || !data) {
+    console.warn(`⚠️  [Email Settings] Failed to load from database, using hardcoded defaults`);
+    if (error) {
+      console.warn(`⚠️  [Email Settings] Error:`, error.message);
+    }
+    
+    // Return hardcoded defaults as fallback
+    return {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+      reply_to_address: 'support@fineearn.com',
+      reply_to_name: 'FineEarn Support',
+      support_email: 'support@fineearn.com',
+      platform_name: 'FineEarn',
+      platform_url: 'https://fineearn.com',
+    };
+  }
+  
+  // Cache and return
+  emailSettingsCache = data.value;
+  cacheTimestamp = now;
+  console.log(`✅ [Email Settings] Settings loaded and cached successfully`);
+  console.log(`📧 [Email Settings] From: ${emailSettingsCache.from_name} <${emailSettingsCache.from_address}>`);
+  console.log(`📧 [Email Settings] Reply-To: ${emailSettingsCache.reply_to_name} <${emailSettingsCache.reply_to_address}>`);
+  
+  return emailSettingsCache;
+}
+
 /**
  * Template Type Mapping
  * Maps friendly template names to their actual database template_type values
@@ -256,18 +321,29 @@ export async function sendTemplateEmail(
     console.log(`✅ [Email Sender] Variable replacement complete: ${replacedVariables} variables replaced`);
 
     // ============================================
+    // FETCH DYNAMIC EMAIL SETTINGS (PHASE 3)
+    // ============================================
+    console.log(`⚙️  [Email Sender] Fetching dynamic email settings...`);
+    const settingsStart = Date.now();
+    const emailSettings = await getEmailSettings(supabaseClient);
+    const settingsTime = Date.now() - settingsStart;
+    console.log(`✅ [Email Sender] Email settings loaded in ${settingsTime}ms`);
+
+    // ============================================
     // SEND EMAIL VIA RESEND
     // ============================================
     console.log(`📤 [Email Sender] Sending email to: ${recipientEmail}`);
     console.log(`📤 [Email Sender] Subject: ${populatedSubject}`);
+    console.log(`📤 [Email Sender] From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+    console.log(`📤 [Email Sender] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
     
     const sendStart = Date.now();
     const emailResponse = await resend.emails.send({
-      from: "FineEarn <noreply@mail.fineearn.com>",
+      from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
       to: [recipientEmail],
       subject: populatedSubject,
       html: populatedBody,
-      reply_to: "support@fineearn.com",
+      reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
     });
     const sendTime = Date.now() - sendStart;
 
