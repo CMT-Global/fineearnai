@@ -13,13 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle, History } from "lucide-react";
+import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle, History, CheckCircle2, XCircle, Loader2, User, Mail, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { EmailHistoryTab } from "@/components/admin/EmailHistoryTab";
 import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
 import { countries, getCountryName } from "@/lib/countries";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface EmailTemplate {
   id: string;
@@ -61,6 +62,13 @@ const BulkEmail = () => {
   const [membershipPlans, setMembershipPlans] = useState<Array<{ name: string; display_name: string; account_type: string; count: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [usernameValidationState, setUsernameValidationState] = useState<{
+    status: 'idle' | 'checking' | 'valid' | 'invalid' | 'error';
+    user?: { username: string; email: string; membership_plan: string };
+    message?: string;
+  }>({ status: 'idle' });
+
+  const debouncedUsername = useDebounce(formData.usernames, 500);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -88,6 +96,68 @@ const BulkEmail = () => {
       calculateRecipientCount();
     }
   }, [formData.recipientType, formData.plan, formData.country, formData.usernames, formData.email, isAdmin]);
+
+  // Username validation
+  useEffect(() => {
+    if (!debouncedUsername.trim() || formData.recipientType !== 'usernames') {
+      setUsernameValidationState({ status: 'idle' });
+      return;
+    }
+
+    const validateUsername = async () => {
+      setUsernameValidationState({ status: 'checking' });
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, email, membership_plan, account_status')
+          .ilike('username', debouncedUsername.trim())
+          .maybeSingle();
+
+        if (error) {
+          setUsernameValidationState({ 
+            status: 'error', 
+            message: 'Failed to validate username. Please try again.' 
+          });
+          return;
+        }
+
+        if (!data) {
+          setUsernameValidationState({ 
+            status: 'invalid', 
+            message: 'Username not found. Please check and try again.' 
+          });
+          return;
+        }
+
+        if (data.account_status !== 'active') {
+          setUsernameValidationState({ 
+            status: 'invalid', 
+            message: `This user account is ${data.account_status}.` 
+          });
+          return;
+        }
+
+        // Valid user found
+        setUsernameValidationState({ 
+          status: 'valid', 
+          user: {
+            username: data.username,
+            email: data.email,
+            membership_plan: data.membership_plan
+          }
+        });
+
+      } catch (err) {
+        setUsernameValidationState({ 
+          status: 'error', 
+          message: 'An unexpected error occurred.' 
+        });
+      }
+    };
+
+    validateUsername();
+  }, [debouncedUsername, formData.recipientType]);
 
   const loadTemplates = async () => {
     try {
@@ -245,9 +315,15 @@ const BulkEmail = () => {
         return;
       }
 
-      if (formData.recipientType === "usernames" && !formData.usernames) {
-        toast.error("Please enter usernames");
-        return;
+      if (formData.recipientType === "usernames") {
+        if (!formData.usernames.trim()) {
+          toast.error("Please enter a username");
+          return;
+        }
+        if (usernameValidationState.status !== 'valid') {
+          toast.error("Please enter a valid username before sending");
+          return;
+        }
       }
 
       if (formData.recipientType === "email") {
@@ -533,17 +609,84 @@ const BulkEmail = () => {
                     </TabsContent>
 
                     <TabsContent value="usernames" className="mt-4">
-                      <Textarea
-                        value={formData.usernames}
-                        onChange={(e) =>
-                          setFormData({ ...formData, usernames: e.target.value })
-                        }
-                        placeholder="Enter usernames separated by commas"
-                        rows={3}
-                      />
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Example: user1, user2, user3
-                      </p>
+                      <div className="space-y-3">
+                        <Input
+                          value={formData.usernames}
+                          onChange={(e) =>
+                            setFormData({ ...formData, usernames: e.target.value })
+                          }
+                          placeholder="Enter username"
+                          className="w-full"
+                        />
+                        
+                        {/* Validation Feedback */}
+                        {usernameValidationState.status === 'checking' && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Checking username...</span>
+                          </div>
+                        )}
+
+                        {usernameValidationState.status === 'invalid' && (
+                          <Alert variant="destructive">
+                            <XCircle className="h-4 w-4" />
+                            <AlertDescription className="text-sm">
+                              {usernameValidationState.message}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {usernameValidationState.status === 'error' && (
+                          <Alert variant="destructive">
+                            <XCircle className="h-4 w-4" />
+                            <AlertDescription className="text-sm">
+                              {usernameValidationState.message}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {usernameValidationState.status === 'valid' && usernameValidationState.user && (
+                          <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
+                            <CardContent className="pt-4">
+                              <div className="flex items-start gap-3">
+                                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                                <div className="flex-1 space-y-2">
+                                  <div className="font-medium text-sm text-green-900 dark:text-green-100">
+                                    Valid user found
+                                  </div>
+                                  <div className="space-y-1.5 text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-3.5 w-3.5 text-green-700 dark:text-green-300" />
+                                      <span className="font-medium text-green-900 dark:text-green-100">
+                                        {usernameValidationState.user.username}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Mail className="h-3.5 w-3.5 text-green-700 dark:text-green-300" />
+                                      <span className="text-green-800 dark:text-green-200">
+                                        {usernameValidationState.user.email}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Shield className="h-3.5 w-3.5 text-green-700 dark:text-green-300" />
+                                      <Badge 
+                                        variant="outline" 
+                                        className="text-xs border-green-300 dark:border-green-700"
+                                      >
+                                        {usernameValidationState.user.membership_plan}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        <p className="text-sm text-muted-foreground">
+                          💡 Enter a single username (e.g., john_doe)
+                        </p>
+                      </div>
                     </TabsContent>
 
                     <TabsContent value="email" className="mt-4">
