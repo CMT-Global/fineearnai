@@ -43,27 +43,27 @@ Deno.serve(async (req) => {
     let hasMore = true;
 
     // ============================================
-    // PHASE 1: SEND PLAN EXPIRY REMINDERS (3 days before expiration)
+    // PHASE 1: SEND PLAN EXPIRY REMINDERS (Daily from 5 days before to 1 day before)
     // ============================================
-    console.log('=== Phase 1: Processing plan expiry reminders ===');
+    console.log('=== Phase 1: Processing plan expiry reminders (5-day window) ===');
     
-    // Calculate date 3 days from now
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-    threeDaysFromNow.setHours(23, 59, 59, 999); // End of day
+    // Calculate 5-day window
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+    fiveDaysFromNow.setHours(23, 59, 59, 999); // End of day
     
-    const twoDaysFromNow = new Date();
-    twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
-    twoDaysFromNow.setHours(0, 0, 0, 0); // Start of day
+    const oneDayFromNow = new Date();
+    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
+    oneDayFromNow.setHours(0, 0, 0, 0); // Start of day
     
-    console.log(`Looking for plans expiring between ${twoDaysFromNow.toISOString()} and ${threeDaysFromNow.toISOString()}`);
+    console.log(`Looking for plans expiring between ${oneDayFromNow.toISOString()} and ${fiveDaysFromNow.toISOString()}`);
 
-    // Get users whose plans expire in 3 days
+    // Get users whose plans expire in 1-5 days
     const { data: upcomingExpiryUsers, error: reminderQueryError } = await supabaseClient
       .from('profiles')
       .select('id, username, email, membership_plan, plan_expires_at')
-      .gte('plan_expires_at', twoDaysFromNow.toISOString())
-      .lte('plan_expires_at', threeDaysFromNow.toISOString())
+      .gte('plan_expires_at', oneDayFromNow.toISOString())
+      .lte('plan_expires_at', fiveDaysFromNow.toISOString())
       .neq('membership_plan', 'free')
       .not('plan_expires_at', 'is', null)
       .eq('account_status', 'active');
@@ -71,29 +71,36 @@ Deno.serve(async (req) => {
     if (reminderQueryError) {
       console.error('Error querying users for expiry reminders:', reminderQueryError);
     } else if (upcomingExpiryUsers && upcomingExpiryUsers.length > 0) {
-      console.log(`Found ${upcomingExpiryUsers.length} users with plans expiring in 3 days`);
+      console.log(`Found ${upcomingExpiryUsers.length} users with plans expiring in 1-5 days`);
 
       for (const user of upcomingExpiryUsers) {
         try {
-          // Check if we already sent a reminder for this expiry date
-          const { data: recentReminder } = await supabaseClient
+          // Check if we already sent a reminder TODAY for this user
+          const reminderCheckDate = new Date();
+          reminderCheckDate.setHours(0, 0, 0, 0);
+          const reminderCheckTomorrow = new Date(reminderCheckDate);
+          reminderCheckTomorrow.setDate(reminderCheckTomorrow.getDate() + 1);
+
+          const { data: todayReminder } = await supabaseClient
             .from('email_logs')
-            .select('id')
+            .select('id, sent_at')
             .eq('recipient_user_id', user.id)
-            .eq('subject', 'Your Plan is Expiring Soon')
-            .gte('sent_at', twoDaysFromNow.toISOString())
+            .contains('metadata', { template_type: 'plan_expiry_reminder' })
+            .gte('sent_at', reminderCheckDate.toISOString())
+            .lt('sent_at', reminderCheckTomorrow.toISOString())
             .limit(1)
             .maybeSingle();
 
-          if (recentReminder) {
-            console.log(`Reminder already sent to user ${user.id}, skipping`);
+          if (todayReminder) {
+            console.log(`Reminder already sent today to user ${user.id}, skipping`);
             reminderResults.push({
               userId: user.id,
               action: 'reminder_skipped',
-              reason: 'Reminder already sent recently'
+              reason: 'Reminder already sent today'
             });
             continue;
           }
+
 
           // Get plan details
           const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
@@ -102,11 +109,13 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          // Calculate days until expiry
           const expiryDate = new Date(user.plan_expires_at);
-          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          const currentDate = new Date();
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
 
           // Send expiry reminder email
-          console.log(`Sending expiry reminder to ${user.email} (${user.username})`);
+          console.log(`Sending expiry reminder to ${user.email} (${user.username}) - ${daysUntilExpiry} days until expiry`);
           
           const emailResult = await sendTemplateEmail({
             templateType: 'plan_expiry_reminder',
@@ -121,32 +130,33 @@ Deno.serve(async (req) => {
                 day: 'numeric' 
               }),
               days_until_expiry: daysUntilExpiry.toString(),
-              plan_price: membershipPlan.price.toString(),
+              plan_price: parseFloat(membershipPlan.price).toFixed(2),
               platform_url: Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://fineearn.com'
             },
             supabaseClient
           });
 
           if (emailResult.success) {
-            console.log(`✅ Expiry reminder sent to ${user.email}`);
+            console.log(`✅ Expiry reminder sent to ${user.email} - ${daysUntilExpiry} days remaining`);
             totalRemindersSent++;
             reminderResults.push({
               userId: user.id,
               action: 'reminder_sent',
-              reason: `Reminder sent for plan expiring in ${daysUntilExpiry} days`
+              reason: `Reminder sent for plan expiring in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`
             });
 
-            // Create in-app notification
+            // Create in-app notification with days remaining
             await supabaseClient.from('notifications').insert({
               user_id: user.id,
-              title: 'Plan Expiring Soon',
-              message: `Your ${membershipPlan.display_name} plan expires in ${daysUntilExpiry} days on ${expiryDate.toLocaleDateString()}. Renew now to avoid service interruption.`,
-              type: 'plan_expiry_warning',
+              type: 'membership',
+              title: `⏰ ${daysUntilExpiry} Day${daysUntilExpiry !== 1 ? 's' : ''} Until Plan Expires`,
+              message: `Your ${membershipPlan.display_name} plan expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''} on ${expiryDate.toLocaleDateString()}. Renew now to keep your premium benefits!`,
               priority: 'high',
               metadata: {
                 plan_name: user.membership_plan,
-                expires_at: user.plan_expires_at,
-                days_until_expiry: daysUntilExpiry
+                expiry_date: user.plan_expires_at,
+                days_until_expiry: daysUntilExpiry,
+                reminder_date: new Date().toISOString()
               }
             });
           } else {
@@ -168,7 +178,7 @@ Deno.serve(async (req) => {
         }
       }
     } else {
-      console.log('No users found with plans expiring in 3 days');
+      console.log('No users found with plans expiring in 1-5 days');
     }
 
     console.log('=== Phase 1 completed: Expiry reminders processed ===');
