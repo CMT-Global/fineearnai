@@ -154,13 +154,13 @@ serve(async (req: Request) => {
     // Generate reset link
     const resetLink = `${req.headers.get('origin') || 'https://fineearn.com'}/reset-password?token=${token}`;
 
-    // Send email using existing email system
+    // Send email using existing email template system
     console.log(`📧 [${requestId}] Sending password reset email to: ${email}`);
 
     const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
       body: {
         email: email,
-        emailType: 'custom_password_reset',
+        emailType: 'auth_password_reset', // Use existing template
         data: {
           username: username,
           reset_link: resetLink,
