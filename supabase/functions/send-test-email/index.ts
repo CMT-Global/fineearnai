@@ -185,6 +185,7 @@ serve(async (req) => {
       to: [test_email],
       subject: `[TEST] ${personalizedSubject}`,
       html: personalizedBody,
+      reply_to: 'support@fineearn.com',
     };
     
     console.log('[PHASE 2] Sending email via Resend API...');
