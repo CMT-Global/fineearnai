@@ -1,3 +1,22 @@
+/**
+ * CPAY Notification Service
+ * 
+ * PURPOSE: Creates in-app notifications for CPAY transaction events
+ * 
+ * NOTE: This function does NOT send emails. Email notifications are handled
+ * by the cpay-webhook function using professional email templates from the
+ * email_templates table with proper branding and wrapper.
+ * 
+ * EVENTS SUPPORTED:
+ * - deposit_success / deposit_failed
+ * - withdrawal_approved / withdrawal_rejected / withdrawal_completed
+ * 
+ * FUNCTIONALITY:
+ * - Creates in-app notifications visible in user dashboard
+ * - Stores transaction metadata for user reference
+ * - Does NOT duplicate email sending (prevents double emails)
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -26,7 +45,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { user_id, type, data }: NotificationRequest = await req.json();
@@ -96,47 +114,18 @@ serve(async (req) => {
 
     if (notificationError) {
       console.error('Failed to create notification:', notificationError);
+    } else {
+      console.log('✅ In-app notification created successfully:', {
+        user_id,
+        type,
+        title,
+        notification_type: type
+      });
     }
 
-    // Send email notification if Resend is configured
-    if (resendApiKey && profile.email) {
-      try {
-        const emailResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'FineEarn <notifications@fineearn.com>',
-            to: profile.email,
-            subject: title,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #333;">${title}</h2>
-                <p style="color: #666; line-height: 1.6;">${message}</p>
-                <div style="margin-top: 30px; padding: 20px; background-color: #f5f5f5; border-radius: 8px;">
-                  <h3 style="color: #333; margin-top: 0;">Transaction Details</h3>
-                  ${data.amount ? `<p><strong>Amount:</strong> ${data.amount} ${data.currency || 'USDT'}</p>` : ''}
-                  ${data.transaction_id ? `<p><strong>Transaction ID:</strong> ${data.transaction_id}</p>` : ''}
-                  ${data.payout_address ? `<p><strong>Address:</strong> ${data.payout_address}</p>` : ''}
-                </div>
-                <p style="margin-top: 30px; color: #999; font-size: 12px;">
-                  This is an automated notification from FineEarn. Please do not reply to this email.
-                </p>
-              </div>
-            `,
-          }),
-        });
-
-        if (!emailResponse.ok) {
-          const errorData = await emailResponse.json();
-          console.error('Failed to send email:', errorData);
-        }
-      } catch (emailError) {
-        console.error('Email sending error:', emailError);
-      }
-    }
+    // NOTE: Email notifications are sent by cpay-webhook function using 
+    // professional templates. This function only creates in-app notifications
+    // to avoid duplicate emails.
 
     return new Response(
       JSON.stringify({ success: true, message: 'Notification sent' }),
