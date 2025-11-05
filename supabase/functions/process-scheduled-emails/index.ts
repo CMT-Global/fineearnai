@@ -56,6 +56,24 @@ const handler = async (req: Request): Promise<Response> => {
     let processedCount = 0;
     let failedCount = 0;
 
+    // PHASE 4 CRITICAL FIX: Fetch dynamic email settings ONCE before loop
+    console.log(`⚙️  [Scheduled Emails] Fetching dynamic email settings...`);
+    const { data: configData } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+
+    const emailSettings = configData?.value || {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+      reply_to_address: 'support@fineearn.com',
+    };
+
+    console.log(`✅ [Scheduled Emails] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+    console.log(`✅ [Scheduled Emails] Reply-To: ${emailSettings.reply_to_address}`);
+    console.log(`🔧 [Scheduled Emails] CRITICAL FIX: Replaced onboarding@resend.dev with verified domain`);
+
     // Process each scheduled email
     for (const scheduledEmail of scheduledEmails) {
       try {
@@ -129,11 +147,11 @@ const handler = async (req: Request): Promise<Response> => {
 
             // Send email
             const emailResponse = await resend.emails.send({
-              from: "FineEarn <onboarding@resend.dev>",
+              from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
               to: [recipient.email!],
               subject: personalizedSubject,
               html: personalizedBody,
-              reply_to: "support@fineearn.com",
+              reply_to: emailSettings.reply_to_address,
             });
 
             // Log successful send

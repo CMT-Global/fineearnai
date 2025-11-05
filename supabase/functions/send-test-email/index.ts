@@ -179,13 +179,30 @@ serve(async (req) => {
       );
     }
 
-    // PHASE 2: Prepare email payload with verified Resend domain
+    // PHASE 4: Fetch dynamic email settings from platform_config
+    console.log(`⚙️  [Test Email] Fetching dynamic email settings...`);
+    const { data: configData } = await supabaseClient
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+
+    const emailSettings = configData?.value || {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+      reply_to_address: 'support@fineearn.com',
+    };
+
+    console.log(`✅ [Test Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+    console.log(`✅ [Test Email] Reply-To: ${emailSettings.reply_to_address}`);
+
+    // PHASE 2: Prepare email payload with dynamic settings
     const emailPayload = {
-      from: 'FineEarn <noreply@mail.fineearn.com>', // Using verified domain mail.fineearn.com
+      from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
       to: [test_email],
       subject: `[TEST] ${personalizedSubject}`,
       html: personalizedBody,
-      reply_to: 'support@fineearn.com',
+      reply_to: emailSettings.reply_to_address,
     };
     
     console.log('[PHASE 2] Sending email via Resend API...');

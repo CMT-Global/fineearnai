@@ -312,16 +312,34 @@ serve(async (req) => {
       htmlBody = fallback.body;
     }
     
+    // PHASE 4: Fetch dynamic email settings from platform_config
+    console.log(`⚙️  [Auth Email Hook] Fetching dynamic email settings...`);
+    const { data: configData } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+
+    const emailSettings = configData?.value || {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+      reply_to_address: 'support@fineearn.com',
+      reply_to_name: 'FineEarn Support',
+    };
+
+    console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+    console.log(`📧 [Auth Email Hook] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
+    
     // Send email via Resend
     console.log(`📤 [Auth Email Hook] Sending email to ${user.email}`);
     
     try {
       const emailResponse = await resend.emails.send({
-        from: "FineEarn <noreply@mail.fineearn.com>",
+        from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
         to: [user.email],
         subject: subject,
         html: htmlBody,
-        reply_to: "support@fineearn.com",
+        reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
       });
       
       console.log(`✅ [Auth Email Hook] Email sent successfully. Resend ID: ${emailResponse.data?.id}`);
