@@ -91,7 +91,7 @@ export default function EmailSettings() {
           value: newSettings,
           description: 'Email sending configuration for the platform',
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'key' });
 
       if (error) throw error;
     },
