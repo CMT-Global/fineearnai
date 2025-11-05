@@ -2,6 +2,36 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+/**
+ * Template Type Mapping
+ * Maps friendly template names to their actual database template_type values
+ */
+const TEMPLATE_TYPE_MAP: Record<string, string> = {
+  // Transaction emails
+  'deposit_confirmation': 'transaction',
+  'withdrawal_processed': 'transaction',
+  'withdrawal_rejected': 'transaction',
+  
+  // Referral emails
+  'new_referral_signup': 'referral',
+  'referral_milestone': 'referral',
+  
+  // Membership emails
+  'plan_upgrade': 'membership',
+  'plan_expiry_reminder': 'membership',
+  'plan_expired': 'membership',
+  
+  // User onboarding
+  'welcome': 'user_onboarding',
+  
+  // Auth emails (handled by auth hook)
+  'auth_magic_link': 'auth_magic_link',
+  'auth_email_confirmation': 'auth_email_confirmation',
+  'auth_password_reset': 'auth_password_reset',
+  'auth_email_change': 'auth_email_change',
+  'default_email_change': 'auth_email_change',
+};
+
 interface SendTemplateEmailParams {
   templateType: string;
   recipientEmail: string;
@@ -34,23 +64,74 @@ export async function sendTemplateEmail(
   try {
     console.log(`📧 [Email Sender] Fetching template: ${templateType}`);
 
-    // Fetch active template from database
-    const { data: template, error: templateError } = await supabaseClient
-      .from("email_templates")
-      .select("*")
-      .eq("template_type", templateType)
-      .eq("is_active", true)
-      .single();
+    // Map template type using the mapping (e.g., 'deposit_confirmation' -> 'transaction')
+    const mappedTemplateType = TEMPLATE_TYPE_MAP[templateType] || templateType;
+    console.log(`🔍 [Email Sender] Template mapping: "${templateType}" -> "${mappedTemplateType}"`);
 
-    if (templateError || !template) {
-      console.error(`❌ [Email Sender] Template not found: ${templateType}`, templateError);
+    let template = null;
+    let templateError = null;
+
+    // Strategy 1: Try by mapped template_type
+    if (mappedTemplateType) {
+      console.log(`🔍 [Email Sender] Attempting to fetch by template_type: ${mappedTemplateType}`);
+      const result = await supabaseClient
+        .from("email_templates")
+        .select("*")
+        .eq("template_type", mappedTemplateType)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      template = result.data;
+      templateError = result.error;
+      
+      if (template) {
+        console.log(`✅ [Email Sender] Template found via template_type mapping: ${template.name}`);
+      }
+    }
+
+    // Strategy 2: Fallback - try by name (for backward compatibility)
+    if (!template && templateType !== mappedTemplateType) {
+      console.log(`🔍 [Email Sender] Fallback: Attempting to fetch by name: ${templateType}`);
+      const result = await supabaseClient
+        .from("email_templates")
+        .select("*")
+        .eq("name", templateType)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      template = result.data;
+      
+      if (template) {
+        console.log(`✅ [Email Sender] Template found via name fallback: ${template.name}`);
+      }
+    }
+
+    // Strategy 3: Final fallback - try original value as template_type
+    if (!template && templateType !== mappedTemplateType) {
+      console.log(`🔍 [Email Sender] Final fallback: Attempting to fetch by original template_type: ${templateType}`);
+      const result = await supabaseClient
+        .from("email_templates")
+        .select("*")
+        .eq("template_type", templateType)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      template = result.data;
+      
+      if (template) {
+        console.log(`✅ [Email Sender] Template found via original template_type: ${template.name}`);
+      }
+    }
+
+    if (!template) {
+      console.error(`❌ [Email Sender] Template not found after all strategies: ${templateType}`, templateError);
       return {
         success: false,
         error: `Template not found: ${templateType}`,
       };
     }
 
-    console.log(`✅ [Email Sender] Template found: ${template.name}`);
+    console.log(`✅ [Email Sender] Final template selected: ${template.name} (type: ${template.template_type})`);
 
     // Replace variables in subject and body
     let populatedSubject = template.subject;
