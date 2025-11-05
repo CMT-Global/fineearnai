@@ -22,6 +22,7 @@ export interface UserFilters {
   statusFilter?: string;
   countryFilter?: string;
   roleFilter?: string;
+  emailVerifiedFilter?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }
@@ -41,6 +42,8 @@ export const useUserManagement = () => {
             id,
             username,
             email,
+            email_verified,
+            email_verified_at,
             full_name,
             country,
             phone,
@@ -100,6 +103,15 @@ export const useUserManagement = () => {
               totalCount: 0,
               totalPages: 0
             };
+          }
+        }
+
+        // Apply email verification filter
+        if (filters.emailVerifiedFilter && filters.emailVerifiedFilter !== 'all') {
+          if (filters.emailVerifiedFilter === 'verified') {
+            query = query.eq('email_verified', true);
+          } else if (filters.emailVerifiedFilter === 'unverified') {
+            query = query.eq('email_verified', false);
           }
         }
 

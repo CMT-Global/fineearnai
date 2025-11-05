@@ -15,7 +15,7 @@ import { UserManagementStats } from "@/components/admin/UserManagementStats";
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar";
 import { BulkUpdatePlanDialog } from "@/components/admin/dialogs/BulkUpdatePlanDialog";
 import { BulkSuspendDialog } from "@/components/admin/dialogs/BulkSuspendDialog";
-import { Search, Eye, Download, RefreshCw, ArrowUpDown, Crown, Shield } from "lucide-react";
+import { Search, Eye, Download, RefreshCw, ArrowUpDown, Crown, Shield, Mail, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -29,6 +29,7 @@ function UsersContent() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [emailVerifiedFilter, setEmailVerifiedFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,6 +53,7 @@ function UsersContent() {
     statusFilter,
     countryFilter,
     roleFilter,
+    emailVerifiedFilter,
     sortBy,
     sortOrder,
   };
@@ -245,6 +247,19 @@ function UsersContent() {
                   <SelectItem value="user">User Only</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={emailVerifiedFilter} onValueChange={(value) => {
+                setEmailVerifiedFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Email Verification" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Users</SelectItem>
+                  <SelectItem value="verified">Verified Only</SelectItem>
+                  <SelectItem value="unverified">Unverified Only</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 size="sm"
@@ -331,7 +346,21 @@ function UsersContent() {
                             />
                           </TableCell>
                           <TableCell className="font-medium">{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">{user.email}</span>
+                              {user.email_verified === true && (
+                                <div title="Email Verified">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                </div>
+                              )}
+                              {user.email_verified === false && (
+                                <div title="Email Not Verified">
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant="outline">{user.membership_plan}</Badge>
                           </TableCell>

@@ -418,8 +418,34 @@ export const OverviewTab = ({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{profile.email}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{profile.email}</p>
+                {profile.email_verified === true ? (
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                ) : profile.email_verified === false ? (
+                  <Badge variant="destructive" className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Not Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Unknown
+                  </Badge>
+                )}
+              </div>
             </div>
+            {profile.email_verified_at && (
+              <div>
+                <p className="text-sm text-muted-foreground">Email Verified At</p>
+                <p className="font-medium text-xs">
+                  {format(new Date(profile.email_verified_at), "PPpp")}
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Full Name</p>
               <p className="font-medium">{profile.full_name || "-"}</p>
