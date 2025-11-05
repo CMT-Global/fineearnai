@@ -397,7 +397,7 @@ export default function SecuritySettings() {
                 <div className="flex items-center gap-3 pt-2">
                   <Button
                     onClick={handleSaveBanner}
-                    disabled={!bannerEnabled || isLoadingBanner || saveBannerMutation.isPending}
+                    disabled={isLoadingBanner || saveBannerMutation.isPending}
                     className="flex-1"
                   >
                     <Save className="h-4 w-4 mr-2" />
@@ -406,7 +406,7 @@ export default function SecuritySettings() {
                   <Button
                     variant="outline"
                     onClick={handleResetBanner}
-                    disabled={!bannerEnabled || isLoadingBanner || saveBannerMutation.isPending}
+                    disabled={isLoadingBanner || saveBannerMutation.isPending}
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset
