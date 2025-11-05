@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { RefreshCw, Search, CheckCircle2, XCircle, Clock, Eye, Mail, Send, Loader2 } from "lucide-react";
+import { RefreshCw, Search, CheckCircle2, XCircle, Clock, Eye, Mail, Send, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -256,6 +256,65 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       toast.error(error.message || "Failed to check delivery status");
     } finally {
       setCheckingStatus(null);
+    }
+  };
+
+  const handleCancelJob = async (jobId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bulk_email_jobs')
+        .update({ 
+          status: 'cancelled',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', jobId)
+        .in('status', ['queued', 'processing']);
+
+      if (error) throw error;
+      toast.success('Job cancelled successfully');
+      loadBulkEmailJobs();
+    } catch (error: any) {
+      console.error('Error cancelling job:', error);
+      toast.error('Failed to cancel job: ' + error.message);
+    }
+  };
+
+  const handleRetryJob = async (jobId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bulk_email_jobs')
+        .update({ 
+          status: 'queued',
+          error_message: null,
+          processed_count: 0,
+          successful_count: 0,
+          failed_count: 0,
+          started_at: null,
+          completed_at: null,
+          last_processed_at: null
+        })
+        .eq('id', jobId);
+
+      if (error) throw error;
+      toast.success('Job queued for retry');
+      loadBulkEmailJobs();
+    } catch (error: any) {
+      console.error('Error retrying job:', error);
+      toast.error('Failed to retry job: ' + error.message);
+    }
+  };
+
+  const handleManualTrigger = async () => {
+    try {
+      toast.info('Triggering queue processing...');
+      const { data, error } = await supabase.functions.invoke('process-bulk-email-queue');
+      
+      if (error) throw error;
+      toast.success('Queue processing triggered manually');
+      setTimeout(() => loadBulkEmailJobs(), 2000); // Reload after 2 seconds
+    } catch (error: any) {
+      console.error('Error triggering queue:', error);
+      toast.error('Failed to trigger queue: ' + error.message);
     }
   };
 
@@ -581,6 +640,19 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
         {/* Queue Tab */}
         <TabsContent value="queue" className="space-y-6">
+          {queuedJobs.length > 0 && (
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleManualTrigger}
+                variant="default"
+                size="sm"
+                className="gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Process Queue Now
+              </Button>
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Queued Jobs</CardTitle>
@@ -624,6 +696,15 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                               </div>
                             </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCancelJob(job.id)}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -636,6 +717,19 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
         {/* Processing Tab */}
         <TabsContent value="processing" className="space-y-6">
+          {processingJobs.length > 0 && (
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleManualTrigger}
+                variant="default"
+                size="sm"
+                className="gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Process Queue Now
+              </Button>
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Processing Jobs</CardTitle>
@@ -675,6 +769,15 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                 </div>
                                 <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
                               </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCancelJob(job.id)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Cancel
+                              </Button>
                             </div>
 
                             {/* Progress Bar */}
@@ -765,6 +868,17 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                 </div>
                                 <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
                               </div>
+                              {job.status === 'failed' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRetryJob(job.id)}
+                                  className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                                >
+                                  <RefreshCw className="h-4 w-4 mr-1" />
+                                  Retry
+                                </Button>
+                              )}
                             </div>
 
                             {/* Stats Grid */}
