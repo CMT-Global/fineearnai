@@ -20,7 +20,7 @@ export const USDCFeeSavingsBanner = ({
         "text-xs sm:text-sm text-amber-700 dark:text-amber-300",
         className
       )}>
-        💡 Tip: Use <strong>USDC (Solana)</strong> for lowest fees
+        💡 Tip: Use <strong>USDC (Solana)</strong> or <strong>USDT - BEP20 (BSC Network)</strong> for lowest fees
       </div>
     );
   }
@@ -36,9 +36,14 @@ export const USDCFeeSavingsBanner = ({
         <AlertTitle className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-100 leading-tight">
           💡 Save on Fees!
         </AlertTitle>
-        <AlertDescription className="text-[11px] sm:text-xs leading-relaxed text-amber-800 dark:text-amber-200">
-          Use <strong>USDC (Solana network)</strong> — especially for <strong>GCash/GCrypto</strong> users. 
-          Enjoy ultra-low fees and faster confirmations. All other supported coins still work normally.
+        <AlertDescription className="text-[11px] sm:text-xs leading-relaxed text-amber-800 dark:text-amber-200 space-y-1">
+          <p>
+            Use <strong>USDC (Solana network)</strong> or <strong>USDT - BEP20 (BSC Network)</strong> — especially for <strong>GCash/GCrypto</strong> users. 
+            Enjoy ultra-low fees and faster confirmations.
+          </p>
+          <p className="text-[10px] sm:text-xs font-bold text-amber-900 dark:text-amber-100">
+            WE SUPPORT ALL OTHER COINS, YOU CAN CHOOSE ANY COIN.
+          </p>
         </AlertDescription>
       </Alert>
     );
@@ -63,13 +68,13 @@ export const USDCFeeSavingsBanner = ({
       </div>
       <AlertDescription className="text-xs sm:text-sm md:text-base text-amber-800 dark:text-amber-200 space-y-1 sm:space-y-2 leading-relaxed">
         <p>
-          For the best experience, deposit using <strong className="text-amber-900 dark:text-amber-100">USDC (Solana network)</strong> — especially for <strong className="text-amber-900 dark:text-amber-100">GCash/GCrypto</strong> users.
+          For the best experience, deposit using <strong className="text-amber-900 dark:text-amber-100">USDC (Solana network)</strong> or <strong className="text-amber-900 dark:text-amber-100">USDT - BEP20 (BSC Network)</strong> — especially for <strong className="text-amber-900 dark:text-amber-100">GCash/GCrypto</strong> users.
         </p>
         <p>
           You'll enjoy <strong>ultra-low fees</strong> and <strong>faster confirmations</strong>.
         </p>
-        <p className="text-[11px] sm:text-xs text-amber-700 dark:text-amber-300 mt-1">
-          All other supported coins still work normally.
+        <p className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-100 mt-2">
+          WE SUPPORT ALL OTHER COINS, YOU CAN CHOOSE ANY COIN.
         </p>
       </AlertDescription>
     </Alert>
