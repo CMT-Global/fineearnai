@@ -30,6 +30,7 @@ interface EmailTemplate {
   template_type: string;
   variables: string[];
   is_active: boolean;
+  use_wrapper_in_editor?: boolean; // Phase 2: Track if template has wrapper baked in
 }
 
 // Complete platform template types with descriptions and available variables

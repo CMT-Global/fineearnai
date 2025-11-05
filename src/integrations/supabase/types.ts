@@ -324,6 +324,7 @@ export type Database = {
           subject: string
           template_type: string
           updated_at: string
+          use_wrapper_in_editor: boolean | null
           variables: Json | null
         }
         Insert: {
@@ -336,6 +337,7 @@ export type Database = {
           subject: string
           template_type: string
           updated_at?: string
+          use_wrapper_in_editor?: boolean | null
           variables?: Json | null
         }
         Update: {
@@ -348,6 +350,7 @@ export type Database = {
           subject?: string
           template_type?: string
           updated_at?: string
+          use_wrapper_in_editor?: boolean | null
           variables?: Json | null
         }
         Relationships: []
