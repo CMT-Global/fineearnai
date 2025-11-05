@@ -26,13 +26,13 @@ const activeCommunities: TelegramCommunity[] = [
   },
   {
     name: "European Community",
-    url: "https://t.me/+aR3MpPi4JoFiMzI0",
+    url: "https://t.me/FINEEARNGROUP",
     flag: "🇪🇺",
     gradient: "from-blue-600 to-yellow-400"
   },
   {
     name: "Marketing Material (Global)",
-    url: "https://t.me/+o0BwNuuxUgU4YmI0",
+    url: "https://t.me/fineearn",
     flag: "📢",
     gradient: "from-purple-500 to-pink-500"
   }
