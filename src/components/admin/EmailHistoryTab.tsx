@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { RefreshCw, Search, CheckCircle2, XCircle, Clock, Eye } from "lucide-react";
+import { RefreshCw, Search, CheckCircle2, XCircle, Clock, Eye, Mail, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -37,6 +39,27 @@ interface BatchStats {
   failed: number;
 }
 
+interface BulkEmailJob {
+  id: string;
+  batch_id: string;
+  subject: string;
+  body: string;
+  recipient_filter: any;
+  total_recipients: number;
+  processed_count: number;
+  successful_count: number;
+  failed_count: number;
+  status: string;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  last_processed_at: string | null;
+  estimated_completion_at: string | null;
+  error_message: string | null;
+  created_by: string | null;
+  processing_metadata: any;
+}
+
 interface EmailHistoryTabProps {
   emailType?: string; // For filtering specific email types (e.g., 'bulk', 'influencer_invite', 'user_invite')
 }
@@ -53,11 +76,42 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
   const [checkingStatus, setCheckingStatus] = useState<string | null>(null);
   const [batchStats, setBatchStats] = useState<Record<string, BatchStats>>({});
   
+  // Bulk email jobs state
+  const [queuedJobs, setQueuedJobs] = useState<BulkEmailJob[]>([]);
+  const [processingJobs, setProcessingJobs] = useState<BulkEmailJob[]>([]);
+  const [completedJobs, setCompletedJobs] = useState<BulkEmailJob[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>("email-logs");
+  
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     loadEmails();
+    loadBulkEmailJobs();
   }, [currentPage, statusFilter, searchTerm, emailType]);
+
+  // Realtime subscription for bulk email jobs
+  useEffect(() => {
+    const channel = supabase
+      .channel('bulk-email-jobs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bulk_email_jobs'
+        },
+        (payload) => {
+          console.log('📡 [Realtime] Bulk email job update:', payload);
+          loadBulkEmailJobs(); // Reload jobs on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const loadEmails = async () => {
     try {
@@ -139,6 +193,49 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
     }
   };
 
+  const loadBulkEmailJobs = async () => {
+    try {
+      setJobsLoading(true);
+
+      // Load queued jobs
+      const { data: queuedData, error: queuedError } = await supabase
+        .from("bulk_email_jobs")
+        .select("*")
+        .eq("status", "queued")
+        .order("created_at", { ascending: false });
+
+      if (queuedError) throw queuedError;
+      setQueuedJobs(queuedData || []);
+
+      // Load processing jobs
+      const { data: processingData, error: processingError } = await supabase
+        .from("bulk_email_jobs")
+        .select("*")
+        .eq("status", "processing")
+        .order("started_at", { ascending: false });
+
+      if (processingError) throw processingError;
+      setProcessingJobs(processingData || []);
+
+      // Load completed/failed jobs (last 50)
+      const { data: completedData, error: completedError } = await supabase
+        .from("bulk_email_jobs")
+        .select("*")
+        .in("status", ["completed", "failed", "cancelled"])
+        .order("completed_at", { ascending: false })
+        .limit(50);
+
+      if (completedError) throw completedError;
+      setCompletedJobs(completedData || []);
+
+    } catch (error: any) {
+      console.error("Error loading bulk email jobs:", error);
+      toast.error("Failed to load bulk email jobs");
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
   const checkDeliveryStatus = async (emailId: string) => {
     try {
       setCheckingStatus(emailId);
@@ -159,6 +256,23 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       toast.error(error.message || "Failed to check delivery status");
     } finally {
       setCheckingStatus(null);
+    }
+  };
+
+  const getJobStatusBadge = (status: string) => {
+    switch (status) {
+      case "queued":
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Queued</Badge>;
+      case "processing":
+        return <Badge className="bg-blue-500"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Processing</Badge>;
+      case "completed":
+        return <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+      case "failed":
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
+      case "cancelled":
+        return <Badge variant="outline"><XCircle className="h-3 w-3 mr-1" />Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -204,8 +318,31 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card>
+      {/* Tabs for Email Logs and Bulk Email Jobs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="email-logs">
+            <Mail className="h-4 w-4 mr-2" />
+            Email Logs
+          </TabsTrigger>
+          <TabsTrigger value="queue">
+            <Clock className="h-4 w-4 mr-2" />
+            Queue ({queuedJobs.length})
+          </TabsTrigger>
+          <TabsTrigger value="processing">
+            <Send className="h-4 w-4 mr-2" />
+            Processing ({processingJobs.length})
+          </TabsTrigger>
+          <TabsTrigger value="complete">
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Complete ({completedJobs.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Email Logs Tab */}
+        <TabsContent value="email-logs" className="space-y-6">
+          {/* Filters */}
+          <Card>
         <CardHeader>
           <CardTitle>Email History</CardTitle>
           <CardDescription>
@@ -377,8 +514,8 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
         </div>
       )}
 
-      {/* Email Details Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+          {/* Email Details Dialog */}
+          <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Email Details</DialogTitle>
@@ -439,7 +576,251 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
             </div>
           )}
         </DialogContent>
-      </Dialog>
+          </Dialog>
+        </TabsContent>
+
+        {/* Queue Tab */}
+        <TabsContent value="queue" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Queued Jobs</CardTitle>
+              <CardDescription>
+                Bulk email jobs waiting to be processed
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {jobsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="lg" text="Loading queued jobs..." />
+                </div>
+              ) : queuedJobs.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No jobs in queue</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {queuedJobs.map((job) => (
+                    <Card key={job.id} className="border-l-4 border-l-yellow-500">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold">{job.subject}</h4>
+                              {getJobStatusBadge(job.status)}
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Total Recipients:</span>
+                                <span className="font-semibold ml-2">{job.total_recipients.toLocaleString()}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Created:</span>
+                                <span className="ml-2">{format(new Date(job.created_at), "MMM dd, HH:mm")}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Batch ID:</span>
+                                <span className="font-mono text-xs ml-2">{job.batch_id}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Processing Tab */}
+        <TabsContent value="processing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Processing Jobs</CardTitle>
+              <CardDescription>
+                Bulk email jobs currently being sent
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {jobsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="lg" text="Loading processing jobs..." />
+                </div>
+              ) : processingJobs.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No jobs currently processing</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {processingJobs.map((job) => {
+                    const progress = job.total_recipients > 0 
+                      ? (job.processed_count / job.total_recipients) * 100 
+                      : 0;
+                    const successRate = job.processed_count > 0
+                      ? (job.successful_count / job.processed_count) * 100
+                      : 0;
+
+                    return (
+                      <Card key={job.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="pt-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold">{job.subject}</h4>
+                                  {getJobStatusBadge(job.status)}
+                                </div>
+                                <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-semibold">{progress.toFixed(1)}%</span>
+                              </div>
+                              <Progress value={progress} className="h-2" />
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>{job.processed_count.toLocaleString()} / {job.total_recipients.toLocaleString()}</span>
+                                <span>{(job.total_recipients - job.processed_count).toLocaleString()} remaining</span>
+                              </div>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-3 gap-4 pt-2 border-t">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-green-600">{job.successful_count.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Successful</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-red-600">{job.failed_count.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Failed</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-blue-600">{successRate.toFixed(1)}%</div>
+                                <div className="text-xs text-muted-foreground">Success Rate</div>
+                              </div>
+                            </div>
+
+                            {/* Timing Info */}
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              {job.started_at && (
+                                <div>Started: {format(new Date(job.started_at), "MMM dd, HH:mm:ss")}</div>
+                              )}
+                              {job.last_processed_at && (
+                                <div>Last update: {format(new Date(job.last_processed_at), "MMM dd, HH:mm:ss")}</div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Complete Tab */}
+        <TabsContent value="complete" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Jobs</CardTitle>
+              <CardDescription>
+                Bulk email jobs that have finished processing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {jobsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="lg" text="Loading completed jobs..." />
+                </div>
+              ) : completedJobs.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No completed jobs yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {completedJobs.map((job) => {
+                    const successRate = job.total_recipients > 0
+                      ? (job.successful_count / job.total_recipients) * 100
+                      : 0;
+                    const isSuccess = job.status === "completed";
+
+                    return (
+                      <Card key={job.id} className={`border-l-4 ${isSuccess ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                        <CardContent className="pt-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold">{job.subject}</h4>
+                                  {getJobStatusBadge(job.status)}
+                                </div>
+                                <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
+                              </div>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-4 gap-4 pt-2 border-t">
+                              <div className="text-center">
+                                <div className="text-xl font-bold">{job.total_recipients.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Total</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-green-600">{job.successful_count.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Successful</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-red-600">{job.failed_count.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Failed</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-blue-600">{successRate.toFixed(1)}%</div>
+                                <div className="text-xs text-muted-foreground">Success Rate</div>
+                              </div>
+                            </div>
+
+                            {/* Timing Info */}
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <div>Created: {format(new Date(job.created_at), "MMM dd, HH:mm")}</div>
+                              {job.started_at && (
+                                <div>Started: {format(new Date(job.started_at), "MMM dd, HH:mm")}</div>
+                              )}
+                              {job.completed_at && (
+                                <div>Completed: {format(new Date(job.completed_at), "MMM dd, HH:mm")}</div>
+                              )}
+                              {job.started_at && job.completed_at && (
+                                <div>
+                                  Duration: {Math.round((new Date(job.completed_at).getTime() - new Date(job.started_at).getTime()) / 1000 / 60)} minutes
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Error Message */}
+                            {job.error_message && (
+                              <div className="pt-2 border-t">
+                                <p className="text-sm text-destructive font-semibold">Error:</p>
+                                <p className="text-xs text-destructive mt-1">{job.error_message}</p>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
