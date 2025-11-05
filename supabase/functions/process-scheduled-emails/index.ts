@@ -87,6 +87,88 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Parse recipient filter
         const filter = scheduledEmail.recipient_filter as any;
+        
+        // Handle email recipient type (single external email)
+        if (filter.type === "email" && filter.email) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(filter.email.trim())) {
+            console.error(`[SCHEDULED-EMAILS] Invalid email address: ${filter.email}`);
+            await supabase
+              .from("scheduled_emails")
+              .update({ status: "failed" })
+              .eq("id", scheduledEmail.id);
+            failedCount++;
+            continue;
+          }
+
+          try {
+            const emailResponse = await resend.emails.send({
+              from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
+              to: [filter.email.trim()],
+              subject: scheduledEmail.subject,
+              html: scheduledEmail.body,
+              reply_to: emailSettings.reply_to_address,
+              headers: {
+                'X-Entity-Ref-ID': `scheduled-external-${Date.now()}`,
+              },
+            });
+
+            // Log the email
+            await supabase.from("email_logs").insert([
+              {
+                recipient_email: filter.email.trim(),
+                recipient_user_id: null,
+                subject: scheduledEmail.subject,
+                body: scheduledEmail.body,
+                status: "sent",
+                sent_at: new Date().toISOString(),
+                sent_by: scheduledEmail.created_by,
+                metadata: { 
+                  resend_id: emailResponse.data?.id,
+                  email_type: 'scheduled',
+                  external_email: true
+                },
+              },
+            ]);
+
+            await supabase
+              .from("scheduled_emails")
+              .update({ status: "sent", sent_at: new Date().toISOString() })
+              .eq("id", scheduledEmail.id);
+
+            processedCount++;
+            console.log(`[SCHEDULED-EMAILS] Email sent to external address: ${filter.email.trim()}`);
+            continue;
+          } catch (error: any) {
+            console.error(`[SCHEDULED-EMAILS] Failed to send to ${filter.email.trim()}:`, error);
+            
+            await supabase.from("email_logs").insert([
+              {
+                recipient_email: filter.email.trim(),
+                recipient_user_id: null,
+                subject: scheduledEmail.subject,
+                body: scheduledEmail.body,
+                status: "failed",
+                error_message: error.message,
+                sent_by: scheduledEmail.created_by,
+                metadata: {
+                  email_type: 'scheduled',
+                  external_email: true
+                },
+              },
+            ]);
+
+            await supabase
+              .from("scheduled_emails")
+              .update({ status: "failed" })
+              .eq("id", scheduledEmail.id);
+
+            failedCount++;
+            continue;
+          }
+        }
+
+        // Query database for registered users
         let query = supabase.from("profiles").select("email, username, id, full_name");
 
         // Apply filters

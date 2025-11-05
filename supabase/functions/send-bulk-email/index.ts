@@ -19,6 +19,7 @@ interface BulkEmailRequest {
   plan?: string;
   country?: string;
   usernames?: string;
+  email?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -132,14 +133,138 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { subject, body, recipientType, plan, country, usernames }: BulkEmailRequest =
+    const { subject, body, recipientType, plan, country, usernames, email }: BulkEmailRequest =
       await req.json();
 
     // Generate unique batch ID for this bulk send operation
     const batchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    console.log("Sending bulk email:", { subject, recipientType, plan, country, batchId });
+    console.log("Sending bulk email:", { subject, recipientType, plan, country, email, batchId });
 
-    // Get recipients based on criteria
+    // Handle email recipient type (single external email)
+    if (recipientType === "email" && email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Invalid email address",
+            message: "Please provide a valid email address"
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      // For email type, create a single recipient object
+      const recipients = [{
+        email: email.trim(),
+        username: 'External User',
+        id: null,
+        full_name: 'External User'
+      }];
+
+      console.log(`Sending to external email: ${email.trim()}`);
+
+      // PHASE 4 CRITICAL FIX: Fetch dynamic email settings ONCE before loop
+      console.log(`⚙️  [Bulk Email] Fetching dynamic email settings...`);
+      const { data: configData } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'email_settings')
+        .maybeSingle();
+
+      const emailSettings = configData?.value || {
+        from_address: 'noreply@mail.fineearn.com',
+        from_name: 'FineEarn',
+        reply_to_address: 'support@fineearn.com',
+      };
+
+      console.log(`✅ [Bulk Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+
+      // Send email to external address
+      try {
+        const emailResponse = await resend.emails.send({
+          from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
+          to: [email.trim()],
+          subject: subject,
+          html: body,
+          reply_to: emailSettings.reply_to_address,
+          headers: {
+            'X-Entity-Ref-ID': `external-${Date.now()}`,
+          },
+        });
+
+        // Log the email
+        await supabase.from("email_logs").insert([
+          {
+            recipient_email: email.trim(),
+            recipient_user_id: null,
+            subject: subject,
+            body: body,
+            status: "sent",
+            sent_at: new Date().toISOString(),
+            sent_by: user.id,
+            metadata: { 
+              resend_id: emailResponse.data?.id,
+              email_type: 'bulk',
+              batch_id: batchId,
+              external_email: true
+            },
+          },
+        ]);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: `Email sent successfully to ${email.trim()}`,
+            total: 1,
+            successful: 1,
+            failed: 0,
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders,
+            },
+          }
+        );
+      } catch (error: any) {
+        console.error(`Failed to send email to ${email.trim()}:`, error);
+
+        // Log the failure
+        await supabase.from("email_logs").insert([
+          {
+            recipient_email: email.trim(),
+            recipient_user_id: null,
+            subject: subject,
+            body: body,
+            status: "failed",
+            error_message: error.message,
+            sent_by: user.id,
+            metadata: {
+              email_type: 'bulk',
+              batch_id: batchId,
+              external_email: true
+            },
+          },
+        ]);
+
+        return new Response(
+          JSON.stringify({ 
+            error: error.message,
+            message: "Failed to send email"
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+    }
+
+    // Get recipients based on criteria (for database users)
     let query = supabase.from("profiles").select("email, username, id, full_name");
 
     if (recipientType === "plan" && plan) {

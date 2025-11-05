@@ -45,6 +45,7 @@ const BulkEmail = () => {
     plan: "",
     country: "",
     usernames: "",
+    email: "",
     templateId: "",
     scheduleType: "immediate",
     scheduledDate: "",
@@ -79,7 +80,7 @@ const BulkEmail = () => {
     if (isAdmin) {
       calculateRecipientCount();
     }
-  }, [formData.recipientType, formData.plan, formData.country, formData.usernames, isAdmin]);
+  }, [formData.recipientType, formData.plan, formData.country, formData.usernames, formData.email, isAdmin]);
 
   const loadTemplates = async () => {
     try {
@@ -105,6 +106,15 @@ const BulkEmail = () => {
   const calculateRecipientCount = async () => {
     try {
       setCalculatingCount(true);
+      
+      // For email type, validate email and set count to 1 if valid
+      if (formData.recipientType === "email") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isValidEmail = emailRegex.test(formData.email.trim());
+        setRecipientCount(isValidEmail && formData.email.trim() ? 1 : 0);
+        setCalculatingCount(false);
+        return;
+      }
       
       let query = supabase.from("profiles").select("*", { count: "exact", head: true });
 
@@ -195,6 +205,18 @@ const BulkEmail = () => {
         return;
       }
 
+      if (formData.recipientType === "email") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!formData.email.trim()) {
+          toast.error("Please enter an email address");
+          return;
+        }
+        if (!emailRegex.test(formData.email.trim())) {
+          toast.error("Please enter a valid email address");
+          return;
+        }
+      }
+
       if (recipientCount === 0) {
         toast.error("No recipients found matching criteria");
         return;
@@ -224,6 +246,7 @@ const BulkEmail = () => {
               plan: formData.plan,
               country: formData.country,
               usernames: formData.usernames,
+              email: formData.email,
             },
             template_id: formData.templateId || null,
             scheduled_for: scheduledFor,
@@ -246,6 +269,7 @@ const BulkEmail = () => {
             plan: formData.plan,
             country: formData.country,
             usernames: formData.usernames,
+            email: formData.email,
           },
         });
 
@@ -262,6 +286,7 @@ const BulkEmail = () => {
         plan: "",
         country: "",
         usernames: "",
+        email: "",
         templateId: "",
         scheduleType: "immediate",
         scheduledDate: "",
@@ -379,11 +404,12 @@ const BulkEmail = () => {
                       setFormData({ ...formData, recipientType: value })
                     }
                   >
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-5">
                       <TabsTrigger value="all">All Users</TabsTrigger>
                       <TabsTrigger value="plan">By Plan</TabsTrigger>
                       <TabsTrigger value="country">By Country</TabsTrigger>
                       <TabsTrigger value="usernames">By Username</TabsTrigger>
+                      <TabsTrigger value="email">By Email</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="all" className="mt-4">
@@ -432,6 +458,20 @@ const BulkEmail = () => {
                       />
                       <p className="text-sm text-muted-foreground mt-2">
                         Example: user1, user2, user3
+                      </p>
+                    </TabsContent>
+
+                    <TabsContent value="email" className="mt-4">
+                      <Input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="Enter email address"
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        💡 Send to any email address (even if not registered on the platform)
                       </p>
                     </TabsContent>
                   </Tabs>
