@@ -19,6 +19,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { EmailHistoryTab } from "@/components/admin/EmailHistoryTab";
 import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
+import { EmailVariableReference } from "@/components/admin/EmailVariableReference";
 import { countries, getCountryName } from "@/lib/countries";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -726,7 +727,7 @@ const BulkEmail = () => {
                     maxLength={20000}
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    💡 Use variables like {`{{username}}`}, {`{{email}}`}, {`{{full_name}}`} for personalization
+                    💡 See the "Available Variables" section in the sidebar for all personalization options
                   </p>
                 </div>
 
@@ -839,6 +840,9 @@ const BulkEmail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Email Variables Reference */}
+            <EmailVariableReference />
 
             {/* Professional Template */}
             <Card>
