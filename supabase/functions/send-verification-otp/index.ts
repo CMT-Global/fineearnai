@@ -179,8 +179,7 @@ Deno.serve(async (req) => {
         {
           body: {
             template_type: "email_verification_otp",
-            recipient_email: userEmail,
-            recipient_user_id: userId,
+            email: userEmail,
             variables: {
               username: username || "User",
               otp_code: otpCode,
