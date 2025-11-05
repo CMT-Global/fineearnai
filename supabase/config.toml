@@ -121,3 +121,15 @@ verify_jwt = false
 
 [functions.convert-usd-to-local]
 verify_jwt = true
+
+[functions.send-template-email]
+verify_jwt = false
+
+[functions.request-password-reset]
+verify_jwt = false
+
+[functions.verify-reset-token]
+verify_jwt = false
+
+[functions.reset-password-with-token]
+verify_jwt = false
