@@ -534,7 +534,7 @@ const EmailTemplates = () => {
                 <DialogContent className="max-w-[95vw] w-full max-h-[92vh] p-0 flex flex-col">
                   <div className="flex flex-1 min-h-0">
                     {/* Left Side: Editor */}
-                    <div className="flex-1 overflow-y-auto p-6 border-r">
+                    <div className="flex-1 flex flex-col overflow-hidden border-r">
                       <DialogHeader>
                         <DialogTitle>
                           {editingTemplate ? "Edit" : "Create"} Email Template
@@ -544,7 +544,8 @@ const EmailTemplates = () => {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="space-y-4 mt-4">
+                      <div className="flex-1 overflow-y-auto px-6 pb-6">
+                        <div className="space-y-4 mt-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="name">Template Name *</Label>
@@ -632,9 +633,10 @@ const EmailTemplates = () => {
                           />
                           <Label htmlFor="is_active">Active Template</Label>
                         </div>
+                        </div>
                       </div>
 
-                      <DialogFooter className="mt-6 border-t pt-4">
+                      <DialogFooter className="flex-shrink-0 border-t px-6 py-4 bg-background">
                         <Button variant="outline" onClick={() => setDialogOpen(false)}>
                           Cancel
                         </Button>
