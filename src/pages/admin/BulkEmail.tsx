@@ -13,10 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { EmailHistoryTab } from "@/components/admin/EmailHistoryTab";
+import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
 
 interface EmailTemplate {
   id: string;
@@ -294,9 +296,28 @@ const BulkEmail = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Compose Form */}
-          <div className="lg:col-span-2">
+        {/* Main Tabs */}
+        <Tabs defaultValue="compose" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="compose">
+              <Send className="h-4 w-4 mr-2" />
+              Compose
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </TabsTrigger>
+            <TabsTrigger value="best-practices">
+              <Info className="h-4 w-4 mr-2" />
+              Best Practices
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Compose Tab */}
+          <TabsContent value="compose">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Compose Form */}
+              <div className="lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>Compose Email</CardTitle>
@@ -674,6 +695,18 @@ const BulkEmail = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <EmailHistoryTab emailType="bulk" />
+          </TabsContent>
+
+          {/* Best Practices Tab */}
+          <TabsContent value="best-practices">
+            <EmailBestPractices />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

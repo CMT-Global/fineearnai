@@ -29,17 +29,71 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user from JWT
+    // Get user from JWT with improved error handling
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      console.error("[BULK EMAIL] Missing authorization header");
+      return new Response(
+        JSON.stringify({ 
+          error: "Authentication required",
+          message: "Please log in again to send emails"
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      throw new Error("Unauthorized");
+    let user;
+    
+    try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (authError) {
+        console.error("[BULK EMAIL] Auth error:", authError.message);
+        return new Response(
+          JSON.stringify({ 
+            error: "Authentication failed",
+            message: "Your session has expired. Please log in again.",
+            details: authError.message
+          }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      if (!authUser) {
+        console.error("[BULK EMAIL] No user found in token");
+        return new Response(
+          JSON.stringify({ 
+            error: "User not found",
+            message: "Please log in again to continue"
+          }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      user = authUser;
+    } catch (error: any) {
+      console.error("[BULK EMAIL] Exception during auth:", error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Authentication error",
+          message: "Failed to verify your session. Please log in again.",
+          details: error.message
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Verify admin role
@@ -50,8 +104,32 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("role", "admin")
       .maybeSingle();
 
-    if (roleError || !roleData) {
-      throw new Error("Unauthorized: Admin access required");
+    if (roleError) {
+      console.error("[BULK EMAIL] Role check error:", roleError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Permission check failed",
+          message: "Unable to verify admin permissions"
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    if (!roleData) {
+      console.error("[BULK EMAIL] User not admin:", user.id);
+      return new Response(
+        JSON.stringify({ 
+          error: "Access denied",
+          message: "Admin privileges required to send bulk emails"
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     const { subject, body, recipientType, plan, country, usernames }: BulkEmailRequest =
@@ -128,9 +206,13 @@ const handler = async (req: Request): Promise<Response> => {
         subject: personalizedSubject,
         html: personalizedBody,
         reply_to: emailSettings.reply_to_address,
+        headers: {
+          'X-Entity-Ref-ID': `${recipient.id}-${Date.now()}`,
+          'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}?subject=Unsubscribe>`,
+        },
       });
 
-      // Log the email
+      // Log the email with email_type metadata for filtering
       await supabase.from("email_logs").insert([
         {
           recipient_email: recipient.email,
@@ -142,7 +224,8 @@ const handler = async (req: Request): Promise<Response> => {
           sent_by: user.id,
           metadata: { 
             resend_id: emailResponse.data?.id,
-            variables_used: Object.keys(replacements)
+            variables_used: Object.keys(replacements),
+            email_type: 'bulk'
           },
         },
       ]);
