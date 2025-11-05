@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle, Monitor, Smartphone, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle, Monitor, Smartphone, Sparkles, Copy } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
@@ -98,6 +100,55 @@ const TEMPLATE_TYPES = [
     variables: []
   }
 ] as const;
+
+// Master list of ALL available variables across the platform
+const ALL_AVAILABLE_VARIABLES = {
+  "User Information": [
+    { name: "username", description: "User's username" },
+    { name: "email", description: "User's email address" },
+    { name: "full_name", description: "User's full name" }
+  ],
+  "Transaction Variables": [
+    { name: "amount", description: "Transaction amount" },
+    { name: "transaction_id", description: "Unique transaction ID" },
+    { name: "new_balance", description: "Updated wallet balance" },
+    { name: "payment_method", description: "Payment method used" },
+    { name: "gateway", description: "Payment gateway (CPAY, Payeer)" },
+    { name: "rejection_reason", description: "Reason for rejection (if applicable)" }
+  ],
+  "Referral Variables": [
+    { name: "referred_username", description: "New referral's username" },
+    { name: "referral_code", description: "User's referral code" },
+    { name: "total_referrals", description: "Total referrals count" },
+    { name: "milestone_count", description: "Milestone reached (5, 10, 25, etc.)" },
+    { name: "total_commission", description: "Total commission earned" },
+    { name: "reward_message", description: "Milestone reward message" },
+    { name: "next_milestone", description: "Next milestone target" },
+    { name: "referrals_to_next", description: "Referrals needed for next milestone" }
+  ],
+  "Membership Variables": [
+    { name: "plan_name", description: "Membership plan name" },
+    { name: "expiry_date", description: "Plan expiration date" },
+    { name: "days_until_expiry", description: "Days remaining until expiry" },
+    { name: "plan_price", description: "Plan cost" },
+    { name: "new_plan", description: "New plan name (for upgrades)" },
+    { name: "old_plan", description: "Previous plan name (for upgrades)" }
+  ],
+  "Authentication Variables": [
+    { name: "reset_link", description: "Password reset URL" },
+    { name: "confirmation_link", description: "Email confirmation URL" },
+    { name: "magic_link", description: "Magic link login URL" },
+    { name: "token_hash", description: "Security token" },
+    { name: "redirect_to", description: "Redirect URL after action" },
+    { name: "old_email", description: "Previous email address" },
+    { name: "new_email", description: "New email address" }
+  ],
+  "Platform Variables": [
+    { name: "platform_url", description: "Platform homepage URL" },
+    { name: "support_email", description: "Support contact email" },
+    { name: "company_name", description: "Platform name (FineEarn)" }
+  ]
+} as const;
 
 const EmailTemplates = () => {
   const { user, loading: authLoading } = useAuth();
@@ -185,6 +236,13 @@ const EmailTemplates = () => {
   };
   
   const selectedTemplateInfo = getTemplateInfo(formData.template_type);
+
+  // Copy variable to clipboard
+  const copyVariableToClipboard = (variableName: string) => {
+    const formattedVariable = `{{${variableName}}}`;
+    navigator.clipboard.writeText(formattedVariable);
+    toast.success(`Copied ${formattedVariable} to clipboard!`);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -457,142 +515,168 @@ const EmailTemplates = () => {
                     Add Template
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingTemplate ? "Edit" : "Create"} Email Template
-                    </DialogTitle>
-                    <DialogDescription>
-                      Configure template details and content
-                    </DialogDescription>
-                  </DialogHeader>
+                <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0">
+                  <div className="flex h-full">
+                    {/* Left Side: Editor */}
+                    <div className="flex-1 overflow-y-auto p-6 border-r">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingTemplate ? "Edit" : "Create"} Email Template
+                        </DialogTitle>
+                        <DialogDescription>
+                          Configure template details and content
+                        </DialogDescription>
+                      </DialogHeader>
 
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Template Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="e.g., password_reset_notification"
-                        />
+                      <div className="space-y-4 mt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="name">Template Name *</Label>
+                            <Input
+                              id="name"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              placeholder="e.g., password_reset_notification"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="type">Template Type *</Label>
+                            <Select value={formData.template_type} onValueChange={handleTemplateTypeChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select template type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TEMPLATE_TYPES.map((type) => (
+                                  <SelectItem key={type.value} value={type.value}>
+                                    {type.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        {/* Template Type Info */}
+                        {selectedTemplateInfo && (
+                          <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                              <strong>{selectedTemplateInfo.label}:</strong> {selectedTemplateInfo.description}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        <div>
+                          <Label htmlFor="subject">Email Subject *</Label>
+                          <Input
+                            id="subject"
+                            value={formData.subject}
+                            onChange={(e) =>
+                              setFormData({ ...formData, subject: e.target.value })
+                            }
+                            placeholder="e.g., Reset Your Password"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            You can use variables like {`{{username}}`} in the subject
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="body">Email Body *</Label>
+                          <RichTextEditor
+                            value={formData.body}
+                            onChange={(html) => setFormData({ ...formData, body: html })}
+                            placeholder="Compose your email content here. Use {{variable}} for placeholders."
+                            maxLength={10000}
+                            enableProfessionalTemplate={true}
+                            templateTitle="FineEarn"
+                          />
+                          <Alert className="mt-3">
+                            <Sparkles className="h-4 w-4" />
+                            <AlertDescription>
+                              <strong>Pro Tips:</strong>
+                              <ul className="list-disc list-inside text-xs mt-2 space-y-1">
+                                <li>Toggle "Professional Template" above for beautiful email styling</li>
+                                <li>Use the ✨ button in toolbar to insert styled buttons</li>
+                                <li>Copy variables from the sidebar and paste them into your content</li>
+                              </ul>
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="is_active"
+                            checked={formData.is_active}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, is_active: checked })
+                            }
+                          />
+                          <Label htmlFor="is_active">Active Template</Label>
+                        </div>
                       </div>
 
-                      <div>
-                        <Label htmlFor="type">Template Type *</Label>
-                        <Select value={formData.template_type} onValueChange={handleTemplateTypeChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select template type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TEMPLATE_TYPES.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <DialogFooter className="mt-6 border-t pt-4">
+                        <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSave}>
+                          {editingTemplate ? "Update" : "Create"} Template
+                        </Button>
+                      </DialogFooter>
                     </div>
                     
-                    {/* Template Type Info */}
-                    {selectedTemplateInfo && (
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>{selectedTemplateInfo.label}:</strong> {selectedTemplateInfo.description}
-                          {selectedTemplateInfo.variables.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium">Available variables:</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {selectedTemplateInfo.variables.map((variable) => (
-                                  <Badge key={variable} variant="secondary" className="text-xs">
-                                    {`{{${variable}}}`}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    <div>
-                      <Label htmlFor="subject">Email Subject *</Label>
-                      <Input
-                        id="subject"
-                        value={formData.subject}
-                        onChange={(e) =>
-                          setFormData({ ...formData, subject: e.target.value })
-                        }
-                        placeholder="e.g., Reset Your Password"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        You can use variables like {`{{username}}`} in the subject
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="body">Email Body *</Label>
-                      <RichTextEditor
-                        value={formData.body}
-                        onChange={(html) => setFormData({ ...formData, body: html })}
-                        placeholder="Compose your email content here. Use {{variable}} for placeholders."
-                        maxLength={10000}
-                        enableProfessionalTemplate={true}
-                        templateTitle="FineEarn"
-                      />
-                      <Alert className="mt-3">
-                        <Sparkles className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Pro Tips:</strong>
-                          <ul className="list-disc list-inside text-xs mt-2 space-y-1">
-                            <li>Toggle "Professional Template" above for beautiful email styling</li>
-                            <li>Use the ✨ button in toolbar to insert styled buttons</li>
-                            <li>Use variables like {`{{username}}`}, {`{{amount}}`}, {`{{reset_link}}`}</li>
-                          </ul>
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="variables">Variables (JSON Array)</Label>
-                      <Textarea
-                        id="variables"
-                        value={formData.variables}
-                        onChange={(e) =>
-                          setFormData({ ...formData, variables: e.target.value })
-                        }
-                        placeholder='["username", "email"]'
-                        rows={3}
-                        className="font-mono text-sm"
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Variables are auto-populated for auth templates. Add custom variables if needed.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="is_active"
-                        checked={formData.is_active}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, is_active: checked })
-                        }
-                      />
-                      <Label htmlFor="is_active">Active Template</Label>
+                    {/* Right Side: Variable Sidebar */}
+                    <div className="w-80 bg-muted/30 p-4 overflow-y-auto">
+                      <div className="sticky top-0 bg-muted/30 pb-3 mb-3 border-b">
+                        <h3 className="font-semibold text-sm flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Available Variables
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Click any variable to copy it
+                        </p>
+                      </div>
+                      
+                      <ScrollArea className="h-full">
+                        <Accordion type="multiple" className="space-y-2">
+                          {Object.entries(ALL_AVAILABLE_VARIABLES).map(([category, variables]) => (
+                            <AccordionItem key={category} value={category}>
+                              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                                {category} ({variables.length})
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-1.5">
+                                  {variables.map((variable) => (
+                                    <Button
+                                      key={variable.name}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start text-left h-auto py-2 px-3 hover:bg-accent"
+                                      onClick={() => copyVariableToClipboard(variable.name)}
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <code className="text-xs font-mono bg-primary/10 px-1.5 py-0.5 rounded">
+                                            {`{{${variable.name}}}`}
+                                          </code>
+                                          <Copy className="h-3 w-3 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {variable.description}
+                                        </p>
+                                      </div>
+                                    </Button>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </ScrollArea>
                     </div>
                   </div>
-
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSave}>
-                      {editingTemplate ? "Update" : "Create"} Template
-                    </Button>
-                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
