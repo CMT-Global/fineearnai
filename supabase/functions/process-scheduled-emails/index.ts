@@ -133,6 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
               to: [recipient.email!],
               subject: personalizedSubject,
               html: personalizedBody,
+              reply_to: "support@fineearn.com",
             });
 
             // Log successful send
