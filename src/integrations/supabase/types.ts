@@ -355,6 +355,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_otps: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          max_attempts: number | null
+          otp_code: string
+          used_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code?: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_account_config: {
         Row: {
           created_at: string
@@ -663,6 +705,8 @@ export type Database = {
           deposit_wallet_balance: number
           earnings_wallet_balance: number
           email: string | null
+          email_verified: boolean | null
+          email_verified_at: string | null
           full_name: string | null
           id: string
           last_activity: string | null
@@ -695,6 +739,8 @@ export type Database = {
           deposit_wallet_balance?: number
           earnings_wallet_balance?: number
           email?: string | null
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           full_name?: string | null
           id: string
           last_activity?: string | null
@@ -727,6 +773,8 @@ export type Database = {
           deposit_wallet_balance?: number
           earnings_wallet_balance?: number
           email?: string | null
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           full_name?: string | null
           id?: string
           last_activity?: string | null
@@ -1427,6 +1475,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_expired_verification_otps: { Args: never; Returns: undefined }
       complete_task_atomic: {
         Args: {
           p_earnings_amount: number
