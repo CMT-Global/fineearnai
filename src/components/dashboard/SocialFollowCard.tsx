@@ -1,36 +1,44 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Send, Music } from "lucide-react";
+import { TelegramGroupsDialog } from "@/components/shared/TelegramGroupsDialog";
 
 export const SocialFollowCard = () => {
+  const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
+
   const socialLinks = [
     {
       name: "Facebook",
       url: "https://facebook.com/fineearn",
       icon: Facebook,
       color: "bg-[#1877F2] hover:bg-[#0d65d9]",
-      description: "Join other members"
+      description: "Join other members",
+      isExternal: true
     },
     {
       name: "Instagram", 
       url: "https://www.instagram.com/fineearnofficial/",
       icon: Instagram,
       color: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#FCAF45] hover:opacity-90",
-      description: "Daily earning tips"
+      description: "Daily earning tips",
+      isExternal: true
     },
     {
       name: "Telegram",
-      url: "https://t.me/fineearn",
+      url: "", // No direct URL - opens dialog
       icon: Send,
       color: "bg-[#0088cc] hover:bg-[#0077b5]",
-      description: "Get Daily Updates"
+      description: "Get Daily Updates",
+      isExternal: false
     },
     {
       name: "TikTok",
       url: "https://www.tiktok.com/@fineearn",
       icon: Music,
       color: "bg-black hover:bg-gray-900",
-      description: "Viral earning hacks"
+      description: "Viral earning hacks",
+      isExternal: true
     }
   ];
 
@@ -49,27 +57,56 @@ export const SocialFollowCard = () => {
       
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {socialLinks.map((social) => (
-            <a
-              key={social.name}
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block group"
-            >
-              <Button
-                className={`w-full h-auto py-4 flex flex-col items-center gap-2 
-                           ${social.color} text-white transition-all duration-300
-                           group-hover:scale-105 group-hover:shadow-lg`}
+          {socialLinks.map((social) => {
+            // Telegram button opens dialog instead of direct link
+            if (social.name === "Telegram") {
+              return (
+                <button
+                  key={social.name}
+                  onClick={() => setTelegramDialogOpen(true)}
+                  className="block group"
+                  aria-label="Open Telegram groups dialog"
+                >
+                  <Button
+                    className={`w-full h-auto py-4 flex flex-col items-center gap-2 
+                               ${social.color} text-white transition-all duration-300
+                               group-hover:scale-105 group-hover:shadow-lg`}
+                    type="button"
+                  >
+                    <social.icon className="w-6 h-6" />
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold">{social.name}</span>
+                      <span className="text-xs opacity-90">{social.description}</span>
+                      <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
+                    </div>
+                  </Button>
+                </button>
+              );
+            }
+
+            // Other social links remain as external links
+            return (
+              <a
+                key={social.name}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block group"
               >
-                <social.icon className="w-6 h-6" />
-                <div className="flex flex-col items-center">
-                  <span className="font-semibold">{social.name}</span>
-                  <span className="text-xs opacity-90">{social.description}</span>
-                </div>
-              </Button>
-            </a>
-          ))}
+                <Button
+                  className={`w-full h-auto py-4 flex flex-col items-center gap-2 
+                             ${social.color} text-white transition-all duration-300
+                             group-hover:scale-105 group-hover:shadow-lg`}
+                >
+                  <social.icon className="w-6 h-6" />
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{social.name}</span>
+                    <span className="text-xs opacity-90">{social.description}</span>
+                  </div>
+                </Button>
+              </a>
+            );
+          })}
         </div>
         
         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
@@ -80,6 +117,12 @@ export const SocialFollowCard = () => {
           </p>
         </div>
       </CardContent>
+
+      {/* Telegram Groups Dialog */}
+      <TelegramGroupsDialog 
+        open={telegramDialogOpen} 
+        onOpenChange={setTelegramDialogOpen} 
+      />
     </Card>
   );
 };
