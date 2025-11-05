@@ -22,20 +22,10 @@ import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
 import { countries, getCountryName } from "@/lib/countries";
 import { useDebounce } from "@/hooks/useDebounce";
 
-interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-  template_type: string;
-  variables: string[];
-}
-
 const BulkEmail = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -48,13 +38,11 @@ const BulkEmail = () => {
     country: "",
     usernames: "",
     email: "",
-    templateId: "",
     scheduleType: "immediate",
     scheduledDate: "",
     scheduledTime: "",
   });
   
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [recipientCount, setRecipientCount] = useState(0);
   const [calculatingCount, setCalculatingCount] = useState(false);
   const [countryStats, setCountryStats] = useState<Array<{ code: string; count: number }>>([]);
@@ -85,9 +73,9 @@ const BulkEmail = () => {
 
   useEffect(() => {
     if (isAdmin) {
-      loadTemplates();
       loadCountryStats();
       loadPlanStats();
+      setLoading(false);
     }
   }, [isAdmin]);
 
@@ -158,27 +146,6 @@ const BulkEmail = () => {
 
     validateUsername();
   }, [debouncedUsername, formData.recipientType]);
-
-  const loadTemplates = async () => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .eq("is_active", true)
-        .order("name");
-
-      if (error) throw error;
-
-      setTemplates((data || []).map(t => ({ ...t, variables: t.variables as string[] })));
-    } catch (error: any) {
-      console.error("Error loading templates:", error);
-      toast.error("Failed to load email templates");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadCountryStats = async () => {
     try {
@@ -264,28 +231,6 @@ const BulkEmail = () => {
       setCalculatingCount(false);
     }
   };
-
-  const handleTemplateSelect = (templateId: string) => {
-    if (!templateId || templateId === "none") {
-      setSelectedTemplate(null);
-      setFormData({
-        ...formData,
-        templateId: "",
-      });
-      return;
-    }
-    
-    const template = templates.find((t) => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(template);
-      setFormData({
-        ...formData,
-        templateId,
-        subject: template.subject,
-        body: template.body,
-      });
-    }
-  };
   
   const getPreviewContent = () => {
     let content = formData.body;
@@ -369,7 +314,6 @@ const BulkEmail = () => {
               usernames: formData.usernames,
               email: formData.email,
             },
-            template_id: formData.templateId || null,
             scheduled_for: scheduledFor,
             created_by: user?.id,
           },
@@ -408,7 +352,6 @@ const BulkEmail = () => {
         country: "",
         usernames: "",
         email: "",
-        templateId: "",
         scheduleType: "immediate",
         scheduledDate: "",
         scheduledTime: "",
@@ -705,27 +648,6 @@ const BulkEmail = () => {
                   </Tabs>
                 </div>
 
-                {/* Template Selection */}
-                <div>
-                  <Label htmlFor="template">Use Template (Optional)</Label>
-                  <Select
-                    value={formData.templateId}
-                    onValueChange={handleTemplateSelect}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Template</SelectItem>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name} - {template.subject}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Subject */}
                 <div>
                   <Label htmlFor="subject">Subject *</Label>
@@ -738,23 +660,6 @@ const BulkEmail = () => {
                     placeholder="Email subject"
                   />
                 </div>
-
-                {/* Template Variables Info */}
-                {selectedTemplate && selectedTemplate.variables.length > 0 && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Available Variables:</strong> These will be automatically replaced for each recipient.
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {selectedTemplate.variables.map((variable) => (
-                          <Badge key={variable} variant="secondary" className="text-xs">
-                            {`{{${variable}}}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
 
                 {/* Body */}
                 <div>
@@ -880,28 +785,23 @@ const BulkEmail = () => {
               </CardContent>
             </Card>
 
-            {/* Template Variables */}
-            {formData.templateId && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Template Variables</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {templates
-                      .find((t) => t.id === formData.templateId)
-                      ?.variables?.map((variable) => (
-                        <Badge key={variable} variant="outline">
-                          {`{{${variable}}}`}
-                        </Badge>
-                      ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-4">
-                    These will be automatically replaced with user data
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Professional Template */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Professional Template</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  All emails are automatically wrapped in a professional template with:
+                </p>
+                <ul className="text-sm space-y-1 text-muted-foreground mt-3">
+                  <li>• Branded gradient header</li>
+                  <li>• Responsive design</li>
+                  <li>• Professional footer</li>
+                  <li>• Optimized for inbox delivery</li>
+                </ul>
+              </CardContent>
+            </Card>
 
             {/* Tips */}
             <Card>
@@ -910,10 +810,10 @@ const BulkEmail = () => {
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-2 text-muted-foreground">
-                  <li>• Use templates for consistency</li>
                   <li>• Test with a small group first</li>
                   <li>• Schedule emails for optimal times</li>
                   <li>• Keep content clear and concise</li>
+                  <li>• Use personalization variables</li>
                 </ul>
               </CardContent>
             </Card>
@@ -957,20 +857,6 @@ const BulkEmail = () => {
                   />
                 </div>
               </div>
-              
-              {/* Template Variables Used */}
-              {selectedTemplate && selectedTemplate.variables.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium">Variables in Use</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedTemplate.variables.map((variable) => (
-                      <Badge key={variable} variant="secondary">
-                        {`{{${variable}}}`}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
               
               {/* Send Info */}
               <Alert variant="default">
