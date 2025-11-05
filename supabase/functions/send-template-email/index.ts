@@ -81,6 +81,18 @@ serve(async (req: Request) => {
 
     const { email, template_type, variables }: SendTemplateEmailRequest = await req.json();
 
+    // Validate email address
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      console.error(`❌ [${requestId}] Invalid email address: ${email}`);
+      throw new Error('Valid email address is required');
+    }
+
+    // Validate template_type
+    if (!template_type || typeof template_type !== 'string' || template_type.trim().length === 0) {
+      console.error(`❌ [${requestId}] Invalid template_type: ${template_type}`);
+      throw new Error('Valid template_type is required');
+    }
+
     console.log(`📧 [${requestId}] Processing email for: ${email}, template: ${template_type}`);
 
     // Step 1: Fetch email template from database
