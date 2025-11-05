@@ -19,6 +19,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { EmailHistoryTab } from "@/components/admin/EmailHistoryTab";
 import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
+import { countries, getCountryName } from "@/lib/countries";
 
 interface EmailTemplate {
   id: string;
@@ -55,6 +56,8 @@ const BulkEmail = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [recipientCount, setRecipientCount] = useState(0);
   const [calculatingCount, setCalculatingCount] = useState(false);
+  const [countryStats, setCountryStats] = useState<Array<{ code: string; count: number }>>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -73,6 +76,7 @@ const BulkEmail = () => {
   useEffect(() => {
     if (isAdmin) {
       loadTemplates();
+      loadCountryStats();
     }
   }, [isAdmin]);
 
@@ -100,6 +104,26 @@ const BulkEmail = () => {
       toast.error("Failed to load email templates");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCountryStats = async () => {
+    try {
+      setLoadingCountries(true);
+
+      const { data, error } = await supabase.functions.invoke("get-country-stats");
+
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        setCountryStats(data.data);
+        console.log(`Loaded ${data.data.length} countries with users`);
+      }
+    } catch (error: any) {
+      console.error("Error loading country stats:", error);
+      // Don't show error toast to avoid annoying users, just log it
+    } finally {
+      setLoadingCountries(false);
     }
   };
 
@@ -438,13 +462,41 @@ const BulkEmail = () => {
                     </TabsContent>
 
                     <TabsContent value="country" className="mt-4">
-                      <Input
+                      <Select
                         value={formData.country}
-                        onChange={(e) =>
-                          setFormData({ ...formData, country: e.target.value })
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, country: value })
                         }
-                        placeholder="Enter country name"
-                      />
+                        disabled={loadingCountries}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select a country"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {loadingCountries ? (
+                            <div className="flex items-center justify-center py-4">
+                              <LoadingSpinner size="sm" />
+                              <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
+                            </div>
+                          ) : countryStats.length === 0 ? (
+                            <div className="py-4 text-center text-sm text-muted-foreground">
+                              No countries with users found
+                            </div>
+                          ) : (
+                            countryStats.map(({ code, count }) => {
+                              const countryName = getCountryName(code) || code;
+                              return (
+                                <SelectItem key={code} value={code}>
+                                  {countryName} ({count.toLocaleString()} {count === 1 ? 'user' : 'users'})
+                                </SelectItem>
+                              );
+                            })
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        💡 Countries are sorted by user count (highest first)
+                      </p>
                     </TabsContent>
 
                     <TabsContent value="usernames" className="mt-4">
