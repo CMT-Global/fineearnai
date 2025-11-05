@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface TestEmailRequest {
-  template_id: string;
+  template_id?: string; // Optional - if not provided, sends generic test email
   test_email: string;
   sample_data?: Record<string, string>;
 }
@@ -102,10 +102,10 @@ serve(async (req) => {
 
     const { template_id, test_email, sample_data }: TestEmailRequest = await req.json();
 
-    // Validate inputs
-    if (!template_id || !test_email) {
+    // Validate test_email is provided
+    if (!test_email) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: template_id and test_email' }),
+        JSON.stringify({ error: 'Missing required field: test_email' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -119,50 +119,110 @@ serve(async (req) => {
       );
     }
 
-    // Fetch template
-    const { data: template, error: templateError } = await supabaseClient
-      .from('email_templates')
-      .select('*')
-      .eq('id', template_id)
-      .single();
+    // PHASE 4: Fetch dynamic email settings from platform_config
+    console.log(`⚙️  [Test Email] Fetching dynamic email settings...`);
+    const { data: configData } = await supabaseClient
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
 
-    if (templateError || !template) {
-      return new Response(
-        JSON.stringify({ error: 'Template not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Generate sample data for variables
-    const defaultSampleData: Record<string, string> = {
-      username: 'TestUser',
-      email: test_email,
-      full_name: 'Test User',
-      reset_link: 'https://example.com/reset?token=sample_token_123',
-      confirmation_link: 'https://example.com/confirm?token=sample_token_123',
-      magic_link: 'https://example.com/login?token=sample_token_123',
-      token_hash: 'sample_token_hash_123456789',
-      redirect_to: 'https://example.com/dashboard',
-      old_email: 'old.test@example.com',
-      new_email: test_email,
-      plan_name: 'Premium Plan',
-      expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      milestone: '100 tasks completed',
-      total_earnings: '$500.00',
+    const emailSettings = configData?.value || {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+      reply_to_address: 'support@fineearn.com',
+      reply_to_name: 'FineEarn Support',
+      platform_name: 'FineEarn',
+      platform_url: 'https://fineearn.com',
     };
 
-    // Merge with custom sample data if provided
-    const finalSampleData = { ...defaultSampleData, ...sample_data };
+    console.log(`✅ [Test Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
+    console.log(`✅ [Test Email] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
 
-    // Replace variables in subject and body
-    let personalizedSubject = template.subject;
-    let personalizedBody = template.body;
+    let personalizedSubject: string;
+    let personalizedBody: string;
+    let templateName = 'Generic Test Email';
 
-    Object.entries(finalSampleData).forEach(([key, value]) => {
-      const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-      personalizedSubject = personalizedSubject.replace(regex, value);
-      personalizedBody = personalizedBody.replace(regex, value);
-    });
+    // Check if template_id is provided - if not, send generic test email
+    if (!template_id) {
+      console.log('[Test Email] No template_id provided - sending generic test email');
+      
+      // Generic test email without template
+      personalizedSubject = `Test Email from ${emailSettings.platform_name}`;
+      personalizedBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #333; border-bottom: 2px solid #0066ff; padding-bottom: 10px;">
+            Test Email
+          </h1>
+          <p style="color: #666; line-height: 1.6;">
+            This is a test email sent from <strong>${emailSettings.platform_name}</strong> email settings to verify your email configuration.
+          </p>
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #333;">Email Configuration:</h3>
+            <p style="margin: 5px 0;"><strong>From:</strong> ${emailSettings.from_name} &lt;${emailSettings.from_address}&gt;</p>
+            <p style="margin: 5px 0;"><strong>Reply-To:</strong> ${emailSettings.reply_to_name} &lt;${emailSettings.reply_to_address}&gt;</p>
+            <p style="margin: 5px 0;"><strong>Platform:</strong> ${emailSettings.platform_name}</p>
+            <p style="margin: 5px 0;"><strong>URL:</strong> <a href="${emailSettings.platform_url}">${emailSettings.platform_url}</a></p>
+          </div>
+          <p style="color: #999; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            ${emailSettings.footer_text || 'This is an automated test email.'}
+          </p>
+        </div>
+      `;
+      
+      console.log('[Test Email] Generic test email prepared');
+    } else {
+      // Template-based test email (existing functionality)
+      console.log('[Test Email] Template ID provided - fetching template:', template_id);
+      
+      const { data: template, error: templateError } = await supabaseClient
+        .from('email_templates')
+        .select('*')
+        .eq('id', template_id)
+        .single();
+
+      if (templateError || !template) {
+        return new Response(
+          JSON.stringify({ error: 'Template not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      templateName = template.name;
+
+      // Generate sample data for variables
+      const defaultSampleData: Record<string, string> = {
+        username: 'TestUser',
+        email: test_email,
+        full_name: 'Test User',
+        reset_link: 'https://example.com/reset?token=sample_token_123',
+        confirmation_link: 'https://example.com/confirm?token=sample_token_123',
+        magic_link: 'https://example.com/login?token=sample_token_123',
+        token_hash: 'sample_token_hash_123456789',
+        redirect_to: 'https://example.com/dashboard',
+        old_email: 'old.test@example.com',
+        new_email: test_email,
+        plan_name: 'Premium Plan',
+        expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        milestone: '100 tasks completed',
+        total_earnings: '$500.00',
+      };
+
+      // Merge with custom sample data if provided
+      const finalSampleData = { ...defaultSampleData, ...sample_data };
+
+      // Replace variables in subject and body
+      personalizedSubject = template.subject;
+      personalizedBody = template.body;
+
+      Object.entries(finalSampleData).forEach(([key, value]) => {
+        const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+        personalizedSubject = personalizedSubject.replace(regex, value);
+        personalizedBody = personalizedBody.replace(regex, value);
+      });
+
+      console.log('[Test Email] Template-based email prepared:', template.name);
+    }
 
     // PHASE 2: Check if RESEND_API_KEY is configured
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -179,22 +239,6 @@ serve(async (req) => {
       );
     }
 
-    // PHASE 4: Fetch dynamic email settings from platform_config
-    console.log(`⚙️  [Test Email] Fetching dynamic email settings...`);
-    const { data: configData } = await supabaseClient
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
-
-    const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
-    };
-
-    console.log(`✅ [Test Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
-    console.log(`✅ [Test Email] Reply-To: ${emailSettings.reply_to_address}`);
 
     // PHASE 2: Prepare email payload with dynamic settings
     const emailPayload = {
@@ -202,7 +246,7 @@ serve(async (req) => {
       to: [test_email],
       subject: `[TEST] ${personalizedSubject}`,
       html: personalizedBody,
-      reply_to: emailSettings.reply_to_address,
+      reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
     };
     
     console.log('[PHASE 2] Sending email via Resend API...');
@@ -253,25 +297,24 @@ serve(async (req) => {
       sent_at: new Date().toISOString(),
       metadata: {
         is_test: true,
-        template_id: template_id,
-        template_name: template.name,
-        template_type: template.template_type,
+        template_id: template_id || null,
+        template_name: templateName,
         resend_id: resendData.id,
         sent_by_admin: user.id,
-        sample_data_used: finalSampleData,
-        variables_replaced: Object.keys(finalSampleData),
+        email_type: template_id ? 'template_based' : 'generic',
       },
     });
 
     console.log('[PHASE 2] ✅ Email logged to database successfully');
-    console.log(`[PHASE 2] ✅✅ COMPLETE: Test email sent successfully to ${test_email} using template ${template.name}`);
+    console.log(`[PHASE 2] ✅✅ COMPLETE: Test email sent successfully to ${test_email} using ${templateName}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `Test email sent to ${test_email}`,
         resend_id: resendData.id,
-        template_name: template.name,
+        template_name: templateName,
+        email_type: template_id ? 'template_based' : 'generic',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
