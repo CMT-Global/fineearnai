@@ -119,8 +119,8 @@ serve(async (req: Request) => {
       });
     }
 
-    // Default fallbacks
-    const fromAddress = emailSettings.from_address || 'noreply@fineearn.com';
+    // Default fallbacks - using verified domain
+    const fromAddress = emailSettings.from_address || 'noreply@mail.fineearn.com';
     const fromName = emailSettings.from_name || emailSettings.platform_name || 'FineEarn';
     const replyTo = emailSettings.reply_to_address || fromAddress;
 
