@@ -236,11 +236,43 @@ const BulkEmail = () => {
     let content = formData.body;
     
     // Replace common variables for preview
-    content = content.replace(/{{username}}/g, '<strong>[Username]</strong>');
-    content = content.replace(/{{email}}/g, '<strong>[user@example.com]</strong>');
-    content = content.replace(/{{full_name}}/g, '<strong>[Full Name]</strong>');
+    content = content.replace(/{{username}}/g, '<strong style="color: #667eea;">john_doe</strong>');
+    content = content.replace(/{{email}}/g, '<strong style="color: #667eea;">user@example.com</strong>');
+    content = content.replace(/{{full_name}}/g, '<strong style="color: #667eea;">John Doe</strong>');
     
-    return content;
+    // Wrap content in professional email template
+    return `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f7; padding: 40px 15px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+          
+          <!-- Gradient Header -->
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              FineEarn
+            </h1>
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 40px 30px;">
+            ${content}
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f8f9fa; padding: 30px 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; color: #6c757d;">
+              <strong style="color: #495057;">FineEarn</strong> - Earn by Training AI
+            </p>
+            <p style="margin: 0 0 15px 0; font-size: 13px; color: #868e96;">
+              This email was sent from FineEarn. If you have any questions, please contact our support team.
+            </p>
+            <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd;">
+              © ${new Date().getFullYear()} FineEarn. All rights reserved.
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    `;
   };
 
   const handleSend = async () => {
@@ -850,7 +882,7 @@ const BulkEmail = () => {
               {/* Body Preview */}
               <div>
                 <Label className="text-sm font-medium">Email Body</Label>
-                <div className="mt-1 border rounded-lg bg-white p-6">
+                <div className="mt-1 border rounded-lg overflow-hidden" style={{ backgroundColor: '#f4f4f7' }}>
                   <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: getPreviewContent() }}
