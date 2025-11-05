@@ -397,6 +397,33 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          last_reminder_sent_at: string | null
+          reminder_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reminder_sent_at?: string | null
+          reminder_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reminder_sent_at?: string | null
+          reminder_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_account_config: {
         Row: {
           created_at: string

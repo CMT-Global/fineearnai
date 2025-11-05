@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Send, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Send, RotateCcw, AlertCircle, CheckCircle2, Settings } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
+import { EmailVerificationRemindersSettings } from "@/components/admin/EmailVerificationRemindersSettings";
 
 // Validation schema - only essential email settings
 const emailSettingsSchema = z.object({
@@ -198,7 +199,7 @@ export default function EmailSettings() {
           <div>
             <h1 className="text-3xl font-bold">Email Settings</h1>
             <p className="text-muted-foreground mt-1">
-              Configure email sending settings for the platform
+              Configure email sending settings and verification reminders
             </p>
           </div>
 
@@ -438,6 +439,9 @@ export default function EmailSettings() {
                 </div>
           </CardContent>
         </Card>
+
+        {/* Email Verification Reminders */}
+        <EmailVerificationRemindersSettings />
     </div>
   );
 }
