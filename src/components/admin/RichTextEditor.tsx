@@ -216,14 +216,14 @@ export const RichTextEditor = ({
 
   return (
     <div className={cn("border rounded-lg bg-background", className)}>
-      {/* Professional Template Toggle */}
+      {/* Professional Template Toggle - Simplified */}
       {enableProfessionalTemplate && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-b px-4 py-3">
+        <div className="border-b px-4 py-2.5 bg-muted/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              <Label htmlFor="professional-template" className="text-sm font-medium cursor-pointer">
-                Use Professional Email Template
+              <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+              <Label htmlFor="professional-template" className="text-xs font-normal cursor-pointer text-muted-foreground">
+                Use professional email wrapper
               </Label>
             </div>
             <Switch
@@ -233,20 +233,15 @@ export const RichTextEditor = ({
               disabled={disabled}
             />
           </div>
-          {useProfessionalTemplate && (
-            <p className="text-xs text-muted-foreground mt-2">
-              ✨ Your content will be wrapped in a beautiful email template with gradient header and footer
-            </p>
-          )}
         </div>
       )}
       
-      {/* Toolbar - Mobile Optimized with Horizontal Scroll */}
-      <div className="border-b bg-muted/30 sticky top-0 z-10">
+      {/* Toolbar - Improved Visual Grouping */}
+      <div className="border-b bg-background sticky top-0 z-10">
         <div className="overflow-x-auto">
-          <div className="flex items-center gap-1 sm:gap-2 min-w-max p-2">
-            {/* Text Formatting */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
+          <div className="flex items-center gap-0.5 min-w-max p-2.5">
+            {/* Text Formatting Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 isActive={editor.isActive('bold')}
@@ -277,131 +272,136 @@ export const RichTextEditor = ({
               />
             </div>
 
-            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-8 mx-2 bg-border" />
 
-            {/* Headings */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              isActive={editor.isActive('heading', { level: 1 })}
-              disabled={disabled}
-              icon={<Heading1 className="h-4 w-4" />}
-              tooltip="Heading 1"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              isActive={editor.isActive('heading', { level: 2 })}
-              disabled={disabled}
-              icon={<Heading2 className="h-4 w-4" />}
-              tooltip="Heading 2"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              isActive={editor.isActive('heading', { level: 3 })}
-              disabled={disabled}
-              icon={<Heading3 className="h-4 w-4" />}
-              tooltip="Heading 3"
-            />
-          </div>
+            {/* Headings Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                isActive={editor.isActive('heading', { level: 1 })}
+                disabled={disabled}
+                icon={<Heading1 className="h-4 w-4" />}
+                tooltip="Heading 1"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                isActive={editor.isActive('heading', { level: 2 })}
+                disabled={disabled}
+                icon={<Heading2 className="h-4 w-4" />}
+                tooltip="Heading 2"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                isActive={editor.isActive('heading', { level: 3 })}
+                disabled={disabled}
+                icon={<Heading3 className="h-4 w-4" />}
+                tooltip="Heading 3"
+              />
+            </div>
 
-            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-8 mx-2 bg-border" />
 
-            {/* Lists */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              isActive={editor.isActive('bulletList')}
-              disabled={disabled}
-              icon={<List className="h-4 w-4" />}
-              tooltip="Bullet List"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              isActive={editor.isActive('orderedList')}
-              disabled={disabled}
-              icon={<ListOrdered className="h-4 w-4" />}
-              tooltip="Numbered List"
-            />
-          </div>
+            {/* Lists Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                isActive={editor.isActive('bulletList')}
+                disabled={disabled}
+                icon={<List className="h-4 w-4" />}
+                tooltip="Bullet List"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                isActive={editor.isActive('orderedList')}
+                disabled={disabled}
+                icon={<ListOrdered className="h-4 w-4" />}
+                tooltip="Numbered List"
+              />
+            </div>
 
-            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-8 mx-2 bg-border" />
 
-            {/* Alignment */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-            <ToolbarButton
-              onClick={() => editor.chain().focus().setTextAlign('left').run()}
-              isActive={editor.isActive({ textAlign: 'left' })}
-              disabled={disabled}
-              icon={<AlignLeft className="h-4 w-4" />}
-              tooltip="Align Left"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().setTextAlign('center').run()}
-              isActive={editor.isActive({ textAlign: 'center' })}
-              disabled={disabled}
-              icon={<AlignCenter className="h-4 w-4" />}
-              tooltip="Align Center"
-            />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().setTextAlign('right').run()}
-              isActive={editor.isActive({ textAlign: 'right' })}
-              disabled={disabled}
-              icon={<AlignRight className="h-4 w-4" />}
-              tooltip="Align Right"
-            />
-          </div>
+            {/* Alignment Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                isActive={editor.isActive({ textAlign: 'left' })}
+                disabled={disabled}
+                icon={<AlignLeft className="h-4 w-4" />}
+                tooltip="Align Left"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                isActive={editor.isActive({ textAlign: 'center' })}
+                disabled={disabled}
+                icon={<AlignCenter className="h-4 w-4" />}
+                tooltip="Align Center"
+              />
+              <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                isActive={editor.isActive({ textAlign: 'right' })}
+                disabled={disabled}
+                icon={<AlignRight className="h-4 w-4" />}
+                tooltip="Align Right"
+              />
+            </div>
 
-            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-8 mx-2 bg-border" />
 
-            {/* Links */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-            <ToolbarButton
-              onClick={setLink}
-              isActive={editor.isActive('link')}
-              disabled={disabled}
-              icon={<Link2 className="h-4 w-4" />}
-              tooltip="Add Link"
-            />
-            <ToolbarButton
-              onClick={removeLink}
-              disabled={disabled || !editor.isActive('link')}
-              icon={<Unlink className="h-4 w-4" />}
-              tooltip="Remove Link"
-            />
-          </div>
+            {/* Links Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
+              <ToolbarButton
+                onClick={setLink}
+                isActive={editor.isActive('link')}
+                disabled={disabled}
+                icon={<Link2 className="h-4 w-4" />}
+                tooltip="Add Link"
+              />
+              <ToolbarButton
+                onClick={removeLink}
+                disabled={disabled || !editor.isActive('link')}
+                icon={<Unlink className="h-4 w-4" />}
+                tooltip="Remove Link"
+              />
+            </div>
 
-            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-8 mx-2 bg-border" />
 
-            {/* Clear Formatting */}
-            <ToolbarButton
-              onClick={clearFormatting}
-              disabled={disabled}
-              icon={<RemoveFormatting className="h-4 w-4" />}
-              tooltip="Clear Formatting"
-            />
-
-            <Separator orientation="vertical" className="h-6 mx-1" />
-
-            {/* Insert Styled Button */}
-            <ToolbarButton
-              onClick={handleInsertButton}
-              disabled={disabled}
-              icon={<Sparkles className="h-4 w-4" />}
-              tooltip="Insert Styled Button"
-            />
+            {/* Utilities Group */}
+            <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-muted/30">
+              <ToolbarButton
+                onClick={clearFormatting}
+                disabled={disabled}
+                icon={<RemoveFormatting className="h-4 w-4" />}
+                tooltip="Clear Formatting"
+              />
+              <ToolbarButton
+                onClick={handleInsertButton}
+                disabled={disabled}
+                icon={<Sparkles className="h-4 w-4" />}
+                tooltip="Insert Styled Button"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Editor Content - Mobile Optimized */}
+      {/* Editor Content - Enhanced Spacing & Focus States */}
       <div className="relative">
         <EditorContent
           editor={editor}
           className={cn(
-            "prose prose-sm sm:prose-base max-w-none p-3 sm:p-4 focus:outline-none min-h-[300px] max-h-[500px] overflow-y-auto",
-            "touch-manipulation", // Better touch handling on mobile
-            "[&_.ProseMirror]:min-h-[280px] [&_.ProseMirror]:focus:outline-none",
-            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none",
+            "prose prose-sm sm:prose-base max-w-none p-4 sm:p-6 focus-within:outline-none min-h-[350px] max-h-[550px] overflow-y-auto",
+            "touch-manipulation transition-all duration-200",
+            "focus-within:bg-muted/5",
+            "[&_.ProseMirror]:min-h-[320px] [&_.ProseMirror]:focus:outline-none",
+            "[&_.ProseMirror]:leading-relaxed",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground/60",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none",
+            "[&_.ProseMirror_p.is-editor-empty:first-child::before]:italic",
             disabled && "opacity-50 cursor-not-allowed"
           )}
         />
