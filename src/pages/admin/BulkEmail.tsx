@@ -53,6 +53,7 @@ const BulkEmail = () => {
   
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [recipientCount, setRecipientCount] = useState(0);
+  const [calculatingCount, setCalculatingCount] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -103,6 +104,8 @@ const BulkEmail = () => {
 
   const calculateRecipientCount = async () => {
     try {
+      setCalculatingCount(true);
+      
       let query = supabase.from("profiles").select("*", { count: "exact", head: true });
 
       if (formData.recipientType === "plan" && formData.plan) {
@@ -110,14 +113,30 @@ const BulkEmail = () => {
       } else if (formData.recipientType === "country" && formData.country) {
         query = query.eq("country", formData.country);
       } else if (formData.recipientType === "usernames" && formData.usernames) {
-        const usernames = formData.usernames.split(",").map((u) => u.trim());
+        const usernames = formData.usernames.split(",").map((u) => u.trim()).filter(u => u.length > 0);
+        if (usernames.length === 0) {
+          setRecipientCount(0);
+          setCalculatingCount(false);
+          return;
+        }
         query = query.in("username", usernames);
       }
 
-      const { count } = await query;
-      setRecipientCount(count || 0);
+      const { count, error } = await query;
+      
+      if (error) {
+        console.error("Error calculating recipients:", error);
+        toast.error("Failed to calculate recipient count");
+        setRecipientCount(0);
+      } else {
+        setRecipientCount(count || 0);
+      }
     } catch (error: any) {
       console.error("Error calculating recipients:", error);
+      toast.error("Failed to calculate recipient count");
+      setRecipientCount(0);
+    } finally {
+      setCalculatingCount(false);
     }
   };
 
@@ -328,7 +347,32 @@ const BulkEmail = () => {
               <CardContent className="space-y-6">
                 {/* Recipient Selection - MOVED TO TOP */}
                 <div>
-                  <Label>Recipients *</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Recipients *</Label>
+                    {calculatingCount ? (
+                      <Badge variant="secondary" className="gap-2">
+                        <LoadingSpinner size="sm" />
+                        <span>Calculating...</span>
+                      </Badge>
+                    ) : (
+                      <Badge 
+                        variant={recipientCount === 0 ? "destructive" : "default"}
+                        className="gap-2 text-base px-3 py-1"
+                      >
+                        📧 Will send to: <strong>{recipientCount.toLocaleString()}</strong> {recipientCount === 1 ? 'user' : 'users'}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {recipientCount === 0 && !calculatingCount && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        No recipients found with the current selection. Please adjust your filters.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <Tabs
                     value={formData.recipientType}
                     onValueChange={(value) =>
