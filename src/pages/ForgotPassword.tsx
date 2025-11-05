@@ -30,16 +30,28 @@ const ForgotPassword = () => {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Call custom password reset backend function
+      const { data: result, error } = await supabase.functions.invoke('request-password-reset', {
+        body: { email: data.email },
       });
 
       if (error) throw error;
 
+      // Check for rate limiting error
+      if (result?.error === 'rate_limit_exceeded') {
+        toast.error(result.message || 'Too many password reset requests. Please try again later.');
+        return;
+      }
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Failed to send reset email');
+      }
+
       setIsSubmitted(true);
       toast.success("Password reset email sent");
     } catch (error: any) {
-      toast.error(`Failed to send reset email: ${error.message}`);
+      console.error('Password reset request failed:', error);
+      toast.error(error.message || 'Failed to send reset email. Please try again.');
     }
   };
 
