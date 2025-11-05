@@ -58,6 +58,8 @@ const BulkEmail = () => {
   const [calculatingCount, setCalculatingCount] = useState(false);
   const [countryStats, setCountryStats] = useState<Array<{ code: string; count: number }>>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
+  const [membershipPlans, setMembershipPlans] = useState<Array<{ name: string; display_name: string; account_type: string; count: number }>>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -77,6 +79,7 @@ const BulkEmail = () => {
     if (isAdmin) {
       loadTemplates();
       loadCountryStats();
+      loadPlanStats();
     }
   }, [isAdmin]);
 
@@ -124,6 +127,24 @@ const BulkEmail = () => {
       // Don't show error toast to avoid annoying users, just log it
     } finally {
       setLoadingCountries(false);
+    }
+  };
+
+  const loadPlanStats = async () => {
+    try {
+      setLoadingPlans(true);
+
+      const { data, error } = await supabase.functions.invoke("get-plan-stats");
+
+      if (error) throw error;
+
+      setMembershipPlans(data || []);
+      console.log(`Loaded ${data?.length || 0} membership plans with user counts`);
+    } catch (error: any) {
+      console.error("Error loading plan stats:", error);
+      // Don't show error toast to avoid annoying users, just log it
+    } finally {
+      setLoadingPlans(false);
     }
   };
 
@@ -452,11 +473,23 @@ const BulkEmail = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select membership plan" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                          <SelectItem value="vip">VIP</SelectItem>
+                        <SelectContent className="max-h-[300px]">
+                          {loadingPlans ? (
+                            <div className="flex items-center justify-center py-4">
+                              <LoadingSpinner size="sm" />
+                              <span className="ml-2 text-sm text-muted-foreground">Loading plans...</span>
+                            </div>
+                          ) : membershipPlans.length === 0 ? (
+                            <div className="py-4 text-center text-sm text-muted-foreground">
+                              No plans with users found
+                            </div>
+                          ) : (
+                            membershipPlans.map(({ name, display_name, count }) => (
+                              <SelectItem key={name} value={name}>
+                                {display_name} ({count.toLocaleString()} {count === 1 ? 'user' : 'users'})
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </TabsContent>
