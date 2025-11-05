@@ -107,22 +107,38 @@ serve(async (req: Request) => {
     const { data: configData } = await supabase
       .from('platform_config')
       .select('key, value')
-      .in('key', ['email_from_address', 'email_from_name', 'email_reply_to', 'platform_name']);
+      .in('key', ['email_from_address', 'email_from_name', 'email_reply_to', 'platform_name', 'email_settings']);
 
     const emailSettings: EmailSettings = {};
     if (configData) {
-      configData.forEach(config => {
+      configData.forEach((config: any) => {
         if (config.key === 'email_from_address') emailSettings.from_address = config.value as string;
         if (config.key === 'email_from_name') emailSettings.from_name = config.value as string;
         if (config.key === 'email_reply_to') emailSettings.reply_to_address = config.value as string;
         if (config.key === 'platform_name') emailSettings.platform_name = config.value as string;
       });
-    }
 
+      // Prefer consolidated JSON config if present
+      const settingsConfig = (configData as any[]).find((c: any) => c.key === 'email_settings');
+      if (settingsConfig && settingsConfig.value && typeof settingsConfig.value === 'object') {
+        const s = settingsConfig.value as Record<string, any>;
+        emailSettings.from_address = s.from_address ?? emailSettings.from_address;
+        emailSettings.from_name = s.from_name ?? emailSettings.from_name;
+        emailSettings.reply_to_address = s.reply_to ?? emailSettings.reply_to_address;
+        emailSettings.platform_name = s.platform_name ?? emailSettings.platform_name;
+      }
+    }
     // Default fallbacks - using verified domain
-    const fromAddress = emailSettings.from_address || 'noreply@mail.fineearn.com';
+    const baseFromAddress = emailSettings.from_address || 'noreply@mail.fineearn.com';
     const fromName = emailSettings.from_name || emailSettings.platform_name || 'FineEarn';
-    const replyTo = emailSettings.reply_to_address || fromAddress;
+    const replyTo = emailSettings.reply_to_address || baseFromAddress;
+
+    // Normalize to verified subdomain if a bare fineearn.com address slips through
+    let fromAddress = baseFromAddress;
+    if (fromAddress?.toLowerCase().endsWith('@fineearn.com') && !fromAddress.toLowerCase().includes('@mail.fineearn.com')) {
+      console.warn(`⚠️ [${requestId}] Unverified sender domain detected (${fromAddress}). Normalizing to noreply@mail.fineearn.com`);
+      fromAddress = 'noreply@mail.fineearn.com';
+    }
 
     console.log(`📧 [${requestId}] Email config: from=${fromName} <${fromAddress}>, reply-to=${replyTo}`);
 
@@ -145,7 +161,13 @@ serve(async (req: Request) => {
         });
       }, 3, 1000); // 3 retries with exponential backoff
 
-      console.log(`✅ [${requestId}] Email sent successfully via Resend:`, emailResponse);
+      // Validate provider response
+      if (!emailResponse?.data?.id) {
+        const providerError = (emailResponse as any)?.error?.message || 'Missing message ID from Resend';
+        throw new Error(providerError);
+      }
+
+      console.log(`✅ [${requestId}] Email sent successfully via Resend. id=${emailResponse.data.id}`);
     } catch (error: any) {
       console.error(`❌ [${requestId}] Failed to send email after retries:`, error);
       
