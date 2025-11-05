@@ -357,8 +357,8 @@ const BulkEmail = () => {
           `Email scheduled for ${new Date(scheduledFor).toLocaleString()}`
         );
       } else {
-        // Send immediately
-        const { error } = await supabase.functions.invoke("send-bulk-email", {
+        // Send immediately (creates background job for database users)
+        const { data: response, error } = await supabase.functions.invoke("send-bulk-email", {
           body: {
             subject: formData.subject,
             body: formData.body,
@@ -372,7 +372,30 @@ const BulkEmail = () => {
 
         if (error) throw error;
 
-        toast.success(`Bulk email sent to ${recipientCount} recipients!`);
+        // Check if it's a job-based response (database users) or immediate send (external email)
+        if (response?.job_id) {
+          // Background job created for database users
+          const estimatedTimeText = response.estimated_time_minutes > 60 
+            ? `${Math.round(response.estimated_time_minutes / 60)} hours`
+            : `${response.estimated_time_minutes} minutes`;
+
+          toast.success(
+            `✅ Bulk email job created! Processing ${response.total_recipients.toLocaleString()} recipients in background.`,
+            {
+              description: `Estimated completion: ${estimatedTimeText}. View progress in History tab.`,
+              duration: 5000,
+            }
+          );
+
+          // Optional: Auto-switch to history tab after 2 seconds to show job progress
+          setTimeout(() => {
+            const historyTab = document.querySelector('[value="history"]') as HTMLElement;
+            if (historyTab) historyTab.click();
+          }, 2000);
+        } else {
+          // Immediate send (external email)
+          toast.success(`Email sent successfully!`);
+        }
       }
 
       // Reset form

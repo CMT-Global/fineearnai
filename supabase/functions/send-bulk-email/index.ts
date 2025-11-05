@@ -279,153 +279,91 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Get recipients based on criteria (for database users)
-    let query = supabase.from("profiles").select("email, username, id, full_name");
+    // PHASE 2: BUILD COUNT QUERY (for database users only)
+    let countQuery = supabase.from("profiles").select("*", { count: 'exact', head: true });
+
+    // Store recipient filter for job processing
+    const recipientFilter: Record<string, any> = { type: recipientType };
 
     if (recipientType === "plan" && plan) {
-      query = query.eq("membership_plan", plan);
+      countQuery = countQuery.eq("membership_plan", plan);
+      recipientFilter.plan = plan;
     } else if (recipientType === "country" && country) {
-      query = query.eq("country", country);
+      countQuery = countQuery.eq("country", country);
+      recipientFilter.country = country;
     } else if (recipientType === "usernames" && usernames) {
       const usernameList = usernames.split(",").map((u) => u.trim());
-      query = query.in("username", usernameList);
+      countQuery = countQuery.in("username", usernameList);
+      recipientFilter.usernames = usernameList;
+    } else if (recipientType === "all") {
+      recipientFilter.all = true;
     }
 
-    const { data: recipients, error: recipientsError } = await query;
+    console.log(`[BULK EMAIL QUEUE] Counting recipients for:`, recipientFilter);
 
-    if (recipientsError) {
-      throw recipientsError;
+    // PHASE 2: GET COUNT ONLY (no data fetch)
+    const { count: totalRecipients, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error("[BULK EMAIL QUEUE] Count error:", countError);
+      throw countError;
     }
 
-    if (!recipients || recipients.length === 0) {
-      throw new Error("No recipients found");
-    }
-
-    console.log(`Found ${recipients.length} recipients`);
-
-    // PHASE 4 CRITICAL FIX: Fetch dynamic email settings ONCE before loop
-    console.log(`⚙️  [Bulk Email] Fetching dynamic email settings...`);
-    const { data: configData } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
-
-    const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
-    };
-
-    console.log(`✅ [Bulk Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
-    console.log(`✅ [Bulk Email] Reply-To: ${emailSettings.reply_to_address}`);
-    console.log(`🔧 [Bulk Email] CRITICAL FIX: Replaced onboarding@resend.dev with verified domain`);
-
-    // Send emails to all recipients
-    const emailPromises = recipients.map(async (recipient) => {
-    try {
-      // Replace variables in body
-      let personalizedBody = body;
-      let personalizedSubject = subject;
-      
-      // Replace all common variables
-      const replacements: Record<string, string> = {
-        'username': recipient.username || 'User',
-        'email': recipient.email || '',
-        'full_name': recipient.full_name || recipient.username || 'User',
-      };
-      
-      // Perform replacements
-      Object.entries(replacements).forEach(([key, value]) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        personalizedBody = personalizedBody.replace(regex, value);
-        personalizedSubject = personalizedSubject.replace(regex, value);
-      });
-
-      // Wrap personalized content in professional template
-      const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
-        title: 'FineEarn',
-        preheader: personalizedSubject,
-        headerGradient: true,
-        includeFooter: true
-      });
-
-      // Create plain text version by stripping HTML tags
-      const textVersion = personalizedBody.replace(/<[^>]*>/g, '').trim();
-
-      const emailResponse = await resend.emails.send({
-        from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
-        to: [recipient.email!],
-        subject: personalizedSubject,
-        html: wrappedBody,
-        text: textVersion,
-        reply_to: emailSettings.reply_to_address,
-        headers: {
-          'X-Entity-Ref-ID': `${recipient.id}-${Date.now()}`,
-          'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}?subject=Unsubscribe>`,
-        },
-      });
-
-      // Log the email with email_type metadata for filtering
-      await supabase.from("email_logs").insert([
+    if (!totalRecipients || totalRecipients === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: "No recipients found",
+          message: "No users match the selected criteria"
+        }),
         {
-          recipient_email: recipient.email,
-          recipient_user_id: recipient.id,
-          subject: personalizedSubject,
-          body: wrappedBody,
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          sent_by: user.id,
-          metadata: { 
-            resend_id: emailResponse.data?.id,
-            variables_used: Object.keys(replacements),
-            email_type: 'bulk',
-            batch_id: batchId,
-            wrapped_in_template: true,
-            original_body: personalizedBody
-          },
-        },
-      ]);
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
-        return { success: true, email: recipient.email };
-      } catch (error: any) {
-        console.error(`Failed to send email to ${recipient.email}:`, error);
+    console.log(`[BULK EMAIL QUEUE] Found ${totalRecipients} recipients`);
 
-        // Log the failure
-        await supabase.from("email_logs").insert([
-          {
-            recipient_email: recipient.email,
-            recipient_user_id: recipient.id,
-            subject: subject,
-            body: body,
-            status: "failed",
-            error_message: error.message,
-            sent_by: user.id,
-            metadata: {
-              email_type: 'bulk',
-              batch_id: batchId
-            },
-          },
-        ]);
+    // PHASE 2: CALCULATE ESTIMATED TIME
+    // Throughput: 200 emails/second = 12,000 emails/minute
+    const estimatedMinutes = Math.ceil(totalRecipients / 12000);
+    console.log(`[BULK EMAIL QUEUE] Estimated completion time: ${estimatedMinutes} minutes`);
 
-        return { success: false, email: recipient.email, error: error.message };
-      }
-    });
+    // PHASE 2: CREATE JOB RECORD
+    const { data: jobData, error: jobError } = await supabase
+      .from("bulk_email_jobs")
+      .insert({
+        batch_id: batchId,
+        subject: subject,
+        body: body,
+        recipient_filter: recipientFilter,
+        total_recipients: totalRecipients,
+        status: 'queued',
+        created_by: user.id,
+      })
+      .select()
+      .single();
 
-    const results = await Promise.all(emailPromises);
+    if (jobError) {
+      console.error("[BULK EMAIL QUEUE] Job creation error:", jobError);
+      throw new Error(`Failed to create email job: ${jobError.message}`);
+    }
 
-    const successful = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
+    console.log(`[BULK EMAIL QUEUE] ✅ Job created successfully: ${jobData.id}`);
+    console.log(`[BULK EMAIL QUEUE] 🎯 Total recipients: ${totalRecipients}`);
+    console.log(`[BULK EMAIL QUEUE] ⏱️  Estimated time: ${estimatedMinutes} minutes`);
+    console.log(`[BULK EMAIL QUEUE] 📊 Status: queued`);
 
-    console.log(`Email sending complete: ${successful} sent, ${failed} failed`);
-
+    // PHASE 2: RETURN IMMEDIATE SUCCESS RESPONSE
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Sent ${successful} emails successfully, ${failed} failed`,
-        total: recipients.length,
-        successful,
-        failed,
+        message: `Bulk email job created successfully. Processing ${totalRecipients} recipients in background.`,
+        job_id: jobData.id,
+        batch_id: batchId,
+        total_recipients: totalRecipients,
+        estimated_time_minutes: estimatedMinutes,
+        status: 'queued',
       }),
       {
         status: 200,
