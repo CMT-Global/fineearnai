@@ -55,6 +55,7 @@ const CPAYReconciliation = lazy(() => import("@/pages/admin/CPAYReconciliation")
 const CPAYCheckouts = lazy(() => import("@/pages/admin/CPAYCheckouts"));
 const CommissionAudit = lazy(() => import("@/pages/admin/CommissionAudit"));
 const InfluencerInvites = lazy(() => import("@/pages/admin/InfluencerInvites"));
+const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -345,6 +346,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <InfluencerInvites />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/communications/user-invites"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <UserInvites />
             </AdminLayout>
           </AdminRoute>
         }
