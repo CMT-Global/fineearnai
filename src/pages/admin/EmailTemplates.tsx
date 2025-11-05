@@ -531,8 +531,8 @@ const EmailTemplates = () => {
                     Add Template
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0">
-                  <div className="flex h-full">
+                <DialogContent className="max-w-[95vw] w-full max-h-[92vh] p-0 flex flex-col">
+                  <div className="flex flex-1 min-h-0">
                     {/* Left Side: Editor */}
                     <div className="flex-1 overflow-y-auto p-6 border-r">
                       <DialogHeader>
