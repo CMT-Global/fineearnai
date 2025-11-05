@@ -161,6 +161,9 @@ const Signup = () => {
         }
       }
 
+      // PHASE 6A: Email verification logging and notification
+      console.log("✅ Signup successful - email verification required");
+      
       // If signup successful and we have a referral code, link will be handled by database trigger
       if (authData.user && referralCode) {
         console.log('[REFERRAL] ✅ Account created with referral code:', {
@@ -172,8 +175,8 @@ const Signup = () => {
         toast({
           title: "Account created!",
           description: referrerUsername 
-            ? `Welcome to FineEarn! You've been referred by ${referrerUsername}.`
-            : "Welcome to FineEarn! Referral link applied.",
+            ? `Welcome to FineEarn! You've been referred by ${referrerUsername}. Please check your email to verify your account.`
+            : "Account created! Please check your email to verify.",
         });
         
         // Clear the stored referral code
@@ -182,10 +185,11 @@ const Signup = () => {
       } else {
         toast({
           title: "Account created!",
-          description: "Welcome to FineEarn. Redirecting to dashboard...",
+          description: "Please check your email to verify your account.",
         });
       }
 
+      // PHASE 6A: Redirect to dashboard where verification banner will show
       setTimeout(() => navigate("/dashboard"), 2000);
     } catch (error: any) {
       console.error("Signup error:", error);

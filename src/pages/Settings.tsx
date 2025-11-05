@@ -17,7 +17,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { countries, getCountryName } from "@/lib/countries";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 
 const Settings = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -35,6 +36,7 @@ const Settings = () => {
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
   const [isCurrencyPopoverOpen, setIsCurrencyPopoverOpen] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
   const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
 
   // Redirect if not authenticated
@@ -243,6 +245,43 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* PHASE 6B: Email Verification Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Verification</CardTitle>
+                <CardDescription>Verify your email to unlock all features</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {profile?.email_verified ? (
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Your email is verified</span>
+                    {profile?.email_verified_at && (
+                      <span className="text-sm text-muted-foreground ml-2">
+                        (Verified on {new Date(profile.email_verified_at).toLocaleDateString()})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Your email is not verified. Some features may be limited until you verify your email address.
+                      </AlertDescription>
+                    </Alert>
+                    <Button 
+                      onClick={() => setShowEmailVerification(true)}
+                      className="w-full sm:w-auto"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Verify Email Now
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -638,6 +677,18 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* PHASE 6B: Email Verification Dialog */}
+        <EmailVerificationDialog 
+          open={showEmailVerification}
+          onOpenChange={setShowEmailVerification}
+          userEmail={profile?.email || user?.email || ''}
+          onVerificationSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+            setShowEmailVerification(false);
+            toast.success("Email verified successfully!");
+          }}
+        />
     </PageLayout>
   );
 };
