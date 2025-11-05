@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     // Get user profile and membership plan (including daily withdrawal bypass flag)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*, membership_plan, allow_daily_withdrawals')
+      .select('*, membership_plan, allow_daily_withdrawals, email_verified')
       .eq('id', user.id)
       .single();
 
@@ -81,6 +81,19 @@ Deno.serve(async (req) => {
       console.error('Profile not found:', profileError);
       return new Response(JSON.stringify({ error: 'Profile not found' }), {
         status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PHASE 5.d: Check email verification status (admins bypass this check)
+    if (!isAdmin && !profile.email_verified) {
+      console.log('Withdrawal blocked: Email not verified', { userId: user.id, email: profile.email });
+      return new Response(JSON.stringify({ 
+        error: 'Email verification required',
+        message: 'Please verify your email address before requesting a withdrawal. Check your inbox for the verification code.',
+        errorCode: 'EMAIL_NOT_VERIFIED'
+      }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

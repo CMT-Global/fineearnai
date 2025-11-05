@@ -13,11 +13,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Wallet as WalletIcon, Crown, Sparkles } from "lucide-react";
 import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
+import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
+import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
+import { useState } from "react";
 
 const Wallet = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   // ✅ NEW: React Query hooks for all data
   const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
@@ -67,6 +71,11 @@ const Wallet = () => {
             </header>
 
             <div className="p-4 lg:p-8 space-y-6">
+              {/* PHASE 5.d: Email Verification Banner (if not verified and not admin) */}
+              {!isAdmin && profile && !profile.email_verified && (
+                <EmailVerificationBanner onVerifyClick={() => setShowEmailVerification(true)} />
+              )}
+
               {/* PHASE 4: VIP Withdrawal Access Banner */}
               {validation?.hasBypass && (
                 <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
@@ -106,6 +115,17 @@ const Wallet = () => {
                 title="Recent Transactions"
               />
             </div>
+
+            {/* PHASE 5.d: Email Verification Dialog */}
+            <EmailVerificationDialog 
+              open={showEmailVerification}
+              onOpenChange={setShowEmailVerification}
+              userEmail={profile?.email || ''}
+              onVerificationSuccess={() => {
+                refetchProfile();
+                setShowEmailVerification(false);
+              }}
+            />
         </>
       )}
     </PageLayout>

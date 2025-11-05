@@ -19,6 +19,9 @@ import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
 import { WithdrawalCountdown } from "./WithdrawalCountdown";
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { USDCFeeSavingsBanner } from "./USDCFeeSavingsBanner";
+import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface PaymentProcessor {
   id: string;
@@ -119,6 +122,10 @@ interface WalletCardProps {
 }
 
 export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }: WalletCardProps) => {
+  const { user } = useAuth();
+  const { isAdmin } = useAdmin();
+  const { data: profile } = useProfile(user?.id);
+  
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("");
@@ -438,6 +445,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     // Validate against earnings balance (in USD)
     if (amountUSD > earningsBalance) {
       toast.error("Insufficient balance");
+      return;
+    }
+    
+    // PHASE 5.d: Check email verification (admins bypass this check)
+    if (!isAdmin && profile && !profile.email_verified) {
+      toast.error("Email verification required. Please verify your email before requesting a withdrawal.");
+      setWithdrawDialogOpen(false);
       return;
     }
     
@@ -845,6 +859,17 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  {/* PHASE 5.d: Email Verification Alert */}
+                  {!isAdmin && profile && !profile.email_verified && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Email Verification Required</AlertTitle>
+                      <AlertDescription>
+                        You must verify your email address before requesting a withdrawal. Please verify your email to proceed.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   {/* PHASE 4: VIP Bypass Badge */}
                   {validation?.hasBypass && (
                     <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
@@ -1133,7 +1158,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </div>
                   <Button
                     onClick={handleWithdraw}
-                    disabled={withdrawLoading || !!withdrawAmountError || !withdrawAmount || !withdrawMethod || !accountDetails}
+                    disabled={
+                      withdrawLoading || 
+                      !!withdrawAmountError || 
+                      !withdrawAmount || 
+                      !withdrawMethod || 
+                      !accountDetails ||
+                      (!isAdmin && profile && !profile.email_verified)
+                    }
                     className="w-full"
                   >
                     {withdrawLoading ? (
