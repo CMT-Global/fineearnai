@@ -64,40 +64,42 @@ serve(async (req: Request) => {
       );
     }
 
-    // RATE LIMITING: Check if user has requested too many resets recently
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    // RATE LIMITING: 5 attempts per 5 minutes (more user-friendly, still secure)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: recentRequests, error: rateLimitError } = await supabase
       .from('password_reset_tokens')
       .select('id, created_at')
       .eq('email', email.toLowerCase())
-      .gte('created_at', oneHourAgo)
+      .gte('created_at', fiveMinutesAgo)
       .order('created_at', { ascending: false });
 
     if (rateLimitError) {
       console.error(`❌ [${requestId}] Rate limit check failed:`, rateLimitError);
-    } else if (recentRequests && recentRequests.length >= 3) {
-      console.log(`⚠️ [${requestId}] Rate limit exceeded for email: ${email} (${recentRequests.length} requests in last hour)`);
+    } else if (recentRequests && recentRequests.length >= 5) {
+      console.log(`⚠️ [${requestId}] Rate limit exceeded for email: ${email} (${recentRequests.length} requests in last 5 minutes)`);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'rate_limit_exceeded',
-          message: 'Too many password reset requests. Please try again later.',
+          message: 'Too many password reset requests. Please wait 5 minutes and try again.',
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
       );
     }
 
-    // Check if user exists in auth.users
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-    
-    if (authError) {
-      console.error(`❌ [${requestId}] Error fetching auth users:`, authError);
+    // Check if user exists in profiles table (indexed, scalable for 1M+ users)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email, username, full_name')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
+
+    if (profileError) {
+      console.error(`❌ [${requestId}] Error fetching profile:`, profileError);
       throw new Error('Failed to process request');
     }
 
-    const user = authUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-
-    if (!user) {
+    if (!profile) {
       console.log(`ℹ️ [${requestId}] No user found with email: ${email}`);
       // Return success anyway to prevent email enumeration attacks
       return new Response(
@@ -109,20 +111,8 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log(`✅ [${requestId}] User found: ${user.id}`);
-
-    // Get user profile for username
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('username, full_name')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error(`❌ [${requestId}] Error fetching profile:`, profileError);
-    }
-
-    const username = profile?.username || profile?.full_name || 'User';
+    console.log(`✅ [${requestId}] User found: ${profile.id}`);
+    const username = profile.username || profile.full_name || 'User';
 
     // Generate secure token
     const token = generateSecureToken();
@@ -134,7 +124,7 @@ serve(async (req: Request) => {
     const { data: tokenRecord, error: tokenError } = await supabase
       .from('password_reset_tokens')
       .insert({
-        user_id: user.id,
+        user_id: profile.id,
         email: email.toLowerCase(),
         token: token,
         expires_at: expiresAt.toISOString(),
