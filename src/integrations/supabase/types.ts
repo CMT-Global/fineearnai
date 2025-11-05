@@ -83,6 +83,69 @@ export type Database = {
         }
         Relationships: []
       }
+      bulk_email_jobs: {
+        Row: {
+          batch_id: string
+          body: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          estimated_completion_at: string | null
+          failed_count: number
+          id: string
+          last_processed_at: string | null
+          processed_count: number
+          processing_metadata: Json | null
+          recipient_filter: Json
+          started_at: string | null
+          status: string
+          subject: string
+          successful_count: number
+          total_recipients: number
+        }
+        Insert: {
+          batch_id: string
+          body: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          estimated_completion_at?: string | null
+          failed_count?: number
+          id?: string
+          last_processed_at?: string | null
+          processed_count?: number
+          processing_metadata?: Json | null
+          recipient_filter?: Json
+          started_at?: string | null
+          status?: string
+          subject: string
+          successful_count?: number
+          total_recipients?: number
+        }
+        Update: {
+          batch_id?: string
+          body?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          estimated_completion_at?: string | null
+          failed_count?: number
+          id?: string
+          last_processed_at?: string | null
+          processed_count?: number
+          processing_metadata?: Json | null
+          recipient_filter?: Json
+          started_at?: string | null
+          status?: string
+          subject?: string
+          successful_count?: number
+          total_recipients?: number
+        }
+        Relationships: []
+      }
       commission_audit_log: {
         Row: {
           commission_amount: number | null
