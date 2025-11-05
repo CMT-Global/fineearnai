@@ -1,4 +1,5 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { wrapInProfessionalTemplate } from "./email-template-wrapper.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -328,6 +329,30 @@ export async function sendTemplateEmail(
     const emailSettings = await getEmailSettings(supabaseClient);
     const settingsTime = Date.now() - settingsStart;
     console.log(`✅ [Email Sender] Email settings loaded in ${settingsTime}ms`);
+
+    // ============================================
+    // APPLY PROFESSIONAL EMAIL WRAPPER (PHASE 2)
+    // ============================================
+    console.log(`🎨 [Email Sender] Checking if email needs professional wrapper...`);
+    
+    const needsWrapper = !populatedBody.trim().toLowerCase().startsWith('<!doctype html');
+    
+    if (needsWrapper) {
+      console.log(`🎨 [Email Sender] Template is HTML fragment - applying professional wrapper`);
+      const wrapperStart = Date.now();
+      
+      populatedBody = wrapInProfessionalTemplate(populatedBody, {
+        title: emailSettings.platform_name || 'FineEarn',
+        preheader: populatedSubject,
+        headerGradient: true,
+        includeFooter: true,
+      });
+      
+      const wrapperTime = Date.now() - wrapperStart;
+      console.log(`✅ [Email Sender] Professional wrapper applied in ${wrapperTime}ms`);
+    } else {
+      console.log(`ℹ️  [Email Sender] Template already has full HTML structure - skipping wrapper`);
+    }
 
     // ============================================
     // SEND EMAIL VIA RESEND
