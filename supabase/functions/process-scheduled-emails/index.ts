@@ -145,13 +145,20 @@ const handler = async (req: Request): Promise<Response> => {
               personalizedSubject = personalizedSubject.replace(regex, value);
             });
 
-            // Send email
+            // Generate unique tracking ID for spam prevention and monitoring
+            const trackingId = `scheduled-${scheduledEmail.id}-${recipient.id}-${Date.now()}`;
+
+            // Send email with spam prevention headers
             const emailResponse = await resend.emails.send({
               from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
               to: [recipient.email!],
               subject: personalizedSubject,
               html: personalizedBody,
               reply_to: emailSettings.reply_to_address,
+              headers: {
+                'X-Entity-Ref-ID': trackingId, // Unique tracking ID
+                'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}>`, // RFC 2369 List-Unsubscribe header
+              },
             });
 
             // Log successful send

@@ -177,6 +177,10 @@ serve(async (req: Request) => {
 
     // Step 4: Send email via Resend with retry logic
     let emailResponse;
+    
+    // Generate unique tracking ID for spam prevention and monitoring
+    const trackingId = `template-${template_type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
       emailResponse = await retryWithBackoff(async () => {
         return await resend.emails.send({
@@ -186,6 +190,10 @@ serve(async (req: Request) => {
           html: body,
           text: htmlToPlainText(body), // Plain-text version for spam prevention
           reply_to: replyTo,
+          headers: {
+            'X-Entity-Ref-ID': trackingId, // Unique tracking ID
+            'List-Unsubscribe': `<mailto:${replyTo}>`, // RFC 2369 List-Unsubscribe header
+          },
         });
       }, 3, 1000); // 3 retries with exponential backoff
 

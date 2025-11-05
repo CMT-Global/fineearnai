@@ -361,6 +361,9 @@ serve(async (req) => {
     // ============================================
     console.log(`📤 [Auth Email Hook] Sending email to ${user.email}`);
     
+    // Generate unique tracking ID for spam prevention and monitoring
+    const trackingId = `auth-${email_action_type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
       const emailResponse = await resend.emails.send({
         from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
@@ -368,6 +371,10 @@ serve(async (req) => {
         subject: subject,
         html: htmlBody,
         reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
+        headers: {
+          'X-Entity-Ref-ID': trackingId, // Unique tracking ID
+          'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}>`, // RFC 2369 List-Unsubscribe header
+        },
       });
       
       console.log(`✅ [Auth Email Hook] Email sent successfully. Resend ID: ${emailResponse.data?.id}`);

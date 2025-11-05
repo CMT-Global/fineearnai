@@ -362,6 +362,10 @@ export async function sendTemplateEmail(
     console.log(`📤 [Email Sender] From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`📤 [Email Sender] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
     
+    // Generate unique tracking ID for spam prevention and monitoring
+    const trackingId = `${templateType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`🔖 [Email Sender] Tracking ID: ${trackingId}`);
+    
     const sendStart = Date.now();
     const emailResponse = await resend.emails.send({
       from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
@@ -369,6 +373,10 @@ export async function sendTemplateEmail(
       subject: populatedSubject,
       html: populatedBody,
       reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
+      headers: {
+        'X-Entity-Ref-ID': trackingId, // Unique tracking ID for deliverability
+        'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}>`, // RFC 2369 List-Unsubscribe header
+      },
     });
     const sendTime = Date.now() - sendStart;
 
@@ -406,7 +414,8 @@ export async function sendTemplateEmail(
           missing_variables: missingVariables,
           discovery_time_ms: discoveryTime,
           send_time_ms: sendTime,
-          total_time_ms: Date.now() - startTime
+          total_time_ms: Date.now() - startTime,
+          tracking_id: trackingId, // Include tracking ID in metadata
         },
       })
       .select()
