@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Send, RotateCcw, Palette, Server, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Send, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 
-// Validation schema
+// Validation schema - only essential email settings
 const emailSettingsSchema = z.object({
   from_address: z.string().email("Invalid email address").max(255, "Email too long"),
   from_name: z.string().trim().min(1, "From name is required").max(100, "Name too long"),
@@ -26,10 +26,9 @@ const emailSettingsSchema = z.object({
   platform_url: z.string().url("Invalid URL").max(500, "URL too long"),
   admin_notification_email: z.string().email("Invalid email address").max(255, "Email too long"),
   footer_text: z.string().max(1000, "Footer text too long"),
-  branding_color_primary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color"),
-  branding_color_secondary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color"),
 });
 
+// Default settings - only essential fields
 const DEFAULT_SETTINGS = {
   from_address: "noreply@mail.fineearn.com",
   from_name: "FineEarn",
@@ -39,16 +38,7 @@ const DEFAULT_SETTINGS = {
   platform_name: "FineEarn",
   platform_url: "https://fineearn.com",
   admin_notification_email: "admin@fineearn.com",
-  smtp_enabled: false,
-  smtp_host: "",
-  smtp_port: 587,
-  smtp_username: "",
-  smtp_secure: true,
   footer_text: "This is an automated email from FineEarn. Please do not reply to this email.",
-  footer_unsubscribe_link: "",
-  branding_logo_url: "",
-  branding_color_primary: "#0066ff",
-  branding_color_secondary: "#f5f5f5"
 };
 
 export default function EmailSettings() {
@@ -112,7 +102,7 @@ export default function EmailSettings() {
     },
   });
 
-  // Send test email mutation
+  // Send test email mutation - simplified
   const testEmailMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -121,17 +111,6 @@ export default function EmailSettings() {
       const { error } = await supabase.functions.invoke('send-test-email', {
         body: {
           test_email: user.email,
-          subject: `Test Email from ${settings.platform_name}`,
-          body: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: ${settings.branding_color_primary};">Test Email</h1>
-              <p>This is a test email sent from ${settings.platform_name} email settings.</p>
-              <p><strong>From:</strong> ${settings.from_name} &lt;${settings.from_address}&gt;</p>
-              <p><strong>Reply-To:</strong> ${settings.reply_to_name} &lt;${settings.reply_to_address}&gt;</p>
-              <hr style="border: 1px solid ${settings.branding_color_secondary}; margin: 20px 0;" />
-              <p style="color: #666; font-size: 12px;">${settings.footer_text}</p>
-            </div>
-          `,
         }
       });
 
@@ -269,32 +248,15 @@ export default function EmailSettings() {
           </Alert>
         )}
 
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="general" className="gap-2">
-              <Mail className="h-4 w-4" />
-              General Settings
-            </TabsTrigger>
-            <TabsTrigger value="branding" className="gap-2">
-              <Palette className="h-4 w-4" />
-              Branding
-            </TabsTrigger>
-            <TabsTrigger value="smtp" className="gap-2">
-              <Server className="h-4 w-4" />
-              SMTP (Optional)
-            </TabsTrigger>
-          </TabsList>
-
-          {/* General Settings Tab */}
-          <TabsContent value="general" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sender Information</CardTitle>
-                <CardDescription>
-                  Configure who emails are sent from. The from_address must be verified in Resend.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        {/* Sender Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sender Information</CardTitle>
+            <CardDescription>
+              Configure who emails are sent from. The from_address must be verified in Resend.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="from_address">From Address *</Label>
@@ -329,17 +291,18 @@ export default function EmailSettings() {
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Reply-To Information</CardTitle>
-                <CardDescription>
-                  Where user replies will be sent to.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        {/* Reply-To Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Reply-To Information</CardTitle>
+            <CardDescription>
+              Where user replies will be sent to.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="reply_to_address">Reply-To Address *</Label>
@@ -374,17 +337,18 @@ export default function EmailSettings() {
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Information</CardTitle>
-                <CardDescription>
-                  Basic platform details used in emails and templates.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        {/* Platform Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Information</CardTitle>
+            <CardDescription>
+              Basic platform details used in emails and templates.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="platform_name">Platform Name *</Label>
@@ -472,193 +436,8 @@ export default function EmailSettings() {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Branding Tab */}
-          <TabsContent value="branding" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Branding</CardTitle>
-                <CardDescription>
-                  Customize the visual appearance of your emails for white-label deployments.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="branding_color_primary">Primary Brand Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="branding_color_primary"
-                        type="color"
-                        value={settings.branding_color_primary}
-                        onChange={(e) => handleInputChange('branding_color_primary', e.target.value)}
-                        className="w-20 h-10"
-                      />
-                      <Input
-                        value={settings.branding_color_primary}
-                        onChange={(e) => handleInputChange('branding_color_primary', e.target.value)}
-                        placeholder="#0066ff"
-                        className="flex-1"
-                      />
-                    </div>
-                    {errors.branding_color_primary && (
-                      <p className="text-sm text-destructive flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {errors.branding_color_primary}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="branding_color_secondary">Secondary Brand Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="branding_color_secondary"
-                        type="color"
-                        value={settings.branding_color_secondary}
-                        onChange={(e) => handleInputChange('branding_color_secondary', e.target.value)}
-                        className="w-20 h-10"
-                      />
-                      <Input
-                        value={settings.branding_color_secondary}
-                        onChange={(e) => handleInputChange('branding_color_secondary', e.target.value)}
-                        placeholder="#f5f5f5"
-                        className="flex-1"
-                      />
-                    </div>
-                    {errors.branding_color_secondary && (
-                      <p className="text-sm text-destructive flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {errors.branding_color_secondary}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="branding_logo_url">Logo URL (Optional)</Label>
-                  <Input
-                    id="branding_logo_url"
-                    type="url"
-                    value={settings.branding_logo_url}
-                    onChange={(e) => handleInputChange('branding_logo_url', e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL to your logo image that will appear in email headers
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Email Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Preview</CardTitle>
-                <CardDescription>
-                  Preview how emails will look with your current settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div 
-                  className="border rounded-lg p-6 bg-white"
-                  style={{ 
-                    maxWidth: '600px',
-                    margin: '0 auto',
-                  }}
-                >
-                  {settings.branding_logo_url && (
-                    <img 
-                      src={settings.branding_logo_url} 
-                      alt="Logo" 
-                      className="h-12 mb-4"
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  )}
-                  <h1 style={{ color: settings.branding_color_primary, marginBottom: '16px' }}>
-                    Sample Email Heading
-                  </h1>
-                  <p className="mb-4">
-                    This is how your emails will appear to users. The heading above uses your primary brand color.
-                  </p>
-                  <p className="mb-4">
-                    <strong>From:</strong> {settings.from_name} &lt;{settings.from_address}&gt;<br />
-                    <strong>Reply-To:</strong> {settings.reply_to_name} &lt;{settings.reply_to_address}&gt;
-                  </p>
-                  <hr style={{ 
-                    border: 'none',
-                    borderTop: `1px solid ${settings.branding_color_secondary}`,
-                    margin: '20px 0' 
-                  }} />
-                  <p style={{ 
-                    color: '#666',
-                    fontSize: '12px',
-                    marginTop: '20px'
-                  }}>
-                    {settings.footer_text}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* SMTP Tab */}
-          <TabsContent value="smtp" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>SMTP Configuration (Future Feature)</CardTitle>
-                <CardDescription>
-                  Configure custom SMTP server for email sending. Currently, the platform uses Resend.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    SMTP configuration will be available in a future update. Currently, all emails are sent via Resend.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-4 opacity-50 pointer-events-none">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Enable SMTP</Label>
-                      <p className="text-sm text-muted-foreground">Use custom SMTP server instead of Resend</p>
-                    </div>
-                    <Switch disabled checked={settings.smtp_enabled} />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>SMTP Host</Label>
-                      <Input disabled value={settings.smtp_host} placeholder="smtp.example.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>SMTP Port</Label>
-                      <Input disabled type="number" value={settings.smtp_port} placeholder="587" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>SMTP Username</Label>
-                    <Input disabled value={settings.smtp_username} placeholder="user@example.com" />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Use TLS/SSL</Label>
-                      <p className="text-sm text-muted-foreground">Enable secure connection</p>
-                    </div>
-                    <Switch disabled checked={settings.smtp_secure} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
     </div>
   );
 }
