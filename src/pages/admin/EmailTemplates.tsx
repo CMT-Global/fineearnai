@@ -30,8 +30,41 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
-// Predefined auth template types with descriptions and available variables
-const AUTH_TEMPLATE_TYPES = [
+// Complete platform template types with descriptions and available variables
+const TEMPLATE_TYPES = [
+  // Transaction Emails
+  {
+    value: "transaction",
+    label: "Transaction (Deposit/Withdrawal)",
+    description: "For deposit confirmations, withdrawal processed, withdrawal rejected",
+    variables: ["username", "amount", "transaction_id", "new_balance", "payment_method", "gateway", "rejection_reason"]
+  },
+  
+  // Referral Emails
+  {
+    value: "referral",
+    label: "Referral (New Signup/Milestone)",
+    description: "For new referral signups and milestone achievements",
+    variables: ["username", "referred_username", "referral_code", "total_referrals", "milestone_count", "total_commission", "reward_message", "next_milestone", "referrals_to_next"]
+  },
+  
+  // Membership Emails
+  {
+    value: "membership",
+    label: "Membership (Upgrade/Expiry/Renewal)",
+    description: "For plan upgrades, expiry reminders, and renewal notifications",
+    variables: ["username", "plan_name", "expiry_date", "days_until_expiry", "plan_price", "new_plan", "old_plan"]
+  },
+  
+  // User Onboarding
+  {
+    value: "user_onboarding",
+    label: "User Onboarding (Welcome)",
+    description: "Welcome email sent to new users",
+    variables: ["username", "email", "referral_code", "platform_url"]
+  },
+  
+  // Auth Emails (handled by auth hook)
   {
     value: "auth_password_reset",
     label: "Password Reset",
@@ -56,6 +89,8 @@ const AUTH_TEMPLATE_TYPES = [
     description: "Sent when user changes their email address",
     variables: ["username", "old_email", "new_email", "confirmation_link", "token_hash"]
   },
+  
+  // Custom
   {
     value: "custom",
     label: "Custom Template",
@@ -92,17 +127,41 @@ const EmailTemplates = () => {
   // Helper function to populate sample data in preview
   const populateSampleData = (content: string): string => {
     const sampleData: Record<string, string> = {
+      // User variables
       username: "JohnDoe",
       email: "john.doe@example.com",
       full_name: "John Doe",
+      
+      // Transaction variables
       amount: "$250.00",
       transaction_id: "TXN-2025-001234",
       new_balance: "$1,250.00",
+      payment_method: "USDT TRC20",
+      gateway: "CPAY",
+      rejection_reason: "Invalid wallet address provided",
+      
+      // Referral variables
+      referred_username: "JaneSmith",
+      referral_code: "JOHNDOE2025",
+      total_referrals: "47",
+      milestone_count: "50",
+      total_commission: "$125.00",
+      reward_message: "Congratulations! You've unlocked the 50 Referrals Badge!",
+      next_milestone: "100",
+      referrals_to_next: "3",
+      
+      // Membership variables
       plan_name: "Premium Plan",
       expiry_date: "March 15, 2025",
-      milestone: "50",
-      total_earnings: "$500.00",
-      rejection_reason: "Insufficient funds in wallet",
+      days_until_expiry: "3",
+      plan_price: "$49.99",
+      new_plan: "Pro Plan",
+      old_plan: "Basic Plan",
+      
+      // Platform variables
+      platform_url: "https://fineearn.com",
+      
+      // Auth variables
       reset_link: "https://fineearn.com/reset-password?token=sample",
       confirmation_link: "https://fineearn.com/confirm-email?token=sample",
       magic_link: "https://fineearn.com/magic-link?token=sample",
@@ -122,7 +181,7 @@ const EmailTemplates = () => {
   
   // Get template info based on selected type
   const getTemplateInfo = (type: string) => {
-    return AUTH_TEMPLATE_TYPES.find(t => t.value === type);
+    return TEMPLATE_TYPES.find(t => t.value === type);
   };
   
   const selectedTemplateInfo = getTemplateInfo(formData.template_type);
@@ -427,7 +486,7 @@ const EmailTemplates = () => {
                             <SelectValue placeholder="Select template type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {AUTH_TEMPLATE_TYPES.map((type) => (
+                            {TEMPLATE_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
                                 {type.label}
                               </SelectItem>
