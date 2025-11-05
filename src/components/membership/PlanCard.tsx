@@ -201,7 +201,9 @@ export function PlanCard({
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Subscription Valid: {plan.billing_period_days} days
+                  Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+                    ? plan.free_plan_expiry_days 
+                    : plan.billing_period_days} days
                 </div>
               </div>
 
@@ -460,7 +462,9 @@ export function PlanCard({
               </span>
             </div>
             <span className="text-xs sm:text-sm font-normal text-muted-foreground">
-              Subscription Valid: {plan.billing_period_days} days
+              Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+                ? plan.free_plan_expiry_days 
+                : plan.billing_period_days} days
             </span>
           </div>
           {/* Daily cost breakdown */}
