@@ -10,6 +10,8 @@ import { RecentTransactionsCard } from "@/components/transactions/RecentTransact
 import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
 import { SocialFollowCard } from "@/components/dashboard/SocialFollowCard";
 import { GCashGuideCard } from "@/components/dashboard/GCashGuideCard";
+import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
+import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 import { 
   Crown, 
   Sparkles,
@@ -39,6 +41,9 @@ const Dashboard = () => {
   
   // State to track fresh login for login message dialog
   const [showLoginMessage, setShowLoginMessage] = useState(false);
+  
+  // State for email verification
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
   
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
@@ -142,8 +147,30 @@ const Dashboard = () => {
         />
       )}
 
+      {/* Email Verification Dialog */}
+      {profile && (
+        <EmailVerificationDialog
+          open={showEmailVerification}
+          onOpenChange={setShowEmailVerification}
+          userEmail={profile.email}
+          onVerificationSuccess={() => {
+            // Refetch dashboard data to update email_verified status
+            refetch();
+          }}
+        />
+      )}
+
       {profile && (
         <>
+          {/* Email Verification Banner - Show if email not verified */}
+          {profile.email_verified === false && (
+            <div className="mx-4 lg:mx-8 mt-6">
+              <EmailVerificationBanner 
+                onVerifyClick={() => setShowEmailVerification(true)}
+              />
+            </div>
+          )}
+
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
