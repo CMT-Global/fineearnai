@@ -326,6 +326,73 @@ const BulkEmail = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Recipient Selection - MOVED TO TOP */}
+                <div>
+                  <Label>Recipients *</Label>
+                  <Tabs
+                    value={formData.recipientType}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, recipientType: value })
+                    }
+                  >
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="all">All Users</TabsTrigger>
+                      <TabsTrigger value="plan">By Plan</TabsTrigger>
+                      <TabsTrigger value="country">By Country</TabsTrigger>
+                      <TabsTrigger value="usernames">By Username</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="all" className="mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Email will be sent to all registered users
+                      </p>
+                    </TabsContent>
+
+                    <TabsContent value="plan" className="mt-4">
+                      <Select
+                        value={formData.plan}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, plan: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select membership plan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                          <SelectItem value="vip">VIP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+
+                    <TabsContent value="country" className="mt-4">
+                      <Input
+                        value={formData.country}
+                        onChange={(e) =>
+                          setFormData({ ...formData, country: e.target.value })
+                        }
+                        placeholder="Enter country name"
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="usernames" className="mt-4">
+                      <Textarea
+                        value={formData.usernames}
+                        onChange={(e) =>
+                          setFormData({ ...formData, usernames: e.target.value })
+                        }
+                        placeholder="Enter usernames separated by commas"
+                        rows={3}
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Example: user1, user2, user3
+                      </p>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+
                 {/* Template Selection */}
                 <div>
                   <Label htmlFor="template">Use Template (Optional)</Label>
@@ -401,73 +468,6 @@ const BulkEmail = () => {
                   <Eye className="mr-2 h-4 w-4" />
                   Preview Email
                 </Button>
-
-                {/* Recipient Selection */}
-                <div>
-                  <Label>Recipients *</Label>
-                  <Tabs
-                    value={formData.recipientType}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, recipientType: value })
-                    }
-                  >
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="all">All Users</TabsTrigger>
-                      <TabsTrigger value="plan">By Plan</TabsTrigger>
-                      <TabsTrigger value="country">By Country</TabsTrigger>
-                      <TabsTrigger value="usernames">By Username</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="all" className="mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Email will be sent to all registered users
-                      </p>
-                    </TabsContent>
-
-                    <TabsContent value="plan" className="mt-4">
-                      <Select
-                        value={formData.plan}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, plan: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select membership plan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                          <SelectItem value="vip">VIP</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TabsContent>
-
-                    <TabsContent value="country" className="mt-4">
-                      <Input
-                        value={formData.country}
-                        onChange={(e) =>
-                          setFormData({ ...formData, country: e.target.value })
-                        }
-                        placeholder="Enter country name"
-                      />
-                    </TabsContent>
-
-                    <TabsContent value="usernames" className="mt-4">
-                      <Textarea
-                        value={formData.usernames}
-                        onChange={(e) =>
-                          setFormData({ ...formData, usernames: e.target.value })
-                        }
-                        placeholder="Enter usernames separated by commas"
-                        rows={3}
-                      />
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Example: user1, user2, user3
-                      </p>
-                    </TabsContent>
-                  </Tabs>
-                </div>
 
                 {/* Schedule Options */}
                 <div>
