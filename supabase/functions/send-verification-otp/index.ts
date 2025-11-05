@@ -172,6 +172,10 @@ Deno.serve(async (req) => {
 
     console.log(`💾 [${requestId}] OTP stored in database: ${otpRecord.id}`);
 
+    // Enhanced logging for debugging
+    console.log(`📧 [${requestId}] Sending OTP email to: ${userEmail}`);
+    console.log(`🔢 [${requestId}] Template: email_verification_otp`);
+
     // Step 7: Send email via template
     try {
       const { data: emailResult, error: emailError } = await supabaseClient.functions.invoke(
