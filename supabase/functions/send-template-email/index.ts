@@ -56,6 +56,21 @@ function replaceVariables(template: string, variables: Record<string, any>): str
   return result;
 }
 
+// Convert HTML to plain text for email compatibility
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[^>]*>.*?<\/style>/gis, '') // Remove style tags
+    .replace(/<script[^>]*>.*?<\/script>/gis, '') // Remove script tags
+    .replace(/<[^>]+>/g, '') // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -169,6 +184,7 @@ serve(async (req: Request) => {
           to: [email],
           subject: subject,
           html: body,
+          text: htmlToPlainText(body), // Plain-text version for spam prevention
           reply_to: replyTo,
         });
       }, 3, 1000); // 3 retries with exponential backoff
