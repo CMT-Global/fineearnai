@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -102,11 +103,23 @@ const handler = async (req: Request): Promise<Response> => {
           }
 
           try {
+            // Wrap content in professional template
+            const wrappedBody = wrapInProfessionalTemplate(scheduledEmail.body, {
+              title: 'FineEarn',
+              preheader: scheduledEmail.subject,
+              headerGradient: true,
+              includeFooter: true
+            });
+
+            // Create plain text version by stripping HTML tags
+            const textVersion = scheduledEmail.body.replace(/<[^>]*>/g, '').trim();
+
             const emailResponse = await resend.emails.send({
               from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
               to: [filter.email.trim()],
               subject: scheduledEmail.subject,
-              html: scheduledEmail.body,
+              html: wrappedBody,
+              text: textVersion,
               reply_to: emailSettings.reply_to_address,
               headers: {
                 'X-Entity-Ref-ID': `scheduled-external-${Date.now()}`,
@@ -119,14 +132,16 @@ const handler = async (req: Request): Promise<Response> => {
                 recipient_email: filter.email.trim(),
                 recipient_user_id: null,
                 subject: scheduledEmail.subject,
-                body: scheduledEmail.body,
+                body: wrappedBody,
                 status: "sent",
                 sent_at: new Date().toISOString(),
                 sent_by: scheduledEmail.created_by,
                 metadata: { 
                   resend_id: emailResponse.data?.id,
                   email_type: 'scheduled',
-                  external_email: true
+                  external_email: true,
+                  wrapped_in_template: true,
+                  original_body: scheduledEmail.body
                 },
               },
             ]);
@@ -230,12 +245,24 @@ const handler = async (req: Request): Promise<Response> => {
             // Generate unique tracking ID for spam prevention and monitoring
             const trackingId = `scheduled-${scheduledEmail.id}-${recipient.id}-${Date.now()}`;
 
+            // Wrap personalized content in professional template
+            const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
+              title: 'FineEarn',
+              preheader: personalizedSubject,
+              headerGradient: true,
+              includeFooter: true
+            });
+
+            // Create plain text version by stripping HTML tags
+            const textVersion = personalizedBody.replace(/<[^>]*>/g, '').trim();
+
             // Send email with spam prevention headers
             const emailResponse = await resend.emails.send({
               from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
               to: [recipient.email!],
               subject: personalizedSubject,
-              html: personalizedBody,
+              html: wrappedBody,
+              text: textVersion,
               reply_to: emailSettings.reply_to_address,
               headers: {
                 'X-Entity-Ref-ID': trackingId, // Unique tracking ID
@@ -249,14 +276,16 @@ const handler = async (req: Request): Promise<Response> => {
                 recipient_email: recipient.email,
                 recipient_user_id: recipient.id,
                 subject: personalizedSubject,
-                body: personalizedBody,
+                body: wrappedBody,
                 status: "sent",
                 sent_at: new Date().toISOString(),
                 sent_by: scheduledEmail.created_by,
                 metadata: { 
                   resend_id: emailResponse.data?.id,
                   scheduled_email_id: scheduledEmail.id,
-                  variables_used: Object.keys(replacements)
+                  variables_used: Object.keys(replacements),
+                  wrapped_in_template: true,
+                  original_body: personalizedBody
                 },
               },
             ]);

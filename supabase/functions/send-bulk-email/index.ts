@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -184,11 +185,23 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Send email to external address
       try {
+        // Wrap content in professional template
+        const wrappedBody = wrapInProfessionalTemplate(body, {
+          title: 'FineEarn',
+          preheader: subject,
+          headerGradient: true,
+          includeFooter: true
+        });
+
+        // Create plain text version by stripping HTML tags
+        const textVersion = body.replace(/<[^>]*>/g, '').trim();
+
         const emailResponse = await resend.emails.send({
           from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
           to: [email.trim()],
           subject: subject,
-          html: body,
+          html: wrappedBody,
+          text: textVersion,
           reply_to: emailSettings.reply_to_address,
           headers: {
             'X-Entity-Ref-ID': `external-${Date.now()}`,
@@ -201,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
             recipient_email: email.trim(),
             recipient_user_id: null,
             subject: subject,
-            body: body,
+            body: wrappedBody,
             status: "sent",
             sent_at: new Date().toISOString(),
             sent_by: user.id,
@@ -209,7 +222,9 @@ const handler = async (req: Request): Promise<Response> => {
               resend_id: emailResponse.data?.id,
               email_type: 'bulk',
               batch_id: batchId,
-              external_email: true
+              external_email: true,
+              wrapped_in_template: true,
+              original_body: body
             },
           },
         ]);
@@ -327,11 +342,23 @@ const handler = async (req: Request): Promise<Response> => {
         personalizedSubject = personalizedSubject.replace(regex, value);
       });
 
+      // Wrap personalized content in professional template
+      const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
+        title: 'FineEarn',
+        preheader: personalizedSubject,
+        headerGradient: true,
+        includeFooter: true
+      });
+
+      // Create plain text version by stripping HTML tags
+      const textVersion = personalizedBody.replace(/<[^>]*>/g, '').trim();
+
       const emailResponse = await resend.emails.send({
         from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
         to: [recipient.email!],
         subject: personalizedSubject,
-        html: personalizedBody,
+        html: wrappedBody,
+        text: textVersion,
         reply_to: emailSettings.reply_to_address,
         headers: {
           'X-Entity-Ref-ID': `${recipient.id}-${Date.now()}`,
@@ -345,7 +372,7 @@ const handler = async (req: Request): Promise<Response> => {
           recipient_email: recipient.email,
           recipient_user_id: recipient.id,
           subject: personalizedSubject,
-          body: personalizedBody,
+          body: wrappedBody,
           status: "sent",
           sent_at: new Date().toISOString(),
           sent_by: user.id,
@@ -353,7 +380,9 @@ const handler = async (req: Request): Promise<Response> => {
             resend_id: emailResponse.data?.id,
             variables_used: Object.keys(replacements),
             email_type: 'bulk',
-            batch_id: batchId
+            batch_id: batchId,
+            wrapped_in_template: true,
+            original_body: personalizedBody
           },
         },
       ]);
