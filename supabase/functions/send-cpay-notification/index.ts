@@ -1,20 +1,47 @@
 /**
- * CPAY Notification Service
+ * ============================================================================
+ * CPAY NOTIFICATION SERVICE - IN-APP NOTIFICATIONS ONLY
+ * ============================================================================
  * 
- * PURPOSE: Creates in-app notifications for CPAY transaction events
+ * PURPOSE:
+ *   Creates in-app notifications for CPAY transaction events that appear in
+ *   the user's notification center/dashboard.
  * 
- * NOTE: This function does NOT send emails. Email notifications are handled
- * by the cpay-webhook function using professional email templates from the
- * email_templates table with proper branding and wrapper.
+ * CRITICAL NOTES:
+ *   ⚠️  This function does NOT send emails
+ *   ⚠️  Email notifications are handled separately by cpay-webhook function
+ *   ⚠️  This prevents duplicate emails (Phase 1 fix applied)
  * 
- * EVENTS SUPPORTED:
- * - deposit_success / deposit_failed
- * - withdrawal_approved / withdrawal_rejected / withdrawal_completed
+ * EMAIL ARCHITECTURE:
+ *   - cpay-webhook: Sends professional templated emails via sendTemplateEmail
+ *   - send-cpay-notification: Creates in-app notifications ONLY (this file)
+ *   
+ *   Flow: Deposit completed → Webhook → sendTemplateEmail() + createNotification()
+ *   Result: 1 EMAIL + 1 IN-APP NOTIFICATION ✅
+ * 
+ * SUPPORTED EVENTS:
+ *   - deposit_success: Deposit successfully credited
+ *   - deposit_failed: Deposit payment failed
+ *   - withdrawal_approved: Withdrawal request approved by admin
+ *   - withdrawal_rejected: Withdrawal request rejected by admin
+ *   - withdrawal_completed: Withdrawal successfully sent to user
  * 
  * FUNCTIONALITY:
- * - Creates in-app notifications visible in user dashboard
- * - Stores transaction metadata for user reference
- * - Does NOT duplicate email sending (prevents double emails)
+ *   ✓ Creates notifications in the 'notifications' table
+ *   ✓ Sets appropriate priority levels (high for transactions)
+ *   ✓ Stores transaction metadata for user reference
+ *   ✓ Generates user-friendly titles and messages
+ *   ✗ Does NOT send emails (see cpay-webhook for email sending)
+ * 
+ * CALLED BY:
+ *   - cpay-webhook (after successful deposit/withdrawal processing)
+ *   - process-withdrawal-payment (after admin actions)
+ * 
+ * HISTORY:
+ *   - Phase 1 (2025-11-05): Removed duplicate email sending logic
+ *   - Phase 3 (2025-11-05): Added comprehensive documentation
+ * 
+ * ============================================================================
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
