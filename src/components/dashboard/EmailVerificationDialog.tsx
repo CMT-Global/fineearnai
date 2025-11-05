@@ -58,7 +58,7 @@ export const EmailVerificationDialog = ({
       }
 
       setOtpSent(true);
-      toast.success("Verification code sent to your email!");
+      toast.success("Verification code sent! Check your email (including spam/junk folder).");
     } catch (err: any) {
       console.error("Error sending OTP:", err);
       const errorMessage = err.message || "Failed to send verification code";
@@ -171,6 +171,13 @@ export const EmailVerificationDialog = ({
             </>
           ) : (
             <>
+              <Alert className="mb-2">
+                <Mail className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  <strong>Didn't receive the code?</strong> Check your <strong>Spam/Junk</strong> folder and mark FineEarn emails as "Not spam" to ensure future deliveries reach your inbox.
+                </AlertDescription>
+              </Alert>
+
               <div className="flex flex-col items-center gap-4">
                 <InputOTP
                   maxLength={6}
