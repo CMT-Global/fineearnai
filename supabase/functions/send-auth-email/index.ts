@@ -321,6 +321,7 @@ serve(async (req) => {
         to: [user.email],
         subject: subject,
         html: htmlBody,
+        reply_to: "support@fineearn.com",
       });
       
       console.log(`✅ [Auth Email Hook] Email sent successfully. Resend ID: ${emailResponse.data?.id}`);
