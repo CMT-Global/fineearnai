@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink, Users } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface TelegramGroupsDialogProps {
   open: boolean;
@@ -13,7 +13,6 @@ interface TelegramGroup {
   url: string;
   flag: string;
   description: string;
-  members: string;
   gradient: string;
 }
 
@@ -23,7 +22,6 @@ const telegramGroups: TelegramGroup[] = [
     url: "https://t.me/FineEarnOfficial",
     flag: "🇵🇭",
     description: "Connect with Filipino earners, get local tips & support",
-    members: "3,200+",
     gradient: "from-blue-500 to-red-500"
   },
   {
@@ -31,7 +29,6 @@ const telegramGroups: TelegramGroup[] = [
     url: "https://t.me/FINEEARNGROUP",
     flag: "🇪🇺",
     description: "Join European members for global strategies & insights",
-    members: "1,800+",
     gradient: "from-blue-600 to-yellow-400"
   },
   {
@@ -39,7 +36,6 @@ const telegramGroups: TelegramGroup[] = [
     url: "https://t.me/fineearn",
     flag: "📢",
     description: "Get official updates, promotional content & announcements",
-    members: "5,000+",
     gradient: "from-purple-500 to-pink-500"
   }
 ];
@@ -105,14 +101,6 @@ export const TelegramGroupsDialog = ({ open, onOpenChange, trigger }: TelegramGr
                       {group.description}
                     </p>
 
-                    {/* Members count */}
-                    <div className="flex items-center gap-2 pt-2 border-t">
-                      <Users className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">
-                        {group.members} members
-                      </span>
-                    </div>
-
                     {/* Join button indicator */}
                     <div className="pt-2">
                       <div className={`
@@ -132,7 +120,7 @@ export const TelegramGroupsDialog = ({ open, onOpenChange, trigger }: TelegramGr
           {/* Info banner */}
           <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
             <p className="text-sm text-center text-muted-foreground">
-              💡 <span className="font-medium">Pro tip:</span> Join multiple communities to maximize your earning potential and stay updated with region-specific opportunities!
+              💡 <span className="font-medium">Pro tip:</span> Join the relevant community and stay updated with region-specific opportunities!
             </p>
           </div>
         </div>
