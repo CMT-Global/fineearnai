@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -224,6 +225,28 @@ serve(async (req) => {
       console.log('[Test Email] Template-based email prepared:', template.name);
     }
 
+    // PHASE 2.5: Apply professional email wrapper (matching production behavior)
+    console.log('[Test Email] Checking if email needs professional wrapper...');
+
+    const needsWrapper = !personalizedBody.trim().toLowerCase().startsWith('<!doctype html');
+
+    if (needsWrapper) {
+      console.log('[Test Email] Template is HTML fragment - applying professional wrapper');
+      const wrapperStart = Date.now();
+      
+      personalizedBody = wrapInProfessionalTemplate(personalizedBody, {
+        title: emailSettings.platform_name || 'FineEarn',
+        preheader: personalizedSubject,
+        headerGradient: true,
+        includeFooter: true,
+      });
+      
+      const wrapperTime = Date.now() - wrapperStart;
+      console.log(`[Test Email] ✅ Professional wrapper applied in ${wrapperTime}ms`);
+    } else {
+      console.log('[Test Email] ℹ️ Template already has full HTML structure - skipping wrapper');
+    }
+
     // PHASE 2: Check if RESEND_API_KEY is configured
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     console.log('[PHASE 2] Resend API Key configured:', !!RESEND_API_KEY);
@@ -254,7 +277,8 @@ serve(async (req) => {
       from: emailPayload.from,
       to: emailPayload.to,
       subject: emailPayload.subject,
-      body_length: personalizedBody.length
+      body_length: personalizedBody.length,
+      wrapper_applied: needsWrapper
     });
 
     // PHASE 2: Send email via Resend with comprehensive error tracking
