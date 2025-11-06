@@ -44,16 +44,16 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const startTime = Date.now();
+    
+    // Generate unique worker ID for this execution
+    const workerId = `worker_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`🔧 [Queue Processor] Worker ID: ${workerId}`);
 
     console.log(`🔄 [Queue Processor] Starting bulk email queue processor...`);
 
-    // STEP 1: Fetch next queued or processing job
+    // STEP 1: Fetch next job with locking (prevents race conditions)
     const { data: jobs, error: jobError } = await supabase
-      .from("bulk_email_jobs")
-      .select("*")
-      .in("status", ["queued", "processing"])
-      .order("created_at", { ascending: true })
-      .limit(1);
+      .rpc("get_next_bulk_email_job");
 
     if (jobError) {
       console.error(`❌ [Queue Processor] Error fetching jobs:`, jobError);
@@ -75,16 +75,33 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`📧 [Queue Processor] Processing job: ${job.id} (Batch: ${job.batch_id})`);
     console.log(`📊 [Queue Processor] Progress: ${job.processed_count}/${job.total_recipients}`);
 
-    // STEP 2: Mark job as processing if it's queued
+    // STEP 2: Mark job as processing with worker ID and heartbeat
     if (job.status === "queued") {
-      await supabase
+      const { error: updateError } = await supabase
         .from("bulk_email_jobs")
         .update({
           status: "processing",
           started_at: new Date().toISOString(),
+          processing_worker_id: workerId,
+          last_heartbeat: new Date().toISOString(),
         })
         .eq("id", job.id);
-      console.log(`▶️  [Queue Processor] Job marked as processing`);
+        
+      if (updateError) {
+        console.error(`❌ [Queue Processor] Failed to mark job as processing:`, updateError);
+        throw updateError;
+      }
+      console.log(`▶️  [Queue Processor] Job marked as processing by ${workerId}`);
+    } else {
+      // Update heartbeat for already processing job
+      await supabase
+        .from("bulk_email_jobs")
+        .update({ 
+          last_heartbeat: new Date().toISOString(),
+          processing_worker_id: workerId 
+        })
+        .eq("id", job.id);
+      console.log(`💓 [Queue Processor] Heartbeat updated for job ${job.id}`);
     }
 
     // STEP 3: Fetch dynamic email settings
@@ -159,6 +176,24 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log(`📨 [Queue Processor] Processing ${recipients.length} recipients`);
+
+    // Check for cancellation request before processing
+    if (job.cancel_requested) {
+      console.log(`🛑 [Queue Processor] Job cancelled by admin. Stopping.`);
+      await supabase
+        .from("bulk_email_jobs")
+        .update({
+          status: "cancelled",
+          completed_at: new Date().toISOString(),
+          error_message: "Cancelled by administrator",
+        })
+        .eq("id", job.id);
+      
+      return new Response(
+        JSON.stringify({ success: true, message: "Job cancelled", job_id: job.id }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // STEP 6: Split recipients into chunks of 100 for Resend Batch API
     const recipientChunks = chunkArray(recipients, RESEND_BATCH_LIMIT);
@@ -293,16 +328,19 @@ const handler = async (req: Request): Promise<Response> => {
       successful_count: newSuccessfulCount,
       failed_count: newFailedCount,
       last_processed_at: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString(), // Update heartbeat
       processing_metadata: {
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
         execution_time_ms: Date.now() - startTime,
+        worker_id: workerId,
       },
     };
 
     if (isComplete) {
       updateData.status = "completed";
       updateData.completed_at = new Date().toISOString();
+      updateData.processing_worker_id = null; // Clear worker ID
     }
 
     const { error: updateError } = await supabase
