@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
@@ -37,9 +37,15 @@ const PartnerApplicationStatus = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [correlationId, setCorrelationId] = useState<string>("");
 
-  // Phase 4: Generate correlation ID on mount and display it
+  // Phase 3: useRef guard to prevent duplicate correlation ID generation in React Strict Mode
+  const correlationIdInitialized = useRef(false);
+
+  // Phase 3: Generate correlation ID on mount with useRef guard to prevent duplicates in Strict Mode
   useEffect(() => {
-    if (user && !correlationId) {
+    // Phase 3: Check ref guard - only generate once per mount
+    if (user && !correlationId && !correlationIdInitialized.current) {
+      correlationIdInitialized.current = true; // Mark as initialized
+      
       const newCorrelationId = generateCorrelationId();
       setCorrelationId(newCorrelationId);
       

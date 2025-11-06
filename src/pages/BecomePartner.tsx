@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -21,6 +21,9 @@ const BecomePartner = () => {
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [correlationId, setCorrelationId] = useState<string>("");
+  
+  // Phase 3: useRef guard to prevent duplicate correlation ID generation in React Strict Mode
+  const correlationIdInitialized = useRef(false);
   
   // Phase 2: Use unified hook to fetch both partner status and application in one request
   const { 
@@ -47,9 +50,12 @@ const BecomePartner = () => {
     timestamp: new Date().toISOString()
   });
 
-  // Phase 2: Generate correlation ID on mount and display it
+  // Phase 3: Generate correlation ID on mount with useRef guard to prevent duplicates in Strict Mode
   useEffect(() => {
-    if (user && !correlationId) {
+    // Phase 3: Check ref guard - only generate once per mount
+    if (user && !correlationId && !correlationIdInitialized.current) {
+      correlationIdInitialized.current = true; // Mark as initialized
+      
       const newCorrelationId = generateCorrelationId();
       setCorrelationId(newCorrelationId);
       
