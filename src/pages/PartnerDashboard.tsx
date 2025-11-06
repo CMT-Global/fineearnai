@@ -11,7 +11,8 @@ import { useIsPartner, usePartnerConfig, usePartnerVouchers, usePurchaseVoucher,
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/wallet-utils";
-import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plus, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plus, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { RankProgressCard } from "@/components/partner/RankProgressCard";
@@ -60,6 +61,12 @@ const PartnerDashboard = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ type: "", details: "" });
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Real-time username validation for voucher recipient
+  const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(recipientUsername);
+  
+  // For voucher sending: username must EXIST (isAvailable = false means username is taken/exists)
+  const isUsernameValid = recipientUsername.trim().length >= 3 && isAvailable === false;
 
   const { data: ranks, isLoading: loadingRanks } = useQuery({
     queryKey: ['partner-ranks'],
@@ -588,7 +595,32 @@ const PartnerDashboard = () => {
                 placeholder="Enter username"
                 value={recipientUsername}
                 onChange={(e) => setRecipientUsername(e.target.value)}
+                className={recipientUsername.trim() && !isChecking ? (isUsernameValid ? 'border-green-500' : 'border-destructive') : ''}
               />
+              {recipientUsername.trim().length > 0 && (
+                <div className="text-sm mt-1.5">
+                  {isChecking && (
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Checking username...
+                    </span>
+                  )}
+                  {!isChecking && isUsernameValid && (
+                    <span className="text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Valid username - ready to send
+                    </span>
+                  )}
+                  {!isChecking && recipientUsername.trim().length >= 3 && !isUsernameValid && (
+                    <span className="text-destructive flex items-center gap-1">
+                      <XCircle className="h-3 w-3" /> {usernameError || 'Username not found'}
+                    </span>
+                  )}
+                  {!isChecking && recipientUsername.trim().length < 3 && (
+                    <span className="text-muted-foreground text-xs">
+                      Enter at least 3 characters
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="bg-muted p-4 rounded-lg space-y-2">
@@ -623,7 +655,7 @@ const PartnerDashboard = () => {
             </Button>
             <Button 
               onClick={handlePurchaseVoucher}
-              disabled={purchaseMutation.isPending || !recipientUsername.trim()}
+              disabled={purchaseMutation.isPending || !isUsernameValid || isChecking}
             >
               {purchaseMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
