@@ -18,6 +18,7 @@ import { RankProgressCard } from "@/components/partner/RankProgressCard";
 import { PartnerLeaderboard } from "@/components/partner/PartnerLeaderboard";
 import { WeeklyBonusProgressCard } from "@/components/partner/WeeklyBonusProgressCard";
 import { BonusHistoryTable } from "@/components/partner/BonusHistoryTable";
+import { PartnerOnboardingChecklist } from "@/components/partner/PartnerOnboardingChecklist";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -197,6 +198,11 @@ const PartnerDashboard = () => {
           <p className="text-muted-foreground">
             Manage your voucher sales and track your earnings
           </p>
+        </div>
+
+        {/* Onboarding Checklist */}
+        <div className="mb-6">
+          <PartnerOnboardingChecklist />
         </div>
 
         {/* Stats Cards */}

@@ -877,6 +877,39 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_onboarding: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          partner_id: string
+          setup_completed: boolean
+          steps_completed: Json
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          partner_id: string
+          setup_completed?: boolean
+          steps_completed?: Json
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          partner_id?: string
+          setup_completed?: boolean
+          steps_completed?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_ranks: {
         Row: {
           commission_rate: number
