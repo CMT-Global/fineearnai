@@ -90,6 +90,61 @@ const BecomePartner = () => {
     applicationError: applicationError?.message
   });
 
+  // Effect-driven redirects - only runs after data is settled
+  useEffect(() => {
+    // CRITICAL: Wait for ready state before ANY redirect logic
+    if (!ready) {
+      console.log('⏳ [BecomePartner] Not ready yet, waiting for queries to settle...', {
+        hasUser: !!user,
+        partnerLoaded,
+        appLoaded
+      });
+      return;
+    }
+    
+    console.log('✅ [BecomePartner] Ready! Checking redirect conditions...');
+    
+    // Redirect approved partners to dashboard
+    if (isPartner) {
+      console.log('✅ [BecomePartner] USER IS PARTNER - Triggering redirect to dashboard');
+      
+      // Log redirect decision ONCE in effect
+      partnerDebugLogger.info('become-partner.redirect-to-dashboard', {
+        reason: 'user_is_partner',
+        isPartner: true,
+        timestamp: new Date().toISOString(),
+      }, correlationId);
+      
+      setIsNavigating(true);
+      navigate('/partner/dashboard', { replace: true });
+      return;
+    }
+    
+    // Redirect users with existing applications
+    if (application) {
+      console.log('✅ [BecomePartner] USER HAS APPLICATION - Triggering redirect to application-status');
+      console.log('📋 [BecomePartner] Application details:', {
+        id: application.id,
+        status: application.status,
+        created_at: application.created_at
+      });
+      
+      // Log redirect decision ONCE in effect
+      partnerDebugLogger.info('become-partner.redirect-to-application-status', {
+        reason: 'user_has_application',
+        applicationId: application.id,
+        applicationStatus: application.status,
+        timestamp: new Date().toISOString(),
+      }, correlationId);
+      
+      setIsNavigating(true);
+      navigate('/partner/application-status', { replace: true });
+      return;
+    }
+    
+    console.log('✅ [BecomePartner] No redirect needed, user can proceed with wizard');
+  }, [ready, isPartner, application, navigate, correlationId, user, partnerLoaded, appLoaded]);
+
   // Handle errors - show error UI with retry and specific messages
   if (partnerError || applicationError) {
     const error = partnerError || applicationError || new Error('Unknown error');
@@ -187,75 +242,39 @@ const BecomePartner = () => {
     );
   }
 
-  // Immediate redirect for approved partners - with loading state to prevent flash
-  if (isPartner) {
-    console.log('✅ [BecomePartner] USER IS PARTNER - Triggering redirect to dashboard');
-    console.log('🔄 [BecomePartner] Setting isNavigating to true');
-    
-    // Phase 5: Log redirect decision
-    partnerDebugLogger.info('become-partner.redirect-to-dashboard', {
-      reason: 'user_is_partner',
-      isPartner: true,
-      timestamp: new Date().toISOString(),
-    }, correlationId);
-    
-    setIsNavigating(true);
-    console.log('🔄 [BecomePartner] Calling navigate to /partner/dashboard');
-    navigate('/partner/dashboard', { replace: true });
-    console.log('✅ [BecomePartner] Navigate called, showing loading state');
+  // Early return if navigation is in progress to prevent wizard flash
+  if (isNavigating) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting to dashboard..." />
+          <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
       </PageLayout>
     );
   }
 
-  // Immediate redirect for users with existing applications - with loading state
-  if (application) {
-    console.log('✅ [BecomePartner] USER HAS APPLICATION - Triggering redirect to application-status');
-    console.log('📋 [BecomePartner] Application details:', {
-      id: application.id,
-      status: application.status,
-      created_at: application.created_at
-    });
-    console.log('🔄 [BecomePartner] Setting isNavigating to true');
-    
-    // Phase 5: Log redirect decision
-    partnerDebugLogger.info('become-partner.redirect-to-application-status', {
-      reason: 'user_has_application',
-      applicationId: application.id,
-      applicationStatus: application.status,
-      timestamp: new Date().toISOString(),
-    }, correlationId);
-    
-    setIsNavigating(true);
-    console.log('🔄 [BecomePartner] Calling navigate to /partner/application-status');
-    navigate('/partner/application-status', { replace: true });
-    console.log('✅ [BecomePartner] Navigate called, showing loading state');
+  // Show loading state while waiting for ready state
+  if (!ready) {
+    console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerLoaded, appLoaded });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading your application..." />
+          <LoadingSpinner size="lg" text="Loading..." />
         </div>
       </PageLayout>
     );
   }
 
-  // Only render wizards for new users without applications or partner status
-  // Ensure user is loaded and no navigation/loading is in progress
-  const shouldShowWizard = !!user && !isPartner && !application && !isNavigating && !checkingPartner && !loadingApplication;
+  // Only render wizards when ready and no redirect is needed
+  const shouldShowWizard = ready && !isNavigating && !isPartner && !application;
   
   console.log('🎯 [BecomePartner] SHOULD SHOW WIZARD CHECK:', {
     shouldShowWizard,
     reasons: {
-      hasUser: !!user,
-      isPartner,
-      hasApplication: !!application,
+      ready,
       isNavigating,
-      checkingPartner,
-      loadingApplication
+      isPartner,
+      hasApplication: !!application
     }
   });
 
