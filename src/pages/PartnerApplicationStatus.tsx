@@ -77,8 +77,11 @@ const PartnerApplicationStatus = () => {
   const isPartner = partnerStatus?.isPartner ?? false;
   const application = partnerStatus?.application ?? null;
 
-  // Phase 7: Align ready state computation - use isSuccess flag
+  // Phase 4: Align ready state computation with BecomePartner
   const ready = !!user && partnerStatusSuccess;
+
+  // Phase 4: Compute pendingRedirect gate - redirect if partner or no application
+  const pendingRedirect = ready && !isNavigating && (isPartner || !application);
 
   // Debug logging for troubleshooting
   console.log('🔍 [ApplicationStatus] Component Render State:', {
@@ -91,23 +94,17 @@ const PartnerApplicationStatus = () => {
     applicationId: application?.id,
     applicationStatus: application?.status,
     isNavigating,
+    pendingRedirect,
     profileLoaded: !!profile
   });
 
-  // Effect-driven redirects - only runs after data is settled
+  // Phase 4: Effect-driven redirects - minimal dependencies, only runs after data is settled
   useEffect(() => {
     console.log('🔄 [ApplicationStatus] useEffect triggered:', { 
-      hasUser: !!user,
       ready, 
       isPartner, 
       hasApplication: !!application 
     });
-    
-    // CRITICAL: Wait for user to be loaded before ANY redirect logic
-    if (!user) {
-      console.log('⏳ [ApplicationStatus] Waiting for user to load...');
-      return;
-    }
     
     if (!ready) {
       console.log('⏳ [ApplicationStatus] Not ready yet, waiting...');
@@ -119,9 +116,7 @@ const PartnerApplicationStatus = () => {
     // Redirect approved partners to dashboard
     if (isPartner) {
       console.log('✅ [ApplicationStatus] PARTNER APPROVED - Redirecting to dashboard');
-      console.log('🔄 [ApplicationStatus] Setting isNavigating to true');
       setIsNavigating(true);
-      console.log('🔄 [ApplicationStatus] Calling navigate to /partner/dashboard');
       navigate('/partner/dashboard', { replace: true });
       return;
     }
@@ -129,28 +124,15 @@ const PartnerApplicationStatus = () => {
     // Redirect users without application to become-partner
     if (!application) {
       console.log('⚠️ [ApplicationStatus] NO APPLICATION FOUND - Redirecting to become-partner');
-      console.log('🔄 [ApplicationStatus] Setting isNavigating to true');
       setIsNavigating(true);
-      console.log('🔄 [ApplicationStatus] Calling navigate to /become-partner');
       navigate('/become-partner', { replace: true });
       return;
     }
     
     console.log('📋 [ApplicationStatus] Has application, showing status page');
-  }, [user, ready, isPartner, application, navigate]);
+  }, [ready, isPartner, application, navigate]);
 
-  // Early return for navigation state - BEFORE error handling
-  if (isNavigating) {
-    return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Handle errors - show error UI with retry
+  // Phase 4: Handle errors first
   if (partnerStatusError) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
@@ -164,8 +146,19 @@ const PartnerApplicationStatus = () => {
     );
   }
 
-  // Show loading state while waiting for user or data is being fetched
-  if (!user || !partnerStatusSuccess) {
+  // Phase 4: Early return for navigation state
+  if (isNavigating) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Redirecting..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Phase 4: Show loading state while data is being fetched
+  if (!ready) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -175,17 +168,19 @@ const PartnerApplicationStatus = () => {
     );
   }
 
-  // Safety check - ensure application exists before rendering
-  // This handles the race condition between useEffect redirect and render
-  if (!application) {
+  // Phase 4: Early return for pendingRedirect - prevents flicker before redirect
+  if (pendingRedirect) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading application..." />
+          <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
       </PageLayout>
     );
   }
+
+  // Phase 4: At this point, we know we have an application to display
+  // TypeScript safety: application is guaranteed to exist here due to pendingRedirect gate
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { 
