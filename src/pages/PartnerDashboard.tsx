@@ -23,6 +23,7 @@ import { BonusHistoryTable } from "@/components/partner/BonusHistoryTable";
 import { PartnerOnboardingChecklist } from "@/components/partner/PartnerOnboardingChecklist";
 import { PartnerDashboardSkeleton } from "@/components/partner/PartnerDashboardSkeleton";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
+import { VoucherHistoryTable } from "@/components/partner/VoucherHistoryTable";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -420,57 +421,7 @@ const PartnerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="vouchers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Voucher History</CardTitle>
-                <CardDescription>All vouchers you've purchased</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingVouchers ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : vouchers && vouchers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Redeemed By</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vouchers.map((voucher: any) => (
-                        <TableRow key={voucher.id}>
-                          <TableCell className="font-mono">{voucher.voucher_code}</TableCell>
-                          <TableCell className="font-bold">
-                            {formatCurrency(voucher.voucher_amount)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={voucher.status === 'redeemed' ? 'secondary' : 'default'}>
-                              {voucher.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {voucher.redeemer?.username || '—'}
-                          </TableCell>
-                          <TableCell>
-                            {formatDistanceToNow(new Date(voucher.created_at), { addSuffix: true })}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-12">
-                    <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">No vouchers purchased yet</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <VoucherHistoryTable />
           </TabsContent>
 
           <TabsContent value="rank-progress">
