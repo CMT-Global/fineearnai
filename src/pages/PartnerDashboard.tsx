@@ -59,7 +59,7 @@ const PartnerDashboard = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ type: "", details: "" });
 
-  const { data: ranks } = useQuery({
+  const { data: ranks, isLoading: loadingRanks } = useQuery({
     queryKey: ['partner-ranks'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -424,13 +424,12 @@ const PartnerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="rank-progress">
-            {ranks && (
-              <RankProgressCard
-                currentRank={partnerConfig?.current_rank || 'bronze'}
-                totalSales={totalSales || 0}
-                ranks={ranks}
-              />
-            )}
+            <RankProgressCard
+              currentRank={partnerConfig?.current_rank || 'bronze'}
+              totalSales={totalSales || 0}
+              ranks={ranks || []}
+              isLoading={loadingRanks}
+            />
           </TabsContent>
 
           <TabsContent value="bonuses" className="space-y-6">

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Award, TrendingUp, Target } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 
@@ -16,9 +17,53 @@ interface RankProgressCardProps {
   currentRank: string;
   totalSales: number;
   ranks: Rank[];
+  isLoading?: boolean;
 }
 
-export const RankProgressCard = ({ currentRank, totalSales, ranks }: RankProgressCardProps) => {
+export const RankProgressCard = ({ 
+  currentRank, 
+  totalSales, 
+  ranks, 
+  isLoading = false 
+}: RankProgressCardProps) => {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Current Rank Display */}
+          <div className="text-center p-6 border-2 rounded-lg">
+            <Skeleton className="h-4 w-24 mx-auto mb-2" />
+            <Skeleton className="h-8 w-32 mx-auto mb-3" />
+            <Skeleton className="h-7 w-36 mx-auto" />
+          </div>
+
+          {/* Progress Section */}
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-48 mb-3" />
+            <Skeleton className="h-3 w-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-20 w-full rounded-lg" />
+          </div>
+
+          {/* Ranks List */}
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-24 mb-3" />
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const sortedRanks = [...ranks].sort((a, b) => a.rank_order - b.rank_order);
   
   const currentRankData = sortedRanks.find(
