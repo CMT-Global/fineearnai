@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCountryCode } from "./countries";
 
 // Section 1: Basic Information
 export const section1Schema = z.object({
@@ -15,6 +16,18 @@ export const section1Schema = z.object({
     .string()
     .min(1, "Telegram group link is required")
     .url("Must be a valid URL"),
+  // Phase 2: New fields
+  applicant_country: z
+    .string()
+    .min(2, "Country is required")
+    .refine((code) => isValidCountryCode(code), {
+      message: "Please select a valid country",
+    }),
+  current_membership_plan: z
+    .string()
+    .min(1, "Membership plan is required"),
+  total_referrals: z.number().int().min(0).optional(),
+  upgraded_referrals: z.number().int().min(0).optional(),
 });
 
 // Section 2: Network & Experience
@@ -58,9 +71,15 @@ export const section3Schema = z.object({
 
 // Section 4: Agreement
 export const section4Schema = z.object({
-  weekly_time_commitment: z
+  // Phase 2: Changed from weekly to daily (keeping weekly optional for backward compatibility)
+  daily_time_commitment: z
     .string()
-    .min(1, "Please specify your weekly time commitment"),
+    .min(1, "Please specify your daily time commitment"),
+  weekly_time_commitment: z.string().optional(), // Kept for backward compatibility
+  // Phase 2: New employment status field
+  is_currently_employed: z.boolean({
+    required_error: "Please answer whether you are currently employed",
+  }),
   motivation_text: z
     .string()
     .min(50, "Please provide at least 50 characters")
@@ -86,6 +105,18 @@ export const completeApplicationSchema = z.object({
     .string()
     .min(1, "Telegram group link is required")
     .url("Must be a valid URL"),
+  // Phase 2: New Section 1 fields
+  applicant_country: z
+    .string()
+    .min(2, "Country is required")
+    .refine((code) => isValidCountryCode(code), {
+      message: "Please select a valid country",
+    }),
+  current_membership_plan: z
+    .string()
+    .min(1, "Membership plan is required"),
+  total_referrals: z.number().int().min(0).optional(),
+  upgraded_referrals: z.number().int().min(0).optional(),
   
   // Section 2
   manages_community: z.boolean({
@@ -123,9 +154,15 @@ export const completeApplicationSchema = z.object({
   }),
   
   // Section 4
-  weekly_time_commitment: z
+  // Phase 2: Changed from weekly to daily (keeping weekly optional for backward compatibility)
+  daily_time_commitment: z
     .string()
-    .min(1, "Please specify your weekly time commitment"),
+    .min(1, "Please specify your daily time commitment"),
+  weekly_time_commitment: z.string().optional(), // Kept for backward compatibility
+  // Phase 2: New employment status field
+  is_currently_employed: z.boolean({
+    required_error: "Please answer whether you are currently employed",
+  }),
   motivation_text: z
     .string()
     .min(50, "Please provide at least 50 characters")
@@ -133,6 +170,15 @@ export const completeApplicationSchema = z.object({
   agrees_to_guidelines: z.boolean().refine((val) => val === true, {
     message: "You must agree to the Partner Guidelines",
   }),
+}).superRefine((data, ctx) => {
+  // Phase 2: Free plan blocking validation
+  if (data.current_membership_plan === 'free') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Users on Free plan cannot become Partners. Please upgrade your account first.",
+      path: ["current_membership_plan"],
+    });
+  }
 }).refine((data) => {
   // Validate conditional fields for Section 1
   if (data.preferred_contact_method === "whatsapp" || data.preferred_contact_method === "both") {
