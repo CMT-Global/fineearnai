@@ -9,6 +9,7 @@ import { generateCorrelationId } from "@/lib/utils";
 const USE_SERVER_STATUS = true;
 
 // Check if user is a partner
+// Returns: { data: boolean, isLoading: boolean, isSuccess: boolean, error: Error | null, refetch: function }
 export const useIsPartner = (correlationId?: string) => {
   const { user } = useAuth();
 
@@ -95,6 +96,7 @@ export const useIsPartner = (correlationId?: string) => {
 };
 
 // Check partner application status
+// Returns: { data: Application | null, isLoading: boolean, isSuccess: boolean, error: Error | null, refetch: function }
 export const usePartnerApplication = (correlationId?: string) => {
   const { user } = useAuth();
 
