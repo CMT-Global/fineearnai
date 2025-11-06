@@ -136,6 +136,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
           { label: "Bonus Tiers", path: "/admin/partner-bonus-tiers" },
           { label: "Bonus Payouts", path: "/admin/partner-bonus-payouts" },
           { label: "Bonus Monitoring", path: "/admin/partner-bonus-monitoring" },
+          { label: "Leaderboard", path: "/admin/partner-leaderboard-stats" },
           { label: "Leaderboard Settings", path: "/admin/partner-leaderboard" },
           { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
         ],
