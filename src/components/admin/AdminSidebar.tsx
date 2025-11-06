@@ -133,6 +133,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "All Partners", path: "/admin/partners" },
         { label: "Partner Analytics", path: "/admin/partner-analytics" },
         { label: "Partner Ranks", path: "/admin/partner-ranks" },
+        { label: "Leaderboard Settings", path: "/admin/partner-leaderboard" },
         { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
       ],
     },

@@ -15,6 +15,7 @@ import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plu
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { RankProgressCard } from "@/components/partner/RankProgressCard";
+import { PartnerLeaderboard } from "@/components/partner/PartnerLeaderboard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -255,7 +256,7 @@ const PartnerDashboard = () => {
           </Card>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-6 flex gap-3">
           <Button
             variant="outline"
             onClick={() => navigate('/partner/analytics')}
@@ -264,6 +265,11 @@ const PartnerDashboard = () => {
             <TrendingUp className="h-4 w-4 mr-2" />
             View Analytics Dashboard
           </Button>
+        </div>
+
+        {/* Leaderboard */}
+        <div className="mb-6">
+          <PartnerLeaderboard />
         </div>
 
         <Tabs defaultValue="purchase" className="space-y-6">
