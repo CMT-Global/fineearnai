@@ -47,7 +47,7 @@ const steps = [
             <span className="text-xs text-muted-foreground">($1,400)</span>
             <span className="font-bold text-primary">weekly</span>
           </span>{" "}
-          by helping people in your community access top-up vouchers.
+          by helping people in your community upgrade their accounts.
         </p>
         <div className="grid grid-cols-3 gap-4 pt-4">
           <Card className="border-primary/20">
@@ -61,7 +61,7 @@ const steps = [
                 />+
               </p>
               <p className="text-xs text-muted-foreground mb-1">($200+)</p>
-              <p className="text-sm text-muted-foreground">Daily Average</p>
+              <p className="text-sm text-muted-foreground">Daily Average Profit</p>
             </CardContent>
           </Card>
           <Card className="border-primary/20">
@@ -98,7 +98,7 @@ const steps = [
             {
               icon: Users,
               title: "Sell to Your Network",
-              description: "Share voucher codes with friends, family, and community members via WhatsApp, Telegram, or in-person."
+              description: "Sell Upgrade voucher codes to friends, family, and community members via WhatsApp, Telegram, in-person or on our Platform when users contact you."
             },
             {
               icon: TrendingUp,
