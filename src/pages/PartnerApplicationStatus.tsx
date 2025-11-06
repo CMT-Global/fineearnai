@@ -8,7 +8,6 @@ import { usePartnerApplication, useIsPartner } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  Loader2, 
   CheckCircle, 
   Clock, 
   XCircle, 
@@ -22,8 +21,9 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
@@ -33,33 +33,39 @@ const PartnerApplicationStatus = () => {
   const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
   const [showWizard, setShowWizard] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && !application) {
-      navigate('/become-partner');
-    }
-  }, [application, isLoading, navigate]);
-
-  useEffect(() => {
-    if (isPartner) {
-      navigate('/partner/dashboard');
-    }
-  }, [isPartner, navigate]);
-
+  // Show loading state while data is being fetched
   if (isLoading || checkingPartner) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">Loading application status...</p>
-          </div>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Loading application status..." />
         </div>
       </PageLayout>
     );
   }
 
+  // Immediate redirect for approved partners - with loading state
+  if (isPartner) {
+    navigate('/partner/dashboard', { replace: true });
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Redirecting to dashboard..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Immediate redirect if no application exists - with loading state
   if (!application) {
-    return null;
+    navigate('/become-partner', { replace: true });
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Redirecting..." />
+        </div>
+      </PageLayout>
+    );
   }
 
   const getStatusConfig = (status: string) => {
