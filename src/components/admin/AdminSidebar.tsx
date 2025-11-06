@@ -125,18 +125,20 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "Referral System", path: "/admin/referrals/manage" },
       ],
     },
-    {
-      label: "Partner Management",
-      icon: Sparkles,
-      items: [
-        { label: "Partner Applications", path: "/admin/partners/applications" },
-        { label: "All Partners", path: "/admin/partners" },
-        { label: "Partner Analytics", path: "/admin/partner-analytics" },
-        { label: "Partner Ranks", path: "/admin/partner-ranks" },
-        { label: "Leaderboard Settings", path: "/admin/partner-leaderboard" },
-        { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
-      ],
-    },
+      {
+        label: "Partner Management",
+        icon: Sparkles,
+        items: [
+          { label: "Partner Applications", path: "/admin/partners/applications" },
+          { label: "All Partners", path: "/admin/partners" },
+          { label: "Partner Analytics", path: "/admin/partner-analytics" },
+          { label: "Partner Ranks", path: "/admin/partner-ranks" },
+          { label: "Bonus Tiers", path: "/admin/partner-bonus-tiers" },
+          { label: "Bonus Payouts", path: "/admin/partner-bonus-payouts" },
+          { label: "Leaderboard Settings", path: "/admin/partner-leaderboard" },
+          { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
+        ],
+      },
     {
       label: "Communications",
       icon: Mail,
