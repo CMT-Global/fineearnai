@@ -2,57 +2,24 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
+import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicationWizard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useIsPartner, usePartnerApplication, useSubmitPartnerApplication } from "@/hooks/usePartner";
+import { useIsPartner, usePartnerApplication } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Sparkles, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, Clock, XCircle, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
-const applicationSchema = z.object({
-  preferred_contact_method: z.string().min(1, "Contact method is required"),
-  whatsapp_number: z.string().optional(),
-  telegram_username: z.string().optional(),
-  whatsapp_group_link: z.string().url().optional().or(z.literal('')),
-  telegram_group_link: z.string().url().optional().or(z.literal('')),
-  application_notes: z.string().max(500).optional(),
-});
-
-type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 const BecomePartner = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [showWizard, setShowWizard] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showIntroWizard, setShowIntroWizard] = useState(true);
+  const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   
   const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
   const { data: application, isLoading: loadingApplication } = usePartnerApplication();
-  const submitMutation = useSubmitPartnerApplication();
   const { data: profile } = useProfile(user?.id || '');
-
-  const form = useForm<ApplicationFormData>({
-    resolver: zodResolver(applicationSchema),
-    defaultValues: {
-      preferred_contact_method: "",
-      whatsapp_number: "",
-      telegram_username: "",
-      whatsapp_group_link: "",
-      telegram_group_link: "",
-      application_notes: "",
-    },
-  });
 
   useEffect(() => {
     if (isPartner) {
@@ -60,29 +27,22 @@ const BecomePartner = () => {
     }
   }, [isPartner, navigate]);
 
-  const handleWizardComplete = () => {
-    setShowWizard(false);
-    setShowForm(true);
+  const handleIntroWizardComplete = () => {
+    setShowIntroWizard(false);
+    setShowApplicationWizard(true);
   };
 
-  const handleWizardClose = () => {
+  const handleIntroWizardClose = () => {
     navigate('/dashboard');
   };
 
-  const onSubmit = (data: ApplicationFormData) => {
-    if (!data.preferred_contact_method) {
-      toast.error("Please select a contact method");
-      return;
-    }
-    
-    submitMutation.mutate({
-      preferred_contact_method: data.preferred_contact_method,
-      whatsapp_number: data.whatsapp_number,
-      telegram_username: data.telegram_username,
-      whatsapp_group_link: data.whatsapp_group_link,
-      telegram_group_link: data.telegram_group_link,
-      application_notes: data.application_notes,
-    });
+  const handleApplicationComplete = () => {
+    // Refresh the page to show the application status
+    window.location.reload();
+  };
+
+  const handleApplicationCancel = () => {
+    navigate('/dashboard');
   };
 
   if (checkingPartner || loadingApplication) {
@@ -175,139 +135,21 @@ const BecomePartner = () => {
 
   return (
     <PageLayout profile={profile} onSignOut={signOut}>
-      <PartnerWizard
-        open={showWizard} 
-        onComplete={handleWizardComplete}
-        onClose={handleWizardClose}
-      />
+      {/* Intro Wizard - Benefits of becoming a partner */}
+      {showIntroWizard && (
+        <PartnerWizard
+          open={showIntroWizard} 
+          onComplete={handleIntroWizardComplete}
+          onClose={handleIntroWizardClose}
+        />
+      )}
 
-      {showForm && (
-        <div className="container max-w-2xl mx-auto px-4 py-12">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3 mb-2">
-                <Sparkles className="h-8 w-8 text-primary" />
-                <CardTitle className="text-2xl">Partner Application</CardTitle>
-              </div>
-              <CardDescription>
-                Complete this form to become a FineEarn Local Partner and start earning today!
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="preferred_contact_method"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preferred Contact Method *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select contact method" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                            <SelectItem value="telegram">Telegram</SelectItem>
-                            <SelectItem value="both">Both</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="whatsapp_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>WhatsApp Number (with country code)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+1234567890" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="telegram_username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telegram Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="@username" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="whatsapp_group_link"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>WhatsApp Group Link (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://chat.whatsapp.com/..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="telegram_group_link"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telegram Group/Channel Link (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://t.me/..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="application_notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Why do you want to become a partner? (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Tell us about your network and why you'd be a great partner..."
-                            rows={4}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full"
-                    disabled={submitMutation.isPending}
-                  >
-                    {submitMutation.isPending && <Loader2 className="h-5 w-5 mr-2 animate-spin" />}
-                    Submit Application
-                    <Sparkles className="h-5 w-5 ml-2" />
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Application Wizard - Multi-step form */}
+      {showApplicationWizard && (
+        <PartnerApplicationWizard
+          onComplete={handleApplicationComplete}
+          onCancel={handleApplicationCancel}
+        />
       )}
     </PageLayout>
   );
