@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-correlation-id",
 };
 
 interface ApplicationSubmission {
@@ -43,6 +43,17 @@ interface ApplicationSubmission {
 }
 
 Deno.serve(async (req) => {
+  // Phase 2: Extract correlation ID from headers for end-to-end tracing
+  const correlationId = req.headers.get("X-Correlation-Id") || req.headers.get("x-correlation-id") || "no-correlation-id";
+  const startTime = Date.now();
+  
+  console.log(`🆔 [Partner Application] Request started`, {
+    event: 'partner-application.start',
+    correlationId,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,7 +77,12 @@ Deno.serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      console.error("[Partner Application] Authentication failed:", authError);
+      console.error(`🚨 [Partner Application] Authentication failed`, {
+        event: 'partner-application.auth-failed',
+        correlationId,
+        error: authError?.message,
+        timingMs: Date.now() - startTime,
+      });
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -76,10 +92,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[Partner Application] Request from user: ${user.id}`);
+    console.log(`✅ [Partner Application] User authenticated`, {
+      event: 'partner-application.authenticated',
+      correlationId,
+      userId: user.id,
+      email: user.email,
+      timingMs: Date.now() - startTime,
+    });
 
     // Handle GET request - Check application status
     if (req.method === "GET") {
+      console.log(`📋 [Partner Application] GET request - checking status`, {
+        event: 'partner-application.get-status',
+        correlationId,
+        userId: user.id,
+      });
+      
       const { data: existingApplication, error: fetchError } = await supabaseClient
         .from("partner_applications")
         .select("*")
@@ -87,7 +115,13 @@ Deno.serve(async (req) => {
         .single();
 
       if (fetchError && fetchError.code !== "PGRST116") {
-        console.error("[Partner Application] Error fetching application:", fetchError);
+        console.error(`🚨 [Partner Application] Error fetching application`, {
+          event: 'partner-application.fetch-error',
+          correlationId,
+          userId: user.id,
+          error: fetchError.message,
+          timingMs: Date.now() - startTime,
+        });
         throw fetchError;
       }
 
@@ -98,6 +132,17 @@ Deno.serve(async (req) => {
         .eq("user_id", user.id)
         .eq("role", "partner")
         .single();
+
+      console.log(`✅ [Partner Application] Status check complete`, {
+        event: 'partner-application.status-result',
+        correlationId,
+        userId: user.id,
+        hasApplication: !!existingApplication,
+        applicationId: existingApplication?.id,
+        applicationStatus: existingApplication?.status,
+        isPartner: !!partnerRole,
+        timingMs: Date.now() - startTime,
+      });
 
       return new Response(
         JSON.stringify({
@@ -116,8 +161,10 @@ Deno.serve(async (req) => {
     if (req.method === "POST") {
       const body: ApplicationSubmission = await req.json();
 
-      console.log("[Partner Application] Submission data:", {
-        user_id: user.id,
+      console.log(`📝 [Partner Application] POST request - submission started`, {
+        event: 'partner-application.submission-start',
+        correlationId,
+        userId: user.id,
         preferred_contact_method: body.preferred_contact_method,
         membership_plan: body.current_membership_plan,
         country: body.applicant_country,
@@ -131,7 +178,13 @@ Deno.serve(async (req) => {
         .single();
 
       if (profileError || !profile) {
-        console.error("[Partner Application] Profile fetch error:", profileError);
+        console.error(`🚨 [Partner Application] Profile fetch error`, {
+          event: 'partner-application.profile-error',
+          correlationId,
+          userId: user.id,
+          error: profileError?.message,
+          timingMs: Date.now() - startTime,
+        });
         return new Response(
           JSON.stringify({ error: "Failed to fetch user profile" }),
           {
@@ -141,9 +194,22 @@ Deno.serve(async (req) => {
         );
       }
 
+      console.log(`✅ [Partner Application] Profile fetched`, {
+        event: 'partner-application.profile-fetched',
+        correlationId,
+        userId: user.id,
+        membershipPlan: profile.membership_plan,
+      });
+
       // SERVER-SIDE FREE PLAN VALIDATION
       if (profile.membership_plan === 'free') {
-        console.log("[Partner Application] BLOCKED: User on free plan:", user.id);
+        console.log(`⛔ [Partner Application] BLOCKED: Free plan`, {
+          event: 'partner-application.free-plan-blocked',
+          correlationId,
+          userId: user.id,
+          membershipPlan: profile.membership_plan,
+          timingMs: Date.now() - startTime,
+        });
         return new Response(
           JSON.stringify({
             error: "Free plan users cannot apply to become partners. Please upgrade your membership plan first.",
@@ -252,6 +318,14 @@ Deno.serve(async (req) => {
 
       // Return validation errors if any
       if (errors.length > 0) {
+        console.log(`⚠️ [Partner Application] Validation failed`, {
+          event: 'partner-application.validation-failed',
+          correlationId,
+          userId: user.id,
+          errorCount: errors.length,
+          errors: errors,
+          timingMs: Date.now() - startTime,
+        });
         return new Response(
           JSON.stringify({ error: errors.join(". "), validation_errors: errors }),
           {
@@ -261,6 +335,13 @@ Deno.serve(async (req) => {
         );
       }
 
+      console.log(`✅ [Partner Application] Validation passed`, {
+        event: 'partner-application.validation-passed',
+        correlationId,
+        userId: user.id,
+        timingMs: Date.now() - startTime,
+      });
+
       // Check if user already has an application
       const { data: existingApplication } = await supabaseClient
         .from("partner_applications")
@@ -269,6 +350,14 @@ Deno.serve(async (req) => {
         .single();
 
       if (existingApplication) {
+        console.log(`⚠️ [Partner Application] Duplicate application attempt`, {
+          event: 'partner-application.duplicate-application',
+          correlationId,
+          userId: user.id,
+          existingApplicationId: existingApplication.id,
+          existingStatus: existingApplication.status,
+          timingMs: Date.now() - startTime,
+        });
         return new Response(
           JSON.stringify({
             error: "Application already exists",
@@ -280,6 +369,12 @@ Deno.serve(async (req) => {
           }
         );
       }
+
+      console.log(`🔄 [Partner Application] Creating application`, {
+        event: 'partner-application.creating',
+        correlationId,
+        userId: user.id,
+      });
 
       // Insert application with all fields
       const { data: application, error: insertError } = await supabaseClient
@@ -322,11 +417,29 @@ Deno.serve(async (req) => {
         .single();
 
       if (insertError) {
-        console.error("[Partner Application] Insert error:", insertError);
+        console.error(`🚨 [Partner Application] Insert error`, {
+          event: 'partner-application.insert-error',
+          correlationId,
+          userId: user.id,
+          error: insertError.message,
+          code: insertError.code,
+          timingMs: Date.now() - startTime,
+        });
         throw insertError;
       }
 
-      console.log(`[Partner Application] Application created: ${application.id}`);
+      console.log(`✅ [Partner Application] Application created successfully`, {
+        event: 'partner-application.created',
+        correlationId,
+        userId: user.id,
+        applicationId: application.id,
+        status: application.status,
+        membershipPlan: application.current_membership_plan,
+        country: application.applicant_country,
+        totalReferrals: application.total_referrals,
+        upgradedReferrals: application.upgraded_referrals,
+        timingMs: Date.now() - startTime,
+      });
 
       // Send notification to admins (optional - can be implemented later)
       // await supabaseClient.from("notifications").insert({
@@ -357,7 +470,13 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("[Partner Application] Error:", error);
+    console.error(`🚨 [Partner Application] Unhandled error`, {
+      event: 'partner-application.error',
+      correlationId: req.headers.get("X-Correlation-Id") || req.headers.get("x-correlation-id") || "no-correlation-id",
+      error: error.message,
+      stack: error.stack,
+      timingMs: Date.now() - startTime,
+    });
     return new Response(
       JSON.stringify({ error: error.message }),
       {

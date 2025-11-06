@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
+import { generateCorrelationId } from "@/lib/utils";
+import { toast } from "sonner";
 
 const BecomePartner = () => {
   const navigate = useNavigate();
@@ -17,10 +19,28 @@ const BecomePartner = () => {
   const { user, signOut } = useAuth();
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [correlationId, setCorrelationId] = useState<string>("");
   
   const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
   const { data: application, isLoading: loadingApplication, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
   const { data: profile } = useProfile(user?.id || '');
+
+  // Phase 2: Generate correlation ID on mount and display it
+  useEffect(() => {
+    if (user && !correlationId) {
+      const newCorrelationId = generateCorrelationId();
+      setCorrelationId(newCorrelationId);
+      
+      console.log('🆔 [BecomePartner] Correlation ID generated:', newCorrelationId);
+      
+      // Display Debug ID in toast for easy tracking
+      toast.info(`Debug ID: ${newCorrelationId}`, {
+        description: "Use this ID to track your partner application in backend logs",
+        duration: 10000, // Show for 10 seconds
+        id: 'correlation-id-toast', // Prevent duplicates
+      });
+    }
+  }, [user, correlationId]);
 
   // Debug logging for troubleshooting
   console.log('🔍 [BecomePartner] Component Render State:', {
@@ -231,8 +251,9 @@ const BecomePartner = () => {
         {/* Application Wizard - Multi-step form */}
         {showApplicationWizard && (
           <>
-            {console.log('📝 [BecomePartner] Rendering APPLICATION WIZARD')}
+            {console.log('📝 [BecomePartner] Rendering APPLICATION WIZARD with correlationId:', correlationId)}
             <PartnerApplicationWizard
+              correlationId={correlationId}
               onComplete={() => {
                 console.log('✅ [BecomePartner] Application wizard onComplete called');
                 handleApplicationComplete();

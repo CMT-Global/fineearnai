@@ -53,11 +53,12 @@ import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 
 interface PartnerApplicationWizardProps {
+  correlationId: string;
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplicationWizardProps) => {
+export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }: PartnerApplicationWizardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
@@ -66,6 +67,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   
   console.log('🎯 [PartnerApplicationWizard] Component mounted/rendered', {
     userId: user?.id,
+    correlationId,
     currentSection,
     isSubmitting,
     completedSections
@@ -394,6 +396,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   const handleSubmit = async (data: CompleteApplicationData) => {
     console.log('📝 [PartnerApplicationWizard] handleSubmit called', {
       userId: user?.id,
+      correlationId,
       current_membership_plan: data.current_membership_plan,
       dataKeys: Object.keys(data)
     });
@@ -405,12 +408,20 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       return;
     }
     
-    console.log('✅ [PartnerApplicationWizard] Starting submission...');
+    console.log('✅ [PartnerApplicationWizard] Starting submission with correlationId:', correlationId);
     setIsSubmitting(true);
 
     try {
-      console.log('🔄 [PartnerApplicationWizard] Calling partner-application edge function...');
+      console.log('🔄 [PartnerApplicationWizard] Calling partner-application edge function with X-Correlation-Id:', correlationId);
+      
+      // Phase 2: Include correlation ID in headers
+      const headers: Record<string, string> = {};
+      if (correlationId) {
+        headers['X-Correlation-Id'] = correlationId;
+      }
+      
       const response = await supabase.functions.invoke("partner-application", {
+        headers,
         body: {
           preferred_contact_method: data.preferred_contact_method,
           whatsapp_number: data.whatsapp_number,
