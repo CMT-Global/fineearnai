@@ -2,22 +2,68 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
+import { generateCorrelationId } from "@/lib/utils";
+
+// 🔧 PHASE 4: Feature flag for server-side status checks
+// Set to false to instantly revert to direct database queries
+const USE_SERVER_STATUS = true;
 
 // Check if user is a partner
-export const useIsPartner = () => {
+export const useIsPartner = (correlationId?: string) => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['is-partner', user?.id],
     queryFn: async () => {
-      console.log('🔍 [useIsPartner] Starting query for user:', user?.id);
+      const cid = correlationId || generateCorrelationId();
+      console.log('🔍 [useIsPartner] Starting query for user:', user?.id, 'correlationId:', cid);
       
       if (!user) {
         console.log('⚠️ [useIsPartner] No user, returning false');
         return false;
       }
 
-      console.log('🔍 [useIsPartner] Fetching partner role from database...');
+      // PHASE 4: Use server-side function with correlation tracking
+      if (USE_SERVER_STATUS) {
+        console.log('🚀 [useIsPartner] Using server-side get-partner-status function');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            console.error('🚨 [useIsPartner] No active session');
+            throw new Error('No active session');
+          }
+
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-partner-status`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+                'X-Correlation-Id': cid,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            const error = await response.json();
+            console.error('🚨 [useIsPartner] Server error:', error);
+            throw new Error(error.error || 'Failed to check partner status');
+          }
+
+          const result = await response.json();
+          const isPartner = result.is_partner;
+          console.log('✅ [useIsPartner] Server result:', { isPartner, correlationId: cid });
+          return isPartner;
+        } catch (error) {
+          console.error('🚨 [useIsPartner] Exception:', error);
+          throw error;
+        }
+      }
+
+      // FALLBACK: Direct database query (original implementation)
+      console.log('🔍 [useIsPartner] Using fallback: direct database query');
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -36,33 +82,79 @@ export const useIsPartner = () => {
       }
 
       const isPartner = !!data;
-      console.log('✅ [useIsPartner] Query result:', { isPartner, data });
+      console.log('✅ [useIsPartner] Fallback result:', { isPartner, data });
       return isPartner;
     },
     enabled: !!user,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false, // Prevent unnecessary refetches on mount
-    refetchOnWindowFocus: false, // Prevent refetch when returning to tab
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 
 // Check partner application status
-export const usePartnerApplication = () => {
+export const usePartnerApplication = (correlationId?: string) => {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: ['partner-application', user?.id],
     queryFn: async () => {
-      console.log('🔍 [usePartnerApplication] Starting query for user:', user?.id);
+      const cid = correlationId || generateCorrelationId();
+      console.log('🔍 [usePartnerApplication] Starting query for user:', user?.id, 'correlationId:', cid);
       
       if (!user) {
         console.log('⚠️ [usePartnerApplication] No user, returning null');
         return null;
       }
 
-      console.log('🔍 [usePartnerApplication] Fetching application from database...');
+      // PHASE 4: Use server-side function with correlation tracking
+      if (USE_SERVER_STATUS) {
+        console.log('🚀 [usePartnerApplication] Using server-side get-partner-status function');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            console.error('🚨 [usePartnerApplication] No active session');
+            throw new Error('No active session');
+          }
+
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-partner-status`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+                'X-Correlation-Id': cid,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            const error = await response.json();
+            console.error('🚨 [usePartnerApplication] Server error:', error);
+            throw new Error(error.error || 'Failed to load application status');
+          }
+
+          const result = await response.json();
+          const application = result.application;
+          console.log('✅ [usePartnerApplication] Server result:', {
+            hasApplication: !!application,
+            applicationId: application?.id,
+            status: application?.status,
+            correlationId: cid
+          });
+          return application;
+        } catch (error) {
+          console.error('🚨 [usePartnerApplication] Exception:', error);
+          throw error;
+        }
+      }
+
+      // FALLBACK: Direct database query (original implementation)
+      console.log('🔍 [usePartnerApplication] Using fallback: direct database query');
       const { data, error } = await supabase
         .from('partner_applications')
         .select('*')
@@ -80,7 +172,7 @@ export const usePartnerApplication = () => {
         throw new Error('Failed to load application status. Please try again.');
       }
 
-      console.log('✅ [usePartnerApplication] Query result:', {
+      console.log('✅ [usePartnerApplication] Fallback result:', {
         hasApplication: !!data,
         applicationId: data?.id,
         status: data?.status,
@@ -92,8 +184,8 @@ export const usePartnerApplication = () => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnMount: false, // Prevent unnecessary refetches on mount
-    refetchOnWindowFocus: false, // Prevent refetch when returning to tab
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 

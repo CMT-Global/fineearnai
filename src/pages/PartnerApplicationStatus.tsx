@@ -26,15 +26,36 @@ import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
+import { generateCorrelationId } from "@/lib/utils";
+import { toast } from "sonner";
 
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id || '');
-  const { data: application, isLoading, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
-  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
   const [showWizard, setShowWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [correlationId, setCorrelationId] = useState<string>("");
+
+  // Phase 4: Generate correlation ID on mount and display it
+  useEffect(() => {
+    if (user && !correlationId) {
+      const newCorrelationId = generateCorrelationId();
+      setCorrelationId(newCorrelationId);
+      
+      console.log('🆔 [ApplicationStatus] Correlation ID generated:', newCorrelationId);
+      
+      // Display Debug ID in toast for easy tracking
+      toast.info(`Debug ID: ${newCorrelationId}`, {
+        description: "Use this ID to track your application status in backend logs",
+        duration: 10000, // Show for 10 seconds
+        id: 'correlation-id-toast-status', // Prevent duplicates
+      });
+    }
+  }, [user, correlationId]);
+
+  const { data: application, isLoading, error: applicationError, refetch: refetchApplication } = usePartnerApplication(correlationId);
+  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner(correlationId);
 
   // Ready gate - only proceed when user is loaded AND all data is loaded
   const ready = !!user && !isLoading && !checkingPartner;

@@ -21,8 +21,8 @@ const BecomePartner = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [correlationId, setCorrelationId] = useState<string>("");
   
-  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
-  const { data: application, isLoading: loadingApplication, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
+  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner(correlationId);
+  const { data: application, isLoading: loadingApplication, error: applicationError, refetch: refetchApplication } = usePartnerApplication(correlationId);
   const { data: profile } = useProfile(user?.id || '');
 
   // Phase 2: Generate correlation ID on mount and display it
