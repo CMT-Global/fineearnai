@@ -201,31 +201,6 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           staleTime: 300000, // 5 minutes (plans don't change often)
         });
         break;
-
-      case '/partner/dashboard':
-        // Prefetch partner data
-        queryClient.prefetchQuery({
-          queryKey: ['partner-config', userId],
-          queryFn: async () => {
-            const [configRes, vouchersRes, rankRes] = await Promise.all([
-              supabase.from('partner_config').select('*').eq('partner_id', userId).single(),
-              supabase.from('vouchers')
-                .select('*')
-                .eq('partner_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(10),
-              supabase.functions.invoke('check-partner-rank', { body: { partner_id: userId } })
-            ]);
-
-            return {
-              config: configRes.data,
-              vouchers: vouchersRes.data,
-              rank: rankRes.data
-            };
-          },
-          staleTime: 30000,
-        });
-        break;
     }
   };
 
