@@ -177,31 +177,65 @@ const steps = [
         <div className="space-y-4">
           {[
             {
-              icon: DollarSign,
-              title: "Buy Voucher Codes",
-              description: "Purchase top-up vouchers at a discounted rate directly from your dashboard using your deposit wallet."
+              icon: Users,
+              emoji: "👥",
+              title: "Connect With Users Who Want to Upgrade",
+              description: "Every day, many users want to upgrade but need guidance on payment methods. As a Local Partner, you'll be their trusted go-to person — helping them upgrade quickly through local payment options they understand."
             },
             {
-              icon: Users,
-              title: "Sell to Your Network",
-              description: "Sell Upgrade voucher codes to friends, family, and community members via WhatsApp, Telegram, in-person or on our Platform when users contact you."
+              icon: MessageCircle,
+              emoji: "💬",
+              title: "Provide Local Support & Guidance",
+              description: "Guide users in your country, answer their questions, and walk them through the process. Your personal support helps them feel confident and stay active on the platform."
+            },
+            {
+              icon: Ticket,
+              emoji: "💸",
+              title: "Sell Top-Up Vouchers Seamlessly",
+              description: "Purchase discounted vouchers from your partner dashboard and sell them to users at full value. They upgrade instantly using your voucher code — no complicated crypto transactions needed."
             },
             {
               icon: TrendingUp,
-              title: "Earn Instant Profit",
-              description: "Keep the difference as your commission! No waiting, no complex processes—just pure profit."
+              emoji: "🚀",
+              title: "Earn While Helping Others Grow",
+              description: "Keep the profit margin on every voucher you sell. The more users you assist, the more you earn — it's transparent, straightforward, and rewarding."
             },
           ].map((item, idx) => (
-            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-muted/50 border">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <item.icon className="h-6 w-6 text-primary" />
+            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-muted/50 border hover:border-primary/20 transition-colors">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-2xl">
+                {item.emoji}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold mb-1">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+                <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                  <item.icon className="h-5 w-5 text-primary" />
+                  {item.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Professional Tip Section */}
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-5 rounded-lg border-2 border-amber-500/30">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-base mb-2 text-amber-900 dark:text-amber-100">
+                💡 Pro Tip: This Is a Real Business Opportunity
+              </h4>
+              <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
+                Being a Local Partner requires dedication, excellent communication skills, and consistent effort. 
+                You'll be building trust in your community and providing valuable service. In return, you'll earn 
+                substantial commissions and the satisfaction of helping others succeed. Treat this like a real 
+                business, and you'll see real results.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     ),
