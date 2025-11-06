@@ -59,6 +59,8 @@ const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
 const PartnerApplications = lazy(() => import("@/pages/admin/PartnerApplications"));
 const Partners = lazy(() => import("@/pages/admin/Partners"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
+const BecomePartner = lazy(() => import("./pages/BecomePartner"));
+const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -180,6 +182,8 @@ const RoutesWrapper = () => {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
         <Route path="/referrals" element={<Referrals />} />
+        <Route path="/become-partner" element={<BecomePartner />} />
+        <Route path="/partner/dashboard" element={<PartnerDashboard />} />
         <Route path="/deposit-result" element={<DepositResult />} />
       
       {/* Admin Routes - Protected with AdminRoute guard and wrapped in AdminLayout */}
