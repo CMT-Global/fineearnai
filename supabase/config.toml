@@ -172,3 +172,12 @@ verify_jwt = true
 
 [functions.get-partner-leaderboard]
 verify_jwt = true
+
+[functions.calculate-weekly-bonuses]
+verify_jwt = false
+
+[functions.process-weekly-bonus-payouts]
+verify_jwt = false
+
+[functions.get-partner-bonus-progress]
+verify_jwt = true
