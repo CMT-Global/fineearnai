@@ -16,6 +16,8 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { RankProgressCard } from "@/components/partner/RankProgressCard";
 import { PartnerLeaderboard } from "@/components/partner/PartnerLeaderboard";
+import { WeeklyBonusProgressCard } from "@/components/partner/WeeklyBonusProgressCard";
+import { BonusHistoryTable } from "@/components/partner/BonusHistoryTable";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -282,6 +284,10 @@ const PartnerDashboard = () => {
               <Ticket className="h-4 w-4 mr-2" />
               My Vouchers
             </TabsTrigger>
+            <TabsTrigger value="bonuses">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Weekly Bonuses
+            </TabsTrigger>
             <TabsTrigger value="rank-progress">
               <Award className="h-4 w-4 mr-2" />
               Rank Progress
@@ -420,6 +426,11 @@ const PartnerDashboard = () => {
                 ranks={ranks}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="bonuses" className="space-y-6">
+            <WeeklyBonusProgressCard />
+            <BonusHistoryTable />
           </TabsContent>
 
           <TabsContent value="payment-methods">
