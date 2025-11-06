@@ -145,3 +145,15 @@ verify_jwt = true
 
 [functions.monitor-bulk-email-jobs]
 verify_jwt = false
+
+[functions.partner-application]
+verify_jwt = true
+
+[functions.purchase-voucher]
+verify_jwt = true
+
+[functions.redeem-voucher]
+verify_jwt = true
+
+[functions.admin-partner-management]
+verify_jwt = true
