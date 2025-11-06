@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DollarSign, Users, CheckCircle2, XCircle, Clock, Eye, PlayCircle, Calendar } from "lucide-react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -160,8 +159,7 @@ export default function PartnerBonusPayouts() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Partner Bonus Payouts</h1>
@@ -409,13 +407,12 @@ export default function PartnerBonusPayouts() {
                   <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground">Transaction ID</p>
                     <p className="font-mono text-xs">{selectedBonus.transaction_id}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AdminLayout>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

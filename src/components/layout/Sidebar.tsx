@@ -21,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsPartner } from "@/hooks/usePartner";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
@@ -40,15 +41,27 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const { enterAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const { data: isPartner } = useIsPartner();
 
   // Primary navigation items (shown in bottom nav on mobile + sidebar)
-  const primaryNavItems = [
+  const basePrimaryNavItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Zap, label: "Tasks", path: "/tasks" },
     { icon: Wallet, label: "Wallet", path: "/wallet" },
     { icon: Users, label: "Referrals", path: "/referrals" },
-    { icon: Crown, label: "Membership", path: "/plans" },
   ];
+
+  // Conditionally add Partner Hub if user is a partner
+  const primaryNavItems: any[] = isPartner
+    ? [
+        ...basePrimaryNavItems,
+        { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true },
+        { icon: Crown, label: "Membership", path: "/plans" },
+      ]
+    : [
+        ...basePrimaryNavItems,
+        { icon: Crown, label: "Membership", path: "/plans" },
+      ];
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
@@ -57,7 +70,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   ];
 
   // Combined nav items for desktop sidebar
-  const navItems = [...primaryNavItems, ...secondaryNavItems];
+  const navItems: any[] = [...primaryNavItems, ...secondaryNavItems];
 
   const isActive = (path: string) => location.pathname === path;
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -188,6 +201,31 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           staleTime: 300000, // 5 minutes (plans don't change often)
         });
         break;
+
+      case '/partner/dashboard':
+        // Prefetch partner data
+        queryClient.prefetchQuery({
+          queryKey: ['partner-config', userId],
+          queryFn: async () => {
+            const [configRes, vouchersRes, rankRes] = await Promise.all([
+              supabase.from('partner_config').select('*').eq('partner_id', userId).single(),
+              supabase.from('vouchers')
+                .select('*')
+                .eq('partner_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(10),
+              supabase.functions.invoke('check-partner-rank', { body: { partner_id: userId } })
+            ]);
+
+            return {
+              config: configRes.data,
+              vouchers: vouchersRes.data,
+              rank: rankRes.data
+            };
+          },
+          staleTime: 30000,
+        });
+        break;
     }
   };
 
@@ -207,7 +245,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <CurrencySelector />
 
       <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => (
+        {navItems.map((item: any) => (
           <button
             key={item.path}
             onClick={() => handleNavigation(item.path)}
@@ -216,10 +254,13 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
               isActive(item.path)
                 ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
                 : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-            }`}
+            } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''}`}
           >
-            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-            <span>{item.label}</span>
+            <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
+            <span className={item.isPartner ? 'font-semibold' : ''}>{item.label}</span>
+            {item.isPartner && (
+              <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+            )}
           </button>
         ))}
       </nav>
@@ -269,8 +310,23 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* Currency Selector */}
       <CurrencySelector />
 
-      {/* Only secondary navigation items in mobile menu */}
+      {/* Only secondary navigation items + Partner Hub (if partner) in mobile menu */}
       <nav className="flex-1 p-4 space-y-1">
+        {isPartner && (
+          <button
+            onClick={() => handleNavigation("/partner/dashboard")}
+            onMouseEnter={() => handlePrefetch("/partner/dashboard")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20 ${
+              isActive("/partner/dashboard")
+                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+            }`}
+          >
+            <Sparkles className={`h-5 w-5 text-[hsl(var(--wallet-deposit))]`} />
+            <span className="font-semibold">Partner Hub</span>
+            <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+          </button>
+        )}
         {secondaryNavItems.map((item) => (
           <button
             key={item.path}

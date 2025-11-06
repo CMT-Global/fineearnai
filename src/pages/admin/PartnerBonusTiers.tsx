@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, DollarSign, Award, TrendingUp } from "lucide-react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 
 interface BonusTier {
   id: string;
@@ -196,180 +195,179 @@ export default function PartnerBonusTiers() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Partner Bonus Tiers</h1>
-          <p className="text-muted-foreground">Configure weekly bonus tiers and percentages</p>
-        </div>
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-3xl font-bold">Partner Bonus Tiers</h1>
+        <p className="text-muted-foreground">Configure weekly bonus tiers and percentages</p>
+      </div>
 
-        {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tiers</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{tiers?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Active: {tiers?.filter(t => t.is_active).length || 0}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Highest Bonus</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {tiers && tiers.length > 0 
-                  ? `${(Math.max(...tiers.map(t => t.bonus_percentage)) * 100).toFixed(1)}%`
-                  : "0%"
-                }
-              </div>
-              <p className="text-xs text-muted-foreground">Maximum earning rate</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Top Tier Threshold</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {tiers && tiers.length > 0
-                  ? `$${Math.max(...tiers.filter(t => t.max_weekly_sales < 999999999).map(t => t.min_weekly_sales)).toFixed(0)}`
-                  : "$0"
-                }
-              </div>
-              <p className="text-xs text-muted-foreground">Weekly sales required</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tiers Table */}
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Bonus Tiers</CardTitle>
-                <CardDescription>Manage weekly bonus tier thresholds and percentages</CardDescription>
-              </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Tier
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{editingTier ? "Edit Bonus Tier" : "Create Bonus Tier"}</DialogTitle>
-                    <DialogDescription>
-                      Configure the weekly sales thresholds and bonus percentage
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit}>
-                    <div className="space-y-4 py-4">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tiers</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{tiers?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">Active: {tiers?.filter(t => t.is_active).length || 0}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Highest Bonus</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tiers && tiers.length > 0 
+                ? `${(Math.max(...tiers.map(t => t.bonus_percentage)) * 100).toFixed(1)}%`
+                : "0%"
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">Maximum earning rate</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Top Tier Threshold</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tiers && tiers.length > 0
+                ? `$${Math.max(...tiers.filter(t => t.max_weekly_sales < 999999999).map(t => t.min_weekly_sales)).toFixed(0)}`
+                : "$0"
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">Weekly sales required</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tiers Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Bonus Tiers</CardTitle>
+              <CardDescription>Manage weekly bonus tier thresholds and percentages</CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Tier
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingTier ? "Edit Bonus Tier" : "Create Bonus Tier"}</DialogTitle>
+                  <DialogDescription>
+                    Configure the weekly sales thresholds and bonus percentage
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tier_name">Tier Name *</Label>
+                      <Input
+                        id="tier_name"
+                        placeholder="e.g., Bronze, Silver, Gold"
+                        value={formData.tier_name}
+                        onChange={(e) => setFormData({ ...formData, tier_name: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="tier_name">Tier Name *</Label>
+                        <Label htmlFor="min_weekly_sales">Min Weekly Sales ($) *</Label>
                         <Input
-                          id="tier_name"
-                          placeholder="e.g., Bronze, Silver, Gold"
-                          value={formData.tier_name}
-                          onChange={(e) => setFormData({ ...formData, tier_name: e.target.value })}
+                          id="min_weekly_sales"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0"
+                          value={formData.min_weekly_sales}
+                          onChange={(e) => setFormData({ ...formData, min_weekly_sales: e.target.value })}
                           required
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="min_weekly_sales">Min Weekly Sales ($) *</Label>
-                          <Input
-                            id="min_weekly_sales"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0"
-                            value={formData.min_weekly_sales}
-                            onChange={(e) => setFormData({ ...formData, min_weekly_sales: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="max_weekly_sales">Max Weekly Sales ($) *</Label>
-                          <Input
-                            id="max_weekly_sales"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="999999"
-                            value={formData.max_weekly_sales}
-                            onChange={(e) => setFormData({ ...formData, max_weekly_sales: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="bonus_percentage">Bonus Percentage (%) *</Label>
-                          <Input
-                            id="bonus_percentage"
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            placeholder="1.5"
-                            value={formData.bonus_percentage}
-                            onChange={(e) => setFormData({ ...formData, bonus_percentage: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="tier_order">Tier Order *</Label>
-                          <Input
-                            id="tier_order"
-                            type="number"
-                            min="1"
-                            placeholder="1"
-                            value={formData.tier_order}
-                            onChange={(e) => setFormData({ ...formData, tier_order: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="is_active"
-                          checked={formData.is_active}
-                          onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      <div className="space-y-2">
+                        <Label htmlFor="max_weekly_sales">Max Weekly Sales ($) *</Label>
+                        <Input
+                          id="max_weekly_sales"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="999999"
+                          value={formData.max_weekly_sales}
+                          onChange={(e) => setFormData({ ...formData, max_weekly_sales: e.target.value })}
+                          required
                         />
-                        <Label htmlFor="is_active">Active</Label>
                       </div>
                     </div>
 
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createTierMutation.isPending || updateTierMutation.isPending}
-                      >
-                        {editingTier ? "Update" : "Create"} Tier
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bonus_percentage">Bonus Percentage (%) *</Label>
+                        <Input
+                          id="bonus_percentage"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="1.5"
+                          value={formData.bonus_percentage}
+                          onChange={(e) => setFormData({ ...formData, bonus_percentage: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="tier_order">Tier Order *</Label>
+                        <Input
+                          id="tier_order"
+                          type="number"
+                          min="1"
+                          placeholder="1"
+                          value={formData.tier_order}
+                          onChange={(e) => setFormData({ ...formData, tier_order: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      />
+                      <Label htmlFor="is_active">Active</Label>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={createTierMutation.isPending || updateTierMutation.isPending}
+                    >
+                      {editingTier ? "Update" : "Create"} Tier
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -449,33 +447,32 @@ export default function PartnerBonusTiers() {
           </CardContent>
         </Card>
 
-        {/* Tier Visualization */}
-        {tiers && tiers.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Tier Visualization</CardTitle>
-              <CardDescription>Visual representation of bonus tier thresholds</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {tiers.filter(t => t.is_active).map((tier, index) => (
-                  <div key={tier.id} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{tier.tier_name}</span>
-                      <span className="text-muted-foreground">
-                        ${tier.min_weekly_sales.toFixed(0)} - ${tier.max_weekly_sales >= 999999999 ? '∞' : tier.max_weekly_sales.toFixed(0)}
-                      </span>
-                    </div>
-                    <div className="h-8 rounded-lg bg-gradient-to-r from-primary/20 to-primary flex items-center justify-center text-sm font-semibold text-primary-foreground">
-                      {(tier.bonus_percentage * 100).toFixed(1)}% Bonus
-                    </div>
+      {/* Tier Visualization */}
+      {tiers && tiers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tier Visualization</CardTitle>
+            <CardDescription>Visual representation of bonus tier thresholds</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {tiers.filter(t => t.is_active).map((tier, index) => (
+                <div key={tier.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{tier.tier_name}</span>
+                    <span className="text-muted-foreground">
+                      ${tier.min_weekly_sales.toFixed(0)} - ${tier.max_weekly_sales >= 999999999 ? '∞' : tier.max_weekly_sales.toFixed(0)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </AdminLayout>
+                  <div className="h-8 rounded-lg bg-gradient-to-r from-primary/20 to-primary flex items-center justify-center text-sm font-semibold text-primary-foreground">
+                    {(tier.bonus_percentage * 100).toFixed(1)}% Bonus
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
