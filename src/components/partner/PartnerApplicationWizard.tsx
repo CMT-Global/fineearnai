@@ -30,7 +30,9 @@ import {
   TrendingUp,
   MapPin,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  User,
+  Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -479,6 +481,52 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                       );
                     }}
                   />
+
+                  {/* Phase 2: Username Display (Read-only) */}
+                  <div className="rounded-lg border p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Username
+                      </label>
+                      {isLoadingProfile ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Badge variant="secondary">
+                          {profile?.username || 'N/A'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Your unique username: <span className="font-semibold">{profile?.username || 'Not set'}</span>
+                    </p>
+                  </div>
+
+                  {/* Phase 2: Email Display (Read-only) */}
+                  <div className="rounded-lg border p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email Address
+                      </label>
+                      {isLoadingProfile ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : profile?.email ? (
+                        <Badge variant="outline" className="text-xs max-w-[200px] truncate">
+                          {profile.email}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">N/A</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {profile?.email ? (
+                        <>Contact email: <span className="font-semibold break-all">{profile.email}</span></>
+                      ) : (
+                        'No email set'
+                      )}
+                    </p>
+                  </div>
 
                   {/* Phase 4: Membership Plan Display (Read-only) */}
                   <div className="rounded-lg border p-4 bg-muted/30">
