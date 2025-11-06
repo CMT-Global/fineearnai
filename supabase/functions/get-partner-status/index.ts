@@ -85,30 +85,30 @@ Deno.serve(async (req) => {
       timingMs: authDuration,
     });
 
-    // Check if user has partner role
+    // Check if user has partner role in user_roles table
     const roleCheckStartTime = Date.now();
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'partner')
+      .maybeSingle();
 
-    if (profileError) {
+    if (roleError) {
       log({
-        event: 'get-partner-status.profile-error',
+        event: 'get-partner-status.role-check-error',
         correlationId,
         userId: user.id,
         timingMs: Date.now() - startTime,
-        error: profileError.message,
+        error: roleError.message,
       });
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to fetch profile' }),
+        JSON.stringify({ success: false, error: 'Failed to check partner role' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const roles = profile?.roles || [];
-    const isPartner = roles.includes('partner');
+    const isPartner = !!roleData;
     const roleCheckDuration = Date.now() - roleCheckStartTime;
 
     log({
