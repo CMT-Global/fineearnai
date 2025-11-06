@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicationWizard";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 
 const BecomePartner = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const [showIntroWizard, setShowIntroWizard] = useState(true);
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
@@ -37,20 +39,23 @@ const BecomePartner = () => {
   };
 
   const handleApplicationComplete = () => {
-    // Refresh the page to show the application status
-    window.location.reload();
+    // Invalidate queries to refresh data without page reload
+    queryClient.invalidateQueries({ queryKey: ['partner-application'] });
+    queryClient.invalidateQueries({ queryKey: ['is-partner'] });
+    // Navigate to application status page
+    navigate('/partner/application-status');
   };
 
   const handleApplicationCancel = () => {
     navigate('/dashboard');
   };
 
-  // If user has a submitted application, redirect to status page
+  // If user has a submitted application (not currently filling wizard), redirect to status page
   useEffect(() => {
-    if (application && !showApplicationWizard) {
+    if (application && !showApplicationWizard && !showIntroWizard) {
       navigate('/partner/application-status');
     }
-  }, [application, showApplicationWizard, navigate]);
+  }, [application, showApplicationWizard, showIntroWizard, navigate]);
 
   if (checkingPartner || loadingApplication) {
     return (
