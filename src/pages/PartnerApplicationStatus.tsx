@@ -36,14 +36,15 @@ const PartnerApplicationStatus = () => {
   const [showWizard, setShowWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // Ready gate - only proceed when all data is loaded
-  const ready = !isLoading && !checkingPartner;
+  // Ready gate - only proceed when user is loaded AND all data is loaded
+  const ready = !!user && !isLoading && !checkingPartner;
 
   // Debug logging for troubleshooting
   console.log('🔍 [ApplicationStatus] Component Render State:', {
     timestamp: new Date().toISOString(),
     userId: user?.id,
     ready,
+    hasUser: !!user,
     isPartner,
     hasApplication: !!application,
     applicationId: application?.id,
@@ -114,8 +115,8 @@ const PartnerApplicationStatus = () => {
     );
   }
 
-  // Show loading state while data is being fetched
-  if (isLoading || checkingPartner) {
+  // Show loading state while waiting for user or data is being fetched
+  if (!user || isLoading || checkingPartner) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">

@@ -119,9 +119,9 @@ const BecomePartner = () => {
     );
   }
 
-  // Show loading state while data is being fetched
-  if (checkingPartner || loadingApplication) {
-    console.log('⏳ [BecomePartner] LOADING STATE:', { checkingPartner, loadingApplication });
+  // Show loading state while waiting for user or data is being fetched
+  if (!user || checkingPartner || loadingApplication) {
+    console.log('⏳ [BecomePartner] LOADING STATE:', { hasUser: !!user, checkingPartner, loadingApplication });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -171,12 +171,13 @@ const BecomePartner = () => {
   }
 
   // Only render wizards for new users without applications or partner status
-  // Triple-check to ensure no wizard rendering during navigation
-  const shouldShowWizard = !isPartner && !application && !isNavigating && !checkingPartner && !loadingApplication;
+  // Ensure user is loaded and no navigation/loading is in progress
+  const shouldShowWizard = !!user && !isPartner && !application && !isNavigating && !checkingPartner && !loadingApplication;
   
   console.log('🎯 [BecomePartner] SHOULD SHOW WIZARD CHECK:', {
     shouldShowWizard,
     reasons: {
+      hasUser: !!user,
       isPartner,
       hasApplication: !!application,
       isNavigating,
