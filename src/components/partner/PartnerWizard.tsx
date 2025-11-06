@@ -37,7 +37,7 @@ const steps = [
         </div>
         <h2 className="text-3xl font-bold">Become a FineEarn Local Partner</h2>
         <p className="text-lg text-muted-foreground">
-          Join thousands of successful partners earning an average of{" "}
+          Become a Local Partner in your country and start earning an average of{" "}
           <span className="inline-flex flex-wrap items-baseline gap-1">
             <CurrencyDisplay 
               amountUSD={1400} 
@@ -47,7 +47,7 @@ const steps = [
             <span className="text-xs text-muted-foreground">($1,400)</span>
             <span className="font-bold text-primary">weekly</span>
           </span>{" "}
-          by helping people in your community upgrade their accounts.
+          by helping people in your community learn more about FineEarn & upgrade their accounts with local support.
         </p>
         <div className="grid grid-cols-3 gap-4 pt-4">
           <Card className="border-primary/20">
