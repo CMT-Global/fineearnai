@@ -7,6 +7,7 @@ import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicatio
 import { usePartnerStatus } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
@@ -18,6 +19,7 @@ const BecomePartner = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [correlationId, setCorrelationId] = useState<string>("");
@@ -207,8 +209,8 @@ const BecomePartner = () => {
       : undefined;
 
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <QueryErrorBoundary 
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+        <QueryErrorBoundary
           error={error}
           customMessage={customMessage}
           reset={() => {
@@ -246,7 +248,7 @@ const BecomePartner = () => {
   if (isNavigating) {
     console.log('🚦 [BecomePartner] Navigation in progress, showing redirect screen');
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
@@ -258,7 +260,7 @@ const BecomePartner = () => {
   if (!ready) {
     console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerStatusSuccess });
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Loading..." />
         </div>
@@ -296,7 +298,7 @@ const BecomePartner = () => {
   if (pendingRedirect) {
     console.log('🔄 [BecomePartner] Pending redirect detected, showing redirect screen');
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
@@ -313,7 +315,7 @@ const BecomePartner = () => {
         refetchPartnerStatus();
       }}
     >
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         {/* Intro Wizard - Benefits of becoming a partner */}
         {!showApplicationWizard && (
           <>

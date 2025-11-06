@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePartnerStatus } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { 
   CheckCircle, 
   Clock, 
@@ -32,6 +33,7 @@ import { toast } from "sonner";
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const { data: profile } = useProfile(user?.id || '');
   const [showWizard, setShowWizard] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -135,8 +137,8 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Handle errors first
   if (partnerStatusError) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <QueryErrorBoundary 
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+        <QueryErrorBoundary
           error={partnerStatusError} 
           reset={() => {
             refetchPartnerStatus();
@@ -149,7 +151,7 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Early return for navigation state
   if (isNavigating) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
@@ -160,7 +162,7 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Show loading state while data is being fetched
   if (!ready) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Loading application status..." />
         </div>
@@ -171,7 +173,7 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Early return for pendingRedirect - prevents flicker before redirect
   if (pendingRedirect) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
@@ -226,7 +228,7 @@ const PartnerApplicationStatus = () => {
         refetchPartnerStatus();
       }}
     >
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
