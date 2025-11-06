@@ -22,9 +22,10 @@ Deno.serve(async (req) => {
     // Find jobs that are stuck in processing (last_heartbeat > 10 minutes ago)
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     
+    // PHASE 4: Include processing_metadata to track reset count
     const { data: stuckJobs, error: fetchError } = await supabase
       .from("bulk_email_jobs")
-      .select("id, batch_id, processing_worker_id, last_heartbeat, processed_count, total_recipients")
+      .select("id, batch_id, processing_worker_id, last_heartbeat, processed_count, total_recipients, processing_metadata")
       .eq("status", "processing")
       .not("last_heartbeat", "is", null)
       .lt("last_heartbeat", tenMinutesAgo);
@@ -51,13 +52,78 @@ Deno.serve(async (req) => {
     
     console.log(`⚠️  [Job Monitor] Found ${stuckJobs.length} stuck job(s)`);
     
-    // Reset each stuck job
+    // PHASE 4: Reset each stuck job with enhanced tracking
     const resetResults = [];
+    const MAX_RESETS = 3;
     
     for (const job of stuckJobs) {
-      console.log(`🔄 [Job Monitor] Resetting stuck job ${job.id} (worker: ${job.processing_worker_id})`);
+      const currentResetCount = (job.processing_metadata?.reset_count || 0);
+      const resetHistory = job.processing_metadata?.reset_history || [];
+      
+      console.log(`🔄 [Job Monitor] Processing stuck job ${job.id} (worker: ${job.processing_worker_id})`);
       console.log(`   Last heartbeat: ${job.last_heartbeat}`);
       console.log(`   Progress: ${job.processed_count}/${job.total_recipients}`);
+      console.log(`   Reset count: ${currentResetCount}/${MAX_RESETS}`);
+      
+      // PHASE 4: Check if job has been reset too many times
+      if (currentResetCount >= MAX_RESETS) {
+        console.error(`❌ [Job Monitor] Job ${job.id} has been reset ${currentResetCount} times. Marking as FAILED.`);
+        
+        const { error: failError } = await supabase
+          .from("bulk_email_jobs")
+          .update({
+            status: "failed",
+            completed_at: new Date().toISOString(),
+            error_message: `Job failed after ${MAX_RESETS} automatic resets. Manual intervention required. Last worker: ${job.processing_worker_id}. Progress: ${job.processed_count}/${job.total_recipients}`,
+            processing_metadata: {
+              ...job.processing_metadata,
+              reset_count: currentResetCount,
+              permanently_failed_at: new Date().toISOString(),
+              final_worker_id: job.processing_worker_id,
+              final_progress: `${job.processed_count}/${job.total_recipients}`,
+            },
+          })
+          .eq("id", job.id);
+        
+        if (failError) {
+          console.error(`❌ [Job Monitor] Failed to mark job ${job.id} as failed:`, failError);
+          resetResults.push({
+            job_id: job.id,
+            batch_id: job.batch_id,
+            action: "mark_failed",
+            success: false,
+            error: failError.message,
+          });
+        } else {
+          console.log(`✅ [Job Monitor] Job ${job.id} marked as FAILED after ${MAX_RESETS} resets`);
+          resetResults.push({
+            job_id: job.id,
+            batch_id: job.batch_id,
+            action: "marked_failed",
+            success: true,
+            reset_count: currentResetCount,
+            reason: `Exceeded maximum reset attempts (${MAX_RESETS})`,
+          });
+        }
+        continue;
+      }
+      
+      // PHASE 4: Normal reset with enhanced metadata tracking
+      const newResetCount = currentResetCount + 1;
+      const resetEntry = {
+        reset_number: newResetCount,
+        reset_at: new Date().toISOString(),
+        stuck_worker_id: job.processing_worker_id,
+        stuck_since: job.last_heartbeat,
+        processed_count_at_reset: job.processed_count,
+        total_recipients: job.total_recipients,
+        minutes_stuck: Math.round((Date.now() - new Date(job.last_heartbeat).getTime()) / 1000 / 60),
+      };
+      
+      // Add warning if approaching max resets
+      if (newResetCount >= 2) {
+        console.warn(`⚠️  [Job Monitor] Job ${job.id} stuck for ${newResetCount} time. Approaching max resets (${MAX_RESETS}).`);
+      }
       
       const { error: resetError } = await supabase
         .from("bulk_email_jobs")
@@ -65,7 +131,13 @@ Deno.serve(async (req) => {
           status: "queued",
           processing_worker_id: null,
           last_heartbeat: null,
-          error_message: `Job was stuck and automatically reset. Last worker: ${job.processing_worker_id}. Progress before reset: ${job.processed_count}/${job.total_recipients}`,
+          error_message: `Job was stuck and automatically reset (attempt ${newResetCount}/${MAX_RESETS}). Last worker: ${job.processing_worker_id}. Stuck since: ${job.last_heartbeat}. Progress: ${job.processed_count}/${job.total_recipients}`,
+          processing_metadata: {
+            ...job.processing_metadata,
+            reset_count: newResetCount,
+            last_reset_at: new Date().toISOString(),
+            reset_history: [...resetHistory, resetEntry],
+          },
         })
         .eq("id", job.id);
       
@@ -74,33 +146,44 @@ Deno.serve(async (req) => {
         resetResults.push({
           job_id: job.id,
           batch_id: job.batch_id,
+          action: "reset",
           success: false,
           error: resetError.message,
         });
       } else {
-        console.log(`✅ [Job Monitor] Successfully reset job ${job.id}`);
+        console.log(`✅ [Job Monitor] Successfully reset job ${job.id} (reset ${newResetCount}/${MAX_RESETS})`);
         resetResults.push({
           job_id: job.id,
           batch_id: job.batch_id,
+          action: "reset",
           success: true,
+          reset_count: newResetCount,
           processed_count: job.processed_count,
           total_recipients: job.total_recipients,
+          minutes_stuck: resetEntry.minutes_stuck,
         });
       }
     }
     
     const successCount = resetResults.filter(r => r.success).length;
     const failureCount = resetResults.filter(r => !r.success).length;
+    const failedCount = resetResults.filter(r => r.action === "marked_failed").length;
+    const resetCount = resetResults.filter(r => r.action === "reset").length;
     
-    console.log(`📊 [Job Monitor] Reset complete: ${successCount} succeeded, ${failureCount} failed`);
+    console.log(`📊 [Job Monitor] Processing complete:`);
+    console.log(`   - Reset: ${resetCount} job(s)`);
+    console.log(`   - Marked as failed: ${failedCount} job(s)`);
+    console.log(`   - Failures: ${failureCount}`);
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Reset ${successCount} stuck job(s)`,
+        message: `Processed ${stuckJobs.length} stuck job(s): ${resetCount} reset, ${failedCount} marked as failed`,
         stuck_jobs_found: stuckJobs.length,
-        reset_successful: successCount,
-        reset_failed: failureCount,
+        jobs_reset: resetCount,
+        jobs_marked_failed: failedCount,
+        operations_successful: successCount,
+        operations_failed: failureCount,
         results: resetResults,
         checked_at: new Date().toISOString()
       }),
