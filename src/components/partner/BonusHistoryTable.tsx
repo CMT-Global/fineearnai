@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { History, DollarSign, TrendingUp, Calendar, Award, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BonusHistoryTableSkeleton } from "@/components/partner/BonusHistoryTableSkeleton";
 
 interface WeeklyBonus {
   id: string;
@@ -224,9 +225,7 @@ export function BonusHistoryTable() {
         {viewMode === "table" && (
           <>
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">Loading bonus history...</div>
-              </div>
+              <BonusHistoryTableSkeleton />
             ) : paginatedBonuses.length > 0 ? (
               <>
                 <Table>
