@@ -57,7 +57,18 @@ const PartnerApplicationStatus = () => {
 
   // Effect-driven redirects - only runs after data is settled
   useEffect(() => {
-    console.log('🔄 [ApplicationStatus] useEffect triggered:', { ready, isPartner, hasApplication: !!application });
+    console.log('🔄 [ApplicationStatus] useEffect triggered:', { 
+      hasUser: !!user,
+      ready, 
+      isPartner, 
+      hasApplication: !!application 
+    });
+    
+    // CRITICAL: Wait for user to be loaded before ANY redirect logic
+    if (!user) {
+      console.log('⏳ [ApplicationStatus] Waiting for user to load...');
+      return;
+    }
     
     if (!ready) {
       console.log('⏳ [ApplicationStatus] Not ready yet, waiting...');
@@ -87,7 +98,7 @@ const PartnerApplicationStatus = () => {
     }
     
     console.log('📋 [ApplicationStatus] Has application, showing status page');
-  }, [ready, isPartner, application, navigate]);
+  }, [user, ready, isPartner, application, navigate]);
 
   // Early return for navigation state - BEFORE error handling
   if (isNavigating) {
