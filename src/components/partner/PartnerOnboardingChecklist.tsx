@@ -237,7 +237,7 @@ export const PartnerOnboardingChecklist = () => {
 
                   {!isCompleted && (
                     <Button
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
                       onClick={() => handleMarkComplete(step.key)}
                       disabled={updateStep.isPending}
