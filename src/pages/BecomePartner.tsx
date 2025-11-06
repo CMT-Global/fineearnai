@@ -16,18 +16,37 @@ const BecomePartner = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
-  const [showIntroWizard, setShowIntroWizard] = useState(true);
+  const [showIntroWizard, setShowIntroWizard] = useState(false);
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   
   const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
   const { data: application, isLoading: loadingApplication } = usePartnerApplication();
   const { data: profile } = useProfile(user?.id || '');
 
+  // Determine wizard visibility based on user status
   useEffect(() => {
+    // Wait for data to load before making decisions
+    if (loadingApplication || checkingPartner) {
+      return;
+    }
+
+    // Priority 1: Redirect approved partners to dashboard
     if (isPartner) {
       navigate('/partner/dashboard');
+      return;
     }
-  }, [isPartner, navigate]);
+
+    // Priority 2: Redirect users with existing applications to status page
+    if (application) {
+      navigate('/partner/application-status');
+      return;
+    }
+
+    // Priority 3: New users without application - show intro wizard
+    if (!application && !isPartner) {
+      setShowIntroWizard(true);
+    }
+  }, [application, isPartner, loadingApplication, checkingPartner, navigate]);
 
   const handleIntroWizardComplete = () => {
     setShowIntroWizard(false);
@@ -50,13 +69,6 @@ const BecomePartner = () => {
     navigate('/dashboard');
   };
 
-  // If user has a submitted application (not currently filling wizard), redirect to status page
-  useEffect(() => {
-    if (application && !showApplicationWizard && !showIntroWizard) {
-      navigate('/partner/application-status');
-    }
-  }, [application, showApplicationWizard, showIntroWizard, navigate]);
-
   if (checkingPartner || loadingApplication) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
@@ -71,21 +83,26 @@ const BecomePartner = () => {
 
   return (
     <PageLayout profile={profile} onSignOut={signOut}>
-      {/* Intro Wizard - Benefits of becoming a partner */}
-      {showIntroWizard && (
-        <PartnerWizard
-          open={showIntroWizard} 
-          onComplete={handleIntroWizardComplete}
-          onClose={handleIntroWizardClose}
-        />
-      )}
+      {/* Only render wizards after data has loaded and we've confirmed user status */}
+      {!loadingApplication && !checkingPartner && (
+        <>
+          {/* Intro Wizard - Benefits of becoming a partner */}
+          {showIntroWizard && !application && !isPartner && (
+            <PartnerWizard
+              open={showIntroWizard} 
+              onComplete={handleIntroWizardComplete}
+              onClose={handleIntroWizardClose}
+            />
+          )}
 
-      {/* Application Wizard - Multi-step form */}
-      {showApplicationWizard && (
-        <PartnerApplicationWizard
-          onComplete={handleApplicationComplete}
-          onCancel={handleApplicationCancel}
-        />
+          {/* Application Wizard - Multi-step form */}
+          {showApplicationWizard && !application && !isPartner && (
+            <PartnerApplicationWizard
+              onComplete={handleApplicationComplete}
+              onCancel={handleApplicationCancel}
+            />
+          )}
+        </>
       )}
     </PageLayout>
   );
