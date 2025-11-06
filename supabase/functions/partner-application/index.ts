@@ -14,6 +14,10 @@ interface ApplicationSubmission {
   whatsapp_group_link?: string;
   telegram_group_link?: string;
   application_notes?: string;
+  applicant_country: string;
+  current_membership_plan: string;
+  total_referrals: number;
+  upgraded_referrals: number;
   
   // Section 2: Network & Experience
   has_community_group?: boolean;
@@ -32,6 +36,8 @@ interface ApplicationSubmission {
   
   // Section 4: Agreement
   weekly_time_commitment?: number;
+  daily_time_commitment: string;
+  is_currently_employed: boolean;
   motivation?: string;
   agrees_to_guidelines?: boolean;
 }
@@ -113,7 +119,54 @@ Deno.serve(async (req) => {
       console.log("[Partner Application] Submission data:", {
         user_id: user.id,
         preferred_contact_method: body.preferred_contact_method,
+        membership_plan: body.current_membership_plan,
+        country: body.applicant_country,
       });
+
+      // Fetch user profile to validate membership plan server-side
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("membership_plan, country")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error("[Partner Application] Profile fetch error:", profileError);
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch user profile" }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // SERVER-SIDE FREE PLAN VALIDATION
+      if (profile.membership_plan === 'free') {
+        console.log("[Partner Application] BLOCKED: User on free plan:", user.id);
+        return new Response(
+          JSON.stringify({
+            error: "Free plan users cannot apply to become partners. Please upgrade your membership plan first.",
+            error_code: "FREE_PLAN_BLOCKED",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Fetch referral data for validation
+      const { count: totalReferrals, error: referralError } = await supabaseClient
+        .from("referrals")
+        .select("*", { count: "exact", head: true })
+        .eq("referrer_id", user.id);
+
+      if (referralError) {
+        console.error("[Partner Application] Referral fetch error:", referralError);
+      }
+
+      console.log("[Partner Application] Referral count:", totalReferrals);
 
       // Comprehensive validation
       const errors: string[] = [];
@@ -133,6 +186,23 @@ Deno.serve(async (req) => {
         if (!body.telegram_username) {
           errors.push("Telegram username is required");
         }
+      }
+
+      // Validate new required fields
+      if (!body.applicant_country || body.applicant_country.length !== 2) {
+        errors.push("Valid country code is required");
+      }
+
+      if (!body.current_membership_plan) {
+        errors.push("Membership plan information is required");
+      }
+
+      if (typeof body.total_referrals !== 'number' || body.total_referrals < 0) {
+        errors.push("Valid referral count is required");
+      }
+
+      if (typeof body.upgraded_referrals !== 'number' || body.upgraded_referrals < 0) {
+        errors.push("Valid upgraded referral count is required");
       }
 
       // Section 2: Network & Experience validation
@@ -166,6 +236,16 @@ Deno.serve(async (req) => {
         if (body.weekly_time_commitment < 1 || body.weekly_time_commitment > 168) {
           errors.push("Weekly time commitment must be between 1 and 168 hours");
         }
+      }
+
+      if (!body.daily_time_commitment) {
+        errors.push("Daily time commitment is required");
+      } else if (!['1-2', '2-4', '4-6', '6+'].includes(body.daily_time_commitment)) {
+        errors.push("Invalid daily time commitment value");
+      }
+
+      if (typeof body.is_currently_employed !== 'boolean') {
+        errors.push("Employment status is required");
       }
 
       if (body.motivation && body.motivation.length > 1000) {
@@ -219,6 +299,10 @@ Deno.serve(async (req) => {
           whatsapp_group_link: body.whatsapp_group_link,
           telegram_group_link: body.telegram_group_link,
           application_notes: body.application_notes,
+          applicant_country: body.applicant_country,
+          current_membership_plan: body.current_membership_plan,
+          total_referrals: body.total_referrals,
+          upgraded_referrals: body.upgraded_referrals,
           // Section 2: Network & Experience
           has_community_group: body.has_community_group ?? false,
           community_group_size: body.community_group_size,
@@ -234,6 +318,8 @@ Deno.serve(async (req) => {
           can_organize_training: body.can_organize_training ?? false,
           // Section 4: Agreement
           weekly_time_commitment: body.weekly_time_commitment,
+          daily_time_commitment: body.daily_time_commitment,
+          is_currently_employed: body.is_currently_employed,
           motivation: body.motivation,
           agrees_to_guidelines: body.agrees_to_guidelines ?? false,
           status: "pending",
