@@ -26,6 +26,9 @@ const BecomePartner = () => {
   const { data: application, isLoading: loadingApplication, isSuccess: appLoaded, error: applicationError, refetch: refetchApplication } = usePartnerApplication(correlationId);
   const { data: profile } = useProfile(user?.id || '');
 
+  // Compute ready state - only true when user exists AND both queries have settled successfully
+  const ready = !!user && partnerLoaded && appLoaded;
+
   // Phase 2: Generate correlation ID on mount and display it
   useEffect(() => {
     if (user && !correlationId) {
