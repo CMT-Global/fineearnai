@@ -49,8 +49,6 @@ const PartnerApplicationStatus = () => {
       
       const newCorrelationId = generateCorrelationId();
       setCorrelationId(newCorrelationId);
-      
-      console.log('🆔 [ApplicationStatus] Correlation ID generated:', newCorrelationId);
     }
   }, [user, correlationId]);
 
@@ -72,39 +70,15 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Compute pendingRedirect gate - redirect if partner or no application
   const pendingRedirect = ready && !isNavigating && (isPartner || !application);
 
-  // Debug logging for troubleshooting
-  console.log('🔍 [ApplicationStatus] Component Render State:', {
-    timestamp: new Date().toISOString(),
-    userId: user?.id,
-    ready,
-    hasUser: !!user,
-    isPartner,
-    hasApplication: !!application,
-    applicationId: application?.id,
-    applicationStatus: application?.status,
-    isNavigating,
-    pendingRedirect,
-    profileLoaded: !!profile
-  });
-
   // Phase 4: Effect-driven redirects - minimal dependencies, only runs after data is settled
   useEffect(() => {
-    console.log('🔄 [ApplicationStatus] useEffect triggered:', { 
-      ready, 
-      isPartner, 
-      hasApplication: !!application 
-    });
-    
     if (!ready) {
-      console.log('⏳ [ApplicationStatus] Not ready yet, waiting...');
       return;
     }
     
-    console.log('✅ [ApplicationStatus] Ready! Checking redirect conditions...');
-    
     // Redirect approved partners to dashboard
     if (isPartner) {
-      console.log('✅ [ApplicationStatus] PARTNER APPROVED - Redirecting to dashboard');
+      console.log('✅ [ApplicationStatus] Redirecting approved partner to dashboard');
       setIsNavigating(true);
       navigate('/partner/dashboard', { replace: true });
       return;
@@ -112,13 +86,11 @@ const PartnerApplicationStatus = () => {
     
     // Redirect users without application to become-partner
     if (!application) {
-      console.log('⚠️ [ApplicationStatus] NO APPLICATION FOUND - Redirecting to become-partner');
+      console.log('⚠️ [ApplicationStatus] No application found, redirecting to become-partner');
       setIsNavigating(true);
       navigate('/become-partner', { replace: true });
       return;
     }
-    
-    console.log('📋 [ApplicationStatus] Has application, showing status page');
   }, [ready, isPartner, application, navigate]);
 
   // Phase 4: Handle errors first

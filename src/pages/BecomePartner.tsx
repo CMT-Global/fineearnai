@@ -42,14 +42,6 @@ const BecomePartner = () => {
 
   // Compute ready state - only true when user exists AND query has settled successfully
   const ready = !!user && partnerStatusSuccess;
-  
-  // Log ready state computation
-  console.log('🎯 [BecomePartner] Ready State Computed:', {
-    ready,
-    hasUser: !!user,
-    partnerStatusSuccess,
-    timestamp: new Date().toISOString()
-  });
 
   // Phase 3: Generate correlation ID on mount with useRef guard to prevent duplicates in Strict Mode
   useEffect(() => {
@@ -60,8 +52,6 @@ const BecomePartner = () => {
       const newCorrelationId = generateCorrelationId();
       setCorrelationId(newCorrelationId);
       
-      console.log('🆔 [BecomePartner] Correlation ID generated:', newCorrelationId);
-      
       // Phase 5: Log page entry with correlation ID
       partnerDebugLogger.info('become-partner.page-entered', {
         userId: user.id,
@@ -71,61 +61,16 @@ const BecomePartner = () => {
     }
   }, [user, correlationId]);
 
-  // Debug logging for troubleshooting
-  console.log('🔍 [BecomePartner] Component Render State:', {
-    timestamp: new Date().toISOString(),
-    userId: user?.id,
-    isPartner,
-    hasApplication: !!application,
-    applicationId: application?.id,
-    applicationStatus: application?.status,
-    partnerStatusSuccess,
-    isNavigating,
-    showApplicationWizard,
-    profileLoaded: !!profile,
-    userEmail: user?.email
-  });
-
-  // Log when partner status changes
-  console.log('🔍 [BecomePartner] Partner Status Check Result:', {
-    isPartner,
-    partnerStatusSuccess,
-    partnerStatusError: partnerStatusError?.message
-  });
-
-  // Log when application status changes
-  console.log('🔍 [BecomePartner] Application Check Result:', {
-    hasApplication: !!application,
-    applicationId: application?.id,
-    applicationStatus: application?.status,
-    partnerStatusSuccess,
-    partnerStatusError: partnerStatusError?.message
-  });
-
   // Effect-driven redirects - only runs after data is settled
   useEffect(() => {
-    console.log('🔄 [BecomePartner] Redirect Effect Triggered:', {
-      ready,
-      isPartner,
-      hasApplication: !!application,
-      isNavigating,
-      timestamp: new Date().toISOString()
-    });
-    
     // CRITICAL: Wait for ready state before ANY redirect logic
     if (!ready) {
-      console.log('⏳ [BecomePartner] Not ready yet, waiting for queries to settle...', {
-        hasUser: !!user,
-        partnerStatusSuccess
-      });
       return;
     }
     
-    console.log('✅ [BecomePartner] Ready! Checking redirect conditions...');
-    
     // Redirect approved partners to dashboard
     if (isPartner) {
-      console.log('✅ [BecomePartner] USER IS PARTNER - Triggering redirect to dashboard');
+      console.log('✅ [BecomePartner] Redirecting partner to dashboard');
       
       // Log redirect decision ONCE in effect
       partnerDebugLogger.info('become-partner.redirect-to-dashboard', {
@@ -141,12 +86,7 @@ const BecomePartner = () => {
     
     // Redirect users with existing applications
     if (application) {
-      console.log('✅ [BecomePartner] USER HAS APPLICATION - Triggering redirect to application-status');
-      console.log('📋 [BecomePartner] Application details:', {
-        id: application.id,
-        status: application.status,
-        created_at: application.created_at
-      });
+      console.log('✅ [BecomePartner] Redirecting user with application to status page');
       
       // Log redirect decision ONCE in effect
       partnerDebugLogger.info('become-partner.redirect-to-application-status', {
@@ -160,9 +100,6 @@ const BecomePartner = () => {
       navigate('/partner/application-status', { replace: true });
       return;
     }
-    
-    console.log('✅ [BecomePartner] No redirect needed, user can proceed with wizard');
-    console.log('🎯 [BecomePartner] Effect complete - render will continue');
   }, [ready, isPartner, application, navigate]);
 
   // Handle errors - show error UI with retry and specific messages
@@ -210,16 +147,13 @@ const BecomePartner = () => {
   }
 
   const handleIntroWizardComplete = () => {
-    console.log('✅ [BecomePartner] Intro wizard completed, showing application wizard');
     setShowApplicationWizard(true);
   };
 
   const handleApplicationComplete = async () => {
-    console.log('✅ [BecomePartner] Application wizard completed, invalidating queries...');
+    console.log('✅ [BecomePartner] Application completed, redirecting to status page');
     try {
       await queryClient.invalidateQueries({ queryKey: ['partner-status'] });
-      console.log('✅ [BecomePartner] Invalidated partner-status query');
-      console.log('🔄 [BecomePartner] Navigating to application-status...');
       navigate('/partner/application-status', { replace: true });
     } catch (error) {
       console.error('🚨 [BecomePartner] Error in handleApplicationComplete:', error);
@@ -227,13 +161,11 @@ const BecomePartner = () => {
   };
 
   const handleApplicationCancel = () => {
-    console.log('❌ [BecomePartner] Application cancelled, navigating to dashboard');
     navigate('/dashboard', { replace: true });
   };
 
   // Early return if navigation is in progress to prevent wizard flash
   if (isNavigating) {
-    console.log('🚦 [BecomePartner] Navigation in progress, showing redirect screen');
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -245,7 +177,6 @@ const BecomePartner = () => {
 
   // Show loading state while waiting for ready state
   if (!ready) {
-    console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerStatusSuccess });
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -257,33 +188,12 @@ const BecomePartner = () => {
 
   // Only render wizards when ready and no redirect is needed
   const shouldShowWizard = ready && !isNavigating && !isPartner && !application;
-  
-  console.log('🎯 [BecomePartner] SHOULD SHOW WIZARD CHECK:', {
-    shouldShowWizard,
-    reasons: {
-      ready,
-      isNavigating,
-      isPartner,
-      hasApplication: !!application
-    },
-    timestamp: new Date().toISOString()
-  });
 
   // Phase 1: Compute pending redirect - if we're ready and should redirect but navigation hasn't started yet
   const pendingRedirect = ready && !isNavigating && (isPartner || !!application);
-  
-  console.log('🚦 [BecomePartner] Pending Redirect Check:', {
-    pendingRedirect,
-    ready,
-    isNavigating,
-    isPartner,
-    hasApplication: !!application,
-    timestamp: new Date().toISOString()
-  });
 
   // Phase 1: If we're about to redirect, show redirecting UI immediately
   if (pendingRedirect) {
-    console.log('🔄 [BecomePartner] Pending redirect detected, showing redirect screen');
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -292,8 +202,6 @@ const BecomePartner = () => {
       </PageLayout>
     );
   }
-
-  console.log('✅ [BecomePartner] RENDERING WIZARDS - All checks passed');
 
   return (
     <PartnerErrorBoundary
@@ -305,40 +213,29 @@ const BecomePartner = () => {
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         {/* Intro Wizard - Benefits of becoming a partner */}
         {!showApplicationWizard && (
-          <>
-            {console.log('📖 [BecomePartner] Rendering INTRO WIZARD')}
-            <PartnerWizard
-              open={true} 
-              onComplete={() => {
-                console.log('✅ [BecomePartner] Intro wizard onComplete called');
-                handleIntroWizardComplete();
-              }}
-              onClose={() => {
-                console.log('❌ [BecomePartner] Intro wizard onClose called - User cancelled');
-                console.log('🔄 [BecomePartner] Setting isNavigating and navigating to dashboard');
-                setIsNavigating(true);
-                navigate('/dashboard', { replace: true });
-              }}
-            />
-          </>
+          <PartnerWizard
+            open={true} 
+            onComplete={() => {
+              handleIntroWizardComplete();
+            }}
+            onClose={() => {
+              setIsNavigating(true);
+              navigate('/dashboard', { replace: true });
+            }}
+          />
         )}
 
         {/* Application Wizard - Multi-step form */}
         {showApplicationWizard && (
-          <>
-            {console.log('📝 [BecomePartner] Rendering APPLICATION WIZARD with correlationId:', correlationId)}
-            <PartnerApplicationWizard
-              correlationId={correlationId}
-              onComplete={() => {
-                console.log('✅ [BecomePartner] Application wizard onComplete called');
-                handleApplicationComplete();
-              }}
-              onCancel={() => {
-                console.log('❌ [BecomePartner] Application wizard onCancel called');
-                handleApplicationCancel();
-              }}
-            />
-          </>
+          <PartnerApplicationWizard
+            correlationId={correlationId}
+            onComplete={() => {
+              handleApplicationComplete();
+            }}
+            onCancel={() => {
+              handleApplicationCancel();
+            }}
+          />
         )}
       </PageLayout>
     </PartnerErrorBoundary>
