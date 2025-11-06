@@ -69,6 +69,9 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   const [countrySearchOpen, setCountrySearchOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState("");
   
+  // Phase 3: Validation errors state
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
   // Phase 4: Fetch profile and referral stats
   const { data: profile, isLoading: isLoadingProfile } = useProfile(user?.id);
   const [referralStats, setReferralStats] = useState({ total: 0, upgraded: 0 });
@@ -223,7 +226,37 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
 
   const progress = ((currentSection + 1) / sections.length) * 100;
 
-  const validateSection = async (section: number): Promise<boolean> => {
+  // Phase 3: Helper function to get human-readable field labels
+  const getFieldLabel = (fieldName: string): string => {
+    const labelMap: Record<string, string> = {
+      preferred_contact_method: "Preferred Contact Method",
+      whatsapp_number: "WhatsApp Number",
+      telegram_username: "Telegram Username",
+      whatsapp_group_link: "WhatsApp Group Link",
+      telegram_group_link: "Telegram Group Link",
+      applicant_country: "Your Country",
+      current_membership_plan: "Current Membership Plan",
+      manages_community: "Manages Community",
+      community_group_links: "Community Group Links",
+      community_member_count: "Community Member Count",
+      promoted_platforms: "Promoted Platforms",
+      platform_promotion_details: "Platform Promotion Details",
+      network_description: "Network Description",
+      expected_monthly_onboarding: "Expected Monthly Onboarding",
+      local_payment_methods: "Local Payment Methods",
+      can_provide_local_support: "Can Provide Local Support",
+      support_preference: "Support Preference",
+      organize_training_sessions: "Organize Training Sessions",
+      daily_time_commitment: "Daily Time Commitment",
+      is_currently_employed: "Employment Status",
+      motivation_text: "Motivation",
+      agrees_to_guidelines: "Agreement to Guidelines"
+    };
+    return labelMap[fieldName] || fieldName;
+  };
+
+  // Phase 3: Enhanced validation with detailed error collection
+  const validateSection = async (section: number): Promise<{ isValid: boolean; errors: string[] }> => {
     let schema;
     let fields: string[] = [];
 
@@ -250,27 +283,48 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
         fields = ["daily_time_commitment", "is_currently_employed", "motivation_text", "agrees_to_guidelines"];
         break;
       default:
-        return false;
+        return { isValid: false, errors: ["Invalid section"] };
     }
 
     const result = await form.trigger(fields as any);
-    return result;
+    
+    if (!result) {
+      // Collect specific error messages
+      const errors: string[] = [];
+      const formErrors = form.formState.errors;
+      
+      fields.forEach(field => {
+        const error = formErrors[field as keyof typeof formErrors];
+        if (error && 'message' in error) {
+          errors.push(`${getFieldLabel(field)}: ${error.message || 'Required'}`);
+        }
+      });
+      
+      return { isValid: false, errors };
+    }
+    
+    return { isValid: true, errors: [] };
   };
 
   const handleNext = async () => {
-    const isValid = await validateSection(currentSection);
+    const validation = await validateSection(currentSection);
     
-    if (isValid) {
+    if (validation.isValid) {
       const newCompleted = [...completedSections];
       newCompleted[currentSection] = true;
       setCompletedSections(newCompleted);
+      setValidationErrors([]); // Clear errors when moving forward
       setCurrentSection((prev) => Math.min(prev + 1, sections.length - 1));
     } else {
+      setValidationErrors(validation.errors);
       toast.error("Please complete all required fields");
+      // Scroll to top to show error alert
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleBack = () => {
+    setValidationErrors([]); // Clear errors when going back
     setCurrentSection((prev) => Math.max(prev - 1, 0));
   };
 
@@ -364,6 +418,23 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
               ? `It will expire in ${draftAge.expiresInHours} hour${draftAge.expiresInHours > 1 ? 's' : ''}.`
               : 'It will expire soon.'
             }
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Phase 3: Validation Error Summary */}
+      {validationErrors.length > 0 && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Please fix the following errors:</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1 mt-2">
+              {validationErrors.map((error, index) => (
+                <li key={index} className="text-sm">
+                  {error}
+                </li>
+              ))}
+            </ul>
           </AlertDescription>
         </Alert>
       )}
