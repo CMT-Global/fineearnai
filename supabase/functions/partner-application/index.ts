@@ -20,25 +20,25 @@ interface ApplicationSubmission {
   upgraded_referrals: number;
   
   // Section 2: Network & Experience
-  has_community_group?: boolean;
-  community_group_size?: number;
+  manages_community?: boolean;
   community_group_links?: string;
-  has_platform_promotion?: boolean;
+  community_member_count?: string;
+  promoted_platforms?: boolean;
   platform_promotion_details?: string;
   network_description?: string;
-  expected_onboarding_count?: number;
+  expected_monthly_onboarding?: string;
   
   // Section 3: Local Payments & Support
-  accepted_payment_methods?: string[];
-  has_local_support?: boolean;
+  local_payment_methods?: string;
+  can_provide_local_support?: boolean;
   support_preference?: 'online' | 'in_person' | 'both';
-  can_organize_training?: boolean;
+  organize_training_sessions?: boolean;
   
   // Section 4: Agreement
-  weekly_time_commitment?: number;
+  weekly_time_commitment?: string;
   daily_time_commitment: string;
   is_currently_employed: boolean;
-  motivation?: string;
+  motivation_text?: string;
   agrees_to_guidelines?: boolean;
 }
 
@@ -206,11 +206,11 @@ Deno.serve(async (req) => {
       }
 
       // Section 2: Network & Experience validation
-      if (body.has_community_group === true && !body.community_group_links) {
+      if (body.manages_community === true && !body.community_group_links) {
         errors.push("Community group links are required when you have a community group");
       }
 
-      if (body.has_platform_promotion === true && !body.platform_promotion_details) {
+      if (body.promoted_platforms === true && !body.platform_promotion_details) {
         errors.push("Platform promotion details are required when you have promoted platforms");
       }
 
@@ -218,13 +218,9 @@ Deno.serve(async (req) => {
         errors.push("Network description must be 1000 characters or less");
       }
 
-      if (body.expected_onboarding_count !== undefined && body.expected_onboarding_count < 0) {
-        errors.push("Expected onboarding count cannot be negative");
-      }
-
       // Section 3: Local Payments & Support validation
-      if (body.accepted_payment_methods && body.accepted_payment_methods.length === 0) {
-        errors.push("At least one payment method must be selected");
+      if (body.local_payment_methods && body.local_payment_methods.trim().length < 5) {
+        errors.push("Please provide details about payment methods you can accept (minimum 5 characters)");
       }
 
       if (body.support_preference && !['online', 'in_person', 'both'].includes(body.support_preference)) {
@@ -232,12 +228,6 @@ Deno.serve(async (req) => {
       }
 
       // Section 4: Agreement validation
-      if (body.weekly_time_commitment !== undefined) {
-        if (body.weekly_time_commitment < 1 || body.weekly_time_commitment > 168) {
-          errors.push("Weekly time commitment must be between 1 and 168 hours");
-        }
-      }
-
       if (!body.daily_time_commitment) {
         errors.push("Daily time commitment is required");
       } else if (!['1-2', '2-4', '4-6', '6+'].includes(body.daily_time_commitment)) {
@@ -248,7 +238,11 @@ Deno.serve(async (req) => {
         errors.push("Employment status is required");
       }
 
-      if (body.motivation && body.motivation.length > 1000) {
+      if (body.motivation_text && body.motivation_text.length < 50) {
+        errors.push("Motivation must be at least 50 characters");
+      }
+
+      if (body.motivation_text && body.motivation_text.length > 1000) {
         errors.push("Motivation must be 1000 characters or less");
       }
 
@@ -304,23 +298,23 @@ Deno.serve(async (req) => {
           total_referrals: body.total_referrals,
           upgraded_referrals: body.upgraded_referrals,
           // Section 2: Network & Experience
-          has_community_group: body.has_community_group ?? false,
-          community_group_size: body.community_group_size,
+          manages_community: body.manages_community ?? false,
           community_group_links: body.community_group_links,
-          has_platform_promotion: body.has_platform_promotion ?? false,
+          community_member_count: body.community_member_count,
+          promoted_platforms: body.promoted_platforms ?? false,
           platform_promotion_details: body.platform_promotion_details,
           network_description: body.network_description,
-          expected_onboarding_count: body.expected_onboarding_count,
+          expected_monthly_onboarding: body.expected_monthly_onboarding,
           // Section 3: Local Payments & Support
-          accepted_payment_methods: body.accepted_payment_methods || [],
-          has_local_support: body.has_local_support ?? false,
+          local_payment_methods: body.local_payment_methods,
+          can_provide_local_support: body.can_provide_local_support ?? false,
           support_preference: body.support_preference,
-          can_organize_training: body.can_organize_training ?? false,
+          organize_training_sessions: body.organize_training_sessions ?? false,
           // Section 4: Agreement
           weekly_time_commitment: body.weekly_time_commitment,
           daily_time_commitment: body.daily_time_commitment,
           is_currently_employed: body.is_currently_employed,
-          motivation: body.motivation,
+          motivation_text: body.motivation_text,
           agrees_to_guidelines: body.agrees_to_guidelines ?? false,
           status: "pending",
         })
