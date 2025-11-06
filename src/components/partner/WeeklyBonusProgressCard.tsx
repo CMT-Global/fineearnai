@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Award, DollarSign, TrendingUp, Clock, Target, Zap } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 
@@ -56,18 +57,66 @@ export function WeeklyBonusProgressCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Weekly Bonus Progress
-          </CardTitle>
-          <CardDescription>Loading your bonus progress...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="h-20 bg-muted animate-pulse rounded-lg" />
-            <div className="h-32 bg-muted animate-pulse rounded-lg" />
-            <div className="h-24 bg-muted animate-pulse rounded-lg" />
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-6 w-56 mb-2" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+            <Skeleton className="h-6 w-32" />
           </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Key Metrics Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="border-muted">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-24 mb-2" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Progress Section */}
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-3 w-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+
+          {/* Tier List */}
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32 mb-3" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
+          </div>
+
+          {/* Velocity Card */}
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-3">
+              <Skeleton className="h-5 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i}>
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     );
