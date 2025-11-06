@@ -208,6 +208,13 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
     }
   }, [referralStats, isLoadingReferrals, form]);
 
+  // Explicitly register hidden fields on mount to prevent timing issues
+  useEffect(() => {
+    form.register('current_membership_plan');
+    form.register('total_referrals');
+    form.register('upgraded_referrals');
+  }, [form]);
+
   // Load draft data on mount
   useEffect(() => {
     if (hasExistingDraft) {
@@ -344,6 +351,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   };
 
   const handleNext = async () => {
+    // Sync guard for Section 1: Ensure membership plan is set before validation
+    if (currentSection === 0) {
+      const plan = form.getValues('current_membership_plan');
+      if (!plan && profile?.membership_plan) {
+        form.setValue('current_membership_plan', profile.membership_plan, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
+    }
+
     const validation = await validateSection(currentSection);
     
     if (validation.isValid) {
@@ -778,21 +797,21 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     control={form.control}
                     name="current_membership_plan"
                     render={({ field }) => (
-                      <input type="hidden" {...field} value={profile?.membership_plan || ''} />
+                      <input type="hidden" {...field} />
                     )}
                   />
                   <FormField
                     control={form.control}
                     name="total_referrals"
                     render={({ field }) => (
-                      <input type="hidden" {...field} value={referralStats.total} />
+                      <input type="hidden" {...field} />
                     )}
                   />
                   <FormField
                     control={form.control}
                     name="upgraded_referrals"
                     render={({ field }) => (
-                      <input type="hidden" {...field} value={referralStats.upgraded} />
+                      <input type="hidden" {...field} />
                     )}
                   />
 
