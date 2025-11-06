@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/wallet-utils";
-import { Trophy, Medal, Award, TrendingUp, Loader2 } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp } from "lucide-react";
+import { PartnerLeaderboardSkeleton } from "@/components/partner/PartnerLeaderboardSkeleton";
 
 export const PartnerLeaderboard = () => {
   const [timePeriod, setTimePeriod] = useState("month");
@@ -72,9 +73,7 @@ export const PartnerLeaderboard = () => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
+          <PartnerLeaderboardSkeleton />
         ) : data?.leaderboard && data.leaderboard.length > 0 ? (
           <div className="space-y-3">
             {data.leaderboard.map((partner: any, index: number) => (
