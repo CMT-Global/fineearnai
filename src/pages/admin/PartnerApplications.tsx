@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePartnerApplications, useManagePartnerApplication } from "@/hooks/usePartnerManagement";
-import { Loader2, CheckCircle, XCircle, Clock, Users, Sparkles } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Clock, Users, Sparkles, MessageSquare, Globe, Calendar, HeartHandshake, DollarSign, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Dialog,
@@ -171,39 +171,179 @@ const PartnerApplications = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Contact Method:</span>
-                            <p className="font-medium">{app.preferred_contact_method || 'Not specified'}</p>
+                      <div className="space-y-6">
+                        {/* Basic Contact Information */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                            Contact Information
                           </div>
-                          <div>
-                            <span className="text-muted-foreground">WhatsApp:</span>
-                            <p className="font-medium">{app.whatsapp_number || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Telegram:</span>
-                            <p className="font-medium">{app.telegram_username || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Applied:</span>
-                            <p className="font-medium">
-                              {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
-                            </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pl-6">
+                            <div>
+                              <span className="text-muted-foreground">Preferred Contact:</span>
+                              <p className="font-medium capitalize">{app.preferred_contact_method || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Applied:</span>
+                              <p className="font-medium">
+                                {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                            {app.whatsapp_number && (
+                              <div>
+                                <span className="text-muted-foreground">WhatsApp:</span>
+                                <p className="font-medium">{app.whatsapp_number}</p>
+                              </div>
+                            )}
+                            {app.telegram_username && (
+                              <div>
+                                <span className="text-muted-foreground">Telegram:</span>
+                                <p className="font-medium">@{app.telegram_username}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        {app.whatsapp_group_link && (
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">WhatsApp Group:</span>
-                            <a
-                              href={app.whatsapp_group_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline ml-2"
-                            >
-                              {app.whatsapp_group_link}
-                            </a>
+                        {/* Network & Experience */}
+                        <div className="space-y-3 border-t pt-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Globe className="h-4 w-4 text-primary" />
+                            Network & Experience
+                          </div>
+                          <div className="space-y-3 pl-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Manages Community:</span>
+                                <p className="font-medium">
+                                  {app.manages_community ? (
+                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                  )}
+                                </p>
+                              </div>
+                              {app.community_member_count && (
+                                <div>
+                                  <span className="text-muted-foreground">Community Size:</span>
+                                  <p className="font-medium">{app.community_member_count} members</p>
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-muted-foreground">Has Promoted Platforms:</span>
+                                <p className="font-medium">
+                                  {app.promoted_platforms ? (
+                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                  )}
+                                </p>
+                              </div>
+                              {app.expected_monthly_onboarding && (
+                                <div>
+                                  <span className="text-muted-foreground">Monthly Onboarding:</span>
+                                  <p className="font-medium">{app.expected_monthly_onboarding} users</p>
+                                </div>
+                              )}
+                              {app.weekly_time_commitment && (
+                                <div>
+                                  <span className="text-muted-foreground">Time Commitment:</span>
+                                  <p className="font-medium">{app.weekly_time_commitment} hours/week</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {app.platform_promotion_details && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Platform Promotion Details:</span>
+                                <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.platform_promotion_details}</p>
+                              </div>
+                            )}
+
+                            {app.network_description && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Network Description:</span>
+                                <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.network_description}</p>
+                              </div>
+                            )}
+
+                            {app.community_group_links && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Community Links:</span>
+                                <p className="mt-1 p-3 bg-muted/50 rounded-lg break-all">{app.community_group_links}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Local Support & Capabilities */}
+                        <div className="space-y-3 border-t pt-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <HeartHandshake className="h-4 w-4 text-primary" />
+                            Support & Capabilities
+                          </div>
+                          <div className="space-y-3 pl-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Can Provide Local Support:</span>
+                                <p className="font-medium">
+                                  {app.can_provide_local_support ? (
+                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                  )}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Can Organize Training:</span>
+                                <p className="font-medium">
+                                  {app.organize_training_sessions ? (
+                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                  )}
+                                </p>
+                              </div>
+                              {app.support_preference && (
+                                <div>
+                                  <span className="text-muted-foreground">Support Method:</span>
+                                  <p className="font-medium capitalize">{app.support_preference}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {app.local_payment_methods && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Local Payment Methods:</span>
+                                <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.local_payment_methods}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Motivation & Agreement */}
+                        {app.motivation_text && (
+                          <div className="space-y-3 border-t pt-4">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                              <Shield className="h-4 w-4 text-primary" />
+                              Motivation & Agreement
+                            </div>
+                            <div className="text-sm pl-6">
+                              <span className="text-muted-foreground">Why they want to be a partner:</span>
+                              <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.motivation_text}</p>
+                            </div>
+                            <div className="text-sm pl-6">
+                              <span className="text-muted-foreground">Agreed to Guidelines:</span>
+                              <p className="font-medium">
+                                {app.agrees_to_guidelines ? (
+                                  <Badge variant="default" className="ml-2">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Yes
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="ml-2">No</Badge>
+                                )}
+                              </p>
+                            </div>
                           </div>
                         )}
 
