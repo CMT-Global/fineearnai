@@ -87,16 +87,20 @@ export type Database = {
         Row: {
           batch_id: string
           body: string
+          cancel_requested: boolean | null
           completed_at: string | null
           created_at: string
           created_by: string | null
+          duplicate_check_hash: string | null
           error_message: string | null
           estimated_completion_at: string | null
           failed_count: number
           id: string
+          last_heartbeat: string | null
           last_processed_at: string | null
           processed_count: number
           processing_metadata: Json | null
+          processing_worker_id: string | null
           recipient_filter: Json
           started_at: string | null
           status: string
@@ -107,16 +111,20 @@ export type Database = {
         Insert: {
           batch_id: string
           body: string
+          cancel_requested?: boolean | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          duplicate_check_hash?: string | null
           error_message?: string | null
           estimated_completion_at?: string | null
           failed_count?: number
           id?: string
+          last_heartbeat?: string | null
           last_processed_at?: string | null
           processed_count?: number
           processing_metadata?: Json | null
+          processing_worker_id?: string | null
           recipient_filter?: Json
           started_at?: string | null
           status?: string
@@ -127,16 +135,20 @@ export type Database = {
         Update: {
           batch_id?: string
           body?: string
+          cancel_requested?: boolean | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          duplicate_check_hash?: string | null
           error_message?: string | null
           estimated_completion_at?: string | null
           failed_count?: number
           id?: string
+          last_heartbeat?: string | null
           last_processed_at?: string | null
           processed_count?: number
           processing_metadata?: Json | null
+          processing_worker_id?: string | null
           recipient_filter?: Json
           started_at?: string | null
           status?: string
@@ -1617,6 +1629,33 @@ export type Database = {
           response_a: string
           response_b: string
           task_id: string
+        }[]
+      }
+      get_next_bulk_email_job: {
+        Args: never
+        Returns: {
+          batch_id: string
+          body: string
+          cancel_requested: boolean
+          completed_at: string
+          created_at: string
+          created_by: string
+          duplicate_check_hash: string
+          error_message: string
+          estimated_completion_at: string
+          failed_count: number
+          id: string
+          last_heartbeat: string
+          last_processed_at: string
+          processed_count: number
+          processing_metadata: Json
+          processing_worker_id: string
+          recipient_filter: Json
+          started_at: string
+          status: string
+          subject: string
+          successful_count: number
+          total_recipients: number
         }[]
       }
       get_next_task_optimized: {
