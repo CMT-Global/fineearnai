@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -590,6 +590,14 @@ export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps)
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        {/* Accessibility: Required by Radix UI for screen readers */}
+        <DialogTitle className="sr-only">
+          Become a FineEarn Local Partner - {currentStepData.title}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          Learn about the benefits and requirements of becoming a local partner. Step {currentStep + 1} of {steps.length}.
+        </DialogDescription>
+        
         <div className="space-y-6 py-4">
           {/* Progress Indicator */}
           <div className="flex justify-center gap-2">
