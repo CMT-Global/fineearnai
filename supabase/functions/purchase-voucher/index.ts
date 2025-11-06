@@ -233,6 +233,35 @@ Deno.serve(async (req) => {
 
     console.log(`[Purchase Voucher] Transaction created: ${transaction.id}`);
 
+    // Step 3b: Create a visible "voucher sent" transaction for partner's history
+    // This creates an additional log entry that's more visible in transaction lists
+    const { error: sentTransactionError } = await supabaseClient
+      .from("transactions")
+      .insert({
+        user_id: user.id,
+        type: "transfer", // Keep as transfer since voucher_sent isn't in the enum
+        amount: body.voucher_amount,
+        wallet_type: "deposit",
+        new_balance: new_balance, // Balance already updated, just for record
+        status: "completed",
+        description: `Voucher sent to: ${body.recipient_username || 'recipient'}`,
+        metadata: {
+          voucher_code: voucherCode,
+          voucher_amount: body.voucher_amount,
+          recipient_username: body.recipient_username,
+          commission_earned: commission_amount,
+          parent_transaction_id: transaction.id,
+          transaction_type: 'voucher_sent',
+        },
+      });
+
+    if (sentTransactionError) {
+      console.error("[Purchase Voucher] Error creating sent transaction log:", sentTransactionError);
+      // Don't throw - this is a secondary log for visibility
+    } else {
+      console.log("[Purchase Voucher] Sent transaction log created for visibility");
+    }
+
     // Step 4: Create voucher record
     const voucher_expires_at = new Date();
     voucher_expires_at.setDate(voucher_expires_at.getDate() + 30); // 30 days expiry

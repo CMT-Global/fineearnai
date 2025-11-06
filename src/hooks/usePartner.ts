@@ -409,10 +409,15 @@ export const usePurchaseVoucher = () => {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Wait for database transaction to fully commit before invalidating queries
+      // This prevents race conditions where UI fetches stale data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       queryClient.invalidateQueries({ queryKey: ['partner-config'] });
       queryClient.invalidateQueries({ queryKey: ['partner-vouchers'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast.success('Voucher purchased successfully!');
     },
     onError: (error: Error) => {

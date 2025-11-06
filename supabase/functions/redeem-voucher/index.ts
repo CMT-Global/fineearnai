@@ -175,7 +175,16 @@ Deno.serve(async (req) => {
 
     console.log(`[Redeem Voucher] Balance updated: ${profile.deposit_wallet_balance} -> ${new_balance}`);
 
-    // Step 3: Create transaction record
+    // Step 3: Get partner username for transaction description
+    const { data: partnerProfile } = await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq("id", voucher.partner_id)
+      .single();
+
+    const partnerUsername = partnerProfile?.username || 'Partner';
+
+    // Step 4: Create transaction record with descriptive text
     const { data: transaction, error: transactionError } = await supabaseClient
       .from("transactions")
       .insert({
@@ -185,13 +194,14 @@ Deno.serve(async (req) => {
         wallet_type: "deposit",
         new_balance: new_balance,
         status: "completed",
-        description: `Redeemed voucher: ${voucher_code}`,
+        description: `Top-up voucher from: ${partnerUsername}`,
         payment_gateway: "voucher",
         gateway_transaction_id: voucher_code,
         metadata: {
           voucher_id: voucher.id,
           voucher_code: voucher_code,
           partner_id: voucher.partner_id,
+          partner_username: partnerUsername,
         },
       })
       .select()
@@ -204,7 +214,7 @@ Deno.serve(async (req) => {
 
     console.log(`[Redeem Voucher] Transaction created: ${transaction.id}`);
 
-    // Step 4: Update voucher status
+    // Step 5: Update voucher status
     const { error: updateVoucherError } = await supabaseClient
       .from("vouchers")
       .update({
@@ -222,7 +232,7 @@ Deno.serve(async (req) => {
 
     console.log(`[Redeem Voucher] Voucher status updated to redeemed`);
 
-    // Check and upgrade partner rank after successful redemption
+    // Step 6: Check and upgrade partner rank after successful redemption
     try {
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? "";
       await fetch(`${supabaseUrl}/functions/v1/check-partner-rank`, {
@@ -238,7 +248,7 @@ Deno.serve(async (req) => {
       // Don't fail the redemption if rank check fails
     }
 
-    // Step 5: Log partner activity
+    // Step 7: Log partner activity
     const { error: activityError } = await supabaseClient
       .from("partner_activity_log")
       .insert({
@@ -260,7 +270,7 @@ Deno.serve(async (req) => {
 
     console.log("[Redeem Voucher] Redemption complete!");
 
-    // Step 6: Get partner config to calculate commission for notification
+    // Step 8: Get partner config to calculate commission for notification
     const { data: partnerConfig } = await supabaseClient
       .from('partner_config')
       .select('commission_rate')
@@ -270,7 +280,7 @@ Deno.serve(async (req) => {
     const commissionRate = partnerConfig?.commission_rate || voucher.commission_rate || 0.10;
     const commissionEarned = voucher.voucher_amount * commissionRate;
 
-    // Step 7: Send redemption notification to partner
+    // Step 9: Send redemption notification to partner
     try {
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
         method: 'POST',
