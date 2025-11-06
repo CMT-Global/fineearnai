@@ -952,6 +952,42 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_debug_logs: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          data: Json | null
+          event: string
+          id: string
+          ip_address: string | null
+          level: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string
+          data?: Json | null
+          event: string
+          id?: string
+          ip_address?: string | null
+          level: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          data?: Json | null
+          event?: string
+          id?: string
+          ip_address?: string | null
+          level?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       partner_onboarding: {
         Row: {
           completed_at: string | null
@@ -2034,6 +2070,7 @@ export type Database = {
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
       cleanup_expired_verification_otps: { Args: never; Returns: undefined }
+      cleanup_old_partner_debug_logs: { Args: never; Returns: undefined }
       complete_task_atomic: {
         Args: {
           p_earnings_amount: number

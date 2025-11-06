@@ -12,6 +12,7 @@ import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import { generateCorrelationId } from "@/lib/utils";
 import { toast } from "sonner";
+import { partnerDebugLogger } from "@/lib/partner-debug-logger";
 
 const BecomePartner = () => {
   const navigate = useNavigate();
@@ -32,6 +33,13 @@ const BecomePartner = () => {
       setCorrelationId(newCorrelationId);
       
       console.log('🆔 [BecomePartner] Correlation ID generated:', newCorrelationId);
+      
+      // Phase 5: Log page entry with correlation ID
+      partnerDebugLogger.info('become-partner.page-entered', {
+        userId: user.id,
+        userEmail: user.email,
+        timestamp: new Date().toISOString(),
+      }, newCorrelationId);
       
       // Display Debug ID in toast for easy tracking
       toast.info(`Debug ID: ${newCorrelationId}`, {
@@ -155,6 +163,14 @@ const BecomePartner = () => {
   if (isPartner) {
     console.log('✅ [BecomePartner] USER IS PARTNER - Triggering redirect to dashboard');
     console.log('🔄 [BecomePartner] Setting isNavigating to true');
+    
+    // Phase 5: Log redirect decision
+    partnerDebugLogger.info('become-partner.redirect-to-dashboard', {
+      reason: 'user_is_partner',
+      isPartner: true,
+      timestamp: new Date().toISOString(),
+    }, correlationId);
+    
     setIsNavigating(true);
     console.log('🔄 [BecomePartner] Calling navigate to /partner/dashboard');
     navigate('/partner/dashboard', { replace: true });
@@ -177,6 +193,15 @@ const BecomePartner = () => {
       created_at: application.created_at
     });
     console.log('🔄 [BecomePartner] Setting isNavigating to true');
+    
+    // Phase 5: Log redirect decision
+    partnerDebugLogger.info('become-partner.redirect-to-application-status', {
+      reason: 'user_has_application',
+      applicationId: application.id,
+      applicationStatus: application.status,
+      timestamp: new Date().toISOString(),
+    }, correlationId);
+    
     setIsNavigating(true);
     console.log('🔄 [BecomePartner] Calling navigate to /partner/application-status');
     navigate('/partner/application-status', { replace: true });
