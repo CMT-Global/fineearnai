@@ -142,3 +142,6 @@ verify_jwt = true
 
 [functions.verify-email-otp]
 verify_jwt = true
+
+[functions.monitor-bulk-email-jobs]
+verify_jwt = false
