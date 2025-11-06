@@ -51,17 +51,16 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Users, label: "Referrals", path: "/referrals" },
   ];
 
-  // Conditionally add Partner Hub if user is a partner
-  const primaryNavItems: any[] = isPartner
-    ? [
-        ...basePrimaryNavItems,
-        { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true },
-        { icon: Crown, label: "Membership", path: "/plans" },
-      ]
-    : [
-        ...basePrimaryNavItems,
-        { icon: Crown, label: "Membership", path: "/plans" },
-      ];
+  // Always show partner navigation - changes based on partner status
+  const partnerNavItem = isPartner
+    ? { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true }
+    : { icon: Sparkles, label: "Become a Partner", path: "/become-partner", isPartner: false };
+
+  const primaryNavItems = [
+    ...basePrimaryNavItems,
+    partnerNavItem,
+    { icon: Crown, label: "Membership", path: "/plans" },
+  ];
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
@@ -285,9 +284,10 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* Currency Selector */}
       <CurrencySelector />
 
-      {/* Only secondary navigation items + Partner Hub (if partner) in mobile menu */}
+      {/* Only secondary navigation items + Partner navigation (always visible) in mobile menu */}
       <nav className="flex-1 p-4 space-y-1">
-        {isPartner && (
+        {/* Partner Navigation - Always visible, changes based on status */}
+        {isPartner ? (
           <button
             onClick={() => handleNavigation("/partner/dashboard")}
             onMouseEnter={() => handlePrefetch("/partner/dashboard")}
@@ -300,6 +300,19 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             <Sparkles className={`h-5 w-5 text-[hsl(var(--wallet-deposit))]`} />
             <span className="font-semibold">Partner Hub</span>
             <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+          </button>
+        ) : (
+          <button
+            onClick={() => handleNavigation("/become-partner")}
+            onMouseEnter={() => handlePrefetch("/become-partner")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+              isActive("/become-partner")
+                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+            }`}
+          >
+            <Sparkles className={`h-5 w-5 ${isActive("/become-partner") ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
+            <span>Become a Partner</span>
           </button>
         )}
         {secondaryNavItems.map((item) => (
