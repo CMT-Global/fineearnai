@@ -161,7 +161,7 @@ const BecomePartner = () => {
     
     console.log('✅ [BecomePartner] No redirect needed, user can proceed with wizard');
     console.log('🎯 [BecomePartner] Effect complete - render will continue');
-  }, [ready, isPartner, application, navigate, correlationId, user, partnerLoaded, appLoaded]);
+  }, [ready, isPartner, application, navigate]);
 
   // Handle errors - show error UI with retry and specific messages
   if (partnerError || applicationError) {
@@ -275,12 +275,25 @@ const BecomePartner = () => {
     timestamp: new Date().toISOString()
   });
 
-  if (!shouldShowWizard) {
-    console.log('⏳ [BecomePartner] Not showing wizard, conditions not met - showing loading state');
+  // Phase 1: Compute pending redirect - if we're ready and should redirect but navigation hasn't started yet
+  const pendingRedirect = ready && !isNavigating && (isPartner || !!application);
+  
+  console.log('🚦 [BecomePartner] Pending Redirect Check:', {
+    pendingRedirect,
+    ready,
+    isNavigating,
+    isPartner,
+    hasApplication: !!application,
+    timestamp: new Date().toISOString()
+  });
+
+  // Phase 1: If we're about to redirect, show redirecting UI immediately
+  if (pendingRedirect) {
+    console.log('🔄 [BecomePartner] Pending redirect detected, showing redirect screen');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading..." />
+          <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
       </PageLayout>
     );
