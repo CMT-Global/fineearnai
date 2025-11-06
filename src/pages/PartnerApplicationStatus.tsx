@@ -254,14 +254,14 @@ const PartnerApplicationStatus = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       {application.manages_community !== null && (
                         <div>
-                          <span className="text-muted-foreground">Manages Community:</span>
-                          <p className="font-medium">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Manages Community:</span>
                             {application.manages_community ? (
-                              <Badge variant="default" className="ml-2">Yes</Badge>
+                              <Badge variant="default">Yes</Badge>
                             ) : (
-                              <Badge variant="secondary" className="ml-2">No</Badge>
+                              <Badge variant="secondary">No</Badge>
                             )}
-                          </p>
+                          </div>
                         </div>
                       )}
                       {application.community_member_count && (
@@ -272,14 +272,14 @@ const PartnerApplicationStatus = () => {
                       )}
                       {application.promoted_platforms !== null && (
                         <div>
-                          <span className="text-muted-foreground">Has Promoted Platforms:</span>
-                          <p className="font-medium">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Has Promoted Platforms:</span>
                             {application.promoted_platforms ? (
-                              <Badge variant="default" className="ml-2">Yes</Badge>
+                              <Badge variant="default">Yes</Badge>
                             ) : (
-                              <Badge variant="secondary" className="ml-2">No</Badge>
+                              <Badge variant="secondary">No</Badge>
                             )}
-                          </p>
+                          </div>
                         </div>
                       )}
                       {application.expected_monthly_onboarding && (
@@ -334,26 +334,26 @@ const PartnerApplicationStatus = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       {application.can_provide_local_support !== null && (
                         <div>
-                          <span className="text-muted-foreground">Can Provide Local Support:</span>
-                          <p className="font-medium">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Can Provide Local Support:</span>
                             {application.can_provide_local_support ? (
-                              <Badge variant="default" className="ml-2">Yes</Badge>
+                              <Badge variant="default">Yes</Badge>
                             ) : (
-                              <Badge variant="secondary" className="ml-2">No</Badge>
+                              <Badge variant="secondary">No</Badge>
                             )}
-                          </p>
+                          </div>
                         </div>
                       )}
                       {application.organize_training_sessions !== null && (
                         <div>
-                          <span className="text-muted-foreground">Can Organize Training:</span>
-                          <p className="font-medium">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Can Organize Training:</span>
                             {application.organize_training_sessions ? (
-                              <Badge variant="default" className="ml-2">Yes</Badge>
+                              <Badge variant="default">Yes</Badge>
                             ) : (
-                              <Badge variant="secondary" className="ml-2">No</Badge>
+                              <Badge variant="secondary">No</Badge>
                             )}
-                          </p>
+                          </div>
                         </div>
                       )}
                       {application.support_preference && (
@@ -389,17 +389,17 @@ const PartnerApplicationStatus = () => {
                     <p className="mt-1 p-3 bg-muted/50 rounded-lg">{application.motivation_text}</p>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Agreed to Guidelines:</span>
-                    <p className="font-medium">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Agreed to Guidelines:</span>
                       {application.agrees_to_guidelines ? (
-                        <Badge variant="default" className="ml-2">
+                        <Badge variant="default">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Yes
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="ml-2">No</Badge>
+                        <Badge variant="secondary">No</Badge>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>
