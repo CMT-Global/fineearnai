@@ -18,7 +18,7 @@ export const usePartnerApplications = (status?: string) => {
         .from('partner_applications')
         .select(`
           *,
-          profiles:user_id (
+          profiles!fk_partner_applications_user_id (
             username,
             email,
             full_name,
@@ -100,7 +100,7 @@ export const usePartners = () => {
         .from('partner_config')
         .select(`
           *,
-          profiles:user_id (
+          profiles!partner_config_user_id_fkey (
             username,
             email,
             full_name,
