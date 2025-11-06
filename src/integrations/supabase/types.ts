@@ -741,50 +741,92 @@ export type Database = {
       }
       partner_applications: {
         Row: {
+          agrees_to_guidelines: boolean | null
           application_notes: string | null
+          can_provide_local_support: boolean | null
+          community_group_links: string | null
+          community_member_count: string | null
           created_at: string
+          expected_monthly_onboarding: string | null
           id: string
+          local_payment_methods: string | null
+          manages_community: boolean | null
+          motivation_text: string | null
+          network_description: string | null
+          organize_training_sessions: boolean | null
+          platform_promotion_details: string | null
           preferred_contact_method: string
+          promoted_platforms: boolean | null
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          support_preference: string | null
           telegram_group_link: string | null
           telegram_username: string | null
           updated_at: string
           user_id: string
+          weekly_time_commitment: string | null
           whatsapp_group_link: string | null
           whatsapp_number: string | null
         }
         Insert: {
+          agrees_to_guidelines?: boolean | null
           application_notes?: string | null
+          can_provide_local_support?: boolean | null
+          community_group_links?: string | null
+          community_member_count?: string | null
           created_at?: string
+          expected_monthly_onboarding?: string | null
           id?: string
+          local_payment_methods?: string | null
+          manages_community?: boolean | null
+          motivation_text?: string | null
+          network_description?: string | null
+          organize_training_sessions?: boolean | null
+          platform_promotion_details?: string | null
           preferred_contact_method: string
+          promoted_platforms?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          support_preference?: string | null
           telegram_group_link?: string | null
           telegram_username?: string | null
           updated_at?: string
           user_id: string
+          weekly_time_commitment?: string | null
           whatsapp_group_link?: string | null
           whatsapp_number?: string | null
         }
         Update: {
+          agrees_to_guidelines?: boolean | null
           application_notes?: string | null
+          can_provide_local_support?: boolean | null
+          community_group_links?: string | null
+          community_member_count?: string | null
           created_at?: string
+          expected_monthly_onboarding?: string | null
           id?: string
+          local_payment_methods?: string | null
+          manages_community?: boolean | null
+          motivation_text?: string | null
+          network_description?: string | null
+          organize_training_sessions?: boolean | null
+          platform_promotion_details?: string | null
           preferred_contact_method?: string
+          promoted_platforms?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          support_preference?: string | null
           telegram_group_link?: string | null
           telegram_username?: string | null
           updated_at?: string
           user_id?: string
+          weekly_time_commitment?: string | null
           whatsapp_group_link?: string | null
           whatsapp_number?: string | null
         }
