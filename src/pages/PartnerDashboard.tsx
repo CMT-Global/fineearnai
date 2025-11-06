@@ -14,6 +14,9 @@ import { formatCurrency } from "@/lib/wallet-utils";
 import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plus, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { RankProgressCard } from "@/components/partner/RankProgressCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -50,6 +53,34 @@ const PartnerDashboard = () => {
 
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ type: "", details: "" });
+
+  const { data: ranks } = useQuery({
+    queryKey: ['partner-ranks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('partner_ranks')
+        .select('*')
+        .order('rank_order', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: totalSales } = useQuery({
+    queryKey: ['partner-total-sales', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vouchers')
+        .select('voucher_amount')
+        .eq('partner_id', user?.id)
+        .eq('status', 'redeemed');
+
+      if (error) throw error;
+      return data?.reduce((sum, v) => sum + Number(v.voucher_amount), 0) || 0;
+    },
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     if (partnerConfig?.payment_methods) {
@@ -245,6 +276,10 @@ const PartnerDashboard = () => {
               <Ticket className="h-4 w-4 mr-2" />
               My Vouchers
             </TabsTrigger>
+            <TabsTrigger value="rank-progress">
+              <Award className="h-4 w-4 mr-2" />
+              Rank Progress
+            </TabsTrigger>
             <TabsTrigger value="payment-methods">
               <Settings className="h-4 w-4 mr-2" />
               Payment Methods
@@ -369,6 +404,16 @@ const PartnerDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="rank-progress">
+            {ranks && (
+              <RankProgressCard
+                currentRank={partnerConfig?.current_rank || 'bronze'}
+                totalSales={totalSales || 0}
+                ranks={ranks}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="payment-methods">

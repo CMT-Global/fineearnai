@@ -129,10 +129,11 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       label: "Partner Management",
       icon: Sparkles,
       items: [
-        { label: "Partner Applications", path: "/admin/partner-applications" },
+        { label: "Partner Applications", path: "/admin/partners/applications" },
         { label: "All Partners", path: "/admin/partners" },
         { label: "Partner Analytics", path: "/admin/partner-analytics" },
-        { label: "Voucher Monitoring", path: "/admin/voucher-monitoring" },
+        { label: "Partner Ranks", path: "/admin/partner-ranks" },
+        { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
       ],
     },
     {

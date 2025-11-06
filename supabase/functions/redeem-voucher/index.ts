@@ -222,6 +222,22 @@ Deno.serve(async (req) => {
 
     console.log(`[Redeem Voucher] Voucher status updated to redeemed`);
 
+    // Check and upgrade partner rank after successful redemption
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? "";
+      await fetch(`${supabaseUrl}/functions/v1/check-partner-rank`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.get('Authorization') || '',
+        },
+        body: JSON.stringify({ partner_id: voucher.partner_id })
+      });
+    } catch (rankError) {
+      console.error('[Redeem Voucher] Error checking partner rank:', rankError);
+      // Don't fail the redemption if rank check fails
+    }
+
     // Step 5: Log partner activity
     const { error: activityError } = await supabaseClient
       .from("partner_activity_log")

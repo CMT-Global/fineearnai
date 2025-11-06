@@ -166,3 +166,6 @@ verify_jwt = true
 
 [functions.get-partner-analytics]
 verify_jwt = true
+
+[functions.check-partner-rank]
+verify_jwt = true
