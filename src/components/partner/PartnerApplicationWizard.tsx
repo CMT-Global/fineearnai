@@ -8,6 +8,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +28,9 @@ import {
   AlertTriangle,
   Users,
   TrendingUp,
-  MapPin
+  MapPin,
+  Check,
+  ChevronsUpDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -58,6 +62,10 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   
   // Phase 4: Free plan blocking dialog state
   const [showFreePlanDialog, setShowFreePlanDialog] = useState(false);
+  
+  // Phase 1: Country search state
+  const [countrySearchOpen, setCountrySearchOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
   
   // Phase 4: Fetch profile and referral stats
   const { data: profile, isLoading: isLoadingProfile } = useProfile(user?.id);
@@ -371,48 +379,105 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
               {/* Section 1: Basic Information */}
               {currentSection === 0 && (
                 <div className="space-y-4 md:space-y-5">
-                  {/* Phase 4: Country Selector with Flags */}
+                  {/* Phase 1: Searchable Country Selector with Flags */}
                   <FormField
                     control={form.control}
                     name="applicant_country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          Your Country *
-                        </FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value}
-                          disabled={isLoadingProfile}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="h-12 md:h-11">
-                              <SelectValue placeholder={isLoadingProfile ? "Loading..." : "Select your country"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="max-h-[300px] z-50 bg-background">
-                            {countries.map((country) => (
-                              <SelectItem key={country.code} value={country.code}>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg">{String.fromCodePoint(...[...country.code].map(c => 127397 + c.charCodeAt(0)))}</span>
-                                  <span>{country.name}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className="text-xs md:text-sm">
-                          {field.value && getCountryName(field.value) ? (
-                            <span className="flex items-center gap-1">
-                              <span className="text-lg">{String.fromCodePoint(...[...field.value].map(c => 127397 + c.charCodeAt(0)))}</span>
-                              {getCountryName(field.value)}
-                            </span>
-                          ) : "Where are you located?"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const selectedCountry = countries.find(c => c.code === field.value);
+                      const filteredCountries = countries.filter(country =>
+                        country.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) ||
+                        country.code.toLowerCase().includes(countrySearchQuery.toLowerCase())
+                      );
+                      
+                      return (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            Your Country *
+                          </FormLabel>
+                          <Popover open={countrySearchOpen} onOpenChange={setCountrySearchOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  disabled={isLoadingProfile}
+                                  className={`h-12 md:h-11 w-full justify-between ${!field.value && "text-muted-foreground"}`}
+                                >
+                                  {isLoadingProfile ? (
+                                    <span className="flex items-center gap-2">
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      Loading...
+                                    </span>
+                                  ) : selectedCountry ? (
+                                    <span className="flex items-center gap-2">
+                                      <span className="text-lg">
+                                        {String.fromCodePoint(...[...selectedCountry.code].map(c => 127397 + c.charCodeAt(0)))}
+                                      </span>
+                                      <span>{selectedCountry.name}</span>
+                                    </span>
+                                  ) : (
+                                    "Select your country"
+                                  )}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0 z-50" align="start">
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Search country..." 
+                                  value={countrySearchQuery}
+                                  onValueChange={setCountrySearchQuery}
+                                  className="h-9"
+                                />
+                                <CommandList>
+                                  <CommandEmpty>No country found.</CommandEmpty>
+                                  <CommandGroup className="max-h-[300px] overflow-auto">
+                                    {filteredCountries.map((country) => (
+                                      <CommandItem
+                                        key={country.code}
+                                        value={country.code}
+                                        onSelect={(value) => {
+                                          field.onChange(value);
+                                          setCountrySearchOpen(false);
+                                          setCountrySearchQuery("");
+                                        }}
+                                        className="flex items-center gap-2 cursor-pointer"
+                                      >
+                                        <span className="text-lg">
+                                          {String.fromCodePoint(...[...country.code].map(c => 127397 + c.charCodeAt(0)))}
+                                        </span>
+                                        <span>{country.name}</span>
+                                        <Check
+                                          className={`ml-auto h-4 w-4 ${
+                                            field.value === country.code ? "opacity-100" : "opacity-0"
+                                          }`}
+                                        />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription className="text-xs md:text-sm">
+                            {field.value && getCountryName(field.value) ? (
+                              <span className="flex items-center gap-1">
+                                <span className="text-lg">
+                                  {String.fromCodePoint(...[...field.value].map(c => 127397 + c.charCodeAt(0)))}
+                                </span>
+                                {getCountryName(field.value)}
+                              </span>
+                            ) : (
+                              "Where are you located?"
+                            )}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   {/* Phase 4: Membership Plan Display (Read-only) */}
