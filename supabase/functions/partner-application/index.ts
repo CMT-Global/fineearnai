@@ -7,12 +7,33 @@ const corsHeaders = {
 };
 
 interface ApplicationSubmission {
+  // Section 1: Basic Information
   preferred_contact_method: 'whatsapp' | 'telegram' | 'both';
   whatsapp_number?: string;
   telegram_username?: string;
   whatsapp_group_link?: string;
   telegram_group_link?: string;
   application_notes?: string;
+  
+  // Section 2: Network & Experience
+  has_community_group?: boolean;
+  community_group_size?: number;
+  community_group_links?: string;
+  has_platform_promotion?: boolean;
+  platform_promotion_details?: string;
+  network_description?: string;
+  expected_onboarding_count?: number;
+  
+  // Section 3: Local Payments & Support
+  accepted_payment_methods?: string[];
+  has_local_support?: boolean;
+  support_preference?: 'online' | 'in_person' | 'both';
+  can_organize_training?: boolean;
+  
+  // Section 4: Agreement
+  weekly_time_commitment?: number;
+  motivation?: string;
+  agrees_to_guidelines?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -94,40 +115,76 @@ Deno.serve(async (req) => {
         preferred_contact_method: body.preferred_contact_method,
       });
 
-      // Validate required fields
+      // Comprehensive validation
+      const errors: string[] = [];
+
+      // Section 1: Basic Information
       if (!body.preferred_contact_method) {
-        return new Response(
-          JSON.stringify({ error: "Preferred contact method is required" }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+        errors.push("Preferred contact method is required");
       }
 
-      // Validate contact information based on preferred method
       if (body.preferred_contact_method === 'whatsapp' || body.preferred_contact_method === 'both') {
         if (!body.whatsapp_number) {
-          return new Response(
-            JSON.stringify({ error: "WhatsApp number is required" }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
+          errors.push("WhatsApp number is required");
         }
       }
 
       if (body.preferred_contact_method === 'telegram' || body.preferred_contact_method === 'both') {
         if (!body.telegram_username) {
-          return new Response(
-            JSON.stringify({ error: "Telegram username is required" }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
+          errors.push("Telegram username is required");
         }
+      }
+
+      // Section 2: Network & Experience validation
+      if (body.has_community_group === true && !body.community_group_links) {
+        errors.push("Community group links are required when you have a community group");
+      }
+
+      if (body.has_platform_promotion === true && !body.platform_promotion_details) {
+        errors.push("Platform promotion details are required when you have promoted platforms");
+      }
+
+      if (body.network_description && body.network_description.length > 1000) {
+        errors.push("Network description must be 1000 characters or less");
+      }
+
+      if (body.expected_onboarding_count !== undefined && body.expected_onboarding_count < 0) {
+        errors.push("Expected onboarding count cannot be negative");
+      }
+
+      // Section 3: Local Payments & Support validation
+      if (body.accepted_payment_methods && body.accepted_payment_methods.length === 0) {
+        errors.push("At least one payment method must be selected");
+      }
+
+      if (body.support_preference && !['online', 'in_person', 'both'].includes(body.support_preference)) {
+        errors.push("Invalid support preference");
+      }
+
+      // Section 4: Agreement validation
+      if (body.weekly_time_commitment !== undefined) {
+        if (body.weekly_time_commitment < 1 || body.weekly_time_commitment > 168) {
+          errors.push("Weekly time commitment must be between 1 and 168 hours");
+        }
+      }
+
+      if (body.motivation && body.motivation.length > 1000) {
+        errors.push("Motivation must be 1000 characters or less");
+      }
+
+      if (body.agrees_to_guidelines !== true) {
+        errors.push("You must agree to the partner guidelines");
+      }
+
+      // Return validation errors if any
+      if (errors.length > 0) {
+        return new Response(
+          JSON.stringify({ error: errors.join(". "), validation_errors: errors }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
 
       // Check if user already has an application
@@ -150,17 +207,35 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Insert application
+      // Insert application with all fields
       const { data: application, error: insertError } = await supabaseClient
         .from("partner_applications")
         .insert({
           user_id: user.id,
+          // Section 1: Basic Information
           preferred_contact_method: body.preferred_contact_method,
           whatsapp_number: body.whatsapp_number,
           telegram_username: body.telegram_username,
           whatsapp_group_link: body.whatsapp_group_link,
           telegram_group_link: body.telegram_group_link,
           application_notes: body.application_notes,
+          // Section 2: Network & Experience
+          has_community_group: body.has_community_group ?? false,
+          community_group_size: body.community_group_size,
+          community_group_links: body.community_group_links,
+          has_platform_promotion: body.has_platform_promotion ?? false,
+          platform_promotion_details: body.platform_promotion_details,
+          network_description: body.network_description,
+          expected_onboarding_count: body.expected_onboarding_count,
+          // Section 3: Local Payments & Support
+          accepted_payment_methods: body.accepted_payment_methods || [],
+          has_local_support: body.has_local_support ?? false,
+          support_preference: body.support_preference,
+          can_organize_training: body.can_organize_training ?? false,
+          // Section 4: Agreement
+          weekly_time_commitment: body.weekly_time_commitment,
+          motivation: body.motivation,
+          agrees_to_guidelines: body.agrees_to_guidelines ?? false,
           status: "pending",
         })
         .select()
