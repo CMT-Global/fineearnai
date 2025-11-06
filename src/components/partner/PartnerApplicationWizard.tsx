@@ -170,7 +170,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       organize_training_sessions: undefined,
       // Phase 4: Section 4 updated fields
       weekly_time_commitment: "", // Keep for backward compatibility
-      daily_time_commitment: "",
+      daily_time_commitment: undefined,
       is_currently_employed: undefined,
       motivation_text: "",
       agrees_to_guidelines: false,
@@ -1263,7 +1263,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel className="text-sm md:text-base flex items-center gap-2">
-                          Support Preference *
+                          How would you prefer to support users? *
                           {isFieldValid('support_preference') && (
                             <CheckCircle2 className="h-4 w-4 text-green-600" />
                           )}
@@ -1276,15 +1276,21 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                             aria-label="Select your support preference"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
-                              <RadioGroupItem value="direct_assistance" id="pref-direct" className="h-5 w-5" />
-                              <label htmlFor="pref-direct" className="flex-1 cursor-pointer text-sm md:text-base">
-                                Yes, I can assist users directly
+                              <RadioGroupItem value="online" id="pref-online" className="h-5 w-5" />
+                              <label htmlFor="pref-online" className="flex-1 cursor-pointer text-sm md:text-base">
+                                Online support (WhatsApp, Telegram, etc.)
                               </label>
                             </div>
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
-                              <RadioGroupItem value="referral_only" id="pref-referral" className="h-5 w-5" />
-                              <label htmlFor="pref-referral" className="flex-1 cursor-pointer text-sm md:text-base">
-                                No, I prefer referring users only
+                              <RadioGroupItem value="in_person" id="pref-in-person" className="h-5 w-5" />
+                              <label htmlFor="pref-in-person" className="flex-1 cursor-pointer text-sm md:text-base">
+                                In-person support (meetups, training sessions)
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="both" id="pref-both" className="h-5 w-5" />
+                              <label htmlFor="pref-both" className="flex-1 cursor-pointer text-sm md:text-base">
+                                Both online and in-person support
                               </label>
                             </div>
                           </RadioGroup>
@@ -1341,7 +1347,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     control={form.control}
                     name="daily_time_commitment"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="space-y-3">
                         <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           How much time can you dedicate daily to managing your local users? *
                           {isFieldValid('daily_time_commitment') && (
@@ -1349,13 +1355,37 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="text"
-                            placeholder="e.g., 2-3 hours per day"
-                            className="h-12 md:h-11"
-                            aria-label="Enter daily time commitment"
-                            {...field}
-                          />
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="flex flex-col space-y-2"
+                            aria-label="Select daily time commitment"
+                          >
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="1-2" id="time-1-2" className="h-5 w-5" />
+                              <label htmlFor="time-1-2" className="flex-1 cursor-pointer text-sm md:text-base">
+                                1-2 hours per day
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="2-4" id="time-2-4" className="h-5 w-5" />
+                              <label htmlFor="time-2-4" className="flex-1 cursor-pointer text-sm md:text-base">
+                                2-4 hours per day
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="4-6" id="time-4-6" className="h-5 w-5" />
+                              <label htmlFor="time-4-6" className="flex-1 cursor-pointer text-sm md:text-base">
+                                4-6 hours per day
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="6+" id="time-6-plus" className="h-5 w-5" />
+                              <label htmlFor="time-6-plus" className="flex-1 cursor-pointer text-sm md:text-base">
+                                6+ hours per day
+                              </label>
+                            </div>
+                          </RadioGroup>
                         </FormControl>
                         <FormDescription className="text-xs md:text-sm">
                           Be realistic about the daily time you can commit

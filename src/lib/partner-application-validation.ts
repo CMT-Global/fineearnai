@@ -61,7 +61,7 @@ export const section3Schema = z.object({
   can_provide_local_support: z.boolean({
     required_error: "Please answer this question",
   }),
-  support_preference: z.enum(["direct_assistance", "referral_only"], {
+  support_preference: z.enum(["online", "in_person", "both"], {
     required_error: "Please select your support preference",
   }),
   organize_training_sessions: z.boolean({
@@ -72,9 +72,9 @@ export const section3Schema = z.object({
 // Section 4: Agreement
 export const section4Schema = z.object({
   // Phase 2: Changed from weekly to daily (keeping weekly optional for backward compatibility)
-  daily_time_commitment: z
-    .string()
-    .min(1, "Please specify your daily time commitment"),
+  daily_time_commitment: z.enum(["1-2", "2-4", "4-6", "6+"], {
+    required_error: "Please select your daily time commitment",
+  }),
   weekly_time_commitment: z.string().optional(), // Kept for backward compatibility
   // Phase 2: New employment status field
   is_currently_employed: z.boolean({
@@ -146,7 +146,7 @@ export const completeApplicationSchema = z.object({
   can_provide_local_support: z.boolean({
     required_error: "Please answer this question",
   }),
-  support_preference: z.enum(["direct_assistance", "referral_only"], {
+  support_preference: z.enum(["online", "in_person", "both"], {
     required_error: "Please select your support preference",
   }),
   organize_training_sessions: z.boolean({
@@ -155,9 +155,9 @@ export const completeApplicationSchema = z.object({
   
   // Section 4
   // Phase 2: Changed from weekly to daily (keeping weekly optional for backward compatibility)
-  daily_time_commitment: z
-    .string()
-    .min(1, "Please specify your daily time commitment"),
+  daily_time_commitment: z.enum(["1-2", "2-4", "4-6", "6+"], {
+    required_error: "Please select your daily time commitment",
+  }),
   weekly_time_commitment: z.string().optional(), // Kept for backward compatibility
   // Phase 2: New employment status field
   is_currently_employed: z.boolean({
