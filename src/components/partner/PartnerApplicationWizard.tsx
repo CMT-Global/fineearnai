@@ -64,6 +64,13 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSections, setCompletedSections] = useState<boolean[]>([false, false, false, false]);
   
+  console.log('🎯 [PartnerApplicationWizard] Component mounted/rendered', {
+    userId: user?.id,
+    currentSection,
+    isSubmitting,
+    completedSections
+  });
+  
   // Phase 4: Free plan blocking dialog state
   const [showFreePlanDialog, setShowFreePlanDialog] = useState(false);
   
@@ -385,15 +392,24 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   };
 
   const handleSubmit = async (data: CompleteApplicationData) => {
+    console.log('📝 [PartnerApplicationWizard] handleSubmit called', {
+      userId: user?.id,
+      current_membership_plan: data.current_membership_plan,
+      dataKeys: Object.keys(data)
+    });
+    
     // Phase 4: Check if user is on free plan and block submission
     if (data.current_membership_plan === 'free') {
+      console.log('⚠️ [PartnerApplicationWizard] Free plan detected, showing dialog');
       setShowFreePlanDialog(true);
       return;
     }
     
+    console.log('✅ [PartnerApplicationWizard] Starting submission...');
     setIsSubmitting(true);
 
     try {
+      console.log('🔄 [PartnerApplicationWizard] Calling partner-application edge function...');
       const response = await supabase.functions.invoke("partner-application", {
         body: {
           preferred_contact_method: data.preferred_contact_method,
@@ -428,19 +444,32 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        console.error('🚨 [PartnerApplicationWizard] Edge function returned error:', response.error);
+        throw response.error;
+      }
 
+      console.log('✅ [PartnerApplicationWizard] Application submitted successfully:', response.data);
       clearDraft();
+      console.log('🗑️ [PartnerApplicationWizard] Draft cleared');
+      
       toast.success("Application submitted successfully!", {
         description: "We'll review your application and get back to you soon.",
       });
+      
+      console.log('🎉 [PartnerApplicationWizard] Calling onComplete...');
       onComplete();
     } catch (error: any) {
-      console.error("Error submitting application:", error);
+      console.error("🚨 [PartnerApplicationWizard] ERROR submitting application:", {
+        message: error.message,
+        stack: error.stack,
+        fullError: error
+      });
       toast.error("Failed to submit application", {
         description: error.message || "Please try again later.",
       });
     } finally {
+      console.log('🔄 [PartnerApplicationWizard] Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -1545,7 +1574,10 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={onCancel}
+                  onClick={() => {
+                    console.log('❌ [PartnerApplicationWizard] Cancel button clicked');
+                    onCancel();
+                  }}
                   className="w-full sm:w-auto order-3 h-12 md:h-11"
                 >
                   Cancel

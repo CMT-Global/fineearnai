@@ -23,22 +23,59 @@ const BecomePartner = () => {
   const { data: profile } = useProfile(user?.id || '');
 
   // Debug logging for troubleshooting
-  console.log('🔍 BecomePartner State:', {
+  console.log('🔍 [BecomePartner] Component Render State:', {
+    timestamp: new Date().toISOString(),
+    userId: user?.id,
     isPartner,
-    application: !!application,
+    hasApplication: !!application,
+    applicationId: application?.id,
+    applicationStatus: application?.status,
     checkingPartner,
     loadingApplication,
     isNavigating,
-    showApplicationWizard
+    showApplicationWizard,
+    profileLoaded: !!profile,
+    userEmail: user?.email
+  });
+
+  // Log when partner status changes
+  console.log('🔍 [BecomePartner] Partner Check Result:', {
+    isPartner,
+    checkingPartner,
+    partnerError: partnerError?.message
+  });
+
+  // Log when application status changes
+  console.log('🔍 [BecomePartner] Application Check Result:', {
+    hasApplication: !!application,
+    applicationId: application?.id,
+    applicationStatus: application?.status,
+    loadingApplication,
+    applicationError: applicationError?.message
   });
 
   // Handle errors - show error UI with retry
   if (partnerError || applicationError) {
+    console.error('🚨 [BecomePartner] ERROR DETECTED:', {
+      timestamp: new Date().toISOString(),
+      partnerError: {
+        message: partnerError?.message,
+        stack: partnerError?.stack,
+        name: partnerError?.name
+      },
+      applicationError: {
+        message: applicationError?.message,
+        stack: applicationError?.stack,
+        name: applicationError?.name
+      },
+      userId: user?.id
+    });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <QueryErrorBoundary 
           error={partnerError || applicationError || new Error('Unknown error')} 
           reset={() => {
+            console.log('🔄 [BecomePartner] Retrying after error...');
             refetchPartner();
             refetchApplication();
           }}
@@ -48,18 +85,26 @@ const BecomePartner = () => {
   }
 
   const handleIntroWizardComplete = () => {
+    console.log('✅ [BecomePartner] Intro wizard completed, showing application wizard');
     setShowApplicationWizard(true);
   };
 
-  const handleApplicationComplete = () => {
-    // Invalidate queries to refresh data
-    queryClient.invalidateQueries({ queryKey: ['partner-application'] });
-    queryClient.invalidateQueries({ queryKey: ['is-partner'] });
-    // Navigate to application status page
-    navigate('/partner/application-status', { replace: true });
+  const handleApplicationComplete = async () => {
+    console.log('✅ [BecomePartner] Application wizard completed, invalidating queries...');
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['partner-application'] });
+      console.log('✅ [BecomePartner] Invalidated partner-application query');
+      await queryClient.invalidateQueries({ queryKey: ['is-partner'] });
+      console.log('✅ [BecomePartner] Invalidated is-partner query');
+      console.log('🔄 [BecomePartner] Navigating to application-status...');
+      navigate('/partner/application-status', { replace: true });
+    } catch (error) {
+      console.error('🚨 [BecomePartner] Error in handleApplicationComplete:', error);
+    }
   };
 
   const handleApplicationCancel = () => {
+    console.log('❌ [BecomePartner] Application cancelled, navigating to dashboard');
     navigate('/dashboard', { replace: true });
   };
 
@@ -76,6 +121,7 @@ const BecomePartner = () => {
 
   // Show loading state while data is being fetched
   if (checkingPartner || loadingApplication) {
+    console.log('⏳ [BecomePartner] LOADING STATE:', { checkingPartner, loadingApplication });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -87,9 +133,12 @@ const BecomePartner = () => {
 
   // Immediate redirect for approved partners - with loading state to prevent flash
   if (isPartner) {
-    console.log('✅ User is partner, redirecting to dashboard');
+    console.log('✅ [BecomePartner] USER IS PARTNER - Triggering redirect to dashboard');
+    console.log('🔄 [BecomePartner] Setting isNavigating to true');
     setIsNavigating(true);
+    console.log('🔄 [BecomePartner] Calling navigate to /partner/dashboard');
     navigate('/partner/dashboard', { replace: true });
+    console.log('✅ [BecomePartner] Navigate called, showing loading state');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -101,9 +150,17 @@ const BecomePartner = () => {
 
   // Immediate redirect for users with existing applications - with loading state
   if (application) {
-    console.log('✅ User has application, redirecting to status');
+    console.log('✅ [BecomePartner] USER HAS APPLICATION - Triggering redirect to application-status');
+    console.log('📋 [BecomePartner] Application details:', {
+      id: application.id,
+      status: application.status,
+      created_at: application.created_at
+    });
+    console.log('🔄 [BecomePartner] Setting isNavigating to true');
     setIsNavigating(true);
+    console.log('🔄 [BecomePartner] Calling navigate to /partner/application-status');
     navigate('/partner/application-status', { replace: true });
+    console.log('✅ [BecomePartner] Navigate called, showing loading state');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -117,9 +174,19 @@ const BecomePartner = () => {
   // Triple-check to ensure no wizard rendering during navigation
   const shouldShowWizard = !isPartner && !application && !isNavigating && !checkingPartner && !loadingApplication;
   
-  console.log('🎯 Should show wizard:', shouldShowWizard);
+  console.log('🎯 [BecomePartner] SHOULD SHOW WIZARD CHECK:', {
+    shouldShowWizard,
+    reasons: {
+      isPartner,
+      hasApplication: !!application,
+      isNavigating,
+      checkingPartner,
+      loadingApplication
+    }
+  });
 
   if (!shouldShowWizard) {
+    console.log('⏳ [BecomePartner] Not showing wizard, showing loading state');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -128,6 +195,8 @@ const BecomePartner = () => {
       </PageLayout>
     );
   }
+
+  console.log('✅ [BecomePartner] RENDERING WIZARDS - All checks passed');
 
   return (
     <PartnerErrorBoundary
@@ -140,23 +209,39 @@ const BecomePartner = () => {
       <PageLayout profile={profile} onSignOut={signOut}>
         {/* Intro Wizard - Benefits of becoming a partner */}
         {!showApplicationWizard && (
-          <PartnerWizard
-            open={true} 
-            onComplete={handleIntroWizardComplete}
-            onClose={() => {
-              console.log('❌ User closed intro wizard, navigating to dashboard');
-              setIsNavigating(true);
-              navigate('/dashboard', { replace: true });
-            }}
-          />
+          <>
+            {console.log('📖 [BecomePartner] Rendering INTRO WIZARD')}
+            <PartnerWizard
+              open={true} 
+              onComplete={() => {
+                console.log('✅ [BecomePartner] Intro wizard onComplete called');
+                handleIntroWizardComplete();
+              }}
+              onClose={() => {
+                console.log('❌ [BecomePartner] Intro wizard onClose called - User cancelled');
+                console.log('🔄 [BecomePartner] Setting isNavigating and navigating to dashboard');
+                setIsNavigating(true);
+                navigate('/dashboard', { replace: true });
+              }}
+            />
+          </>
         )}
 
         {/* Application Wizard - Multi-step form */}
         {showApplicationWizard && (
-          <PartnerApplicationWizard
-            onComplete={handleApplicationComplete}
-            onCancel={handleApplicationCancel}
-          />
+          <>
+            {console.log('📝 [BecomePartner] Rendering APPLICATION WIZARD')}
+            <PartnerApplicationWizard
+              onComplete={() => {
+                console.log('✅ [BecomePartner] Application wizard onComplete called');
+                handleApplicationComplete();
+              }}
+              onCancel={() => {
+                console.log('❌ [BecomePartner] Application wizard onCancel called');
+                handleApplicationCancel();
+              }}
+            />
+          </>
         )}
       </PageLayout>
     </PartnerErrorBoundary>

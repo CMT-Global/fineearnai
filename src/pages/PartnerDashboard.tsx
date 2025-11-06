@@ -97,10 +97,16 @@ const PartnerDashboard = () => {
 
   // Effect-driven redirect - only runs after partner check is complete
   useEffect(() => {
+    console.log('🔄 [PartnerDashboard] useEffect triggered:', { checkingPartner, isPartner });
+    
     if (!checkingPartner && isPartner === false) {
-      console.log('⚠️ Not a partner, redirecting to become-partner');
+      console.log('⚠️ [PartnerDashboard] NOT A PARTNER - Redirecting to become-partner');
+      console.log('🔄 [PartnerDashboard] Setting isNavigating to true');
       setIsNavigating(true);
+      console.log('🔄 [PartnerDashboard] Calling navigate to /become-partner');
       navigate('/become-partner', { replace: true });
+    } else if (isPartner === true) {
+      console.log('✅ [PartnerDashboard] IS A PARTNER - Staying on dashboard');
     }
   }, [checkingPartner, isPartner, navigate]);
 

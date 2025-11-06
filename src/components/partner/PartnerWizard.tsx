@@ -555,16 +555,31 @@ const steps = [
 export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   
+  console.log('🎯 [PartnerWizard] Component state:', {
+    open,
+    currentStep,
+    totalSteps: steps.length
+  });
+  
   const handleNext = () => {
+    console.log('➡️ [PartnerWizard] handleNext clicked', {
+      currentStep,
+      isLastStep: currentStep === steps.length - 1
+    });
+    
     if (currentStep < steps.length - 1) {
+      console.log('➡️ [PartnerWizard] Moving to next step:', currentStep + 1);
       setCurrentStep(currentStep + 1);
     } else {
+      console.log('✅ [PartnerWizard] Last step reached, calling onComplete');
       onComplete();
     }
   };
 
   const handleBack = () => {
+    console.log('⬅️ [PartnerWizard] handleBack clicked', { currentStep });
     if (currentStep > 0) {
+      console.log('⬅️ [PartnerWizard] Moving to previous step:', currentStep - 1);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -601,7 +616,18 @@ export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps)
           <div className="flex justify-between pt-4 border-t">
             <Button
               variant="outline"
-              onClick={currentStep === 0 ? onClose : handleBack}
+              onClick={() => {
+                console.log('🔘 [PartnerWizard] Left button clicked', {
+                  isFirstStep: currentStep === 0,
+                  action: currentStep === 0 ? 'onClose' : 'handleBack'
+                });
+                if (currentStep === 0) {
+                  console.log('❌ [PartnerWizard] Calling onClose');
+                  onClose();
+                } else {
+                  handleBack();
+                }
+              }}
             >
               {currentStep === 0 ? (
                 "Maybe Later"
@@ -612,7 +638,17 @@ export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps)
                 </>
               )}
             </Button>
-            <Button onClick={handleNext} size="lg" className="min-w-[150px]">
+            <Button 
+              onClick={() => {
+                console.log('🔘 [PartnerWizard] Right button clicked', {
+                  isLastStep: currentStep === steps.length - 1,
+                  action: currentStep === steps.length - 1 ? 'Apply Now' : 'Continue'
+                });
+                handleNext();
+              }} 
+              size="lg" 
+              className="min-w-[150px]"
+            >
               {currentStep === steps.length - 1 ? (
                 <>
                   Apply Now

@@ -40,33 +40,52 @@ const PartnerApplicationStatus = () => {
   const ready = !isLoading && !checkingPartner;
 
   // Debug logging for troubleshooting
-  console.log('🔍 PartnerApplicationStatus State:', {
+  console.log('🔍 [ApplicationStatus] Component Render State:', {
+    timestamp: new Date().toISOString(),
+    userId: user?.id,
     ready,
     isPartner,
-    application: !!application,
+    hasApplication: !!application,
+    applicationId: application?.id,
+    applicationStatus: application?.status,
     isLoading,
     checkingPartner,
-    isNavigating
+    isNavigating,
+    profileLoaded: !!profile
   });
 
   // Effect-driven redirects - only runs after data is settled
   useEffect(() => {
-    if (!ready) return;
+    console.log('🔄 [ApplicationStatus] useEffect triggered:', { ready, isPartner, hasApplication: !!application });
+    
+    if (!ready) {
+      console.log('⏳ [ApplicationStatus] Not ready yet, waiting...');
+      return;
+    }
+    
+    console.log('✅ [ApplicationStatus] Ready! Checking redirect conditions...');
     
     // Redirect approved partners to dashboard
     if (isPartner) {
-      console.log('✅ Partner approved, redirecting to dashboard');
+      console.log('✅ [ApplicationStatus] PARTNER APPROVED - Redirecting to dashboard');
+      console.log('🔄 [ApplicationStatus] Setting isNavigating to true');
       setIsNavigating(true);
+      console.log('🔄 [ApplicationStatus] Calling navigate to /partner/dashboard');
       navigate('/partner/dashboard', { replace: true });
       return;
     }
     
     // Redirect users without application to become-partner
     if (!application) {
-      console.log('⚠️ No application found, redirecting to become-partner');
+      console.log('⚠️ [ApplicationStatus] NO APPLICATION FOUND - Redirecting to become-partner');
+      console.log('🔄 [ApplicationStatus] Setting isNavigating to true');
       setIsNavigating(true);
+      console.log('🔄 [ApplicationStatus] Calling navigate to /become-partner');
       navigate('/become-partner', { replace: true });
+      return;
     }
+    
+    console.log('📋 [ApplicationStatus] Has application, showing status page');
   }, [ready, isPartner, application, navigate]);
 
   // Early return for navigation state - BEFORE error handling

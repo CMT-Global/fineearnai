@@ -10,8 +10,14 @@ export const useIsPartner = () => {
   return useQuery({
     queryKey: ['is-partner', user?.id],
     queryFn: async () => {
-      if (!user) return false;
+      console.log('🔍 [useIsPartner] Starting query for user:', user?.id);
+      
+      if (!user) {
+        console.log('⚠️ [useIsPartner] No user, returning false');
+        return false;
+      }
 
+      console.log('🔍 [useIsPartner] Fetching partner role from database...');
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -20,11 +26,18 @@ export const useIsPartner = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking partner status:', error);
+        console.error('🚨 [useIsPartner] ERROR:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw new Error('Failed to check partner status. Please try again.');
       }
 
-      return !!data;
+      const isPartner = !!data;
+      console.log('✅ [useIsPartner] Query result:', { isPartner, data });
+      return isPartner;
     },
     enabled: !!user,
     retry: 3,
@@ -42,8 +55,14 @@ export const usePartnerApplication = () => {
   return useQuery({
     queryKey: ['partner-application', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      console.log('🔍 [usePartnerApplication] Starting query for user:', user?.id);
+      
+      if (!user) {
+        console.log('⚠️ [usePartnerApplication] No user, returning null');
+        return null;
+      }
 
+      console.log('🔍 [usePartnerApplication] Fetching application from database...');
       const { data, error } = await supabase
         .from('partner_applications')
         .select('*')
@@ -52,10 +71,21 @@ export const usePartnerApplication = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching partner application:', error);
+        console.error('🚨 [usePartnerApplication] ERROR:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw new Error('Failed to load application status. Please try again.');
       }
 
+      console.log('✅ [usePartnerApplication] Query result:', {
+        hasApplication: !!data,
+        applicationId: data?.id,
+        status: data?.status,
+        createdAt: data?.created_at
+      });
       return data;
     },
     enabled: !!user,
