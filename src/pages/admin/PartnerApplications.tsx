@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePartnerApplications, useManagePartnerApplication } from "@/hooks/usePartnerManagement";
-import { Loader2, CheckCircle, XCircle, Clock, Users, Sparkles, MessageSquare, Globe, Calendar, HeartHandshake, DollarSign, Shield } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Clock, Users, Sparkles, MessageSquare, Globe, Calendar, HeartHandshake, DollarSign, Shield, Filter, ArrowUpDown, Briefcase, TrendingUp, Flag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Dialog,
@@ -18,6 +18,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countries } from "@/lib/countries";
 
 const PartnerApplications = () => {
   const [activeTab, setActiveTab] = useState("pending");
@@ -28,6 +30,12 @@ const PartnerApplications = () => {
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [customCommission, setCustomCommission] = useState("");
+
+  // Filtering and sorting state
+  const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterPlan, setFilterPlan] = useState<string>("all");
+  const [filterEmployment, setFilterEmployment] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date_desc");
 
   const handleAction = (application: any, action: 'approve' | 'reject') => {
     setSelectedApplication(application);
@@ -77,6 +85,71 @@ const PartnerApplications = () => {
       </Badge>
     );
   };
+
+  const getCountryName = (code: string) => {
+    return countries.find(c => c.code === code)?.name || code;
+  };
+
+  const getCountryFlag = (code: string) => {
+    if (!code || code.length !== 2) return "🌍";
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+  };
+
+  // Filtered and sorted applications
+  const filteredAndSortedApplications = useMemo(() => {
+    if (!applications) return [];
+
+    let filtered = [...applications];
+
+    // Apply filters
+    if (filterCountry !== "all") {
+      filtered = filtered.filter(app => app.applicant_country === filterCountry);
+    }
+
+    if (filterPlan !== "all") {
+      filtered = filtered.filter(app => app.current_membership_plan === filterPlan);
+    }
+
+    if (filterEmployment !== "all") {
+      const isEmployed = filterEmployment === "employed";
+      filtered = filtered.filter(app => app.is_currently_employed === isEmployed);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "date_desc":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "date_asc":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "referrals_desc":
+          return (b.total_referrals || 0) - (a.total_referrals || 0);
+        case "referrals_asc":
+          return (a.total_referrals || 0) - (b.total_referrals || 0);
+        case "country_asc":
+          return getCountryName(a.applicant_country || "").localeCompare(getCountryName(b.applicant_country || ""));
+        case "country_desc":
+          return getCountryName(b.applicant_country || "").localeCompare(getCountryName(a.applicant_country || ""));
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [applications, filterCountry, filterPlan, filterEmployment, sortBy]);
+
+  // Get unique countries and plans for filter dropdowns
+  const uniqueCountries = useMemo(() => {
+    if (!applications) return [];
+    const countries = [...new Set(applications.map((app: any) => app.applicant_country).filter(Boolean))];
+    return countries.sort();
+  }, [applications]);
+
+  const uniquePlans = useMemo(() => {
+    if (!applications) return [];
+    const plans = [...new Set(applications.map((app: any) => app.current_membership_plan).filter(Boolean))];
+    return plans.sort();
+  }, [applications]);
 
   const pendingCount = applications?.filter((a: any) => a.status === 'pending').length || 0;
 
@@ -149,13 +222,140 @@ const PartnerApplications = () => {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
+            {/* Filters and Sorting */}
+            <Card className="mb-6">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Filters & Sorting</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Country</Label>
+                    <Select value={filterCountry} onValueChange={setFilterCountry}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Countries" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Countries</SelectItem>
+                        {uniqueCountries.map((code) => (
+                          <SelectItem key={code} value={code}>
+                            {getCountryFlag(code)} {getCountryName(code)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Membership Plan</Label>
+                    <Select value={filterPlan} onValueChange={setFilterPlan}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Plans" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Plans</SelectItem>
+                        {uniquePlans.map((plan) => (
+                          <SelectItem key={plan} value={plan}>
+                            {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Employment Status</Label>
+                    <Select value={filterEmployment} onValueChange={setFilterEmployment}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="employed">Employed</SelectItem>
+                        <SelectItem value="unemployed">Unemployed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Sort By</Label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date_desc">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Newest First
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="date_asc">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Oldest First
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="referrals_desc">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Most Referrals
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="referrals_asc">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Least Referrals
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="country_asc">
+                          <div className="flex items-center gap-2">
+                            <Flag className="h-4 w-4" />
+                            Country (A-Z)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="country_desc">
+                          <div className="flex items-center gap-2">
+                            <Flag className="h-4 w-4" />
+                            Country (Z-A)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {(filterCountry !== "all" || filterPlan !== "all" || filterEmployment !== "all") && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilterCountry("all");
+                        setFilterPlan("all");
+                        setFilterEmployment("all");
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Showing {filteredAndSortedApplications.length} of {applications?.length || 0} applications
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : applications && applications.length > 0 ? (
+            ) : filteredAndSortedApplications && filteredAndSortedApplications.length > 0 ? (
               <div className="grid gap-4">
-                {applications.map((app: any) => (
+                {filteredAndSortedApplications.map((app: any) => (
                   <Card key={app.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -172,8 +372,65 @@ const PartnerApplications = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-6">
-                        {/* Basic Contact Information */}
+                        {/* Applicant Profile & Stats */}
                         <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Users className="h-4 w-4 text-primary" />
+                            Applicant Profile
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pl-6">
+                            {app.applicant_country && (
+                              <div>
+                                <span className="text-muted-foreground">Country:</span>
+                                <p className="font-medium flex items-center gap-2 mt-1">
+                                  <span className="text-2xl">{getCountryFlag(app.applicant_country)}</span>
+                                  {getCountryName(app.applicant_country)}
+                                </p>
+                              </div>
+                            )}
+                            {app.current_membership_plan && (
+                              <div>
+                                <span className="text-muted-foreground">Membership Plan:</span>
+                                <Badge variant="outline" className="mt-1 capitalize">
+                                  {app.current_membership_plan}
+                                </Badge>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-muted-foreground">Employment Status:</span>
+                              <p className="font-medium">
+                                {app.is_currently_employed ? (
+                                  <Badge variant="default" className="ml-2">
+                                    <Briefcase className="h-3 w-3 mr-1" />
+                                    Employed
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="ml-2">Unemployed</Badge>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pl-6 pt-2">
+                            <div>
+                              <span className="text-muted-foreground">Total Referrals:</span>
+                              <p className="font-bold text-lg text-primary">{app.total_referrals || 0}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Upgraded Referrals:</span>
+                              <p className="font-bold text-lg text-green-600">{app.upgraded_referrals || 0}</p>
+                            </div>
+                            {app.daily_time_commitment && (
+                              <div>
+                                <span className="text-muted-foreground">Daily Commitment:</span>
+                                <Badge variant="outline" className="mt-1">{app.daily_time_commitment} hours</Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Basic Contact Information */}
+                        <div className="space-y-3 border-t pt-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
                             Contact Information
