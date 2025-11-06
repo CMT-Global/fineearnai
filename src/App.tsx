@@ -67,6 +67,7 @@ const PartnerLeaderboard = lazy(() => import("@/pages/admin/PartnerLeaderboard")
 const AdminPartnerAnalytics = lazy(() => import("@/pages/admin/PartnerAnalytics"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
 const BecomePartner = lazy(() => import("./pages/BecomePartner"));
+const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 
@@ -191,6 +192,7 @@ const RoutesWrapper = () => {
         <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
         <Route path="/referrals" element={<Referrals />} />
           <Route path="/become-partner" element={<BecomePartner />} />
+          <Route path="/partner/application-status" element={<PartnerApplicationStatus />} />
           <Route path="/partner/dashboard" element={<PartnerDashboard />} />
           <Route path="/partner/analytics" element={<PartnerAnalytics />} />
         <Route path="/deposit-result" element={<DepositResult />} />
