@@ -107,6 +107,10 @@ const handler = async (req: Request): Promise<Response> => {
     // PHASE 2: Initialize duplicate prevention tracking
     const existingSentIds = job.processing_metadata?.sent_recipient_ids || [];
     console.log(`📋 [Queue Processor] Already sent to ${existingSentIds.length} recipients`);
+    
+    // PHASE 1: Initialize idempotency keys tracking
+    const usedIdempotencyKeys = job.processing_metadata?.idempotency_keys_used || [];
+    console.log(`🔑 [Queue Processor] Tracking ${usedIdempotencyKeys.length} used idempotency keys`);
 
     // STEP 3: Fetch dynamic email settings
     console.log(`⚙️  [Queue Processor] Fetching email settings...`);
@@ -212,6 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
     let successCount = 0;
     let failCount = 0;
     const emailLogs: any[] = [];
+    const newIdempotencyKeys: string[] = []; // PHASE 1: Track new idempotency keys
 
     // STEP 7: Process each chunk with Resend Batch API
     for (let chunkIndex = 0; chunkIndex < recipientChunks.length; chunkIndex++) {
@@ -219,7 +224,13 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`📤 [Queue Processor] Sending chunk ${chunkIndex + 1}/${recipientChunks.length} (${chunk.length} emails)`);
 
       try {
-        // Prepare batch emails with personalization
+        // PHASE 1: Generate unique idempotency key for this batch chunk
+        // Format: team-{jobId}/chunk-{index}-{timestamp} (max 256 chars, stored for 24h by Resend)
+        const idempotencyKey = `team-${job.id}/chunk-${chunkIndex}-${Date.now()}`;
+        newIdempotencyKeys.push(idempotencyKey);
+        console.log(`🔑 [Queue Processor] Using idempotency key: ${idempotencyKey}`);
+
+        // Prepare batch emails with personalization and idempotency key
         const batchEmails = chunk.map((recipient) => {
           const personalizedBody = personalizeContent(job.body, recipient);
           const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
@@ -239,11 +250,12 @@ const handler = async (req: Request): Promise<Response> => {
             reply_to: emailSettings.reply_to_address,
             headers: {
               "X-Entity-Ref-ID": `bulk-${job.batch_id}-${recipient.id}`,
+              "Idempotency-Key": idempotencyKey, // PHASE 1: Prevent duplicate sends on retry
             },
           };
         });
 
-        // Send batch using Resend Batch API
+        // PHASE 1: Send batch using Resend Batch API (idempotency key in email headers)
         const batchResponse = await resend.batch.send(batchEmails);
 
         // Process batch response
@@ -337,6 +349,10 @@ const handler = async (req: Request): Promise<Response> => {
     const newlySentIds = recipients.map(r => r.id);
     const allSentIds = [...existingSentIds, ...newlySentIds];
     console.log(`📊 [Queue Processor] Tracking sent IDs: previously=${existingSentIds.length}, new=${newlySentIds.length}, total=${allSentIds.length}`);
+    
+    // PHASE 1: Track all idempotency keys used
+    const allIdempotencyKeys = [...usedIdempotencyKeys, ...newIdempotencyKeys];
+    console.log(`🔑 [Queue Processor] Idempotency keys: previously=${usedIdempotencyKeys.length}, new=${newIdempotencyKeys.length}, total=${allIdempotencyKeys.length}`);
 
     const updateData: any = {
       processed_count: newProcessedCount,
@@ -346,6 +362,7 @@ const handler = async (req: Request): Promise<Response> => {
       last_heartbeat: new Date().toISOString(), // Update heartbeat
       processing_metadata: {
         sent_recipient_ids: allSentIds, // PHASE 2: Critical for duplicate prevention
+        idempotency_keys_used: allIdempotencyKeys, // PHASE 1: Prevent duplicate sends on retry
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
         last_batch_timestamp: new Date().toISOString(),
