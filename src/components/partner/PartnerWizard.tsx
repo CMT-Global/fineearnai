@@ -15,7 +15,11 @@ import {
   Shield,
   Wallet,
   Phone,
-  Ticket
+  Ticket,
+  Globe,
+  Heart,
+  MessageCircle,
+  BadgeCheck
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
@@ -78,6 +82,88 @@ const steps = [
               <p className="text-sm text-muted-foreground">Earnings</p>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "How Regular Users Benefit",
+    icon: Users,
+    content: (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-bold">How Regular Users Benefit</h2>
+          <p className="text-lg text-muted-foreground">
+            Our FineEarn Partner Network makes it easier than ever for our users to grow and succeed
+          </p>
+        </div>
+
+        {/* Benefits Grid */}
+        <div className="space-y-4">
+          {[
+            {
+              icon: Globe,
+              emoji: "🌍",
+              title: "Local Payment Options",
+              description: "Upgrade your account easily using local payment methods through verified FineEarn Partners in your country."
+            },
+            {
+              icon: Heart,
+              emoji: "🤝",
+              title: "Personal Support",
+              description: "Get direct assistance and step-by-step guidance from your Local Partner whenever you need help."
+            },
+            {
+              icon: MessageCircle,
+              emoji: "💬",
+              title: "Community Access",
+              description: "Join local Telegram & WhatsApp groups managed by our Partners for updates, training, and shared opportunities."
+            },
+            {
+              icon: Zap,
+              emoji: "💸",
+              title: "Fast & Hassle-Free Upgrades",
+              description: "No need for crypto deposits — pay locally through the Authorised partners, and your FineEarn account is upgraded instantly."
+            },
+            {
+              icon: BadgeCheck,
+              emoji: "🧭",
+              title: "Verified & Trusted Partners",
+              description: "All FineEarn Partners are verified to ensure safe, transparent, and reliable transactions."
+            },
+            {
+              icon: TrendingUp,
+              emoji: "💪",
+              title: "Grow Together",
+              description: "Local Partners help you understand how to maximize your earnings and move up faster in FineEarn's earning plans."
+            },
+          ].map((item, idx) => (
+            <div key={idx} className="flex gap-4 p-4 rounded-lg bg-muted/50 border hover:border-primary/20 transition-colors">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-2xl">
+                {item.emoji}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                  <item.icon className="h-5 w-5 text-primary" />
+                  {item.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Call-to-Action Footer */}
+        <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-5 rounded-lg border-2 border-primary/20 text-center">
+          <p className="font-bold text-lg mb-2">
+            Join thousands of FineEarn users already benefiting from our Partner Network
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Partners make earning and upgrading accessible to everyone, everywhere 🌍
+          </p>
         </div>
       </div>
     ),
