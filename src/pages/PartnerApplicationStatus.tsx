@@ -105,6 +105,18 @@ const PartnerApplicationStatus = () => {
     );
   }
 
+  // Safety check - ensure application exists before rendering
+  // This handles the race condition between useEffect redirect and render
+  if (!application) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Loading application..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { 
       variant: any; 
