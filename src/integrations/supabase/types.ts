@@ -790,6 +790,42 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_bonus_tiers: {
+        Row: {
+          bonus_percentage: number
+          created_at: string
+          id: string
+          is_active: boolean
+          max_weekly_sales: number
+          min_weekly_sales: number
+          tier_name: string
+          tier_order: number
+          updated_at: string
+        }
+        Insert: {
+          bonus_percentage: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_weekly_sales: number
+          min_weekly_sales: number
+          tier_name: string
+          tier_order: number
+          updated_at?: string
+        }
+        Update: {
+          bonus_percentage?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_weekly_sales?: number
+          min_weekly_sales?: number
+          tier_name?: string
+          tier_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_config: {
         Row: {
           commission_rate: number
@@ -870,6 +906,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      partner_weekly_bonuses: {
+        Row: {
+          bonus_amount: number | null
+          bonus_percentage: number | null
+          created_at: string
+          id: string
+          paid_at: string | null
+          partner_id: string
+          qualified_tier_id: string | null
+          status: string
+          total_weekly_sales: number
+          transaction_id: string | null
+          updated_at: string
+          week_end_date: string
+          week_start_date: string
+        }
+        Insert: {
+          bonus_amount?: number | null
+          bonus_percentage?: number | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id: string
+          qualified_tier_id?: string | null
+          status?: string
+          total_weekly_sales?: number
+          transaction_id?: string | null
+          updated_at?: string
+          week_end_date: string
+          week_start_date: string
+        }
+        Update: {
+          bonus_amount?: number | null
+          bonus_percentage?: number | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id?: string
+          qualified_tier_id?: string | null
+          status?: string
+          total_weekly_sales?: number
+          transaction_id?: string | null
+          updated_at?: string
+          week_end_date?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_weekly_bonuses_qualified_tier_id_fkey"
+            columns: ["qualified_tier_id"]
+            isOneToOne: false
+            referencedRelation: "partner_bonus_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_weekly_bonuses_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_tokens: {
         Row: {
