@@ -340,8 +340,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (isComplete) {
       updateData.status = "completed";
       updateData.completed_at = new Date().toISOString();
-      updateData.processing_worker_id = null; // Clear worker ID
     }
+    
+    // CRITICAL: Always clear worker ID after batch, regardless of completion status
+    // This prevents jobs from getting stuck when processing multiple batches
+    updateData.processing_worker_id = null;
 
     const { error: updateError } = await supabase
       .from("bulk_email_jobs")
