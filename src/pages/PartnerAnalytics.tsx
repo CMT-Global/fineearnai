@@ -10,6 +10,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Loader2, TrendingUp, DollarSign, Target, Award, BarChart3 } from "lucide-react";
+import { PartnerAnalyticsSkeleton } from "@/components/partner/PartnerAnalyticsSkeleton";
 import {
   LineChart,
   Line,
@@ -40,9 +41,7 @@ const PartnerAnalytics = () => {
   if (checkingPartner) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <PartnerAnalyticsSkeleton />
       </PageLayout>
     );
   }
@@ -89,9 +88,7 @@ const PartnerAnalytics = () => {
         </div>
 
         {loadingAnalytics ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <PartnerAnalyticsSkeleton showHeader={false} />
         ) : analytics ? (
           <div className="space-y-6">
             {/* Overview Stats */}
