@@ -848,7 +848,22 @@ export type Database = {
           whatsapp_group_link?: string | null
           whatsapp_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_partner_applications_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_partner_applications_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_daily_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       partner_bonus_tiers: {
         Row: {
