@@ -126,6 +126,15 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       ],
     },
     {
+      label: "Partner Management",
+      icon: Sparkles,
+      items: [
+        { label: "Partner Applications", path: "/admin/partners/applications" },
+        { label: "All Partners", path: "/admin/partners" },
+        { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
+      ],
+    },
+    {
       label: "Communications",
       icon: Mail,
       items: [

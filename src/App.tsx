@@ -56,6 +56,9 @@ const CPAYCheckouts = lazy(() => import("@/pages/admin/CPAYCheckouts"));
 const CommissionAudit = lazy(() => import("@/pages/admin/CommissionAudit"));
 const InfluencerInvites = lazy(() => import("@/pages/admin/InfluencerInvites"));
 const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
+const PartnerApplications = lazy(() => import("@/pages/admin/PartnerApplications"));
+const Partners = lazy(() => import("@/pages/admin/Partners"));
+const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -426,6 +429,36 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <CommissionAudit />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/partners/applications"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <PartnerApplications />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/partners"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <Partners />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/partners/vouchers"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <VoucherMonitoring />
             </AdminLayout>
           </AdminRoute>
         }
