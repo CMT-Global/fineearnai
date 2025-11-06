@@ -179,16 +179,32 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
 
   // Phase 4: Auto-populate profile and referral data when loaded
   useEffect(() => {
-    if (profile) {
-      form.setValue('current_membership_plan', profile.membership_plan);
-      form.setValue('applicant_country', profile.registration_country || profile.country || '');
+    if (profile && profile.membership_plan) {
+      form.setValue('current_membership_plan', profile.membership_plan, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true 
+      });
+      form.setValue('applicant_country', profile.registration_country || profile.country || '', { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true 
+      });
     }
   }, [profile, form]);
 
   useEffect(() => {
     if (!isLoadingReferrals) {
-      form.setValue('total_referrals', referralStats.total);
-      form.setValue('upgraded_referrals', referralStats.upgraded);
+      form.setValue('total_referrals', referralStats.total, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true 
+      });
+      form.setValue('upgraded_referrals', referralStats.upgraded, { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true 
+      });
     }
   }, [referralStats, isLoadingReferrals, form]);
 
@@ -756,6 +772,29 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                       )}
                     </div>
                   </div>
+
+                  {/* Hidden fields to properly register in React Hook Form */}
+                  <FormField
+                    control={form.control}
+                    name="current_membership_plan"
+                    render={({ field }) => (
+                      <input type="hidden" {...field} value={profile?.membership_plan || ''} />
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="total_referrals"
+                    render={({ field }) => (
+                      <input type="hidden" {...field} value={referralStats.total} />
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="upgraded_referrals"
+                    render={({ field }) => (
+                      <input type="hidden" {...field} value={referralStats.upgraded} />
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
