@@ -224,6 +224,17 @@ const PartnerDashboard = () => {
           </Card>
         </div>
 
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/partner/analytics')}
+            className="w-full sm:w-auto"
+          >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            View Analytics Dashboard
+          </Button>
+        </div>
+
         <Tabs defaultValue="purchase" className="space-y-6">
           <TabsList>
             <TabsTrigger value="purchase">

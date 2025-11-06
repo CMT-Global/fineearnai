@@ -163,3 +163,6 @@ verify_jwt = true
 
 [functions.admin-partner-management]
 verify_jwt = true
+
+[functions.get-partner-analytics]
+verify_jwt = true
