@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
@@ -33,6 +33,51 @@ const PartnerApplicationStatus = () => {
   const { data: application, isLoading, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
   const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
   const [showWizard, setShowWizard] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Ready gate - only proceed when all data is loaded
+  const ready = !isLoading && !checkingPartner;
+
+  // Debug logging for troubleshooting
+  console.log('🔍 PartnerApplicationStatus State:', {
+    ready,
+    isPartner,
+    application: !!application,
+    isLoading,
+    checkingPartner,
+    isNavigating
+  });
+
+  // Effect-driven redirects - only runs after data is settled
+  useEffect(() => {
+    if (!ready) return;
+    
+    // Redirect approved partners to dashboard
+    if (isPartner) {
+      console.log('✅ Partner approved, redirecting to dashboard');
+      setIsNavigating(true);
+      navigate('/partner/dashboard', { replace: true });
+      return;
+    }
+    
+    // Redirect users without application to become-partner
+    if (!application) {
+      console.log('⚠️ No application found, redirecting to become-partner');
+      setIsNavigating(true);
+      navigate('/become-partner', { replace: true });
+    }
+  }, [ready, isPartner, application, navigate]);
+
+  // Early return for navigation state - BEFORE error handling
+  if (isNavigating) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Redirecting..." />
+        </div>
+      </PageLayout>
+    );
+  }
 
   // Handle errors - show error UI with retry
   if (applicationError || partnerError) {
@@ -55,30 +100,6 @@ const PartnerApplicationStatus = () => {
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text="Loading application status..." />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Immediate redirect for approved partners - with loading state
-  if (isPartner) {
-    navigate('/partner/dashboard', { replace: true });
-    return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting to dashboard..." />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Immediate redirect if no application exists - with loading state
-  if (!application) {
-    navigate('/become-partner', { replace: true });
-    return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
         </div>
       </PageLayout>
     );
