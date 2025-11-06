@@ -58,6 +58,7 @@ const PartnerDashboard = () => {
 
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ type: "", details: "" });
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const { data: ranks, isLoading: loadingRanks } = useQuery({
     queryKey: ['partner-ranks'],
@@ -93,17 +94,33 @@ const PartnerDashboard = () => {
     }
   }, [partnerConfig]);
 
+  // Effect-driven redirect - only runs after partner check is complete
+  useEffect(() => {
+    if (!checkingPartner && isPartner === false) {
+      console.log('⚠️ Not a partner, redirecting to become-partner');
+      setIsNavigating(true);
+      navigate('/become-partner', { replace: true });
+    }
+  }, [checkingPartner, isPartner, navigate]);
+
+  // Early return for navigation state - BEFORE loading checks
+  if (isNavigating) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-3 text-muted-foreground">Redirecting...</span>
+        </div>
+      </PageLayout>
+    );
+  }
+
   if (checkingPartner || loadingConfig) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <PartnerDashboardSkeleton />
       </PageLayout>
     );
-  }
-
-  if (!isPartner) {
-    navigate('/become-partner');
-    return null;
   }
 
   const handlePurchaseVoucher = () => {
