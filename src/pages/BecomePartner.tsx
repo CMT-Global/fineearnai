@@ -230,29 +230,6 @@ const BecomePartner = () => {
     );
   }
 
-  // Show loading state while waiting for user or data is being fetched
-  if (!user || checkingPartner || loadingApplication) {
-    console.log('⏳ [BecomePartner] LOADING STATE:', { hasUser: !!user, checkingPartner, loadingApplication });
-    return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading..." />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Early return if navigation is in progress to prevent wizard flash
-  if (isNavigating) {
-    return (
-      <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
-        </div>
-      </PageLayout>
-    );
-  }
-
   // Show loading state while waiting for ready state
   if (!ready) {
     console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerLoaded, appLoaded });
