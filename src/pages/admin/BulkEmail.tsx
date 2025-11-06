@@ -48,6 +48,18 @@ const BulkEmail = () => {
   const [calculatingCount, setCalculatingCount] = useState(false);
   const [countryStats, setCountryStats] = useState<Array<{ code: string; count: number }>>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
+  
+  // PHASE 3: Helper function to generate duplicate check hash
+  const generateDuplicateHash = async (subject: string, body: string, recipientFilter: any): Promise<string> => {
+    const hashInput = JSON.stringify({ subject, body, recipientFilter });
+    const encoder = new TextEncoder();
+    const data = encoder.encode(hashInput);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  };
+
+
   const [membershipPlans, setMembershipPlans] = useState<Array<{ name: string; display_name: string; account_type: string; count: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
@@ -329,6 +341,50 @@ const BulkEmail = () => {
       }
 
       setSending(true);
+
+      // PHASE 3: Check for duplicate jobs before creating new one
+      const recipientFilter = {
+        type: formData.recipientType,
+        plan: formData.plan || null,
+        country: formData.country || null,
+        usernames: formData.usernames || null,
+        email: formData.email || null,
+      };
+      
+      const duplicateHash = await generateDuplicateHash(
+        formData.subject,
+        formData.body,
+        recipientFilter
+      );
+
+      // Query for existing jobs with same hash (queued or processing)
+      const { data: existingJob, error: duplicateCheckError } = await supabase
+        .from("bulk_email_jobs")
+        .select("id, status, created_at, total_recipients")
+        .eq("duplicate_check_hash", duplicateHash)
+        .in("status", ["queued", "processing"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (duplicateCheckError) {
+        console.error("Error checking for duplicate jobs:", duplicateCheckError);
+        // Continue anyway - this is not a critical error
+      }
+
+      if (existingJob) {
+        setSending(false);
+        const createdAgo = Math.round((Date.now() - new Date(existingJob.created_at).getTime()) / 1000 / 60);
+        const timeText = createdAgo < 60 
+          ? `${createdAgo} minute${createdAgo !== 1 ? 's' : ''} ago`
+          : `${Math.round(createdAgo / 60)} hour${Math.round(createdAgo / 60) !== 1 ? 's' : ''} ago`;
+        
+        toast.error("Duplicate Email Campaign Detected", {
+          description: `A similar email campaign already exists (Status: ${existingJob.status}, ${existingJob.total_recipients} recipients). Created ${timeText}. Please wait for it to complete or modify your email content.`,
+          duration: 8000,
+        });
+        return;
+      }
 
       if (formData.scheduleType === "scheduled") {
         // Schedule email
