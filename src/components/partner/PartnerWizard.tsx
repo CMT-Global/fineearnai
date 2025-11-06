@@ -13,6 +13,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface PartnerWizardProps {
   open: boolean;
@@ -31,13 +32,30 @@ const steps = [
         </div>
         <h2 className="text-3xl font-bold">Become a FineEarn Local Partner</h2>
         <p className="text-lg text-muted-foreground">
-          Join thousands of successful partners earning an average of <span className="font-bold text-primary">$1,400 weekly</span> by helping people in your community access top-up vouchers.
+          Join thousands of successful partners earning an average of{" "}
+          <span className="inline-flex flex-wrap items-baseline gap-1">
+            <CurrencyDisplay 
+              amountUSD={1400} 
+              className="font-bold text-primary"
+              showTooltip={true}
+            />
+            <span className="text-xs text-muted-foreground">($1,400)</span>
+            <span className="font-bold text-primary">weekly</span>
+          </span>{" "}
+          by helping people in your community access top-up vouchers.
         </p>
         <div className="grid grid-cols-3 gap-4 pt-4">
           <Card className="border-primary/20">
             <CardContent className="pt-6 text-center">
               <DollarSign className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <p className="text-2xl font-bold">$200+</p>
+              <p className="text-2xl font-bold">
+                <CurrencyDisplay 
+                  amountUSD={200} 
+                  decimals={0}
+                  showTooltip={true}
+                />+
+              </p>
+              <p className="text-xs text-muted-foreground mb-1">($200+)</p>
               <p className="text-sm text-muted-foreground">Daily Average</p>
             </CardContent>
           </Card>
@@ -108,19 +126,39 @@ const steps = [
           <div className="space-y-3">
             <div className="flex justify-between items-center pb-2 border-b">
               <span className="text-muted-foreground">Voucher Face Value:</span>
-              <span className="font-bold text-lg">$100.00</span>
+              <div className="text-right">
+                <div className="font-bold text-lg">
+                  <CurrencyDisplay amountUSD={100} showTooltip={true} />
+                </div>
+                <div className="text-xs text-muted-foreground">($100.00)</div>
+              </div>
             </div>
             <div className="flex justify-between items-center pb-2 border-b">
               <span className="text-muted-foreground">Your Cost (10% discount):</span>
-              <span className="font-bold text-lg text-blue-600">-$90.00</span>
+              <div className="text-right">
+                <div className="font-bold text-lg text-blue-600">
+                  -<CurrencyDisplay amountUSD={90} showTooltip={true} />
+                </div>
+                <div className="text-xs text-muted-foreground">(-$90.00)</div>
+              </div>
             </div>
             <div className="flex justify-between items-center pb-2 border-b">
               <span className="text-muted-foreground">You Sell For:</span>
-              <span className="font-bold text-lg">$100.00</span>
+              <div className="text-right">
+                <div className="font-bold text-lg">
+                  <CurrencyDisplay amountUSD={100} showTooltip={true} />
+                </div>
+                <div className="text-xs text-muted-foreground">($100.00)</div>
+              </div>
             </div>
             <div className="flex justify-between items-center pt-2 bg-green-100 dark:bg-green-900/30 -mx-6 px-6 py-3 rounded-b-lg">
               <span className="font-bold text-lg">Your Profit:</span>
-              <span className="font-bold text-2xl text-green-600">$10.00</span>
+              <div className="text-right">
+                <div className="font-bold text-2xl text-green-600">
+                  <CurrencyDisplay amountUSD={10} showTooltip={true} />
+                </div>
+                <div className="text-xs text-muted-foreground">($10.00)</div>
+              </div>
             </div>
           </div>
         </div>
@@ -128,7 +166,14 @@ const steps = [
           <p className="text-lg">
             Sell just <span className="font-bold text-primary">20 vouchers per day</span> at this rate:
           </p>
-          <p className="text-3xl font-bold text-green-600">$200/day = $1,400/week!</p>
+          <div className="space-y-1">
+            <p className="text-3xl font-bold text-green-600">
+              <CurrencyDisplay amountUSD={200} decimals={0} showTooltip={true} />/day = <CurrencyDisplay amountUSD={1400} decimals={0} showTooltip={true} />/week!
+            </p>
+            <p className="text-sm text-muted-foreground">
+              ($200/day = $1,400/week)
+            </p>
+          </div>
         </div>
       </div>
     ),
