@@ -263,6 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
     let failCount = 0;
     const emailLogs: any[] = [];
     const newIdempotencyKeys: string[] = []; // PHASE 1: Track new idempotency keys
+    const rateLimitMetrics: any[] = []; // PHASE 3: Track rate limit metrics per batch
 
     // STEP 7: Process each chunk with Resend Batch API
     for (let chunkIndex = 0; chunkIndex < recipientChunks.length; chunkIndex++) {
@@ -307,6 +308,26 @@ const handler = async (req: Request): Promise<Response> => {
           3, // Max 3 retries
           1000 // Start with 1s delay
         );
+
+        // PHASE 3: Extract rate limit headers for monitoring
+        // Note: Resend SDK may not expose headers directly; attempt extraction from response object
+        const rateLimitHeaders = {
+          limit: (batchResponse as any)?.response?.headers?.['ratelimit-limit'] || 
+                 (batchResponse as any)?.headers?.['ratelimit-limit'] || 'unknown',
+          remaining: (batchResponse as any)?.response?.headers?.['ratelimit-remaining'] || 
+                     (batchResponse as any)?.headers?.['ratelimit-remaining'] || 'unknown',
+          reset: (batchResponse as any)?.response?.headers?.['ratelimit-reset'] || 
+                 (batchResponse as any)?.headers?.['ratelimit-reset'] || 'unknown',
+        };
+
+        console.log(`📊 [Queue Processor] Rate Limits - Limit: ${rateLimitHeaders.limit}, Remaining: ${rateLimitHeaders.remaining}, Reset: ${rateLimitHeaders.reset}`);
+
+        // PHASE 3: Store rate limit metrics
+        rateLimitMetrics.push({
+          chunk_index: chunkIndex,
+          timestamp: new Date().toISOString(),
+          ...rateLimitHeaders,
+        });
 
         // Process batch response
         if (batchResponse.data) {
@@ -421,6 +442,7 @@ const handler = async (req: Request): Promise<Response> => {
       processing_metadata: {
         sent_recipient_ids: allSentIds, // PHASE 2: Critical for duplicate prevention
         idempotency_keys_used: allIdempotencyKeys, // PHASE 1: Prevent duplicate sends on retry
+        rate_limit_metrics: rateLimitMetrics, // PHASE 3: Store rate limit headers for monitoring
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
         last_batch_timestamp: new Date().toISOString(),
