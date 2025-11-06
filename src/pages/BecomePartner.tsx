@@ -41,12 +41,17 @@ const BecomePartner = () => {
         timestamp: new Date().toISOString(),
       }, newCorrelationId);
       
-      // Display Debug ID in toast for easy tracking
-      toast.info(`Debug ID: ${newCorrelationId}`, {
-        description: "Use this ID to track your partner application in backend logs",
-        duration: 10000, // Show for 10 seconds
-        id: 'correlation-id-toast', // Prevent duplicates
-      });
+      // Only show Debug ID in development mode or when ?debug=true is in URL
+      const isDevelopment = import.meta.env.DEV;
+      const hasDebugParam = new URLSearchParams(window.location.search).get('debug') === 'true';
+
+      if (isDevelopment || hasDebugParam) {
+        toast.info(`Debug ID: ${newCorrelationId}`, {
+          description: "Use this ID to track your partner application in backend logs",
+          duration: 10000,
+          id: 'correlation-id-toast',
+        });
+      }
     }
   }, [user, correlationId]);
 
@@ -82,8 +87,17 @@ const BecomePartner = () => {
     applicationError: applicationError?.message
   });
 
-  // Handle errors - show error UI with retry
+  // Handle errors - show error UI with retry and specific messages
   if (partnerError || applicationError) {
+    const error = partnerError || applicationError || new Error('Unknown error');
+    const isNetworkError = error?.message?.includes('fetch') || 
+                          error?.message?.includes('Failed to fetch') ||
+                          error?.message?.includes('network');
+    const isAuthError = error?.message?.includes('session') || 
+                       error?.message?.includes('Unauthorized') ||
+                       error?.message?.includes('JWT') ||
+                       error?.message?.includes('auth');
+    
     console.error('🚨 [BecomePartner] ERROR DETECTED:', {
       timestamp: new Date().toISOString(),
       partnerError: {
@@ -96,14 +110,25 @@ const BecomePartner = () => {
         stack: applicationError?.stack,
         name: applicationError?.name
       },
-      userId: user?.id
+      isNetworkError,
+      isAuthError,
+      userId: user?.id,
+      correlationId
     });
+
+    const customMessage = isNetworkError 
+      ? "Unable to load partner status. Please check your connection and try again."
+      : isAuthError
+      ? "Your session has expired. Please refresh the page or log in again."
+      : undefined;
+
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <QueryErrorBoundary 
-          error={partnerError || applicationError || new Error('Unknown error')} 
+          error={error}
+          customMessage={customMessage}
           reset={() => {
-            console.log('🔄 [BecomePartner] Retrying after error...');
+            console.log('🔄 [BecomePartner] Retrying after error...', { correlationId });
             refetchPartner();
             refetchApplication();
           }}
