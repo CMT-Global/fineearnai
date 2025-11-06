@@ -45,12 +45,17 @@ const PartnerApplicationStatus = () => {
       
       console.log('🆔 [ApplicationStatus] Correlation ID generated:', newCorrelationId);
       
-      // Display Debug ID in toast for easy tracking
-      toast.info(`Debug ID: ${newCorrelationId}`, {
-        description: "Use this ID to track your application status in backend logs",
-        duration: 10000, // Show for 10 seconds
-        id: 'correlation-id-toast-status', // Prevent duplicates
-      });
+      // Display Debug ID in toast for easy tracking (only in dev mode or with ?debug=true)
+      const isDevelopment = import.meta.env.DEV;
+      const hasDebugParam = new URLSearchParams(window.location.search).get('debug') === 'true';
+      
+      if (isDevelopment || hasDebugParam) {
+        toast.info(`Debug ID: ${newCorrelationId}`, {
+          description: "Use this ID to track your application status in backend logs",
+          duration: 10000, // Show for 10 seconds
+          id: 'correlation-id-toast-status', // Prevent duplicates
+        });
+      }
     }
   }, [user, correlationId]);
 
