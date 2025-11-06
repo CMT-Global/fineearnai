@@ -32,7 +32,8 @@ import {
   Check,
   ChevronsUpDown,
   User,
-  Mail
+  Mail,
+  CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -253,6 +254,25 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       agrees_to_guidelines: "Agreement to Guidelines"
     };
     return labelMap[fieldName] || fieldName;
+  };
+
+  // Phase 4: Helper function to check if a field is valid (has value and no errors)
+  const isFieldValid = (fieldName: keyof CompleteApplicationData): boolean => {
+    const fieldValue = form.watch(fieldName);
+    const fieldError = form.formState.errors[fieldName];
+    
+    // Check if field has a value and no errors
+    if (fieldError) return false;
+    
+    // For boolean fields
+    if (typeof fieldValue === 'boolean') return true;
+    
+    // For string/number fields
+    if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+      return true;
+    }
+    
+    return false;
   };
 
   // Phase 3: Enhanced validation with detailed error collection
@@ -658,10 +678,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="preferred_contact_method"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">Preferred Contact Method *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          Preferred Contact Method *
+                          {isFieldValid('preferred_contact_method') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-12 md:h-11">
+                            <SelectTrigger 
+                              className="h-12 md:h-11"
+                              aria-label="Select preferred contact method"
+                            >
                               <SelectValue placeholder="Select contact method" />
                             </SelectTrigger>
                           </FormControl>
@@ -681,13 +709,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="whatsapp_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">WhatsApp Number *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          WhatsApp Number *
+                          {isFieldValid('whatsapp_number') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
                             inputMode="tel"
                             placeholder="+1234567890"
                             className="h-12 md:h-11"
+                            aria-label="Enter WhatsApp number with country code"
                             {...field}
                           />
                         </FormControl>
@@ -704,13 +738,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="telegram_username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">Telegram Username *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          Telegram Username *
+                          {isFieldValid('telegram_username') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="text"
                             placeholder="@username"
                             autoCapitalize="none"
                             className="h-12 md:h-11"
+                            aria-label="Enter Telegram username"
                             {...field}
                           />
                         </FormControl>
@@ -724,13 +764,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="whatsapp_group_link"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">WhatsApp Group Link *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          WhatsApp Group Link *
+                          {isFieldValid('whatsapp_group_link') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="url"
                             inputMode="url"
                             placeholder="https://chat.whatsapp.com/..."
                             className="h-12 md:h-11"
+                            aria-label="Enter WhatsApp group invitation link"
                             {...field}
                           />
                         </FormControl>
@@ -744,13 +790,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="telegram_group_link"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">Telegram Group/Channel Link *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          Telegram Group/Channel Link *
+                          {isFieldValid('telegram_group_link') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="url"
                             inputMode="url"
                             placeholder="https://t.me/..."
                             className="h-12 md:h-11"
+                            aria-label="Enter Telegram group or channel link"
                             {...field}
                           />
                         </FormControl>
@@ -769,14 +821,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="manages_community"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Do you currently manage any online community or group? *
+                          {isFieldValid('manages_community') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "true")}
                             value={field.value === undefined ? undefined : field.value ? "true" : "false"}
                             className="flex flex-col space-y-2"
+                            aria-label="Select if you manage a community"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="true" id="manages-yes" className="h-5 w-5" />
@@ -804,13 +860,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         name="community_group_links"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm md:text-base">Group Link(s) *</FormLabel>
+                            <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                              Group Link(s) *
+                              {isFieldValid('community_group_links') && (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              )}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="url"
                                 inputMode="url"
                                 placeholder="https://..."
                                 className="h-12 md:h-11"
+                                aria-label="Enter community group link"
                                 {...field}
                               />
                             </FormControl>
@@ -824,12 +886,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         name="community_member_count"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm md:text-base">Community Size (Member Count) *</FormLabel>
+                            <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                              Community Size (Member Count) *
+                              {isFieldValid('community_member_count') && (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              )}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="text"
                                 placeholder="e.g., 500+ members"
                                 className="h-12 md:h-11"
+                                aria-label="Enter community member count"
                                 {...field}
                               />
                             </FormControl>
@@ -845,14 +913,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="promoted_platforms"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Have you previously promoted or managed digital or online earning platforms? *
+                          {isFieldValid('promoted_platforms') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "true")}
                             value={field.value === undefined ? undefined : field.value ? "true" : "false"}
                             className="flex flex-col space-y-2"
+                            aria-label="Select if you have promoted platforms before"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="true" id="promoted-yes" className="h-5 w-5" />
@@ -879,11 +951,17 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                       name="platform_promotion_details"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm md:text-base">Please describe briefly *</FormLabel>
+                          <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                            Please describe briefly *
+                            {isFieldValid('platform_promotion_details') && (
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            )}
+                          </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Tell us about your experience..."
                               className="min-h-[100px] resize-y"
+                              aria-label="Describe your platform promotion experience"
                               {...field}
                             />
                           </FormControl>
@@ -898,13 +976,17 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="network_description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           How do you plan on marketing and educating users in your country about our platform? *
+                          {isFieldValid('network_description') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Describe your marketing strategy, channels you'll use (social media, community groups, events), and how you'll educate users about the platform..."
                             className="min-h-[120px] resize-y"
+                            aria-label="Describe your marketing and education strategy"
                             {...field}
                           />
                         </FormControl>
@@ -921,14 +1003,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="expected_monthly_onboarding"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           How many users do you think you can onboard in your first month? *
+                          {isFieldValid('expected_monthly_onboarding') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
                             value={field.value}
                             className="flex flex-col space-y-2"
+                            aria-label="Select expected monthly user onboarding"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="less_than_50" id="onboard-1" className="h-5 w-5" />
@@ -971,13 +1057,17 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="local_payment_methods"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Which local payment methods do you use or can accept from users? *
+                          {isFieldValid('local_payment_methods') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="List payment methods you can work with..."
                             className="min-h-[100px] resize-y"
+                            aria-label="List local payment methods you can accept"
                             {...field}
                           />
                         </FormControl>
@@ -991,14 +1081,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="can_provide_local_support"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Will you be able to provide local support to users in your country? *
+                          {isFieldValid('can_provide_local_support') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "true")}
                             value={field.value === undefined ? undefined : field.value ? "true" : "false"}
                             className="flex flex-col space-y-2"
+                            aria-label="Select if you can provide local support"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="true" id="support-yes" className="h-5 w-5" />
@@ -1024,12 +1118,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="support_preference"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">Support Preference *</FormLabel>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          Support Preference *
+                          {isFieldValid('support_preference') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
                             value={field.value}
                             className="flex flex-col space-y-2"
+                            aria-label="Select your support preference"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="direct_assistance" id="pref-direct" className="h-5 w-5" />
@@ -1055,14 +1155,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="organize_training_sessions"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Are you open to organizing small online/offline sessions to train new users? *
+                          {isFieldValid('organize_training_sessions') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "true")}
                             value={field.value === undefined ? undefined : field.value ? "true" : "false"}
                             className="flex flex-col space-y-2"
+                            aria-label="Select if you're open to organizing training sessions"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="true" id="training-yes" className="h-5 w-5" />
@@ -1094,14 +1198,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="daily_time_commitment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           How much time can you dedicate daily to managing your local users? *
+                          {isFieldValid('daily_time_commitment') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <Input
                             type="text"
                             placeholder="e.g., 2-3 hours per day"
                             className="h-12 md:h-11"
+                            aria-label="Enter daily time commitment"
                             {...field}
                           />
                         </FormControl>
@@ -1119,14 +1227,18 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="is_currently_employed"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Are you currently employed or have another job? *
+                          {isFieldValid('is_currently_employed') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => field.onChange(value === "true")}
                             value={field.value === undefined ? undefined : field.value ? "true" : "false"}
                             className="flex flex-col space-y-2"
+                            aria-label="Select your employment status"
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
                               <RadioGroupItem value="true" id="employed-yes" className="h-5 w-5" />
@@ -1152,13 +1264,17 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     name="motivation_text"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm md:text-base">
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
                           Why do you want to become a Local Partner? *
+                          {isFieldValid('motivation_text') && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          )}
                         </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Tell us what motivates you to represent our platform in your country..."
                             className="min-h-[150px] resize-y"
+                            aria-label="Describe your motivation to become a local partner"
                             {...field}
                           />
                         </FormControl>
@@ -1180,11 +1296,15 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                             checked={field.value}
                             onCheckedChange={field.onChange}
                             className="h-5 w-5 mt-1"
+                            aria-label="Agree to follow partner guidelines"
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm md:text-base cursor-pointer">
+                          <FormLabel className="text-sm md:text-base cursor-pointer flex items-center gap-2">
                             I agree to follow the Partner Guidelines *
+                            {isFieldValid('agrees_to_guidelines') && (
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            )}
                           </FormLabel>
                           <FormDescription className="text-xs md:text-sm">
                             You agree to represent the platform professionally and follow all partner guidelines
