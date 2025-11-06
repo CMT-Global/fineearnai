@@ -25,6 +25,7 @@ import { useState, useEffect } from "react";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
+import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
@@ -155,8 +156,15 @@ const PartnerApplicationStatus = () => {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <PageLayout profile={profile} onSignOut={signOut}>
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <PartnerErrorBoundary
+      fallbackMessage="There was an error loading your partner application status. Please try again."
+      onReset={() => {
+        refetchApplication();
+        refetchPartner();
+      }}
+    >
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
           <Button
@@ -461,6 +469,7 @@ const PartnerApplicationStatus = () => {
         </div>
       </div>
     </PageLayout>
+    </PartnerErrorBoundary>
   );
 };
 

@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
+import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 
 const BecomePartner = () => {
   const navigate = useNavigate();
@@ -129,28 +130,36 @@ const BecomePartner = () => {
   }
 
   return (
-    <PageLayout profile={profile} onSignOut={signOut}>
-      {/* Intro Wizard - Benefits of becoming a partner */}
-      {!showApplicationWizard && (
-        <PartnerWizard
-          open={true} 
-          onComplete={handleIntroWizardComplete}
-          onClose={() => {
-            console.log('❌ User closed intro wizard, navigating to dashboard');
-            setIsNavigating(true);
-            navigate('/dashboard', { replace: true });
-          }}
-        />
-      )}
+    <PartnerErrorBoundary
+      fallbackMessage="There was an error loading the partner application page. Please try again."
+      onReset={() => {
+        refetchPartner();
+        refetchApplication();
+      }}
+    >
+      <PageLayout profile={profile} onSignOut={signOut}>
+        {/* Intro Wizard - Benefits of becoming a partner */}
+        {!showApplicationWizard && (
+          <PartnerWizard
+            open={true} 
+            onComplete={handleIntroWizardComplete}
+            onClose={() => {
+              console.log('❌ User closed intro wizard, navigating to dashboard');
+              setIsNavigating(true);
+              navigate('/dashboard', { replace: true });
+            }}
+          />
+        )}
 
-      {/* Application Wizard - Multi-step form */}
-      {showApplicationWizard && (
-        <PartnerApplicationWizard
-          onComplete={handleApplicationComplete}
-          onCancel={handleApplicationCancel}
-        />
-      )}
-    </PageLayout>
+        {/* Application Wizard - Multi-step form */}
+        {showApplicationWizard && (
+          <PartnerApplicationWizard
+            onComplete={handleApplicationComplete}
+            onCancel={handleApplicationCancel}
+          />
+        )}
+      </PageLayout>
+    </PartnerErrorBoundary>
   );
 };
 

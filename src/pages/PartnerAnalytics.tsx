@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Loader2, TrendingUp, DollarSign, Target, Award, BarChart3 } from "lucide-react";
 import { PartnerAnalyticsSkeleton } from "@/components/partner/PartnerAnalyticsSkeleton";
+import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import {
   LineChart,
   Line,
@@ -61,8 +62,11 @@ const PartnerAnalytics = () => {
   };
 
   return (
-    <PageLayout profile={profile} onSignOut={signOut}>
-      <div className="container mx-auto px-4 py-6">
+    <PartnerErrorBoundary
+      fallbackMessage="There was an error loading your partner analytics. Please try again."
+    >
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -284,6 +288,7 @@ const PartnerAnalytics = () => {
         )}
       </div>
     </PageLayout>
+    </PartnerErrorBoundary>
   );
 };
 

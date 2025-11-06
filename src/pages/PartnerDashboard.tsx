@@ -20,6 +20,7 @@ import { WeeklyBonusProgressCard } from "@/components/partner/WeeklyBonusProgres
 import { BonusHistoryTable } from "@/components/partner/BonusHistoryTable";
 import { PartnerOnboardingChecklist } from "@/components/partner/PartnerOnboardingChecklist";
 import { PartnerDashboardSkeleton } from "@/components/partner/PartnerDashboardSkeleton";
+import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -204,8 +205,11 @@ const PartnerDashboard = () => {
     : partnerConfig?.commission_rate || 0.10;
 
   return (
-    <PageLayout profile={profile} onSignOut={signOut}>
-      <div className="container mx-auto px-4 py-6">
+    <PartnerErrorBoundary
+      fallbackMessage="There was an error loading your partner dashboard. Please try again."
+    >
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
@@ -624,6 +628,7 @@ const PartnerDashboard = () => {
         </DialogContent>
       </Dialog>
     </PageLayout>
+    </PartnerErrorBoundary>
   );
 };
 
