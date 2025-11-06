@@ -8,6 +8,76 @@ import { generateCorrelationId } from "@/lib/utils";
 // Set to false to instantly revert to direct database queries
 const USE_SERVER_STATUS = true;
 
+// 🆕 PHASE 2: Unified hook that fetches both partner status and application in one request
+// This eliminates the timing inconsistency of separate queries hitting the same backend
+export const usePartnerStatus = (correlationId?: string) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['partner-status', user?.id],
+    queryFn: async () => {
+      const cid = correlationId || generateCorrelationId();
+      console.log('🔍 [usePartnerStatus] Starting unified query for user:', user?.id, 'correlationId:', cid);
+      
+      if (!user) {
+        console.log('⚠️ [usePartnerStatus] No user, returning default state');
+        return { isPartner: false, application: null };
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.error('🚨 [usePartnerStatus] No active session');
+          throw new Error('No active session');
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-partner-status`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'X-Correlation-Id': cid,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('🚨 [usePartnerStatus] Server error:', error);
+          throw new Error(error.error || 'Failed to load partner status');
+        }
+
+        const result = await response.json();
+        
+        console.log('✅ [usePartnerStatus] Unified result:', {
+          isPartner: result.is_partner,
+          hasApplication: !!result.application,
+          applicationId: result.application?.id,
+          applicationStatus: result.application?.status,
+          correlationId: cid
+        });
+        
+        return {
+          isPartner: result.is_partner,
+          application: result.application
+        };
+      } catch (error) {
+        console.error('🚨 [usePartnerStatus] Exception:', error);
+        throw error;
+      }
+    },
+    enabled: !!user,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30_000, // 30 seconds
+    refetchOnMount: 'always', // Always verify latest state when mounting critical pages
+    refetchOnWindowFocus: false, // Avoid mid-session flickers on focus
+  });
+};
+
 // Check if user is a partner
 // Returns: { data: boolean, isLoading: boolean, isSuccess: boolean, error: Error | null, refetch: function }
 export const useIsPartner = (correlationId?: string) => {
@@ -231,7 +301,7 @@ export const useSubmitPartnerApplication = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partner-application'] });
+      queryClient.invalidateQueries({ queryKey: ['partner-status'] });
       toast.success('Application submitted successfully! We will review it within 24 hours.');
     },
     onError: (error: Error) => {

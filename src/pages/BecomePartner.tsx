@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicationWizard";
-import { useIsPartner, usePartnerApplication } from "@/hooks/usePartner";
+import { usePartnerStatus } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -22,19 +22,28 @@ const BecomePartner = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [correlationId, setCorrelationId] = useState<string>("");
   
-  const { data: isPartner, isLoading: checkingPartner, isSuccess: partnerLoaded, error: partnerError, refetch: refetchPartner } = useIsPartner(correlationId);
-  const { data: application, isLoading: loadingApplication, isSuccess: appLoaded, error: applicationError, refetch: refetchApplication } = usePartnerApplication(correlationId);
+  // Phase 2: Use unified hook to fetch both partner status and application in one request
+  const { 
+    data: partnerStatus, 
+    isSuccess: partnerStatusSuccess, 
+    error: partnerStatusError, 
+    refetch: refetchPartnerStatus 
+  } = usePartnerStatus(correlationId);
+  
   const { data: profile } = useProfile(user?.id || '');
 
-  // Compute ready state - only true when user exists AND both queries have settled successfully
-  const ready = !!user && partnerLoaded && appLoaded;
+  // Destructure partner status for convenience
+  const isPartner = partnerStatus?.isPartner ?? false;
+  const application = partnerStatus?.application ?? null;
+
+  // Compute ready state - only true when user exists AND query has settled successfully
+  const ready = !!user && partnerStatusSuccess;
   
   // Log ready state computation
   console.log('🎯 [BecomePartner] Ready State Computed:', {
     ready,
     hasUser: !!user,
-    partnerLoaded,
-    appLoaded,
+    partnerStatusSuccess,
     timestamp: new Date().toISOString()
   });
 
@@ -75,8 +84,7 @@ const BecomePartner = () => {
     hasApplication: !!application,
     applicationId: application?.id,
     applicationStatus: application?.status,
-    checkingPartner,
-    loadingApplication,
+    partnerStatusSuccess,
     isNavigating,
     showApplicationWizard,
     profileLoaded: !!profile,
@@ -84,10 +92,10 @@ const BecomePartner = () => {
   });
 
   // Log when partner status changes
-  console.log('🔍 [BecomePartner] Partner Check Result:', {
+  console.log('🔍 [BecomePartner] Partner Status Check Result:', {
     isPartner,
-    checkingPartner,
-    partnerError: partnerError?.message
+    partnerStatusSuccess,
+    partnerStatusError: partnerStatusError?.message
   });
 
   // Log when application status changes
@@ -95,8 +103,8 @@ const BecomePartner = () => {
     hasApplication: !!application,
     applicationId: application?.id,
     applicationStatus: application?.status,
-    loadingApplication,
-    applicationError: applicationError?.message
+    partnerStatusSuccess,
+    partnerStatusError: partnerStatusError?.message
   });
 
   // Effect-driven redirects - only runs after data is settled
@@ -113,8 +121,7 @@ const BecomePartner = () => {
     if (!ready) {
       console.log('⏳ [BecomePartner] Not ready yet, waiting for queries to settle...', {
         hasUser: !!user,
-        partnerLoaded,
-        appLoaded
+        partnerStatusSuccess
       });
       return;
     }
@@ -164,8 +171,8 @@ const BecomePartner = () => {
   }, [ready, isPartner, application, navigate]);
 
   // Handle errors - show error UI with retry and specific messages
-  if (partnerError || applicationError) {
-    const error = partnerError || applicationError || new Error('Unknown error');
+  if (partnerStatusError) {
+    const error = partnerStatusError;
     const isNetworkError = error?.message?.includes('fetch') || 
                           error?.message?.includes('Failed to fetch') ||
                           error?.message?.includes('network');
@@ -176,15 +183,10 @@ const BecomePartner = () => {
     
     console.error('🚨 [BecomePartner] ERROR DETECTED:', {
       timestamp: new Date().toISOString(),
-      partnerError: {
-        message: partnerError?.message,
-        stack: partnerError?.stack,
-        name: partnerError?.name
-      },
-      applicationError: {
-        message: applicationError?.message,
-        stack: applicationError?.stack,
-        name: applicationError?.name
+      error: {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
       },
       isNetworkError,
       isAuthError,
@@ -205,8 +207,7 @@ const BecomePartner = () => {
           customMessage={customMessage}
           reset={() => {
             console.log('🔄 [BecomePartner] Retrying after error...', { correlationId });
-            refetchPartner();
-            refetchApplication();
+            refetchPartnerStatus();
           }}
         />
       </PageLayout>
@@ -221,10 +222,8 @@ const BecomePartner = () => {
   const handleApplicationComplete = async () => {
     console.log('✅ [BecomePartner] Application wizard completed, invalidating queries...');
     try {
-      await queryClient.invalidateQueries({ queryKey: ['partner-application'] });
-      console.log('✅ [BecomePartner] Invalidated partner-application query');
-      await queryClient.invalidateQueries({ queryKey: ['is-partner'] });
-      console.log('✅ [BecomePartner] Invalidated is-partner query');
+      await queryClient.invalidateQueries({ queryKey: ['partner-status'] });
+      console.log('✅ [BecomePartner] Invalidated partner-status query');
       console.log('🔄 [BecomePartner] Navigating to application-status...');
       navigate('/partner/application-status', { replace: true });
     } catch (error) {
@@ -251,7 +250,7 @@ const BecomePartner = () => {
 
   // Show loading state while waiting for ready state
   if (!ready) {
-    console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerLoaded, appLoaded });
+    console.log('⏳ [BecomePartner] LOADING STATE (waiting for ready):', { hasUser: !!user, partnerStatusSuccess });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -305,8 +304,7 @@ const BecomePartner = () => {
     <PartnerErrorBoundary
       fallbackMessage="There was an error loading the partner application page. Please try again."
       onReset={() => {
-        refetchPartner();
-        refetchApplication();
+        refetchPartnerStatus();
       }}
     >
       <PageLayout profile={profile} onSignOut={signOut}>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { usePartnerApplication, useIsPartner } from "@/hooks/usePartner";
+import { usePartnerStatus } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -59,11 +59,20 @@ const PartnerApplicationStatus = () => {
     }
   }, [user, correlationId]);
 
-  const { data: application, isLoading, error: applicationError, refetch: refetchApplication } = usePartnerApplication(correlationId);
-  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner(correlationId);
+  // Phase 2: Use unified hook to fetch both partner status and application in one request
+  const { 
+    data: partnerStatus, 
+    isSuccess: partnerStatusSuccess, 
+    error: partnerStatusError, 
+    refetch: refetchPartnerStatus 
+  } = usePartnerStatus(correlationId);
 
-  // Ready gate - only proceed when user is loaded AND all data is loaded
-  const ready = !!user && !isLoading && !checkingPartner;
+  // Destructure partner status for convenience
+  const isPartner = partnerStatus?.isPartner ?? false;
+  const application = partnerStatus?.application ?? null;
+
+  // Phase 7: Align ready state computation - use isSuccess flag
+  const ready = !!user && partnerStatusSuccess;
 
   // Debug logging for troubleshooting
   console.log('🔍 [ApplicationStatus] Component Render State:', {
@@ -75,8 +84,6 @@ const PartnerApplicationStatus = () => {
     hasApplication: !!application,
     applicationId: application?.id,
     applicationStatus: application?.status,
-    isLoading,
-    checkingPartner,
     isNavigating,
     profileLoaded: !!profile
   });
@@ -138,14 +145,13 @@ const PartnerApplicationStatus = () => {
   }
 
   // Handle errors - show error UI with retry
-  if (applicationError || partnerError) {
+  if (partnerStatusError) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <QueryErrorBoundary 
-          error={applicationError || partnerError || new Error('Unknown error')} 
+          error={partnerStatusError} 
           reset={() => {
-            refetchApplication();
-            refetchPartner();
+            refetchPartnerStatus();
           }}
         />
       </PageLayout>
@@ -153,7 +159,7 @@ const PartnerApplicationStatus = () => {
   }
 
   // Show loading state while waiting for user or data is being fetched
-  if (!user || isLoading || checkingPartner) {
+  if (!user || !partnerStatusSuccess) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -216,8 +222,7 @@ const PartnerApplicationStatus = () => {
     <PartnerErrorBoundary
       fallbackMessage="There was an error loading your partner application status. Please try again."
       onReset={() => {
-        refetchApplication();
-        refetchPartner();
+        refetchPartnerStatus();
       }}
     >
       <PageLayout profile={profile} onSignOut={signOut}>
