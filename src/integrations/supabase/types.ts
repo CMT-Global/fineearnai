@@ -742,13 +742,17 @@ export type Database = {
       partner_applications: {
         Row: {
           agrees_to_guidelines: boolean | null
+          applicant_country: string | null
           application_notes: string | null
           can_provide_local_support: boolean | null
           community_group_links: string | null
           community_member_count: string | null
           created_at: string
+          current_membership_plan: string | null
+          daily_time_commitment: string | null
           expected_monthly_onboarding: string | null
           id: string
+          is_currently_employed: boolean | null
           local_payment_methods: string | null
           manages_community: boolean | null
           motivation_text: string | null
@@ -764,7 +768,9 @@ export type Database = {
           support_preference: string | null
           telegram_group_link: string | null
           telegram_username: string | null
+          total_referrals: number
           updated_at: string
+          upgraded_referrals: number
           user_id: string
           weekly_time_commitment: string | null
           whatsapp_group_link: string | null
@@ -772,13 +778,17 @@ export type Database = {
         }
         Insert: {
           agrees_to_guidelines?: boolean | null
+          applicant_country?: string | null
           application_notes?: string | null
           can_provide_local_support?: boolean | null
           community_group_links?: string | null
           community_member_count?: string | null
           created_at?: string
+          current_membership_plan?: string | null
+          daily_time_commitment?: string | null
           expected_monthly_onboarding?: string | null
           id?: string
+          is_currently_employed?: boolean | null
           local_payment_methods?: string | null
           manages_community?: boolean | null
           motivation_text?: string | null
@@ -794,7 +804,9 @@ export type Database = {
           support_preference?: string | null
           telegram_group_link?: string | null
           telegram_username?: string | null
+          total_referrals?: number
           updated_at?: string
+          upgraded_referrals?: number
           user_id: string
           weekly_time_commitment?: string | null
           whatsapp_group_link?: string | null
@@ -802,13 +814,17 @@ export type Database = {
         }
         Update: {
           agrees_to_guidelines?: boolean | null
+          applicant_country?: string | null
           application_notes?: string | null
           can_provide_local_support?: boolean | null
           community_group_links?: string | null
           community_member_count?: string | null
           created_at?: string
+          current_membership_plan?: string | null
+          daily_time_commitment?: string | null
           expected_monthly_onboarding?: string | null
           id?: string
+          is_currently_employed?: boolean | null
           local_payment_methods?: string | null
           manages_community?: boolean | null
           motivation_text?: string | null
@@ -824,7 +840,9 @@ export type Database = {
           support_preference?: string | null
           telegram_group_link?: string | null
           telegram_username?: string | null
+          total_referrals?: number
           updated_at?: string
+          upgraded_referrals?: number
           user_id?: string
           weekly_time_commitment?: string | null
           whatsapp_group_link?: string | null
