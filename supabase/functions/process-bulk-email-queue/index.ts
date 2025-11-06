@@ -365,10 +365,19 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error((batchResponse as any).error?.message || "Unknown batch send error");
         }
 
-        // Rate limiting: Wait 500ms before next batch (respects Resend's 2 req/sec limit)
+        // PHASE 4: Dynamic rate limiting - double delay if remaining requests are low
         if (chunkIndex < recipientChunks.length - 1) {
-          console.log(`⏳ [Queue Processor] Rate limiting: waiting ${RATE_LIMIT_DELAY_MS}ms...`);
-          await sleep(RATE_LIMIT_DELAY_MS);
+          const remaining = parseInt(rateLimitHeaders.remaining as string);
+          let dynamicDelay = RATE_LIMIT_DELAY_MS;
+          
+          // Double the delay if we're close to rate limit (less than 2 remaining)
+          if (!isNaN(remaining) && remaining < 2) {
+            dynamicDelay = RATE_LIMIT_DELAY_MS * 2;
+            console.log(`⚠️  [Queue Processor] Low rate limit remaining (${remaining}). Doubling delay to ${dynamicDelay}ms`);
+          }
+          
+          console.log(`⏳ [Queue Processor] Rate limiting: waiting ${dynamicDelay}ms...`);
+          await sleep(dynamicDelay);
         }
       } catch (error: any) {
         console.error(`❌ [Queue Processor] Batch ${chunkIndex + 1} failed after retries:`, error);
