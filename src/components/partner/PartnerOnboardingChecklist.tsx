@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   CheckCircle2, 
   Circle, 
@@ -78,7 +79,40 @@ export const PartnerOnboardingChecklist = () => {
   const dismissOnboarding = useDismissOnboarding();
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <Card className="border-2 border-primary/20">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3 flex-1">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex-1">
+                <Skeleton className="h-6 w-64 mb-2" />
+                <Skeleton className="h-4 w-96" />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="p-4 rounded-lg border-2 border-border">
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-5 w-5 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
   
   // Don't show if onboarding doesn't exist, is completed, or is dismissed
   if (!onboarding || onboarding.setup_completed || onboarding.dismissed_at) {
