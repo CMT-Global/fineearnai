@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,7 +12,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -19,9 +21,15 @@ import {
   Save, 
   CheckCircle, 
   Info,
-  Sparkles 
+  Sparkles,
+  Clock,
+  AlertTriangle,
+  Users,
+  TrendingUp,
+  MapPin
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { usePartnerApplicationDraft } from "@/hooks/usePartnerApplicationDraft";
 import {
   section1Schema,
@@ -31,6 +39,7 @@ import {
   completeApplicationSchema,
   CompleteApplicationData,
 } from "@/lib/partner-application-validation";
+import { countries, getCountryName } from "@/lib/countries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -42,17 +51,80 @@ interface PartnerApplicationWizardProps {
 
 export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplicationWizardProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSections, setCompletedSections] = useState<boolean[]>([false, false, false, false]);
+  
+  // Phase 4: Free plan blocking dialog state
+  const [showFreePlanDialog, setShowFreePlanDialog] = useState(false);
+  
+  // Phase 4: Fetch profile and referral stats
+  const { data: profile, isLoading: isLoadingProfile } = useProfile(user?.id);
+  const [referralStats, setReferralStats] = useState({ total: 0, upgraded: 0 });
+  const [isLoadingReferrals, setIsLoadingReferrals] = useState(true);
 
   const {
     hasExistingDraft,
+    draftAge,
     saveDraft,
     clearDraft,
     getDraftData,
     getDraftSection,
   } = usePartnerApplicationDraft(user?.id || "");
+
+  // Phase 4: Fetch referral statistics
+  useEffect(() => {
+    const fetchReferralStats = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoadingReferrals(true);
+        
+        // Get total referrals
+        const { count: totalCount } = await supabase
+          .from('referrals')
+          .select('*', { count: 'exact', head: true })
+          .eq('referrer_id', user.id)
+          .eq('status', 'active');
+        
+        // Get upgraded referrals (referrals whose membership_plan is not 'free')
+        const { data: upgradedReferrals } = await supabase
+          .from('referrals')
+          .select('referred_id')
+          .eq('referrer_id', user.id)
+          .eq('status', 'active');
+        
+        if (upgradedReferrals) {
+          const referredIds = upgradedReferrals.map(r => r.referred_id);
+          
+          if (referredIds.length > 0) {
+            const { count: upgradedCount } = await supabase
+              .from('profiles')
+              .select('*', { count: 'exact', head: true })
+              .in('id', referredIds)
+              .neq('membership_plan', 'free');
+            
+            setReferralStats({
+              total: totalCount || 0,
+              upgraded: upgradedCount || 0
+            });
+          } else {
+            setReferralStats({ total: totalCount || 0, upgraded: 0 });
+          }
+        } else {
+          setReferralStats({ total: totalCount || 0, upgraded: 0 });
+        }
+      } catch (error) {
+        console.error('[ReferralStats] Error fetching:', error);
+        setReferralStats({ total: 0, upgraded: 0 });
+      } finally {
+        setIsLoadingReferrals(false);
+      }
+    };
+    
+    fetchReferralStats();
+  }, [user?.id]);
 
   const form = useForm<CompleteApplicationData>({
     resolver: zodResolver(completeApplicationSchema),
@@ -63,6 +135,12 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       telegram_username: "",
       whatsapp_group_link: "",
       telegram_group_link: "",
+      // Phase 4: New Section 1 fields
+      applicant_country: profile?.registration_country || profile?.country || "",
+      current_membership_plan: profile?.membership_plan || "",
+      total_referrals: 0,
+      upgraded_referrals: 0,
+      // Section 2
       manages_community: undefined,
       community_group_links: "",
       community_member_count: "",
@@ -70,15 +148,34 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       platform_promotion_details: "",
       network_description: "",
       expected_monthly_onboarding: undefined,
+      // Section 3
       local_payment_methods: "",
       can_provide_local_support: undefined,
       support_preference: undefined,
       organize_training_sessions: undefined,
-      weekly_time_commitment: "",
+      // Phase 4: Section 4 updated fields
+      weekly_time_commitment: "", // Keep for backward compatibility
+      daily_time_commitment: "",
+      is_currently_employed: undefined,
       motivation_text: "",
       agrees_to_guidelines: false,
     },
   });
+
+  // Phase 4: Auto-populate profile and referral data when loaded
+  useEffect(() => {
+    if (profile) {
+      form.setValue('current_membership_plan', profile.membership_plan);
+      form.setValue('applicant_country', profile.registration_country || profile.country || '');
+    }
+  }, [profile, form]);
+
+  useEffect(() => {
+    if (!isLoadingReferrals) {
+      form.setValue('total_referrals', referralStats.total);
+      form.setValue('upgraded_referrals', referralStats.upgraded);
+    }
+  }, [referralStats, isLoadingReferrals, form]);
 
   // Load draft data on mount
   useEffect(() => {
@@ -124,7 +221,8 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
       case 0:
         schema = section1Schema;
         fields = ["preferred_contact_method", "whatsapp_number", "telegram_username", 
-                  "whatsapp_group_link", "telegram_group_link"];
+                  "whatsapp_group_link", "telegram_group_link", "applicant_country",
+                  "current_membership_plan"];
         break;
       case 1:
         schema = section2Schema;
@@ -139,7 +237,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
         break;
       case 3:
         schema = section4Schema;
-        fields = ["weekly_time_commitment", "motivation_text", "agrees_to_guidelines"];
+        fields = ["daily_time_commitment", "is_currently_employed", "motivation_text", "agrees_to_guidelines"];
         break;
       default:
         return false;
@@ -167,6 +265,12 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
   };
 
   const handleSubmit = async (data: CompleteApplicationData) => {
+    // Phase 4: Check if user is on free plan and block submission
+    if (data.current_membership_plan === 'free') {
+      setShowFreePlanDialog(true);
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -177,6 +281,12 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
           telegram_username: data.telegram_username,
           whatsapp_group_link: data.whatsapp_group_link,
           telegram_group_link: data.telegram_group_link,
+          // Phase 4: New Section 1 fields
+          applicant_country: data.applicant_country,
+          current_membership_plan: data.current_membership_plan,
+          total_referrals: data.total_referrals,
+          upgraded_referrals: data.upgraded_referrals,
+          // Section 2
           manages_community: data.manages_community,
           community_group_links: data.community_group_links,
           community_member_count: data.community_member_count,
@@ -184,11 +294,15 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
           platform_promotion_details: data.platform_promotion_details,
           network_description: data.network_description,
           expected_monthly_onboarding: data.expected_monthly_onboarding,
+          // Section 3
           local_payment_methods: data.local_payment_methods,
           can_provide_local_support: data.can_provide_local_support,
           support_preference: data.support_preference,
           organize_training_sessions: data.organize_training_sessions,
-          weekly_time_commitment: data.weekly_time_commitment,
+          // Phase 4: Section 4 updated fields
+          weekly_time_commitment: data.weekly_time_commitment || data.daily_time_commitment,
+          daily_time_commitment: data.daily_time_commitment,
+          is_currently_employed: data.is_currently_employed,
           motivation_text: data.motivation_text,
           agrees_to_guidelines: data.agrees_to_guidelines,
         },
@@ -227,11 +341,19 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
         </p>
       </div>
 
-      {hasExistingDraft && currentSection === 0 && (
+      {hasExistingDraft && draftAge && currentSection === 0 && (
         <Alert className="mb-6">
-          <Info className="h-4 w-4" />
+          <Clock className="h-4 w-4" />
           <AlertDescription>
-            You have a saved draft. Your progress has been restored.
+            You have a saved draft from {draftAge.daysAgo > 0 
+              ? `${draftAge.daysAgo} day${draftAge.daysAgo > 1 ? 's' : ''} ago`
+              : draftAge.hoursAgo > 0 
+              ? `${draftAge.hoursAgo} hour${draftAge.hoursAgo > 1 ? 's' : ''} ago`
+              : `${draftAge.minutesAgo} minute${draftAge.minutesAgo > 1 ? 's' : ''} ago`
+            }. {draftAge.expiresInHours > 0 
+              ? `It will expire in ${draftAge.expiresInHours} hour${draftAge.expiresInHours > 1 ? 's' : ''}.`
+              : 'It will expire soon.'
+            }
           </AlertDescription>
         </Alert>
       )}
@@ -249,6 +371,104 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
               {/* Section 1: Basic Information */}
               {currentSection === 0 && (
                 <div className="space-y-4 md:space-y-5">
+                  {/* Phase 4: Country Selector with Flags */}
+                  <FormField
+                    control={form.control}
+                    name="applicant_country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm md:text-base flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          Your Country *
+                        </FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={isLoadingProfile}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 md:h-11">
+                              <SelectValue placeholder={isLoadingProfile ? "Loading..." : "Select your country"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="max-h-[300px] z-50 bg-background">
+                            {countries.map((country) => (
+                              <SelectItem key={country.code} value={country.code}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">{String.fromCodePoint(...[...country.code].map(c => 127397 + c.charCodeAt(0)))}</span>
+                                  <span>{country.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs md:text-sm">
+                          {field.value && getCountryName(field.value) ? (
+                            <span className="flex items-center gap-1">
+                              <span className="text-lg">{String.fromCodePoint(...[...field.value].map(c => 127397 + c.charCodeAt(0)))}</span>
+                              {getCountryName(field.value)}
+                            </span>
+                          ) : "Where are you located?"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Phase 4: Membership Plan Display (Read-only) */}
+                  <div className="rounded-lg border p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Current Membership Plan
+                      </label>
+                      {isLoadingProfile ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Badge variant={profile?.membership_plan === 'free' ? 'destructive' : 'default'}>
+                          {profile?.membership_plan?.toUpperCase() || 'FREE'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Your current plan: <span className="font-semibold">{profile?.membership_plan || 'Free'}</span>
+                    </p>
+                    {profile?.membership_plan === 'free' && (
+                      <Alert className="mt-2" variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="text-xs">
+                          Free plan users cannot become partners. Please upgrade your account to apply.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+
+                  {/* Phase 4: Referral Statistics Display (Read-only) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border p-4 bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">Total Referrals</span>
+                      </div>
+                      {isLoadingReferrals ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold">{referralStats.total}</p>
+                      )}
+                    </div>
+                    <div className="rounded-lg border p-4 bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">Upgraded Referrals</span>
+                      </div>
+                      {isLoadingReferrals ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold text-primary">{referralStats.upgraded}</p>
+                      )}
+                    </div>
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="preferred_contact_method"
@@ -261,7 +481,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                               <SelectValue placeholder="Select contact method" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-50 bg-background">
                             <SelectItem value="whatsapp">WhatsApp</SelectItem>
                             <SelectItem value="telegram">Telegram</SelectItem>
                             <SelectItem value="both">Both WhatsApp & Telegram</SelectItem>
@@ -495,11 +715,11 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm md:text-base">
-                          Tell us about your network and why you'd be a great partner *
+                          How do you plan on marketing and educating users in your country about our platform? *
                         </FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Describe your reach, audience, and why you're the perfect fit..."
+                            placeholder="Describe your marketing strategy, channels you'll use (social media, community groups, events), and how you'll educate users about the platform..."
                             className="min-h-[120px] resize-y"
                             {...field}
                           />
@@ -684,21 +904,59 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
               {/* Section 4: Agreement */}
               {currentSection === 3 && (
                 <div className="space-y-4 md:space-y-5">
+                  {/* Phase 4: Daily Time Commitment */}
                   <FormField
                     control={form.control}
-                    name="weekly_time_commitment"
+                    name="daily_time_commitment"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm md:text-base">
-                          How much time can you dedicate weekly to managing your local users? *
+                          How much time can you dedicate daily to managing your local users? *
                         </FormLabel>
                         <FormControl>
                           <Input
                             type="text"
-                            placeholder="e.g., 10-15 hours per week"
+                            placeholder="e.g., 2-3 hours per day"
                             className="h-12 md:h-11"
                             {...field}
                           />
+                        </FormControl>
+                        <FormDescription className="text-xs md:text-sm">
+                          Be realistic about the daily time you can commit
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Phase 4: Employment Status */}
+                  <FormField
+                    control={form.control}
+                    name="is_currently_employed"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel className="text-sm md:text-base">
+                          Are you currently employed or have another job? *
+                        </FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(value) => field.onChange(value === "true")}
+                            value={field.value === undefined ? undefined : field.value ? "true" : "false"}
+                            className="flex flex-col space-y-2"
+                          >
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="true" id="employed-yes" className="h-5 w-5" />
+                              <label htmlFor="employed-yes" className="flex-1 cursor-pointer text-sm md:text-base">
+                                Yes, I'm currently employed
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent">
+                              <RadioGroupItem value="false" id="employed-no" className="h-5 w-5" />
+                              <label htmlFor="employed-no" className="flex-1 cursor-pointer text-sm md:text-base">
+                                No, I'm not currently employed
+                              </label>
+                            </div>
+                          </RadioGroup>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -827,6 +1085,35 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
           Your progress is automatically saved
         </p>
       </div>
+
+      {/* Phase 4: Free Plan Blocking Dialog */}
+      <AlertDialog open={showFreePlanDialog} onOpenChange={setShowFreePlanDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Upgrade Required
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Users on the <strong>Free plan</strong> cannot become Partners. 
+                To submit your partner application, you need to upgrade your account to a paid membership plan.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Paid plans unlock partner benefits including higher commission rates, 
+                better support, and exclusive features.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate('/membership-plans')}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Upgrade Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
