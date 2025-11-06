@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -465,6 +466,16 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
           <CardDescription className="text-sm md:text-base">
             {sections[currentSection].description}
           </CardDescription>
+          
+          {/* Loading State Indicator */}
+          {(isLoadingProfile || isLoadingReferrals) && currentSection === 0 && (
+            <Alert className="mt-4">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertDescription className="text-xs md:text-sm">
+                Loading your profile and referral data...
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -472,7 +483,66 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
               {/* Section 1: Basic Information */}
               {currentSection === 0 && (
                 <div className="space-y-4 md:space-y-5">
-                  {/* Phase 1: Searchable Country Selector with Flags */}
+                  {/* Show skeleton loader for initial data fetch */}
+                  {isLoadingProfile && !profile ? (
+                    <div className="space-y-4 md:space-y-5 animate-pulse">
+                      {/* Country Selector Skeleton */}
+                      <div className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-4 w-48" />
+                      </div>
+
+                      {/* Username Display Skeleton */}
+                      <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                        <Skeleton className="h-4 w-48" />
+                      </div>
+
+                      {/* Email Display Skeleton */}
+                      <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-6 w-32" />
+                        </div>
+                        <Skeleton className="h-4 w-56" />
+                      </div>
+
+                      {/* Membership Plan Skeleton */}
+                      <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                        <Skeleton className="h-4 w-40" />
+                      </div>
+
+                      {/* Referral Stats Skeleton */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-8 w-16" />
+                        </div>
+                        <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-8 w-16" />
+                        </div>
+                      </div>
+
+                      {/* Form Fields Skeleton */}
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="space-y-2">
+                          <Skeleton className="h-5 w-48" />
+                          <Skeleton className="h-12 w-full" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4 md:space-y-5 animate-in fade-in duration-500">
+                      {/* Phase 1: Searchable Country Selector with Flags */}
                   <FormField
                     control={form.control}
                     name="applicant_country"
@@ -581,16 +651,20 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         Username
                       </label>
                       {isLoadingProfile ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Skeleton className="h-6 w-24" />
                       ) : (
                         <Badge variant="secondary">
                           {profile?.username || 'N/A'}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Your unique username: <span className="font-semibold">{profile?.username || 'Not set'}</span>
-                    </p>
+                    {isLoadingProfile ? (
+                      <Skeleton className="h-4 w-48" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Your unique username: <span className="font-semibold">{profile?.username || 'Not set'}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Phase 2: Email Display (Read-only) */}
@@ -601,7 +675,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         Email Address
                       </label>
                       {isLoadingProfile ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Skeleton className="h-6 w-32" />
                       ) : profile?.email ? (
                         <Badge variant="outline" className="text-xs max-w-[200px] truncate">
                           {profile.email}
@@ -610,13 +684,17 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         <Badge variant="secondary">N/A</Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {profile?.email ? (
-                        <>Contact email: <span className="font-semibold break-all">{profile.email}</span></>
-                      ) : (
-                        'No email set'
-                      )}
-                    </p>
+                    {isLoadingProfile ? (
+                      <Skeleton className="h-4 w-56" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {profile?.email ? (
+                          <>Contact email: <span className="font-semibold break-all">{profile.email}</span></>
+                        ) : (
+                          'No email set'
+                        )}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phase 4: Membership Plan Display (Read-only) */}
@@ -627,23 +705,29 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         Current Membership Plan
                       </label>
                       {isLoadingProfile ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Skeleton className="h-6 w-20" />
                       ) : (
                         <Badge variant={profile?.membership_plan === 'free' ? 'destructive' : 'default'}>
                           {profile?.membership_plan?.toUpperCase() || 'FREE'}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Your current plan: <span className="font-semibold">{profile?.membership_plan || 'Free'}</span>
-                    </p>
-                    {profile?.membership_plan === 'free' && (
-                      <Alert className="mt-2" variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          Free plan users cannot become partners. Please upgrade your account to apply.
-                        </AlertDescription>
-                      </Alert>
+                    {isLoadingProfile ? (
+                      <Skeleton className="h-4 w-40" />
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          Your current plan: <span className="font-semibold">{profile?.membership_plan || 'Free'}</span>
+                        </p>
+                        {profile?.membership_plan === 'free' && (
+                          <Alert className="mt-2" variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription className="text-xs">
+                              Free plan users cannot become partners. Please upgrade your account to apply.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -655,7 +739,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         <span className="text-xs font-medium text-muted-foreground">Total Referrals</span>
                       </div>
                       {isLoadingReferrals ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Skeleton className="h-8 w-16" />
                       ) : (
                         <p className="text-2xl font-bold">{referralStats.total}</p>
                       )}
@@ -666,7 +750,7 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                         <span className="text-xs font-medium text-muted-foreground">Upgraded Referrals</span>
                       </div>
                       {isLoadingReferrals ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Skeleton className="h-8 w-16" />
                       ) : (
                         <p className="text-2xl font-bold text-primary">{referralStats.upgraded}</p>
                       )}
@@ -810,6 +894,8 @@ export const PartnerApplicationWizard = ({ onComplete, onCancel }: PartnerApplic
                       </FormItem>
                     )}
                   />
+                    </div>
+                  )}
                 </div>
               )}
 
