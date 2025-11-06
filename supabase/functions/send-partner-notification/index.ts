@@ -7,9 +7,10 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  partner_id: string;
-  notification_type: 'weekly_summary' | 'bonus_calculated' | 'bonus_paid' | 'tier_milestone';
-  data: {
+  user_id?: string; // For backward compatibility with partner_id
+  partner_id?: string;
+  notification_type: 'weekly_summary' | 'bonus_calculated' | 'bonus_paid' | 'tier_milestone' | 'application_approved' | 'application_rejected';
+  data?: {
     week_start_date?: string;
     week_end_date?: string;
     total_sales?: number;
@@ -19,6 +20,9 @@ interface NotificationRequest {
     amount_to_next_tier?: number;
     payment_method?: string;
     transaction_id?: string;
+    rejection_reason?: string;
+    commission_rate?: number;
+    username?: string;
   };
 }
 
@@ -32,21 +36,30 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { partner_id, notification_type, data }: NotificationRequest = await req.json();
+    const requestBody: NotificationRequest = await req.json();
+    const userId = requestBody.user_id || requestBody.partner_id;
+    const { notification_type, data = {} } = requestBody;
 
-    console.log(`[PARTNER-NOTIFICATION] Processing ${notification_type} for partner=${partner_id}`);
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'user_id or partner_id is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
-    // Get partner details
+    console.log(`[PARTNER-NOTIFICATION] Processing ${notification_type} for user=${userId}`);
+
+    // Get user profile details
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('username, email, full_name')
-      .eq('id', partner_id)
+      .eq('id', userId)
       .single();
 
     if (profileError || !profile) {
-      console.error('[PARTNER-NOTIFICATION] Partner not found:', profileError);
+      console.error('[PARTNER-NOTIFICATION] User not found:', profileError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Partner not found' }),
+        JSON.stringify({ success: false, error: 'User not found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
@@ -54,15 +67,122 @@ Deno.serve(async (req) => {
     // Generate email content based on notification type
     let subject = '';
     let html = '';
-    const partnerName = profile.full_name || profile.username;
+    const userName = profile.full_name || profile.username;
+    const username = data.username || profile.username;
 
     switch (notification_type) {
+      case 'application_approved':
+        subject = '🎉 Your Partner Application Has Been Approved!';
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+              <h1 style="color: white; margin: 0; font-size: 32px;">🎉 Congratulations!</h1>
+              <p style="color: white; font-size: 18px; margin: 15px 0 0 0;">Your Partner Application Has Been Approved</p>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6;">Hello ${userName},</p>
+            
+            <p style="font-size: 16px; line-height: 1.6;">
+              We're excited to inform you that your partner application has been approved! Welcome to the FineEarn Partner Program.
+            </p>
+
+            <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="margin: 0 0 15px 0; color: #065f46;">Your Partner Details</h3>
+              <p style="margin: 8px 0; color: #065f46;"><strong>Username:</strong> @${username}</p>
+              ${data.commission_rate ? `
+                <p style="margin: 8px 0; color: #065f46;"><strong>Commission Rate:</strong> ${(data.commission_rate * 100).toFixed(1)}%</p>
+              ` : ''}
+            </div>
+
+            <div style="background: #fefce8; border-left: 4px solid #eab308; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="margin: 0 0 15px 0; color: #854d0e;">🚀 Next Steps</h3>
+              <ol style="margin: 0; padding-left: 20px; color: #854d0e;">
+                <li style="margin: 10px 0;">Access your Partner Dashboard to get started</li>
+                <li style="margin: 10px 0;">Set up your payment methods in your profile</li>
+                <li style="margin: 10px 0;">Start creating vouchers and earning commissions</li>
+                <li style="margin: 10px 0;">Join our partner community groups for support and tips</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/partner/dashboard" 
+                 style="display: inline-block; background: #10b981; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                Go to Partner Dashboard
+              </a>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
+              If you have any questions or need assistance getting started, please don't hesitate to reach out to our support team.
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.6; margin-top: 25px;">
+              Welcome aboard!<br/>
+              <strong>The FineEarn Team</strong>
+            </p>
+          </div>
+        `;
+        break;
+
+      case 'application_rejected':
+        subject = 'Partner Application Status Update';
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #f3f4f6; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px; border-top: 4px solid #ef4444;">
+              <h1 style="color: #1f2937; margin: 0; font-size: 28px;">Partner Application Update</h1>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6;">Hello ${userName},</p>
+            
+            <p style="font-size: 16px; line-height: 1.6;">
+              Thank you for your interest in joining the FineEarn Partner Program. After careful review, we're unable to approve your application at this time.
+            </p>
+
+            ${data.rejection_reason ? `
+              <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                <h3 style="margin: 0 0 15px 0; color: #991b1b;">Reason for Decision</h3>
+                <p style="margin: 0; color: #991b1b; font-size: 15px; line-height: 1.6;">${data.rejection_reason}</p>
+              </div>
+            ` : ''}
+
+            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="margin: 0 0 15px 0; color: #1e40af;">📋 What You Can Do Next</h3>
+              <ul style="margin: 0; padding-left: 20px; color: #1e40af;">
+                <li style="margin: 10px 0;">Review the feedback provided above</li>
+                <li style="margin: 10px 0;">Continue building your network and community engagement</li>
+                <li style="margin: 10px 0;">You may reapply after 30 days with improved qualifications</li>
+                <li style="margin: 10px 0;">Contact our support team if you have questions about the decision</li>
+              </ul>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6;">
+              We appreciate your interest in partnering with FineEarn. While we can't approve your application now, we encourage you to continue growing your skills and network.
+            </p>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/dashboard" 
+                 style="display: inline-block; background: #3b82f6; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                Return to Dashboard
+              </a>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
+              If you have any questions, please don't hesitate to contact our support team.
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.6; margin-top: 25px;">
+              Best regards,<br/>
+              <strong>The FineEarn Team</strong>
+            </p>
+          </div>
+        `;
+        break;
+
       case 'weekly_summary':
         subject = `Weekly Sales Summary - ${data.week_start_date} to ${data.week_end_date}`;
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">Weekly Sales Summary</h2>
-            <p>Hello ${partnerName},</p>
+            <p>Hello ${userName},</p>
             <p>Here's your sales summary for the week of <strong>${data.week_start_date}</strong> to <strong>${data.week_end_date}</strong>:</p>
             
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -104,7 +224,7 @@ Deno.serve(async (req) => {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #059669;">🎉 Bonus Calculated!</h2>
-            <p>Hello ${partnerName},</p>
+            <p>Hello ${userName},</p>
             <p>Great news! Your weekly bonus has been calculated for the period <strong>${data.week_start_date}</strong> to <strong>${data.week_end_date}</strong>.</p>
             
             <div style="background: #d1fae5; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
@@ -135,7 +255,7 @@ Deno.serve(async (req) => {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #059669;">💰 Bonus Payment Confirmed!</h2>
-            <p>Hello ${partnerName},</p>
+            <p>Hello ${userName},</p>
             <p>Excellent news! Your weekly bonus has been successfully paid to your earnings wallet.</p>
             
             <div style="background: #d1fae5; padding: 25px; border-radius: 8px; margin: 20px 0;">
@@ -171,7 +291,7 @@ Deno.serve(async (req) => {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #dc2626;">🏆 New Tier Unlocked!</h2>
-            <p>Hello ${partnerName},</p>
+            <p>Hello ${userName},</p>
             <p>Amazing work! You've just reached a new bonus tier!</p>
             
             <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px solid #f59e0b;">

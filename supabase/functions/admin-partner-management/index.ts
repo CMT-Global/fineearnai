@@ -217,8 +217,13 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             user_id: application.user_id,
             notification_type: 'application_approved',
+            data: {
+              username: applicantProfile?.username,
+              commission_rate: commission_rate,
+            },
           }),
         });
+        console.log('[Admin Partner] Approval email sent successfully');
       } catch (emailError) {
         console.error('[Admin Partner] Failed to send approval email:', emailError);
         // Don't fail the approval if email fails
@@ -287,9 +292,28 @@ Deno.serve(async (req) => {
         console.error("[Admin Partner] Error creating notification:", notificationError);
       }
 
-      // TODO: Send email to applicant
-      // Subject: "Partner Application Status Update"
-      // Body: Include rejection reason and encourage reapplication
+      // Send rejection notification email
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': req.headers.get('Authorization') || '',
+          },
+          body: JSON.stringify({
+            user_id: application.user_id,
+            notification_type: 'application_rejected',
+            data: {
+              username: applicantProfile?.username,
+              rejection_reason: body.rejection_reason,
+            },
+          }),
+        });
+        console.log('[Admin Partner] Rejection email sent successfully');
+      } catch (emailError) {
+        console.error('[Admin Partner] Failed to send rejection email:', emailError);
+        // Don't fail the rejection if email fails
+      }
 
       console.log("[Admin Partner] Application rejected");
 
