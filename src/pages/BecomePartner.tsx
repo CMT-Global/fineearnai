@@ -28,6 +28,15 @@ const BecomePartner = () => {
 
   // Compute ready state - only true when user exists AND both queries have settled successfully
   const ready = !!user && partnerLoaded && appLoaded;
+  
+  // Log ready state computation
+  console.log('🎯 [BecomePartner] Ready State Computed:', {
+    ready,
+    hasUser: !!user,
+    partnerLoaded,
+    appLoaded,
+    timestamp: new Date().toISOString()
+  });
 
   // Phase 2: Generate correlation ID on mount and display it
   useEffect(() => {
@@ -92,6 +101,14 @@ const BecomePartner = () => {
 
   // Effect-driven redirects - only runs after data is settled
   useEffect(() => {
+    console.log('🔄 [BecomePartner] Redirect Effect Triggered:', {
+      ready,
+      isPartner,
+      hasApplication: !!application,
+      isNavigating,
+      timestamp: new Date().toISOString()
+    });
+    
     // CRITICAL: Wait for ready state before ANY redirect logic
     if (!ready) {
       console.log('⏳ [BecomePartner] Not ready yet, waiting for queries to settle...', {
@@ -143,6 +160,7 @@ const BecomePartner = () => {
     }
     
     console.log('✅ [BecomePartner] No redirect needed, user can proceed with wizard');
+    console.log('🎯 [BecomePartner] Effect complete - render will continue');
   }, [ready, isPartner, application, navigate, correlationId, user, partnerLoaded, appLoaded]);
 
   // Handle errors - show error UI with retry and specific messages
@@ -221,6 +239,7 @@ const BecomePartner = () => {
 
   // Early return if navigation is in progress to prevent wizard flash
   if (isNavigating) {
+    console.log('🚦 [BecomePartner] Navigation in progress, showing redirect screen');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
@@ -252,11 +271,12 @@ const BecomePartner = () => {
       isNavigating,
       isPartner,
       hasApplication: !!application
-    }
+    },
+    timestamp: new Date().toISOString()
   });
 
   if (!shouldShowWizard) {
-    console.log('⏳ [BecomePartner] Not showing wizard, showing loading state');
+    console.log('⏳ [BecomePartner] Not showing wizard, conditions not met - showing loading state');
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
