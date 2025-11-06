@@ -32,15 +32,48 @@ serve(async (req) => {
 
     const { step, value, dismiss } = await req.json();
 
-    // Get current onboarding record
-    const { data: onboarding, error: fetchError } = await supabase
+    console.log('[Partner Onboarding] Update request:', { user_id: user.id, step, value, dismiss });
+
+    // Get current onboarding record (use maybeSingle to handle missing record)
+    const { data: existingOnboarding, error: fetchError } = await supabase
       .from('partner_onboarding')
       .select('*')
       .eq('partner_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
+      console.error('[Partner Onboarding] Error fetching record:', fetchError);
       throw fetchError;
+    }
+
+    let onboarding = existingOnboarding;
+
+    // If no record exists, create one
+    if (!onboarding) {
+      console.log('[Partner Onboarding] No record found, creating new one...');
+      const { data: created, error: createError } = await supabase
+        .from('partner_onboarding')
+        .insert({
+          partner_id: user.id,
+          setup_completed: false,
+          steps_completed: {
+            profile_completed: false,
+            payment_methods_set: false,
+            first_voucher_created: false,
+            community_joined: false,
+            guidelines_read: false
+          }
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('[Partner Onboarding] Error creating record:', createError);
+        throw createError;
+      }
+
+      onboarding = created;
+      console.log('[Partner Onboarding] Record created successfully');
     }
 
     let updateData: any = {

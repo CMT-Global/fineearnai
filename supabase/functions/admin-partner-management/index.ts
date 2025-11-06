@@ -174,6 +174,28 @@ Deno.serve(async (req) => {
         throw configError;
       }
 
+      // Step 3b: Create partner onboarding record
+      const { error: onboardingError } = await supabaseClient
+        .from("partner_onboarding")
+        .insert({
+          partner_id: application.user_id,
+          setup_completed: false,
+          steps_completed: {
+            profile_completed: false,
+            payment_methods_set: false,
+            first_voucher_created: false,
+            community_joined: false,
+            guidelines_read: false
+          }
+        });
+
+      if (onboardingError && onboardingError.code !== "23505") { // Ignore duplicate key error
+        console.error("[Admin Partner] Error creating onboarding record:", onboardingError);
+        // Don't throw - this is non-critical for approval
+      } else {
+        console.log("[Admin Partner] Onboarding record created successfully");
+      }
+
       // Step 4: Log activity
       const { error: activityError } = await supabaseClient
         .from("partner_activity_log")
