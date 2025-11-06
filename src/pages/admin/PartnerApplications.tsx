@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PartnerApplicationsErrorBoundary } from "@/components/admin/PartnerApplicationsErrorBoundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -155,9 +154,8 @@ const PartnerApplications = () => {
   const pendingCount = applications?.filter((a: any) => a.status === 'pending').length || 0;
 
   return (
-    <AdminLayout>
-      <PartnerApplicationsErrorBoundary>
-        <div className="container mx-auto px-4 py-6">
+    <PartnerApplicationsErrorBoundary>
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
@@ -718,8 +716,7 @@ const PartnerApplications = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </PartnerApplicationsErrorBoundary>
-    </AdminLayout>
+    </PartnerApplicationsErrorBoundary>
   );
 };
 
