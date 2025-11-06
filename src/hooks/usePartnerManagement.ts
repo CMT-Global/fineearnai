@@ -35,11 +35,14 @@ export const usePartnerApplications = (status?: string) => {
 
       if (error) {
         console.error('Error fetching partner applications:', error);
-        throw error;
+        throw new Error('Failed to load partner applications. Please check your connection and try again.');
       }
 
-      return data;
+      return data || [];
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -113,11 +116,14 @@ export const usePartners = () => {
 
       if (error) {
         console.error('Error fetching partners:', error);
-        throw error;
+        throw new Error('Failed to load partners list. Please try again.');
       }
 
-      return data;
+      return data || [];
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -131,19 +137,28 @@ export const usePartnerStats = () => {
         .select('*')
         .eq('is_active', true);
 
-      if (partnersError) throw partnersError;
+      if (partnersError) {
+        console.error('Error fetching partners:', partnersError);
+        throw new Error('Failed to load partner statistics. Please try again.');
+      }
 
       const { data: applications, error: appsError } = await supabase
         .from('partner_applications')
         .select('status');
 
-      if (appsError) throw appsError;
+      if (appsError) {
+        console.error('Error fetching applications:', appsError);
+        throw new Error('Failed to load application statistics. Please try again.');
+      }
 
       const { data: vouchers, error: vouchersError } = await supabase
         .from('vouchers')
         .select('*');
 
-      if (vouchersError) throw vouchersError;
+      if (vouchersError) {
+        console.error('Error fetching vouchers:', vouchersError);
+        throw new Error('Failed to load voucher statistics. Please try again.');
+      }
 
       const totalVouchersSold = vouchers?.filter(v => v.status === 'redeemed').length || 0;
       const totalVoucherValue = vouchers
@@ -159,6 +174,9 @@ export const usePartnerStats = () => {
         pendingApplications,
       };
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -194,10 +212,13 @@ export const useVouchers = (filters?: { status?: string; partner_id?: string }) 
 
       if (error) {
         console.error('Error fetching vouchers:', error);
-        throw error;
+        throw new Error('Failed to load vouchers. Please check your connection and try again.');
       }
 
-      return data;
+      return data || [];
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 };

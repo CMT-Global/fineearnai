@@ -21,12 +21,15 @@ export const useIsPartner = () => {
 
       if (error) {
         console.error('Error checking partner status:', error);
-        return false;
+        throw new Error('Failed to check partner status. Please try again.');
       }
 
       return !!data;
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -48,12 +51,15 @@ export const usePartnerApplication = () => {
 
       if (error) {
         console.error('Error fetching partner application:', error);
-        return null;
+        throw new Error('Failed to load application status. Please try again.');
       }
 
       return data;
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -124,12 +130,15 @@ export const usePartnerConfig = () => {
 
       if (error) {
         console.error('Error fetching partner config:', error);
-        return null;
+        throw new Error('Failed to load partner configuration. Please try again.');
       }
 
       return data;
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -156,12 +165,15 @@ export const usePartnerVouchers = () => {
 
       if (error) {
         console.error('Error fetching partner vouchers:', error);
-        return [];
+        throw new Error('Failed to load vouchers. Please try again.');
       }
 
-      return data;
+      return data || [];
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 3 * 60 * 1000, // 3 minutes
   });
 };
 

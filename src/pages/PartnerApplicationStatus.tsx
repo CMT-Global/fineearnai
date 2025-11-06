@@ -24,14 +24,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState } from "react";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id || '');
-  const { data: application, isLoading } = usePartnerApplication();
-  const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
+  const { data: application, isLoading, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
+  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
   const [showWizard, setShowWizard] = useState(false);
+
+  // Handle errors - show error UI with retry
+  if (applicationError || partnerError) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <QueryErrorBoundary 
+          error={applicationError || partnerError || new Error('Unknown error')} 
+          reset={() => {
+            refetchApplication();
+            refetchPartner();
+          }}
+        />
+      </PageLayout>
+    );
+  }
 
   // Show loading state while data is being fetched
   if (isLoading || checkingPartner) {

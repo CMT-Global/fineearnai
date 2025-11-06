@@ -8,6 +8,7 @@ import { useIsPartner, usePartnerApplication } from "@/hooks/usePartner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 
 const BecomePartner = () => {
   const navigate = useNavigate();
@@ -15,9 +16,24 @@ const BecomePartner = () => {
   const { user, signOut } = useAuth();
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
   
-  const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
-  const { data: application, isLoading: loadingApplication } = usePartnerApplication();
+  const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
+  const { data: application, isLoading: loadingApplication, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
   const { data: profile } = useProfile(user?.id || '');
+
+  // Handle errors - show error UI with retry
+  if (partnerError || applicationError) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <QueryErrorBoundary 
+          error={partnerError || applicationError || new Error('Unknown error')} 
+          reset={() => {
+            refetchPartner();
+            refetchApplication();
+          }}
+        />
+      </PageLayout>
+    );
+  }
 
   const handleIntroWizardComplete = () => {
     setShowApplicationWizard(true);
