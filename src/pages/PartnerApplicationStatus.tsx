@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { PartnerWizard } from "@/components/partner/PartnerWizard";
 
 const PartnerApplicationStatus = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const PartnerApplicationStatus = () => {
   const { data: profile } = useProfile(user?.id || '');
   const { data: application, isLoading } = usePartnerApplication();
   const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
+  const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !application) {
@@ -119,6 +121,15 @@ const PartnerApplicationStatus = () => {
             View your partner application details and current status
           </p>
         </div>
+
+        {/* Partner Info Wizard Dialog */}
+        {showWizard && (
+          <PartnerWizard
+            open={showWizard}
+            onComplete={() => setShowWizard(false)}
+            onClose={() => setShowWizard(false)}
+          />
+        )}
 
         {/* Status Alert */}
         <Alert className={`mb-6 ${application.status === 'approved' ? 'border-green-600' : application.status === 'rejected' ? 'border-destructive' : 'border-yellow-600'}`}>
@@ -362,13 +373,25 @@ const PartnerApplicationStatus = () => {
           >
             Return to Dashboard
           </Button>
+          
+          {/* NEW: How It Works button */}
+          <Button
+            variant="outline"
+            onClick={() => setShowWizard(true)}
+            className="flex-1"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            How It Works
+          </Button>
+          
           {application.status === 'pending' && (
             <Button
-              variant="default"
-              onClick={() => navigate('/become-partner')}
-              className="flex-1"
+              variant="secondary"
+              disabled
+              className="flex-1 cursor-not-allowed"
+              title="You cannot edit your application while it's under review"
             >
-              Edit Application
+              Application Under Review
             </Button>
           )}
           {application.status === 'approved' && (
