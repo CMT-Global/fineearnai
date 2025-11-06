@@ -12,7 +12,6 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import { generateCorrelationId } from "@/lib/utils";
-import { toast } from "sonner";
 import { partnerDebugLogger } from "@/lib/partner-debug-logger";
 
 const BecomePartner = () => {
@@ -69,18 +68,6 @@ const BecomePartner = () => {
         userEmail: user.email,
         timestamp: new Date().toISOString(),
       }, newCorrelationId);
-      
-      // Only show Debug ID in development mode or when ?debug=true is in URL
-      const isDevelopment = import.meta.env.DEV;
-      const hasDebugParam = new URLSearchParams(window.location.search).get('debug') === 'true';
-
-      if (isDevelopment || hasDebugParam) {
-        toast.info(`Debug ID: ${newCorrelationId}`, {
-          description: "Use this ID to track your partner application in backend logs",
-          duration: 10000,
-          id: 'correlation-id-toast',
-        });
-      }
     }
   }, [user, correlationId]);
 
