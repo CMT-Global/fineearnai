@@ -11,8 +11,9 @@ import { useIsPartner, usePartnerConfig, usePartnerVouchers, usePurchaseVoucher,
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/wallet-utils";
-import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plus, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Sparkles, DollarSign, Ticket, TrendingUp, Award, Settings, Plus, Trash2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { RankProgressCard } from "@/components/partner/RankProgressCard";
@@ -61,6 +62,8 @@ const PartnerDashboard = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ type: "", details: "" });
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; costAmount: number; commissionRate: number } | null>(null);
 
   // Real-time username validation for voucher recipient
   const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(recipientUsername);
@@ -137,7 +140,7 @@ const PartnerDashboard = () => {
     );
   }
 
-  const handlePurchaseVoucher = () => {
+  const handleInitiatePurchase = () => {
     const amount = selectedAmount || parseFloat(customAmount);
     
     if (!amount || amount <= 0) {
@@ -145,8 +148,8 @@ const PartnerDashboard = () => {
       return;
     }
 
-    if (!recipientUsername.trim()) {
-      toast.error("Please enter recipient username");
+    if (!recipientUsername.trim() || !isUsernameValid) {
+      toast.error("Please enter a valid recipient username");
       return;
     }
 
@@ -161,18 +164,31 @@ const PartnerDashboard = () => {
       return;
     }
 
+    // Store pending purchase details and show confirmation dialog
+    setPendingPurchase({ amount, costAmount, commissionRate });
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmPurchase = () => {
+    if (!pendingPurchase) return;
+
     purchaseMutation.mutate(
       {
-        voucher_amount: amount,
+        voucher_amount: pendingPurchase.amount,
         recipient_username: recipientUsername.trim(),
       },
       {
         onSuccess: () => {
+          setShowConfirmDialog(false);
           setPurchaseDialog(false);
           setSelectedAmount(null);
           setCustomAmount("");
           setRecipientUsername("");
+          setPendingPurchase(null);
         },
+        onError: () => {
+          setShowConfirmDialog(false);
+        }
       }
     );
   };
@@ -654,13 +670,85 @@ const PartnerDashboard = () => {
               Cancel
             </Button>
             <Button 
-              onClick={handlePurchaseVoucher}
+              onClick={handleInitiatePurchase}
               disabled={purchaseMutation.isPending || !isUsernameValid || isChecking}
             >
               {purchaseMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Confirm Purchase
+              Review Purchase
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog - Phase 4: Duplicate Prevention */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirm Voucher Purchase
+            </DialogTitle>
+            <DialogDescription>
+              Please review carefully - this action cannot be undone
+            </DialogDescription>
+          </DialogHeader>
+
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-sm">
+              <strong>Warning:</strong> Once confirmed, this voucher purchase is final. 
+              Please verify the recipient username and amount before proceeding.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-muted-foreground">Recipient:</span>
+              <span className="font-semibold">{recipientUsername}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-muted-foreground">Voucher Amount:</span>
+              <span className="font-bold text-lg">
+                {pendingPurchase && formatCurrency(pendingPurchase.amount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-muted-foreground">Your Cost:</span>
+              <span className="font-semibold">
+                {pendingPurchase && formatCurrency(pendingPurchase.costAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 bg-green-500/10 rounded-lg px-3">
+              <span className="text-green-700 dark:text-green-400 font-medium">Your Profit:</span>
+              <span className="text-green-700 dark:text-green-400 font-bold">
+                {pendingPurchase && formatCurrency(pendingPurchase.amount * pendingPurchase.commissionRate)}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmDialog(false)}
+              disabled={purchaseMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmPurchase}
+              disabled={purchaseMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {purchaseMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Confirm & Purchase'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
