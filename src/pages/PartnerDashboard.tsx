@@ -19,6 +19,7 @@ import { PartnerLeaderboard } from "@/components/partner/PartnerLeaderboard";
 import { WeeklyBonusProgressCard } from "@/components/partner/WeeklyBonusProgressCard";
 import { BonusHistoryTable } from "@/components/partner/BonusHistoryTable";
 import { PartnerOnboardingChecklist } from "@/components/partner/PartnerOnboardingChecklist";
+import { PartnerDashboardSkeleton } from "@/components/partner/PartnerDashboardSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -95,9 +96,7 @@ const PartnerDashboard = () => {
   if (checkingPartner || loadingConfig) {
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <PartnerDashboardSkeleton />
       </PageLayout>
     );
   }
