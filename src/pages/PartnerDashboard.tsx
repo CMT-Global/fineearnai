@@ -365,26 +365,61 @@ const PartnerDashboard = () => {
               <CardHeader>
                 <CardTitle>Payment Methods</CardTitle>
                 <CardDescription>
-                  Add your payment details so customers know how to pay you
+                  Configure how customers should pay you for vouchers
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  {paymentMethods.map((method, idx) => (
-                    <div key={idx} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-semibold">{method.type}</p>
-                        <p className="text-sm text-muted-foreground">{method.details}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removePaymentMethod(idx)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {/* Payment Instructions Banner */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    How Customer Payments Work
+                  </h4>
+                  <div className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
+                    <div className="flex gap-3">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">1.</span>
+                      <p>Customer contacts you to purchase a voucher (via WhatsApp, Telegram, etc.)</p>
                     </div>
-                  ))}
+                    <div className="flex gap-3">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">2.</span>
+                      <p>Customer sends payment using one of your configured methods below</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">3.</span>
+                      <p>You purchase the voucher from your dashboard and send the code to customer</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <span className="font-bold text-blue-600 dark:text-blue-400">4.</span>
+                      <p>Customer redeems the voucher and you keep your commission! 🎉</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Your Payment Methods</h4>
+                  {paymentMethods.length === 0 ? (
+                    <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                      <DollarSign className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground">No payment methods added yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">Add methods below so customers know how to pay you</p>
+                    </div>
+                  ) : (
+                    paymentMethods.map((method, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+                        <div className="flex-1">
+                          <p className="font-semibold">{method.type}</p>
+                          <p className="text-sm text-muted-foreground">{method.details}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePaymentMethod(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">

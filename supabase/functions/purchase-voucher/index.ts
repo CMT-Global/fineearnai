@@ -316,6 +316,28 @@ Deno.serve(async (req) => {
 
     console.log("[Purchase Voucher] Transaction complete!");
 
+    // Step 8: Send purchase confirmation email
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.get('Authorization') || '',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          notification_type: 'voucher_purchased',
+          data: {
+            voucher_code: voucherCode,
+            voucher_amount: body.voucher_amount,
+          },
+        }),
+      });
+    } catch (emailError) {
+      console.error('[Purchase Voucher] Failed to send purchase notification:', emailError);
+      // Don't fail the purchase if email fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

@@ -244,9 +244,39 @@ Deno.serve(async (req) => {
 
     console.log("[Redeem Voucher] Redemption complete!");
 
-    // TODO: Send email notifications to both partner and user
-    // - User: "Your voucher has been successfully redeemed!"
-    // - Partner: "Your voucher [CODE] has been redeemed by [USER]"
+    // Step 6: Get partner config to calculate commission for notification
+    const { data: partnerConfig } = await supabaseClient
+      .from('partner_config')
+      .select('commission_rate')
+      .eq('user_id', voucher.partner_id)
+      .single();
+
+    const commissionRate = partnerConfig?.commission_rate || voucher.commission_rate || 0.10;
+    const commissionEarned = voucher.voucher_amount * commissionRate;
+
+    // Step 7: Send redemption notification to partner
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.get('Authorization') || '',
+        },
+        body: JSON.stringify({
+          user_id: voucher.partner_id,
+          notification_type: 'voucher_redeemed',
+          data: {
+            voucher_code: voucher_code,
+            voucher_amount: voucher.voucher_amount,
+            redeemer_username: profile.username || profile.email,
+            commission_earned: commissionEarned,
+          },
+        }),
+      });
+    } catch (emailError) {
+      console.error('[Redeem Voucher] Failed to send redemption notification:', emailError);
+      // Don't fail the redemption if email fails
+    }
 
     return new Response(
       JSON.stringify({

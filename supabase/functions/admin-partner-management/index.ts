@@ -206,9 +206,23 @@ Deno.serve(async (req) => {
         console.error("[Admin Partner] Error creating notification:", notificationError);
       }
 
-      // TODO: Send email to applicant
-      // Subject: "Welcome to FineEarn Partner Program!"
-      // Body: Include partner dashboard link, commission rate, getting started guide
+      // Step 6: Send approval notification email
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': req.headers.get('Authorization') || '',
+          },
+          body: JSON.stringify({
+            user_id: application.user_id,
+            notification_type: 'application_approved',
+          }),
+        });
+      } catch (emailError) {
+        console.error('[Admin Partner] Failed to send approval email:', emailError);
+        // Don't fail the approval if email fails
+      }
 
       console.log("[Admin Partner] Application approved successfully");
 

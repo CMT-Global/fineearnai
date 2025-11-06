@@ -15,6 +15,7 @@ import { Wallet as WalletIcon, Crown, Sparkles } from "lucide-react";
 import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
+import { VoucherRedemptionCard } from "@/components/wallet/VoucherRedemptionCard";
 import { useState } from "react";
 
 const Wallet = () => {
@@ -106,6 +107,12 @@ const Wallet = () => {
                   onBalanceUpdate={refetchProfile}
                 />
               </div>
+
+              {/* Voucher Redemption */}
+              <VoucherRedemptionCard 
+                userId={user?.id || ''} 
+                onRedemptionSuccess={refetchProfile}
+              />
 
               {/* Recent Transactions */}
               <RecentTransactionsCard 

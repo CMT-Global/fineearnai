@@ -137,6 +137,12 @@ verify_jwt = false
 [functions.reset-password-with-token]
 verify_jwt = false
 
+[functions.send-user-invite]
+verify_jwt = false
+
+[functions.send-partner-notification]
+verify_jwt = false
+
 [functions.send-verification-otp]
 verify_jwt = true
 
