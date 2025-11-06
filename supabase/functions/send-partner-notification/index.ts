@@ -1,249 +1,266 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { Resend } from 'https://esm.sh/resend@2.0.0';
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 interface NotificationRequest {
-  user_id: string;
-  notification_type: 'application_approved' | 'voucher_purchased' | 'voucher_redeemed';
-  data?: {
-    voucher_code?: string;
-    voucher_amount?: number;
-    redeemer_username?: string;
-    commission_earned?: number;
+  partner_id: string;
+  notification_type: 'weekly_summary' | 'bonus_calculated' | 'bonus_paid' | 'tier_milestone';
+  data: {
+    week_start_date?: string;
+    week_end_date?: string;
+    total_sales?: number;
+    bonus_amount?: number;
+    tier_name?: string;
+    next_tier_name?: string;
+    amount_to_next_tier?: number;
+    payment_method?: string;
+    transaction_id?: string;
   };
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { user_id, notification_type, data = {} }: NotificationRequest = await req.json();
+    const { partner_id, notification_type, data }: NotificationRequest = await req.json();
 
-    console.log('[PARTNER-NOTIFICATION] Processing:', { user_id, notification_type });
+    console.log(`[PARTNER-NOTIFICATION] Processing ${notification_type} for partner=${partner_id}`);
 
-    // Get user profile
+    // Get partner details
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('email, username, full_name')
-      .eq('id', user_id)
+      .select('username, email, full_name')
+      .eq('id', partner_id)
       .single();
 
     if (profileError || !profile) {
-      throw new Error('User profile not found');
+      console.error('[PARTNER-NOTIFICATION] Partner not found:', profileError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Partner not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
     }
-
-    // Get email settings
-    const { data: emailSettings } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .single();
-
-    const settings = emailSettings?.value as any || {};
-    const fromEmail = settings.from_email || 'noreply@fineearn.com';
-    const fromName = settings.from_name || 'FineEarn';
 
     // Generate email content based on notification type
     let subject = '';
-    let htmlBody = '';
-    let textBody = '';
+    let html = '';
+    const partnerName = profile.full_name || profile.username;
 
     switch (notification_type) {
-      case 'application_approved':
-        subject = '🎉 Your Partner Application Has Been Approved!';
-        htmlBody = `
+      case 'weekly_summary':
+        subject = `Weekly Sales Summary - ${data.week_start_date} to ${data.week_end_date}`;
+        html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #059669;">Congratulations, ${profile.full_name || profile.username}! 🎉</h2>
-            <p>Your application to become a <strong>FineEarn Local Partner</strong> has been approved!</p>
+            <h2 style="color: #2563eb;">Weekly Sales Summary</h2>
+            <p>Hello ${partnerName},</p>
+            <p>Here's your sales summary for the week of <strong>${data.week_start_date}</strong> to <strong>${data.week_end_date}</strong>:</p>
             
-            <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #059669;">What's Next?</h3>
-              <ul>
-                <li>Access your Partner Dashboard to start purchasing vouchers</li>
-                <li>Share vouchers with your network at competitive rates</li>
-                <li>Earn instant commission on every voucher sale</li>
-                <li>Track your sales and earnings in real-time</li>
-              </ul>
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #1f2937;">📊 Week Performance</h3>
+              <p style="font-size: 18px; margin: 10px 0;">
+                <strong>Total Sales:</strong> $${data.total_sales?.toFixed(2)}
+              </p>
+              ${data.tier_name ? `
+                <p style="font-size: 16px; margin: 10px 0;">
+                  <strong>Current Tier:</strong> ${data.tier_name}
+                </p>
+              ` : ''}
+              ${data.bonus_amount && data.bonus_amount > 0 ? `
+                <p style="font-size: 18px; margin: 10px 0; color: #059669;">
+                  <strong>Bonus Earned:</strong> $${data.bonus_amount.toFixed(2)}
+                </p>
+              ` : `
+                <p style="color: #6b7280;">No bonus earned this week. Keep pushing to reach the next tier!</p>
+              `}
             </div>
 
-            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h4 style="margin-top: 0;">💰 Earning Potential</h4>
-              <p>Our top partners earn an average of <strong>$1,400 per week</strong> by helping others access our platform!</p>
-            </div>
+            ${data.next_tier_name && data.amount_to_next_tier ? `
+              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <p style="margin: 0; color: #92400e;">
+                  <strong>💡 Next Tier:</strong> ${data.next_tier_name}<br/>
+                  You need <strong>$${data.amount_to_next_tier.toFixed(2)}</strong> more in sales to reach the next tier!
+                </p>
+              </div>
+            ` : ''}
 
-            <a href="${Deno.env.get("SITE_URL") || "https://app.fineearn.com"}/partner/dashboard" 
-               style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-              Go to Partner Dashboard →
-            </a>
-
-            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-              Need help? Contact our partner support team anytime.
-            </p>
+            <p style="margin-top: 30px;">Keep up the great work! 🚀</p>
+            <p>Best regards,<br/>The Team</p>
           </div>
         `;
-        textBody = `Congratulations ${profile.full_name || profile.username}! Your Partner Application has been approved. Visit your Partner Dashboard to start earning: ${Deno.env.get("SITE_URL") || "https://app.fineearn.com"}/partner/dashboard`;
         break;
 
-      case 'voucher_purchased':
-        subject = '✅ Voucher Purchase Confirmed';
-        htmlBody = `
+      case 'bonus_calculated':
+        subject = `🎉 Your Weekly Bonus Has Been Calculated!`;
+        html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Voucher Purchase Confirmed ✅</h2>
-            <p>Hi ${profile.full_name || profile.username},</p>
-            <p>Your voucher purchase has been successfully processed.</p>
+            <h2 style="color: #059669;">🎉 Bonus Calculated!</h2>
+            <p>Hello ${partnerName},</p>
+            <p>Great news! Your weekly bonus has been calculated for the period <strong>${data.week_start_date}</strong> to <strong>${data.week_end_date}</strong>.</p>
             
-            <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Voucher Details</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Voucher Code:</td>
-                  <td style="padding: 8px 0; font-weight: bold; font-family: monospace; font-size: 18px;">${data.voucher_code}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Voucher Value:</td>
-                  <td style="padding: 8px 0; font-weight: bold; color: #059669;">$${data.voucher_amount?.toFixed(2)}</td>
-                </tr>
-              </table>
+            <div style="background: #d1fae5; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+              <p style="font-size: 16px; color: #065f46; margin: 0;">Your Bonus Amount</p>
+              <p style="font-size: 36px; font-weight: bold; color: #059669; margin: 10px 0;">
+                $${data.bonus_amount?.toFixed(2)}
+              </p>
+              <p style="font-size: 14px; color: #065f46; margin: 0;">
+                Based on $${data.total_sales?.toFixed(2)} in sales
+              </p>
+              ${data.tier_name ? `
+                <p style="font-size: 14px; color: #065f46; margin: 5px 0;">
+                  Tier: <strong>${data.tier_name}</strong>
+                </p>
+              ` : ''}
             </div>
 
-            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0;"><strong>📋 Next Steps:</strong></p>
-              <ol style="margin: 10px 0;">
-                <li>Share this voucher code with your customer</li>
-                <li>Customer redeems it on their account</li>
-                <li>You earn your commission instantly!</li>
-              </ol>
-            </div>
-
-            <p style="color: #6b7280; font-size: 14px;">
-              Track all your vouchers in your Partner Dashboard.
-            </p>
+            <p>Your bonus will be processed and paid out shortly. You'll receive another notification once the payment is complete.</p>
+            
+            <p style="margin-top: 30px;">Congratulations on your achievement! 🎊</p>
+            <p>Best regards,<br/>The Team</p>
           </div>
         `;
-        textBody = `Voucher Purchase Confirmed! Code: ${data.voucher_code} | Value: $${data.voucher_amount?.toFixed(2)}`;
         break;
 
-      case 'voucher_redeemed':
-        subject = '🎊 Your Voucher Was Redeemed!';
-        htmlBody = `
+      case 'bonus_paid':
+        subject = `💰 Your Weekly Bonus Has Been Paid!`;
+        html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #059669;">Great News! 🎊</h2>
-            <p>Hi ${profile.full_name || profile.username},</p>
-            <p>One of your vouchers has been successfully redeemed!</p>
+            <h2 style="color: #059669;">💰 Bonus Payment Confirmed!</h2>
+            <p>Hello ${partnerName},</p>
+            <p>Excellent news! Your weekly bonus has been successfully paid to your earnings wallet.</p>
             
-            <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #059669;">Redemption Details</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Voucher Code:</td>
-                  <td style="padding: 8px 0; font-weight: bold; font-family: monospace;">${data.voucher_code}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Redeemed By:</td>
-                  <td style="padding: 8px 0; font-weight: bold;">${data.redeemer_username}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Your Commission:</td>
-                  <td style="padding: 8px 0; font-weight: bold; color: #059669; font-size: 20px;">$${data.commission_earned?.toFixed(2)}</td>
-                </tr>
-              </table>
+            <div style="background: #d1fae5; padding: 25px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #065f46;">Payment Details</h3>
+              <p style="font-size: 24px; font-weight: bold; color: #059669; margin: 10px 0;">
+                +$${data.bonus_amount?.toFixed(2)}
+              </p>
+              <p style="font-size: 14px; color: #065f46; margin: 5px 0;">
+                Week: ${data.week_start_date} to ${data.week_end_date}
+              </p>
+              ${data.tier_name ? `
+                <p style="font-size: 14px; color: #065f46; margin: 5px 0;">
+                  Tier: <strong>${data.tier_name}</strong>
+                </p>
+              ` : ''}
+              ${data.transaction_id ? `
+                <p style="font-size: 12px; color: #6b7280; margin-top: 15px;">
+                  Transaction ID: ${data.transaction_id}
+                </p>
+              ` : ''}
             </div>
 
-            <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0;"><strong>💰 Commission Credited</strong></p>
-              <p style="margin: 10px 0 0 0;">Your commission has been added to your deposit wallet and is available for new voucher purchases.</p>
-            </div>
-
-            <a href="${Deno.env.get("SITE_URL") || "https://app.fineearn.com"}/partner/dashboard" 
-               style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-              View Dashboard →
-            </a>
-
-            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-              Keep up the great work! 🚀
-            </p>
+            <p>The funds are now available in your earnings wallet and can be withdrawn according to your account settings.</p>
+            
+            <p style="margin-top: 30px;">Thank you for your continued excellence! 💪</p>
+            <p>Best regards,<br/>The Team</p>
           </div>
         `;
-        textBody = `Your voucher ${data.voucher_code} was redeemed by ${data.redeemer_username}! Commission earned: $${data.commission_earned?.toFixed(2)}`;
         break;
+
+      case 'tier_milestone':
+        subject = `🏆 Congratulations! You've Reached a New Tier!`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">🏆 New Tier Unlocked!</h2>
+            <p>Hello ${partnerName},</p>
+            <p>Amazing work! You've just reached a new bonus tier!</p>
+            
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px solid #f59e0b;">
+              <p style="font-size: 18px; color: #78350f; margin: 0;">You've Advanced To</p>
+              <p style="font-size: 32px; font-weight: bold; color: #b45309; margin: 15px 0;">
+                ${data.tier_name}
+              </p>
+              <p style="font-size: 16px; color: #78350f; margin: 0;">
+                Based on $${data.total_sales?.toFixed(2)} in sales this week!
+              </p>
+            </div>
+
+            ${data.bonus_amount ? `
+              <div style="background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="text-align: center; margin: 0; color: #065f46;">
+                  Your new tier bonus: <strong style="font-size: 24px; color: #059669;">$${data.bonus_amount.toFixed(2)}</strong>
+                </p>
+              </div>
+            ` : ''}
+
+            ${data.next_tier_name ? `
+              <p style="background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                <strong>Next Challenge:</strong> Reach <strong>${data.next_tier_name}</strong> tier to unlock even higher bonuses!
+              </p>
+            ` : ''}
+
+            <p style="margin-top: 30px;">This is a testament to your outstanding performance. Keep pushing forward! 🚀</p>
+            <p>Best regards,<br/>The Team</p>
+          </div>
+        `;
+        break;
+
+      default:
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid notification type' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
     }
+
+    // Get email settings
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+
+    const emailSettings = emailConfig?.value || {
+      from_address: 'noreply@mail.fineearn.com',
+      from_name: 'FineEarn',
+    };
 
     // Send email via Resend
-    if (RESEND_API_KEY) {
-      const resendResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: `${fromName} <${fromEmail}>`,
-          to: [profile.email],
-          subject,
-          html: htmlBody,
-          text: textBody,
-        }),
-      });
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    const emailResult = await resend.emails.send({
+      from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
+      to: [profile.email],
+      subject,
+      html,
+    });
 
-      if (!resendResponse.ok) {
-        const error = await resendResponse.text();
-        console.error('[PARTNER-NOTIFICATION] Resend error:', error);
-        throw new Error(`Failed to send email: ${error}`);
-      }
-
-      console.log('[PARTNER-NOTIFICATION] Email sent successfully');
+    if (emailResult.error) {
+      console.error('[PARTNER-NOTIFICATION] Email send failed:', emailResult.error);
+      return new Response(
+        JSON.stringify({ success: false, error: emailResult.error.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
-    // Create in-app notification
-    await supabase.from('notifications').insert({
-      user_id,
-      title: subject,
-      message: textBody,
-      type: 'partner_activity',
-      priority: 'high',
-      is_read: false,
-    });
-
-    // Log email
-    await supabase.from('email_logs').insert({
-      user_id,
-      email: profile.email,
-      subject,
-      body: htmlBody,
-      status: 'sent',
-      sent_at: new Date().toISOString(),
-    });
+    console.log(`[PARTNER-NOTIFICATION] Email sent successfully to ${profile.email}`);
 
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'Partner notification sent',
+        success: true, 
+        message: 'Notification sent successfully',
+        email_sent_to: profile.email
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[PARTNER-NOTIFICATION] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to send partner notification',
+        success: false, 
+        error: errorMessage,
+        timestamp: new Date().toISOString()
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
