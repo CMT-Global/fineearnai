@@ -104,6 +104,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`💓 [Queue Processor] Heartbeat updated for job ${job.id}`);
     }
 
+    // PHASE 2: Initialize duplicate prevention tracking
+    const existingSentIds = job.processing_metadata?.sent_recipient_ids || [];
+    console.log(`📋 [Queue Processor] Already sent to ${existingSentIds.length} recipients`);
+
     // STEP 3: Fetch dynamic email settings
     console.log(`⚙️  [Queue Processor] Fetching email settings...`);
     const { data: configData } = await supabase
@@ -130,6 +134,12 @@ const handler = async (req: Request): Promise<Response> => {
       recipientsQuery = recipientsQuery.eq("country", recipientFilter.country);
     } else if (recipientFilter.type === "usernames" && recipientFilter.usernames) {
       recipientsQuery = recipientsQuery.in("username", recipientFilter.usernames);
+    }
+
+    // PHASE 2: Exclude already-sent recipients to prevent duplicates on job reset
+    if (existingSentIds.length > 0) {
+      console.log(`🔒 [Queue Processor] Excluding ${existingSentIds.length} already-sent recipients`);
+      recipientsQuery = recipientsQuery.not("id", "in", `(${existingSentIds.join(",")})`);
     }
 
     // STEP 5: Fetch batch of 500 recipients using OFFSET pagination
@@ -323,6 +333,11 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`   - Failed: ${newFailedCount}`);
     console.log(`   - Status: ${isComplete ? "COMPLETED" : "PROCESSING"}`);
 
+    // PHASE 2: Track successfully sent recipient IDs for duplicate prevention
+    const newlySentIds = recipients.map(r => r.id);
+    const allSentIds = [...existingSentIds, ...newlySentIds];
+    console.log(`📊 [Queue Processor] Tracking sent IDs: previously=${existingSentIds.length}, new=${newlySentIds.length}, total=${allSentIds.length}`);
+
     const updateData: any = {
       processed_count: newProcessedCount,
       successful_count: newSuccessfulCount,
@@ -330,8 +345,10 @@ const handler = async (req: Request): Promise<Response> => {
       last_processed_at: new Date().toISOString(),
       last_heartbeat: new Date().toISOString(), // Update heartbeat
       processing_metadata: {
+        sent_recipient_ids: allSentIds, // PHASE 2: Critical for duplicate prevention
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
+        last_batch_timestamp: new Date().toISOString(),
         execution_time_ms: Date.now() - startTime,
         worker_id: workerId,
       },
