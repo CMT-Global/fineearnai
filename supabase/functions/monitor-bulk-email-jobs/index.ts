@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       .from("bulk_email_jobs")
       .select("id, batch_id, processing_worker_id, last_heartbeat, processed_count, total_recipients")
       .eq("status", "processing")
+      .not("last_heartbeat", "is", null)
       .lt("last_heartbeat", tenMinutesAgo);
     
     if (fetchError) {
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       }),
       { 
