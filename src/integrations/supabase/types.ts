@@ -691,6 +691,186 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_activity_log: {
+        Row: {
+          activity_type: string
+          created_at: string
+          details: Json
+          id: string
+          ip_address: string | null
+          partner_id: string
+          transaction_id: string | null
+          voucher_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          partner_id: string
+          transaction_id?: string | null
+          voucher_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          partner_id?: string
+          transaction_id?: string | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_activity_log_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_activity_log_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_applications: {
+        Row: {
+          application_notes: string | null
+          created_at: string
+          id: string
+          preferred_contact_method: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          telegram_group_link: string | null
+          telegram_username: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_group_link: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          application_notes?: string | null
+          created_at?: string
+          id?: string
+          preferred_contact_method: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          telegram_group_link?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_group_link?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          application_notes?: string | null
+          created_at?: string
+          id?: string
+          preferred_contact_method?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          telegram_group_link?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_group_link?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      partner_config: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          current_rank: string
+          daily_sales: number
+          id: string
+          is_active: boolean
+          last_sale_at: string | null
+          payment_methods: Json
+          total_commission_earned: number
+          total_vouchers_sold: number
+          updated_at: string
+          use_global_commission: boolean
+          user_id: string
+          weekly_sales: number
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          current_rank?: string
+          daily_sales?: number
+          id?: string
+          is_active?: boolean
+          last_sale_at?: string | null
+          payment_methods?: Json
+          total_commission_earned?: number
+          total_vouchers_sold?: number
+          updated_at?: string
+          use_global_commission?: boolean
+          user_id: string
+          weekly_sales?: number
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          current_rank?: string
+          daily_sales?: number
+          id?: string
+          is_active?: boolean
+          last_sale_at?: string | null
+          payment_methods?: Json
+          total_commission_earned?: number
+          total_vouchers_sold?: number
+          updated_at?: string
+          use_global_commission?: boolean
+          user_id?: string
+          weekly_sales?: number
+        }
+        Relationships: []
+      }
+      partner_ranks: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          daily_sales_target: number
+          id: string
+          rank_name: string
+          rank_order: number
+          updated_at: string
+        }
+        Insert: {
+          commission_rate: number
+          created_at?: string
+          daily_sales_target: number
+          id?: string
+          rank_name: string
+          rank_order: number
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          daily_sales_target?: number
+          id?: string
+          rank_name?: string
+          rank_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
@@ -1359,6 +1539,75 @@ export type Database = {
           },
         ]
       }
+      vouchers: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          expires_at: string
+          id: string
+          notes: string | null
+          partner_id: string
+          partner_paid_amount: number
+          purchase_transaction_id: string | null
+          redeemed_at: string | null
+          redeemed_by_user_id: string | null
+          redemption_transaction_id: string | null
+          status: string
+          voucher_amount: number
+          voucher_code: string
+        }
+        Insert: {
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          notes?: string | null
+          partner_id: string
+          partner_paid_amount: number
+          purchase_transaction_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          redemption_transaction_id?: string | null
+          status?: string
+          voucher_amount: number
+          voucher_code: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          partner_id?: string
+          partner_paid_amount?: number
+          purchase_transaction_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          redemption_transaction_id?: string | null
+          status?: string
+          voucher_amount?: number
+          voucher_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_purchase_transaction_id_fkey"
+            columns: ["purchase_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_redemption_transaction_id_fkey"
+            columns: ["redemption_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawal_requests: {
         Row: {
           admin_notes: string | null
@@ -1612,6 +1861,7 @@ export type Database = {
         Returns: Json
       }
       generate_referral_code: { Args: never; Returns: string }
+      generate_voucher_code: { Args: never; Returns: string }
       get_available_task_count: { Args: { p_user_id: string }; Returns: number }
       get_current_utc_day: { Args: never; Returns: number }
       get_current_utc_time: { Args: never; Returns: string }
@@ -1670,6 +1920,10 @@ export type Database = {
           response_b: string
           task_id: string
         }[]
+      }
+      get_partner_commission_rate: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       get_referral_stats: {
         Args: { user_uuid: string }
@@ -1745,6 +1999,8 @@ export type Database = {
         Returns: Json
       }
       refresh_materialized_views: { Args: never; Returns: undefined }
+      reset_partner_sales_counters: { Args: never; Returns: undefined }
+      update_partner_rank: { Args: { p_partner_id: string }; Returns: string }
       validate_payout_days: { Args: { config_value: Json }; Returns: boolean }
       validate_payout_schedule: {
         Args: { config_value: Json }
@@ -1753,7 +2009,7 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "suspended" | "banned"
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "partner"
       task_difficulty: "easy" | "medium" | "hard"
       task_status:
         | "pending"
@@ -1899,7 +2155,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "suspended", "banned"],
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "partner"],
       task_difficulty: ["easy", "medium", "hard"],
       task_status: [
         "pending",
