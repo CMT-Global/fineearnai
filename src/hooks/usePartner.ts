@@ -30,6 +30,8 @@ export const useIsPartner = () => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false, // Prevent unnecessary refetches on mount
+    refetchOnWindowFocus: false, // Prevent refetch when returning to tab
   });
 };
 
@@ -60,6 +62,8 @@ export const usePartnerApplication = () => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnMount: false, // Prevent unnecessary refetches on mount
+    refetchOnWindowFocus: false, // Prevent refetch when returning to tab
   });
 };
 

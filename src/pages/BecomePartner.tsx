@@ -15,10 +15,21 @@ const BecomePartner = () => {
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const [showApplicationWizard, setShowApplicationWizard] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   
   const { data: isPartner, isLoading: checkingPartner, error: partnerError, refetch: refetchPartner } = useIsPartner();
   const { data: application, isLoading: loadingApplication, error: applicationError, refetch: refetchApplication } = usePartnerApplication();
   const { data: profile } = useProfile(user?.id || '');
+
+  // Debug logging for troubleshooting
+  console.log('🔍 BecomePartner State:', {
+    isPartner,
+    application: !!application,
+    checkingPartner,
+    loadingApplication,
+    isNavigating,
+    showApplicationWizard
+  });
 
   // Handle errors - show error UI with retry
   if (partnerError || applicationError) {
@@ -51,6 +62,17 @@ const BecomePartner = () => {
     navigate('/dashboard', { replace: true });
   };
 
+  // Early return if navigation is in progress to prevent wizard flash
+  if (isNavigating) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Redirecting..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
   // Show loading state while data is being fetched
   if (checkingPartner || loadingApplication) {
     return (
@@ -64,6 +86,8 @@ const BecomePartner = () => {
 
   // Immediate redirect for approved partners - with loading state to prevent flash
   if (isPartner) {
+    console.log('✅ User is partner, redirecting to dashboard');
+    setIsNavigating(true);
     navigate('/partner/dashboard', { replace: true });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
@@ -76,6 +100,8 @@ const BecomePartner = () => {
 
   // Immediate redirect for users with existing applications - with loading state
   if (application) {
+    console.log('✅ User has application, redirecting to status');
+    setIsNavigating(true);
     navigate('/partner/application-status', { replace: true });
     return (
       <PageLayout profile={profile} onSignOut={signOut}>
@@ -87,6 +113,21 @@ const BecomePartner = () => {
   }
 
   // Only render wizards for new users without applications or partner status
+  // Triple-check to ensure no wizard rendering during navigation
+  const shouldShowWizard = !isPartner && !application && !isNavigating && !checkingPartner && !loadingApplication;
+  
+  console.log('🎯 Should show wizard:', shouldShowWizard);
+
+  if (!shouldShowWizard) {
+    return (
+      <PageLayout profile={profile} onSignOut={signOut}>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner size="lg" text="Loading..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout profile={profile} onSignOut={signOut}>
       {/* Intro Wizard - Benefits of becoming a partner */}
@@ -94,7 +135,11 @@ const BecomePartner = () => {
         <PartnerWizard
           open={true} 
           onComplete={handleIntroWizardComplete}
-          onClose={() => navigate('/dashboard', { replace: true })}
+          onClose={() => {
+            console.log('❌ User closed intro wizard, navigating to dashboard');
+            setIsNavigating(true);
+            navigate('/dashboard', { replace: true });
+          }}
         />
       )}
 
