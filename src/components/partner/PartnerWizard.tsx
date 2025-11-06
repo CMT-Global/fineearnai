@@ -186,13 +186,13 @@ const steps = [
               icon: MessageCircle,
               emoji: "💬",
               title: "Provide Local Support & Guidance",
-              description: "Guide users in your country, answer their questions, and walk them through the process. Your personal support helps them feel confident and stay active on the platform."
+              description: "Guide users in your country, answer their questions, and walk them through the process. Your personal support helps them stay active on the platform."
             },
             {
               icon: Ticket,
               emoji: "💸",
               title: "Sell Top-Up Vouchers Seamlessly",
-              description: "Purchase discounted vouchers from your partner dashboard and sell them to users at full value. They upgrade instantly using your voucher code — no complicated crypto transactions needed."
+              description: "Purchase discounted vouchers from your partner dashboard and sell them to users at full value. They upgrade instantly using your voucher code — no complicated transactions needed."
             },
             {
               icon: TrendingUp,
