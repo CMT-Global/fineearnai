@@ -36,6 +36,52 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
   return chunks;
 };
 
+// PHASE 2: Helper - Retry with exponential backoff for 429 errors
+const retryWithBackoff = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a 429 rate limit error
+      const is429 = error?.status === 429 || 
+                    error?.statusCode === 429 || 
+                    error?.message?.includes('429') ||
+                    error?.message?.toLowerCase().includes('rate limit');
+      
+      if (!is429 || attempt === maxRetries - 1) {
+        // Not a rate limit error or last attempt, throw immediately
+        throw error;
+      }
+      
+      // Extract retry-after header if available (in seconds)
+      const retryAfter = error?.headers?.['retry-after'] || 
+                        error?.response?.headers?.['retry-after'];
+      
+      // Calculate delay: use retry-after if provided, otherwise exponential backoff
+      const delay = retryAfter 
+        ? parseInt(retryAfter) * 1000 
+        : initialDelay * Math.pow(2, attempt);
+      
+      console.log(`⚠️  [429 Rate Limit] Attempt ${attempt + 1}/${maxRetries} failed. Retrying in ${delay}ms...`);
+      if (retryAfter) {
+        console.log(`🔄 [429 Rate Limit] Using retry-after header: ${retryAfter}s`);
+      }
+      
+      await sleep(delay);
+    }
+  }
+  
+  throw lastError;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -255,8 +301,12 @@ const handler = async (req: Request): Promise<Response> => {
           };
         });
 
-        // PHASE 1: Send batch using Resend Batch API (idempotency key in email headers)
-        const batchResponse = await resend.batch.send(batchEmails);
+        // PHASE 2: Send batch using Resend Batch API with 429 retry logic
+        const batchResponse = await retryWithBackoff(
+          async () => await resend.batch.send(batchEmails),
+          3, // Max 3 retries
+          1000 // Start with 1s delay
+        );
 
         // Process batch response
         if (batchResponse.data) {
@@ -300,9 +350,15 @@ const handler = async (req: Request): Promise<Response> => {
           await sleep(RATE_LIMIT_DELAY_MS);
         }
       } catch (error: any) {
-        console.error(`❌ [Queue Processor] Batch ${chunkIndex + 1} failed:`, error);
+        console.error(`❌ [Queue Processor] Batch ${chunkIndex + 1} failed after retries:`, error);
         
-        // Log failed emails
+        // PHASE 2: Detect if final failure was due to 429
+        const is429 = error?.status === 429 || 
+                      error?.statusCode === 429 || 
+                      error?.message?.includes('429') ||
+                      error?.message?.toLowerCase().includes('rate limit');
+        
+        // Log failed emails with failure type
         for (const recipient of chunk) {
           emailLogs.push({
             recipient_email: recipient.email,
@@ -317,6 +373,8 @@ const handler = async (req: Request): Promise<Response> => {
               batch_id: job.batch_id,
               job_id: job.id,
               chunk_index: chunkIndex,
+              failure_type: is429 ? 'rate_limit_429' : 'other', // PHASE 2: Track 429 failures
+              retries_exhausted: true,
             },
           });
           failCount++;
