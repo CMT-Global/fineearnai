@@ -226,6 +226,9 @@ export default function AdminAnalyticsDashboard() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Daily count of new user registrations over the past 7 days. Track user acquisition trends and identify high-growth days.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -258,6 +261,9 @@ export default function AdminAnalyticsDashboard() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Total deposit amounts (in USD) per day over the past 7 days. Monitor revenue trends and identify peak deposit days.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -289,6 +295,9 @@ export default function AdminAnalyticsDashboard() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Daily count of new referrals (users who joined via referral links) over the past 7 days. Measure referral program effectiveness.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -321,6 +330,9 @@ export default function AdminAnalyticsDashboard() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Revenue generated from membership plan upgrades (in USD) per day over the past 7 days. Track upgrade monetization trends.
+                  </p>
                 </CardContent>
               </Card>
             </div>
