@@ -60,24 +60,6 @@ const Admin = () => {
         .select("*", { count: "exact", head: true })
         .gt("tasks_completed_today", 0);
 
-      // Get total tasks
-      const { count: totalTasks } = await supabase
-        .from("tasks")
-        .select("*", { count: "exact", head: true });
-
-      // Get completed tasks today
-      const today = new Date().toISOString().split("T")[0];
-      const { count: completedTasksToday } = await supabase
-        .from("user_tasks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "completed")
-        .gte("completed_at", today);
-
-      // Get total transactions
-      const { count: totalTransactions } = await supabase
-        .from("transactions")
-        .select("*", { count: "exact", head: true });
-
       // Get pending withdrawals
       const { count: pendingWithdrawals } = await supabase
         .from("transactions")
@@ -85,15 +67,32 @@ const Admin = () => {
         .eq("type", "withdrawal")
         .eq("status", "pending");
 
-      // Get total platform earnings
-      const { data: earningsData } = await supabase
-        .from("profiles")
-        .select("earnings_wallet_balance");
+      // Get total completed deposits (regular deposits only)
+      const { data: depositsData } = await supabase
+        .from("transactions")
+        .select("amount")
+        .eq("type", "deposit")
+        .eq("status", "completed");
 
-      const totalEarnings = earningsData?.reduce(
-        (sum, profile) => sum + parseFloat(String(profile.earnings_wallet_balance || 0)),
+      const totalDeposits = depositsData?.reduce(
+        (sum, tx) => sum + parseFloat(String(tx.amount || 0)),
         0
       ) || 0;
+
+      const totalDepositCount = depositsData?.length || 0;
+
+      // Get total completed withdrawals
+      const { data: withdrawalsData } = await supabase
+        .from("withdrawal_requests")
+        .select("net_amount")
+        .eq("status", "completed");
+
+      const totalWithdrawals = withdrawalsData?.reduce(
+        (sum, wr) => sum + parseFloat(String(wr.net_amount || 0)),
+        0
+      ) || 0;
+
+      const totalWithdrawalCount = withdrawalsData?.length || 0;
 
       // Get membership distribution
       const { data: membershipData } = await supabase
@@ -108,11 +107,11 @@ const Admin = () => {
       setStats({
         totalUsers: totalUsers || 0,
         activeUsers: activeUsers || 0,
-        totalTasks: totalTasks || 0,
-        completedTasksToday: completedTasksToday || 0,
-        totalTransactions: totalTransactions || 0,
         pendingWithdrawals: pendingWithdrawals || 0,
-        totalEarnings,
+        totalDeposits,
+        totalDepositCount,
+        totalWithdrawals,
+        totalWithdrawalCount,
         membershipDistribution: membershipDistribution || {},
       });
     } catch (error: any) {
