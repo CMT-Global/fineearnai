@@ -9,6 +9,30 @@ interface InsightsSummaryCardProps {
   dateRange: { startDate: string; endDate: string };
 }
 
+const getPeriodLabel = (dateRange: { startDate: string; endDate: string }) => {
+  const start = new Date(dateRange.startDate);
+  const end = new Date(dateRange.endDate);
+  const daysDiff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  // Check if it's today
+  if (start.getTime() === today.getTime() && end.getTime() === today.getTime()) {
+    return "Today";
+  }
+  
+  // Check if it's yesterday
+  if (start.getTime() === yesterday.getTime() && end.getTime() === yesterday.getTime()) {
+    return "Yesterday";
+  }
+  
+  // Return days count for other ranges
+  return `${daysDiff + 1} Days`;
+};
+
 export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCardProps) => {
   // Find peak days
   const peakUserDay = analytics.userGrowth?.daily_breakdown
@@ -187,7 +211,7 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
         <div>
           <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-amber-600" />
-            Period Summary
+            Period Summary for {getPeriodLabel(dateRange)}
           </h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <InsightItem
