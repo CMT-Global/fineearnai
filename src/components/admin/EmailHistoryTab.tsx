@@ -281,22 +281,57 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
   const handleRetryJob = async (jobId: string) => {
     try {
+      // PHASE 4 FIX: Fetch job details to calculate remaining recipients
+      const { data: jobData, error: fetchError } = await supabase
+        .from('bulk_email_jobs')
+        .select('total_recipients, processed_count, successful_count, failed_count, processing_metadata')
+        .eq('id', jobId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!jobData) throw new Error('Job not found');
+
+      // Calculate remaining recipients
+      const metadata = jobData.processing_metadata as any;
+      const sentIds = metadata?.sent_recipient_ids || [];
+      const remainingRecipients = jobData.total_recipients - sentIds.length;
+
+      if (remainingRecipients <= 0) {
+        toast.info('No remaining recipients to process');
+        return;
+      }
+
+      // Show confirmation dialog
+      const confirmed = window.confirm(
+        `This will retry sending to ${remainingRecipients} remaining recipients.\n\n` +
+        `Progress so far:\n` +
+        `- Total: ${jobData.total_recipients}\n` +
+        `- Sent: ${sentIds.length}\n` +
+        `- Successful: ${jobData.successful_count}\n` +
+        `- Failed: ${jobData.failed_count}\n\n` +
+        `Continue?`
+      );
+
+      if (!confirmed) return;
+
+      // PHASE 4 FIX: Only reset status, error, timestamps, and worker tracking
+      // DO NOT reset counts - they will continue from where they left off
       const { error } = await supabase
         .from('bulk_email_jobs')
         .update({ 
           status: 'queued',
           error_message: null,
-          processed_count: 0,
-          successful_count: 0,
-          failed_count: 0,
           started_at: null,
           completed_at: null,
-          last_processed_at: null
+          last_processed_at: null,
+          processing_worker_id: null,
+          last_heartbeat: null,
+          cancel_requested: false
         })
         .eq('id', jobId);
 
       if (error) throw error;
-      toast.success('Job queued for retry');
+      toast.success(`Job queued for retry (${remainingRecipients} recipients remaining)`);
       loadBulkEmailJobs();
     } catch (error: any) {
       console.error('Error retrying job:', error);

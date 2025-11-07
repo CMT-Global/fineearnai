@@ -272,6 +272,85 @@ const handler = async (req: Request): Promise<Response> => {
       const chunk = recipientChunks[chunkIndex];
       console.log(`📤 [Queue Processor] Sending chunk ${chunkIndex + 1}/${recipientChunks.length} (${chunk.length} emails)`);
 
+      // PHASE 4 FIX: Check for cancellation INSIDE loop (mid-batch cancellation)
+      const { data: currentJob, error: checkError } = await supabase
+        .from('bulk_email_jobs')
+        .select('cancel_requested')
+        .eq('id', job.id)
+        .single();
+
+      if (checkError) {
+        console.error(`⚠️  [Queue Processor] Error checking cancellation status:`, checkError);
+      } else if (currentJob?.cancel_requested) {
+        console.log(`🛑 [Queue Processor] Job cancelled mid-batch at chunk ${chunkIndex + 1}/${recipientChunks.length}`);
+        
+        // Save progress before exiting
+        const partialSentIds = recipients.slice(0, chunkIndex * RESEND_BATCH_LIMIT).map(r => r.id);
+        const allPartialSentIds = [...existingSentIds, ...partialSentIds];
+        
+        await supabase
+          .from('bulk_email_jobs')
+          .update({
+            status: 'cancelled',
+            completed_at: new Date().toISOString(),
+            error_message: `Cancelled by administrator at chunk ${chunkIndex + 1}/${recipientChunks.length}`,
+            processing_metadata: {
+              ...job.processing_metadata,
+              sent_recipient_ids: allPartialSentIds,
+              cancelled_at_chunk: chunkIndex,
+            },
+          })
+          .eq('id', job.id);
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: `Job cancelled mid-batch (processed ${chunkIndex}/${recipientChunks.length} chunks)`,
+            job_id: job.id,
+            chunks_processed: chunkIndex,
+            total_chunks: recipientChunks.length,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // PHASE 4 FIX: Check timeout INSIDE loop (graceful timeout prevention)
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime >= MAX_EXECUTION_TIME_MS) {
+        console.log(`⏱️  [Queue Processor] Approaching timeout limit (${elapsedTime}ms). Gracefully exiting...`);
+        
+        // Save progress before exiting
+        const partialSentIds = recipients.slice(0, chunkIndex * RESEND_BATCH_LIMIT).map(r => r.id);
+        const allPartialSentIds = [...existingSentIds, ...partialSentIds];
+        
+        await supabase
+          .from('bulk_email_jobs')
+          .update({
+            status: 'queued', // Re-queue for next worker to pick up
+            processing_metadata: {
+              ...job.processing_metadata,
+              sent_recipient_ids: allPartialSentIds,
+              timeout_prevention_triggered: true,
+              stopped_at_chunk: chunkIndex,
+            },
+            processing_worker_id: null,
+            error_message: `Graceful timeout prevention at ${elapsedTime}ms`,
+          })
+          .eq('id', job.id);
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: `Graceful timeout prevention triggered (${elapsedTime}ms)`,
+            job_id: job.id,
+            chunks_processed: chunkIndex,
+            total_chunks: recipientChunks.length,
+            will_auto_continue: true,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
       try {
         // PHASE 1: Generate unique idempotency key for this batch chunk
         // Format: team-{jobId}/chunk-{index}-{timestamp} (max 256 chars, stored for 24h by Resend)
@@ -431,6 +510,35 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`   - Total recipients: ${job.total_recipients}`);
     console.log(`   - Is complete: ${isComplete}`);
 
+    // PHASE 4 FIX: Update metadata BEFORE inserting logs (prevent duplicate sends if logs insert fails)
+    const metadataUpdateData: any = {
+      last_processed_at: new Date().toISOString(),
+      last_heartbeat: new Date().toISOString(),
+      processing_metadata: {
+        sent_recipient_ids: allSentIds, // CRITICAL: Save this FIRST to prevent duplicates
+        idempotency_keys_used: allIdempotencyKeys,
+        rate_limit_metrics: rateLimitMetrics,
+        last_batch_size: recipients.length,
+        last_chunk_count: recipientChunks.length,
+        last_batch_timestamp: new Date().toISOString(),
+        execution_time_ms: Date.now() - startTime,
+        worker_id: workerId,
+      },
+    };
+
+    console.log(`💾 [Queue Processor] Saving metadata BEFORE email logs insert...`);
+    const { error: metadataError } = await supabase
+      .from("bulk_email_jobs")
+      .update(metadataUpdateData)
+      .eq("id", job.id);
+
+    if (metadataError) {
+      console.error(`❌ [Queue Processor] CRITICAL: Failed to save metadata:`, metadataError);
+      throw new Error(`Failed to save sent_recipient_ids: ${metadataError.message}`);
+    } else {
+      console.log(`✅ [Queue Processor] Metadata saved successfully (${allSentIds.length} sent IDs tracked)`);
+    }
+
     // STEP 8: Insert email logs in bulk (CRITICAL: This triggers auto-count update)
     if (emailLogs.length > 0) {
       console.log(`📝 [Queue Processor] Logging ${emailLogs.length} emails...`);
@@ -440,46 +548,36 @@ const handler = async (req: Request): Promise<Response> => {
       
       if (logError) {
         console.error(`⚠️  [Queue Processor] Error logging emails:`, logError);
+        // Don't throw - metadata is already saved, counts will sync on next run
       } else {
         console.log(`✅ [Queue Processor] Email logs inserted. Counts auto-updated by trigger.`);
       }
     }
 
-    // STEP 9: Update job metadata and status (counts already updated by trigger)
-    const updateData: any = {
-      last_processed_at: new Date().toISOString(),
+    // STEP 9: Update completion status if needed
+    const finalUpdateData: any = {
       last_heartbeat: new Date().toISOString(),
-      processing_metadata: {
-        sent_recipient_ids: allSentIds, // PHASE 2: Critical for duplicate prevention
-        idempotency_keys_used: allIdempotencyKeys, // PHASE 1: Prevent duplicate sends on retry
-        rate_limit_metrics: rateLimitMetrics, // PHASE 3: Store rate limit headers
-        last_batch_size: recipients.length,
-        last_chunk_count: recipientChunks.length,
-        last_batch_timestamp: new Date().toISOString(),
-        execution_time_ms: Date.now() - startTime,
-        worker_id: workerId,
-      },
     };
 
-    // PHASE 1 FIX: Mark as completed if all recipients processed
+    // Mark as completed if all recipients processed
     if (isComplete) {
-      updateData.status = "completed";
-      updateData.completed_at = new Date().toISOString();
+      finalUpdateData.status = "completed";
+      finalUpdateData.completed_at = new Date().toISOString();
       console.log(`🎉 [Queue Processor] Job completed! All ${job.total_recipients} recipients processed.`);
     }
     
     // Clear worker ID after batch (prevents stuck jobs)
-    updateData.processing_worker_id = null;
+    finalUpdateData.processing_worker_id = null;
 
-    const { error: updateError } = await supabase
+    const { error: finalUpdateError } = await supabase
       .from("bulk_email_jobs")
-      .update(updateData)
+      .update(finalUpdateData)
       .eq("id", job.id);
 
-    if (updateError) {
-      console.error(`❌ [Queue Processor] Error updating job metadata:`, updateError);
+    if (finalUpdateError) {
+      console.error(`❌ [Queue Processor] Error updating final job status:`, finalUpdateError);
     } else {
-      console.log(`✅ [Queue Processor] Job metadata updated successfully`);
+      console.log(`✅ [Queue Processor] Final job status updated successfully`);
     }
 
     const executionTime = Date.now() - startTime;
@@ -496,31 +594,43 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`🔄 [Self-Continuation] Job not complete. Triggering continuation...`);
       console.log(`📊 [Self-Continuation] Progress: ${allSentIds.length}/${job.total_recipients} (${Math.round(allSentIds.length / job.total_recipients * 100)}%)`);
       
-      // Trigger continuation asynchronously (don't await)
-      setTimeout(async () => {
-        try {
-          console.log(`🚀 [Self-Continuation] Invoking next batch after ${CONTINUATION_DELAY_MS}ms delay...`);
-          
-          const continuationResponse = await supabase.functions.invoke('process-bulk-email-queue', {
-            body: {},
-            headers: {
-              'X-Continuation-Trigger': 'auto',
-              'X-Parent-Worker-Id': workerId,
-              'X-Job-Id': job.id,
-            }
-          });
-          
-          if (continuationResponse.error) {
-            console.error(`❌ [Self-Continuation] Failed to trigger continuation:`, continuationResponse.error);
+      // PHASE 4 FIX: Use immediate invocation instead of setTimeout for reliability
+      // setTimeout can fail if the edge function terminates before the timeout fires
+      try {
+        console.log(`🚀 [Self-Continuation] Immediately invoking next batch (no delay)...`);
+        
+        // Use waitUntil to ensure continuation happens even if function terminates
+        const continuationPromise = supabase.functions.invoke('process-bulk-email-queue', {
+          body: {},
+          headers: {
+            'X-Continuation-Trigger': 'auto',
+            'X-Parent-Worker-Id': workerId,
+            'X-Job-Id': job.id,
+          }
+        }).then((response) => {
+          if (response.error) {
+            console.error(`❌ [Self-Continuation] Failed to trigger continuation:`, response.error);
           } else {
             console.log(`✅ [Self-Continuation] Successfully triggered next batch processing`);
           }
-        } catch (error: any) {
+        }).catch((error: any) => {
           console.error(`❌ [Self-Continuation] Error during continuation:`, error);
+        });
+        
+        // Use EdgeRuntime.waitUntil if available (Deno Deploy feature)
+        const edgeRuntime = (globalThis as any).EdgeRuntime;
+        if (edgeRuntime && typeof edgeRuntime.waitUntil === 'function') {
+          edgeRuntime.waitUntil(continuationPromise);
+          console.log(`✅ [Self-Continuation] Continuation registered with EdgeRuntime.waitUntil`);
+        } else {
+          // Fallback: Fire and forget (already invoked above)
+          console.log(`⚠️  [Self-Continuation] EdgeRuntime.waitUntil not available, using fire-and-forget`);
         }
-      }, CONTINUATION_DELAY_MS);
+      } catch (error: any) {
+        console.error(`❌ [Self-Continuation] Failed to trigger continuation:`, error);
+      }
       
-      console.log(`✅ [Self-Continuation] Continuation scheduled. Returning current batch results.`);
+      console.log(`✅ [Self-Continuation] Continuation triggered. Returning current batch results.`);
     } else if (isComplete) {
       console.log(`🎉 [Self-Continuation] Job fully complete. No continuation needed.`);
     } else {
