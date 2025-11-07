@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { VoucherDetailsDialog } from "./VoucherDetailsDialog";
 import {
   Table,
   TableBody,
@@ -46,12 +47,16 @@ interface VoucherData {
   voucher_amount: number;
   partner_paid_amount: number;
   commission_amount: number;
+  commission_rate: number;
   status: string;
   created_at: string;
   redeemed_at: string | null;
   expires_at: string;
   partner_id: string;
   redeemed_by_user_id: string | null;
+  purchase_transaction_id: string | null;
+  redemption_transaction_id: string | null;
+  notes: string | null;
 }
 
 interface Voucher extends VoucherData {
@@ -65,6 +70,8 @@ export function VoucherHistoryTable() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   // Fetch sent vouchers (where user is partner)
   const { data: sentVouchers = [], isLoading: loadingSent } = useQuery({
@@ -329,7 +336,14 @@ export function VoucherHistoryTable() {
                 </TableHeader>
                 <TableBody>
                   {paginatedVouchers.map((voucher) => (
-                    <TableRow key={voucher.id}>
+                    <TableRow 
+                      key={voucher.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => {
+                        setSelectedVoucher(voucher);
+                        setDetailsDialogOpen(true);
+                      }}
+                    >
                       <TableCell>{getTypeBadge(voucher.type)}</TableCell>
                       <TableCell className="font-mono text-sm">
                         {voucher.voucher_code}
@@ -427,6 +441,13 @@ export function VoucherHistoryTable() {
           </>
         )}
       </CardContent>
+
+      <VoucherDetailsDialog
+        voucher={selectedVoucher}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        userProfiles={userProfiles}
+      />
     </Card>
   );
 }
