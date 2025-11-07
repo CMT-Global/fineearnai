@@ -179,7 +179,7 @@ export const LoginMessageDialog = ({
 
         {/* Scrollable body content */}
         <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
-          <DialogDescription 
+          <div 
             id="login-message-description"
             className="p-4 sm:p-6"
           >
@@ -201,10 +201,12 @@ export const LoginMessageDialog = ({
                 [&>a]:text-primary [&>a]:underline
                 [&>a:hover]:text-primary/80
                 touch-manipulation
+                break-words
+                overflow-wrap-anywhere
               "
               dangerouslySetInnerHTML={{ __html: config.body }}
             />
-          </DialogDescription>
+          </div>
         </ScrollArea>
 
         {/* Footer with action button */}
