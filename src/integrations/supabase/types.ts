@@ -2161,6 +2161,18 @@ export type Database = {
       get_available_task_count: { Args: { p_user_id: string }; Returns: number }
       get_current_utc_day: { Args: never; Returns: number }
       get_current_utc_time: { Args: never; Returns: string }
+      get_deposit_stats: {
+        Args: never
+        Returns: {
+          daily_breakdown: Json
+          last_7days_count: number
+          last_7days_volume: number
+          today_count: number
+          today_volume: number
+          yesterday_count: number
+          yesterday_volume: number
+        }[]
+      }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
         Returns: Json
