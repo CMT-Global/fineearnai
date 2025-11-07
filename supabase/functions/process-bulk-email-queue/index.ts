@@ -21,6 +21,25 @@ const corsHeaders = {
 // Helper: Sleep function for rate limiting
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// PHASE 5: Helper - Calculate exponential backoff delay for retries
+const calculateRetryDelay = (retryCount: number): number => {
+  // Formula: 2^retry_count minutes, capped at 15 minutes
+  // Retry 1: 2^1 = 2 minutes
+  // Retry 2: 2^2 = 4 minutes
+  // Retry 3: 2^3 = 8 minutes
+  // Retry 4+: 15 minutes (cap)
+  const exponentialMinutes = Math.pow(2, retryCount);
+  const cappedMinutes = Math.min(exponentialMinutes, 15);
+  return cappedMinutes * 60 * 1000; // Convert to milliseconds
+};
+
+// PHASE 5: Helper - Calculate next retry timestamp
+const calculateNextRetryAt = (retryCount: number): string => {
+  const delayMs = calculateRetryDelay(retryCount);
+  const nextRetryDate = new Date(Date.now() + delayMs);
+  return nextRetryDate.toISOString();
+};
+
 // Helper: Personalize email content
 const personalizeContent = (content: string, recipient: any): string => {
   return content
@@ -122,6 +141,13 @@ const handler = async (req: Request): Promise<Response> => {
     const job = jobs[0];
     console.log(`📧 [Queue Processor] Processing job: ${job.id} (Batch: ${job.batch_id})`);
     console.log(`📊 [Queue Processor] Progress: ${job.processed_count}/${job.total_recipients}`);
+
+    if (job.next_retry_at) {
+      const retryDate = new Date(job.next_retry_at);
+      const now = new Date();
+      const minutesUntilRetry = Math.round((retryDate.getTime() - now.getTime()) / 1000 / 60);
+      console.log(`⏰ [Queue Processor] Job has retry schedule: ${job.next_retry_at} (in ${minutesUntilRetry} minutes)`);
+    }
 
     // PHASE 5 FIX: Check retry limit before processing
     const retryCount = job.retry_count || 0;
@@ -708,6 +734,88 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error(`❌ [Queue Processor] Fatal error:`, error);
+    
+    // PHASE 5 FIX: On fatal error, increment retry count and reset job with exponential backoff
+    try {
+      // Try to get job ID from context (if we got past job fetching)
+      const jobId = (error as any).jobId;
+      
+      if (jobId) {
+        console.log(`🔄 [Queue Processor] Attempting to reset job ${jobId} after fatal error`);
+        
+        // Fetch current job state
+        const { data: failedJob } = await (async () => {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
+          return await supabase
+            .from('bulk_email_jobs')
+            .select('id, retry_count, max_retries, processing_metadata')
+            .eq('id', jobId)
+            .single();
+        })();
+        
+        if (failedJob) {
+          const retryCount = failedJob.retry_count || 0;
+          const maxRetries = failedJob.max_retries || 3;
+          const newRetryCount = retryCount + 1;
+          
+          if (newRetryCount >= maxRetries) {
+            console.error(`❌ [Queue Processor] Job ${jobId} reached max retries (${newRetryCount}/${maxRetries}), marking as permanently failed`);
+            
+            const supabase = createClient(supabaseUrl, supabaseServiceKey);
+            await supabase
+              .from('bulk_email_jobs')
+              .update({
+                status: 'failed',
+                retry_count: newRetryCount,
+                processing_worker_id: null,
+                last_heartbeat: null,
+                completed_at: new Date().toISOString(),
+                error_message: `Job failed after ${newRetryCount} retry attempts: ${error.message}`,
+                processing_metadata: {
+                  ...failedJob.processing_metadata,
+                  last_error: error.message,
+                  last_error_timestamp: new Date().toISOString(),
+                  retry_limit_reached: true,
+                  final_retry_count: newRetryCount
+                }
+              })
+              .eq('id', jobId);
+          } else {
+            const nextRetryAt = calculateNextRetryAt(newRetryCount);
+            const delayMinutes = Math.round(calculateRetryDelay(newRetryCount) / 1000 / 60);
+            
+            console.log(`🔄 [Queue Processor] Job ${jobId} will retry in ${delayMinutes} minutes (attempt ${newRetryCount}/${maxRetries})`);
+            console.log(`📅 [Queue Processor] Next retry scheduled for: ${nextRetryAt}`);
+            
+            const supabase = createClient(supabaseUrl, supabaseServiceKey);
+            await supabase
+              .from('bulk_email_jobs')
+              .update({
+                status: 'queued',
+                retry_count: newRetryCount,
+                next_retry_at: nextRetryAt,
+                processing_worker_id: null,
+                last_heartbeat: null,
+                error_message: `Worker error (retry ${newRetryCount}/${maxRetries} in ${delayMinutes}min): ${error.message}`,
+                processing_metadata: {
+                  ...failedJob.processing_metadata,
+                  last_error: error.message,
+                  last_error_timestamp: new Date().toISOString(),
+                  auto_reset_for_retry: true,
+                  retry_count: newRetryCount,
+                  retry_delay_minutes: delayMinutes
+                }
+              })
+              .eq('id', jobId);
+            
+            console.log(`✅ [Queue Processor] Job ${jobId} reset with exponential backoff (${delayMinutes}min delay)`);
+          }
+        }
+      }
+    } catch (resetError: any) {
+      console.error(`❌ [Queue Processor] Failed to reset job after fatal error:`, resetError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
