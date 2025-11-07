@@ -10,7 +10,7 @@ export interface Last7DaysActivity {
   withdrawals_count: number;
   withdrawals_volume: number;
   plan_upgrades_count: number;
-  plan_upgrades_volume: number;
+  margin: number;
 }
 
 export const useLast7DaysActivity = () => {

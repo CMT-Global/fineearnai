@@ -45,7 +45,7 @@ export const Last7DaysActivityTable = () => {
       withdrawals_count: acc.withdrawals_count + day.withdrawals_count,
       withdrawals_volume: acc.withdrawals_volume + day.withdrawals_volume,
       plan_upgrades_count: acc.plan_upgrades_count + day.plan_upgrades_count,
-      plan_upgrades_volume: acc.plan_upgrades_volume + day.plan_upgrades_volume,
+      margin: acc.margin + day.margin,
     }),
     {
       new_registrations: 0,
@@ -55,7 +55,7 @@ export const Last7DaysActivityTable = () => {
       withdrawals_count: 0,
       withdrawals_volume: 0,
       plan_upgrades_count: 0,
-      plan_upgrades_volume: 0,
+      margin: 0,
     }
   );
 
@@ -85,13 +85,13 @@ export const Last7DaysActivityTable = () => {
           <TableRow className="bg-muted/50">
             <TableHead className="font-semibold whitespace-nowrap">Date</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">New Users</TableHead>
-            <TableHead className="text-right font-semibold whitespace-nowrap">Referrals</TableHead>
+            <TableHead className="text-right font-semibold whitespace-nowrap">Referred</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">Deposits</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">Deposit Vol.</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">Withdrawals</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">Withdrawal Vol.</TableHead>
             <TableHead className="text-right font-semibold whitespace-nowrap">Upgrades</TableHead>
-            <TableHead className="text-right font-semibold whitespace-nowrap">Upgrade Vol.</TableHead>
+            <TableHead className="text-right font-semibold whitespace-nowrap">Margin</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -121,8 +121,11 @@ export const Last7DaysActivityTable = () => {
               <TableCell className="text-right tabular-nums">
                 {formatNumber(day.plan_upgrades_count)}
               </TableCell>
-              <TableCell className="text-right tabular-nums font-medium text-blue-600">
-                {formatCurrency(day.plan_upgrades_volume)}
+              <TableCell 
+                className="text-right tabular-nums font-bold"
+                style={{ color: day.margin >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}
+              >
+                {formatCurrency(day.margin)}
               </TableCell>
             </TableRow>
           ))}
@@ -150,8 +153,11 @@ export const Last7DaysActivityTable = () => {
             <TableCell className="text-right tabular-nums">
               {formatNumber(totals.plan_upgrades_count)}
             </TableCell>
-            <TableCell className="text-right tabular-nums font-bold text-blue-600">
-              {formatCurrency(totals.plan_upgrades_volume)}
+            <TableCell 
+              className="text-right tabular-nums font-bold"
+              style={{ color: totals.margin >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}
+            >
+              {formatCurrency(totals.margin)}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -168,13 +174,13 @@ const TableSkeleton = () => {
           <TableRow className="bg-muted/50">
             <TableHead>Date</TableHead>
             <TableHead className="text-right">New Users</TableHead>
-            <TableHead className="text-right">Referrals</TableHead>
+            <TableHead className="text-right">Referred</TableHead>
             <TableHead className="text-right">Deposits</TableHead>
             <TableHead className="text-right">Deposit Vol.</TableHead>
             <TableHead className="text-right">Withdrawals</TableHead>
             <TableHead className="text-right">Withdrawal Vol.</TableHead>
             <TableHead className="text-right">Upgrades</TableHead>
-            <TableHead className="text-right">Upgrade Vol.</TableHead>
+            <TableHead className="text-right">Margin</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

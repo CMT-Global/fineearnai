@@ -2202,9 +2202,9 @@ export type Database = {
           activity_date: string
           deposits_count: number
           deposits_volume: number
+          margin: number
           new_registrations: number
           plan_upgrades_count: number
-          plan_upgrades_volume: number
           referred_users: number
           withdrawals_count: number
           withdrawals_volume: number
