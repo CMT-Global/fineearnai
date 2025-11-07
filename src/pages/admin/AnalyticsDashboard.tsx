@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminAnalytics, DateRange } from "@/hooks/useAdminAnalytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, CreditCard } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, ArrowDownCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
@@ -170,10 +170,11 @@ export default function AdminAnalyticsDashboard() {
                 icon={UserPlus}
               />
               <StatCard
-                title="Plan Upgrades Today"
-                value={analytics.planUpgrades?.today_count || 0}
-                previousValue={analytics.planUpgrades?.yesterday_count || 0}
-                icon={CreditCard}
+                title="Withdrawals Today"
+                value={analytics.withdrawals?.today_volume || 0}
+                previousValue={analytics.withdrawals?.yesterday_volume || 0}
+                icon={ArrowDownCircle}
+                prefix="$"
               />
             </div>
 
@@ -218,12 +219,12 @@ export default function AdminAnalyticsDashboard() {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Upgrade Revenue (7 Days)
+                    Withdrawals (7 Days)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    ${(analytics.planUpgrades?.last_7days_volume || 0).toLocaleString()}
+                    ${(analytics.withdrawals?.total_volume || 0).toLocaleString()}
                   </div>
                 </CardContent>
               </Card>
@@ -334,14 +335,20 @@ export default function AdminAnalyticsDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Plan Upgrades Chart */}
+              {/* Deposits vs Withdrawals Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Plan Upgrade Revenue</CardTitle>
+                  <CardTitle>Deposits vs Withdrawals</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reverseChronologically(analytics.planUpgrades?.daily_breakdown || [])}>
+                    <BarChart data={reverseChronologically(
+                      (analytics.deposits?.daily_breakdown || []).map((depositDay) => ({
+                        date: depositDay.date,
+                        deposits: depositDay.volume || 0,
+                        withdrawals: analytics.withdrawals?.daily_breakdown.find(w => w.date === depositDay.date)?.volume || 0
+                      }))
+                    )}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -351,20 +358,29 @@ export default function AdminAnalyticsDashboard() {
                       <YAxis className="text-xs" />
                       <Tooltip 
                         labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
-                        formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']}
+                        formatter={(value: any, name: string) => [
+                          `$${Number(value).toLocaleString()}`, 
+                          name === 'deposits' ? 'Deposits' : 'Withdrawals'
+                        ]}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
                       <Bar 
-                        dataKey="volume" 
-                        fill="hsl(var(--chart-3))" 
-                        name="Revenue"
+                        dataKey="deposits" 
+                        fill="hsl(var(--chart-1))" 
+                        name="Deposits"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="withdrawals" 
+                        fill="hsl(var(--chart-4))" 
+                        name="Withdrawals"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Revenue generated from membership plan upgrades (in USD) per day over the selected period. Track upgrade monetization trends.
+                    Daily comparison of deposit inflows vs withdrawal outflows (in USD). Monitor cash flow balance and identify liquidity trends.
                   </p>
                 </CardContent>
               </Card>
