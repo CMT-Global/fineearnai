@@ -2161,18 +2161,31 @@ export type Database = {
       get_available_task_count: { Args: { p_user_id: string }; Returns: number }
       get_current_utc_day: { Args: never; Returns: number }
       get_current_utc_time: { Args: never; Returns: string }
-      get_deposit_stats: {
-        Args: never
-        Returns: {
-          daily_breakdown: Json
-          last_7days_count: number
-          last_7days_volume: number
-          today_count: number
-          today_volume: number
-          yesterday_count: number
-          yesterday_volume: number
-        }[]
-      }
+      get_deposit_stats:
+        | {
+            Args: { p_end_date?: string; p_start_date?: string }
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              last_7days_volume: number
+              today_count: number
+              today_volume: number
+              yesterday_count: number
+              yesterday_volume: number
+            }[]
+          }
+        | {
+            Args: never
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              last_7days_volume: number
+              today_count: number
+              today_volume: number
+              yesterday_count: number
+              yesterday_volume: number
+            }[]
+          }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
         Returns: Json
@@ -2236,18 +2249,31 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
-      get_plan_upgrade_stats: {
-        Args: never
-        Returns: {
-          daily_breakdown: Json
-          last_7days_count: number
-          last_7days_volume: number
-          today_count: number
-          today_volume: number
-          yesterday_count: number
-          yesterday_volume: number
-        }[]
-      }
+      get_plan_upgrade_stats:
+        | {
+            Args: { p_end_date?: string; p_start_date?: string }
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              last_7days_volume: number
+              today_count: number
+              today_volume: number
+              yesterday_count: number
+              yesterday_volume: number
+            }[]
+          }
+        | {
+            Args: never
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              last_7days_volume: number
+              today_count: number
+              today_volume: number
+              yesterday_count: number
+              yesterday_volume: number
+            }[]
+          }
       get_referral_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -2258,14 +2284,23 @@ export type Database = {
           total_referrals: number
         }[]
       }
-      get_referral_stats_overview: {
-        Args: never
-        Returns: {
-          daily_breakdown: Json
-          last_7days_count: number
-          today_count: number
-        }[]
-      }
+      get_referral_stats_overview:
+        | {
+            Args: { p_end_date?: string; p_start_date?: string }
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              today_count: number
+            }[]
+          }
+        | {
+            Args: never
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              today_count: number
+            }[]
+          }
       get_referrals_with_details: {
         Args: { p_limit?: number; p_offset?: number; p_referrer_id: string }
         Returns: {
@@ -2303,15 +2338,25 @@ export type Database = {
         }[]
       }
       get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }
-      get_user_growth_stats: {
-        Args: never
-        Returns: {
-          daily_breakdown: Json
-          last_7days_count: number
-          today_count: number
-          yesterday_count: number
-        }[]
-      }
+      get_user_growth_stats:
+        | {
+            Args: { p_end_date?: string; p_start_date?: string }
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              today_count: number
+              yesterday_count: number
+            }[]
+          }
+        | {
+            Args: never
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              today_count: number
+              yesterday_count: number
+            }[]
+          }
       get_username_by_referral_code: {
         Args: { p_referral_code: string }
         Returns: string

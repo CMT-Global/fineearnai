@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
+import { useAdminAnalytics, DateRange } from "@/hooks/useAdminAnalytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, CreditCard } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { format, subDays } from "date-fns";
+import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
 
 const StatCard = ({ 
   title, 
@@ -88,7 +90,13 @@ const LoadingSkeleton = () => (
 );
 
 export default function AdminAnalyticsDashboard() {
-  const { data: analytics, isLoading, error } = useAdminAnalytics();
+  // Initialize with last 7 days
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: format(subDays(new Date(), 6), "yyyy-MM-dd"),
+    endDate: format(new Date(), "yyyy-MM-dd"),
+  });
+
+  const { data: analytics, isLoading, error } = useAdminAnalytics(dateRange);
 
   // Utility to reverse data chronologically (oldest to newest, left to right)
   const reverseChronologically = (data: any[]) => {
@@ -98,11 +106,16 @@ export default function AdminAnalyticsDashboard() {
   return (
     <div className="p-6 space-y-6">
         {/* Page Header */}
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor platform performance and user activity metrics
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+            <p className="text-muted-foreground">
+              Monitor platform performance and user activity metrics
+            </p>
+          </div>
+          
+          {/* Date Range Selector */}
+          <DateRangeSelector value={dateRange} onChange={setDateRange} />
         </div>
         {error && (
           <Alert variant="destructive">
@@ -227,7 +240,7 @@ export default function AdminAnalyticsDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Daily count of new user registrations over the past 7 days. Track user acquisition trends and identify high-growth days.
+                    Daily count of new user registrations over the selected period. Track user acquisition trends and identify high-growth days.
                   </p>
                 </CardContent>
               </Card>
@@ -262,7 +275,7 @@ export default function AdminAnalyticsDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Total deposit amounts (in USD) per day over the past 7 days. Monitor revenue trends and identify peak deposit days.
+                    Total deposit amounts (in USD) per day over the selected period. Monitor revenue trends and identify peak deposit days.
                   </p>
                 </CardContent>
               </Card>
@@ -296,7 +309,7 @@ export default function AdminAnalyticsDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Daily count of new referrals (users who joined via referral links) over the past 7 days. Measure referral program effectiveness.
+                    Daily count of new referrals (users who joined via referral links) over the selected period. Measure referral program effectiveness.
                   </p>
                 </CardContent>
               </Card>
@@ -331,7 +344,7 @@ export default function AdminAnalyticsDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Revenue generated from membership plan upgrades (in USD) per day over the past 7 days. Track upgrade monetization trends.
+                    Revenue generated from membership plan upgrades (in USD) per day over the selected period. Track upgrade monetization trends.
                   </p>
                 </CardContent>
               </Card>

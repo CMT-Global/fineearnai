@@ -47,16 +47,27 @@ export interface AdminAnalyticsData {
   planUpgrades: PlanUpgradeStats | null;
 }
 
-export const useAdminAnalytics = () => {
+export interface DateRange {
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  endDate: string;   // ISO date string (YYYY-MM-DD)
+}
+
+export const useAdminAnalytics = (dateRange?: DateRange) => {
   return useQuery({
-    queryKey: ["admin-analytics"],
+    queryKey: ["admin-analytics", dateRange],
     queryFn: async () => {
+      // Prepare date parameters
+      const params = dateRange ? {
+        p_start_date: dateRange.startDate,
+        p_end_date: dateRange.endDate
+      } : {};
+
       // Fetch all analytics data in parallel
       const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes] = await Promise.all([
-        supabase.rpc("get_user_growth_stats" as any),
-        supabase.rpc("get_deposit_stats" as any),
-        supabase.rpc("get_referral_stats_overview" as any),
-        supabase.rpc("get_plan_upgrade_stats"),
+        supabase.rpc("get_user_growth_stats" as any, params),
+        supabase.rpc("get_deposit_stats" as any, params),
+        supabase.rpc("get_referral_stats_overview" as any, params),
+        supabase.rpc("get_plan_upgrade_stats", params),
       ]);
 
       // Check for errors
