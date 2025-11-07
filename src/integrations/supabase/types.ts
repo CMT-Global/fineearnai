@@ -2159,6 +2159,16 @@ export type Database = {
       generate_referral_code: { Args: never; Returns: string }
       generate_voucher_code: { Args: never; Returns: string }
       get_available_task_count: { Args: { p_user_id: string }; Returns: number }
+      get_country_stats: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          country_code: string
+          country_name: string
+          percentage: number
+          total_deposits: number
+          user_count: number
+        }[]
+      }
       get_current_utc_day: { Args: never; Returns: number }
       get_current_utc_time: { Args: never; Returns: string }
       get_deposit_stats:
@@ -2335,6 +2345,19 @@ export type Database = {
           health_status: string
           recommendation: string
           total_tasks: number
+        }[]
+      }
+      get_top_referrers: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          country_code: string
+          country_name: string
+          rank: number
+          referral_count: number
+          total_commission: number
+          total_referral_deposits: number
+          user_id: string
+          username: string
         }[]
       }
       get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }

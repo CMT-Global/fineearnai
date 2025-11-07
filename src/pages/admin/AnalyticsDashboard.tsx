@@ -9,6 +9,8 @@ import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
 import { ComparisonPresetSelector, type ComparisonPreset } from "@/components/admin/ComparisonPresetSelector";
 import { InsightsSummaryCard } from "@/components/admin/InsightsSummaryCard";
+import { CountrySegmentationCard } from "@/components/admin/CountrySegmentationCard";
+import { TopReferrersCard } from "@/components/admin/TopReferrersCard";
 
 const StatCard = ({ 
   title, 
@@ -384,6 +386,21 @@ export default function AdminAnalyticsDashboard() {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* User Segmentation Section */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">User Segmentation & High-Value Analysis</h2>
+                <p className="text-muted-foreground">
+                  Identify high-value user segments by geographic distribution and top referrer performance
+                </p>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <CountrySegmentationCard data={analytics.countryStats} />
+                <TopReferrersCard data={analytics.topReferrers} />
+              </div>
             </div>
           </>
         )}

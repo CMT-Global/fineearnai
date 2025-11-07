@@ -49,12 +49,33 @@ export interface WithdrawalStats {
   daily_breakdown: DailyBreakdown[];
 }
 
+export interface CountryStats {
+  country_code: string;
+  country_name: string;
+  user_count: number;
+  total_deposits: number;
+  percentage: number;
+}
+
+export interface TopReferrer {
+  user_id: string;
+  username: string;
+  country_code: string;
+  country_name: string;
+  referral_count: number;
+  total_commission: number;
+  total_referral_deposits: number;
+  rank: number;
+}
+
 export interface AdminAnalyticsData {
   userGrowth: UserGrowthStats | null;
   deposits: DepositStats | null;
   referrals: ReferralStats | null;
   planUpgrades: PlanUpgradeStats | null;
   withdrawals: WithdrawalStats | null;
+  countryStats: CountryStats[];
+  topReferrers: TopReferrer[];
 }
 
 export interface DateRange {
@@ -73,12 +94,14 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
       } : {};
 
       // Fetch all analytics data in parallel
-      const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes, withdrawalsRes] = await Promise.all([
+      const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes, withdrawalsRes, countryStatsRes, topReferrersRes] = await Promise.all([
         supabase.rpc("get_user_growth_stats" as any, params),
         supabase.rpc("get_deposit_stats" as any, params),
         supabase.rpc("get_referral_stats_overview" as any, params),
         supabase.rpc("get_plan_upgrade_stats", params),
         supabase.rpc("get_withdrawal_stats" as any, params),
+        supabase.rpc("get_country_stats" as any, params),
+        supabase.rpc("get_top_referrers" as any, params),
       ]);
 
       // Check for errors
@@ -87,6 +110,8 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
       if (referralsRes.error) throw referralsRes.error;
       if (planUpgradesRes.error) throw planUpgradesRes.error;
       if (withdrawalsRes.error) throw withdrawalsRes.error;
+      if (countryStatsRes.error) throw countryStatsRes.error;
+      if (topReferrersRes.error) throw topReferrersRes.error;
 
       // Parse and structure the data
       const userGrowth: UserGrowthStats | null = userGrowthRes.data?.[0]
@@ -141,12 +166,17 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
           }
         : null;
 
+      const countryStats: CountryStats[] = (countryStatsRes.data as any[]) || [];
+      const topReferrers: TopReferrer[] = (topReferrersRes.data as any[]) || [];
+
       const analyticsData: AdminAnalyticsData = {
         userGrowth,
         deposits,
         referrals,
         planUpgrades,
         withdrawals,
+        countryStats,
+        topReferrers,
       };
 
       return analyticsData;
