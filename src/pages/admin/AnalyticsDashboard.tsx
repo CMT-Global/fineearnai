@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, CreditCard } fro
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
+import { ComparisonPresetSelector, type ComparisonPreset } from "@/components/admin/ComparisonPresetSelector";
 
 const StatCard = ({ 
   title, 
@@ -95,8 +96,17 @@ export default function AdminAnalyticsDashboard() {
     startDate: format(subDays(new Date(), 6), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
+  const [selectedPreset, setSelectedPreset] = useState<string>("Last 7 Days vs Previous 7");
 
   const { data: analytics, isLoading, error } = useAdminAnalytics(dateRange);
+
+  const handlePresetSelect = (preset: ComparisonPreset) => {
+    setDateRange({
+      startDate: preset.startDate,
+      endDate: preset.endDate,
+    });
+    setSelectedPreset(preset.label);
+  };
 
   // Utility to reverse data chronologically (oldest to newest, left to right)
   const reverseChronologically = (data: any[]) => {
@@ -116,6 +126,12 @@ export default function AdminAnalyticsDashboard() {
           
           {/* Date Range Selector */}
           <DateRangeSelector value={dateRange} onChange={setDateRange} />
+          
+          {/* Quick Comparison Presets */}
+          <ComparisonPresetSelector 
+            onPresetSelect={handlePresetSelect}
+            selectedPreset={selectedPreset}
+          />
         </div>
         {error && (
           <Alert variant="destructive">
