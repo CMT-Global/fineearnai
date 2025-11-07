@@ -10,6 +10,8 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BATCH_SIZE = 500; // Process 500 recipients per cycle
 const RESEND_BATCH_LIMIT = 100; // Resend allows 100 emails per batch API call
 const RATE_LIMIT_DELAY_MS = 500; // 500ms delay between batch API calls
+const MAX_EXECUTION_TIME_MS = 4 * 60 * 1000; // 4 minutes (safe buffer before 5min timeout)
+const CONTINUATION_DELAY_MS = 2000; // 2 second delay before triggering continuation
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -485,6 +487,46 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`📧 [Queue Processor] Sent: ${successCount}, Failed: ${failCount}`);
     console.log(`📊 [Queue Processor] Database trigger has auto-synced counts from email_logs`);
 
+    // PHASE 3: Self-continuation for large jobs
+    const shouldContinue = !isComplete && 
+                          successCount > 0 && 
+                          allSentIds.length < job.total_recipients;
+    
+    if (shouldContinue) {
+      console.log(`🔄 [Self-Continuation] Job not complete. Triggering continuation...`);
+      console.log(`📊 [Self-Continuation] Progress: ${allSentIds.length}/${job.total_recipients} (${Math.round(allSentIds.length / job.total_recipients * 100)}%)`);
+      
+      // Trigger continuation asynchronously (don't await)
+      setTimeout(async () => {
+        try {
+          console.log(`🚀 [Self-Continuation] Invoking next batch after ${CONTINUATION_DELAY_MS}ms delay...`);
+          
+          const continuationResponse = await supabase.functions.invoke('process-bulk-email-queue', {
+            body: {},
+            headers: {
+              'X-Continuation-Trigger': 'auto',
+              'X-Parent-Worker-Id': workerId,
+              'X-Job-Id': job.id,
+            }
+          });
+          
+          if (continuationResponse.error) {
+            console.error(`❌ [Self-Continuation] Failed to trigger continuation:`, continuationResponse.error);
+          } else {
+            console.log(`✅ [Self-Continuation] Successfully triggered next batch processing`);
+          }
+        } catch (error: any) {
+          console.error(`❌ [Self-Continuation] Error during continuation:`, error);
+        }
+      }, CONTINUATION_DELAY_MS);
+      
+      console.log(`✅ [Self-Continuation] Continuation scheduled. Returning current batch results.`);
+    } else if (isComplete) {
+      console.log(`🎉 [Self-Continuation] Job fully complete. No continuation needed.`);
+    } else {
+      console.log(`⚠️  [Self-Continuation] Skipped: successCount=${successCount}, remaining=${job.total_recipients - allSentIds.length}`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -497,6 +539,7 @@ const handler = async (req: Request): Promise<Response> => {
         failed_count: (job.failed_count || 0) + failCount,
         is_complete: isComplete,
         execution_time_ms: executionTime,
+        continuation_scheduled: shouldContinue,
         note: "Counts auto-synced by database trigger from email_logs",
       }),
       {
