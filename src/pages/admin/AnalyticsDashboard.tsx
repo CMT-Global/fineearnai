@@ -204,12 +204,12 @@ export default function AdminAnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(date) => format(new Date(date), 'MMM dd')}
+                        tickFormatter={(date) => format(new Date(date), 'EEE, MMM dd')}
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
                       <Tooltip 
-                        labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                        labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
@@ -236,12 +236,12 @@ export default function AdminAnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(date) => format(new Date(date), 'MMM dd')}
+                        tickFormatter={(date) => format(new Date(date), 'EEE, MMM dd')}
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
                       <Tooltip 
-                        labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                        labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
                         formatter={(value: any) => [`$${value.toLocaleString()}`, 'Volume']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
@@ -268,12 +268,12 @@ export default function AdminAnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(date) => format(new Date(date), 'MMM dd')}
+                        tickFormatter={(date) => format(new Date(date), 'EEE, MMM dd')}
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
                       <Tooltip 
-                        labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                        labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
@@ -300,12 +300,12 @@ export default function AdminAnalyticsDashboard() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(date) => format(new Date(date), 'MMM dd')}
+                        tickFormatter={(date) => format(new Date(date), 'EEE, MMM dd')}
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
                       <Tooltip 
-                        labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                        labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
                         formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
