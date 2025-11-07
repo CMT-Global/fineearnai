@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_otps: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          max_attempts: number | null
+          otp_code: string
+          used_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code?: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_tasks: {
         Row: {
           category: string
@@ -2077,6 +2119,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_expired_account_deletion_otps: { Args: never; Returns: undefined }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
       cleanup_expired_verification_otps: { Args: never; Returns: undefined }
       cleanup_old_partner_debug_logs: { Args: never; Returns: undefined }
