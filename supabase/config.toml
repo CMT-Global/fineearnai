@@ -184,3 +184,6 @@ verify_jwt = false
 
 [functions.get-partner-bonus-progress]
 verify_jwt = true
+
+[functions.send-email-verification-reminders]
+verify_jwt = false
