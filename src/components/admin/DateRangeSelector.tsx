@@ -13,6 +13,8 @@ interface DateRangeSelectorProps {
 }
 
 const presets = [
+  { label: "Today", days: 0 },
+  { label: "Yesterday", days: 1 },
   { label: "Last 7 Days", days: 7 },
   { label: "Last 30 Days", days: 30 },
   { label: "Last 90 Days", days: 90 },
@@ -25,10 +27,15 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
 
   const handlePresetClick = (days: number) => {
     const endDate = new Date();
-    const startDate = subDays(endDate, days - 1);
+    const startDate = days === 0 
+      ? new Date()                    // Today: same as end date
+      : days === 1 
+        ? subDays(endDate, 1)         // Yesterday: 1 day back
+        : subDays(endDate, days - 1); // Multi-day range
+    
     onChange({
       startDate: format(startDate, "yyyy-MM-dd"),
-      endDate: format(endDate, "yyyy-MM-dd"),
+      endDate: format(days === 1 ? startDate : endDate, "yyyy-MM-dd"),
     });
   };
 
@@ -44,10 +51,17 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
 
   const isPresetActive = (days: number) => {
     const endDate = new Date();
-    const startDate = subDays(endDate, days - 1);
+    const startDate = days === 0 
+      ? new Date()
+      : days === 1 
+        ? subDays(endDate, 1)
+        : subDays(endDate, days - 1);
+    
+    const expectedEnd = days === 1 ? startDate : endDate;
+    
     return (
       value.startDate === format(startDate, "yyyy-MM-dd") &&
-      value.endDate === format(endDate, "yyyy-MM-dd")
+      value.endDate === format(expectedEnd, "yyyy-MM-dd")
     );
   };
 
