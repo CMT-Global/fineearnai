@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, DollarSign, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface TopReferrer {
   user_id: string;
@@ -15,6 +16,7 @@ interface TopReferrer {
 
 interface TopReferrersCardProps {
   data: TopReferrer[];
+  dateRange: { startDate: string; endDate: string };
 }
 
 const getRankColor = (rank: number) => {
@@ -30,7 +32,7 @@ const getRankBadgeVariant = (rank: number): "default" | "secondary" | "outline" 
   return "outline";
 };
 
-export const TopReferrersCard = ({ data }: TopReferrersCardProps) => {
+export const TopReferrersCard = ({ data, dateRange }: TopReferrersCardProps) => {
   return (
     <Card>
       <CardHeader>
@@ -39,6 +41,9 @@ export const TopReferrersCard = ({ data }: TopReferrersCardProps) => {
             <Trophy className="h-5 w-5" />
             Top 20 Referrers
           </CardTitle>
+          <Badge variant="outline" className="text-xs">
+            {format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")}
+          </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           Highest performing referrers ranked by total commission earned

@@ -348,8 +348,8 @@ export default function AdminAnalyticsDashboard() {
               </div>
               
               <div className="grid gap-4 md:grid-cols-2">
-                <CountrySegmentationCard data={analytics.countryStats} />
-                <TopReferrersCard data={analytics.topReferrers} />
+                <CountrySegmentationCard data={analytics.countryStats} dateRange={dateRange} />
+                <TopReferrersCard data={analytics.topReferrers} dateRange={dateRange} />
               </div>
             </div>
           </>

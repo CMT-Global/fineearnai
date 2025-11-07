@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Globe } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface CountryStats {
   country_code: string;
@@ -12,9 +14,10 @@ interface CountryStats {
 
 interface CountrySegmentationCardProps {
   data: CountryStats[];
+  dateRange: { startDate: string; endDate: string };
 }
 
-export const CountrySegmentationCard = ({ data }: CountrySegmentationCardProps) => {
+export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentationCardProps) => {
   const maxUsers = Math.max(...data.map(c => c.user_count), 1);
 
   return (
@@ -25,6 +28,9 @@ export const CountrySegmentationCard = ({ data }: CountrySegmentationCardProps) 
             <Globe className="h-5 w-5" />
             User Segmentation by Country
           </CardTitle>
+          <Badge variant="outline" className="text-xs">
+            {format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")}
+          </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           Geographic distribution of users and deposit volumes
