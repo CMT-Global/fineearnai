@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles, HelpCircle } from "lucide-react";
@@ -851,201 +852,120 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   Withdraw
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="p-0 gap-0 overflow-hidden max-h-[92vh] w-[96vw] max-w-[440px] sm:w-[90vw] sm:max-w-[520px] md:w-[600px]">
+                {/* Fixed Header */}
+                <DialogHeader className="p-3 sm:p-4 md:p-6 border-b">
                   <DialogTitle>Request Withdrawal</DialogTitle>
                   <DialogDescription>
                     Withdraw funds from your earnings wallet
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  {/* PHASE 5.d: Email Verification Alert */}
-                  {!isAdmin && profile && !profile.email_verified && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Email Verification Required</AlertTitle>
-                      <AlertDescription>
-                        You must verify your email address before requesting a withdrawal. Please verify your email to proceed.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {/* PHASE 4: VIP Bypass Badge */}
-                  {validation?.hasBypass && (
-                    <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
-                      <div className="flex items-center gap-2">
-                        <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                        <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-                      </div>
-                      <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                        VIP Withdrawal Access
-                        <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
-                          Unrestricted
-                        </Badge>
-                      </AlertTitle>
-                      <AlertDescription className="text-amber-800 dark:text-amber-200">
-                        Your account has Daily withdrawals access. You can withdraw any day at any time without schedule restrictions.
-                      </AlertDescription>
-                    </Alert>
-                  )}
 
-                  {/* Standard users: Show schedule restrictions */}
-                  {!validation?.hasBypass && validation && !validation.isAllowed && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{validation.message}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {/* Display countdown timer when withdrawals are closed (only for non-VIP) */}
-                  {!validation?.hasBypass && validation && !validation.isAllowed && validation.countdownSeconds !== null && validation.nextWindow && (
-                    <WithdrawalCountdown
-                      secondsUntilNext={validation.countdownSeconds}
-                      nextWindowDay={validation.nextWindow.next_day}
-                      nextWindowTime={`${validation.nextWindow.start_time}-${validation.nextWindow.end_time}`}
-                    />
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="withdraw-amount">
-                        Amount ({userCurrency})
-                      </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleWithdrawAll}
-                        disabled={earningsBalance === 0 || withdrawLoading}
-                        className="h-7 px-3 text-xs"
-                      >
-                        All
-                      </Button>
-                    </div>
-                    <Input
-                      id="withdraw-amount"
-                      type="number"
-                      placeholder={`Enter amount in ${userCurrency}`}
-                      value={withdrawAmount}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setWithdrawAmount(value);
-                        const error = validateWithdrawAmountRealtime(value);
-                        setWithdrawAmountError(error);
-                      }}
-                      min="0"
-                      step="0.01"
-                      max={earningsBalance}
-                      className={withdrawAmountError ? "border-red-500 focus-visible:ring-red-500" : ""}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Available: <CurrencyDisplay amountUSD={earningsBalance} />
-                      {userCurrency !== 'USD' && withdrawAmount && parseFloat(withdrawAmount) > 0 && (
-                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
-                          ≈ ${convertLocalToUSD(parseFloat(withdrawAmount)).toFixed(2)} USD
-                        </span>
-                      )}
-                    </p>
-
-                    {/* Real-time Balance Validation Error */}
-                    {withdrawAmountError && (
-                      <Alert variant="destructive" className="mt-2">
+                {/* Scrollable Content Area */}
+                <ScrollArea className="max-h-[65vh] sm:max-h-[70vh] md:max-h-[75vh] flex-1">
+                  <div className="p-3 sm:p-4 md:p-6 space-y-4">
+                    {/* PHASE 5.d: Email Verification Alert */}
+                    {!isAdmin && profile && !profile.email_verified && (
+                      <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="text-sm">
-                          {withdrawAmountError}
+                        <AlertTitle>Email Verification Required</AlertTitle>
+                        <AlertDescription>
+                          You must verify your email address before requesting a withdrawal. Please verify your email to proceed.
                         </AlertDescription>
                       </Alert>
                     )}
-                  </div>
-                  
-                  {/* Withdrawal Fee Breakdown */}
-                  {withdrawAmount && withdrawMethod && parseFloat(withdrawAmount) > 0 && (() => {
-                    // ✅ Find processor - could be virtual or actual
-                    const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                    const processor = virtualMethod && actualCryptoProcessor 
-                      ? actualCryptoProcessor 
-                      : withdrawalProcessors.find(p => p.name === withdrawMethod);
                     
-                    if (!processor) return null;
-                    
-                    const amountLocal = parseFloat(withdrawAmount);
-                    
-                    // Convert local currency amount to USD for fee calculations
-                    const amountUSD = convertLocalToUSD(amountLocal);
-                    
-                    // Calculate fees in USD
-                    const fixedFee = processor?.fee_fixed || 0;
-                    const percentageFee = (amountUSD * (processor?.fee_percentage || 0)) / 100;
-                    const totalFee = fixedFee + percentageFee;
-                    const netAmountUSD = amountUSD - totalFee;
-                    
-                    return (
-                      <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                        <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <AlertDescription>
-                          <div className="text-xs space-y-1">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Withdrawal Amount:</span>
-                              <span className="font-semibold">
-                                <CurrencyDisplay amountUSD={amountUSD} />
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Processing Fee:</span>
-                              <span className="font-semibold text-red-600 dark:text-red-400">
-                                - <CurrencyDisplay amountUSD={totalFee} />
-                              </span>
-                            </div>
-                            {percentageFee > 0 && (
-                              <div className="flex justify-between text-[10px]">
-                                <span className="text-muted-foreground ml-2">
-                                  (Fixed: <CurrencyDisplay amountUSD={fixedFee} /> + {processor?.fee_percentage}%)
-                                </span>
-                              </div>
-                            )}
-                            <div className="border-t border-blue-200 dark:border-blue-800 pt-1 mt-1"></div>
-                            <div className="flex justify-between">
-                              <span className="font-semibold text-muted-foreground">You will receive:</span>
-                              <span className="font-bold text-green-600 dark:text-green-400 text-sm">
-                                <CurrencyDisplay amountUSD={netAmountUSD} />
-                              </span>
-                            </div>
-                          </div>
+                    {/* PHASE 4: VIP Bypass Badge */}
+                    {validation?.hasBypass && (
+                      <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+                        <div className="flex items-center gap-2">
+                          <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                          <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                        </div>
+                        <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                          VIP Withdrawal Access
+                          <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+                            Unrestricted
+                          </Badge>
+                        </AlertTitle>
+                        <AlertDescription className="text-amber-800 dark:text-amber-200">
+                          Your account has Daily withdrawals access. You can withdraw any day at any time without schedule restrictions.
                         </AlertDescription>
                       </Alert>
-                    );
-                  })()}
-                  
-                  <div>
-                    <Label htmlFor="withdraw-method">Withdrawal Method</Label>
-                    <Select value={withdrawMethod} onValueChange={setWithdrawMethod} disabled={loadingProcessors}>
-                      <SelectTrigger id="withdraw-method">
-                        <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select withdrawal method"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* ✅ Show virtual methods if crypto processor exists */}
-                        {actualCryptoProcessor && VIRTUAL_WITHDRAWAL_METHODS.length > 0 ? (
-                          VIRTUAL_WITHDRAWAL_METHODS.map((method) => (
-                            <SelectItem key={method.id} value={method.id}>
-                              <div className="flex items-center gap-2">
-                                <span>{method.icon}</span>
-                                <span>{method.displayName}</span>
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : withdrawalProcessors.length === 0 ? (
-                          <SelectItem value="none" disabled>No withdrawal methods available</SelectItem>
-                        ) : (
-                          withdrawalProcessors.map((processor) => (
-                            <SelectItem key={processor.id} value={processor.name}>
-                              {processor.config?.display_name || processor.name}
-                            </SelectItem>
-                          ))
+                    )}
+
+                    {/* Standard users: Show schedule restrictions */}
+                    {!validation?.hasBypass && validation && !validation.isAllowed && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{validation.message}</AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {/* Display countdown timer when withdrawals are closed (only for non-VIP) */}
+                    {!validation?.hasBypass && validation && !validation.isAllowed && validation.countdownSeconds !== null && validation.nextWindow && (
+                      <WithdrawalCountdown
+                        secondsUntilNext={validation.countdownSeconds}
+                        nextWindowDay={validation.nextWindow.next_day}
+                        nextWindowTime={`${validation.nextWindow.start_time}-${validation.nextWindow.end_time}`}
+                      />
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="withdraw-amount">
+                          Amount ({userCurrency})
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleWithdrawAll}
+                          disabled={earningsBalance === 0 || withdrawLoading}
+                          className="h-7 px-3 text-xs"
+                        >
+                          All
+                        </Button>
+                      </div>
+                      <Input
+                        id="withdraw-amount"
+                        type="number"
+                        placeholder={`Enter amount in ${userCurrency}`}
+                        value={withdrawAmount}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setWithdrawAmount(value);
+                          const error = validateWithdrawAmountRealtime(value);
+                          setWithdrawAmountError(error);
+                        }}
+                        min="0"
+                        step="0.01"
+                        max={earningsBalance}
+                        className={withdrawAmountError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Available: <CurrencyDisplay amountUSD={earningsBalance} />
+                        {userCurrency !== 'USD' && withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                          <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                            ≈ ${convertLocalToUSD(parseFloat(withdrawAmount)).toFixed(2)} USD
+                          </span>
                         )}
-                      </SelectContent>
-                    </Select>
-                    {/* ✅ Display method-specific description and fee */}
-                    {withdrawMethod && (() => {
+                      </p>
+
+                      {/* Real-time Balance Validation Error */}
+                      {withdrawAmountError && (
+                        <Alert variant="destructive" className="mt-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-sm">
+                            {withdrawAmountError}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                    
+                    {/* Withdrawal Fee Breakdown */}
+                    {withdrawAmount && withdrawMethod && parseFloat(withdrawAmount) > 0 && (() => {
+                      // ✅ Find processor - could be virtual or actual
                       const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
                       const processor = virtualMethod && actualCryptoProcessor 
                         ? actualCryptoProcessor 
@@ -1053,108 +973,198 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       
                       if (!processor) return null;
                       
+                      const amountLocal = parseFloat(withdrawAmount);
+                      
+                      // Convert local currency amount to USD for fee calculations
+                      const amountUSD = convertLocalToUSD(amountLocal);
+                      
+                      // Calculate fees in USD
+                      const fixedFee = processor?.fee_fixed || 0;
+                      const percentageFee = (amountUSD * (processor?.fee_percentage || 0)) / 100;
+                      const totalFee = fixedFee + percentageFee;
+                      const netAmountUSD = amountUSD - totalFee;
+                      
                       return (
-                        <Alert className="mt-2">
-                          <InfoIcon className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            {virtualMethod ? virtualMethod.description : processor.config?.description}
-                            <br />
-                            <strong>Fee:</strong> ${processor.fee_fixed || 0}
+                        <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                          <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <AlertDescription>
+                            <div className="text-xs space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Withdrawal Amount:</span>
+                                <span className="font-semibold">
+                                  <CurrencyDisplay amountUSD={amountUSD} />
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Processing Fee:</span>
+                                <span className="font-semibold text-red-600 dark:text-red-400">
+                                  - <CurrencyDisplay amountUSD={totalFee} />
+                                </span>
+                              </div>
+                              {percentageFee > 0 && (
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-muted-foreground ml-2">
+                                    (Fixed: <CurrencyDisplay amountUSD={fixedFee} /> + {processor?.fee_percentage}%)
+                                  </span>
+                                </div>
+                              )}
+                              <div className="border-t border-blue-200 dark:border-blue-800 pt-1 mt-1"></div>
+                              <div className="flex justify-between">
+                                <span className="font-semibold text-muted-foreground">You will receive:</span>
+                                <span className="font-bold text-green-600 dark:text-green-400 text-sm">
+                                  <CurrencyDisplay amountUSD={netAmountUSD} />
+                                </span>
+                              </div>
+                            </div>
                           </AlertDescription>
                         </Alert>
                       );
                     })()}
-                  </div>
-
-                  {/* Currency & Network Badge */}
-                  <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                    <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <AlertTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                      Withdrawal Currency & Network
-                      <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
-                        USDC Solana (SPL)
-                      </Badge>
-                    </AlertTitle>
-                    <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
-                      Your withdrawal will be sent as <strong>USDC</strong> on the <strong>Solana (SPL)</strong> network. 
-                      Make sure your wallet supports USDC on Solana.
-                    </AlertDescription>
-                  </Alert>
-
-                  {/* Expandable Help Guide */}
-                  <Collapsible className="w-full">
-                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      <HelpCircle className="h-4 w-4" />
-                      <span className="underline">How to get your USDC Solana address?</span>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-3">
-                      <div className="text-sm space-y-3 bg-muted/50 p-4 rounded-lg border border-border">
-                        <p className="font-semibold text-foreground">Step-by-Step Guide:</p>
-                        <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                          <li>Open your crypto wallet or exchange (Binance, Gcrypto, Coinbase, etc.)</li>
-                          <li>Navigate to <strong className="text-foreground">Deposit</strong> or <strong className="text-foreground">Receive</strong> section</li>
-                          <li>Search for <strong className="text-foreground">USDC</strong> (not USDT)</li>
-                          <li>When prompted to select a network, choose <strong className="text-foreground">Solana (SPL)</strong></li>
-                          <li>Copy the displayed wallet address</li>
-                          <li>Paste the address in the field below</li>
-                        </ol>
-                        <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-3">
-                          <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium text-xs">
-                            ⚠️ <strong>Important:</strong> Always verify you've selected Solana (SPL) network, not TRC20, ERC20, or other networks! Sending to the wrong network will result in loss of funds.
-                          </AlertDescription>
-                        </Alert>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  <div>
-                    <Label htmlFor="account-details">
-                      {(() => {
+                    
+                    <div>
+                      <Label htmlFor="withdraw-method">Withdrawal Method</Label>
+                      <Select value={withdrawMethod} onValueChange={setWithdrawMethod} disabled={loadingProcessors}>
+                        <SelectTrigger id="withdraw-method">
+                          <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select withdrawal method"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* ✅ Show virtual methods if crypto processor exists */}
+                          {actualCryptoProcessor && VIRTUAL_WITHDRAWAL_METHODS.length > 0 ? (
+                            VIRTUAL_WITHDRAWAL_METHODS.map((method) => (
+                              <SelectItem key={method.id} value={method.id}>
+                                <div className="flex items-center gap-2">
+                                  <span>{method.icon}</span>
+                                  <span>{method.displayName}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          ) : withdrawalProcessors.length === 0 ? (
+                            <SelectItem value="none" disabled>No withdrawal methods available</SelectItem>
+                          ) : (
+                            withdrawalProcessors.map((processor) => (
+                              <SelectItem key={processor.id} value={processor.name}>
+                                {processor.config?.display_name || processor.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {/* ✅ Display method-specific description and fee */}
+                      {withdrawMethod && (() => {
                         const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                        if (virtualMethod) {
-                          // Method-specific labels for virtual methods
-                          const labels: Record<string, string> = {
-                            'gcrypto': 'USDC Solana (SPL) Wallet Address',
-                            'binance': 'USDC Solana (SPL) Wallet Address',
-                            'coinsph': 'USDC Solana (SPL) Wallet Address',
-                            'bybit': 'USDC Solana (SPL) Wallet Address',
-                            'coinbase': 'USDC Solana (SPL) Wallet Address',
-                            'kucoin': 'USDC Solana (SPL) Wallet Address',
-                          };
-                          return labels[virtualMethod.id] || 'Account Details';
-                        }
+                        const processor = virtualMethod && actualCryptoProcessor 
+                          ? actualCryptoProcessor 
+                          : withdrawalProcessors.find(p => p.name === withdrawMethod);
                         
-                        // Fallback to actual processor label
-                        const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                        return processor?.config?.address_label || "USDC Solana (SPL) Wallet Address *";
-                      })()}
-                    </Label>
-                    <Textarea
-                      id="account-details"
-                      placeholder={(() => {
-                        const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                        if (virtualMethod) {
-                          // Method-specific placeholders for virtual methods
-                          const placeholders: Record<string, string> = {
-                            'gcrypto': 'Enter your Gcrypto USDC Solana address',
-                            'binance': 'Enter your Binance USDC Solana address',
-                            'coinsph': 'Enter your Coins.Ph USDC Solana address',
-                            'bybit': 'Enter your ByBit USDC Solana address',
-                            'coinbase': 'Enter your Coinbase USDC Solana address',
-                            'kucoin': 'Enter your KuCoin USDC Solana address',
-                          };
-                          return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
-                        }
+                        if (!processor) return null;
                         
-                        // Fallback to actual processor placeholder or default
-                        const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                        return processor?.config?.address_placeholder || "Enter your wallet address";
+                        return (
+                          <Alert className="mt-2">
+                            <InfoIcon className="h-4 w-4" />
+                            <AlertDescription className="text-xs">
+                              {virtualMethod ? virtualMethod.description : processor.config?.description}
+                              <br />
+                              <strong>Fee:</strong> ${processor.fee_fixed || 0}
+                            </AlertDescription>
+                          </Alert>
+                        );
                       })()}
-                      value={accountDetails}
-                      onChange={(e) => setAccountDetails(e.target.value)}
-                      rows={3}
-                    />
+                    </div>
+
+                    {/* Currency & Network Badge */}
+                    <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                      <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <AlertTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                        Withdrawal Currency & Network
+                        <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
+                          USDC Solana (SPL)
+                        </Badge>
+                      </AlertTitle>
+                      <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                        Your withdrawal will be sent as <strong>USDC</strong> on the <strong>Solana (SPL)</strong> network. 
+                        Make sure your wallet supports USDC on Solana.
+                      </AlertDescription>
+                    </Alert>
+
+                    {/* Expandable Help Guide */}
+                    <Collapsible className="w-full">
+                      <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="underline">How to get your USDC Solana address?</span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        <div className="text-sm space-y-3 bg-muted/50 p-4 rounded-lg border border-border">
+                          <p className="font-semibold text-foreground">Step-by-Step Guide:</p>
+                          <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                            <li>Open your crypto wallet or exchange (Binance, Gcrypto, Coinbase, etc.)</li>
+                            <li>Navigate to <strong className="text-foreground">Deposit</strong> or <strong className="text-foreground">Receive</strong> section</li>
+                            <li>Search for <strong className="text-foreground">USDC</strong> (not USDT)</li>
+                            <li>When prompted to select a network, choose <strong className="text-foreground">Solana (SPL)</strong></li>
+                            <li>Copy the displayed wallet address</li>
+                            <li>Paste the address in the field below</li>
+                          </ol>
+                          <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-3">
+                            <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium text-xs">
+                              ⚠️ <strong>Important:</strong> Always verify you've selected Solana (SPL) network, not TRC20, ERC20, or other networks! Sending to the wrong network will result in loss of funds.
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    <div>
+                      <Label htmlFor="account-details">
+                        {(() => {
+                          const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                          if (virtualMethod) {
+                            // Method-specific labels for virtual methods
+                            const labels: Record<string, string> = {
+                              'gcrypto': 'USDC Solana (SPL) Wallet Address',
+                              'binance': 'USDC Solana (SPL) Wallet Address',
+                              'coinsph': 'USDC Solana (SPL) Wallet Address',
+                              'bybit': 'USDC Solana (SPL) Wallet Address',
+                              'coinbase': 'USDC Solana (SPL) Wallet Address',
+                              'kucoin': 'USDC Solana (SPL) Wallet Address',
+                            };
+                            return labels[virtualMethod.id] || 'Account Details';
+                          }
+                          
+                          // Fallback to actual processor label
+                          const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+                          return processor?.config?.address_label || "USDC Solana (SPL) Wallet Address *";
+                        })()}
+                      </Label>
+                      <Textarea
+                        id="account-details"
+                        placeholder={(() => {
+                          const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
+                          if (virtualMethod) {
+                            // Method-specific placeholders for virtual methods
+                            const placeholders: Record<string, string> = {
+                              'gcrypto': 'Enter your Gcrypto USDC Solana address',
+                              'binance': 'Enter your Binance USDC Solana address',
+                              'coinsph': 'Enter your Coins.Ph USDC Solana address',
+                              'bybit': 'Enter your ByBit USDC Solana address',
+                              'coinbase': 'Enter your Coinbase USDC Solana address',
+                              'kucoin': 'Enter your KuCoin USDC Solana address',
+                            };
+                            return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
+                          }
+                          
+                          // Fallback to actual processor placeholder or default
+                          const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
+                          return processor?.config?.address_placeholder || "Enter your wallet address";
+                        })()}
+                        value={accountDetails}
+                        onChange={(e) => setAccountDetails(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
                   </div>
+                </ScrollArea>
+
+                {/* Fixed Footer with Withdrawal Button */}
+                <div className="p-3 sm:p-4 md:p-6 border-t bg-background">
                   <Button
                     onClick={handleWithdraw}
                     disabled={
