@@ -66,6 +66,7 @@ const PartnerBonusMonitoring = lazy(() => import("@/pages/admin/PartnerBonusMoni
 const PartnerLeaderboard = lazy(() => import("@/pages/admin/PartnerLeaderboard"));
 const AdminPartnerAnalytics = lazy(() => import("@/pages/admin/PartnerAnalytics"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
+const AdminAnalyticsDashboard = lazy(() => import("@/pages/admin/AnalyticsDashboard"));
 const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
@@ -334,6 +335,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <ReferralSystemManage />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics/dashboard"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <AdminAnalyticsDashboard />
             </AdminLayout>
           </AdminRoute>
         }

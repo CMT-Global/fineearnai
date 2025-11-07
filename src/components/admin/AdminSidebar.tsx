@@ -81,7 +81,10 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     {
       label: "Overview",
       icon: LayoutDashboard,
-      items: [{ label: "Dashboard", path: "/admin", icon: LayoutDashboard }],
+      items: [
+        { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
+        { label: "Analytics Dashboard", path: "/admin/analytics/dashboard", icon: TrendingUp },
+      ],
       defaultOpen: true,
     },
     {
