@@ -12,8 +12,7 @@ import {
   TrendingUp,
   AlertCircle,
   Shield,
-  RefreshCw,
-  ArrowRight
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
@@ -223,105 +222,8 @@ const Admin = () => {
         </Card>
       </div>
 
-      {/* Quick Access Cards */}
+      {/* Membership Distribution */}
       <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/users")}>
-              <CardHeader>
-                <CardTitle className="text-lg">User Management</CardTitle>
-                <CardDescription>View and manage all users</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  Manage Users
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/tasks/generate")}>
-              <CardHeader>
-                <CardTitle className="text-lg">AI Tasks</CardTitle>
-                <CardDescription>Generate and manage tasks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  Generate Tasks
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/withdrawals")}>
-              <CardHeader>
-                <CardTitle className="text-lg">Withdrawals</CardTitle>
-                <CardDescription>Process withdrawal requests</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  View Withdrawals
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/transactions")}>
-              <CardHeader>
-                <CardTitle className="text-lg">Transactions</CardTitle>
-                <CardDescription>View all transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  View Transactions
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/plans/manage")}>
-              <CardHeader>
-                <CardTitle className="text-lg">Membership Plans</CardTitle>
-                <CardDescription>Configure plans and pricing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  Manage Plans
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/analytics/tasks")}>
-              <CardHeader>
-                <CardTitle className="text-lg">Analytics</CardTitle>
-                <CardDescription>View platform analytics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  View Analytics
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/settings/cpay-checkouts")}>
-              <CardHeader>
-                <CardTitle className="text-lg">CPAY Checkouts</CardTitle>
-                <CardDescription>Manage deposit checkout pages</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="ghost" className="w-full justify-between">
-                  Manage Checkouts
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Membership Distribution */}
         <Card>
           <CardHeader>
             <CardTitle>Membership Distribution</CardTitle>
