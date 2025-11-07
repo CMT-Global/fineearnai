@@ -78,6 +78,12 @@ export const Last7DaysActivityTable = () => {
     }
   };
 
+  const calculatePercentage = (part: number, total: number): string => {
+    if (total === 0) return '0.0%';
+    const percentage = (part / total) * 100;
+    return `${percentage.toFixed(1)}%`;
+  };
+
   return (
     <div className="rounded-md border overflow-x-auto">
       <Table>
