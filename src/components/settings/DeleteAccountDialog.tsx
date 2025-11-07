@@ -56,13 +56,28 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
 
     setSendingOtp(true);
     try {
+      console.log('[DELETE-ACCOUNT] Sending OTP request...');
+      
       const { data, error } = await supabase.functions.invoke('send-account-deletion-otp', {
         body: {}
       });
 
-      if (error) throw error;
+      // 🔍 DIAGNOSTIC LOGGING - Phase 1
+      console.log('[DELETE-ACCOUNT] Response received:', {
+        hasError: !!error,
+        hasData: !!data,
+        dataContent: data,
+        errorContent: error,
+        errorType: error?.constructor?.name
+      });
+
+      if (error) {
+        console.error('[DELETE-ACCOUNT] Supabase functions.invoke error:', error);
+        throw error;
+      }
 
       if (data?.error) {
+        console.warn('[DELETE-ACCOUNT] Application error in response:', data.error);
         if (data.rate_limited) {
           toast.error("Too many requests", {
             description: data.error
@@ -73,12 +88,31 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
         return;
       }
 
+      // ✅ EXPLICIT SUCCESS CHECK
+      if (data?.success === true) {
+        console.log('[DELETE-ACCOUNT] OTP sent successfully!');
+        toast.success("Verification code sent!", {
+          description: "Check your email for the 6-digit code"
+        });
+        setStep(2);
+        return;
+      }
+
+      // ⚠️ UNEXPECTED RESPONSE FORMAT
+      console.warn('[DELETE-ACCOUNT] Unexpected response format:', data);
       toast.success("Verification code sent!", {
         description: "Check your email for the 6-digit code"
       });
       setStep(2);
+      
     } catch (error: any) {
-      console.error("Error sending OTP:", error);
+      console.error("[DELETE-ACCOUNT] Caught error:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        fullError: error
+      });
+      
       toast.error("Failed to send verification code", {
         description: error.message || "Please try again"
       });
