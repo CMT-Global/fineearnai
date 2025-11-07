@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [rateLimitedUntil, setRateLimitedUntil] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState<string>("");
 
   const resetDialog = () => {
     setStep(1);
@@ -39,7 +41,37 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
     setOtpCode("");
     setLoading(false);
     setSendingOtp(false);
+    setRateLimitedUntil(null);
+    setCountdown("");
   };
+
+  // Countdown timer for rate limiting
+  useEffect(() => {
+    if (!rateLimitedUntil) {
+      setCountdown("");
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = Date.now();
+      const timeLeft = rateLimitedUntil.getTime() - now;
+
+      if (timeLeft <= 0) {
+        setRateLimitedUntil(null);
+        setCountdown("");
+        return;
+      }
+
+      const minutes = Math.floor(timeLeft / 60000);
+      const seconds = Math.floor((timeLeft % 60000) / 1000);
+      setCountdown(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [rateLimitedUntil]);
 
   const handleClose = () => {
     if (!loading && !sendingOtp) {
@@ -83,8 +115,13 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
       if (data?.error) {
         console.warn('[DELETE-ACCOUNT] Application error:', data.error);
         if (data.rate_limited) {
+          // Calculate when user can try again (15 minutes from now)
+          const retryTime = new Date(Date.now() + 15 * 60 * 1000);
+          setRateLimitedUntil(retryTime);
+          
           toast.error("Too many requests", {
-            description: data.error
+            description: "Please wait 15 minutes before trying again",
+            duration: 5000
           });
         } else {
           toast.error(data.error);
@@ -197,7 +234,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                   id="understand"
                   checked={understood}
                   onCheckedChange={(checked) => setUnderstood(checked as boolean)}
-                  disabled={sendingOtp}
+                  disabled={sendingOtp || !!rateLimitedUntil}
                 />
                 <label
                   htmlFor="understand"
@@ -206,6 +243,18 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                   I understand this action is permanent and cannot be undone
                 </label>
               </div>
+
+              {rateLimitedUntil && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Too many verification attempts.</strong>
+                    <p className="mt-1">
+                      Please try again in <span className="font-mono font-semibold">{countdown}</span>
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -222,7 +271,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 type="button"
                 variant="destructive"
                 onClick={handleSendOtp}
-                disabled={!understood || sendingOtp}
+                disabled={!understood || sendingOtp || !!rateLimitedUntil}
                 className="w-full sm:w-auto"
               >
                 {sendingOtp ? (
@@ -230,6 +279,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Sending Code...
                   </>
+                ) : rateLimitedUntil ? (
+                  `Try again in ${countdown}`
                 ) : (
                   "Continue to Verification"
                 )}
