@@ -51,7 +51,7 @@ export const TopReferrersCard = ({ data, dateRange }: TopReferrersCardProps) => 
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Highest performing referrers ranked by total commission earned
+          Highest performing referrers ranked by total referrals brought in
         </p>
       </CardHeader>
       <CardContent>
