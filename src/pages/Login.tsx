@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, CheckCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "@/lib/auth-schema";
@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlatformMigrationBanner } from "@/components/shared/PlatformMigrationBanner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -26,9 +27,21 @@ const Login = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeletedMessage, setShowDeletedMessage] = useState(false);
   const referralCode = searchParams.get("ref");
+  const accountDeleted = searchParams.get("deleted");
 
   useEffect(() => {
+    // Show deleted account success message
+    if (accountDeleted === "true") {
+      setShowDeletedMessage(true);
+      // Auto-hide after 10 seconds
+      const timer = setTimeout(() => {
+        setShowDeletedMessage(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+
     // Store referral code in localStorage if present
     if (referralCode) {
       localStorage.setItem("pending_referral_code", referralCode.toUpperCase());
@@ -40,7 +53,7 @@ const Login = () => {
         navigate("/dashboard");
       }
     });
-  }, [navigate, referralCode]);
+  }, [navigate, referralCode, accountDeleted]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -154,6 +167,17 @@ const Login = () => {
           <h1 className="text-2xl font-bold">Welcome Back</h1>
           <p className="text-muted-foreground">Sign in to FineEarn - Continue earning with AI tasks</p>
         </div>
+
+        {/* Account Deleted Success Message */}
+        {showDeletedMessage && (
+          <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <AlertTitle className="text-green-800 dark:text-green-200">Account Deleted Successfully</AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              Your account has been permanently deleted. All your data has been removed from our systems.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

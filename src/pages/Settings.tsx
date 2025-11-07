@@ -27,6 +27,7 @@ import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
+import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 
 const Settings = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -37,6 +38,7 @@ const Settings = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
   const [isCurrencyPopoverOpen, setIsCurrencyPopoverOpen] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
 
   // Redirect if not authenticated
@@ -676,9 +678,40 @@ const Settings = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Danger Zone */}
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-destructive" />
+                <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              </div>
+              <CardDescription>
+                Irreversible actions that will permanently affect your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Warning</AlertTitle>
+                <AlertDescription>
+                  Deleting your account will permanently remove all your data, including earnings, 
+                  transaction history, referrals, and task records. This action cannot be undone.
+                </AlertDescription>
+              </Alert>
+              
+              <Button 
+                variant="destructive" 
+                onClick={() => setDeleteDialogOpen(true)}
+                className="w-full sm:w-auto"
+              >
+                Delete My Account
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* PHASE 6B: Email Verification Dialog */}
+        {/* Email Verification Dialog */}
         <EmailVerificationDialog 
           open={showEmailVerification}
           onOpenChange={setShowEmailVerification}
@@ -688,6 +721,12 @@ const Settings = () => {
             setShowEmailVerification(false);
             toast.success("Email verified successfully!");
           }}
+        />
+
+        {/* Delete Account Dialog */}
+        <DeleteAccountDialog 
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
         />
     </PageLayout>
   );
