@@ -186,17 +186,17 @@ const handler = async (req: Request): Promise<Response> => {
       recipientsQuery = recipientsQuery.in("username", recipientFilter.usernames);
     }
 
-    // PHASE 2: Exclude already-sent recipients to prevent duplicates on job reset
+    // PHASE 2 FIX: Exclude already-sent recipients to prevent duplicates on retry
     if (existingSentIds.length > 0) {
       console.log(`🔒 [Queue Processor] Excluding ${existingSentIds.length} already-sent recipients`);
       recipientsQuery = recipientsQuery.not("id", "in", `(${existingSentIds.join(",")})`);
     }
 
-    // STEP 5: Fetch batch of 500 recipients using OFFSET pagination
-    const offset = job.processed_count || 0;
-    recipientsQuery = recipientsQuery.range(offset, offset + BATCH_SIZE - 1);
+    // PHASE 2 FIX: Fetch next batch WITHOUT offset since exclusion handles processed recipients
+    // The NOT IN clause naturally skips processed recipients, so we always fetch the "next" batch
+    recipientsQuery = recipientsQuery.limit(BATCH_SIZE);
 
-    console.log(`📥 [Queue Processor] Fetching recipients: offset ${offset}, limit ${BATCH_SIZE}`);
+    console.log(`📥 [Queue Processor] Fetching next ${BATCH_SIZE} unprocessed recipients (${existingSentIds.length} already sent)`);
     const { data: recipients, error: recipientsError } = await recipientsQuery;
 
     if (recipientsError) {
@@ -420,22 +420,19 @@ const handler = async (req: Request): Promise<Response> => {
     const allIdempotencyKeys = [...usedIdempotencyKeys, ...newIdempotencyKeys];
     console.log(`🔑 [Queue Processor] Idempotency keys: previously=${usedIdempotencyKeys.length}, new=${newIdempotencyKeys.length}, total=${allIdempotencyKeys.length}`);
 
-    // PHASE 1 FIX: Calculate completion status BEFORE inserting logs
-    // NOTE: processed_count will be auto-updated by database trigger after email_logs insert
-    const currentProcessedCount = (job.processed_count || 0);
-    const expectedProcessedCount = currentProcessedCount + recipients.length;
-    const isComplete = expectedProcessedCount >= job.total_recipients;
+    // PHASE 2 FIX: Calculate completion based on total sent (not offset-based processed_count)
+    // The trigger will sync the counts, but we determine completion by checking if all recipients are in the sent list
+    const isComplete = allSentIds.length >= job.total_recipients;
 
     console.log(`📊 [Queue Processor] Progress Calculation:`);
-    console.log(`   - Current processed: ${currentProcessedCount}`);
-    console.log(`   - Batch size: ${recipients.length}`);
-    console.log(`   - Expected after insert: ${expectedProcessedCount}/${job.total_recipients}`);
-    console.log(`   - Will complete: ${isComplete ? "YES" : "NO"}`);
+    console.log(`   - Total sent IDs tracked: ${allSentIds.length}`);
+    console.log(`   - Total recipients: ${job.total_recipients}`);
+    console.log(`   - Is complete: ${isComplete}`);
 
     // STEP 8: Insert email logs in bulk (CRITICAL: This triggers auto-count update)
     if (emailLogs.length > 0) {
       console.log(`📝 [Queue Processor] Logging ${emailLogs.length} emails...`);
-      console.log(`🔧 [Queue Processor] Database trigger will auto-update processed_count to ${expectedProcessedCount}`);
+      console.log(`🔧 [Queue Processor] Database trigger will auto-update counts based on email_logs`);
       
       const { error: logError } = await supabase.from("email_logs").insert(emailLogs);
       
@@ -494,10 +491,10 @@ const handler = async (req: Request): Promise<Response> => {
         message: "Batch processed successfully",
         job_id: job.id,
         batch_id: job.batch_id,
-        processed_count: expectedProcessedCount, // Use calculated value
+        processed_count: allSentIds.length, // Total sent recipients tracked
         total_recipients: job.total_recipients,
-        successful_count: (job.successful_count || 0) + successCount, // Calculated value
-        failed_count: (job.failed_count || 0) + failCount, // Calculated value
+        successful_count: (job.successful_count || 0) + successCount,
+        failed_count: (job.failed_count || 0) + failCount,
         is_complete: isComplete,
         execution_time_ms: executionTime,
         note: "Counts auto-synced by database trigger from email_logs",
