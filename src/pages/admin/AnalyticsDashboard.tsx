@@ -205,7 +205,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={reverseChronologically(analytics.userGrowth?.daily_breakdown || [])}>
+                    <BarChart data={reverseChronologically(analytics.userGrowth?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -218,14 +218,13 @@ export default function AdminAnalyticsDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
-                      <Line 
-                        type="monotone" 
+                      <Bar 
                         dataKey="count" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
+                        fill="hsl(var(--primary))" 
                         name="New Users"
+                        radius={[4, 4, 0, 0]}
                       />
-                    </LineChart>
+                    </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
@@ -269,7 +268,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={reverseChronologically(analytics.referrals?.daily_breakdown || [])}>
+                    <BarChart data={reverseChronologically(analytics.referrals?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -282,14 +281,13 @@ export default function AdminAnalyticsDashboard() {
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
-                      <Line 
-                        type="monotone" 
+                      <Bar 
                         dataKey="count" 
-                        stroke="hsl(var(--chart-2))" 
-                        strokeWidth={2}
+                        fill="hsl(var(--chart-2))" 
                         name="Referrals"
+                        radius={[4, 4, 0, 0]}
                       />
-                    </LineChart>
+                    </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
