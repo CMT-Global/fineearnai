@@ -412,46 +412,48 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // STEP 8: Insert email logs in bulk
-    if (emailLogs.length > 0) {
-      console.log(`📝 [Queue Processor] Logging ${emailLogs.length} emails...`);
-      const { error: logError } = await supabase.from("email_logs").insert(emailLogs);
-      if (logError) {
-        console.error(`⚠️  [Queue Processor] Error logging emails:`, logError);
-      }
-    }
-
-    // STEP 9: Update job progress
-    const newProcessedCount = (job.processed_count || 0) + recipients.length;
-    const newSuccessfulCount = (job.successful_count || 0) + successCount;
-    const newFailedCount = (job.failed_count || 0) + failCount;
-    const isComplete = newProcessedCount >= job.total_recipients;
-
-    console.log(`📊 [Queue Processor] Progress Update:`);
-    console.log(`   - Processed: ${newProcessedCount}/${job.total_recipients}`);
-    console.log(`   - Successful: ${newSuccessfulCount}`);
-    console.log(`   - Failed: ${newFailedCount}`);
-    console.log(`   - Status: ${isComplete ? "COMPLETED" : "PROCESSING"}`);
-
-    // PHASE 2: Track successfully sent recipient IDs for duplicate prevention
+    // PHASE 1 FIX: Track duplicate prevention data BEFORE inserting logs
     const newlySentIds = recipients.map(r => r.id);
     const allSentIds = [...existingSentIds, ...newlySentIds];
     console.log(`📊 [Queue Processor] Tracking sent IDs: previously=${existingSentIds.length}, new=${newlySentIds.length}, total=${allSentIds.length}`);
     
-    // PHASE 1: Track all idempotency keys used
     const allIdempotencyKeys = [...usedIdempotencyKeys, ...newIdempotencyKeys];
     console.log(`🔑 [Queue Processor] Idempotency keys: previously=${usedIdempotencyKeys.length}, new=${newIdempotencyKeys.length}, total=${allIdempotencyKeys.length}`);
 
+    // PHASE 1 FIX: Calculate completion status BEFORE inserting logs
+    // NOTE: processed_count will be auto-updated by database trigger after email_logs insert
+    const currentProcessedCount = (job.processed_count || 0);
+    const expectedProcessedCount = currentProcessedCount + recipients.length;
+    const isComplete = expectedProcessedCount >= job.total_recipients;
+
+    console.log(`📊 [Queue Processor] Progress Calculation:`);
+    console.log(`   - Current processed: ${currentProcessedCount}`);
+    console.log(`   - Batch size: ${recipients.length}`);
+    console.log(`   - Expected after insert: ${expectedProcessedCount}/${job.total_recipients}`);
+    console.log(`   - Will complete: ${isComplete ? "YES" : "NO"}`);
+
+    // STEP 8: Insert email logs in bulk (CRITICAL: This triggers auto-count update)
+    if (emailLogs.length > 0) {
+      console.log(`📝 [Queue Processor] Logging ${emailLogs.length} emails...`);
+      console.log(`🔧 [Queue Processor] Database trigger will auto-update processed_count to ${expectedProcessedCount}`);
+      
+      const { error: logError } = await supabase.from("email_logs").insert(emailLogs);
+      
+      if (logError) {
+        console.error(`⚠️  [Queue Processor] Error logging emails:`, logError);
+      } else {
+        console.log(`✅ [Queue Processor] Email logs inserted. Counts auto-updated by trigger.`);
+      }
+    }
+
+    // STEP 9: Update job metadata and status (counts already updated by trigger)
     const updateData: any = {
-      processed_count: newProcessedCount,
-      successful_count: newSuccessfulCount,
-      failed_count: newFailedCount,
       last_processed_at: new Date().toISOString(),
-      last_heartbeat: new Date().toISOString(), // Update heartbeat
+      last_heartbeat: new Date().toISOString(),
       processing_metadata: {
         sent_recipient_ids: allSentIds, // PHASE 2: Critical for duplicate prevention
         idempotency_keys_used: allIdempotencyKeys, // PHASE 1: Prevent duplicate sends on retry
-        rate_limit_metrics: rateLimitMetrics, // PHASE 3: Store rate limit headers for monitoring
+        rate_limit_metrics: rateLimitMetrics, // PHASE 3: Store rate limit headers
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
         last_batch_timestamp: new Date().toISOString(),
@@ -460,13 +462,14 @@ const handler = async (req: Request): Promise<Response> => {
       },
     };
 
+    // PHASE 1 FIX: Mark as completed if all recipients processed
     if (isComplete) {
       updateData.status = "completed";
       updateData.completed_at = new Date().toISOString();
+      console.log(`🎉 [Queue Processor] Job completed! All ${job.total_recipients} recipients processed.`);
     }
     
-    // CRITICAL: Always clear worker ID after batch, regardless of completion status
-    // This prevents jobs from getting stuck when processing multiple batches
+    // Clear worker ID after batch (prevents stuck jobs)
     updateData.processing_worker_id = null;
 
     const { error: updateError } = await supabase
@@ -475,12 +478,15 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("id", job.id);
 
     if (updateError) {
-      console.error(`❌ [Queue Processor] Error updating job progress:`, updateError);
+      console.error(`❌ [Queue Processor] Error updating job metadata:`, updateError);
+    } else {
+      console.log(`✅ [Queue Processor] Job metadata updated successfully`);
     }
 
     const executionTime = Date.now() - startTime;
     console.log(`✅ [Queue Processor] Batch complete in ${executionTime}ms`);
     console.log(`📧 [Queue Processor] Sent: ${successCount}, Failed: ${failCount}`);
+    console.log(`📊 [Queue Processor] Database trigger has auto-synced counts from email_logs`);
 
     return new Response(
       JSON.stringify({
@@ -488,12 +494,13 @@ const handler = async (req: Request): Promise<Response> => {
         message: "Batch processed successfully",
         job_id: job.id,
         batch_id: job.batch_id,
-        processed_count: newProcessedCount,
+        processed_count: expectedProcessedCount, // Use calculated value
         total_recipients: job.total_recipients,
-        successful_count: newSuccessfulCount,
-        failed_count: newFailedCount,
+        successful_count: (job.successful_count || 0) + successCount, // Calculated value
+        failed_count: (job.failed_count || 0) + failCount, // Calculated value
         is_complete: isComplete,
         execution_time_ms: executionTime,
+        note: "Counts auto-synced by database trigger from email_logs",
       }),
       {
         status: 200,
