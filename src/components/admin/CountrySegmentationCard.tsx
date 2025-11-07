@@ -3,6 +3,7 @@ import { Globe } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { getCountryName } from "@/lib/countries";
 
 interface CountryStats {
   country_code: string;
@@ -74,7 +75,7 @@ export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentation
                       }
                     </span>
                     <div>
-                      <div className="font-medium">{country.country_name}</div>
+                      <div className="font-medium">{getCountryName(country.country_code) || country.country_code}</div>
                       <div className="text-xs text-muted-foreground">
                         {country.user_count} users • ${country.total_deposits.toLocaleString()} deposits
                       </div>

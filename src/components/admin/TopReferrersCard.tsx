@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, DollarSign, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { getCountryName } from "@/lib/countries";
 
 interface TopReferrer {
   user_id: string;
@@ -72,7 +73,7 @@ export const TopReferrersCard = ({ data, dateRange }: TopReferrersCardProps) => 
                   </div>
                   <span 
                     className="text-2xl"
-                    title={referrer.country_name}
+                    title={getCountryName(referrer.country_code) || referrer.country_code}
                   >
                     {referrer.country_code ? 
                       String.fromCodePoint(...[...referrer.country_code.toUpperCase()].map(c => 127397 + c.charCodeAt(0))) 
