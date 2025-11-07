@@ -509,6 +509,7 @@ const Deposits = () => {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>User</TableHead>
+                    <TableHead>Country</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Method</TableHead>
@@ -519,7 +520,7 @@ const Deposits = () => {
                 <TableBody>
                   {filteredDeposits.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">
                         No deposits found
                       </TableCell>
                     </TableRow>
@@ -536,6 +537,11 @@ const Deposits = () => {
                               {deposit.profiles?.email}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {deposit.profiles?.registration_country_name || "N/A"}
+                          </Badge>
                         </TableCell>
                         <TableCell className="font-semibold">
                           {formatCurrency(deposit.amount)}
