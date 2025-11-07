@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, CreditCard } fro
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
+import { ComparisonBadge } from "@/components/admin/ComparisonBadge";
 
 const StatCard = ({ 
   title, 
@@ -157,54 +158,96 @@ export default function AdminAnalyticsDashboard() {
               />
             </div>
 
-            {/* 7-Day Summary Cards */}
+            {/* 7-Day Summary Cards with Comparisons */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    New Users (7 Days)
+                    New Users (Selected Period)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {analytics.userGrowth?.last_7days_count || 0}
                   </div>
+                  {analytics.comparisons && (
+                    <div className="mt-2">
+                      <ComparisonBadge
+                        changePercent={analytics.comparisons.userCount.changePercent}
+                        change={analytics.comparisons.userCount.change}
+                        previous={analytics.comparisons.userCount.previous}
+                        showAbsoluteChange
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Deposit Volume (7 Days)
+                    Deposit Volume (Selected Period)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     ${(analytics.deposits?.last_7days_volume || 0).toLocaleString()}
                   </div>
+                  {analytics.comparisons && (
+                    <div className="mt-2">
+                      <ComparisonBadge
+                        changePercent={analytics.comparisons.depositVolume.changePercent}
+                        change={analytics.comparisons.depositVolume.change}
+                        previous={analytics.comparisons.depositVolume.previous}
+                        prefix="$"
+                        showAbsoluteChange
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Referrals (7 Days)
+                    Referrals (Selected Period)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {analytics.referrals?.last_7days_count || 0}
                   </div>
+                  {analytics.comparisons && (
+                    <div className="mt-2">
+                      <ComparisonBadge
+                        changePercent={analytics.comparisons.referralCount.changePercent}
+                        change={analytics.comparisons.referralCount.change}
+                        previous={analytics.comparisons.referralCount.previous}
+                        showAbsoluteChange
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Upgrade Revenue (7 Days)
+                    Upgrade Revenue (Selected Period)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     ${(analytics.planUpgrades?.last_7days_volume || 0).toLocaleString()}
                   </div>
+                  {analytics.comparisons && (
+                    <div className="mt-2">
+                      <ComparisonBadge
+                        changePercent={analytics.comparisons.upgradeRevenue.changePercent}
+                        change={analytics.comparisons.upgradeRevenue.change}
+                        previous={analytics.comparisons.upgradeRevenue.previous}
+                        prefix="$"
+                        showAbsoluteChange
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
