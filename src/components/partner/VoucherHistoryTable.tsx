@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,12 @@ const ITEMS_PER_PAGE = 10;
 type VoucherType = 'all' | 'sent' | 'received';
 type VoucherStatus = 'all' | 'active' | 'redeemed' | 'expired';
 
+interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+}
+
 interface VoucherData {
   id: string;
   voucher_code: string;
@@ -58,6 +64,7 @@ export function VoucherHistoryTable() {
   const [statusFilter, setStatusFilter] = useState<VoucherStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
 
   // Fetch sent vouchers (where user is partner)
   const { data: sentVouchers = [], isLoading: loadingSent } = useQuery({
@@ -96,6 +103,38 @@ export function VoucherHistoryTable() {
   });
 
   const isLoading = loadingSent || loadingReceived;
+
+  // Fetch user profiles for all unique user IDs
+  useEffect(() => {
+    const fetchUserProfiles = async () => {
+      const allVouchers = [...sentVouchers, ...receivedVouchers];
+      const userIds = new Set<string>();
+
+      allVouchers.forEach((voucher) => {
+        if (voucher.partner_id) userIds.add(voucher.partner_id);
+        if (voucher.redeemed_by_user_id) userIds.add(voucher.redeemed_by_user_id);
+      });
+
+      if (userIds.size === 0) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('get-voucher-user-profiles', {
+          body: { userIds: Array.from(userIds) }
+        });
+
+        if (error) throw error;
+        if (data?.profiles) {
+          setUserProfiles(data.profiles);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profiles:', error);
+      }
+    };
+
+    if ((sentVouchers.length > 0 || receivedVouchers.length > 0) && !isLoading) {
+      fetchUserProfiles();
+    }
+  }, [sentVouchers, receivedVouchers, isLoading]);
 
   // Combine and filter vouchers
   const allVouchers: Voucher[] = [
@@ -306,8 +345,10 @@ export function VoucherHistoryTable() {
                       <TableCell>{getStatusBadge(voucher.status)}</TableCell>
                       <TableCell>
                         {voucher.type === 'sent' 
-                          ? (voucher.redeemed_by_user_id ? `User ${voucher.redeemed_by_user_id.slice(0, 8)}...` : '—')
-                          : `Partner ${voucher.partner_id.slice(0, 8)}...`
+                          ? (voucher.redeemed_by_user_id 
+                              ? userProfiles[voucher.redeemed_by_user_id]?.username || `User ${voucher.redeemed_by_user_id.slice(0, 8)}...`
+                              : '—')
+                          : userProfiles[voucher.partner_id]?.username || `Partner ${voucher.partner_id.slice(0, 8)}...`
                         }
                       </TableCell>
                       <TableCell>
