@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
+import { Last7DaysActivityTable } from "@/components/admin/Last7DaysActivityTable";
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
@@ -244,6 +245,17 @@ const Admin = () => {
                   )
                 )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Last 7 Days Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Last 7 Days Activity</CardTitle>
+            <CardDescription>Daily breakdown of platform metrics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Last7DaysActivityTable />
           </CardContent>
         </Card>
       </div>
