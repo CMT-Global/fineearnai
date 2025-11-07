@@ -2250,6 +2250,15 @@ export type Database = {
           username: string
         }[]
       }
+      get_registration_stats: {
+        Args: never
+        Returns: {
+          daily_breakdown: Json
+          last_7days_count: number
+          today_count: number
+          yesterday_count: number
+        }[]
+      }
       get_task_pool_health: {
         Args: never
         Returns: {
