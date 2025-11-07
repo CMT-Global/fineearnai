@@ -852,7 +852,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   Withdraw
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 gap-0 overflow-hidden max-h-[92vh] w-[96vw] max-w-[440px] sm:w-[90vw] sm:max-w-[520px] md:w-[600px]">
+              <DialogContent className="p-0 gap-0 overflow-hidden max-h-[92vh] w-[96vw] max-w-[440px] sm:w-[90vw] sm:max-w-[520px] md:w-[600px] lg:w-[640px]">
                 {/* Fixed Header */}
                 <DialogHeader className="p-3 sm:p-4 md:p-6 border-b">
                   <DialogTitle>Request Withdrawal</DialogTitle>
@@ -862,7 +862,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                 </DialogHeader>
 
                 {/* Scrollable Content Area */}
-                <ScrollArea className="max-h-[65vh] sm:max-h-[70vh] md:max-h-[75vh] flex-1">
+                <ScrollArea className="max-h-[58vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] flex-1">
                   <div className="p-3 sm:p-4 md:p-6 space-y-4">
                     {/* PHASE 5.d: Email Verification Alert */}
                     {!isAdmin && profile && !profile.email_verified && (
