@@ -18,7 +18,16 @@ interface CountrySegmentationCardProps {
 }
 
 export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentationCardProps) => {
-  const maxUsers = Math.max(...data.map(c => c.user_count), 1);
+  // Sort by user_count descending and add rank (1-20)
+  const rankedData = [...data]
+    .sort((a, b) => b.user_count - a.user_count)
+    .slice(0, 20) // Take top 20
+    .map((country, index) => ({
+      ...country,
+      rank: index + 1
+    }));
+  
+  const maxUsers = Math.max(...rankedData.map(c => c.user_count), 1);
 
   return (
     <Card>
@@ -38,15 +47,18 @@ export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentation
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {data.length === 0 ? (
+          {rankedData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No country data available for the selected period
             </div>
           ) : (
-            data.map((country) => (
+            rankedData.map((country) => (
               <div key={country.country_code} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
+                    <div className="font-bold text-sm min-w-[2rem] text-muted-foreground">
+                      #{country.rank}
+                    </div>
                     <span 
                       className="text-2xl"
                       title={country.country_name}
