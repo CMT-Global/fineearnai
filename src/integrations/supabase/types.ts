@@ -2196,6 +2196,20 @@ export type Database = {
               yesterday_volume: number
             }[]
           }
+      get_last_7days_activity: {
+        Args: never
+        Returns: {
+          activity_date: string
+          deposits_count: number
+          deposits_volume: number
+          new_registrations: number
+          plan_upgrades_count: number
+          plan_upgrades_volume: number
+          referred_users: number
+          withdrawals_count: number
+          withdrawals_volume: number
+        }[]
+      }
       get_multiple_users_detail: {
         Args: { p_user_ids: string[] }
         Returns: Json
