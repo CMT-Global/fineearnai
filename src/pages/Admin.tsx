@@ -231,10 +231,7 @@ const Admin = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/users")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">User Management</CardTitle>
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">User Management</CardTitle>
                 <CardDescription>View and manage all users</CardDescription>
               </CardHeader>
               <CardContent>
@@ -247,10 +244,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/tasks/generate")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">AI Tasks</CardTitle>
-                  <Zap className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">AI Tasks</CardTitle>
                 <CardDescription>Generate and manage tasks</CardDescription>
               </CardHeader>
               <CardContent>
@@ -263,10 +257,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/withdrawals")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Withdrawals</CardTitle>
-                  <DollarSign className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">Withdrawals</CardTitle>
                 <CardDescription>Process withdrawal requests</CardDescription>
               </CardHeader>
               <CardContent>
@@ -279,10 +270,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/transactions")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Transactions</CardTitle>
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">Transactions</CardTitle>
                 <CardDescription>View all transactions</CardDescription>
               </CardHeader>
               <CardContent>
@@ -295,10 +283,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/plans/manage")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Membership Plans</CardTitle>
-                  <Crown className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">Membership Plans</CardTitle>
                 <CardDescription>Configure plans and pricing</CardDescription>
               </CardHeader>
               <CardContent>
@@ -311,10 +296,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/analytics/tasks")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Analytics</CardTitle>
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">Analytics</CardTitle>
                 <CardDescription>View platform analytics</CardDescription>
               </CardHeader>
               <CardContent>
@@ -327,10 +309,7 @@ const Admin = () => {
 
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/settings/cpay-checkouts")}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">CPAY Checkouts</CardTitle>
-                  <DollarSign className="h-5 w-5 text-primary" />
-                </div>
+                <CardTitle className="text-lg">CPAY Checkouts</CardTitle>
                 <CardDescription>Manage deposit checkout pages</CardDescription>
               </CardHeader>
               <CardContent>
