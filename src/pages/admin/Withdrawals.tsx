@@ -38,14 +38,7 @@ interface WithdrawalRequest {
   profiles?: {
     username: string;
     email: string;
-    membership_plan: string | null;
-    registration_country_name: string | null;
   };
-  referrals?: Array<{
-    referrer: {
-      username: string;
-    } | null;
-  }>;
 }
 
 export default function Withdrawals() {
@@ -106,16 +99,9 @@ export default function Withdrawals() {
         .from("withdrawal_requests")
         .select(`
           *,
-          profiles:user_id (
+          profiles (
             username,
-            email,
-            membership_plan,
-            registration_country_name
-          ),
-          referrals!referrals_referred_id_fkey (
-            referrer:referrer_id (
-              username
-            )
+            email
           )
         `)
         .order("created_at", { ascending: false });
@@ -714,24 +700,6 @@ export default function Withdrawals() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Membership Plan</p>
-                        <Badge variant="secondary">
-                          {withdrawal.profiles?.membership_plan || 'Free'}
-                        </Badge>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Country</p>
-                        <Badge variant="outline">
-                          {withdrawal.profiles?.registration_country_name || 'N/A'}
-                        </Badge>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Upline</p>
-                        <Badge variant="outline">
-                          {withdrawal.referrals?.[0]?.referrer?.username || 'Direct'}
-                        </Badge>
-                      </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Amount</p>
                         <p className="text-lg font-semibold">{formatCurrency(withdrawal.amount)}</p>
