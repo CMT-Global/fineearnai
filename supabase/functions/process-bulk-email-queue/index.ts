@@ -493,10 +493,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // PHASE 1 FIX: Track duplicate prevention data BEFORE inserting logs
-    const newlySentIds = recipients.map(r => r.id);
+    // PHASE 4 CRITICAL FIX: Only track SUCCESSFULLY SENT recipient IDs
+    // Do NOT add failed recipients to sent list, or they'll be skipped on retry
+    const newlySentIds = emailLogs
+      .filter(log => log.status === 'sent')
+      .map(log => log.recipient_user_id as string);
+      
     const allSentIds = [...existingSentIds, ...newlySentIds];
-    console.log(`📊 [Queue Processor] Tracking sent IDs: previously=${existingSentIds.length}, new=${newlySentIds.length}, total=${allSentIds.length}`);
+
+    console.log(`📊 [Queue Processor] Tracking sent IDs:`);
+    console.log(`   - Previously sent: ${existingSentIds.length}`);
+    console.log(`   - Newly sent (successful only): ${newlySentIds.length}`);
+    console.log(`   - Total sent: ${allSentIds.length}`);
+    console.log(`   - Failed (not tracked): ${emailLogs.filter(log => log.status === 'failed').length}`);
     
     const allIdempotencyKeys = [...usedIdempotencyKeys, ...newIdempotencyKeys];
     console.log(`🔑 [Queue Processor] Idempotency keys: previously=${usedIdempotencyKeys.length}, new=${newIdempotencyKeys.length}, total=${allIdempotencyKeys.length}`);
