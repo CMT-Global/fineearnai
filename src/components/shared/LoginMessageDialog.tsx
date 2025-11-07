@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -35,6 +35,9 @@ export const LoginMessageDialog = ({
   const [isOpen, setIsOpen] = useState(false);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const [lastTriggerValue, setLastTriggerValue] = useState(trigger);
+  const [showTopShadow, setShowTopShadow] = useState(false);
+  const [showBottomShadow, setShowBottomShadow] = useState(false);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   // Fetch login message config from platform_config
   const { data: config, isLoading } = useQuery({
@@ -123,6 +126,30 @@ export const LoginMessageDialog = ({
     setHasCheckedStorage(true);
   }, [config, isLoading, userId, trigger, hasCheckedStorage]);
 
+  // Handle scroll to update shadow indicators
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    const scrollTop = target.scrollTop;
+    const scrollHeight = target.scrollHeight;
+    const clientHeight = target.clientHeight;
+
+    // Show top shadow if scrolled down from top
+    setShowTopShadow(scrollTop > 10);
+    
+    // Show bottom shadow if not at bottom
+    setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
+  };
+
+  // Check initial scroll state when dialog opens
+  useEffect(() => {
+    if (isOpen && scrollViewportRef.current) {
+      const viewport = scrollViewportRef.current;
+      const hasScroll = viewport.scrollHeight > viewport.clientHeight;
+      setShowBottomShadow(hasScroll);
+      setShowTopShadow(false);
+    }
+  }, [isOpen, config?.body]);
+
   // Handle dialog close
   const handleOpenChange = (open: boolean) => {
     // Only allow closing if dismissible
@@ -178,37 +205,63 @@ export const LoginMessageDialog = ({
           </DialogHeader>
         </div>
 
-        {/* Scrollable body content */}
-        <ScrollArea className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh] flex-1">
+        {/* Scrollable body content with gradient indicators */}
+        <div className="relative flex-1">
+          {/* Top gradient shadow */}
           <div 
-            id="login-message-description"
-            className="p-3 sm:p-4 md:p-6"
-          >
+            className={`
+              absolute top-0 left-0 right-0 h-8 z-10
+              bg-gradient-to-b from-background to-transparent
+              pointer-events-none
+              transition-opacity duration-300
+              ${showTopShadow ? 'opacity-100' : 'opacity-0'}
+            `}
+          />
+          
+          <ScrollArea className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh]">
             <div 
-              className="
-                prose prose-sm sm:prose-base
-                dark:prose-invert
-                max-w-none
-                text-foreground
-                [&>p]:text-foreground
-                [&>p]:leading-relaxed
-                [&>h1]:text-foreground
-                [&>h2]:text-foreground
-                [&>h3]:text-foreground
-                [&>strong]:text-foreground
-                [&>em]:text-muted-foreground
-                [&>ul]:text-foreground
-                [&>ol]:text-foreground
-                [&>a]:text-primary [&>a]:underline
-                [&>a:hover]:text-primary/80
-                touch-manipulation
-                break-words
-                overflow-wrap-anywhere
-              "
-              dangerouslySetInnerHTML={{ __html: config.body }}
-            />
-          </div>
-        </ScrollArea>
+              ref={scrollViewportRef}
+              onScroll={handleScroll}
+              id="login-message-description"
+              className="p-3 sm:p-4 md:p-6"
+            >
+              <div 
+                className="
+                  prose prose-sm sm:prose-base
+                  dark:prose-invert
+                  max-w-none
+                  text-foreground
+                  [&>p]:text-foreground
+                  [&>p]:leading-relaxed
+                  [&>h1]:text-foreground
+                  [&>h2]:text-foreground
+                  [&>h3]:text-foreground
+                  [&>strong]:text-foreground
+                  [&>em]:text-muted-foreground
+                  [&>ul]:text-foreground
+                  [&>ol]:text-foreground
+                  [&>a]:text-primary [&>a]:underline
+                  [&>a:hover]:text-primary/80
+                  touch-manipulation
+                  break-words
+                  overflow-wrap-anywhere
+                "
+                dangerouslySetInnerHTML={{ __html: config.body }}
+              />
+            </div>
+          </ScrollArea>
+
+          {/* Bottom gradient shadow */}
+          <div 
+            className={`
+              absolute bottom-0 left-0 right-0 h-8 z-10
+              bg-gradient-to-t from-background to-transparent
+              pointer-events-none
+              transition-opacity duration-300
+              ${showBottomShadow ? 'opacity-100' : 'opacity-0'}
+            `}
+          />
+        </div>
 
         {/* Footer with action button */}
         {config.dismissible && (
