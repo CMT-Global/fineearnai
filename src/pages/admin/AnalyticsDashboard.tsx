@@ -90,6 +90,11 @@ const LoadingSkeleton = () => (
 export default function AdminAnalyticsDashboard() {
   const { data: analytics, isLoading, error } = useAdminAnalytics();
 
+  // Utility to reverse data chronologically (oldest to newest, left to right)
+  const reverseChronologically = (data: any[]) => {
+    return [...data].reverse();
+  };
+
   return (
     <div className="p-6 space-y-6">
         {/* Page Header */}
@@ -200,7 +205,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={analytics.userGrowth?.daily_breakdown || []}>
+                    <LineChart data={reverseChronologically(analytics.userGrowth?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -232,7 +237,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analytics.deposits?.daily_breakdown || []}>
+                    <BarChart data={reverseChronologically(analytics.deposits?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -264,7 +269,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={analytics.referrals?.daily_breakdown || []}>
+                    <LineChart data={reverseChronologically(analytics.referrals?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
@@ -296,7 +301,7 @@ export default function AdminAnalyticsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analytics.planUpgrades?.daily_breakdown || []}>
+                    <BarChart data={reverseChronologically(analytics.planUpgrades?.daily_breakdown || [])}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis 
                         dataKey="date" 
