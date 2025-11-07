@@ -97,7 +97,7 @@ export default function AdminAnalyticsDashboard() {
     startDate: format(subDays(new Date(), 6), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
-  const [selectedPreset, setSelectedPreset] = useState<string>("Last 7 Days");
+  const [selectedPreset, setSelectedPreset] = useState<string>("Last 7 Days vs Previous 7");
 
   const { data: analytics, isLoading, error } = useAdminAnalytics(dateRange);
 

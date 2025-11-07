@@ -21,37 +21,27 @@ export const ComparisonPresetSelector = ({
   
   const presets: ComparisonPreset[] = [
     {
-      label: "Today",
-      startDate: format(today, "yyyy-MM-dd"),
-      endDate: format(today, "yyyy-MM-dd"),
-    },
-    {
-      label: "Yesterday",
+      label: "Yesterday vs Day Before",
       startDate: format(subDays(today, 1), "yyyy-MM-dd"),
       endDate: format(subDays(today, 1), "yyyy-MM-dd"),
     },
     {
-      label: "Last 7 Days",
-      startDate: format(subDays(today, 6), "yyyy-MM-dd"),
-      endDate: format(today, "yyyy-MM-dd"),
+      label: "Last 7 Days vs Previous 7",
+      startDate: format(subDays(today, 7), "yyyy-MM-dd"),
+      endDate: format(subDays(today, 1), "yyyy-MM-dd"),
     },
     {
-      label: "Last 30 Days",
-      startDate: format(subDays(today, 29), "yyyy-MM-dd"),
-      endDate: format(today, "yyyy-MM-dd"),
+      label: "Last 30 Days vs Previous 30",
+      startDate: format(subDays(today, 30), "yyyy-MM-dd"),
+      endDate: format(subDays(today, 1), "yyyy-MM-dd"),
     },
     {
-      label: "Last 90 Days",
-      startDate: format(subDays(today, 89), "yyyy-MM-dd"),
-      endDate: format(today, "yyyy-MM-dd"),
-    },
-    {
-      label: "This Month",
+      label: "This Month vs Last Month",
       startDate: format(startOfMonth(today), "yyyy-MM-dd"),
       endDate: format(today, "yyyy-MM-dd"),
     },
     {
-      label: "Last Month",
+      label: "Last Month vs Month Before",
       startDate: format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd"),
       endDate: format(endOfMonth(subMonths(today, 1)), "yyyy-MM-dd"),
     },
