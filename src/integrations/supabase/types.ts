@@ -98,10 +98,12 @@ export type Database = {
           id: string
           last_heartbeat: string | null
           last_processed_at: string | null
+          max_retries: number
           processed_count: number
           processing_metadata: Json | null
           processing_worker_id: string | null
           recipient_filter: Json
+          retry_count: number
           started_at: string | null
           status: string
           subject: string
@@ -122,10 +124,12 @@ export type Database = {
           id?: string
           last_heartbeat?: string | null
           last_processed_at?: string | null
+          max_retries?: number
           processed_count?: number
           processing_metadata?: Json | null
           processing_worker_id?: string | null
           recipient_filter?: Json
+          retry_count?: number
           started_at?: string | null
           status?: string
           subject: string
@@ -146,10 +150,12 @@ export type Database = {
           id?: string
           last_heartbeat?: string | null
           last_processed_at?: string | null
+          max_retries?: number
           processed_count?: number
           processing_metadata?: Json | null
           processing_worker_id?: string | null
           recipient_filter?: Json
+          retry_count?: number
           started_at?: string | null
           status?: string
           subject?: string

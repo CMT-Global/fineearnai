@@ -22,10 +22,10 @@ Deno.serve(async (req) => {
     // Find jobs that are stuck in processing (last_heartbeat > 10 minutes ago)
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     
-    // PHASE 4: Include processing_metadata to track reset count
+    // PHASE 5: Include retry_count and max_retries for retry limit tracking
     const { data: stuckJobs, error: fetchError } = await supabase
       .from("bulk_email_jobs")
-      .select("id, batch_id, processing_worker_id, last_heartbeat, processed_count, total_recipients, processing_metadata")
+      .select("id, batch_id, processing_worker_id, last_heartbeat, processed_count, total_recipients, processing_metadata, retry_count, max_retries")
       .eq("status", "processing")
       .not("last_heartbeat", "is", null)
       .lt("last_heartbeat", tenMinutesAgo);
@@ -52,33 +52,36 @@ Deno.serve(async (req) => {
     
     console.log(`⚠️  [Job Monitor] Found ${stuckJobs.length} stuck job(s)`);
     
-    // PHASE 4: Reset each stuck job with enhanced tracking
+    // PHASE 5: Reset each stuck job with retry limit tracking
     const resetResults = [];
-    const MAX_RESETS = 3;
     
     for (const job of stuckJobs) {
-      const currentResetCount = (job.processing_metadata?.reset_count || 0);
+      // PHASE 5 FIX: Use retry_count column instead of metadata reset_count
+      const retryCount = job.retry_count || 0;
+      const maxRetries = job.max_retries || 3;
       const resetHistory = job.processing_metadata?.reset_history || [];
       
       console.log(`🔄 [Job Monitor] Processing stuck job ${job.id} (worker: ${job.processing_worker_id})`);
       console.log(`   Last heartbeat: ${job.last_heartbeat}`);
       console.log(`   Progress: ${job.processed_count}/${job.total_recipients}`);
-      console.log(`   Reset count: ${currentResetCount}/${MAX_RESETS}`);
+      console.log(`   Retry count: ${retryCount}/${maxRetries}`);
       
-      // PHASE 4: Check if job has been reset too many times
-      if (currentResetCount >= MAX_RESETS) {
-        console.error(`❌ [Job Monitor] Job ${job.id} has been reset ${currentResetCount} times. Marking as FAILED.`);
+      // PHASE 5 FIX: Check retry limit before resetting
+      if (retryCount >= maxRetries) {
+        console.error(`❌ [Job Monitor] Job ${job.id} exceeded retry limit (${retryCount}/${maxRetries}). Marking as PERMANENTLY FAILED.`);
         
         const { error: failError } = await supabase
           .from("bulk_email_jobs")
           .update({
             status: "failed",
             completed_at: new Date().toISOString(),
-            error_message: `Job failed after ${MAX_RESETS} automatic resets. Manual intervention required. Last worker: ${job.processing_worker_id}. Progress: ${job.processed_count}/${job.total_recipients}`,
+            processing_worker_id: null,
+            last_heartbeat: null,
+            error_message: `Job exceeded maximum retry limit (${maxRetries} attempts) after repeated stalling. Last worker: ${job.processing_worker_id}. Progress: ${job.processed_count}/${job.total_recipients}`,
             processing_metadata: {
               ...job.processing_metadata,
-              reset_count: currentResetCount,
-              permanently_failed_at: new Date().toISOString(),
+              permanently_failed_reason: 'retry_limit_exceeded',
+              final_retry_count: retryCount,
               final_worker_id: job.processing_worker_id,
               final_progress: `${job.processed_count}/${job.total_recipients}`,
             },
@@ -95,23 +98,23 @@ Deno.serve(async (req) => {
             error: failError.message,
           });
         } else {
-          console.log(`✅ [Job Monitor] Job ${job.id} marked as FAILED after ${MAX_RESETS} resets`);
+          console.log(`✅ [Job Monitor] Job ${job.id} marked as PERMANENTLY FAILED after ${retryCount} retries`);
           resetResults.push({
             job_id: job.id,
             batch_id: job.batch_id,
             action: "marked_failed",
             success: true,
-            reset_count: currentResetCount,
-            reason: `Exceeded maximum reset attempts (${MAX_RESETS})`,
+            retry_count: retryCount,
+            reason: `Exceeded maximum retry limit (${maxRetries})`,
           });
         }
         continue;
       }
       
-      // PHASE 4: Normal reset with enhanced metadata tracking
-      const newResetCount = currentResetCount + 1;
+      // PHASE 5 FIX: Increment retry_count and reset to 'queued'
+      const newRetryCount = retryCount + 1;
       const resetEntry = {
-        reset_number: newResetCount,
+        retry_number: newRetryCount,
         reset_at: new Date().toISOString(),
         stuck_worker_id: job.processing_worker_id,
         stuck_since: job.last_heartbeat,
@@ -120,21 +123,21 @@ Deno.serve(async (req) => {
         minutes_stuck: Math.round((Date.now() - new Date(job.last_heartbeat).getTime()) / 1000 / 60),
       };
       
-      // Add warning if approaching max resets
-      if (newResetCount >= 2) {
-        console.warn(`⚠️  [Job Monitor] Job ${job.id} stuck for ${newResetCount} time. Approaching max resets (${MAX_RESETS}).`);
+      // Add warning if approaching max retries
+      if (newRetryCount >= 2) {
+        console.warn(`⚠️  [Job Monitor] Job ${job.id} stuck for ${newRetryCount} time. Approaching max retries (${maxRetries}).`);
       }
       
       const { error: resetError } = await supabase
         .from("bulk_email_jobs")
         .update({
           status: "queued",
+          retry_count: newRetryCount,
           processing_worker_id: null,
           last_heartbeat: null,
-          error_message: `Job was stuck and automatically reset (attempt ${newResetCount}/${MAX_RESETS}). Last worker: ${job.processing_worker_id}. Stuck since: ${job.last_heartbeat}. Progress: ${job.processed_count}/${job.total_recipients}`,
+          error_message: `Job was stuck and automatically reset (retry ${newRetryCount}/${maxRetries}). Last worker: ${job.processing_worker_id}. Stuck since: ${job.last_heartbeat}. Progress: ${job.processed_count}/${job.total_recipients}`,
           processing_metadata: {
             ...job.processing_metadata,
-            reset_count: newResetCount,
             last_reset_at: new Date().toISOString(),
             reset_history: [...resetHistory, resetEntry],
           },
@@ -151,13 +154,13 @@ Deno.serve(async (req) => {
           error: resetError.message,
         });
       } else {
-        console.log(`✅ [Job Monitor] Successfully reset job ${job.id} (reset ${newResetCount}/${MAX_RESETS})`);
+        console.log(`✅ [Job Monitor] Successfully reset job ${job.id} (retry ${newRetryCount}/${maxRetries})`);
         resetResults.push({
           job_id: job.id,
           batch_id: job.batch_id,
           action: "reset",
           success: true,
-          reset_count: newResetCount,
+          retry_count: newRetryCount,
           processed_count: job.processed_count,
           total_recipients: job.total_recipients,
           minutes_stuck: resetEntry.minutes_stuck,

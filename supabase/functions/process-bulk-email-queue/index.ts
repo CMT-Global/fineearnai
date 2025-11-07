@@ -123,6 +123,46 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`📧 [Queue Processor] Processing job: ${job.id} (Batch: ${job.batch_id})`);
     console.log(`📊 [Queue Processor] Progress: ${job.processed_count}/${job.total_recipients}`);
 
+    // PHASE 5 FIX: Check retry limit before processing
+    const retryCount = job.retry_count || 0;
+    const maxRetries = job.max_retries || 3;
+    console.log(`🔄 [Queue Processor] Retry status: ${retryCount}/${maxRetries}`);
+
+    if (retryCount >= maxRetries) {
+      console.error(`❌ [Queue Processor] Job ${job.id} exceeded retry limit (${retryCount}/${maxRetries})`);
+      
+      // Mark as permanently failed
+      await supabase
+        .from('bulk_email_jobs')
+        .update({
+          status: 'failed',
+          error_message: `Job exceeded maximum retry limit (${maxRetries} attempts)`,
+          completed_at: new Date().toISOString(),
+          processing_worker_id: null,
+          last_heartbeat: null,
+          processing_metadata: {
+            ...job.processing_metadata,
+            retry_limit_exceeded: true,
+            final_retry_count: retryCount
+          }
+        })
+        .eq('id', job.id);
+
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          message: `Job ${job.id} permanently failed after ${retryCount} retries`,
+          job_id: job.id,
+          retry_count: retryCount,
+          max_retries: maxRetries
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
     // STEP 2: Mark job as processing with worker ID and heartbeat
     if (job.status === "queued") {
       const { error: updateError } = await supabase
