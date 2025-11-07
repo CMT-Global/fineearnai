@@ -2246,6 +2246,14 @@ export type Database = {
           total_referrals: number
         }[]
       }
+      get_referral_stats_overview: {
+        Args: never
+        Returns: {
+          daily_breakdown: Json
+          last_7days_count: number
+          today_count: number
+        }[]
+      }
       get_referrals_with_details: {
         Args: { p_limit?: number; p_offset?: number; p_referrer_id: string }
         Returns: {
