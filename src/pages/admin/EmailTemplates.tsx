@@ -93,6 +93,22 @@ const TEMPLATE_TYPES = [
     variables: ["username", "old_email", "new_email", "confirmation_link", "token_hash"]
   },
   
+  // Email Verification
+  {
+    value: "email_verification_otp",
+    label: "Email Verification OTP",
+    description: "OTP code sent for email verification",
+    variables: ["username", "otp_code", "expiry_minutes"]
+  },
+  
+  // Account Deletion
+  {
+    value: "account_deletion_otp",
+    label: "Account Deletion OTP",
+    description: "OTP code sent when user requests to delete their account",
+    variables: ["username", "otp_code", "expiry_minutes"]
+  },
+  
   // Custom
   {
     value: "custom",
@@ -178,7 +194,11 @@ const EmailTemplates = () => {
       token_hash: "abc123def456",
       redirect_to: "https://fineearn.com/dashboard",
       old_email: "old.email@example.com",
-      new_email: "new.email@example.com"
+      new_email: "new.email@example.com",
+      
+      // OTP variables
+      otp_code: "123456",
+      expiry_minutes: "15"
     };
 
     let populatedContent = content;
