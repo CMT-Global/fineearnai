@@ -109,8 +109,13 @@ export const Last7DaysActivityTable = () => {
               <TableCell className="text-right tabular-nums">
                 {formatNumber(day.new_registrations)}
               </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatNumber(day.referred_users)}
+              <TableCell className="text-right">
+                <div className="flex flex-col items-end">
+                  <span className="font-medium tabular-nums">{formatNumber(day.referred_users)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({calculatePercentage(day.referred_users, day.new_registrations)})
+                  </span>
+                </div>
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatNumber(day.deposits_count)}
