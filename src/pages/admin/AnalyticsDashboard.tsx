@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
 import { ComparisonPresetSelector, type ComparisonPreset } from "@/components/admin/ComparisonPresetSelector";
+import { InsightsSummaryCard } from "@/components/admin/InsightsSummaryCard";
 
 const StatCard = ({ 
   title, 
@@ -145,6 +146,9 @@ export default function AdminAnalyticsDashboard() {
 
         {!isLoading && analytics && (
           <>
+            {/* Insights Summary Card */}
+            <InsightsSummaryCard analytics={analytics} dateRange={dateRange} />
+
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
