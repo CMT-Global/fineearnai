@@ -33,6 +33,11 @@ const getRankBadgeVariant = (rank: number): "default" | "secondary" | "outline" 
 };
 
 export const TopReferrersCard = ({ data, dateRange }: TopReferrersCardProps) => {
+  // Calculate number of days in range
+  const daysDiff = Math.round(
+    (new Date(dateRange.endDate).getTime() - new Date(dateRange.startDate).getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1; // +1 to include both start and end dates
+
   return (
     <Card>
       <CardHeader>
@@ -42,7 +47,7 @@ export const TopReferrersCard = ({ data, dateRange }: TopReferrersCardProps) => 
             Top 20 Referrers
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")}
+            {daysDiff} {daysDiff === 1 ? 'Day' : 'Days'} ({format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")})
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">

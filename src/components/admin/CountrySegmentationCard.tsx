@@ -18,6 +18,11 @@ interface CountrySegmentationCardProps {
 }
 
 export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentationCardProps) => {
+  // Calculate number of days in range
+  const daysDiff = Math.round(
+    (new Date(dateRange.endDate).getTime() - new Date(dateRange.startDate).getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1; // +1 to include both start and end dates
+
   // Sort by user_count descending and add rank (1-20)
   const rankedData = [...data]
     .sort((a, b) => b.user_count - a.user_count)
@@ -38,7 +43,7 @@ export const CountrySegmentationCard = ({ data, dateRange }: CountrySegmentation
             User Segmentation by Country
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")}
+            {daysDiff} {daysDiff === 1 ? 'Day' : 'Days'} ({format(new Date(dateRange.startDate), "MMM dd")} - {format(new Date(dateRange.endDate), "MMM dd")})
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
