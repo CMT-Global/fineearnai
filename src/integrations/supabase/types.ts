@@ -2303,6 +2303,15 @@ export type Database = {
         }[]
       }
       get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }
+      get_user_growth_stats: {
+        Args: never
+        Returns: {
+          daily_breakdown: Json
+          last_7days_count: number
+          today_count: number
+          yesterday_count: number
+        }[]
+      }
       get_username_by_referral_code: {
         Args: { p_referral_code: string }
         Returns: string
