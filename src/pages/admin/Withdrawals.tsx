@@ -38,6 +38,8 @@ interface WithdrawalRequest {
   profiles?: {
     username: string;
     email: string;
+    membership_plan: string;
+    registration_country_name: string | null;
   };
 }
 
@@ -101,7 +103,9 @@ export default function Withdrawals() {
           *,
           profiles (
             username,
-            email
+            email,
+            membership_plan,
+            registration_country_name
           )
         `)
         .order("created_at", { ascending: false });
