@@ -179,59 +179,6 @@ export default function AdminAnalyticsDashboard() {
                 prefix="$"
               />
             </div>
-
-            {/* 7-Day Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    New Users (7 Days)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.userGrowth?.last_7days_count || 0}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Deposit Volume (7 Days)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${(analytics.deposits?.last_7days_volume || 0).toLocaleString()}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Referrals (7 Days)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.referrals?.last_7days_count || 0}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Withdrawals (7 Days)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${(analytics.withdrawals?.total_volume || 0).toLocaleString()}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Charts */}
             <div className="grid gap-4 md:grid-cols-2">
               {/* User Growth Chart */}
