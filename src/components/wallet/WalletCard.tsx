@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles, HelpCircle } from "lucide-react";
@@ -151,12 +152,37 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [cpayAmount, setCpayAmount] = useState(0);
   const [cpayCurrency, setCpayCurrency] = useState("");
   
+  // PHASE 3: Scroll indicator state for withdrawal dialog
+  const [showTopShadow, setShowTopShadow] = useState(false);
+  const [showBottomShadow, setShowBottomShadow] = useState(false);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+  
   const { data: validation } = useWithdrawalValidation();
   const { convertAmount, userCurrency, exchangeRate } = useCurrencyConversion();
 
   useEffect(() => {
     loadPaymentProcessors();
   }, []);
+
+  // PHASE 3: Initialize scroll state when withdrawal dialog opens
+  useEffect(() => {
+    if (withdrawDialogOpen && scrollViewportRef.current) {
+      const viewport = scrollViewportRef.current;
+      const { scrollHeight, clientHeight } = viewport;
+      setShowTopShadow(false);
+      setShowBottomShadow(scrollHeight > clientHeight);
+    }
+  }, [withdrawDialogOpen]);
+
+  // PHASE 3: Scroll event handler for withdrawal dialog
+  const handleScrollInWithdrawDialog = () => {
+    const viewport = scrollViewportRef.current;
+    if (!viewport) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = viewport;
+    setShowTopShadow(scrollTop > 10);
+    setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
+  };
 
   const loadPaymentProcessors = async () => {
     try {
@@ -861,8 +887,21 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   </DialogDescription>
                 </DialogHeader>
 
-                {/* Scrollable Content Area */}
-                <ScrollArea className="max-h-[58vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] flex-1">
+                {/* Scrollable Content Area with Shadow Indicators */}
+                <div className="relative flex-1 overflow-hidden">
+                  {/* Top shadow gradient */}
+                  <div 
+                    className={cn(
+                      "absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent pointer-events-none z-10 transition-opacity duration-200",
+                      showTopShadow ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  
+                  <ScrollArea 
+                    className="max-h-[58vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] h-full"
+                    ref={scrollViewportRef}
+                    onScrollCapture={handleScrollInWithdrawDialog}
+                  >
                   <div className="p-3 sm:p-4 md:p-6 space-y-4">
                     {/* PHASE 5.d: Email Verification Alert */}
                     {!isAdmin && profile && !profile.email_verified && (
@@ -1161,7 +1200,16 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       />
                     </div>
                   </div>
-                </ScrollArea>
+                  </ScrollArea>
+                  
+                  {/* Bottom shadow gradient */}
+                  <div 
+                    className={cn(
+                      "absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none z-10 transition-opacity duration-200",
+                      showBottomShadow ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                </div>
 
                 {/* Fixed Footer with Withdrawal Button */}
                 <div className="p-3 sm:p-4 md:p-6 border-t bg-background">
