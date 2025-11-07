@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Calendar, DollarSign, Users, Target } from "lucide-react";
+import { TrendingUp, Calendar, DollarSign, Users, Target, ArrowDownCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { AdminAnalyticsData } from "@/hooks/useAdminAnalytics";
 
@@ -20,18 +20,25 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
   const peakReferralDay = analytics.referrals?.daily_breakdown
     .reduce((max, day) => (day.count > max.count ? day : max), { date: "", count: 0 });
   
-  const peakUpgradeDay = analytics.planUpgrades?.daily_breakdown
+  const peakWithdrawalDay = analytics.withdrawals?.daily_breakdown
     .reduce((max, day) => ((day.volume || 0) > (max.volume || 0) ? day : max), { date: "", volume: 0 });
 
-  // Calculate averages
+  // Calculate daily averages
   const daysCount = analytics.userGrowth?.daily_breakdown.length || 1;
   const avgDailyUsers = Math.round((analytics.userGrowth?.last_7days_count || 0) / daysCount);
   const avgDailyDeposits = Math.round((analytics.deposits?.last_7days_volume || 0) / daysCount);
   const avgDailyReferrals = Math.round((analytics.referrals?.last_7days_count || 0) / daysCount);
-  const avgDailyUpgrades = Math.round((analytics.planUpgrades?.last_7days_volume || 0) / daysCount);
+  const avgDailyWithdrawals = Math.round((analytics.withdrawals?.total_volume || 0) / daysCount);
+
+  // Calculate weekly averages (daily average * 7)
+  const avgWeeklyUsers = Math.round(avgDailyUsers * 7);
+  const avgWeeklyDeposits = Math.round(avgDailyDeposits * 7);
+  const avgWeeklyReferrals = Math.round(avgDailyReferrals * 7);
+  const avgWeeklyWithdrawals = Math.round(avgDailyWithdrawals * 7);
 
   // Calculate totals
-  const totalRevenue = (analytics.deposits?.last_7days_volume || 0) + (analytics.planUpgrades?.last_7days_volume || 0);
+  const totalDeposits = analytics.deposits?.last_7days_volume || 0;
+  const totalWithdrawals = analytics.withdrawals?.total_volume || 0;
 
   const InsightItem = ({ 
     icon: Icon, 
@@ -89,28 +96,28 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
               icon={Users}
               label="Most New Users"
               value={`${peakUserDay?.count || 0} users`}
-              subtext={peakUserDay?.date ? format(new Date(peakUserDay.date), "MMM dd, yyyy") : "N/A"}
+              subtext={peakUserDay?.date ? format(new Date(peakUserDay.date), "EEE, MMM dd, yyyy") : "N/A"}
               color="success"
             />
             <InsightItem
               icon={DollarSign}
               label="Highest Deposits"
               value={`$${(peakDepositDay?.volume || 0).toLocaleString()}`}
-              subtext={peakDepositDay?.date ? format(new Date(peakDepositDay.date), "MMM dd, yyyy") : "N/A"}
+              subtext={peakDepositDay?.date ? format(new Date(peakDepositDay.date), "EEE, MMM dd, yyyy") : "N/A"}
               color="success"
             />
             <InsightItem
               icon={Users}
               label="Most Referrals"
               value={`${peakReferralDay?.count || 0} referrals`}
-              subtext={peakReferralDay?.date ? format(new Date(peakReferralDay.date), "MMM dd, yyyy") : "N/A"}
+              subtext={peakReferralDay?.date ? format(new Date(peakReferralDay.date), "EEE, MMM dd, yyyy") : "N/A"}
               color="success"
             />
             <InsightItem
-              icon={DollarSign}
-              label="Top Upgrade Day"
-              value={`$${(peakUpgradeDay?.volume || 0).toLocaleString()}`}
-              subtext={peakUpgradeDay?.date ? format(new Date(peakUpgradeDay.date), "MMM dd, yyyy") : "N/A"}
+              icon={ArrowDownCircle}
+              label="Highest Withdrawals"
+              value={`$${(peakWithdrawalDay?.volume || 0).toLocaleString()}`}
+              subtext={peakWithdrawalDay?.date ? format(new Date(peakWithdrawalDay.date), "EEE, MMM dd, yyyy") : "N/A"}
               color="success"
             />
           </div>
@@ -139,9 +146,39 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
               value={`${avgDailyReferrals}`}
             />
             <InsightItem
+              icon={ArrowDownCircle}
+              label="Avg Withdrawals/Day"
+              value={`$${avgDailyWithdrawals.toLocaleString()}`}
+            />
+          </div>
+        </div>
+
+        {/* Weekly Averages */}
+        <div>
+          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-blue-600" />
+            Weekly Averages
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <InsightItem
+              icon={Users}
+              label="Avg New Users/Week"
+              value={`${avgWeeklyUsers}`}
+            />
+            <InsightItem
               icon={DollarSign}
-              label="Avg Upgrades/Day"
-              value={`$${avgDailyUpgrades.toLocaleString()}`}
+              label="Avg Deposits/Week"
+              value={`$${avgWeeklyDeposits.toLocaleString()}`}
+            />
+            <InsightItem
+              icon={Users}
+              label="Avg Referrals/Week"
+              value={`${avgWeeklyReferrals}`}
+            />
+            <InsightItem
+              icon={ArrowDownCircle}
+              label="Avg Withdrawals/Week"
+              value={`$${avgWeeklyWithdrawals.toLocaleString()}`}
             />
           </div>
         </div>
@@ -152,7 +189,7 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
             <DollarSign className="h-4 w-4 text-amber-600" />
             Period Summary
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <InsightItem
               icon={Users}
               label="Total New Users"
@@ -161,9 +198,16 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
             />
             <InsightItem
               icon={DollarSign}
-              label="Total Revenue"
-              value={`$${totalRevenue.toLocaleString()}`}
-              subtext={`Deposits + Upgrades`}
+              label="Total Deposits"
+              value={`$${totalDeposits.toLocaleString()}`}
+              subtext={`${daysCount} days`}
+              color="success"
+            />
+            <InsightItem
+              icon={ArrowDownCircle}
+              label="Total Withdrawals"
+              value={`$${totalWithdrawals.toLocaleString()}`}
+              subtext={`${daysCount} days`}
               color="warning"
             />
             <InsightItem
