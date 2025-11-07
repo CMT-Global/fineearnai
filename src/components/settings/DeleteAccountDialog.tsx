@@ -15,9 +15,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Loader2, ShieldAlert, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, ShieldAlert, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -326,7 +332,58 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 <p className="text-xs text-muted-foreground text-center">
                   Code expires in 15 minutes
                 </p>
+                
+                {/* Resend Code Button */}
+                <div className="flex justify-center pt-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSendOtp}
+                            disabled={sendingOtp || !!rateLimitedUntil || loading}
+                            className="text-xs"
+                          >
+                            {sendingOtp ? (
+                              <>
+                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="mr-1 h-3 w-3" />
+                                Resend Code
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {rateLimitedUntil && (
+                        <TooltipContent>
+                          <p className="text-xs">
+                            Too many requests. Try again in {countdown}
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
+
+              {rateLimitedUntil && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    <strong>Too many verification attempts.</strong>
+                    <p className="mt-1">
+                      Please try again in <span className="font-mono font-semibold">{countdown}</span>
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
