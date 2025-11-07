@@ -27,6 +27,7 @@ interface Deposit {
   profiles: {
     username: string;
     email: string;
+    registration_country_name: string | null;
   };
 }
 
@@ -93,7 +94,8 @@ const Deposits = () => {
           created_at,
           profiles:user_id (
             username,
-            email
+            email,
+            registration_country_name
           )
         `);
 
