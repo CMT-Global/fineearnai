@@ -705,6 +705,18 @@ export default function Withdrawals() {
                   <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
+                        <p className="text-sm text-muted-foreground">Membership Plan</p>
+                        <Badge variant="outline" className="mt-1">
+                          {withdrawal.profiles?.membership_plan || 'free'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Country</p>
+                        <Badge variant="outline" className="mt-1">
+                          {withdrawal.profiles?.registration_country_name || 'N/A'}
+                        </Badge>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Amount</p>
                         <p className="text-lg font-semibold">{formatCurrency(withdrawal.amount)}</p>
                       </div>
