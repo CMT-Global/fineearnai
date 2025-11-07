@@ -2301,6 +2301,7 @@ export type Database = {
               daily_breakdown: Json
               last_7days_count: number
               today_count: number
+              yesterday_count: number
             }[]
           }
         | {

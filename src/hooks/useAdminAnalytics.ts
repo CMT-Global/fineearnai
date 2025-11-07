@@ -26,6 +26,7 @@ export interface DepositStats {
 
 export interface ReferralStats {
   today_count: number;
+  yesterday_count: number;
   last_7days_count: number;
   daily_breakdown: DailyBreakdown[];
 }
@@ -138,6 +139,7 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
       const referrals: ReferralStats | null = referralsRes.data?.[0]
         ? {
             today_count: referralsRes.data[0].today_count,
+            yesterday_count: referralsRes.data[0].yesterday_count,
             last_7days_count: referralsRes.data[0].last_7days_count,
             daily_breakdown: (referralsRes.data[0].daily_breakdown as any[]) || [],
           }
