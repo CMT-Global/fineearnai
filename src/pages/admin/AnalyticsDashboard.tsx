@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -92,8 +91,7 @@ export default function AdminAnalyticsDashboard() {
   const { data: analytics, isLoading, error } = useAdminAnalytics();
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         {/* Page Header */}
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
@@ -325,7 +323,6 @@ export default function AdminAnalyticsDashboard() {
             </div>
           </>
         )}
-      </div>
-    </AdminLayout>
+    </div>
   );
 }
