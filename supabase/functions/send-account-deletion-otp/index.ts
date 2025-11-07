@@ -165,7 +165,7 @@ serve(async (req) => {
       'send-template-email',
       {
         body: {
-          to: userEmail,
+          email: userEmail,
           template_type: 'account_deletion_otp',
           variables: {
             username: profile.username || 'User',
