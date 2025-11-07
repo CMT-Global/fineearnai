@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subDays, differenceInDays, parseISO } from "date-fns";
 
 export interface DailyBreakdown {
   date: string;
@@ -41,24 +40,11 @@ export interface PlanUpgradeStats {
   daily_breakdown: DailyBreakdown[];
 }
 
-export interface PeriodComparison {
-  current: number;
-  previous: number;
-  change: number;
-  changePercent: number;
-}
-
 export interface AdminAnalyticsData {
   userGrowth: UserGrowthStats | null;
   deposits: DepositStats | null;
   referrals: ReferralStats | null;
   planUpgrades: PlanUpgradeStats | null;
-  comparisons?: {
-    userCount: PeriodComparison;
-    depositVolume: PeriodComparison;
-    referralCount: PeriodComparison;
-    upgradeRevenue: PeriodComparison;
-  };
 }
 
 export interface DateRange {
@@ -66,60 +52,23 @@ export interface DateRange {
   endDate: string;   // ISO date string (YYYY-MM-DD)
 }
 
-const calculateComparison = (current: number, previous: number): PeriodComparison => {
-  const change = current - previous;
-  const changePercent = previous > 0 ? ((change / previous) * 100) : (current > 0 ? 100 : 0);
-  
-  return {
-    current,
-    previous,
-    change,
-    changePercent: parseFloat(changePercent.toFixed(2))
-  };
-};
-
 export const useAdminAnalytics = (dateRange?: DateRange) => {
   return useQuery({
     queryKey: ["admin-analytics", dateRange],
     queryFn: async () => {
-      // Prepare current period parameters
-      const currentParams = dateRange ? {
+      // Prepare date parameters
+      const params = dateRange ? {
         p_start_date: dateRange.startDate,
         p_end_date: dateRange.endDate
       } : {};
 
-      // Calculate previous period parameters for comparison
-      let previousParams = {};
-      if (dateRange) {
-        const startDate = parseISO(dateRange.startDate);
-        const endDate = parseISO(dateRange.endDate);
-        const periodDays = differenceInDays(endDate, startDate);
-        
-        const previousEndDate = subDays(startDate, 1);
-        const previousStartDate = subDays(previousEndDate, periodDays);
-        
-        previousParams = {
-          p_start_date: previousStartDate.toISOString().split('T')[0],
-          p_end_date: previousEndDate.toISOString().split('T')[0]
-        };
-      }
-
-      // Fetch current period data
+      // Fetch all analytics data in parallel
       const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes] = await Promise.all([
-        supabase.rpc("get_user_growth_stats" as any, currentParams),
-        supabase.rpc("get_deposit_stats" as any, currentParams),
-        supabase.rpc("get_referral_stats_overview" as any, currentParams),
-        supabase.rpc("get_plan_upgrade_stats", currentParams),
+        supabase.rpc("get_user_growth_stats" as any, params),
+        supabase.rpc("get_deposit_stats" as any, params),
+        supabase.rpc("get_referral_stats_overview" as any, params),
+        supabase.rpc("get_plan_upgrade_stats", params),
       ]);
-
-      // Fetch previous period data for comparison
-      const [prevUserGrowthRes, prevDepositsRes, prevReferralsRes, prevPlanUpgradesRes] = await Promise.all([
-        supabase.rpc("get_user_growth_stats" as any, previousParams),
-        supabase.rpc("get_deposit_stats" as any, previousParams),
-        supabase.rpc("get_referral_stats_overview" as any, previousParams),
-        supabase.rpc("get_plan_upgrade_stats", previousParams),
-      ]);
-
 
       // Check for errors
       if (userGrowthRes.error) throw userGrowthRes.error;
@@ -169,32 +118,11 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
           }
         : null;
 
-      // Calculate period comparisons
-      const comparisons = dateRange ? {
-        userCount: calculateComparison(
-          userGrowth?.last_7days_count || 0,
-          prevUserGrowthRes.data?.[0]?.last_7days_count || 0
-        ),
-        depositVolume: calculateComparison(
-          deposits?.last_7days_volume || 0,
-          prevDepositsRes.data?.[0]?.last_7days_volume || 0
-        ),
-        referralCount: calculateComparison(
-          referrals?.last_7days_count || 0,
-          prevReferralsRes.data?.[0]?.last_7days_count || 0
-        ),
-        upgradeRevenue: calculateComparison(
-          planUpgrades?.last_7days_volume || 0,
-          prevPlanUpgradesRes.data?.[0]?.last_7days_volume || 0
-        ),
-      } : undefined;
-
       const analyticsData: AdminAnalyticsData = {
         userGrowth,
         deposits,
         referrals,
         planUpgrades,
-        comparisons,
       };
 
       return analyticsData;
