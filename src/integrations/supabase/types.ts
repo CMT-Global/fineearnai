@@ -2361,6 +2361,17 @@ export type Database = {
         Args: { p_referral_code: string }
         Returns: string
       }
+      get_withdrawal_stats: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          daily_breakdown: Json
+          today_count: number
+          today_volume: number
+          total_volume: number
+          yesterday_count: number
+          yesterday_volume: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
