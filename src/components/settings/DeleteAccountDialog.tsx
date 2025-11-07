@@ -62,22 +62,26 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
         body: {}
       });
 
-      // 🔍 DIAGNOSTIC LOGGING - Phase 1
+      // 🔍 DIAGNOSTIC LOGGING
       console.log('[DELETE-ACCOUNT] Response received:', {
         hasError: !!error,
         hasData: !!data,
         dataContent: data,
-        errorContent: error,
-        errorType: error?.constructor?.name
+        errorContent: error
       });
 
+      // Handle Supabase client errors (network, timeout, etc.)
       if (error) {
-        console.error('[DELETE-ACCOUNT] Supabase functions.invoke error:', error);
-        throw error;
+        console.error('[DELETE-ACCOUNT] Function invocation error:', error);
+        toast.error("Failed to send verification code", {
+          description: "Network error. Please try again."
+        });
+        return;
       }
 
+      // Handle application-level errors from backend
       if (data?.error) {
-        console.warn('[DELETE-ACCOUNT] Application error in response:', data.error);
+        console.warn('[DELETE-ACCOUNT] Application error:', data.error);
         if (data.rate_limited) {
           toast.error("Too many requests", {
             description: data.error
@@ -88,33 +92,18 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
         return;
       }
 
-      // ✅ EXPLICIT SUCCESS CHECK
-      if (data?.success === true) {
-        console.log('[DELETE-ACCOUNT] OTP sent successfully!');
-        toast.success("Verification code sent!", {
-          description: "Check your email for the 6-digit code"
-        });
-        setStep(2);
-        return;
-      }
-
-      // ⚠️ UNEXPECTED RESPONSE FORMAT
-      console.warn('[DELETE-ACCOUNT] Unexpected response format:', data);
+      // ✅ SUCCESS - Backend returns { success: true, message: '...', expires_at: '...' }
+      console.log('[DELETE-ACCOUNT] OTP sent successfully');
       toast.success("Verification code sent!", {
         description: "Check your email for the 6-digit code"
       });
       setStep(2);
       
     } catch (error: any) {
-      console.error("[DELETE-ACCOUNT] Caught error:", {
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
-        fullError: error
-      });
-      
+      // This should rarely be hit - only for unexpected exceptions
+      console.error("[DELETE-ACCOUNT] Unexpected error:", error);
       toast.error("Failed to send verification code", {
-        description: error.message || "Please try again"
+        description: "An unexpected error occurred"
       });
     } finally {
       setSendingOtp(false);
