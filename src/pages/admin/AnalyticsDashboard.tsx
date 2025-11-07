@@ -49,7 +49,9 @@ const StatCard = ({
             <span className={isPositive ? "text-green-500" : "text-red-500"}>
               {Math.abs(percentChange).toFixed(1)}%
             </span>
-            <span className="ml-1">vs yesterday</span>
+            <span className="ml-1">
+              vs yesterday <span className="text-[10px]">({prefix}{previousValue.toLocaleString()})</span>
+            </span>
           </div>
         )}
       </CardContent>
@@ -167,8 +169,9 @@ export default function AdminAnalyticsDashboard() {
                 prefix="$"
               />
               <StatCard
-                title="Referrals Today"
+                title="New Referrals Today"
                 value={analytics.referrals?.today_count || 0}
+                previousValue={analytics.referrals?.yesterday_count || 0}
                 icon={UserPlus}
               />
               <StatCard
