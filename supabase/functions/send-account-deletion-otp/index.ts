@@ -57,23 +57,14 @@ serve(async (req) => {
     }
 
     const userId = user.id;
-    const userEmail = user.email;
+    let userEmail = user.email || null;
 
-    console.log('[SEND-DELETION-OTP] Generating OTP for user:', userId, 'email:', userEmail);
+    console.log('[SEND-DELETION-OTP] Generating OTP for user:', userId, 'email from JWT:', userEmail);
 
-    // Validate email exists
-    if (!userEmail) {
-      console.error('[SEND-DELETION-OTP] No email found for user:', userId);
-      return new Response(
-        JSON.stringify({ error: 'No email address found for your account' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get user profile for username
+    // Get user profile for username AND email fallback
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('username')
+      .select('email, username')
       .eq('id', userId)
       .single();
 
@@ -84,6 +75,20 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Apply fallback pattern (CRITICAL LINE)
+    userEmail = userEmail || profile.email;
+
+    // Validate email exists AFTER fallback
+    if (!userEmail) {
+      console.error('[SEND-DELETION-OTP] No email found for user after fallback check');
+      return new Response(
+        JSON.stringify({ error: 'No email address found for your account' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[SEND-DELETION-OTP] Final email to use:', userEmail);
 
     // Rate limiting: Check for recent OTP requests (max 3 per 15 minutes)
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
