@@ -171,16 +171,18 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tasks Completed Today
+              Total Deposits
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{stats?.completedTasksToday || 0}</div>
-              <Zap className="h-8 w-8 text-green-500" />
+              <div className="text-2xl font-bold">
+                {formatCurrency(stats?.totalDeposits || 0)}
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.totalTasks || 0} total tasks
+              {stats?.totalDepositCount || 0} completed deposits
             </p>
           </CardContent>
         </Card>
@@ -188,18 +190,18 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Platform Earnings
+              Total Withdrawals
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-2xl font-bold">
-                {formatCurrency(stats?.totalEarnings || 0)}
+                {formatCurrency(stats?.totalWithdrawals || 0)}
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-500" />
+              <DollarSign className="h-8 w-8 text-red-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.totalTransactions || 0} transactions
+              {stats?.totalWithdrawalCount || 0} completed payouts
             </p>
           </CardContent>
         </Card>
