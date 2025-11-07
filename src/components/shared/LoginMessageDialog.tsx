@@ -148,9 +148,10 @@ export const LoginMessageDialog = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
         className="
-          w-[95vw] max-w-[420px] 
-          sm:w-[85vw] sm:max-w-[500px] 
-          md:w-[600px]
+          w-[96vw] max-w-[440px] 
+          sm:w-[90vw] sm:max-w-[520px] 
+          md:w-[640px] lg:w-[700px]
+          max-h-[90vh]
           p-0
           gap-0
           overflow-hidden
@@ -161,7 +162,7 @@ export const LoginMessageDialog = ({
         <div className="
           bg-gradient-to-r from-primary/10 via-primary/5 to-background
           border-b border-border/50
-          p-4 sm:p-6
+          p-3 sm:p-4 md:p-6
         ">
           <DialogHeader>
             <DialogTitle className="
@@ -178,10 +179,10 @@ export const LoginMessageDialog = ({
         </div>
 
         {/* Scrollable body content */}
-        <ScrollArea className="max-h-[60vh] sm:max-h-[70vh]">
+        <ScrollArea className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh] flex-1">
           <div 
             id="login-message-description"
-            className="p-4 sm:p-6"
+            className="p-3 sm:p-4 md:p-6"
           >
             <div 
               className="
@@ -213,7 +214,7 @@ export const LoginMessageDialog = ({
         {config.dismissible && (
           <div className="
             border-t border-border/50
-            p-4 sm:p-6
+            p-3 sm:p-4 md:p-6
             bg-muted/30
           ">
             <Button 
