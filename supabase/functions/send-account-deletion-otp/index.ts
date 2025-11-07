@@ -36,43 +36,44 @@ serve(async (req) => {
       }
     );
 
-    // Get user from JWT or request body
-    let userId: string;
-    let userEmail: string;
-
+    // Get user from JWT
     const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-      
-      if (authError || !user) {
-        console.error('[SEND-DELETION-OTP] Auth error:', authError);
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      userId = user.id;
-      userEmail = user.email || '';
-    } else {
-      const body: SendOTPRequest = await req.json();
-      if (!body.user_id || !body.email) {
-        return new Response(
-          JSON.stringify({ error: 'Missing user_id or email' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      userId = body.user_id;
-      userEmail = body.email;
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('[SEND-DELETION-OTP] Generating OTP for user:', userId);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('[SEND-DELETION-OTP] Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Check if user profile exists
+    const userId = user.id;
+    const userEmail = user.email;
+
+    console.log('[SEND-DELETION-OTP] Generating OTP for user:', userId, 'email:', userEmail);
+
+    // Validate email exists
+    if (!userEmail) {
+      console.error('[SEND-DELETION-OTP] No email found for user:', userId);
+      return new Response(
+        JSON.stringify({ error: 'No email address found for your account' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get user profile for username
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('email, email_verified, username')
+      .select('username')
       .eq('id', userId)
       .single();
 
@@ -81,14 +82,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'User profile not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const finalEmail = userEmail || profile.email;
-    if (!finalEmail) {
-      return new Response(
-        JSON.stringify({ error: 'User email not found' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -141,7 +134,7 @@ serve(async (req) => {
       .from('account_deletion_otps')
       .insert({
         user_id: userId,
-        email: finalEmail,
+        email: userEmail,
         otp_code: otpCode,
         expires_at: expiresAt.toISOString(),
         ip_address: ipAddress,
@@ -167,7 +160,7 @@ serve(async (req) => {
       'send-template-email',
       {
         body: {
-          to: finalEmail,
+          to: userEmail,
           template_type: 'account_deletion_otp',
           variables: {
             username: profile.username || 'User',
