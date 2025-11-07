@@ -190,20 +190,24 @@ export const LoginMessageDialog = ({
                 dark:prose-invert
                 max-w-none
                 text-foreground
-                [&>p]:text-foreground
-                [&>p]:leading-relaxed
-                [&>h1]:text-foreground
-                [&>h2]:text-foreground
-                [&>h3]:text-foreground
-                [&>strong]:text-foreground
+                
+                [&>*]:text-foreground
+                [&>p]:leading-relaxed [&>p]:mb-3
+                [&>h1]:text-lg [&>h1]:sm:text-xl [&>h1]:font-bold [&>h1]:mb-2
+                [&>h2]:text-base [&>h2]:sm:text-lg [&>h2]:font-semibold [&>h2]:mb-2
+                [&>h3]:text-sm [&>h3]:sm:text-base [&>h3]:font-semibold [&>h3]:mb-2
+                [&>strong]:font-semibold [&>strong]:text-foreground
                 [&>em]:text-muted-foreground
-                [&>ul]:text-foreground
-                [&>ol]:text-foreground
-                [&>a]:text-primary [&>a]:underline
+                [&>ul]:pl-4 [&>ul]:space-y-1 [&>ul]:mb-3
+                [&>ol]:pl-4 [&>ol]:space-y-1 [&>ol]:mb-3
+                [&>li]:text-sm [&>li]:sm:text-base
+                [&>a]:text-primary [&>a]:underline [&>a]:break-words
                 [&>a:hover]:text-primary/80
-                touch-manipulation
+                
                 break-words
                 overflow-wrap-anywhere
+                hyphens-auto
+                touch-manipulation
               "
               dangerouslySetInnerHTML={{ __html: config.body }}
             />
