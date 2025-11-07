@@ -29,7 +29,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/login";
+    window.location.href = "https://finearn.com";
   };
 
   return { user, session, loading, signOut };
