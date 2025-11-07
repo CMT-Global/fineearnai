@@ -38,7 +38,14 @@ interface WithdrawalRequest {
   profiles?: {
     username: string;
     email: string;
+    membership_plan: string | null;
+    registration_country_name: string | null;
   };
+  referrals?: Array<{
+    referrer: {
+      username: string;
+    } | null;
+  }>;
 }
 
 export default function Withdrawals() {
@@ -99,9 +106,16 @@ export default function Withdrawals() {
         .from("withdrawal_requests")
         .select(`
           *,
-          profiles (
+          profiles:user_id (
             username,
-            email
+            email,
+            membership_plan,
+            registration_country_name
+          ),
+          referrals!referrals_referred_id_fkey (
+            referrer:referrer_id (
+              username
+            )
           )
         `)
         .order("created_at", { ascending: false });
