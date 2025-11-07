@@ -1136,20 +1136,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         if (virtualMethod) {
                           // Method-specific placeholders for virtual methods
                           const placeholders: Record<string, string> = {
-                            'gcrypto': 'Enter your Gcrypto USDC Solana address. Log into Gcrypto, tap Wallet → USDC → Select Solana (SPL) Network → Copy Address → Paste here.',
-                            'binance': 'Enter your Binance USDC Solana address. Go to Binance → Wallet → Deposit → Search "USDC" → Select Solana Network → Copy Address → Paste here.',
-                            'coinsph': 'Enter your Coins.Ph USDC Solana address. Open Coins.Ph → Crypto Wallet → USDC → Select Solana Network → Copy Address → Paste here.',
-                            'bybit': 'Enter your ByBit USDC Solana address. Go to ByBit → Assets → Deposit → Search "USDC" → Select Solana Network → Copy Address → Paste here.',
-                            'coinbase': 'Enter your CoinBase USDC Solana address. Open CoinBase → USDC Wallet → Receive → Select Solana Network → Copy Address → Paste here.',
-                            'kucoin': 'Enter your KuCoin USDC Solana address. Go to KuCoin → Assets → Deposit → Search "USDC" → Select Solana (SPL) → Copy Address → Paste here.',
+                            'gcrypto': 'Enter your Gcrypto USDC Solana address',
+                            'binance': 'Enter your Binance USDC Solana address',
+                            'coinsph': 'Enter your Coins.Ph USDC Solana address',
+                            'bybit': 'Enter your ByBit USDC Solana address',
+                            'coinbase': 'Enter your Coinbase USDC Solana address',
+                            'kucoin': 'Enter your KuCoin USDC Solana address',
                           };
                           return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
                         }
                         
                         // Fallback to actual processor placeholder or default
                         const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                        return processor?.config?.address_placeholder || 
-                          "Enter your USDC Solana (SPL Network) address. Copy your USDC address from any exchange (Binance, Gcrypto, etc.). Make sure you select the Solana (SPL) network when copying the address. Paste it here.";
+                        return processor?.config?.address_placeholder || "Enter your wallet address";
                       })()}
                       value={accountDetails}
                       onChange={(e) => setAccountDetails(e.target.value)}
