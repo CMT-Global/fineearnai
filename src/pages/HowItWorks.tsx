@@ -489,29 +489,30 @@ const HowItWorks = () => {
 
   return (
     <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
-      <div className="container max-w-4xl mx-auto px-4 py-8">
-        {showBanner && (
-          <Alert className="mb-6 bg-blue-500/10 border-blue-500/20">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span className="text-sm text-muted-foreground">
-                Take a quick tour to learn how FineEarn works and start earning today!
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={dismissBanner}
-                className="flex-shrink-0 h-6 w-6 p-0 hover:bg-blue-500/20"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-8 px-4">
+        <div className="container max-w-4xl mx-auto">
+          {showBanner && (
+            <Alert className="mb-6 bg-blue-500/10 border-blue-500/20 shadow-sm">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">
+                  Take a quick tour to learn how FineEarn works and start earning today!
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={dismissBanner}
+                  className="flex-shrink-0 h-6 w-6 p-0 hover:bg-blue-500/20"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <Card className="shadow-xl overflow-hidden">
+          <Card className="shadow-xl overflow-hidden rounded-xl bg-card">
           {/* Colored Header Section */}
-          <div className={`${stepThemes[currentStep].bg} text-white p-6 md:p-8`}>
+          <div className={`${stepThemes[currentStep].bg} text-white p-8 md:p-10`}>
             {/* Large Icon Circle */}
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -525,7 +526,7 @@ const HowItWorks = () => {
           </div>
 
           {/* Content Section */}
-          <CardContent className="p-6 space-y-6">
+          <CardContent className="p-8 md:p-10 space-y-6 bg-card">
             <div className="mb-6">
               <Progress value={progressPercentage} className="h-2" />
               <p className="text-center text-sm text-muted-foreground mt-2">
@@ -580,6 +581,7 @@ const HowItWorks = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </PageLayout>
   );
