@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
 export const useDashboardData = (userId: string | undefined) => {
   return useQuery({
@@ -19,8 +20,12 @@ export const useDashboardData = (userId: string | undefined) => {
         .eq('name', profile.data?.membership_plan)
         .single();
       
+      // Add earner badge status to profile
+      const accountType = planData?.account_type;
+      const earnerBadge = getEarnerBadgeStatus(accountType);
+      
       return {
-        profile: profile.data,
+        profile: profile.data ? { ...profile.data, earnerBadge } : null,
         referralStats: referralStats.data?.[0],
         membershipPlan: planData
       };

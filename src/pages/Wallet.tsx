@@ -11,7 +11,8 @@ import { WalletCard } from "@/components/wallet/WalletCard";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, Crown, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Wallet as WalletIcon, Crown, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
 import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
@@ -98,6 +99,29 @@ const Wallet = () => {
 
               {/* USDC Fee Savings Banner */}
               <USDCFeeSavingsBanner variant="banner" className="mb-6" />
+
+              {/* Earner Status Banner - Unverified Users Only */}
+              {profile.earnerBadge && !profile.earnerBadge.isVerified && (
+                <Alert className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{profile.earnerBadge.icon}</span>
+                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <AlertTitle className="text-orange-900 dark:text-orange-100">
+                    {profile.earnerBadge.badgeText} - Limited Withdrawal Access
+                  </AlertTitle>
+                  <AlertDescription className="text-orange-800 dark:text-orange-200 space-y-3">
+                    <p>{profile.earnerBadge.upgradePrompt}</p>
+                    <Button 
+                      onClick={() => navigate("/plans")}
+                      className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                    >
+                      Become a Verified Earner
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Wallet Balances */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

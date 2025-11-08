@@ -22,7 +22,8 @@ import {
   AlertCircle,
   Clock,
   Settings,
-  Rocket
+  Rocket,
+  ArrowRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -169,6 +170,31 @@ const Dashboard = () => {
               <EmailVerificationBanner 
                 onVerifyClick={() => setShowEmailVerification(true)}
               />
+            </div>
+          )}
+
+          {/* Earner Status Banner - Unverified Users Only */}
+          {profile.earnerBadge && !profile.earnerBadge.isVerified && (
+            <div className="mx-4 lg:mx-8 mt-6">
+              <Alert className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{profile.earnerBadge.icon}</span>
+                  <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <AlertTitle className="text-orange-900 dark:text-orange-100 flex items-center gap-2">
+                  {profile.earnerBadge.badgeText}
+                </AlertTitle>
+                <AlertDescription className="text-orange-800 dark:text-orange-200 space-y-3">
+                  <p>{profile.earnerBadge.upgradePrompt}</p>
+                  <Button 
+                    onClick={() => navigate("/plans")}
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                  >
+                    Upgrade to Verified Earner
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ReferralCodeCard } from "@/components/referrals/ReferralCodeCard";
 import { ReferralStatsCard } from "@/components/referrals/ReferralStatsCard";
 import { ReferralQRCode } from "@/components/referrals/ReferralQRCode";
@@ -16,7 +17,7 @@ import { SocialShareButtons } from "@/components/referrals/SocialShareButtons";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
 import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
-import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import {
   Pagination,
@@ -92,6 +93,29 @@ const Referrals = () => {
             <div className="p-4 lg:p-8">
               {/* My Upline Card */}
               <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
+
+              {/* Earner Status Banner - Unverified Users Only */}
+              {profile?.earnerBadge && !profile.earnerBadge.isVerified && (
+                <Alert className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{profile.earnerBadge.icon}</span>
+                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <AlertTitle className="text-orange-900 dark:text-orange-100">
+                    {profile.earnerBadge.badgeText} - No Referral Commissions
+                  </AlertTitle>
+                  <AlertDescription className="text-orange-800 dark:text-orange-200 space-y-3">
+                    <p>{profile.earnerBadge.upgradePrompt}</p>
+                    <Button 
+                      onClick={() => navigate("/plans")}
+                      className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                    >
+                      Upgrade to Earn Commissions
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Referral Code Card - Full Width */}
               <Card className="p-6 mb-8">
