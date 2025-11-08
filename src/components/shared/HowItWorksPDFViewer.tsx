@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Download, FileText, Info } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { toast } from "sonner";
 
 export const HowItWorksPDFViewer = () => {
   const [isPrinting, setIsPrinting] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
   // Fetch the active PDF document
   const { data: pdfDocument, isLoading } = useQuery({
@@ -33,13 +34,27 @@ export const HowItWorksPDFViewer = () => {
 
     setIsPrinting(true);
     try {
-      // Create a temporary link to download the PDF
+      // Extract filename from URL
+      const filename = pdfDocument.file_url.split('/').pop()!;
+      
+      // Download PDF as blob through authenticated Supabase client
+      const { data: pdfData, error } = await supabase.storage
+        .from('how-it-works-pdfs')
+        .download(filename);
+
+      if (error) throw error;
+
+      // Create blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(pdfData);
       const link = document.createElement('a');
-      link.href = pdfDocument.file_url;
+      link.href = blobUrl;
       link.download = `how-it-works-v${pdfDocument.version}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Cleanup blob URL
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
       
       toast.success('PDF download started');
     } catch (error) {
@@ -50,12 +65,61 @@ export const HowItWorksPDFViewer = () => {
     }
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!pdfDocument?.file_url) return;
     
-    // Open PDF in new window
-    window.open(pdfDocument.file_url, '_blank');
+    try {
+      // Extract filename from URL
+      const filename = pdfDocument.file_url.split('/').pop()!;
+      
+      // Download PDF as blob through authenticated Supabase client
+      const { data: pdfData, error } = await supabase.storage
+        .from('how-it-works-pdfs')
+        .download(filename);
+
+      if (error) throw error;
+
+      // Create blob URL and open in new tab
+      const blobUrl = window.URL.createObjectURL(pdfData);
+      window.open(blobUrl, '_blank');
+      
+      // Cleanup after a delay (blob URL will persist in new tab)
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Failed to preview PDF. Please try downloading instead.');
+    }
   };
+
+  // Load PDF as blob for embedded preview
+  useEffect(() => {
+    if (!pdfDocument?.file_url) return;
+    
+    const loadPreview = async () => {
+      try {
+        const filename = pdfDocument.file_url.split('/').pop()!;
+        const { data: pdfData, error } = await supabase.storage
+          .from('how-it-works-pdfs')
+          .download(filename);
+
+        if (error) throw error;
+
+        const blobUrl = window.URL.createObjectURL(pdfData);
+        setPreviewBlobUrl(blobUrl);
+      } catch (error) {
+        console.error('Error loading preview:', error);
+      }
+    };
+    
+    loadPreview();
+    
+    // Cleanup on unmount
+    return () => {
+      if (previewBlobUrl) {
+        window.URL.revokeObjectURL(previewBlobUrl);
+      }
+    };
+  }, [pdfDocument?.file_url]);
 
   if (isLoading) {
     return (
@@ -124,7 +188,7 @@ export const HowItWorksPDFViewer = () => {
         <div className="border border-border rounded-lg overflow-hidden bg-muted/20">
           <AspectRatio ratio={16 / 9}>
             <iframe 
-              src={pdfDocument.file_url}
+              src={previewBlobUrl || pdfDocument.file_url}
               className="w-full h-full"
               title="PDF Preview"
             />

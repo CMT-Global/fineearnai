@@ -43,6 +43,7 @@ const HowItWorksPDFManager = () => {
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
   // Fetch PDF documents
   const { data: documents, isLoading } = useQuery({
@@ -169,9 +170,24 @@ const HowItWorksPDFManager = () => {
   const pendingDocs = documents?.filter(doc => doc.status === 'pending_review') || [];
   const historyDocs = documents?.filter(doc => doc.status !== 'pending_review') || [];
 
-  const handlePreview = (doc: any) => {
-    setSelectedDoc(doc);
-    setPreviewDialogOpen(true);
+  const loadPDFForPreview = async (doc: any) => {
+    try {
+      const filename = doc.file_url.split('/').pop()!;
+      const { data: pdfData, error } = await supabase.storage
+        .from('how-it-works-pdfs')
+        .download(filename);
+
+      if (error) throw error;
+
+      // Create blob URL for preview
+      const blobUrl = window.URL.createObjectURL(pdfData);
+      setPreviewBlobUrl(blobUrl);
+      setSelectedDoc(doc);
+      setPreviewDialogOpen(true);
+    } catch (error) {
+      console.error('Error loading PDF preview:', error);
+      toast.error('Failed to load PDF preview');
+    }
   };
 
   const handleReview = (doc: any) => {
@@ -272,7 +288,7 @@ const HowItWorksPDFManager = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handlePreview(doc)}
+                                onClick={() => loadPDFForPreview(doc)}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 Preview
@@ -349,7 +365,7 @@ const HowItWorksPDFManager = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handlePreview(doc)}
+                                onClick={() => loadPDFForPreview(doc)}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 Preview
@@ -461,7 +477,16 @@ const HowItWorksPDFManager = () => {
       </Dialog>
 
       {/* Preview Dialog */}
-      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+      <Dialog 
+        open={previewDialogOpen} 
+        onOpenChange={(open) => {
+          setPreviewDialogOpen(open);
+          if (!open && previewBlobUrl) {
+            window.URL.revokeObjectURL(previewBlobUrl);
+            setPreviewBlobUrl(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>PDF Preview - v{selectedDoc?.version}</DialogTitle>
@@ -471,9 +496,9 @@ const HowItWorksPDFManager = () => {
           </DialogHeader>
           
           <div className="overflow-y-auto max-h-[60vh] border rounded-lg">
-            {selectedDoc?.file_url ? (
+            {previewBlobUrl || selectedDoc?.file_url ? (
               <iframe 
-                src={selectedDoc.file_url} 
+                src={previewBlobUrl || selectedDoc.file_url} 
                 className="w-full h-[500px] border-0"
                 title="PDF Preview"
               />
