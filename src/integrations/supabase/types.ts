@@ -2531,18 +2531,32 @@ export type Database = {
         }
         Returns: Json
       }
-      process_withdrawal_request_atomic: {
-        Args: {
-          p_amount: number
-          p_fee: number
-          p_net_amount: number
-          p_payment_method: string
-          p_payment_processor_id?: string
-          p_payout_address: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      process_withdrawal_request_atomic:
+        | {
+            Args: {
+              p_amount: number
+              p_fee: number
+              p_metadata?: Json
+              p_net_amount: number
+              p_payment_method: string
+              p_payment_processor_id?: string
+              p_payout_address: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_fee: number
+              p_net_amount: number
+              p_payment_method: string
+              p_payment_processor_id?: string
+              p_payout_address: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       refresh_materialized_views: { Args: never; Returns: undefined }
       reset_partner_sales_counters: { Args: never; Returns: undefined }
       update_partner_rank: { Args: { p_partner_id: string }; Returns: string }

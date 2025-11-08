@@ -66,9 +66,27 @@ Deno.serve(async (req) => {
       console.log('Rate limit bypassed for admin user:', user.id);
     }
 
-    const { amount, payoutAddress, paymentMethod, paymentProcessorId } = await req.json();
+    const { amount, payoutAddress, paymentMethod, paymentProcessorId, cryptoId } = await req.json();
 
-    console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod, paymentProcessorId });
+    console.log('Processing withdrawal request:', { userId: user.id, amount, paymentMethod, paymentProcessorId, cryptoId });
+
+    // Validate cryptocurrency selection
+    const validCryptoIds = ['usdc-solana', 'usdt-bep20'];
+    if (!cryptoId || !validCryptoIds.includes(cryptoId)) {
+      console.error('Invalid cryptocurrency selection:', cryptoId);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid cryptocurrency selection. Please select USDC (Solana) or USDT (BEP-20).' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Map crypto ID to display name
+    const cryptoDisplayNames: Record<string, string> = {
+      'usdc-solana': 'USDC (Solana)',
+      'usdt-bep20': 'USDT (BEP-20)'
+    };
 
     // Get user profile and membership plan (including daily withdrawal bypass flag)
     const { data: profile, error: profileError } = await supabase
@@ -385,6 +403,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Prepare metadata with cryptocurrency information
+    const withdrawalMetadata = {
+      crypto_id: cryptoId,
+      crypto_name: cryptoDisplayNames[cryptoId],
+      processor_id: paymentProcessorId,
+      requested_at: new Date().toISOString(),
+      user_agent: req.headers.get('user-agent') || 'unknown'
+    };
+
     // Use atomic database function to process withdrawal request
     // This eliminates race conditions and ensures all-or-nothing operation
     const { data: result, error: atomicError } = await supabase.rpc(
@@ -397,6 +424,7 @@ Deno.serve(async (req) => {
         p_payout_address: payoutAddress,
         p_payment_method: paymentMethod,
         p_payment_processor_id: paymentProcessorId || null,
+        p_metadata: withdrawalMetadata,
       }
     );
 
@@ -430,6 +458,8 @@ Deno.serve(async (req) => {
     console.log('Withdrawal request created successfully (atomic):', { 
       userId: user.id, 
       amount: withdrawalAmount,
+      cryptoId,
+      cryptoName: cryptoDisplayNames[cryptoId],
       withdrawalRequestId: result.withdrawal_request_id,
       transactionId: result.transaction_id
     });
@@ -451,6 +481,8 @@ Deno.serve(async (req) => {
       net_amount: netAmount,
       payout_address: payoutAddress,
       payment_method: paymentMethod,
+      crypto_id: cryptoId,
+      crypto_name: cryptoDisplayNames[cryptoId],
       status: 'pending',
     };
 
