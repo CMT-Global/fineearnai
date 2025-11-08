@@ -24,6 +24,13 @@ import { USDCFeeSavingsBanner } from "./USDCFeeSavingsBanner";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { 
+  SUPPORTED_CRYPTOCURRENCIES, 
+  getDefaultCrypto, 
+  getCryptoById, 
+  validateCryptoAddress,
+  type CryptoCurrency 
+} from "@/types/crypto-currencies";
 
 interface PaymentProcessor {
   id: string;
@@ -144,6 +151,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [actualCryptoProcessor, setActualCryptoProcessor] = useState<PaymentProcessor | null>(null);
   const [actualDepositProcessor, setActualDepositProcessor] = useState<PaymentProcessor | null>(null);
   
+  // PHASE 3: Cryptocurrency selection state
+  const [selectedCrypto, setSelectedCrypto] = useState<CryptoCurrency>(getDefaultCrypto());
+  const [cryptoAddressError, setCryptoAddressError] = useState<string | null>(null);
+  
   // CPAY iframe state
   const [showCpayIframe, setShowCpayIframe] = useState(false);
   const [cpayCheckoutUrl, setCpayCheckoutUrl] = useState("");
@@ -171,6 +182,37 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       const { scrollHeight, clientHeight } = viewport;
       setShowTopShadow(false);
       setShowBottomShadow(scrollHeight > clientHeight);
+    }
+  }, [withdrawDialogOpen]);
+
+  // PHASE 3: Auto-fill crypto address from profile when dialog opens or crypto changes
+  useEffect(() => {
+    if (!withdrawDialogOpen || !profile) return;
+    
+    // Get saved address for selected crypto
+    let savedAddress = '';
+    if (selectedCrypto.id === 'usdc-solana' && profile.usdc_solana_address) {
+      savedAddress = profile.usdc_solana_address;
+    } else if (selectedCrypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
+      savedAddress = profile.usdt_bep20_address;
+    }
+    
+    // Auto-fill saved address when crypto changes
+    if (savedAddress) {
+      setAccountDetails(savedAddress);
+      toast.success(`Auto-filled saved ${selectedCrypto.displayName} address`, { duration: 2000 });
+    } else {
+      // Clear if no saved address for this crypto
+      setAccountDetails('');
+    }
+  }, [selectedCrypto.id, withdrawDialogOpen]);
+  
+  // PHASE 3: Reset crypto selection and clear address when dialog closes
+  useEffect(() => {
+    if (!withdrawDialogOpen) {
+      setSelectedCrypto(getDefaultCrypto());
+      setCryptoAddressError(null);
+      setAccountDetails('');
     }
   }, [withdrawDialogOpen]);
 
@@ -636,10 +678,18 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
+      // PHASE 3: Validate crypto address format
+      if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
+        toast.error(`Invalid ${selectedCrypto.displayName} address format. Please check and try again.`);
+        setCryptoAddressError(`Invalid ${selectedCrypto.displayName} address format`);
+        return;
+      }
+
       console.log('🔄 Processing withdrawal with processor:', {
         id: selectedProcessor.id,
         name: selectedProcessor.name,
         displayMethodName,
+        cryptocurrency: selectedCrypto.displayName,
         feeFixed: selectedProcessor.fee_fixed,
         feePercentage: selectedProcessor.fee_percentage,
         amountUSD,
@@ -653,6 +703,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
           payoutAddress: accountDetails,
           paymentProcessorId: selectedProcessor.id, // ✅ Use actual processor ID for fees/processing
+          cryptocurrency: selectedCrypto.id, // ✅ PHASE 3: Include selected crypto
         },
       });
 
@@ -1110,18 +1161,77 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       })()}
                     </div>
 
+                    {/* PHASE 3: Cryptocurrency Selection */}
+                    <div>
+                      <Label htmlFor="crypto-selection">
+                        Select Cryptocurrency
+                      </Label>
+                      <Select 
+                        value={selectedCrypto.id} 
+                        onValueChange={(cryptoId) => {
+                          const crypto = getCryptoById(cryptoId);
+                          if (crypto) {
+                            setSelectedCrypto(crypto);
+                            setCryptoAddressError(null);
+                            
+                            // Auto-fill address if saved for this crypto
+                            if (profile) {
+                              if (crypto.id === 'usdc-solana' && profile.usdc_solana_address) {
+                                setAccountDetails(profile.usdc_solana_address);
+                                toast.success(`Auto-filled saved ${crypto.displayName} address`);
+                              } else if (crypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
+                                setAccountDetails(profile.usdt_bep20_address);
+                                toast.success(`Auto-filled saved ${crypto.displayName} address`);
+                              }
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger id="crypto-selection">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SUPPORTED_CRYPTOCURRENCIES.map((crypto) => (
+                            <SelectItem key={crypto.id} value={crypto.id}>
+                              <div className="flex items-center justify-between gap-3 w-full">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">{crypto.icon}</span>
+                                  <div className="flex flex-col items-start">
+                                    <span className="font-medium">{crypto.displayName}</span>
+                                    <span className="text-xs text-muted-foreground">{crypto.network}</span>
+                                  </div>
+                                </div>
+                                {crypto.isDefault && (
+                                  <Badge variant="secondary" className="ml-2 shrink-0">
+                                    Recommended
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Alert className="mt-2">
+                        <InfoIcon className="h-4 w-4" />
+                        <AlertDescription className="text-xs space-y-1">
+                          <div>{selectedCrypto.description}</div>
+                          <div className="text-muted-foreground">{selectedCrypto.feeInfo}</div>
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+
                     {/* Currency & Network Badge */}
                     <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                       <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <AlertTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
                         Withdrawal Currency & Network
                         <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
-                          USDC Solana (SPL)
+                          {selectedCrypto.icon} {selectedCrypto.displayName}
                         </Badge>
                       </AlertTitle>
                       <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
-                        Your withdrawal will be sent as <strong>USDC</strong> on the <strong>Solana (SPL)</strong> network. 
-                        Make sure your wallet supports USDC on Solana.
+                        Your withdrawal will be sent as <strong>{selectedCrypto.symbol}</strong> on the <strong>{selectedCrypto.network}</strong> network. 
+                        Make sure your wallet supports {selectedCrypto.symbol} on {selectedCrypto.networkShort}.
                       </AlertDescription>
                     </Alert>
 
@@ -1129,7 +1239,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     <Collapsible className="w-full">
                       <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                         <HelpCircle className="h-4 w-4" />
-                        <span className="underline">How to get your USDC Solana address?</span>
+                        <span className="underline">How to get your {selectedCrypto.displayName} address?</span>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-3">
                         <div className="text-sm space-y-3 bg-muted/50 p-4 rounded-lg border border-border">
@@ -1137,14 +1247,20 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                             <li>Open your crypto wallet or exchange (Binance, Gcrypto, Coinbase, etc.)</li>
                             <li>Navigate to <strong className="text-foreground">Deposit</strong> or <strong className="text-foreground">Receive</strong> section</li>
-                            <li>Search for <strong className="text-foreground">USDC</strong> (not USDT)</li>
-                            <li>When prompted to select a network, choose <strong className="text-foreground">Solana (SPL)</strong></li>
+                            <li>Search for <strong className="text-foreground">{selectedCrypto.symbol}</strong> {selectedCrypto.id === 'usdc-solana' && '(not USDT)'}</li>
+                            <li>When prompted to select a network, choose <strong className="text-foreground">{selectedCrypto.network}</strong></li>
                             <li>Copy the displayed wallet address</li>
                             <li>Paste the address in the field below</li>
                           </ol>
+                          {selectedCrypto.addressExample && (
+                            <div className="mt-2 p-2 bg-muted rounded border">
+                              <p className="text-xs text-muted-foreground mb-1">Example address format:</p>
+                              <code className="text-xs font-mono break-all">{selectedCrypto.addressExample}</code>
+                            </div>
+                          )}
                           <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-3">
                             <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium text-xs">
-                              ⚠️ <strong>Important:</strong> Always verify you've selected Solana (SPL) network, not TRC20, ERC20, or other networks! Sending to the wrong network will result in loss of funds.
+                              ⚠️ <strong>Important:</strong> Always verify you've selected {selectedCrypto.network} network! Sending to the wrong network will result in loss of funds.
                             </AlertDescription>
                           </Alert>
                         </div>
@@ -1153,51 +1269,37 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
                     <div>
                       <Label htmlFor="account-details">
-                        {(() => {
-                          const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                          if (virtualMethod) {
-                            // Method-specific labels for virtual methods
-                            const labels: Record<string, string> = {
-                              'gcrypto': 'USDC Solana (SPL) Wallet Address',
-                              'binance': 'USDC Solana (SPL) Wallet Address',
-                              'coinsph': 'USDC Solana (SPL) Wallet Address',
-                              'bybit': 'USDC Solana (SPL) Wallet Address',
-                              'coinbase': 'USDC Solana (SPL) Wallet Address',
-                              'kucoin': 'USDC Solana (SPL) Wallet Address',
-                            };
-                            return labels[virtualMethod.id] || 'Account Details';
-                          }
-                          
-                          // Fallback to actual processor label
-                          const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                          return processor?.config?.address_label || "USDC Solana (SPL) Wallet Address *";
-                        })()}
+                        {selectedCrypto.symbol} {selectedCrypto.networkShort} Wallet Address *
                       </Label>
                       <Textarea
                         id="account-details"
-                        placeholder={(() => {
-                          const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                          if (virtualMethod) {
-                            // Method-specific placeholders for virtual methods
-                            const placeholders: Record<string, string> = {
-                              'gcrypto': 'Enter your Gcrypto USDC Solana address',
-                              'binance': 'Enter your Binance USDC Solana address',
-                              'coinsph': 'Enter your Coins.Ph USDC Solana address',
-                              'bybit': 'Enter your ByBit USDC Solana address',
-                              'coinbase': 'Enter your Coinbase USDC Solana address',
-                              'kucoin': 'Enter your KuCoin USDC Solana address',
-                            };
-                            return placeholders[virtualMethod.id] || "Enter your crypto wallet address";
-                          }
-                          
-                          // Fallback to actual processor placeholder or default
-                          const processor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-                          return processor?.config?.address_placeholder || "Enter your wallet address";
-                        })()}
+                        placeholder={selectedCrypto.addressPlaceholder}
                         value={accountDetails}
-                        onChange={(e) => setAccountDetails(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setAccountDetails(value);
+                          
+                          // Real-time address validation
+                          if (value && !validateCryptoAddress(selectedCrypto.id, value)) {
+                            setCryptoAddressError(`Invalid ${selectedCrypto.displayName} address format`);
+                          } else {
+                            setCryptoAddressError(null);
+                          }
+                        }}
                         rows={3}
+                        className={cryptoAddressError ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
+                      {cryptoAddressError && (
+                        <Alert variant="destructive" className="mt-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-sm">
+                            {cryptoAddressError}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Enter your {selectedCrypto.displayName} wallet address where you want to receive funds.
+                      </p>
                     </div>
                   </div>
                   </ScrollArea>
@@ -1218,6 +1320,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     disabled={
                       withdrawLoading || 
                       !!withdrawAmountError || 
+                      !!cryptoAddressError ||
                       !withdrawAmount || 
                       !withdrawMethod || 
                       !accountDetails ||
