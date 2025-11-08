@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { HowItWorksPDFViewer } from "@/components/shared/HowItWorksPDFViewer";
 import {
   Sparkles,
   DollarSign,
@@ -491,6 +492,11 @@ const HowItWorks = () => {
     <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-8 px-4">
         <div className="container max-w-4xl mx-auto">
+          {/* PDF Download Section */}
+          <div className="mb-6">
+            <HowItWorksPDFViewer />
+          </div>
+
           {showBanner && (
             <Alert className="mb-6 bg-blue-500/10 border-blue-500/20 shadow-sm">
               <Info className="h-4 w-4 text-blue-600" />
