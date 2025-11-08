@@ -14,7 +14,8 @@ import {
   History,
   Menu,
   Shield,
-  ArrowRight
+  ArrowRight,
+  HelpCircle
 } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -64,6 +65,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
+    { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true },
     { icon: History, label: "Transactions", path: "/transactions" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
@@ -227,11 +229,13 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
               isActive(item.path)
                 ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : item.highlight
+                ? "bg-green-500/10 hover:bg-green-500/20"
                 : "hover:bg-[hsl(var(--sidebar-accent))]/50"
             } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''}`}
           >
-            <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-            <span className={item.isPartner ? 'font-semibold' : ''}>{item.label}</span>
+            <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
+            <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''}`}>{item.label}</span>
             {item.isPartner && (
               <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
             )}
@@ -323,11 +327,13 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
               isActive(item.path)
                 ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                : item.highlight
+                ? "bg-green-500/10 hover:bg-green-500/20"
                 : "hover:bg-[hsl(var(--sidebar-accent))]/50"
             }`}
           >
-            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-            <span>{item.label}</span>
+            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
+            <span className={item.highlight ? 'text-green-600 font-semibold' : ''}>{item.label}</span>
           </button>
         ))}
       </nav>
