@@ -174,6 +174,125 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
     withdrawalAlertMessage: '💰 After admin approval, funds will arrive in your Binance wallet within minutes.'
   },
   {
+    id: 'binance-p2p-fiat',
+    name: 'Binance P2P',
+    displayName: 'Binance P2P (Buy/Sell with Fiat)',
+    countryCode: 'GLOBAL',
+    countryName: 'Worldwide',
+    flag: '🌍',
+    description: 'Buy crypto with your local bank/mobile money or sell crypto for cash',
+    isGlobal: true,
+    category: 'exchange',
+    depositSteps: [
+      {
+        stepNumber: 1,
+        instruction: 'Open Binance app or website → Go to P2P Trading section (found in Buy Crypto menu).',
+        highlights: ['Binance', 'P2P Trading', 'Buy Crypto'],
+        delay: '0s'
+      },
+      {
+        stepNumber: 2,
+        instruction: 'Select "Buy" → Choose USDC or USDT → Select your preferred payment method (Bank Transfer, Mobile Money, etc.).',
+        highlights: ['Buy', 'USDC', 'USDT', 'payment method'],
+        delay: '0.1s'
+      },
+      {
+        stepNumber: 3,
+        instruction: 'Enter the amount you want to buy → Browse available sellers and select one with good ratings (98%+ recommended).',
+        highlights: ['amount', 'good ratings', '98%+'],
+        delay: '0.2s'
+      },
+      {
+        stepNumber: 4,
+        instruction: 'Click "Buy" on the selected offer → Follow the payment instructions provided by the seller (bank details, mobile money number, etc.).',
+        highlights: ['Buy', 'payment instructions'],
+        delay: '0.3s'
+      },
+      {
+        stepNumber: 5,
+        instruction: 'Complete the payment using your bank or mobile money → Return to Binance and click "Transferred, notify seller".',
+        highlights: ['Complete the payment', 'Transferred, notify seller'],
+        delay: '0.4s'
+      },
+      {
+        stepNumber: 6,
+        instruction: 'Wait for seller confirmation (usually 5-15 minutes) → Crypto will be released to your Binance wallet automatically.',
+        highlights: ['seller confirmation', 'Binance wallet'],
+        delay: '0.5s'
+      },
+      {
+        stepNumber: 7,
+        instruction: 'Once received, go to your Binance Spot Wallet → Find your USDC or USDT.',
+        highlights: ['Spot Wallet', 'USDC', 'USDT'],
+        delay: '0.6s'
+      },
+      {
+        stepNumber: 8,
+        instruction: 'Click "Withdraw" → Select the appropriate network (Solana for USDC or BEP20 for USDT) → Enter your FineEarn deposit address.',
+        highlights: ['Withdraw', 'Solana', 'BEP20', 'FineEarn deposit address'],
+        delay: '0.7s'
+      },
+      {
+        stepNumber: 9,
+        instruction: 'Confirm the withdrawal → Wait 2-5 minutes for crypto to arrive in your FineEarn account.',
+        highlights: ['Confirm', 'FineEarn account'],
+        delay: '0.8s'
+      }
+    ],
+    withdrawalSteps: [
+      {
+        stepNumber: 1,
+        instruction: 'First, withdraw your crypto from FineEarn to your Binance wallet using the withdrawal method guides.',
+        highlights: ['withdraw', 'FineEarn', 'Binance wallet'],
+        delay: '0s'
+      },
+      {
+        stepNumber: 2,
+        instruction: 'Once crypto arrives in Binance, open Binance app/website → Go to P2P Trading section.',
+        highlights: ['Binance', 'P2P Trading'],
+        delay: '0.1s'
+      },
+      {
+        stepNumber: 3,
+        instruction: 'Select "Sell" → Choose the crypto you received (USDC or USDT) → Select your preferred payment method (Bank Transfer, Mobile Money).',
+        highlights: ['Sell', 'USDC', 'USDT', 'payment method'],
+        delay: '0.2s'
+      },
+      {
+        stepNumber: 4,
+        instruction: 'Enter the amount you want to sell → Browse available buyers with good ratings (98%+ recommended).',
+        highlights: ['amount', 'good ratings', '98%+'],
+        delay: '0.3s'
+      },
+      {
+        stepNumber: 5,
+        instruction: 'Click "Sell" on the selected offer → Provide your payment details (bank account or mobile money number) where you want to receive cash.',
+        highlights: ['Sell', 'payment details'],
+        delay: '0.4s'
+      },
+      {
+        stepNumber: 6,
+        instruction: 'Binance will hold your crypto in escrow → Wait for the buyer to transfer money to your bank/mobile money account.',
+        highlights: ['escrow', 'buyer to transfer money'],
+        delay: '0.5s'
+      },
+      {
+        stepNumber: 7,
+        instruction: 'Check your bank or mobile money account → Once payment is received, return to Binance and click "Release crypto".',
+        highlights: ['payment is received', 'Release crypto'],
+        delay: '0.6s'
+      },
+      {
+        stepNumber: 8,
+        instruction: 'Crypto is released to buyer → Money stays in your bank/mobile money account. Transaction complete!',
+        highlights: ['Transaction complete'],
+        delay: '0.7s'
+      }
+    ],
+    depositAlertMessage: '💡 Pro Tip: Always verify seller ratings and reviews before trading. Complete payment within the time limit to avoid order cancellation.',
+    withdrawalAlertMessage: '💡 Pro Tip: Only release crypto after confirming payment in your bank/mobile money account. Never share your Binance password with buyers.'
+  },
+  {
     id: 'coinbase-global',
     name: 'Coinbase',
     displayName: 'Coinbase Exchange',
