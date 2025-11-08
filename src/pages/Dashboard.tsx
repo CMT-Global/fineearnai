@@ -21,7 +21,8 @@ import {
   Zap,
   AlertCircle,
   Clock,
-  Settings
+  Settings,
+  Rocket
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -277,28 +278,28 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Info Alert */}
-          <div className="mx-8 mt-6">
-            <Card className="p-4 bg-[hsl(var(--wallet-earnings))]/5 border-[hsl(var(--wallet-earnings))]/20">
-              <div className="flex gap-3">
-                <div className="h-5 w-5 rounded-full bg-[hsl(var(--wallet-earnings))]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Sparkles className="h-3 w-3 text-[hsl(var(--wallet-earnings))]" />
+          {/* FineEarn Earners Guide Button */}
+          <div className="mx-4 lg:mx-8 mt-6">
+            <Button
+              onClick={() => navigate("/how-it-works")}
+              size="lg"
+              className="w-full group relative overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] h-auto py-6"
+            >
+              {/* Animated background pulse */}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse" />
+              
+              {/* Content */}
+              <div className="relative flex items-center justify-center gap-3">
+                <Sparkles className="h-6 w-6 animate-spin-slow" />
+                <div className="flex flex-col items-start">
+                  <span className="text-lg font-bold">FineEarn - Earners Guide</span>
+                  <span className="text-xs text-white/80">Learn how to maximize your earnings</span>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-[hsl(var(--wallet-earnings))] mb-1">What is FineEarn?</h3>
-                  <p className="text-sm text-foreground/80 mb-2">
-                    FineEarn is an AI training platform that allows you and your team to earn online by training AI. You mainly earn in 2 ways:
-                  </p>
-                  <ol className="text-sm text-foreground/80 space-y-1 ml-4 list-decimal">
-                    <li>You <strong>earn from the AI Training tasks you do yourself</strong>. The tasks are simple as long as you understand English and only take 30 to 40 minutes daily.</li>
-                    <li>You also <strong>earn a commission from every AI task completed by people you invite</strong> if you have an upgraded account.</li>
-                  </ol>
-                  <p className="text-sm text-foreground/80 mt-2">
-                    This allows you to earn yourself and also to <strong>create a team and employ people under you</strong>.
-                  </p>
+                <div className="ml-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
+                  <Rocket className="h-5 w-5" />
                 </div>
               </div>
-            </Card>
+            </Button>
           </div>
 
           {/* Stats Cards */}
