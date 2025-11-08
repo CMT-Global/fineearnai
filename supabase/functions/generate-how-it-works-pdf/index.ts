@@ -109,12 +109,40 @@ Deno.serve(async (req) => {
 
     console.log('[PDF-GEN] Created PDF record:', pdfRecord.id);
 
-    // Step 4: Format content for AI
+    // Step 4: Ensure storage bucket exists (self-healing)
+    console.log('[PDF-GEN] Checking storage bucket...');
+    
+    const { data: existingBuckets } = await supabase.storage.listBuckets();
+    const bucketExists = existingBuckets?.some(b => b.id === 'how-it-works-pdfs');
+    
+    if (!bucketExists) {
+      console.log('[PDF-GEN] Creating storage bucket...');
+      const { error: bucketError } = await supabase.storage.createBucket('how-it-works-pdfs', {
+        public: true,
+        fileSizeLimit: 52428800, // 50MB
+        allowedMimeTypes: ['application/pdf', 'text/html']
+      });
+      
+      if (bucketError) {
+        console.error('[PDF-GEN] Failed to create bucket:', bucketError);
+        // Update PDF record to failed status
+        await supabase
+          .from('how_it_works_pdf_documents')
+          .update({ status: 'failed' })
+          .eq('id', pdfRecord.id);
+        throw new Error(`Storage bucket creation failed: ${bucketError.message}`);
+      }
+      console.log('[PDF-GEN] Storage bucket created successfully');
+    } else {
+      console.log('[PDF-GEN] Storage bucket exists');
+    }
+
+    // Step 5: Format content for AI
     const contentForAI = steps.map(step => 
       `Step ${step.step_number}: ${step.title}\n${step.description}`
     ).join('\n\n');
 
-    // Step 5: Generate beautiful HTML using Lovable AI
+    // Step 6: Generate beautiful HTML using Lovable AI
     const aiPrompt = `Create a beautiful, professional HTML document for a comprehensive PDF guide titled "FineEarn - Earners Guide: How to Maximize Your AI Training Earnings".
 
 CRITICAL REQUIREMENTS:
@@ -207,13 +235,13 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
 
     console.log(`[PDF-GEN] Generated HTML (${htmlContent.length} characters)`);
 
-    // Step 6: Store AI prompt used
+    // Step 7: Store AI prompt used
     await supabase
       .from('how_it_works_pdf_documents')
       .update({ ai_prompt_used: aiPrompt })
       .eq('id', pdfRecord.id);
 
-    // Step 7: Convert HTML to PDF using browser's print-to-PDF capability
+    // Step 8: Convert HTML to PDF using browser's print-to-PDF capability
     // For now, we'll store the HTML and mark it as pending_review
     // The admin will be able to preview the HTML and manually generate PDF
     // OR we can integrate a proper HTML-to-PDF service in production
@@ -241,7 +269,7 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
       .from('how-it-works-pdfs')
       .getPublicUrl(htmlFileName);
 
-    // Step 8: Update PDF record with status 'pending_review'
+    // Step 9: Update PDF record with status 'pending_review'
     const { error: updateError } = await supabase
       .from('how_it_works_pdf_documents')
       .update({
