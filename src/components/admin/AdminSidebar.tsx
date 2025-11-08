@@ -155,6 +155,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "User Invites", path: "/admin/communications/user-invites" },
         { label: "Email Templates", path: "/admin/communications/templates" },
         { label: "Scheduled Emails", path: "/admin/communications/scheduled" },
+        { label: "How It Works PDFs", path: "/admin/communications/how-it-works-pdfs" },
       ],
     },
     {
