@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
+import { EarnerBadgeStatus, getEarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface UserHeaderCardProps {
   profile?: {
@@ -151,6 +151,35 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ') || 'Free';
   
+  // Defensive fallback: Compute earner badge if not present in profile
+  // This guarantees badge visibility even if upstream data pipeline fails
+  const effectiveBadge = useMemo(() => {
+    // Use profile's earnerBadge if available
+    if (profile.earnerBadge) {
+      return profile.earnerBadge;
+    }
+    
+    // Fallback: Compute badge based on membership plan
+    // Determine account type from membership plan
+    const membershipPlan = profile.membership_plan?.toLowerCase() || 'free';
+    let accountType: string;
+    
+    if (membershipPlan === 'free') {
+      accountType = 'free';
+    } else if (membershipPlan.includes('personal')) {
+      accountType = 'personal';
+    } else if (membershipPlan.includes('business')) {
+      accountType = 'business';
+    } else if (membershipPlan.includes('group')) {
+      accountType = 'group';
+    } else {
+      // Default to personal for any paid plan
+      accountType = 'personal';
+    }
+    
+    return getEarnerBadgeStatus(accountType);
+  }, [profile.earnerBadge, profile.membership_plan]);
+  
   return (
     <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-transparent">
       {/* User Avatar & Info */}
@@ -193,19 +222,19 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
       </div>
 
       {/* Earner Verification Badge - PROMINENT */}
-      {profile.earnerBadge && (
+      {effectiveBadge && (
         <div className="px-4 pb-3 space-y-2">
           <div className="flex items-center gap-2">
             <Badge 
-              variant={profile.earnerBadge.badgeVariant}
+              variant={effectiveBadge.badgeVariant}
               className="text-xs font-bold"
             >
-              <span className="mr-1">{profile.earnerBadge.icon}</span>
-              {profile.earnerBadge.badgeText}
+              <span className="mr-1">{effectiveBadge.icon}</span>
+              {effectiveBadge.badgeText}
             </Badge>
             
             {/* Upgrade CTA for Unverified Users */}
-            {!profile.earnerBadge.isVerified && (
+            {!effectiveBadge.isVerified && (
               <Link to="/plans" className="flex-1">
                 <Button 
                   size="sm" 
@@ -221,7 +250,7 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
           
           {/* Helper Text */}
           <p className="text-[10px] text-muted-foreground leading-tight">
-            {profile.earnerBadge.description}
+            {effectiveBadge.description}
           </p>
         </div>
       )}
