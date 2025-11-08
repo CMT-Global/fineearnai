@@ -98,7 +98,7 @@ function UserDetailContent() {
     // Invalidate all queries related to this user
     await Promise.all([
       // Primary user detail cache
-      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', userId] }),
       
       // Users list cache (in case user appears in listings)
       queryClient.invalidateQueries({ queryKey: ['users'] }),
