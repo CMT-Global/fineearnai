@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // Use atomic deposit function for race-condition protection
     console.log('Calling atomic deposit function:', { userId: user.id, amount: depositAmount, paymentMethod });
     
-    const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic', {
+    const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic_v2', {
       p_user_id: user.id,
       p_amount: depositAmount,
       p_order_id: gatewayTransactionId || `manual-${Date.now()}`,
