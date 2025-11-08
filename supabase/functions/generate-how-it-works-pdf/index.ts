@@ -15,9 +15,14 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const pdfShiftApiKey = Deno.env.get('PDFSHIFT_API_KEY')!;
     
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY is not configured');
+    }
+    
+    if (!pdfShiftApiKey) {
+      throw new Error('PDFSHIFT_API_KEY is not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -120,7 +125,7 @@ Deno.serve(async (req) => {
       const { error: bucketError } = await supabase.storage.createBucket('how-it-works-pdfs', {
         public: true,
         fileSizeLimit: 52428800, // 50MB
-        allowedMimeTypes: ['application/pdf', 'text/html']
+        allowedMimeTypes: ['application/pdf'] // Only PDFs allowed
       });
       
       if (bucketError) {
@@ -241,19 +246,54 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
       .update({ ai_prompt_used: aiPrompt })
       .eq('id', pdfRecord.id);
 
-    // Step 8: Convert HTML to PDF using browser's print-to-PDF capability
-    // For now, we'll store the HTML and mark it as pending_review
-    // The admin will be able to preview the HTML and manually generate PDF
-    // OR we can integrate a proper HTML-to-PDF service in production
+    // Step 7.5: Convert HTML to PDF using PDFShift
+    console.log('[PDF-GEN] Converting HTML to PDF using PDFShift...');
     
-    // For MVP: Store HTML in storage as a temporary measure
-    const htmlFileName = `fineearn-earners-guide-v${nextVersion}-${Date.now()}.html`;
-    const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+    const pdfShiftResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa('api:' + pdfShiftApiKey),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: htmlContent,
+        format: 'A4',
+        margin: {
+          top: '20mm',
+          right: '15mm',
+          bottom: '20mm',
+          left: '15mm'
+        },
+        print_background: true,
+        landscape: false,
+        use_print: false,
+      }),
+    });
+
+    if (!pdfShiftResponse.ok) {
+      const errorText = await pdfShiftResponse.text();
+      console.error('[PDF-GEN] PDFShift conversion failed:', pdfShiftResponse.status, errorText);
+      
+      // Update PDF record to failed status
+      await supabase
+        .from('how_it_works_pdf_documents')
+        .update({ status: 'failed' })
+        .eq('id', pdfRecord.id);
+      
+      throw new Error(`PDF conversion failed: ${pdfShiftResponse.status} - ${errorText}`);
+    }
+
+    // Get the PDF blob
+    const pdfBlob = await pdfShiftResponse.blob();
+    console.log(`[PDF-GEN] Generated PDF (${pdfBlob.size} bytes)`);
+
+    // Step 8: Upload actual PDF file to storage
+    const pdfFileName = `fineearn-earners-guide-v${nextVersion}-${Date.now()}.pdf`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('how-it-works-pdfs')
-      .upload(htmlFileName, htmlBlob, {
-        contentType: 'text/html',
+      .upload(pdfFileName, pdfBlob, {
+        contentType: 'application/pdf',
         cacheControl: '3600',
       });
 
@@ -262,12 +302,12 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
       throw uploadError;
     }
 
-    console.log('[PDF-GEN] Uploaded HTML:', htmlFileName);
+    console.log('[PDF-GEN] Uploaded PDF:', pdfFileName);
 
-    // Get public URL for the HTML
+    // Get public URL for the PDF
     const { data: { publicUrl } } = supabase.storage
       .from('how-it-works-pdfs')
-      .getPublicUrl(htmlFileName);
+      .getPublicUrl(pdfFileName);
 
     // Step 9: Update PDF record with status 'pending_review'
     const { error: updateError } = await supabase
@@ -275,7 +315,7 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
       .update({
         status: 'pending_review',
         file_url: publicUrl,
-        file_size_bytes: htmlBlob.size,
+        file_size_bytes: pdfBlob.size, // PDF size instead of HTML size
         generated_at: new Date().toISOString(),
       })
       .eq('id', pdfRecord.id);
@@ -293,9 +333,9 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
         pdf_id: pdfRecord.id,
         version: nextVersion,
         status: 'pending_review',
-        html_url: publicUrl,
-        message: 'PDF HTML generated successfully. Open the URL in a browser and use Print > Save as PDF to create the final PDF document.',
-        instructions: 'The HTML is optimized for printing. Open it in Chrome/Edge, press Ctrl+P (or Cmd+P on Mac), and save as PDF with these settings: Layout=Portrait, Paper=A4, Margins=Default, Background graphics=Enabled.',
+        pdf_url: publicUrl,
+        file_size: pdfBlob.size,
+        message: 'PDF generated successfully and ready for review.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
