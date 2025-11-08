@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
-import { ArrowLeft, Key, Activity, Crown } from "lucide-react";
+import { ArrowLeft, Key, Activity, Crown, AlertCircle, RefreshCw } from "lucide-react";
 
 // Import new tab components
 import { OverviewTab } from "@/components/admin/user-detail/OverviewTab";
@@ -47,7 +48,7 @@ function UserDetailContent() {
   const [userRoles, setUserRoles] = useState<string[]>(['user']);
 
   // Fetch user detail using the new hook
-  const { data: userDetail, isLoading: loadingDetail, refetch } = useUserDetail(userId || '');
+  const { data: userDetail, isLoading: loadingDetail, error: detailError, refetch } = useUserDetail(userId || '');
 
   // Fetch user roles when component mounts or userId changes
   React.useEffect(() => {
@@ -164,6 +165,40 @@ function UserDetailContent() {
 
   if (authLoading || adminLoading || loadingDetail) {
     return <LoadingSpinner />;
+  }
+
+  // Show error UI if fetch failed
+  if (detailError) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto">
+          <Button variant="ghost" onClick={() => navigate("/admin/users")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Users
+          </Button>
+          <Card className="mt-6">
+            <CardContent className="p-6">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading User</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p>{detailError.message || 'Failed to load user details. Please try again.'}</p>
+                  <Button 
+                    onClick={() => refetch()} 
+                    variant="outline" 
+                    size="sm"
+                    className="mt-2"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   if (!userDetail) {
