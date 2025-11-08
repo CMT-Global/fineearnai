@@ -1,9 +1,10 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Settings, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
+import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface UserHeaderCardProps {
   profile?: {
@@ -14,6 +15,7 @@ interface UserHeaderCardProps {
     account_status: string;
     earnings_wallet_balance: number;
     deposit_wallet_balance: number;
+    earnerBadge?: EarnerBadgeStatus;
   } | null;
 }
 
@@ -189,6 +191,40 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
           </div>
         </div>
       </div>
+
+      {/* Earner Verification Badge - PROMINENT */}
+      {profile.earnerBadge && (
+        <div className="px-4 pb-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant={profile.earnerBadge.badgeVariant}
+              className="text-xs font-bold"
+            >
+              <span className="mr-1">{profile.earnerBadge.icon}</span>
+              {profile.earnerBadge.badgeText}
+            </Badge>
+            
+            {/* Upgrade CTA for Unverified Users */}
+            {!profile.earnerBadge.isVerified && (
+              <Link to="/plans" className="flex-1">
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="w-full h-7 text-xs font-semibold animate-pulse hover:animate-none"
+                >
+                  Upgrade Now
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </Link>
+            )}
+          </div>
+          
+          {/* Helper Text */}
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            {profile.earnerBadge.description}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
