@@ -557,28 +557,29 @@ const HowItWorks = () => {
                 </Button>
               )}
             </div>
+
+            {/* Circular Step Indicator Dots */}
+            <div className="flex justify-center items-center gap-2 pt-6">
+              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
+                <button
+                  key={step}
+                  onClick={() => {
+                    setCurrentStep(step);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    step === currentStep
+                      ? `${stepThemes[currentStep].bg} scale-125`
+                      : step < currentStep
+                      ? "bg-primary/60"
+                      : "bg-gray-300"
+                  }`}
+                  aria-label={`Go to step ${step}`}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-center gap-2 mt-6">
-          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
-            <button
-              key={step}
-              onClick={() => {
-                setCurrentStep(step);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`w-2 h-2 rounded-full transition-all ${
-                step === currentStep
-                  ? "bg-primary w-8"
-                  : step < currentStep
-                  ? "bg-primary/50"
-                  : "bg-muted"
-              }`}
-              aria-label={`Go to step ${step}`}
-            />
-          ))}
-        </div>
       </div>
     </PageLayout>
   );
