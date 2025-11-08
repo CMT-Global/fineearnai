@@ -28,6 +28,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const DepositResult = lazy(() => import("./pages/DepositResult"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy-loaded admin routes
@@ -560,6 +561,11 @@ const RoutesWrapper = () => {
         }
       />
       
+      <Route path="/how-it-works" element={
+        <ProtectedRoute>
+          <HowItWorks />
+        </ProtectedRoute>
+      } />
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
