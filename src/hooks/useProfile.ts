@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeProfile } from './useRealtimeProfile';
+import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
 const PROFILE_CACHE_KEY = 'fineearn_profile_cache';
 const CACHE_VERSION = '1.0';
@@ -82,18 +83,39 @@ export const useProfile = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      const { data, error } = await supabase
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (profileError) throw profileError;
+      
+      // Fetch membership plan details to get account_type
+      let accountType = null;
+      if (profileData.membership_plan) {
+        const { data: planData } = await supabase
+          .from('membership_plans')
+          .select('account_type, name, display_name')
+          .eq('name', profileData.membership_plan)
+          .single();
+        
+        accountType = planData?.account_type;
+      }
+      
+      // Transform profile data to include earner badge status
+      const earnerBadge = getEarnerBadgeStatus(accountType);
+      
+      const transformedData = {
+        ...profileData,
+        earnerBadge
+      };
       
       // Save to cache after successful fetch
-      setCachedProfile(userId, data);
+      setCachedProfile(userId, transformedData);
       
-      return data;
+      return transformedData;
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
