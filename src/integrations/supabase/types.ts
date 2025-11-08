@@ -2013,6 +2013,7 @@ export type Database = {
           fee: number
           id: string
           manual_txn_hash: string | null
+          metadata: Json | null
           net_amount: number
           payment_method: string
           payment_processor_id: string | null
@@ -2033,6 +2034,7 @@ export type Database = {
           fee?: number
           id?: string
           manual_txn_hash?: string | null
+          metadata?: Json | null
           net_amount: number
           payment_method: string
           payment_processor_id?: string | null
@@ -2053,6 +2055,7 @@ export type Database = {
           fee?: number
           id?: string
           manual_txn_hash?: string | null
+          metadata?: Json | null
           net_amount?: number
           payment_method?: string
           payment_processor_id?: string | null
