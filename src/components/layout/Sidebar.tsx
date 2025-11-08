@@ -108,7 +108,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       case '/dashboard':
         // Prefetch dashboard data (profile + referral stats + membership plan)
         queryClient.prefetchQuery({
-          queryKey: ['dashboard-data', userId],
+          queryKey: ['dashboard-data-v2', userId],
           queryFn: async () => {
             const [profileRes, statsRes] = await Promise.all([
               supabase.from('profiles').select('*').eq('id', userId).single(),
@@ -134,7 +134,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       case '/referrals':
         // Prefetch referral data (stats + upline + earnings + referrals list)
         queryClient.prefetchQuery({
-          queryKey: ['referral-complete-data', userId],
+          queryKey: ['referral-complete-data-v2', userId],
           queryFn: async () => {
             const [profileRes, statsRes, earningsRes, referralsRes] = await Promise.all([
               supabase.from('profiles').select('*').eq('id', userId).single(),

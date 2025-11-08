@@ -79,7 +79,7 @@ export const useProfile = (userId: string | undefined) => {
   useRealtimeProfile(userId);
 
   return useQuery({
-    queryKey: ['profile', userId],
+    queryKey: ['profile-v2', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       

@@ -4,7 +4,7 @@ import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
 export const useDashboardData = (userId: string | undefined) => {
   return useQuery({
-    queryKey: ['dashboard-data', userId],
+    queryKey: ['dashboard-data-v2', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       

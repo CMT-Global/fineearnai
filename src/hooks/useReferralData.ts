@@ -4,7 +4,7 @@ import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
 export const useReferralData = (userId: string | undefined) => {
   return useQuery({
-    queryKey: ['referral-complete-data', userId],
+    queryKey: ['referral-complete-data-v2', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
