@@ -264,7 +264,6 @@ OUTPUT: Return ONLY the complete, valid HTML code. No explanations, no markdown 
           bottom: '20mm',
           left: '15mm'
         },
-        print_background: true,
         landscape: false,
         use_print: false,
       }),
