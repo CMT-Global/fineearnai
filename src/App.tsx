@@ -68,6 +68,7 @@ const PartnerLeaderboard = lazy(() => import("@/pages/admin/PartnerLeaderboard")
 const AdminPartnerAnalytics = lazy(() => import("@/pages/admin/PartnerAnalytics"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
 const AdminAnalyticsDashboard = lazy(() => import("@/pages/admin/AnalyticsDashboard"));
+const AdminHowItWorks = lazy(() => import("@/pages/admin/HowItWorksManage"));
 const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
@@ -427,6 +428,14 @@ const RoutesWrapper = () => {
             <AdminLayout>
               <LoginMessage />
             </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/how-it-works"
+        element={
+          <AdminRoute>
+            <AdminHowItWorks />
           </AdminRoute>
         }
       />

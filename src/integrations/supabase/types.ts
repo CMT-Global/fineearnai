@@ -577,6 +577,39 @@ export type Database = {
         }
         Relationships: []
       }
+      how_it_works_steps: {
+        Row: {
+          created_at: string
+          description: string
+          icon_name: string
+          id: string
+          is_active: boolean
+          step_number: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          step_number: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          step_number?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       master_login_sessions: {
         Row: {
           admin_id: string

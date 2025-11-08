@@ -150,6 +150,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       items: [
         { label: "Email Settings", path: "/admin/communications/email-settings" },
         { label: "Login Message", path: "/admin/communications/login-message" },
+        { label: "How It Works", path: "/admin/how-it-works" },
         { label: "Bulk Email", path: "/admin/communications/email" },
         { label: "Influencer Invites", path: "/admin/communications/influencer-invites" },
         { label: "User Invites", path: "/admin/communications/user-invites" },
