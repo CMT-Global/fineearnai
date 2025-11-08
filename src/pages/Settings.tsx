@@ -17,8 +17,9 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle, Wallet } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SUPPORTED_CRYPTOCURRENCIES, validateCryptoAddress, getCryptoById } from "@/types/crypto-currencies";
 import { countries, getCountryName } from "@/lib/countries";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,6 +41,14 @@ const Settings = () => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
+  
+  // Cryptocurrency address state
+  const [usdcSolanaAddress, setUsdcSolanaAddress] = useState("");
+  const [usdtBep20Address, setUsdtBep20Address] = useState("");
+  const [cryptoAddressErrors, setCryptoAddressErrors] = useState<{
+    usdc?: string;
+    usdt?: string;
+  }>({});
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -64,6 +73,10 @@ const Settings = () => {
       if (data?.preferred_currency) {
         setSelectedCurrency(data.preferred_currency);
       }
+      
+      // Initialize crypto addresses from profile
+      setUsdcSolanaAddress(data?.usdc_solana_address || "");
+      setUsdtBep20Address(data?.usdt_bep20_address || "");
       
       return data;
     },
@@ -162,6 +175,28 @@ const Settings = () => {
     },
   });
 
+  // Update cryptocurrency addresses mutation
+  const updateCryptoAddressesMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          usdc_solana_address: usdcSolanaAddress.trim() || null,
+          usdt_bep20_address: usdtBep20Address.trim() || null,
+        })
+        .eq("id", user?.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Cryptocurrency addresses updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update addresses: ${error.message}`);
+    },
+  });
+
   const onProfileSubmit = (data: UpdateProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -173,6 +208,27 @@ const Settings = () => {
   const handleCurrencyUpdate = () => {
     if (selectedCurrency && selectedCurrency !== userCurrency) {
       updateCurrencyMutation.mutate(selectedCurrency);
+    }
+  };
+
+  const handleCryptoAddressUpdate = () => {
+    // Validate addresses before saving
+    const errors: { usdc?: string; usdt?: string } = {};
+    
+    if (usdcSolanaAddress.trim() && !validateCryptoAddress('usdc-solana', usdcSolanaAddress)) {
+      errors.usdc = "Invalid USDC Solana address format";
+    }
+    
+    if (usdtBep20Address.trim() && !validateCryptoAddress('usdt-bep20', usdtBep20Address)) {
+      errors.usdt = "Invalid USDT BEP-20 address format";
+    }
+    
+    setCryptoAddressErrors(errors);
+    
+    if (Object.keys(errors).length === 0) {
+      updateCryptoAddressesMutation.mutate();
+    } else {
+      toast.error("Please fix the address validation errors");
     }
   };
 
@@ -615,6 +671,95 @@ const Settings = () => {
                   <AlertDescription>
                     Currency conversion affects display only. All transactions are processed in USD. 
                     Exchange rates are updated every 24 hours.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Cryptocurrency Addresses */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5" />
+                  Withdrawal Addresses
+                </CardTitle>
+                <CardDescription>
+                  Manage your cryptocurrency withdrawal addresses
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* USDC Solana Address */}
+                <div className="space-y-2">
+                  <Label htmlFor="usdc-solana">
+                    {getCryptoById('usdc-solana')?.displayName || 'USDC (Solana)'}
+                  </Label>
+                  <Input
+                    id="usdc-solana"
+                    value={usdcSolanaAddress}
+                    onChange={(e) => {
+                      setUsdcSolanaAddress(e.target.value);
+                      if (cryptoAddressErrors.usdc) {
+                        setCryptoAddressErrors(prev => ({ ...prev, usdc: undefined }));
+                      }
+                    }}
+                    placeholder={getCryptoById('usdc-solana')?.addressPlaceholder || 'Enter your USDC Solana address'}
+                    className={cn(cryptoAddressErrors.usdc && "border-destructive")}
+                  />
+                  {cryptoAddressErrors.usdc ? (
+                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdc}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {getCryptoById('usdc-solana')?.description} • Example: {getCryptoById('usdc-solana')?.addressExample}
+                    </p>
+                  )}
+                </div>
+
+                {/* USDT BEP-20 Address */}
+                <div className="space-y-2">
+                  <Label htmlFor="usdt-bep20">
+                    {getCryptoById('usdt-bep20')?.displayName || 'USDT (BEP-20)'}
+                  </Label>
+                  <Input
+                    id="usdt-bep20"
+                    value={usdtBep20Address}
+                    onChange={(e) => {
+                      setUsdtBep20Address(e.target.value);
+                      if (cryptoAddressErrors.usdt) {
+                        setCryptoAddressErrors(prev => ({ ...prev, usdt: undefined }));
+                      }
+                    }}
+                    placeholder={getCryptoById('usdt-bep20')?.addressPlaceholder || 'Enter your USDT BEP-20 address'}
+                    className={cn(cryptoAddressErrors.usdt && "border-destructive")}
+                  />
+                  {cryptoAddressErrors.usdt ? (
+                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdt}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {getCryptoById('usdt-bep20')?.description} • Example: {getCryptoById('usdt-bep20')?.addressExample}
+                    </p>
+                  )}
+                </div>
+
+                {/* Save Button */}
+                <Button
+                  onClick={handleCryptoAddressUpdate}
+                  disabled={
+                    updateCryptoAddressesMutation.isPending ||
+                    (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) ||
+                    (usdcSolanaAddress === profile?.usdc_solana_address && usdtBep20Address === profile?.usdt_bep20_address)
+                  }
+                  className="w-full"
+                >
+                  {updateCryptoAddressesMutation.isPending ? "Saving..." : "Save Withdrawal Addresses"}
+                </Button>
+
+                {/* Information Alert */}
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Withdrawal Addresses</AlertTitle>
+                  <AlertDescription>
+                    These addresses will be used for cryptocurrency withdrawals. Please double-check your addresses before saving.
+                    Sending funds to an incorrect address may result in permanent loss.
                   </AlertDescription>
                 </Alert>
               </CardContent>
