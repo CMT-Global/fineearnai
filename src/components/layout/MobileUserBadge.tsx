@@ -2,7 +2,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { Badge } from "@/components/ui/badge";
+import { Check } from "lucide-react";
 import { useMemo } from "react";
+import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface MobileUserBadgeProps {
   profile?: {
@@ -13,6 +15,7 @@ interface MobileUserBadgeProps {
     account_status: string;
     earnings_wallet_balance: number;
     deposit_wallet_balance: number;
+    earnerBadge?: EarnerBadgeStatus;
   } | null;
 }
 
@@ -67,7 +70,17 @@ export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
             </AvatarFallback>
           </Avatar>
           
-          {/* Notification Dot - Plan Expiring Soon */}
+          {/* Verified Earner Checkmark - Bottom Right */}
+          {profile.earnerBadge?.isVerified && (
+            <span 
+              className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5 border border-background shadow-sm"
+              title="Verified Earner"
+            >
+              <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
+            </span>
+          )}
+          
+          {/* Notification Dot - Plan Expiring Soon (Top Right, takes priority over verification) */}
           {showNotification && (
             <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
