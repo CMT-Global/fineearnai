@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { 
   FileText, 
@@ -165,7 +164,7 @@ const HowItWorksPDFManager = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="container mx-auto px-4 py-8">
         <AdminBreadcrumb 
           items={[
@@ -488,7 +487,7 @@ const HowItWorksPDFManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 };
 
