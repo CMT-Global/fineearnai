@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { supabase } from "@/integrations/supabase/client";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -55,7 +56,8 @@ const Tasks = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [profile, setProfile] = useState<any>(null);
+  // Use unified profile hook with earnerBadge computation
+  const { data: profile, isLoading: isProfileLoading } = useProfile(user?.id);
   const [selectedResponse, setSelectedResponse] = useState<string>("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [startTime] = useState<number>(Date.now());
@@ -71,18 +73,6 @@ const Tasks = () => {
       navigate("/login");
     }
   }, [user, loading, navigate]);
-
-  // Load profile
-  useEffect(() => {
-    if (user) {
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => data && setProfile(data));
-    }
-  }, [user]);
 
   // ✅ Phase 2: React Query handles ALL server data (user stats from get-next-task)
   // Database is the single source of truth for task resets
@@ -155,8 +145,7 @@ const Tasks = () => {
           // Invalidate the next-task query to trigger a refetch with fresh data
           queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
           
-          // Also update the profile state
-          setProfile(payload.new);
+          // Profile updates are handled by useProfile hook's real-time subscription
           
           // Hide syncing indicator after a short delay
           setTimeout(() => setIsSyncing(false), 1000);
@@ -318,7 +307,7 @@ const Tasks = () => {
       profile={profile}
       isAdmin={isAdmin}
       onSignOut={signOut}
-      isLoading={!profile}
+      isLoading={isProfileLoading || !profile}
       loadingText="Loading tasks..."
     >
       {/* Header */}
