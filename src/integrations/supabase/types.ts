@@ -2004,6 +2004,54 @@ export type Database = {
           },
         ]
       }
+      withdrawal_address_otps: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          max_attempts: number | null
+          otp_code: string
+          usdc_address: string | null
+          usdt_address: string | null
+          used_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code: string
+          usdc_address?: string | null
+          usdt_address?: string | null
+          used_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number | null
+          otp_code?: string
+          usdc_address?: string | null
+          usdt_address?: string | null
+          used_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       withdrawal_requests: {
         Row: {
           admin_notes: string | null

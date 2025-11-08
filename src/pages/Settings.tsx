@@ -17,7 +17,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle, Wallet } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle, Wallet, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SUPPORTED_CRYPTOCURRENCIES, validateCryptoAddress, getCryptoById } from "@/types/crypto-currencies";
 import { countries, getCountryName } from "@/lib/countries";
@@ -49,6 +50,13 @@ const Settings = () => {
     usdc?: string;
     usdt?: string;
   }>({});
+
+  // OTP state for withdrawal address changes
+  const [showWithdrawalOTP, setShowWithdrawalOTP] = useState(false);
+  const [withdrawalOTP, setWithdrawalOTP] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOTP, setSendingOTP] = useState(false);
+  const [verifyingOTP, setVerifyingOTP] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -211,8 +219,8 @@ const Settings = () => {
     }
   };
 
-  const handleCryptoAddressUpdate = () => {
-    // Validate addresses before saving
+  const handleSendWithdrawalOTP = async () => {
+    // Validate addresses before sending OTP
     const errors: { usdc?: string; usdt?: string } = {};
     
     if (usdcSolanaAddress.trim() && !validateCryptoAddress('usdc-solana', usdcSolanaAddress)) {
@@ -225,10 +233,77 @@ const Settings = () => {
     
     setCryptoAddressErrors(errors);
     
-    if (Object.keys(errors).length === 0) {
-      updateCryptoAddressesMutation.mutate();
-    } else {
+    if (Object.keys(errors).length > 0) {
       toast.error("Please fix the address validation errors");
+      return;
+    }
+
+    if (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) {
+      toast.error("Please enter at least one cryptocurrency address");
+      return;
+    }
+
+    try {
+      setSendingOTP(true);
+      
+      const { data, error } = await supabase.functions.invoke('send-withdrawal-address-otp', {
+        body: {
+          usdcAddress: usdcSolanaAddress.trim() || undefined,
+          usdtAddress: usdtBep20Address.trim() || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      setOtpSent(true);
+      setShowWithdrawalOTP(true);
+      toast.success('Verification code sent to your email');
+    } catch (error: any) {
+      console.error('Failed to send OTP:', error);
+      toast.error(error.message || 'Failed to send verification code');
+    } finally {
+      setSendingOTP(false);
+    }
+  };
+
+  const handleVerifyAndSaveAddresses = async () => {
+    if (!withdrawalOTP || withdrawalOTP.length !== 6) {
+      toast.error('Please enter a valid 6-digit verification code');
+      return;
+    }
+
+    try {
+      setVerifyingOTP(true);
+
+      const { data, error } = await supabase.functions.invoke('verify-withdrawal-address-otp', {
+        body: {
+          otpCode: withdrawalOTP,
+          usdcAddress: usdcSolanaAddress.trim() || undefined,
+          usdtAddress: usdtBep20Address.trim() || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      // Update successful
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setShowWithdrawalOTP(false);
+      setWithdrawalOTP('');
+      setOtpSent(false);
+      toast.success('Withdrawal addresses updated successfully');
+    } catch (error: any) {
+      console.error('Verification failed:', error);
+      toast.error(error.message || 'Verification failed. Please try again.');
+    } finally {
+      setVerifyingOTP(false);
     }
   };
 
@@ -260,6 +335,63 @@ const Settings = () => {
             </div>
 
             {/* Account Information */}
+            {/* OTP Verification Dialog */}
+            <Dialog open={showWithdrawalOTP} onOpenChange={setShowWithdrawalOTP}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Verify Your Email</DialogTitle>
+                  <DialogDescription>
+                    Enter the 6-digit verification code sent to your email to confirm the address changes
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="otp">Verification Code</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="Enter 6-digit code"
+                      value={withdrawalOTP}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setWithdrawalOTP(value);
+                      }}
+                      maxLength={6}
+                      className="text-center text-2xl tracking-widest font-mono"
+                    />
+                    <p className="text-xs text-muted-foreground text-center">
+                      Code expires in 10 minutes
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleVerifyAndSaveAddresses}
+                    disabled={verifyingOTP || withdrawalOTP.length !== 6}
+                    className="w-full"
+                  >
+                    {verifyingOTP ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      'Verify & Save'
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowWithdrawalOTP(false);
+                      setWithdrawalOTP('');
+                    }}
+                    disabled={verifyingOTP}
+                    className="w-full"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Card>
               <CardHeader>
                 <CardTitle>Account Information</CardTitle>
@@ -740,11 +872,21 @@ const Settings = () => {
                   )}
                 </div>
 
+                {/* Security Notice */}
+                <Alert>
+                  <Shield className="h-4 w-4" />
+                  <AlertTitle>Secure Your Addresses</AlertTitle>
+                  <AlertDescription>
+                    For security, we'll send a verification code to your email when you update these addresses.
+                    Make sure your withdrawal addresses are correct to avoid loss of funds.
+                  </AlertDescription>
+                </Alert>
+
                 {/* Save Button */}
                 <Button
-                  onClick={handleCryptoAddressUpdate}
+                  onClick={handleSendWithdrawalOTP}
                   disabled={
-                    updateCryptoAddressesMutation.isPending ||
+                    sendingOTP ||
                     (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) ||
                     (usdcSolanaAddress === profile?.usdc_solana_address && usdtBep20Address === profile?.usdt_bep20_address)
                   }
