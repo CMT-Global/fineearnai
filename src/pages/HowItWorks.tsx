@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,18 @@ const HowItWorks = () => {
   const { profile } = data || {};
 
   const totalSteps = 8;
+
+  // Step-specific color themes with gradients
+  const stepThemes: Record<number, { gradient: string; bg: string }> = {
+    1: { gradient: "from-blue-500 to-cyan-500", bg: "bg-gradient-to-br from-blue-500 to-cyan-500" },
+    2: { gradient: "from-green-500 to-emerald-500", bg: "bg-gradient-to-br from-green-500 to-emerald-500" },
+    3: { gradient: "from-purple-500 to-pink-500", bg: "bg-gradient-to-br from-purple-500 to-pink-500" },
+    4: { gradient: "from-orange-500 to-amber-500", bg: "bg-gradient-to-br from-orange-500 to-amber-500" },
+    5: { gradient: "from-teal-500 to-cyan-500", bg: "bg-gradient-to-br from-teal-500 to-cyan-500" },
+    6: { gradient: "from-indigo-500 to-purple-500", bg: "bg-gradient-to-br from-indigo-500 to-purple-500" },
+    7: { gradient: "from-rose-500 to-pink-500", bg: "bg-gradient-to-br from-rose-500 to-pink-500" },
+    8: { gradient: "from-violet-500 to-fuchsia-500", bg: "bg-gradient-to-br from-violet-500 to-fuchsia-500" }
+  };
 
   const dismissBanner = () => {
     setShowBanner(false);
@@ -497,24 +509,30 @@ const HowItWorks = () => {
           </Alert>
         )}
 
-        <Card className="shadow-lg">
-          <CardHeader className="text-center space-y-4 pb-4">
-            <div className="flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center shadow-lg">
-                <Icon className="w-10 h-10 text-primary-foreground" />
+        <Card className="shadow-xl overflow-hidden">
+          {/* Colored Header Section */}
+          <div className={`${stepThemes[currentStep].bg} text-white p-6 md:p-8`}>
+            {/* Large Icon Circle */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <Icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
             </div>
-            <div>
-              <Badge variant="outline" className="mb-2">
-                Step {currentStep} of {totalSteps}
-              </Badge>
-              <CardTitle className="text-2xl sm:text-3xl">{currentStepData.title}</CardTitle>
-              <CardDescription className="text-base mt-2">{currentStepData.subtitle}</CardDescription>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-          </CardHeader>
+            
+            {/* Title & Subtitle */}
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">{currentStepData.title}</h2>
+            <p className="text-white/90 text-center text-base md:text-lg">{currentStepData.subtitle}</p>
+          </div>
 
-          <CardContent className="space-y-6">
+          {/* Content Section */}
+          <CardContent className="p-6 space-y-6">
+            <div className="mb-6">
+              <Progress value={progressPercentage} className="h-2" />
+              <p className="text-center text-sm text-muted-foreground mt-2">
+                Step {currentStep} of {totalSteps}
+              </p>
+            </div>
+            
             <div className="min-h-[300px] sm:min-h-[400px]">
               {currentStepData.content}
             </div>
