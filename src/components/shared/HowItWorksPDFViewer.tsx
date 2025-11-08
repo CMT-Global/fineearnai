@@ -44,8 +44,9 @@ export const HowItWorksPDFViewer = () => {
 
       if (error) throw error;
 
-      // Create blob URL and trigger download
-      const blobUrl = window.URL.createObjectURL(pdfData);
+      // Re-wrap with correct mimetype and trigger download
+      const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = `how-it-works-v${pdfDocument.version}.pdf`;
@@ -79,8 +80,9 @@ export const HowItWorksPDFViewer = () => {
 
       if (error) throw error;
 
-      // Create blob URL and open in new tab
-      const blobUrl = window.URL.createObjectURL(pdfData);
+      // Re-wrap with correct mimetype and open in new tab
+      const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(pdfBlob);
       window.open(blobUrl, '_blank');
       
       // Cleanup after a delay (blob URL will persist in new tab)
@@ -104,7 +106,9 @@ export const HowItWorksPDFViewer = () => {
 
         if (error) throw error;
 
-        const blobUrl = window.URL.createObjectURL(pdfData);
+        // Re-wrap with correct mimetype for iframe rendering
+        const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+        const blobUrl = window.URL.createObjectURL(pdfBlob);
         setPreviewBlobUrl(blobUrl);
       } catch (error) {
         console.error('Error loading preview:', error);

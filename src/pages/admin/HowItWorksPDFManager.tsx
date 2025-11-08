@@ -170,23 +170,63 @@ const HowItWorksPDFManager = () => {
   const pendingDocs = documents?.filter(doc => doc.status === 'pending_review') || [];
   const historyDocs = documents?.filter(doc => doc.status !== 'pending_review') || [];
 
+  const getFilenameFromUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+      return u.pathname.split('/').pop() || '';
+    } catch {
+      return url.split('/').pop() || '';
+    }
+  };
+
   const loadPDFForPreview = async (doc: any) => {
     try {
-      const filename = doc.file_url.split('/').pop()!;
+      const filename = getFilenameFromUrl(doc.file_url);
       const { data: pdfData, error } = await supabase.storage
         .from('how-it-works-pdfs')
         .download(filename);
 
       if (error) throw error;
 
-      // Create blob URL for preview
-      const blobUrl = window.URL.createObjectURL(pdfData);
+      // Re-wrap with correct mimetype for iframe rendering
+      const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(pdfBlob);
       setPreviewBlobUrl(blobUrl);
       setSelectedDoc(doc);
       setPreviewDialogOpen(true);
     } catch (error) {
       console.error('Error loading PDF preview:', error);
       toast.error('Failed to load PDF preview');
+    }
+  };
+
+  const handleBlobDownload = async (doc: any) => {
+    try {
+      const filename = getFilenameFromUrl(doc.file_url);
+      const { data: pdfData, error } = await supabase.storage
+        .from('how-it-works-pdfs')
+        .download(filename);
+
+      if (error) throw error;
+
+      // Re-wrap with correct mimetype
+      const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(pdfBlob);
+      
+      // Trigger download
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `fineearn-earners-guide-v${doc.version}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Cleanup
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 500);
+      toast.success('PDF download started');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF');
     }
   };
 
@@ -374,7 +414,7 @@ const HowItWorksPDFManager = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => window.open(doc.file_url, '_blank')}
+                                  onClick={() => handleBlobDownload(doc)}
                                 >
                                   <Download className="h-4 w-4 mr-1" />
                                   Download
@@ -519,7 +559,7 @@ const HowItWorksPDFManager = () => {
             </Button>
             {selectedDoc?.file_url && (
               <Button
-                onClick={() => window.open(selectedDoc.file_url, '_blank')}
+                onClick={() => handleBlobDownload(selectedDoc)}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
