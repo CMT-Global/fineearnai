@@ -14,36 +14,56 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get authenticated user
+    // Get authenticated user using ANON_KEY (not SERVICE_ROLE_KEY)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    // Create client with ANON_KEY and auth header for user authentication
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: authHeader } }
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
+      console.error('❌ Auth error:', authError);
       throw new Error('Unauthorized');
     }
 
-    // Parse query parameters
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    // Parse parameters from body (POST) or query params (GET)
+    let page = 1;
+    let limit = 20;
+    
+    if (req.method === 'POST') {
+      const body = await req.json();
+      page = parseInt(body.page || '1');
+      limit = parseInt(body.limit || '20');
+    } else {
+      const url = new URL(req.url);
+      page = parseInt(url.searchParams.get('page') || '1');
+      limit = parseInt(url.searchParams.get('limit') || '20');
+    }
+    
     const offset = (page - 1) * limit;
 
     console.log(`⚡ Fetching referrals (optimized) for user ${user.id}, page ${page}, limit ${limit}`);
 
     // ============================================================================
     // SINGLE OPTIMIZED QUERY - Replaces 3 separate queries
+    // Use service role client for the RPC call to bypass RLS
     // ============================================================================
-    const { data: referrals, error: referralsError } = await supabaseClient
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    const { data: referrals, error: referralsError } = await serviceClient
       .rpc('get_referrals_with_details', {
         p_referrer_id: user.id,
         p_limit: limit,

@@ -64,6 +64,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.error('❌ Auth error details:', {
+        hasError: !!authError,
+        errorMessage: authError?.message,
+        errorDetails: authError,
+        hasUser: !!user,
+        authHeader: authHeader?.substring(0, 20) + '...'
+      });
+      
       log({
         event: 'get-partner-status.auth-failed',
         correlationId,
@@ -72,7 +80,11 @@ Deno.serve(async (req) => {
         error: authError?.message || 'Authentication failed',
       });
       return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Unauthorized',
+          debug: authError?.message 
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
