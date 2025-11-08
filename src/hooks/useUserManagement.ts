@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { callEdgeFunctionWithRetry } from '@/lib/session-refresh';
 
 /**
  * useUserManagement - Hook for admin user management operations
@@ -226,14 +227,9 @@ export const useUserManagement = () => {
       queryFn: async () => {
         console.log('🔍 [useUserDetail] Fetching user detail for:', userId);
         
-        const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-          body: { action: 'get_user_detail', userId }
+        const data: any = await callEdgeFunctionWithRetry('admin-manage-user', {
+          body: { action: 'get_user_detail', user_id: userId }
         });
-
-        if (error) {
-          console.error('❌ [useUserDetail] Edge function error:', error);
-          throw new Error(`Failed to fetch user: ${error.message}`);
-        }
 
         if (!data || !data.result) {
           console.error('❌ [useUserDetail] Invalid response:', data);
@@ -245,19 +241,17 @@ export const useUserManagement = () => {
       },
       enabled: !!userId,
       staleTime: 30000,
-      retry: 2, // Retry failed requests twice
-      retryDelay: 1000, // Wait 1s between retries
+      retry: 1, // Retry once (session refresh already retries)
+      retryDelay: 1000,
     });
   };
 
   // Update user profile
   const updateUserProfile = useMutation({
     mutationFn: async ({ userId, profileData }: { userId: string; profileData: any }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'update_user_profile', userId, profileData }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'update_user_profile', user_id: userId, updates: profileData }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
@@ -272,11 +266,9 @@ export const useUserManagement = () => {
   // Update user email
   const updateUserEmail = useMutation({
     mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'update_user_email', userId, newEmail }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'update_user_email', user_id: userId, new_email: newEmail }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
@@ -291,11 +283,15 @@ export const useUserManagement = () => {
   // Adjust wallet balance
   const adjustWalletBalance = useMutation({
     mutationFn: async ({ userId, walletAdjustment }: { userId: string; walletAdjustment: any }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'adjust_wallet_balance', userId, walletAdjustment }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { 
+          action: 'adjust_wallet_balance', 
+          user_id: userId, 
+          wallet_type: walletAdjustment.walletType,
+          amount: walletAdjustment.amount,
+          reason: walletAdjustment.reason
+        }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
@@ -310,11 +306,14 @@ export const useUserManagement = () => {
   // Change membership plan
   const changeMembershipPlan = useMutation({
     mutationFn: async ({ userId, planData }: { userId: string; planData: any }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'change_membership_plan', userId, planData }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { 
+          action: 'change_membership_plan', 
+          user_id: userId, 
+          plan_name: planData.planName,
+          expires_at: planData.expiresAt
+        }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
@@ -329,16 +328,14 @@ export const useUserManagement = () => {
   // Suspend user
   const suspendUser = useMutation({
     mutationFn: async ({ userId, suspendReason }: { userId: string; suspendReason?: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'suspend_user', userId, suspendReason }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'suspend_user', user_id: userId, suspend: true, reason: suspendReason }
       });
-      if (error) throw error;
-      return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success(data.result.message);
+      toast.success(data?.result?.message || 'User suspended successfully');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to suspend user');
@@ -348,11 +345,9 @@ export const useUserManagement = () => {
   // Ban user
   const banUser = useMutation({
     mutationFn: async ({ userId, banReason }: { userId: string; banReason: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'ban_user', userId, banReason }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'ban_user', user_id: userId, reason: banReason }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
@@ -367,11 +362,9 @@ export const useUserManagement = () => {
   // Reset daily limits
   const resetDailyLimits = useMutation({
     mutationFn: async (userId: string) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'reset_daily_limits', userId }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'reset_daily_limits', user_id: userId }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', userId] });
@@ -385,11 +378,9 @@ export const useUserManagement = () => {
   // Change upline
   const changeUpline = useMutation({
     mutationFn: async ({ userId, newUplineEmail }: { userId: string; newUplineEmail: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'change_upline', userId, newUplineEmail }
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'change_upline', user_id: userId, new_upline_id: newUplineEmail }
       });
-      if (error) throw error;
-      return data;
     },
     onSuccess: (_, variables) => {
       // Invalidate ALL related caches
@@ -467,11 +458,10 @@ export const useUserManagement = () => {
 
   // Get user roles
   const getUserRoles = async (userId: string) => {
-    const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-      body: { action: 'get_user_roles', userId }
+    const data: any = await callEdgeFunctionWithRetry('admin-manage-user', {
+      body: { action: 'get_user_roles', user_id: userId }
     });
-    if (error) throw error;
-    return data.roles as string[];
+    return (data?.roles || []) as string[];
   };
 
   // Assign role to user
