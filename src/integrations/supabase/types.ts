@@ -1397,7 +1397,7 @@ export type Database = {
           tasks_completed_today: number
           total_earned: number
           usdc_solana_address: string | null
-          usdt_trc20_address: string | null
+          usdt_bep20_address: string | null
           username: string
           withdrawal_addresses_updated_at: string | null
         }
@@ -1434,7 +1434,7 @@ export type Database = {
           tasks_completed_today?: number
           total_earned?: number
           usdc_solana_address?: string | null
-          usdt_trc20_address?: string | null
+          usdt_bep20_address?: string | null
           username: string
           withdrawal_addresses_updated_at?: string | null
         }
@@ -1471,7 +1471,7 @@ export type Database = {
           tasks_completed_today?: number
           total_earned?: number
           usdc_solana_address?: string | null
-          usdt_trc20_address?: string | null
+          usdt_bep20_address?: string | null
           username?: string
           withdrawal_addresses_updated_at?: string | null
         }
