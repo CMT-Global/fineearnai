@@ -224,15 +224,29 @@ export const useUserManagement = () => {
     return useQuery({
       queryKey: ['admin-user-detail', userId],
       queryFn: async () => {
+        console.log('🔍 [useUserDetail] Fetching user detail for:', userId);
+        
         const { data, error } = await supabase.functions.invoke('admin-manage-user', {
           body: { action: 'get_user_detail', userId }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ [useUserDetail] Edge function error:', error);
+          throw new Error(`Failed to fetch user: ${error.message}`);
+        }
+
+        if (!data || !data.result) {
+          console.error('❌ [useUserDetail] Invalid response:', data);
+          throw new Error('Invalid response from server');
+        }
+
+        console.log('✅ [useUserDetail] Success:', data.result.profile?.username);
         return data.result;
       },
       enabled: !!userId,
       staleTime: 30000,
+      retry: 2, // Retry failed requests twice
+      retryDelay: 1000, // Wait 1s between retries
     });
   };
 
