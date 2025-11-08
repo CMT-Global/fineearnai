@@ -187,3 +187,9 @@ verify_jwt = true
 
 [functions.send-email-verification-reminders]
 verify_jwt = false
+
+[functions.initialize-pdf-storage]
+verify_jwt = true
+
+[functions.generate-how-it-works-pdf]
+verify_jwt = true
