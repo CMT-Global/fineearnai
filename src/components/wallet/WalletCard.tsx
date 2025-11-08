@@ -31,6 +31,7 @@ import {
   validateCryptoAddress,
   type CryptoCurrency 
 } from "@/types/crypto-currencies";
+import { WithdrawalConfirmationDialog } from "./WithdrawalConfirmationDialog";
 
 interface PaymentProcessor {
   id: string;
@@ -154,6 +155,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   // PHASE 3: Cryptocurrency selection state
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoCurrency>(getDefaultCrypto());
   const [cryptoAddressError, setCryptoAddressError] = useState<string | null>(null);
+  
+  // Phase 5.5: Withdrawal confirmation dialog state
+  const [showWithdrawalConfirmation, setShowWithdrawalConfirmation] = useState(false);
+  const [pendingWithdrawalData, setPendingWithdrawalData] = useState<{
+    amount: string;
+    address: string;
+    cryptoId: string;
+  } | null>(null);
   
   // CPAY iframe state
   const [showCpayIframe, setShowCpayIframe] = useState(false);
@@ -650,17 +659,47 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // All validations passed, proceed with withdrawal request
-      // ✅ NEW: Map virtual method to actual processor
+      // PHASE 3: Validate crypto address format
+      if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
+        toast.error(`Invalid ${selectedCrypto.displayName} address format. Please check and try again.`);
+        setCryptoAddressError(`Invalid ${selectedCrypto.displayName} address format`);
+        return;
+      }
+
+      // All validations passed - show confirmation dialog
+      setPendingWithdrawalData({
+        amount: withdrawAmount,
+        address: accountDetails.trim(),
+        cryptoId: selectedCrypto.id
+      });
+      setShowWithdrawalConfirmation(true);
+      
+    } catch (error: any) {
+      console.error("Withdrawal validation error:", error);
+      toast.error(error.message || "Failed to validate withdrawal");
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    if (!pendingWithdrawalData || !user || !profile) return;
+
+    setWithdrawLoading(true);
+    console.log('🔄 Starting confirmed withdrawal request...');
+
+    try {
+      const amountUSD = convertLocalToUSD(parseFloat(pendingWithdrawalData.amount));
+
+      // ✅ Map virtual method to actual processor
       const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
       
       let selectedProcessor: PaymentProcessor | undefined;
       let displayMethodName: string;
       
       if (virtualMethod && actualCryptoProcessor) {
-        // User selected a virtual method - use the actual crypto processor behind the scenes
         selectedProcessor = actualCryptoProcessor;
-        displayMethodName = virtualMethod.displayName; // Store user-friendly name for tracking
+        displayMethodName = virtualMethod.displayName;
         console.log('🎭 Virtual method selected:', {
           virtualMethodId: virtualMethod.id,
           displayName: virtualMethod.displayName,
@@ -668,20 +707,12 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           actualProcessorName: actualCryptoProcessor.name
         });
       } else {
-        // User selected an actual processor (fallback for backwards compatibility)
         selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
         displayMethodName = withdrawMethod;
       }
       
       if (!selectedProcessor) {
         toast.error("Please select a valid withdrawal method");
-        return;
-      }
-
-      // PHASE 3: Validate crypto address format
-      if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
-        toast.error(`Invalid ${selectedCrypto.displayName} address format. Please check and try again.`);
-        setCryptoAddressError(`Invalid ${selectedCrypto.displayName} address format`);
         return;
       }
 
@@ -693,17 +724,17 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         feeFixed: selectedProcessor.fee_fixed,
         feePercentage: selectedProcessor.fee_percentage,
         amountUSD,
-        originalAmount: amount,
+        originalAmount: pendingWithdrawalData.amount,
         currency: userCurrency
       });
       
       const { data, error } = await supabase.functions.invoke("request-withdrawal", {
         body: {
           amount: amountUSD,
-          paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
-          payoutAddress: accountDetails,
-          paymentProcessorId: selectedProcessor.id, // ✅ Use actual processor ID for fees/processing
-          cryptocurrency: selectedCrypto.id, // ✅ PHASE 3: Include selected crypto
+          paymentMethod: displayMethodName,
+          payoutAddress: pendingWithdrawalData.address,
+          paymentProcessorId: selectedProcessor.id,
+          cryptocurrency: pendingWithdrawalData.cryptoId,
         },
       });
 
@@ -714,6 +745,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       setWithdrawMethod("");
       setAccountDetails("");
       setWithdrawDialogOpen(false);
+      setShowWithdrawalConfirmation(false);
+      setPendingWithdrawalData(null);
       onBalanceUpdate();
     } catch (error: any) {
       console.error("Withdrawal error:", error);
@@ -1344,6 +1377,21 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         </div>
       </CardContent>
     </Card>
+
+    <WithdrawalConfirmationDialog
+      open={showWithdrawalConfirmation}
+      onOpenChange={(open) => {
+        setShowWithdrawalConfirmation(open);
+        if (!open) {
+          setPendingWithdrawalData(null);
+        }
+      }}
+      onConfirm={handleConfirmWithdrawal}
+      amount={pendingWithdrawalData?.amount || '0'}
+      selectedCrypto={selectedCrypto}
+      address={pendingWithdrawalData?.address || ''}
+      isProcessing={withdrawLoading}
+    />
     </>
   );
 };
