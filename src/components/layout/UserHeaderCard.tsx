@@ -154,8 +154,16 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
   // Defensive fallback: Compute earner badge if not present in profile
   // This guarantees badge visibility even if upstream data pipeline fails
   const effectiveBadge = useMemo(() => {
+    console.log('🎯 [UserHeaderCard] Computing earner badge:', {
+      hasEarnerBadge: !!profile.earnerBadge,
+      earnerBadge: profile.earnerBadge,
+      membershipPlan: profile.membership_plan,
+      username: profile.username
+    });
+    
     // Use profile's earnerBadge if available
     if (profile.earnerBadge) {
+      console.log('✅ Using existing earnerBadge from profile');
       return profile.earnerBadge;
     }
     
@@ -177,7 +185,11 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
       accountType = 'personal';
     }
     
-    return getEarnerBadgeStatus(accountType);
+    console.log('🔄 Computing badge via fallback. Account type:', accountType);
+    const computedBadge = getEarnerBadgeStatus(accountType);
+    console.log('✅ Computed badge:', computedBadge);
+    
+    return computedBadge;
   }, [profile.earnerBadge, profile.membership_plan]);
   
   return (
