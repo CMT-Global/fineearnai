@@ -90,6 +90,9 @@ const TEMPLATE_TYPE_MAP: Record<string, string> = {
   // User onboarding
   'welcome': 'user_onboarding',
   
+  // Security emails
+  'withdrawal_address_change': 'security',
+  
   // Auth emails (handled by auth hook)
   'auth_magic_link': 'auth_magic_link',
   'auth_email_confirmation': 'auth_email_confirmation',
