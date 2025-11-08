@@ -57,18 +57,24 @@ Deno.serve(async (req) => {
 
     const depositAmount = parseFloat(amount);
     
+    // Generate tracking and payment IDs for idempotency and audit trail
+    const trackingId = gatewayTransactionId || `DEP-manual-${Date.now()}`;
+    const paymentId = gatewayTransactionId || `manual-${Date.now()}`;
+    
     // Use atomic deposit function for race-condition protection
-    console.log('Calling atomic deposit function:', { userId: user.id, amount: depositAmount, paymentMethod });
+    console.log('Calling atomic deposit function:', { userId: user.id, amount: depositAmount, paymentMethod, trackingId, paymentId });
     
     const { data: atomicResult, error: atomicError } = await supabase.rpc('credit_deposit_atomic_v2', {
       p_user_id: user.id,
       p_amount: depositAmount,
-      p_order_id: gatewayTransactionId || `manual-${Date.now()}`,
+      p_tracking_id: trackingId,
+      p_payment_id: paymentId,
       p_payment_method: paymentMethod,
-      p_gateway_transaction_id: gatewayTransactionId,
       p_metadata: {
         deposit_via: 'direct',
-        processed_at: new Date().toISOString()
+        processed_at: new Date().toISOString(),
+        tracking_id: trackingId,
+        payment_id: paymentId
       }
     });
 
