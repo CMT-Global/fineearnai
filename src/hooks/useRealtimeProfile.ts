@@ -35,12 +35,19 @@ export const useRealtimeProfile = (userId: string | undefined) => {
 
           // Update React Query cache with new data
           if (payload.new) {
-            queryClient.setQueryData(['profile', userId], payload.new);
+            // Merge with existing cache to preserve computed fields like earnerBadge
+            queryClient.setQueryData(['profile-v2', userId], (oldData: any) => ({
+              ...oldData,
+              ...payload.new,
+              // Preserve computed earnerBadge from previous cache
+              earnerBadge: oldData?.earnerBadge
+            }));
             
-            // Also invalidate dashboard data to refresh everything
-            queryClient.invalidateQueries({ queryKey: ['dashboard-data', userId] });
+            // Invalidate dependent queries to refresh with new data
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data-v2', userId] });
+            queryClient.invalidateQueries({ queryKey: ['referral-complete-data-v2', userId] });
             
-            console.log('✅ Profile cache updated via real-time subscription');
+            console.log('✅ Profile cache updated via real-time subscription (earnerBadge preserved)');
           }
         }
       )
