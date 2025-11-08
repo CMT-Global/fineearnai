@@ -1244,13 +1244,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           ))}
                         </SelectContent>
                       </Select>
-                      <Alert className="mt-2">
-                        <InfoIcon className="h-4 w-4" />
-                        <AlertDescription className="text-xs space-y-1">
-                          <div>{selectedCrypto.description}</div>
-                          <div className="text-muted-foreground">{selectedCrypto.feeInfo}</div>
-                        </AlertDescription>
-                      </Alert>
                     </div>
 
                     {/* Currency & Network Badge */}
