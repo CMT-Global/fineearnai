@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Download, FileText, Info } from "lucide-react";
 import { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { toast } from "sonner";
 
 export const HowItWorksPDFViewer = () => {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -32,55 +33,28 @@ export const HowItWorksPDFViewer = () => {
 
     setIsPrinting(true);
     try {
-      // Fetch the HTML content
-      const { data: htmlData, error } = await supabase.storage
-        .from("how-it-works-pdfs")
-        .download(pdfDocument.file_url.split("/").pop()!);
-
-      if (error) throw error;
-
-      // Convert blob to text
-      const htmlText = await htmlData.text();
-
-      // Open in new window for printing
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(htmlText);
-        printWindow.document.close();
-        
-        // Wait for content to load, then trigger print dialog
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
-          }, 500);
-        };
-      }
+      // Create a temporary link to download the PDF
+      const link = document.createElement('a');
+      link.href = pdfDocument.file_url;
+      link.download = `how-it-works-v${pdfDocument.version}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('PDF download started');
     } catch (error) {
       console.error("Error downloading PDF:", error);
+      toast.error('Failed to download PDF');
     } finally {
       setIsPrinting(false);
     }
   };
 
-  const handlePreview = async () => {
+  const handlePreview = () => {
     if (!pdfDocument?.file_url) return;
-
-    try {
-      const { data: htmlData, error } = await supabase.storage
-        .from("how-it-works-pdfs")
-        .download(pdfDocument.file_url.split("/").pop()!);
-
-      if (error) throw error;
-
-      const htmlText = await htmlData.text();
-      const previewWindow = window.open("", "_blank");
-      if (previewWindow) {
-        previewWindow.document.write(htmlText);
-        previewWindow.document.close();
-      }
-    } catch (error) {
-      console.error("Error previewing PDF:", error);
-    }
+    
+    // Open PDF in new window
+    window.open(pdfDocument.file_url, '_blank');
   };
 
   if (isLoading) {
@@ -149,29 +123,17 @@ export const HowItWorksPDFViewer = () => {
         {/* PDF Preview Frame */}
         <div className="border border-border rounded-lg overflow-hidden bg-muted/20">
           <AspectRatio ratio={16 / 9}>
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-              <div className="text-center space-y-3 p-6">
-                <FileText className="h-16 w-16 text-primary mx-auto opacity-40" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">
-                    How It Works Guide
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Version {pdfDocument.version} • Generated on{" "}
-                    {new Date(pdfDocument.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreview}
-                  className="border-border hover:bg-accent"
-                >
-                  Click to Preview
-                </Button>
-              </div>
-            </div>
+            <iframe 
+              src={pdfDocument.file_url}
+              className="w-full h-full"
+              title="PDF Preview"
+            />
           </AspectRatio>
+        </div>
+        
+        <div className="text-center text-xs text-muted-foreground">
+          Version {pdfDocument.version} • Generated on{" "}
+          {new Date(pdfDocument.created_at).toLocaleDateString()}
         </div>
 
         <Alert className="border-info/20 bg-info/5">

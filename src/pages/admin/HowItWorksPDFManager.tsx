@@ -466,11 +466,11 @@ const HowItWorksPDFManager = () => {
           <DialogHeader>
             <DialogTitle>PDF Preview - v{selectedDoc?.version}</DialogTitle>
             <DialogDescription>
-              Preview of the AI-generated HTML content
+              Preview of the AI-generated PDF document
             </DialogDescription>
           </DialogHeader>
           
-          <div className="overflow-y-auto max-h-[60vh] border rounded-lg p-4">
+          <div className="overflow-y-auto max-h-[60vh] border rounded-lg">
             {selectedDoc?.file_url ? (
               <iframe 
                 src={selectedDoc.file_url} 
