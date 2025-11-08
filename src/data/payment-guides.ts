@@ -103,8 +103,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'If you don\'t have crypto, click Buy Crypto → Choose your preferred payment method → Purchase USDC or USDT.',
-        highlights: ['Buy Crypto', 'USDC', 'USDT'],
+        instruction: 'If you don\'t have crypto, click Buy Crypto → Choose your preferred payment method → Purchase cryptocurrency (BTC, ETH, USDC, USDT, TRX, or others supported by FineEarn).',
+        highlights: ['Buy Crypto', 'cryptocurrency', 'BTC, ETH, USDC, USDT, TRX'],
         delay: '0.1s'
       },
       {
@@ -115,14 +115,14 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'Select USDC or USDT as the coin → Choose the network (we recommend Solana for low fees or TRC20 for USDT) → Copy the wallet address displayed.',
-        highlights: ['USDC', 'USDT', 'Solana', 'TRC20'],
+        instruction: 'Select your coin (BTC, ETH, USDC, USDT, etc.) → Choose the network (we recommend Solana for USDC or BEP20 (BSC) for USDT - both have low fees) → Copy the wallet address displayed.',
+        highlights: ['coin', 'Solana', 'USDC', 'BEP20 (BSC)', 'USDT', 'low fees'],
         delay: '0.3s'
       },
       {
         stepNumber: 5,
-        instruction: 'Return to Binance → Click Withdraw → Select the same coin (USDC/USDT) and network → Paste the FineEarn wallet address.',
-        highlights: ['Binance', 'Withdraw'],
+        instruction: 'Return to Binance → Click Withdraw → Select the same coin and network you chose → Paste the FineEarn wallet address.',
+        highlights: ['Binance', 'Withdraw', 'same coin and network'],
         delay: '0.4s'
       },
       {
@@ -141,8 +141,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'Select USDC or USDT → Choose the network that matches what FineEarn will send (Solana recommended for USDC, TRC20 for USDT).',
-        highlights: ['USDC', 'USDT', 'Solana', 'TRC20'],
+        instruction: 'Select USDC or USDT → Choose the network that matches what FineEarn will send (Solana for USDC or BEP20 (BSC) for USDT).',
+        highlights: ['USDC', 'USDT', 'Solana', 'BEP20 (BSC)'],
         delay: '0.1s'
       },
       {
@@ -153,8 +153,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'On FineEarn, open the Withdraw page → Enter your withdrawal amount → Select the same coin and network.',
-        highlights: ['FineEarn', 'Withdraw page'],
+        instruction: 'On FineEarn, open the Withdraw page → Enter your withdrawal amount → Select the matching coin and network (USDC-Solana or USDT-BEP20).',
+        highlights: ['FineEarn', 'Withdraw page', 'matching coin and network'],
         delay: '0.3s'
       },
       {
@@ -192,8 +192,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'If you need to buy crypto, click Buy → Choose USDC (recommended) or USDT → Complete your purchase.',
-        highlights: ['Buy', 'USDC', 'USDT'],
+        instruction: 'If you need to buy crypto, click Buy → Choose your preferred cryptocurrency (USDC on Solana recommended for lowest fees, or BTC, ETH, USDT on BEP20, etc.) → Complete your purchase.',
+        highlights: ['Buy', 'USDC on Solana', 'lowest fees', 'BTC, ETH, USDT'],
         delay: '0.1s'
       },
       {
@@ -204,8 +204,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'Select USDC as the coin → Choose Solana network for lowest fees → Copy the wallet address shown.',
-        highlights: ['USDC', 'Solana', 'lowest fees'],
+        instruction: 'Select your coin (USDC recommended) → Choose Solana network for lowest fees (or BEP20 for USDT) → Copy the wallet address shown.',
+        highlights: ['coin', 'USDC', 'Solana', 'lowest fees', 'BEP20'],
         delay: '0.3s'
       },
       {
@@ -275,14 +275,14 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
     depositSteps: [
       {
         stepNumber: 1,
-        instruction: 'Open Trust Wallet app → Make sure you have USDC on Solana network (or buy crypto using the app).',
-        highlights: ['Trust Wallet app', 'USDC', 'Solana'],
+        instruction: 'Open Trust Wallet app → Make sure you have cryptocurrency available (USDC on Solana recommended for lowest fees, or BTC, ETH, USDT on BEP20, etc.).',
+        highlights: ['Trust Wallet app', 'USDC on Solana', 'lowest fees', 'BTC, ETH, USDT on BEP20'],
         delay: '0s'
       },
       {
         stepNumber: 2,
-        instruction: 'If you need to buy crypto, tap Buy → Select USDC → Choose Solana network → Complete purchase.',
-        highlights: ['Buy', 'USDC', 'Solana'],
+        instruction: 'If you need to buy crypto, tap Buy → Select your preferred coin (USDC, USDT, BTC, ETH, etc.) → Choose the appropriate network (Solana for USDC, BEP20 for USDT) → Complete purchase.',
+        highlights: ['Buy', 'preferred coin', 'Solana', 'USDC', 'BEP20', 'USDT'],
         delay: '0.1s'
       },
       {
@@ -293,8 +293,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'Select USDC as coin → Choose Solana network → Copy the wallet address displayed.',
-        highlights: ['USDC', 'Solana'],
+        instruction: 'Select your coin → Choose the appropriate network (Solana for USDC, BEP20 for USDT) → Copy the wallet address displayed.',
+        highlights: ['coin', 'Solana', 'BEP20'],
         delay: '0.3s'
       },
       {
@@ -364,8 +364,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
     depositSteps: [
       {
         stepNumber: 1,
-        instruction: 'Open MetaMask browser extension or mobile app → Ensure you have USDC or USDT available.',
-        highlights: ['MetaMask', 'USDC', 'USDT'],
+        instruction: 'Open MetaMask browser extension or mobile app → Ensure you have cryptocurrency available (USDC, USDT, BTC, ETH, or others).',
+        highlights: ['MetaMask', 'cryptocurrency', 'USDC, USDT, BTC, ETH'],
         delay: '0s'
       },
       {
@@ -382,8 +382,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'Select USDC/USDT → Choose Solana or your preferred network → Copy the deposit address shown.',
-        highlights: ['USDC', 'USDT', 'Solana', 'deposit address'],
+        instruction: 'Select your coin (USDC, USDT, BTC, ETH, etc.) → Choose the network (Solana for USDC or BEP20 for USDT recommended for low fees) → Copy the deposit address shown.',
+        highlights: ['coin', 'Solana', 'USDC', 'BEP20', 'USDT', 'low fees'],
         delay: '0.3s'
       },
       {
