@@ -76,7 +76,23 @@ const HowItWorksPDFManager = () => {
       queryClient.invalidateQueries({ queryKey: ['how-it-works-pdfs'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to generate PDF');
+      const errorMsg = error.message || 'Failed to generate PDF';
+      console.error('[PDF Manager] Generation error:', error);
+      
+      // User-friendly error messages based on error content
+      if (errorMsg.includes('Bucket') || errorMsg.includes('bucket')) {
+        toast.error('Storage initialization failed. Please contact support.');
+      } else if (errorMsg.includes('Rate limit') || errorMsg.includes('rate limit') || errorMsg.includes('429')) {
+        toast.error('AI service rate limit reached. Please try again in a few minutes.');
+      } else if (errorMsg.includes('Payment required') || errorMsg.includes('credits') || errorMsg.includes('402')) {
+        toast.error('AI credits depleted. Please contact administrator to add credits.');
+      } else if (errorMsg.includes('Authentication') || errorMsg.includes('Unauthorized')) {
+        toast.error('Authentication failed. Please refresh the page and try again.');
+      } else if (errorMsg.includes('Not authenticated')) {
+        toast.error('Session expired. Please refresh the page and login again.');
+      } else {
+        toast.error(errorMsg);
+      }
     },
   });
 
