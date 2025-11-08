@@ -70,6 +70,12 @@ export const ProcessorSelectionDialog = ({
     recommendation: getProcessorRecommendation(processor, userCountry)
   })).sort((a, b) => b.recommendation.score - a.recommendation.score); // Sort by score
 
+  // Separate P2P guide from regular processors
+  const p2pGuide = processors.find(p => p.id === 'binance-p2p-fiat');
+  const regularProcessors = processorsWithRecommendations.filter(
+    ({ processor }) => processor.id !== 'binance-p2p-fiat'
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl animate-scale-in">
@@ -83,8 +89,51 @@ export const ProcessorSelectionDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Binance P2P Guide - Prominent Section */}
+        {p2pGuide && (
+          <div className="mb-4 animate-fade-in">
+            <Card 
+              className={`cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.01] border-2 ${
+                isDeposit ? 'border-green-300 dark:border-green-700' : 'border-blue-300 dark:border-blue-700'
+              } ${bgClass}`}
+              onClick={() => onProcessorSelect(p2pGuide)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🌍</span>
+                      <CardTitle className={`text-lg ${colorClass}`}>
+                        {isDeposit ? '💵 Buy Crypto with Bank/Mobile Money' : '💰 Sell Crypto for Cash'}
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-sm">
+                      {isDeposit 
+                        ? 'Learn how to buy cryptocurrency using your local bank or mobile money via Binance P2P - works worldwide!' 
+                        : 'Learn how to convert your crypto earnings to cash in your bank or mobile money via Binance P2P'}
+                    </CardDescription>
+                  </div>
+                  <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                    Beginner Friendly
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Badge className={`${isDeposit ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
+                    View Complete Guide →
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {isDeposit ? '9 easy steps' : '8 easy steps'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scroll-smooth">
-          {processorsWithRecommendations.map(({ processor, recommendation }, index) => {
+          {regularProcessors.map(({ processor, recommendation }, index) => {
             const isTopRecommendation = index === 0 && recommendation.score >= 100;
             
             return (
