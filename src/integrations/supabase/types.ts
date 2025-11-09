@@ -2560,6 +2560,14 @@ export type Database = {
         Returns: boolean
       }
       is_withdrawal_allowed: { Args: never; Returns: boolean }
+      process_deposit_commission_simple_v1: {
+        Args: {
+          p_deposit_amount: number
+          p_deposit_transaction_id: string
+          p_depositor_id: string
+        }
+        Returns: Json
+      }
       process_plan_upgrade_atomic: {
         Args: {
           p_expiry_date: string
