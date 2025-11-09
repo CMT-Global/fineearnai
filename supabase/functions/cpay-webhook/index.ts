@@ -520,260 +520,162 @@ serve(async (req) => {
 
     // Handle payment status
     if (status === 'completed') {
-      // Credit user with ACTUAL amount paid using atomic function V2 (race-condition safe + tracking_id based idempotency)
+      // ============================================================================
+      // PHASE 4: TWO-STEP FLOW (Deposit First, Then Commission)
+      // ============================================================================
+      // Step 1: Process deposit (MUST succeed - user gets credited)
+      // Step 2: Process commission (CAN fail gracefully - logged but non-critical)
+      // This separation ensures users always receive deposits even if commission fails.
+      // ============================================================================
+      
       console.log(
-        `[CPAY-WEBHOOK] 💰 Calling atomic deposit function V2 for user ${transaction.profiles.id}: ` +
+        `[CPAY-WEBHOOK-V3] 💰 Starting two-step deposit flow for user ${transaction.profiles.id}: ` +
         `Current balance: ${transaction.profiles.deposit_wallet_balance}, Amount to credit: ${actualAmount}, ` +
         `tracking_id: ${trackingId}, payment_id: ${payment_id}`
       );
       
-      // PHASE 5: Atomic deposit with retry logic and exponential backoff
-      const MAX_RETRIES = 3;
-      const BASE_DELAY_MS = 1000; // 1 second base delay
-      let atomicResult: any = null;
-      let atomicError: any = null;
-      let retryAttempt = 0;
+      // ============================================================================
+      // STEP 1: Process Deposit (CRITICAL - Must Succeed)
+      // ============================================================================
+      console.log(`[DEPOSIT-V3] Step 1: Processing deposit ONLY...`);
       
-      // Check if user has upline BEFORE attempting (for audit logging)
-      const { data: referralCheck } = await supabase
-        .from('referrals')
-        .select('referrer_id, status')
-        .eq('referred_id', transaction.profiles.id)
-        .eq('status', 'active')
-        .maybeSingle();
-      
-      const hasUpline = !!referralCheck?.referrer_id;
-      const referrerId = referralCheck?.referrer_id || null;
-      
-      console.log(`[COMMISSION-RETRY] User ${transaction.profiles.id} has upline: ${hasUpline}, referrerId: ${referrerId}`);
-      
-      // Retry loop with exponential backoff
-      while (retryAttempt <= MAX_RETRIES) {
-        console.log(`[COMMISSION-RETRY] Attempt ${retryAttempt + 1}/${MAX_RETRIES + 1} - Calling credit_deposit_atomic_v2...`);
-        
-        const { data, error } = await supabase.rpc('credit_deposit_atomic_v2', {
-          p_user_id: transaction.profiles.id,
-          p_amount: actualAmount,
-          p_tracking_id: trackingId, // CRITICAL: Use tracking_id (original order ID like DEP-xxx) for idempotency
-          p_payment_id: payment_id, // CPAY's payment_id (can be different per webhook for same order)
-          p_payment_method: 'cpay',
-          p_metadata: {
-            tracking_id: trackingId, // Store in metadata for idempotency check
-            webhook_received_at: new Date().toISOString(),
-            cpay_status: status,
-            cpay_payment_id: payment_id,
-            cpay_system_status: webhookData.systemStatus || webhookData.chargeStatus,
-            cpay_hash: webhookData.hash || webhookData.incomingTxHash,
-            requested_amount: requestedAmount,
-            actual_amount_paid: actualAmount,
-            amount_discrepancy: actualAmount - requestedAmount,
-            webhook_received_from_ip: clientIP,
-            original_transaction_id: transaction.id,
-            retry_attempt: retryAttempt
-          }
-        });
-        
-        atomicResult = data;
-        atomicError = error;
-        
-        if (!error && data?.success) {
-          // Success!
-          if (retryAttempt > 0) {
-            console.log(`[COMMISSION-RETRY] ✅ SUCCESS after ${retryAttempt} retries! Deposit processed successfully.`);
-            
-            // Log successful retry to audit (only if commission was processed)
-            if (hasUpline && data.commission_processed) {
-              await supabase.from('commission_audit_log').insert({
-                deposit_transaction_id: data.transaction_id,
-                referrer_id: referrerId,
-                referred_id: transaction.profiles.id,
-                commission_type: 'deposit_commission',
-                status: 'success',
-                commission_amount: data.commission_amount || 0,
-                error_details: {
-                  succeeded_after_retries: true,
-                  total_retry_attempts: retryAttempt,
-                  tracking_id: trackingId,
-                  payment_id: payment_id,
-                  deposit_amount: actualAmount,
-                  timestamp: new Date().toISOString()
-                }
-              });
-            }
-          }
-          break; // Exit retry loop on success
+      const { data: depositResult, error: depositError } = await supabase.rpc('credit_deposit_simple_v3', {
+        p_user_id: transaction.profiles.id,
+        p_amount: actualAmount,
+        p_tracking_id: trackingId, // CRITICAL: Use tracking_id for idempotency
+        p_payment_id: payment_id,
+        p_payment_method: 'cpay',
+        p_metadata: {
+          tracking_id: trackingId,
+          webhook_received_at: new Date().toISOString(),
+          cpay_status: status,
+          cpay_payment_id: payment_id,
+          cpay_system_status: webhookData.systemStatus || webhookData.chargeStatus,
+          cpay_hash: webhookData.hash || webhookData.incomingTxHash,
+          requested_amount: requestedAmount,
+          actual_amount_paid: actualAmount,
+          amount_discrepancy: actualAmount - requestedAmount,
+          webhook_received_from_ip: clientIP,
+          original_transaction_id: transaction.id
         }
-        
-        // Error occurred or atomic function returned failure
-        const errorMessage = error?.message || atomicResult?.message || 'Unknown error';
-        const errorCode = error?.code || atomicResult?.error || 'UNKNOWN';
-        
-        console.error(`[COMMISSION-RETRY] ⚠️ Attempt ${retryAttempt + 1} failed:`, { error, atomicResult });
-        
-        if (retryAttempt < MAX_RETRIES) {
-          const delayMs = BASE_DELAY_MS * Math.pow(2, retryAttempt); // Exponential: 1s, 2s, 4s
-          console.log(`[COMMISSION-RETRY] Retrying in ${delayMs}ms...`);
-          
-          // Log retry attempt to audit (only if user has upline)
-          if (hasUpline) {
-            await supabase.from('commission_audit_log').insert({
-              deposit_transaction_id: trackingId, // Use tracking ID as temp ID
-              referrer_id: referrerId,
-              referred_id: transaction.profiles.id,
-              commission_type: 'deposit_commission',
-              status: 'failed',
-              commission_amount: 0,
-              error_details: {
-                reason: 'deposit_function_failed_retrying',
-                error_message: errorMessage,
-                error_code: errorCode,
-                retry_attempt: retryAttempt + 1,
-                max_retries: MAX_RETRIES,
-                next_retry_delay_ms: delayMs,
-                tracking_id: trackingId,
-                payment_id: payment_id,
-                deposit_amount: actualAmount,
-                username: transaction.profiles.username,
-                timestamp: new Date().toISOString()
-              }
-            });
-          }
-          
-          // Wait before retry (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-          retryAttempt++;
-        } else {
-          // Max retries exceeded
-          console.error(`[COMMISSION-RETRY] 🚨🚨🚨 CRITICAL: Max retries (${MAX_RETRIES}) exceeded!`);
-          
-          // Log permanent failure to audit (only if user has upline)
-          if (hasUpline) {
-            await supabase.from('commission_audit_log').insert({
-              deposit_transaction_id: trackingId,
-              referrer_id: referrerId,
-              referred_id: transaction.profiles.id,
-              commission_type: 'deposit_commission',
-              status: 'failed',
-              commission_amount: 0,
-              error_details: {
-                reason: 'max_retries_exceeded',
-                error_message: errorMessage,
-                error_code: errorCode,
-                total_retry_attempts: retryAttempt + 1,
-                max_retries: MAX_RETRIES,
-                tracking_id: trackingId,
-                payment_id: payment_id,
-                deposit_amount: actualAmount,
-                username: transaction.profiles.username,
-                timestamp: new Date().toISOString()
-              }
-            });
-            
-            console.error(
-              `🚨🚨🚨 CRITICAL ALERT: Commission processing PERMANENTLY FAILED after ${retryAttempt + 1} attempts! ` +
-              `User: ${transaction.profiles.username}, Upline: ${referrerId}, ` +
-              `TrackingId: ${trackingId}, Error: ${errorMessage}`
-            );
-          }
-          break; // Exit retry loop after max attempts
-        }
-      }
-
-      if (atomicError) {
-        console.error('[CPAY-WEBHOOK] ❌ Atomic deposit function error:', atomicError);
-        throw new Error('Failed to process deposit atomically: ' + atomicError.message);
-      }
-
-      // Check if atomic function detected duplicate or failed
-      if (!atomicResult.success) {
-        if (atomicResult.error === 'duplicate_transaction') {
-          console.log(
-            `[CPAY-WEBHOOK] ⚠️ DUPLICATE PREVENTED by atomic function V2: ` +
-            `tracking_id=${atomicResult.tracking_id} already processed in tx=${atomicResult.transaction_id}. ` +
-            `Current payment_id=${atomicResult.duplicate_payment_id} ignored to prevent double-credit.`
-          );
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              message: 'Duplicate webhook prevented - transaction already processed',
-              transaction_id: atomicResult.transaction_id,
-              tracking_id: atomicResult.tracking_id,
-              duplicate_payment_id: atomicResult.duplicate_payment_id
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        console.error('[CPAY-WEBHOOK] ❌ Atomic deposit failed:', atomicResult);
-        throw new Error(atomicResult.message || 'Atomic deposit processing failed');
-      }
-
-      console.log('[CPAY-WEBHOOK] ✅ Atomic deposit V2 successful:', {
-        transactionId: atomicResult.transaction_id,
-        trackingId: atomicResult.tracking_id,
-        paymentId: atomicResult.payment_id,
-        oldBalance: atomicResult.old_balance,
-        newBalance: atomicResult.new_balance,
-        amountCredited: atomicResult.amount_credited,
-        commissionProcessed: atomicResult.commission_processed,
-        commissionAmount: atomicResult.commission_amount,
-        commissionTransactionId: atomicResult.commission_transaction_id,
-        referralEarningId: atomicResult.referral_earning_id
       });
 
-      // Log commission processing result
-      if (atomicResult.commission_processed) {
-        console.log(
-          `[CPAY-WEBHOOK] 💰 COMMISSION PROCESSED: Referrer earned $${atomicResult.commission_amount} ` +
-          `from deposit by ${transaction.profiles.username}`
-        );
-      } else {
-        console.log('[CPAY-WEBHOOK] ℹ️ No commission processed (user has no active referrer or commission rate is 0)');
+      if (depositError || !depositResult?.success) {
+        console.error('[DEPOSIT-V3] ❌ Deposit processing failed:', depositError || depositResult);
+        throw new Error('Failed to process deposit: ' + (depositError?.message || depositResult?.error));
       }
 
-      // PHASE 3: Commission Audit Logging (reusing referral check from retry logic above)
-      // Note: hasUpline and referrerId were already determined before the retry loop
+      // Check for duplicate detection
+      if (depositResult.error === 'duplicate_transaction') {
+        console.log(
+          `[DEPOSIT-V3] ⚠️ DUPLICATE PREVENTED: ` +
+          `tracking_id=${trackingId} already processed in tx=${depositResult.existing_transaction_id}`
+        );
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Duplicate webhook prevented - transaction already processed',
+            transaction_id: depositResult.existing_transaction_id,
+            tracking_id: trackingId
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[DEPOSIT-V3] ✅ Deposit successful:', {
+        transactionId: depositResult.transaction_id,
+        oldBalance: depositResult.old_balance,
+        newBalance: depositResult.new_balance,
+        amountCredited: depositResult.amount_credited
+      });
+
+      // ============================================================================
+      // STEP 2: Process Commission (NON-CRITICAL - Can Fail Gracefully)
+      // ============================================================================
+      console.log(`[COMMISSION-V1] Step 2: Processing commission separately...`);
       
-      // Log commission outcome to audit table (for successful deposits without retries)
-      if (retryAttempt === 0) {
-        // Only log if there were no retries (retries already logged their own audit entries)
-        const auditLogEntry = {
-          deposit_transaction_id: atomicResult.transaction_id,
-          referrer_id: referrerId,
-          referred_id: transaction.profiles.id,
-          commission_type: 'deposit',
-          status: atomicResult.commission_processed ? 'success' : 'failed',
-          commission_amount: atomicResult.commission_amount || 0,
-          error_details: atomicResult.commission_processed ? null : {
-            reason: 'Commission not processed by atomic function',
-            tracking_id: trackingId,
-            payment_id: payment_id,
-            has_upline: hasUpline,
-            username: transaction.profiles.username,
-            deposit_amount: actualAmount,
-            timestamp: new Date().toISOString()
+      // Simple retry for commission only (2 retries max)
+      const MAX_COMMISSION_RETRIES = 2;
+      let commissionResult: any = null;
+      
+      for (let attempt = 0; attempt <= MAX_COMMISSION_RETRIES; attempt++) {
+        console.log(`[COMMISSION-V1] Attempt ${attempt + 1}/${MAX_COMMISSION_RETRIES + 1}`);
+        
+        const { data } = await supabase.rpc('process_deposit_commission_simple_v1', {
+          p_deposit_transaction_id: depositResult.transaction_id,
+          p_deposit_amount: actualAmount,
+          p_depositor_id: transaction.profiles.id
+        });
+        
+        commissionResult = data;
+        
+        if (data?.success) {
+          if (attempt > 0) {
+            console.log(`[COMMISSION-V1] ✅ Commission succeeded after ${attempt} retries`);
           }
-        };
-        
-        const { error: auditLogError } = await supabase
-          .from('commission_audit_log')
-          .insert(auditLogEntry);
-        
-        if (auditLogError) {
-          console.warn('[CPAY-WEBHOOK] ⚠️ Failed to insert commission audit log (non-critical):', auditLogError);
-        } else {
-          console.log('[CPAY-WEBHOOK] ✓ Commission audit log created:', auditLogEntry.status);
+          break; // Success, exit retry loop
         }
         
-        // CRITICAL ALERT: If commission failed but user has active upline
-        if (!atomicResult.commission_processed && hasUpline) {
-          console.error(
-            `🚨 COMMISSION FAILURE: User ${transaction.profiles.username} deposited $${actualAmount} ` +
-            `but commission NOT credited to upline (referrer_id: ${referrerId}). ` +
-            `TrackingId: ${trackingId}, PaymentId: ${payment_id}`
-          );
+        if (attempt < MAX_COMMISSION_RETRIES) {
+          const delayMs = 1000 * (attempt + 1); // 1s, 2s delay
+          console.warn(`[COMMISSION-V1] ⚠️ Attempt ${attempt + 1} failed, retrying in ${delayMs}ms...`, data);
+          await new Promise(r => setTimeout(r, delayMs));
         }
       }
+
+      // Log commission outcome
+      if (commissionResult?.success) {
+        if (commissionResult.commission_amount > 0) {
+          console.log(
+            `[COMMISSION-V1] ✅ Commission processed: $${commissionResult.commission_amount} ` +
+            `to upline ${commissionResult.upline_username || commissionResult.upline_id}`
+          );
+        } else {
+          console.log('[COMMISSION-V1] ℹ️ Commission skipped:', commissionResult.reason || 'No upline or zero rate');
+        }
+      } else {
+        console.warn('[COMMISSION-V1] ⚠️ Commission failed (non-critical):', commissionResult?.error || 'Unknown error');
+      }
+
+      // ============================================================================
+      // COMMISSION AUDIT LOGGING
+      // ============================================================================
+      const auditLogEntry = {
+        deposit_transaction_id: depositResult.transaction_id,
+        referrer_id: commissionResult?.upline_id || null,
+        referred_id: transaction.profiles.id,
+        commission_type: 'deposit',
+        status: commissionResult?.success && commissionResult?.commission_amount > 0 ? 'success' : 'failed',
+        commission_amount: commissionResult?.commission_amount || 0,
+        error_details: commissionResult?.success ? null : {
+          reason: commissionResult?.error || commissionResult?.reason || 'Commission processing failed',
+          error_code: commissionResult?.error_code || 'UNKNOWN',
+          tracking_id: trackingId,
+          payment_id: payment_id,
+          deposit_amount: actualAmount,
+          username: transaction.profiles.username,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      const { error: auditLogError } = await supabase
+        .from('commission_audit_log')
+        .insert(auditLogEntry);
+      
+      if (auditLogError) {
+        console.warn('[COMMISSION-V1] ⚠️ Failed to insert audit log (non-critical):', auditLogError);
+      } else {
+        console.log('[COMMISSION-V1] ✓ Audit log created:', auditLogEntry.status);
+      }
+
+      // Store results for use below (replacing old atomicResult variable)
+      const atomicResult = {
+        ...depositResult,
+        commission_processed: commissionResult?.success && commissionResult?.commission_amount > 0,
+        commission_amount: commissionResult?.commission_amount || 0,
+        commission_transaction_id: commissionResult?.commission_transaction_id || null,
+        referral_earning_id: commissionResult?.referral_earning_id || null
+      };
 
       // Update the original pending transaction to mark it as completed
       const { error: txUpdateError } = await supabase
