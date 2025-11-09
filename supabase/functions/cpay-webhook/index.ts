@@ -501,7 +501,7 @@ serve(async (req) => {
     }
 
     console.log(`[CPAY-WEBHOOK] ✓ Transaction found: ${transaction.id}, User: ${transaction.profiles.username} (${transaction.profiles.email})`);
-    console.log(`[CPAY-WEBHOOK] 🔄 Calling credit_deposit_atomic_v2 for tracking_id=${trackingId}, payment_id=${payment_id}. Duplicate detection will be handled by atomic function.`);
+    console.log(`[CPAY-WEBHOOK] 🔄 Calling credit_deposit_simple_v3 for tracking_id=${trackingId}, payment_id=${payment_id}. Duplicate detection will be handled by atomic function.`);
     
     // Extract requested amount from transaction metadata
     const requestedAmount = transaction.metadata?.requested_amount || transaction.amount;

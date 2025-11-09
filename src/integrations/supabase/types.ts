@@ -2287,17 +2287,6 @@ export type Database = {
         }
         Returns: Json
       }
-      credit_deposit_atomic_v2: {
-        Args: {
-          p_amount: number
-          p_metadata?: Json
-          p_payment_id: string
-          p_payment_method?: string
-          p_tracking_id: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
       credit_deposit_simple_v3: {
         Args: {
           p_amount: number
