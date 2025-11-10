@@ -444,24 +444,35 @@ Deno.serve(async (req) => {
     metadata.new_balance = result.new_balance;
     metadata.actual_balance_change = oldBalance - result.new_balance;
     metadata.balance_match = Math.abs(metadata.actual_balance_change - partner_paid_amount) < 0.01;
+    metadata.recipient_credited = result.recipient_credited;
+    metadata.auto_redeemed = result.auto_redeemed;
 
-    console.log(`[${correlationId}] ✅ Atomic transaction complete!`, {
-      transaction_id: result.transaction_id,
+    console.log(`[${correlationId}] ✅ Atomic transaction complete (AUTO-REDEEMED)!`, {
+      partner_transaction_id: result.partner_transaction_id,
+      recipient_transaction_id: result.recipient_transaction_id,
       voucher_id: result.voucher_id,
       voucher_code: result.voucher_code,
-      old_balance: result.old_balance,
-      new_balance: result.new_balance,
+      partner_old_balance: result.partner_old_balance,
+      partner_new_balance: result.partner_new_balance,
+      recipient_old_balance: result.recipient_old_balance,
+      recipient_new_balance: result.recipient_new_balance,
       expected_new_balance: expectedNewBalance,
-      balance_difference: result.new_balance - expectedNewBalance,
+      balance_difference: result.partner_new_balance - expectedNewBalance,
       balance_match: metadata.balance_match,
       amount_charged: result.amount_charged,
       commission_earned: result.commission_earned,
+      voucher_amount: result.voucher_amount,
+      recipient_id: result.recipient_id,
+      recipient_username: result.recipient_username,
+      recipient_credited: result.recipient_credited,
+      auto_redeemed: result.auto_redeemed,
       new_rank: result.new_rank,
       duration_ms: atomicTotalDuration,
     });
 
-    // Step 3: Send purchase confirmation email
+    // Step 3: Send notifications (non-blocking)
     try {
+      // Notify partner about successful purchase
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
         method: 'POST',
         headers: {
@@ -474,12 +485,17 @@ Deno.serve(async (req) => {
           data: {
             voucher_code: result.voucher_code,
             voucher_amount: body.voucher_amount,
+            recipient_username: result.recipient_username,
+            auto_redeemed: true,
           },
         }),
       });
+      
+      // TODO: Send email to recipient notifying them of the credit
+      // This would require a new edge function or email template
     } catch (emailError) {
-      console.error('[Purchase Voucher] Failed to send purchase notification:', emailError);
-      // Don't fail the purchase if email fails
+      console.error('[Purchase Voucher] Failed to send notifications:', emailError);
+      // Don't fail the purchase if notifications fail
     }
 
     const totalDuration = Date.now() - startTime;
@@ -501,17 +517,31 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        message: "Voucher purchased and funds sent successfully",
+        partner_transaction: {
+          id: result.partner_transaction_id,
+          old_balance: result.partner_old_balance,
+          new_balance: result.partner_new_balance,
+          amount_charged: result.amount_charged,
+          commission_earned: result.commission_earned,
+        },
+        recipient: {
+          id: result.recipient_id,
+          username: result.recipient_username,
+          transaction_id: result.recipient_transaction_id,
+          old_balance: result.recipient_old_balance,
+          new_balance: result.recipient_new_balance,
+          amount_credited: result.voucher_amount,
+          credited_instantly: true,
+        },
         voucher: {
           id: result.voucher_id,
           voucher_code: result.voucher_code,
-          amount: body.voucher_amount,
+          amount: result.voucher_amount,
+          status: 'redeemed',
+          redeemed_at: result.redeemed_at,
           expires_at: result.expires_at,
-        },
-        transaction: {
-          id: result.transaction_id,
-          amount_paid: partner_paid_amount,
-          commission_earned: result.commission_earned,
-          new_balance: result.new_balance,
+          auto_redeemed: true,
         },
         partner_stats: {
           total_vouchers_sold: result.total_vouchers_sold,
