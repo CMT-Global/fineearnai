@@ -1946,6 +1946,8 @@ export type Database = {
           partner_id: string
           partner_paid_amount: number
           purchase_transaction_id: string | null
+          recipient_email: string | null
+          recipient_username: string | null
           redeemed_at: string | null
           redeemed_by_user_id: string | null
           redemption_transaction_id: string | null
@@ -1963,6 +1965,8 @@ export type Database = {
           partner_id: string
           partner_paid_amount: number
           purchase_transaction_id?: string | null
+          recipient_email?: string | null
+          recipient_username?: string | null
           redeemed_at?: string | null
           redeemed_by_user_id?: string | null
           redemption_transaction_id?: string | null
@@ -1980,6 +1984,8 @@ export type Database = {
           partner_id?: string
           partner_paid_amount?: number
           purchase_transaction_id?: string | null
+          recipient_email?: string | null
+          recipient_username?: string | null
           redeemed_at?: string | null
           redeemed_by_user_id?: string | null
           redemption_transaction_id?: string | null
