@@ -70,6 +70,7 @@ export const getTransactionTypeLabel = (type: string): string => {
     plan_upgrade: 'Plan Upgrade',
     transfer: 'Admin Deduction',
     adjustment: 'Balance Adjustment',
+    voucher_purchase: 'Voucher Code Purchase',
   };
   return labels[type] || type;
 };
@@ -87,6 +88,9 @@ export const getTransactionStatusColor = (status: string): string => {
 export const getTransactionTypeColor = (type: string): string => {
   if (['deposit', 'task_earning', 'referral_commission', 'adjustment'].includes(type)) {
     return 'text-green-600';
+  }
+  if (['voucher_purchase', 'withdrawal', 'plan_upgrade', 'transfer'].includes(type)) {
+    return 'text-red-600';
   }
   return 'text-red-600';
 };
