@@ -228,7 +228,7 @@ export const useUserManagement = () => {
         console.log('🔍 [useUserDetail] Fetching user detail for:', userId);
         
         const data: any = await callEdgeFunctionWithRetry('admin-manage-user', {
-          body: { action: 'get_user_detail', user_id: userId }
+          body: { action: 'get_user_detail', userId }
         });
 
         if (!data || !data.result) {
@@ -250,7 +250,7 @@ export const useUserManagement = () => {
   const updateUserProfile = useMutation({
     mutationFn: async ({ userId, profileData }: { userId: string; profileData: any }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'update_user_profile', user_id: userId, updates: profileData }
+        body: { action: 'update_user_profile', userId, profileData }
       });
     },
     onSuccess: (_, variables) => {
@@ -267,7 +267,7 @@ export const useUserManagement = () => {
   const updateUserEmail = useMutation({
     mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'update_user_email', user_id: userId, new_email: newEmail }
+        body: { action: 'update_user_email', userId, newEmail }
       });
     },
     onSuccess: (_, variables) => {
@@ -286,8 +286,8 @@ export const useUserManagement = () => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
         body: { 
           action: 'adjust_wallet_balance', 
-          user_id: userId, 
-          wallet_type: walletAdjustment.walletType,
+          userId,
+          walletType: walletAdjustment.walletType,
           amount: walletAdjustment.amount,
           reason: walletAdjustment.reason
         }
@@ -309,9 +309,9 @@ export const useUserManagement = () => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
         body: { 
           action: 'change_membership_plan', 
-          user_id: userId, 
-          plan_name: planData.planName,
-          expires_at: planData.expiresAt
+          userId,
+          planName: planData.planName,
+          expiresAt: planData.expiresAt
         }
       });
     },
@@ -329,7 +329,7 @@ export const useUserManagement = () => {
   const suspendUser = useMutation({
     mutationFn: async ({ userId, suspendReason }: { userId: string; suspendReason?: string }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'suspend_user', user_id: userId, suspend: true, reason: suspendReason }
+        body: { action: 'suspend_user', userId, suspend: true, reason: suspendReason }
       });
     },
     onSuccess: (data: any, variables) => {
@@ -346,7 +346,7 @@ export const useUserManagement = () => {
   const banUser = useMutation({
     mutationFn: async ({ userId, banReason }: { userId: string; banReason: string }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'ban_user', user_id: userId, reason: banReason }
+        body: { action: 'ban_user', userId, reason: banReason }
       });
     },
     onSuccess: (_, variables) => {
@@ -363,7 +363,7 @@ export const useUserManagement = () => {
   const resetDailyLimits = useMutation({
     mutationFn: async (userId: string) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'reset_daily_limits', user_id: userId }
+        body: { action: 'reset_daily_limits', userId }
       });
     },
     onSuccess: (_, userId) => {
@@ -379,7 +379,7 @@ export const useUserManagement = () => {
   const changeUpline = useMutation({
     mutationFn: async ({ userId, newUplineEmail }: { userId: string; newUplineEmail: string }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'change_upline', user_id: userId, new_upline_id: newUplineEmail }
+        body: { action: 'change_upline', userId, newUplineEmail }
       });
     },
     onSuccess: (_, variables) => {
@@ -459,7 +459,7 @@ export const useUserManagement = () => {
   // Get user roles
   const getUserRoles = async (userId: string) => {
     const data: any = await callEdgeFunctionWithRetry('admin-manage-user', {
-      body: { action: 'get_user_roles', user_id: userId }
+      body: { action: 'get_user_roles', userId }
     });
     return (data?.roles || []) as string[];
   };
