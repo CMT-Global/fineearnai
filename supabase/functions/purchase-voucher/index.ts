@@ -13,14 +13,54 @@ interface VoucherPurchaseRequest {
   notes?: string;
 }
 
+// Generate correlation ID for tracking this request
+function generateCorrelationId(): string {
+  return `voucher-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Log to edge_function_metrics for monitoring
+async function logMetric(
+  supabaseClient: any,
+  correlationId: string,
+  userId: string | null,
+  success: boolean,
+  executionTimeMs: number,
+  metadata: Record<string, any>,
+  errorMessage?: string
+) {
+  try {
+    await supabaseClient.from("edge_function_metrics").insert({
+      function_name: "purchase-voucher",
+      user_id: userId,
+      success,
+      execution_time_ms: executionTimeMs,
+      metadata: {
+        correlation_id: correlationId,
+        ...metadata,
+      },
+      error_message: errorMessage,
+    });
+  } catch (err) {
+    console.error("[Metrics] Failed to log metric:", err);
+  }
+}
+
 Deno.serve(async (req) => {
+  const startTime = Date.now();
+  const correlationId = generateCorrelationId();
+  let userId: string | null = null;
+  let metadata: Record<string, any> = { correlation_id: correlationId };
+  let supabaseClient: any = null;
+
+  console.log(`[${correlationId}] ========== VOUCHER PURCHASE REQUEST START ==========`);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
+    supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
@@ -37,7 +77,16 @@ Deno.serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      console.error("[Purchase Voucher] Authentication failed:", authError);
+      console.error(`[${correlationId}] ❌ Authentication failed:`, authError);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        null,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "authentication" },
+        authError?.message || "Unauthorized"
+      );
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -47,7 +96,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[Purchase Voucher] Request from user: ${user.id}`);
+    userId = user.id;
+    metadata.user_id = userId;
+    console.log(`[${correlationId}] ✅ Authenticated user: ${userId}`);
 
     // Verify user is a partner
     const { data: partnerRole } = await supabaseClient
@@ -58,7 +109,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (!partnerRole) {
-      console.error("[Purchase Voucher] User is not a partner");
+      console.error(`[${correlationId}] ❌ User is not a partner`);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "role_verification" },
+        "User is not a partner"
+      );
       return new Response(
         JSON.stringify({ error: "Only partners can purchase vouchers" }),
         {
@@ -69,15 +129,29 @@ Deno.serve(async (req) => {
     }
 
     const body: VoucherPurchaseRequest = await req.json();
+    metadata.voucher_amount = body.voucher_amount;
+    metadata.has_recipient_username = !!body.recipient_username;
+    metadata.has_recipient_email = !!body.recipient_email;
 
-    console.log("[Purchase Voucher] Request:", {
+    console.log(`[${correlationId}] 📋 Request details:`, {
       voucher_amount: body.voucher_amount,
       recipient_username: body.recipient_username,
       recipient_email: body.recipient_email,
+      has_notes: !!body.notes,
     });
 
     // Validate voucher amount
     if (!body.voucher_amount || body.voucher_amount <= 0) {
+      console.error(`[${correlationId}] ❌ Invalid voucher amount:`, body.voucher_amount);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "validation", invalid_amount: body.voucher_amount },
+        "Invalid voucher amount"
+      );
       return new Response(
         JSON.stringify({ error: "Invalid voucher amount" }),
         {
@@ -95,7 +169,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (!partnerConfig) {
-      console.error("[Purchase Voucher] Partner config not found");
+      console.error(`[${correlationId}] ❌ Partner config not found for user:`, userId);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "partner_config_fetch" },
+        "Partner configuration not found"
+      );
       return new Response(
         JSON.stringify({ error: "Partner configuration not found. Please contact support." }),
         {
@@ -106,6 +189,16 @@ Deno.serve(async (req) => {
     }
 
     if (!partnerConfig.is_active) {
+      console.error(`[${correlationId}] ❌ Partner account is not active`);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "partner_active_check" },
+        "Partner account is not active"
+      );
       return new Response(
         JSON.stringify({ error: "Partner account is not active" }),
         {
@@ -115,6 +208,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log(`[${correlationId}] ✅ Partner config loaded:`, {
+      is_active: partnerConfig.is_active,
+      current_rank: partnerConfig.current_rank,
+      total_vouchers_sold: partnerConfig.total_vouchers_sold,
+    });
+
     // Get commission rate using database function
     const { data: commissionRateData, error: commissionError } = await supabaseClient.rpc(
       "get_partner_commission_rate",
@@ -122,7 +221,16 @@ Deno.serve(async (req) => {
     );
 
     if (commissionError) {
-      console.error("[Purchase Voucher] Error getting commission rate:", commissionError);
+      console.error(`[${correlationId}] ❌ Error getting commission rate:`, commissionError);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "commission_rate_fetch" },
+        commissionError.message
+      );
       throw commissionError;
     }
 
@@ -130,11 +238,22 @@ Deno.serve(async (req) => {
     const commission_amount = body.voucher_amount * commission_rate;
     const partner_paid_amount = body.voucher_amount - commission_amount;
 
-    console.log("[Purchase Voucher] Calculation:", {
+    // Log calculated amounts with precision tracking
+    metadata.commission_rate = commission_rate;
+    metadata.commission_amount = commission_amount;
+    metadata.partner_paid_amount = partner_paid_amount;
+    metadata.commission_amount_rounded = Number(commission_amount.toFixed(2));
+    metadata.partner_paid_amount_rounded = Number(partner_paid_amount.toFixed(2));
+
+    console.log(`[${correlationId}] 💰 Financial Calculation:`, {
       voucher_amount: body.voucher_amount,
       commission_rate,
       commission_amount,
+      commission_amount_rounded: Number(commission_amount.toFixed(2)),
       partner_paid_amount,
+      partner_paid_amount_rounded: Number(partner_paid_amount.toFixed(2)),
+      rounding_difference_commission: commission_amount - Number(commission_amount.toFixed(2)),
+      rounding_difference_partner: partner_paid_amount - Number(partner_paid_amount.toFixed(2)),
     });
 
     // Check partner's deposit wallet balance
@@ -145,15 +264,55 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError) {
-      console.error("[Purchase Voucher] Error fetching profile:", profileError);
+      console.error(`[${correlationId}] ❌ Error fetching profile:`, profileError);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "profile_fetch" },
+        profileError.message
+      );
       throw profileError;
     }
 
+    const oldBalance = profile.deposit_wallet_balance;
+    const expectedNewBalance = Number((oldBalance - partner_paid_amount).toFixed(2));
+
+    metadata.old_balance = oldBalance;
+    metadata.expected_new_balance = expectedNewBalance;
+    metadata.balance_difference = partner_paid_amount;
+
+    console.log(`[${correlationId}] 💵 Balance Check:`, {
+      current_balance: oldBalance,
+      required_amount: partner_paid_amount,
+      expected_new_balance: expectedNewBalance,
+      sufficient_funds: oldBalance >= partner_paid_amount,
+      balance_after_rounding: Number(oldBalance.toFixed(2)),
+    });
+
     if (profile.deposit_wallet_balance < partner_paid_amount) {
-      console.error("[Purchase Voucher] Insufficient balance:", {
+      console.error(`[${correlationId}] ❌ Insufficient balance:`, {
         current: profile.deposit_wallet_balance,
         required: partner_paid_amount,
+        shortage: partner_paid_amount - profile.deposit_wallet_balance,
       });
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        {
+          ...metadata,
+          error_stage: "balance_check",
+          current_balance: profile.deposit_wallet_balance,
+          required_amount: partner_paid_amount,
+          shortage: partner_paid_amount - profile.deposit_wallet_balance,
+        },
+        "Insufficient deposit wallet balance"
+      );
       return new Response(
         JSON.stringify({
           error: "Insufficient deposit wallet balance",
@@ -168,21 +327,44 @@ Deno.serve(async (req) => {
     }
 
     // ATOMIC TRANSACTION: Use database function for all-or-nothing execution
-    console.log("[Purchase Voucher] Starting atomic transaction...");
+    const atomicStartTime = Date.now();
+    console.log(`[${correlationId}] 🔄 Starting atomic transaction...`);
 
     // Step 1: Generate unique voucher code
+    const codeGenStartTime = Date.now();
     const { data: voucherCode, error: codeError } = await supabaseClient.rpc(
       "generate_voucher_code"
     );
+    const codeGenDuration = Date.now() - codeGenStartTime;
 
     if (codeError) {
-      console.error("[Purchase Voucher] Error generating voucher code:", codeError);
+      console.error(`[${correlationId}] ❌ Error generating voucher code:`, codeError);
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        { ...metadata, error_stage: "voucher_code_generation", code_gen_duration: codeGenDuration },
+        codeError.message
+      );
       throw codeError;
     }
 
-    console.log(`[Purchase Voucher] Generated voucher code: ${voucherCode}`);
+    metadata.voucher_code = voucherCode;
+    console.log(`[${correlationId}] ✅ Generated voucher code: ${voucherCode} (${codeGenDuration}ms)`);
 
     // Step 2: Execute atomic purchase via database function
+    const atomicFunctionStartTime = Date.now();
+    console.log(`[${correlationId}] 🔐 Executing atomic function with params:`, {
+      partner_id: user.id,
+      voucher_code: voucherCode,
+      voucher_amount: body.voucher_amount,
+      partner_paid_amount,
+      commission_amount,
+      commission_rate,
+    });
+
     const { data: result, error: purchaseError } = await supabaseClient.rpc(
       "purchase_voucher_atomic",
       {
@@ -198,14 +380,52 @@ Deno.serve(async (req) => {
       }
     );
 
+    const atomicFunctionDuration = Date.now() - atomicFunctionStartTime;
+    metadata.atomic_function_duration_ms = atomicFunctionDuration;
+
     if (purchaseError) {
-      console.error("[Purchase Voucher] Atomic function error:", purchaseError);
+      console.error(`[${correlationId}] ❌ Atomic function error:`, {
+        error: purchaseError,
+        duration_ms: atomicFunctionDuration,
+        expected_balance_change: partner_paid_amount,
+      });
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        {
+          ...metadata,
+          error_stage: "atomic_function_execution",
+          atomic_function_duration_ms: atomicFunctionDuration,
+        },
+        purchaseError.message
+      );
       throw purchaseError;
     }
 
     // Check if the atomic function returned an error
     if (!result || !result.success) {
-      console.error("[Purchase Voucher] Atomic operation failed:", result);
+      console.error(`[${correlationId}] ❌ Atomic operation failed:`, {
+        result,
+        duration_ms: atomicFunctionDuration,
+        expected_new_balance: expectedNewBalance,
+      });
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        Date.now() - startTime,
+        {
+          ...metadata,
+          error_stage: "atomic_operation_failed",
+          atomic_function_duration_ms: atomicFunctionDuration,
+          function_result: result,
+        },
+        result?.error || "Voucher purchase failed"
+      );
       return new Response(
         JSON.stringify({
           error: result?.error || "Voucher purchase failed",
@@ -219,11 +439,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("[Purchase Voucher] Atomic transaction complete!", {
+    const atomicTotalDuration = Date.now() - atomicStartTime;
+    metadata.atomic_total_duration_ms = atomicTotalDuration;
+    metadata.new_balance = result.new_balance;
+    metadata.actual_balance_change = oldBalance - result.new_balance;
+    metadata.balance_match = Math.abs(metadata.actual_balance_change - partner_paid_amount) < 0.01;
+
+    console.log(`[${correlationId}] ✅ Atomic transaction complete!`, {
       transaction_id: result.transaction_id,
       voucher_id: result.voucher_id,
+      voucher_code: result.voucher_code,
+      old_balance: result.old_balance,
       new_balance: result.new_balance,
+      expected_new_balance: expectedNewBalance,
+      balance_difference: result.new_balance - expectedNewBalance,
+      balance_match: metadata.balance_match,
+      amount_charged: result.amount_charged,
+      commission_earned: result.commission_earned,
       new_rank: result.new_rank,
+      duration_ms: atomicTotalDuration,
     });
 
     // Step 3: Send purchase confirmation email
@@ -247,6 +481,22 @@ Deno.serve(async (req) => {
       console.error('[Purchase Voucher] Failed to send purchase notification:', emailError);
       // Don't fail the purchase if email fails
     }
+
+    const totalDuration = Date.now() - startTime;
+    metadata.total_duration_ms = totalDuration;
+    metadata.success = true;
+
+    // Log successful purchase
+    await logMetric(
+      supabaseClient,
+      correlationId,
+      userId,
+      true,
+      totalDuration,
+      metadata
+    );
+
+    console.log(`[${correlationId}] ========== VOUCHER PURCHASE SUCCESS (${totalDuration}ms) ==========`);
 
     return new Response(
       JSON.stringify({
@@ -275,7 +525,28 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("[Purchase Voucher] Error:", error);
+    const totalDuration = Date.now() - startTime;
+    console.error(`[${correlationId}] ❌ ========== UNEXPECTED ERROR (${totalDuration}ms) ==========`);
+    console.error(`[${correlationId}] Error details:`, {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      metadata,
+    });
+
+    // Only log metric if supabaseClient was successfully created
+    if (supabaseClient) {
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        false,
+        totalDuration,
+        { ...metadata, error_stage: "unexpected_error", error_name: error.name },
+        error.message
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: error.message }),
       {
