@@ -35,6 +35,14 @@ const telegramGroups: TelegramGroup[] = [
     isComingSoon: false
   },
   {
+    name: "Georgia Community",
+    url: "https://t.me/finearngeorgia",
+    flag: "🇬🇪",
+    description: "Connect with Georgian earners and get local support",
+    gradient: "from-red-600 to-red-900",
+    isComingSoon: false
+  },
+  {
     name: "Marketing Material (Global)",
     url: "https://t.me/fineearn",
     flag: "📢",

@@ -31,6 +31,12 @@ const activeCommunities: TelegramCommunity[] = [
     gradient: "from-blue-600 to-yellow-400"
   },
   {
+    name: "Georgia Community",
+    url: "https://t.me/finearngeorgia",
+    flag: "🇬🇪",
+    gradient: "from-red-600 to-red-900"
+  },
+  {
     name: "Marketing Material (Global)",
     url: "https://t.me/fineearn",
     flag: "📢",
