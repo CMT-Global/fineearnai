@@ -287,9 +287,7 @@ export const useUserManagement = () => {
         body: { 
           action: 'adjust_wallet_balance', 
           userId,
-          walletType: walletAdjustment.walletType,
-          amount: walletAdjustment.amount,
-          reason: walletAdjustment.reason
+          walletAdjustment: walletAdjustment
         }
       });
     },
