@@ -734,7 +734,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           paymentMethod: displayMethodName,
           payoutAddress: pendingWithdrawalData.address,
           paymentProcessorId: selectedProcessor.id,
-          cryptocurrency: pendingWithdrawalData.cryptoId,
+          cryptoId: pendingWithdrawalData.cryptoId,
         },
       });
 
