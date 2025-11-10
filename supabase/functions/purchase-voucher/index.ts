@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ATOMIC TRANSACTION: Deduct balance, create voucher, update stats
+    // ATOMIC TRANSACTION: Use database function for all-or-nothing execution
     console.log("[Purchase Voucher] Starting atomic transaction...");
 
     // Step 1: Generate unique voucher code
@@ -182,141 +182,51 @@ Deno.serve(async (req) => {
 
     console.log(`[Purchase Voucher] Generated voucher code: ${voucherCode}`);
 
-    // Step 2: Deduct from partner's deposit wallet
-    const new_balance = profile.deposit_wallet_balance - partner_paid_amount;
-
-    const { error: updateBalanceError } = await supabaseClient
-      .from("profiles")
-      .update({
-        deposit_wallet_balance: new_balance,
-        last_activity: new Date().toISOString(),
-      })
-      .eq("id", user.id);
-
-    if (updateBalanceError) {
-      console.error("[Purchase Voucher] Error updating balance:", updateBalanceError);
-      throw updateBalanceError;
-    }
-
-    console.log("[Purchase Voucher] Balance updated:", {
-      old_balance: profile.deposit_wallet_balance,
-      new_balance,
-    });
-
-    // Step 3: Create transaction record for voucher purchase
-    const { data: transaction, error: transactionError } = await supabaseClient
-      .from("transactions")
-      .insert({
-        user_id: user.id,
-        type: "transfer",
-        amount: partner_paid_amount,
-        wallet_type: "deposit",
-        new_balance: new_balance,
-        status: "completed",
-        description: `Purchased voucher code: ${voucherCode}`,
-        metadata: {
-          voucher_code: voucherCode,
-          voucher_amount: body.voucher_amount,
-          commission_amount,
-          commission_rate,
-          recipient_username: body.recipient_username,
-          recipient_email: body.recipient_email,
-        },
-      })
-      .select()
-      .single();
-
-    if (transactionError) {
-      console.error("[Purchase Voucher] Error creating transaction:", transactionError);
-      throw transactionError;
-    }
-
-    console.log(`[Purchase Voucher] Transaction created: ${transaction.id}`);
-
-    // Step 4: Create voucher record
-    const voucher_expires_at = new Date();
-    voucher_expires_at.setDate(voucher_expires_at.getDate() + 30); // 30 days expiry
-
-    const { data: voucher, error: voucherError } = await supabaseClient
-      .from("vouchers")
-      .insert({
-        voucher_code: voucherCode,
-        partner_id: user.id,
-        voucher_amount: body.voucher_amount,
-        partner_paid_amount,
-        commission_amount,
-        commission_rate,
-        status: "active",
-        expires_at: voucher_expires_at.toISOString(),
-        purchase_transaction_id: transaction.id,
-        notes: body.notes,
-      })
-      .select()
-      .single();
-
-    if (voucherError) {
-      console.error("[Purchase Voucher] Error creating voucher:", voucherError);
-      throw voucherError;
-    }
-
-    console.log(`[Purchase Voucher] Voucher created: ${voucher.id}`);
-
-    // Step 5: Update partner stats
-    const { error: updateStatsError } = await supabaseClient
-      .from("partner_config")
-      .update({
-        total_vouchers_sold: partnerConfig.total_vouchers_sold + 1,
-        total_commission_earned: partnerConfig.total_commission_earned + commission_amount,
-        daily_sales: partnerConfig.daily_sales + body.voucher_amount,
-        weekly_sales: partnerConfig.weekly_sales + body.voucher_amount,
-        last_sale_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
-
-    if (updateStatsError) {
-      console.error("[Purchase Voucher] Error updating stats:", updateStatsError);
-      throw updateStatsError;
-    }
-
-    console.log("[Purchase Voucher] Partner stats updated");
-
-    // Step 6: Update partner rank
-    const { data: newRank, error: rankError } = await supabaseClient.rpc(
-      "update_partner_rank",
-      { p_partner_id: user.id }
+    // Step 2: Execute atomic purchase via database function
+    const { data: result, error: purchaseError } = await supabaseClient.rpc(
+      "purchase_voucher_atomic",
+      {
+        p_partner_id: user.id,
+        p_voucher_code: voucherCode,
+        p_voucher_amount: body.voucher_amount,
+        p_partner_paid_amount: partner_paid_amount,
+        p_commission_amount: commission_amount,
+        p_commission_rate: commission_rate,
+        p_notes: body.notes || null,
+        p_recipient_username: body.recipient_username || null,
+        p_recipient_email: body.recipient_email || null,
+      }
     );
 
-    if (rankError) {
-      console.error("[Purchase Voucher] Error updating rank:", rankError);
-    } else {
-      console.log(`[Purchase Voucher] Rank updated to: ${newRank}`);
+    if (purchaseError) {
+      console.error("[Purchase Voucher] Atomic function error:", purchaseError);
+      throw purchaseError;
     }
 
-    // Step 7: Log activity
-    const { error: activityError } = await supabaseClient
-      .from("partner_activity_log")
-      .insert({
-        partner_id: user.id,
-        activity_type: "voucher_purchased",
-        details: {
-          voucher_code: voucherCode,
-          voucher_amount: body.voucher_amount,
-          commission_amount,
-          recipient_username: body.recipient_username,
-          recipient_email: body.recipient_email,
-        },
-        voucher_id: voucher.id,
-        transaction_id: transaction.id,
-      });
-
-    if (activityError) {
-      console.error("[Purchase Voucher] Error logging activity:", activityError);
+    // Check if the atomic function returned an error
+    if (!result || !result.success) {
+      console.error("[Purchase Voucher] Atomic operation failed:", result);
+      return new Response(
+        JSON.stringify({
+          error: result?.error || "Voucher purchase failed",
+          error_code: result?.error_code || "UNKNOWN_ERROR",
+          details: result,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
-    console.log("[Purchase Voucher] Transaction complete!");
+    console.log("[Purchase Voucher] Atomic transaction complete!", {
+      transaction_id: result.transaction_id,
+      voucher_id: result.voucher_id,
+      new_balance: result.new_balance,
+      new_rank: result.new_rank,
+    });
 
-    // Step 8: Send purchase confirmation email
+    // Step 3: Send purchase confirmation email
     try {
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
         method: 'POST',
@@ -328,7 +238,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           notification_type: 'voucher_purchased',
           data: {
-            voucher_code: voucherCode,
+            voucher_code: result.voucher_code,
             voucher_amount: body.voucher_amount,
           },
         }),
@@ -342,21 +252,21 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         voucher: {
-          id: voucher.id,
-          voucher_code: voucherCode,
+          id: result.voucher_id,
+          voucher_code: result.voucher_code,
           amount: body.voucher_amount,
-          expires_at: voucher_expires_at.toISOString(),
+          expires_at: result.expires_at,
         },
         transaction: {
-          id: transaction.id,
+          id: result.transaction_id,
           amount_paid: partner_paid_amount,
-          commission_earned: commission_amount,
-          new_balance,
+          commission_earned: result.commission_earned,
+          new_balance: result.new_balance,
         },
         partner_stats: {
-          total_vouchers_sold: partnerConfig.total_vouchers_sold + 1,
-          daily_sales: partnerConfig.daily_sales + body.voucher_amount,
-          current_rank: newRank || partnerConfig.current_rank,
+          total_vouchers_sold: result.total_vouchers_sold,
+          daily_sales: result.daily_sales,
+          current_rank: result.new_rank,
         },
       }),
       {
