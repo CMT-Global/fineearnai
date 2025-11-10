@@ -2647,6 +2647,7 @@ export type Database = {
         | "plan_upgrade"
         | "transfer"
         | "adjustment"
+        | "voucher_purchase"
       wallet_type: "deposit" | "earnings"
     }
     CompositeTypes: {
@@ -2794,6 +2795,7 @@ export const Constants = {
         "plan_upgrade",
         "transfer",
         "adjustment",
+        "voucher_purchase",
       ],
       wallet_type: ["deposit", "earnings"],
     },
