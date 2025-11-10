@@ -689,6 +689,25 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     console.log('🔄 Starting confirmed withdrawal request...');
 
     try {
+      // ✅ PHASE 2: Defensive validation for cryptoId
+      if (!pendingWithdrawalData.cryptoId) {
+        toast.error("Cryptocurrency selection is required");
+        console.error('❌ Missing cryptoId:', pendingWithdrawalData);
+        setWithdrawLoading(false);
+        return;
+      }
+
+      // Validate cryptoId format
+      const validCryptoIds = ['usdc-solana', 'usdt-bep20'];
+      if (!validCryptoIds.includes(pendingWithdrawalData.cryptoId)) {
+        toast.error("Invalid cryptocurrency selected. Please try again.");
+        console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected one of:', validCryptoIds);
+        setWithdrawLoading(false);
+        return;
+      }
+
+      console.log('✅ CryptoId validation passed:', pendingWithdrawalData.cryptoId);
+
       const amountUSD = convertLocalToUSD(parseFloat(pendingWithdrawalData.amount));
 
       // ✅ Map virtual method to actual processor
