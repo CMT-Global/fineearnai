@@ -345,7 +345,15 @@ function UsersContent() {
                               onCheckedChange={() => toggleSelectUser(user.id)}
                             />
                           </TableCell>
-                          <TableCell className="font-medium">{user.username}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="link"
+                              className="h-auto p-0 font-medium text-base text-foreground hover:text-primary"
+                              onClick={() => navigate(`/admin/users/${user.id}`)}
+                            >
+                              {user.username}
+                            </Button>
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="text-sm">{user.email}</span>
