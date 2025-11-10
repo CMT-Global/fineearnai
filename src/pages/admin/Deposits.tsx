@@ -593,7 +593,13 @@ const Deposits = () => {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{deposit.profiles?.username}</div>
+                            <Button
+                              variant="link"
+                              className="h-auto p-0 font-medium text-base text-foreground hover:text-primary"
+                              onClick={() => navigate(`/admin/users/${deposit.user_id}`)}
+                            >
+                              {deposit.profiles?.username}
+                            </Button>
                             <div className="text-sm text-muted-foreground">
                               {deposit.profiles?.email}
                             </div>
