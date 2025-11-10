@@ -57,6 +57,15 @@ export const WalletAdjustmentDialog = ({
       return;
     }
 
+    // Log validated data before submission
+    console.log('💰 Submitting wallet adjustment:', {
+      userId,
+      username,
+      wallet_type: walletType,
+      amount: parsedAmount,
+      reason: reason.trim().substring(0, 50) + '...'
+    });
+
     adjustWalletBalance.mutate(
       {
         userId,
@@ -68,6 +77,7 @@ export const WalletAdjustmentDialog = ({
       },
       {
         onSuccess: () => {
+          console.log('✅ Wallet adjustment dialog closed successfully');
           onOpenChange(false);
           setAmount("");
           setReason("");
