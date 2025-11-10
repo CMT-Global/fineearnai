@@ -746,6 +746,32 @@ export default function Withdrawals() {
                         </p>
                       </div>
                       <div>
+                        <p className="text-sm text-muted-foreground">Cryptocurrency</p>
+                        {withdrawal.metadata?.crypto_name ? (
+                          <>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge 
+                                variant="default" 
+                                className={
+                                  withdrawal.metadata.crypto_id === 'usdc-solana' 
+                                    ? 'bg-blue-600 hover:bg-blue-700' 
+                                    : 'bg-amber-600 hover:bg-amber-700'
+                                }
+                              >
+                                {withdrawal.metadata.crypto_name}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Network: {withdrawal.metadata.crypto_id === 'usdc-solana' ? 'Solana' : 'BEP-20 (BSC)'}
+                            </p>
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="mt-1 text-muted-foreground">
+                            Not specified (Legacy)
+                          </Badge>
+                        )}
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Payout Address</p>
                         <p className="font-mono text-sm">{withdrawal.payout_address}</p>
                       </div>
