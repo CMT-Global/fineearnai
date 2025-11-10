@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Ticket, Loader2, CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Ticket, Loader2, CheckCircle2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -93,6 +94,15 @@ export const VoucherRedemptionCard = ({ userId, onRedemptionSuccess }: VoucherRe
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Auto-Redemption Notice */}
+          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-xs text-blue-800 dark:text-blue-200">
+              <strong>Note:</strong> New vouchers sent by partners are now automatically credited to your wallet. 
+              This redemption form is only for older voucher codes received before the auto-redemption update.
+            </AlertDescription>
+          </Alert>
+
           <div>
             <Label htmlFor="voucher-code">Voucher Code</Label>
             <Input

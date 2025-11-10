@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useVouchers } from "@/hooks/usePartnerManagement";
-import { Loader2, Ticket, Search } from "lucide-react";
+import { Loader2, Ticket, Search, Info, CheckCircle2 } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -65,6 +66,45 @@ const VoucherMonitoring = () => {
             Track all voucher purchases and redemptions
           </p>
         </div>
+
+        {/* Phase 2 Backward Compatibility Notice */}
+        {stats.active > 0 ? (
+          <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-900 dark:text-blue-100">
+              System Transition: Auto-Redemption Active
+            </AlertTitle>
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <p className="mb-2">
+                <strong>New vouchers are now automatically redeemed.</strong> When a partner sends a voucher, 
+                the recipient is instantly credited without needing to manually redeem a code.
+              </p>
+              <p className="mb-2">
+                The <strong className="text-blue-900 dark:text-blue-100">{stats.active} active voucher(s)</strong> shown 
+                below are legacy vouchers created before this update and still awaiting manual redemption.
+              </p>
+              <p className="text-sm">
+                💡 <strong>Next Step:</strong> Once the active count reaches 0 (all legacy vouchers redeemed or expired), 
+                the system can proceed to Phase 3 cleanup to remove legacy code.
+              </p>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950/20">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-900 dark:text-green-100">
+              Ready for Phase 3 Cleanup
+            </AlertTitle>
+            <AlertDescription className="text-green-800 dark:text-green-200">
+              <p className="mb-2">
+                ✅ <strong>No active legacy vouchers remaining.</strong> All vouchers are now using the auto-redemption system.
+              </p>
+              <p className="text-sm">
+                The system is ready for Phase 3 cleanup to remove legacy voucher redemption code and simplify the codebase.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
