@@ -2611,20 +2611,33 @@ export type Database = {
             }
             Returns: Json
           }
-      purchase_voucher_atomic: {
-        Args: {
-          p_commission_amount: number
-          p_commission_rate: number
-          p_notes?: string
-          p_partner_id: string
-          p_partner_paid_amount: number
-          p_recipient_email?: string
-          p_recipient_username?: string
-          p_voucher_amount: number
-          p_voucher_code: string
-        }
-        Returns: Json
-      }
+      purchase_voucher_atomic:
+        | {
+            Args: {
+              p_commission_amount: number
+              p_commission_rate: number
+              p_notes?: string
+              p_partner_id: string
+              p_partner_paid_amount: number
+              p_recipient_email?: string
+              p_recipient_username?: string
+              p_voucher_amount: number
+              p_voucher_code: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_commission_rate: number
+              p_notes?: string
+              p_partner_id: string
+              p_recipient_email?: string
+              p_recipient_username?: string
+              p_voucher_amount: number
+              p_voucher_code: string
+            }
+            Returns: Json
+          }
       refresh_materialized_views: { Args: never; Returns: undefined }
       reset_partner_sales_counters: { Args: never; Returns: undefined }
       update_partner_rank: { Args: { p_partner_id: string }; Returns: string }
