@@ -12,6 +12,8 @@ const MasterLogin = () => {
 
   useEffect(() => {
     const processMasterLogin = async () => {
+      const startTime = Date.now();
+      
       try {
         const token = searchParams.get("token");
 
@@ -19,45 +21,84 @@ const MasterLogin = () => {
           throw new Error("No token provided");
         }
 
-        console.log("🔐 [MasterLogin] Processing master login with token");
+        console.log("🔐 [MasterLogin] Processing master login", {
+          token_preview: token.substring(0, 8) + '...',
+          timestamp: new Date().toISOString()
+        });
 
         // Validate the token
+        console.log("📡 [MasterLogin] Calling validate-master-login-token edge function");
+        const functionStartTime = Date.now();
+        
         const { data, error } = await supabase.functions.invoke("validate-master-login-token", {
           body: { token },
         });
 
-        if (error) throw error;
+        const functionDuration = Date.now() - functionStartTime;
+        console.log(`⏱️ [MasterLogin] Edge function completed in ${functionDuration}ms`);
+
+        if (error) {
+          console.error("❌ [MasterLogin] Edge function error:", error);
+          throw error;
+        }
 
         if (!data?.success || !data?.access_token || !data?.refresh_token) {
+          console.error("❌ [MasterLogin] Invalid response from edge function:", {
+            has_success: !!data?.success,
+            has_access_token: !!data?.access_token,
+            has_refresh_token: !!data?.refresh_token
+          });
           throw new Error("Invalid authentication response");
         }
 
-        console.log("✅ [MasterLogin] Tokens received, setting session");
+        console.log("✅ [MasterLogin] Tokens received", {
+          user_id: data.userId,
+          email_masked: data.userEmail?.substring(0, 3) + '***',
+          has_access_token: !!data.access_token,
+          has_refresh_token: !!data.refresh_token
+        });
 
         // Set the session directly using tokens from backend
+        console.log("🔐 [MasterLogin] Setting user session");
+        const sessionStartTime = Date.now();
+        
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
 
-        if (sessionError) throw sessionError;
+        const sessionDuration = Date.now() - sessionStartTime;
+        console.log(`⏱️ [MasterLogin] Session set in ${sessionDuration}ms`);
 
-        console.log("✅ [MasterLogin] Session created successfully");
+        if (sessionError) {
+          console.error("❌ [MasterLogin] Session error:", sessionError);
+          throw sessionError;
+        }
+
+        const totalDuration = Date.now() - startTime;
+        console.log(`✅ [MasterLogin] Session created successfully - Total time: ${totalDuration}ms`);
         
         setStatus("success");
         toast.success("Master login successful! Redirecting...");
 
         // Redirect to dashboard after brief delay
+        console.log("🔄 [MasterLogin] Redirecting to dashboard in 1s");
         setTimeout(() => {
           navigate("/dashboard");
         }, 1000);
 
       } catch (error: any) {
-        console.error("❌ [MasterLogin] Error:", error);
+        const totalDuration = Date.now() - startTime;
+        console.error(`❌ [MasterLogin] Error after ${totalDuration}ms:`, {
+          message: error.message,
+          error: error
+        });
+        
         setStatus("error");
         toast.error(error.message || "Master login failed");
 
         // Redirect to login page after error
+        console.log("🔄 [MasterLogin] Redirecting to login page in 3s");
         setTimeout(() => {
           navigate("/login");
         }, 3000);

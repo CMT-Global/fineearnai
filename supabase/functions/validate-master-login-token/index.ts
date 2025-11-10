@@ -91,9 +91,14 @@ Deno.serve(async (req) => {
     const accessToken = verifyData.session.access_token;
     const refreshToken = verifyData.session.refresh_token;
 
-    console.log('✅ [validate-master-login-token] Session tokens generated successfully');
+    console.log('✅ [validate-master-login-token] Session tokens generated successfully', {
+      session_expires_at: verifyData.session.expires_at,
+      session_expires_in_seconds: verifyData.session.expires_in,
+      user_id: session.target_user_id
+    });
 
     // Mark the token as used
+    console.log('🔒 [validate-master-login-token] Marking token as used:', session.id);
     const { error: updateError } = await supabaseClient
       .from('master_login_sessions')
       .update({ used_at: new Date().toISOString() })
@@ -101,10 +106,13 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error('❌ [validate-master-login-token] Failed to mark token as used:', updateError);
+    } else {
+      console.log('✅ [validate-master-login-token] Token marked as used successfully');
     }
 
     // Create audit log entry
-    await supabaseClient
+    console.log('📝 [validate-master-login-token] Creating audit log entry');
+    const { error: auditError } = await supabaseClient
       .from('audit_logs')
       .insert({
         admin_id: session.admin_id,
@@ -113,11 +121,22 @@ Deno.serve(async (req) => {
         details: {
           method: 'one_time_token',
           timestamp: new Date().toISOString(),
-          token_id: session.id
+          token_id: session.id,
+          token_age_seconds: Math.round((Date.now() - new Date(session.created_at).getTime()) / 1000)
         }
       });
 
-    console.log('✅ [validate-master-login-token] Token validated successfully for user:', targetUser.email);
+    if (auditError) {
+      console.error('❌ [validate-master-login-token] Failed to create audit log:', auditError);
+    } else {
+      console.log('✅ [validate-master-login-token] Audit log created successfully');
+    }
+
+    console.log('✅ [validate-master-login-token] Complete! Token validated successfully for user:', {
+      email: targetUser.email,
+      user_id: session.target_user_id,
+      total_process_time_ms: Date.now() - new Date(session.created_at).getTime()
+    });
 
     return new Response(
       JSON.stringify({
