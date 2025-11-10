@@ -16,6 +16,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import MasterLogin from "./pages/MasterLogin";
 
 // Lazy-loaded user routes
 const Wallet = lazy(() => import("./pages/Wallet"));
@@ -573,6 +574,7 @@ const RoutesWrapper = () => {
       } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/master-login" element={<MasterLogin />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
       </Routes>
