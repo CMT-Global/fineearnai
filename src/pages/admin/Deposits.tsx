@@ -24,6 +24,8 @@ interface Deposit {
   payment_gateway: string | null;
   gateway_transaction_id: string | null;
   created_at: string;
+  upline_username?: string | null;
+  upline_id?: string | null;
   profiles: {
     username: string;
     email: string;
@@ -120,7 +122,9 @@ const Deposits = () => {
 
       if (error) throw error;
 
-      setDeposits(data || []);
+      // Fetch upline data for all deposits
+      const depositsWithUplines = await fetchUplineData(data || []);
+      setDeposits(depositsWithUplines);
 
       // Load separate stats for regular deposits
       const { data: regularDeposits, error: regularError } = await supabase
@@ -159,6 +163,55 @@ const Deposits = () => {
       toast.error("Failed to load deposits");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUplineData = async (depositsData: Deposit[]): Promise<Deposit[]> => {
+    try {
+      // Extract unique user IDs from deposits
+      const userIds = [...new Set(depositsData.map(d => d.user_id))];
+      
+      if (userIds.length === 0) return depositsData;
+
+      // Batch fetch all referral relationships with upline details
+      const { data: referralsData, error } = await supabase
+        .from('referrals')
+        .select(`
+          referred_id,
+          referrer_id,
+          referrer:profiles!referrals_referrer_id_fkey (
+            id,
+            username
+          )
+        `)
+        .in('referred_id', userIds)
+        .eq('status', 'active');
+
+      if (error) {
+        console.error('Error fetching upline data:', error);
+        return depositsData;
+      }
+
+      // Create a map for O(1) lookup
+      const uplineMap = new Map<string, { id: string; username: string }>();
+      referralsData?.forEach((ref: any) => {
+        if (ref.referrer) {
+          uplineMap.set(ref.referred_id, {
+            id: ref.referrer.id,
+            username: ref.referrer.username
+          });
+        }
+      });
+
+      // Map upline data to deposits
+      return depositsData.map(deposit => ({
+        ...deposit,
+        upline_id: uplineMap.get(deposit.user_id)?.id || null,
+        upline_username: uplineMap.get(deposit.user_id)?.username || null
+      }));
+    } catch (error) {
+      console.error('Error in fetchUplineData:', error);
+      return depositsData;
     }
   };
 
@@ -202,12 +255,14 @@ const Deposits = () => {
 
   const exportToCSV = () => {
     const csv = [
-      ["Date", "Username", "Email", "Amount", "Method", "Transaction ID", "Status"],
+      ["Date", "Time", "Username", "Email", "Amount", "Upline", "Method", "Transaction ID", "Status"],
       ...filteredDeposits.map((d) => [
         new Date(d.created_at).toLocaleDateString(),
+        new Date(d.created_at).toLocaleTimeString(),
         d.profiles?.username || "N/A",
         d.profiles?.email || "N/A",
         d.amount.toString(),
+        d.upline_username || "No Upline",
         d.payment_gateway || "N/A",
         d.gateway_transaction_id || "N/A",
         d.status,
@@ -511,6 +566,7 @@ const Deposits = () => {
                     <TableHead>User</TableHead>
                     <TableHead>Country</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Upline</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Transaction ID</TableHead>
@@ -520,7 +576,7 @@ const Deposits = () => {
                 <TableBody>
                   {filteredDeposits.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground">
                         No deposits found
                       </TableCell>
                     </TableRow>
@@ -528,7 +584,12 @@ const Deposits = () => {
                     filteredDeposits.map((deposit) => (
                       <TableRow key={deposit.id}>
                         <TableCell>
-                          {new Date(deposit.created_at).toLocaleDateString()}
+                          <div className="text-sm">
+                            <div>{new Date(deposit.created_at).toLocaleDateString()}</div>
+                            <div className="text-muted-foreground text-xs">
+                              {new Date(deposit.created_at).toLocaleTimeString()}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div>
@@ -545,6 +606,22 @@ const Deposits = () => {
                         </TableCell>
                         <TableCell className="font-semibold">
                           {formatCurrency(deposit.amount)}
+                        </TableCell>
+                        <TableCell>
+                          {deposit.upline_username ? (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto font-medium text-primary hover:underline"
+                              onClick={() => navigate(`/admin/users/${deposit.upline_id}`)}
+                            >
+                              {deposit.upline_username}
+                            </Button>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              No Upline
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={deposit.type === 'deposit' ? 'default' : 'secondary'}>
