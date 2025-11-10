@@ -29,6 +29,13 @@ interface WithdrawalRequest {
   processed_at?: string;
   created_at: string;
   payment_provider?: string;
+  metadata?: {
+    crypto_id?: string;           // 'usdc-solana' or 'usdt-bep20'
+    crypto_name?: string;         // 'USDC (Solana)' or 'USDT (BEP-20)'
+    processor_id?: string;
+    requested_at?: string;
+    user_agent?: string;
+  };
   api_response?: {
     error?: string;
     details?: string;
