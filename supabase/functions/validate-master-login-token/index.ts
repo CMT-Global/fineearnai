@@ -46,10 +46,52 @@ Deno.serve(async (req) => {
       session.target_user_id
     );
 
-    if (userError || !targetUser) {
+    if (userError || !targetUser || !targetUser.email) {
       console.error('❌ [validate-master-login-token] User fetch error:', userError);
       throw new Error('Target user not found');
     }
+
+    console.log('🔐 [validate-master-login-token] Generating session tokens for user:', {
+      target_user_id: session.target_user_id,
+      email_masked: targetUser.email.substring(0, 3) + '***',
+      token_age_seconds: Math.round((Date.now() - new Date(session.created_at).getTime()) / 1000),
+      expires_in_minutes: Math.round((new Date(session.expires_at).getTime() - Date.now()) / 60000)
+    });
+
+    // Generate magic link session server-side using admin API
+    const { data: magicLinkData, error: magicLinkError } = await supabaseClient.auth.admin.generateLink({
+      type: 'magiclink',
+      email: targetUser.email
+    });
+
+    if (magicLinkError || !magicLinkData) {
+      console.error('❌ [validate-master-login-token] Failed to generate magic link:', magicLinkError);
+      throw new Error('Failed to generate authentication session');
+    }
+
+    // Extract hashed token from the magic link
+    const hashedToken = magicLinkData.properties.hashed_token;
+    
+    if (!hashedToken) {
+      console.error('❌ [validate-master-login-token] Missing hashed_token in magic link response');
+      throw new Error('Failed to extract authentication token');
+    }
+
+    // Verify the token to get session tokens
+    const { data: verifyData, error: verifyError } = await supabaseClient.auth.verifyOtp({
+      token_hash: hashedToken,
+      type: 'magiclink'
+    });
+
+    if (verifyError || !verifyData?.session) {
+      console.error('❌ [validate-master-login-token] Failed to verify token:', verifyError);
+      throw new Error('Failed to create authentication session');
+    }
+
+    const accessToken = verifyData.session.access_token;
+    const refreshToken = verifyData.session.refresh_token;
+
+    console.log('✅ [validate-master-login-token] Session tokens generated successfully');
 
     // Mark the token as used
     const { error: updateError } = await supabaseClient
@@ -81,7 +123,9 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         userId: session.target_user_id,
-        userEmail: targetUser.email
+        userEmail: targetUser.email,
+        access_token: accessToken,
+        refresh_token: refreshToken
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
