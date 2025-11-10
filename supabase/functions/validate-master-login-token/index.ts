@@ -20,13 +20,19 @@ Deno.serve(async (req) => {
 
     console.log('🔍 [validate-master-login-token] Validating token:', token);
 
+    // Add 30-second buffer to prevent race conditions during validation
+    const bufferSeconds = 30;
+    const minExpiryTime = new Date(Date.now() + (bufferSeconds * 1000)).toISOString();
+    
+    console.log('⏰ [validate-master-login-token] Token must be valid for at least', bufferSeconds, 'more seconds');
+
     // Find the master login session
     const { data: session, error: sessionError } = await supabaseClient
       .from('master_login_sessions')
       .select('*')
       .eq('one_time_token', token)
       .is('used_at', null)
-      .gt('expires_at', new Date().toISOString())
+      .gt('expires_at', minExpiryTime)
       .maybeSingle();
 
     if (sessionError) {
@@ -35,11 +41,12 @@ Deno.serve(async (req) => {
     }
 
     if (!session) {
-      console.log('⚠️ [validate-master-login-token] Invalid, expired, or already used token');
+      console.log('⚠️ [validate-master-login-token] Invalid, expired, or already used token (or expires within 30 seconds)');
       throw new Error('Invalid, expired, or already used token');
     }
 
-    console.log('✅ [validate-master-login-token] Valid session found:', session.id);
+    const expiresInSeconds = Math.round((new Date(session.expires_at).getTime() - Date.now()) / 1000);
+    console.log('✅ [validate-master-login-token] Valid session found:', session.id, '- Expires in', expiresInSeconds, 'seconds');
 
     // Get the target user's email
     const { data: { user: targetUser }, error: userError } = await supabaseClient.auth.admin.getUserById(
