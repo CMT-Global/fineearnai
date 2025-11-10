@@ -28,37 +28,16 @@ const MasterLogin = () => {
 
         if (error) throw error;
 
-        if (!data?.success || !data?.userEmail) {
-          throw new Error("Invalid token response");
+        if (!data?.success || !data?.access_token || !data?.refresh_token) {
+          throw new Error("Invalid authentication response");
         }
 
-        console.log("✅ [MasterLogin] Token validated, creating session for:", data.userEmail);
+        console.log("✅ [MasterLogin] Tokens received, setting session");
 
-        // Generate a magic link session for the target user (admin API)
-        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-          type: "magiclink",
-          email: data.userEmail,
-        });
-
-        if (linkError) throw linkError;
-
-        if (!linkData?.properties?.action_link) {
-          throw new Error("Failed to generate authentication link");
-        }
-
-        // Extract the tokens from the action link
-        const url = new URL(linkData.properties.action_link);
-        const accessToken = url.searchParams.get("access_token");
-        const refreshToken = url.searchParams.get("refresh_token");
-
-        if (!accessToken || !refreshToken) {
-          throw new Error("Invalid authentication tokens");
-        }
-
-        // Set the session directly (bypassing normal login flow)
+        // Set the session directly using tokens from backend
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
         });
 
         if (sessionError) throw sessionError;
