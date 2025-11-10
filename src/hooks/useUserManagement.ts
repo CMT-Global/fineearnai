@@ -283,6 +283,13 @@ export const useUserManagement = () => {
   // Adjust wallet balance
   const adjustWalletBalance = useMutation({
     mutationFn: async ({ userId, walletAdjustment }: { userId: string; walletAdjustment: any }) => {
+      console.log('💰 Wallet adjustment request:', {
+        userId,
+        walletType: walletAdjustment.wallet_type,
+        amount: walletAdjustment.amount,
+        reason: walletAdjustment.reason?.substring(0, 50) + '...'
+      });
+      
       return await callEdgeFunctionWithRetry('admin-manage-user', {
         body: { 
           action: 'adjust_wallet_balance', 
@@ -291,12 +298,14 @@ export const useUserManagement = () => {
         }
       });
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      console.log('✅ Wallet adjustment successful:', data);
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('Wallet balance adjusted successfully');
     },
     onError: (error: any) => {
+      console.error('❌ Wallet adjustment failed:', error);
       toast.error(error.message || 'Failed to adjust wallet balance');
     }
   });
