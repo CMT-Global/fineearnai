@@ -13,7 +13,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
-import { ArrowLeft, Key, Activity, Crown, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Key, Activity, Crown, AlertCircle, RefreshCw, Copy, ExternalLink, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Import new tab components
 import { OverviewTab } from "@/components/admin/user-detail/OverviewTab";
@@ -46,6 +55,9 @@ function UserDetailContent() {
 
   // User roles state
   const [userRoles, setUserRoles] = useState<string[]>(['user']);
+  
+  // Master login URL state
+  const [masterLoginUrl, setMasterLoginUrl] = useState<string | null>(null);
 
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, error: detailError, refetch } = useUserDetail(userId || '');
@@ -146,7 +158,11 @@ function UserDetailContent() {
       
       // Copy to clipboard
       await navigator.clipboard.writeText(loginUrl);
-      toast.success("Master login URL copied to clipboard! Valid for 15 minutes.");
+      
+      // Store URL to display in dialog
+      setMasterLoginUrl(loginUrl);
+      
+      toast.success("Master login URL generated!");
     } catch (error: any) {
       toast.error(error.message || "Failed to generate master login");
     }
@@ -381,6 +397,62 @@ function UserDetailContent() {
             />
           </>
         )}
+
+        {/* Master Login URL Dialog */}
+        <AlertDialog open={!!masterLoginUrl} onOpenChange={() => setMasterLoginUrl(null)}>
+          <AlertDialogContent className="max-w-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Master Login URL Generated</AlertDialogTitle>
+              <AlertDialogDescription>
+                Use this URL to log in as this user. The link expires in 15 minutes and can only be used once.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg border">
+                <p className="text-sm font-mono break-all">{masterLoginUrl}</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(masterLoginUrl!);
+                    toast.success("URL copied to clipboard!");
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy URL
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    window.open(masterLoginUrl!, '_blank');
+                  }}
+                  className="flex-1"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in New Tab
+                </Button>
+              </div>
+              
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Security Notice</AlertTitle>
+                <AlertDescription>
+                  This URL provides direct access to the user's account. Keep it secure and do not share it.
+                </AlertDescription>
+              </Alert>
+            </div>
+            
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setMasterLoginUrl(null)}>
+                Close
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
