@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ========== PHASE 2: CONFIGURATION ==========
+const EDGE_FUNCTION_TIMEOUT_MS = 30000; // 30 seconds
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000; // Initial retry delay
+const TRANSIENT_ERROR_CODES = ['40001', '40P01', '08000', '08003', '08006', '08P01', '57014', '57P01'];
+
 interface VoucherPurchaseRequest {
   voucher_amount: number;
   recipient_username?: string;
@@ -13,9 +19,128 @@ interface VoucherPurchaseRequest {
   notes?: string;
 }
 
+// Explicit type for atomic function parameters
+interface AtomicFunctionParams {
+  p_partner_id: string;
+  p_voucher_code: string;
+  p_voucher_amount: number;
+  p_amount: number;
+  p_commission_rate: number;
+  p_notes: string | null;
+  p_recipient_username: string | null;
+  p_recipient_email: string | null;
+  p_expires_at: string;
+}
+
+// Checkpoint markers for detailed error tracking
+enum CheckpointStage {
+  START = 'START',
+  CORS_CHECK = 'CORS_CHECK',
+  AUTH = 'AUTH',
+  ROLE_VERIFICATION = 'ROLE_VERIFICATION',
+  REQUEST_VALIDATION = 'REQUEST_VALIDATION',
+  PARTNER_CONFIG_FETCH = 'PARTNER_CONFIG_FETCH',
+  COMMISSION_RATE_FETCH = 'COMMISSION_RATE_FETCH',
+  BALANCE_FETCH = 'BALANCE_FETCH',
+  BALANCE_CHECK = 'BALANCE_CHECK',
+  VOUCHER_CODE_GENERATION = 'VOUCHER_CODE_GENERATION',
+  ATOMIC_TRANSACTION_START = 'ATOMIC_TRANSACTION_START',
+  ATOMIC_TRANSACTION_COMPLETE = 'ATOMIC_TRANSACTION_COMPLETE',
+  NOTIFICATION = 'NOTIFICATION',
+  SUCCESS = 'SUCCESS',
+}
+
+// ========== PHASE 2: HELPER FUNCTIONS ==========
+
 // Generate correlation ID for tracking this request
 function generateCorrelationId(): string {
   return `voucher-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Checkpoint logger with stage tracking
+function logCheckpoint(
+  correlationId: string,
+  stage: CheckpointStage,
+  data?: Record<string, any>
+) {
+  const timestamp = new Date().toISOString();
+  console.log(`[${correlationId}] [${timestamp}] CHECKPOINT: ${stage}`, data || {});
+}
+
+// Check if error is transient and retryable
+function isTransientError(error: any): boolean {
+  if (!error) return false;
+  
+  // Check PostgreSQL error codes for transient failures
+  const errorCode = error.code || error.error_code || error.sqlState;
+  if (errorCode && TRANSIENT_ERROR_CODES.includes(errorCode)) {
+    return true;
+  }
+  
+  // Check error messages
+  const message = (error.message || '').toLowerCase();
+  return (
+    message.includes('timeout') ||
+    message.includes('connection') ||
+    message.includes('temporary') ||
+    message.includes('lock') ||
+    message.includes('deadlock')
+  );
+}
+
+// Retry logic with exponential backoff
+async function retryWithBackoff<T>(
+  correlationId: string,
+  operationName: string,
+  operation: () => Promise<T>,
+  maxAttempts: number = MAX_RETRY_ATTEMPTS
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`[${correlationId}] Attempt ${attempt}/${maxAttempts} for ${operationName}`);
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Only retry if it's a transient error and we have attempts left
+      if (attempt < maxAttempts && isTransientError(error)) {
+        const delay = RETRY_DELAY_MS * Math.pow(2, attempt - 1); // Exponential backoff
+        console.warn(
+          `[${correlationId}] Transient error in ${operationName} (attempt ${attempt}/${maxAttempts}):`,
+          error.message,
+          `Retrying in ${delay}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Non-transient error or out of retries
+        console.error(
+          `[${correlationId}] Failed ${operationName} after ${attempt} attempt(s):`,
+          error
+        );
+        throw error;
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// Timeout wrapper for long-running operations
+async function withTimeout<T>(
+  correlationId: string,
+  operationName: string,
+  operation: Promise<T>,
+  timeoutMs: number = EDGE_FUNCTION_TIMEOUT_MS
+): Promise<T> {
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Operation ${operationName} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+  
+  return Promise.race([operation, timeoutPromise]);
 }
 
 // Log to edge_function_metrics for monitoring
@@ -53,9 +178,11 @@ Deno.serve(async (req) => {
   let supabaseClient: any = null;
 
   console.log(`[${correlationId}] ========== VOUCHER PURCHASE REQUEST START ==========`);
+  logCheckpoint(correlationId, CheckpointStage.START);
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    logCheckpoint(correlationId, CheckpointStage.CORS_CHECK);
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -70,21 +197,28 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Authenticate user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    // Authenticate user with retry logic
+    logCheckpoint(correlationId, CheckpointStage.AUTH, { stage: 'starting' });
+    
+    const { data: { user }, error: authError } = await retryWithBackoff(
+      correlationId,
+      'authentication',
+      () => supabaseClient.auth.getUser()
+    );
 
     if (authError || !user) {
       console.error(`[${correlationId}] ❌ Authentication failed:`, authError);
+      logCheckpoint(correlationId, CheckpointStage.AUTH, { 
+        stage: 'failed',
+        error: authError?.message 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         null,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "authentication" },
+        { ...metadata, checkpoint: CheckpointStage.AUTH },
         authError?.message || "Unauthorized"
       );
       return new Response(
@@ -98,25 +232,39 @@ Deno.serve(async (req) => {
 
     userId = user.id;
     metadata.user_id = userId;
+    logCheckpoint(correlationId, CheckpointStage.AUTH, { 
+      stage: 'success',
+      user_id: userId 
+    });
     console.log(`[${correlationId}] ✅ Authenticated user: ${userId}`);
 
-    // Verify user is a partner
-    const { data: partnerRole } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "partner")
-      .single();
+    // Verify user is a partner with retry logic
+    logCheckpoint(correlationId, CheckpointStage.ROLE_VERIFICATION, { stage: 'starting' });
+    
+    const { data: partnerRole } = await retryWithBackoff(
+      correlationId,
+      'role_verification',
+      () => supabaseClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "partner")
+        .single()
+    );
 
     if (!partnerRole) {
       console.error(`[${correlationId}] ❌ User is not a partner`);
+      logCheckpoint(correlationId, CheckpointStage.ROLE_VERIFICATION, { 
+        stage: 'failed',
+        reason: 'not_partner' 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         userId,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "role_verification" },
+        { ...metadata, checkpoint: CheckpointStage.ROLE_VERIFICATION },
         "User is not a partner"
       );
       return new Response(
@@ -127,7 +275,11 @@ Deno.serve(async (req) => {
         }
       );
     }
+    
+    logCheckpoint(correlationId, CheckpointStage.ROLE_VERIFICATION, { stage: 'success' });
 
+    logCheckpoint(correlationId, CheckpointStage.REQUEST_VALIDATION, { stage: 'starting' });
+    
     const body: VoucherPurchaseRequest = await req.json();
     metadata.voucher_amount = body.voucher_amount;
     metadata.has_recipient_username = !!body.recipient_username;
@@ -143,13 +295,18 @@ Deno.serve(async (req) => {
     // Validate voucher amount
     if (!body.voucher_amount || body.voucher_amount <= 0) {
       console.error(`[${correlationId}] ❌ Invalid voucher amount:`, body.voucher_amount);
+      logCheckpoint(correlationId, CheckpointStage.REQUEST_VALIDATION, { 
+        stage: 'failed',
+        reason: 'invalid_amount',
+        amount: body.voucher_amount 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         userId,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "validation", invalid_amount: body.voucher_amount },
+        { ...metadata, checkpoint: CheckpointStage.REQUEST_VALIDATION, invalid_amount: body.voucher_amount },
         "Invalid voucher amount"
       );
       return new Response(
@@ -160,13 +317,21 @@ Deno.serve(async (req) => {
         }
       );
     }
+    
+    logCheckpoint(correlationId, CheckpointStage.REQUEST_VALIDATION, { stage: 'success' });
 
-    // Get partner config and commission rate
-    const { data: partnerConfig } = await supabaseClient
-      .from("partner_config")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+    // Get partner config and commission rate with retry logic
+    logCheckpoint(correlationId, CheckpointStage.PARTNER_CONFIG_FETCH, { stage: 'starting' });
+    
+    const { data: partnerConfig } = await retryWithBackoff(
+      correlationId,
+      'partner_config_fetch',
+      () => supabaseClient
+        .from("partner_config")
+        .select("*")
+        .eq("user_id", user.id)
+        .single()
+    );
 
     if (!partnerConfig) {
       console.error(`[${correlationId}] ❌ Partner config not found for user:`, userId);
@@ -208,31 +373,49 @@ Deno.serve(async (req) => {
       );
     }
 
+    logCheckpoint(correlationId, CheckpointStage.PARTNER_CONFIG_FETCH, { 
+      stage: 'success',
+      is_active: partnerConfig.is_active,
+      current_rank: partnerConfig.current_rank 
+    });
+    
     console.log(`[${correlationId}] ✅ Partner config loaded:`, {
       is_active: partnerConfig.is_active,
       current_rank: partnerConfig.current_rank,
       total_vouchers_sold: partnerConfig.total_vouchers_sold,
     });
 
-    // Get commission rate using database function
-    const { data: commissionRateData, error: commissionError } = await supabaseClient.rpc(
-      "get_partner_commission_rate",
-      { p_user_id: user.id }
+    // Get commission rate using database function with retry logic
+    logCheckpoint(correlationId, CheckpointStage.COMMISSION_RATE_FETCH, { stage: 'starting' });
+    
+    const { data: commissionRateData, error: commissionError } = await retryWithBackoff(
+      correlationId,
+      'commission_rate_fetch',
+      () => supabaseClient.rpc("get_partner_commission_rate", { p_user_id: user.id })
     );
 
     if (commissionError) {
       console.error(`[${correlationId}] ❌ Error getting commission rate:`, commissionError);
+      logCheckpoint(correlationId, CheckpointStage.COMMISSION_RATE_FETCH, { 
+        stage: 'failed',
+        error: commissionError.message 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         userId,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "commission_rate_fetch" },
+        { ...metadata, checkpoint: CheckpointStage.COMMISSION_RATE_FETCH },
         commissionError.message
       );
       throw commissionError;
     }
+    
+    logCheckpoint(correlationId, CheckpointStage.COMMISSION_RATE_FETCH, { 
+      stage: 'success',
+      commission_rate: commissionRateData 
+    });
 
     const commission_rate = commissionRateData as number;
     const commission_amount = body.voucher_amount * commission_rate;
@@ -256,26 +439,41 @@ Deno.serve(async (req) => {
       rounding_difference_partner: partner_paid_amount - Number(partner_paid_amount.toFixed(2)),
     });
 
-    // Check partner's deposit wallet balance
-    const { data: profile, error: profileError } = await supabaseClient
-      .from("profiles")
-      .select("deposit_wallet_balance, username")
-      .eq("id", user.id)
-      .single();
+    // Check partner's deposit wallet balance with retry logic
+    logCheckpoint(correlationId, CheckpointStage.BALANCE_FETCH, { stage: 'starting' });
+    
+    const { data: profile, error: profileError } = await retryWithBackoff(
+      correlationId,
+      'balance_fetch',
+      () => supabaseClient
+        .from("profiles")
+        .select("deposit_wallet_balance, username")
+        .eq("id", user.id)
+        .single()
+    );
 
     if (profileError) {
       console.error(`[${correlationId}] ❌ Error fetching profile:`, profileError);
+      logCheckpoint(correlationId, CheckpointStage.BALANCE_FETCH, { 
+        stage: 'failed',
+        error: profileError.message 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         userId,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "profile_fetch" },
+        { ...metadata, checkpoint: CheckpointStage.BALANCE_FETCH },
         profileError.message
       );
       throw profileError;
     }
+    
+    logCheckpoint(correlationId, CheckpointStage.BALANCE_FETCH, { 
+      stage: 'success',
+      balance: profile.deposit_wallet_balance 
+    });
 
     const oldBalance = profile.deposit_wallet_balance;
     const expectedNewBalance = Number((oldBalance - partner_paid_amount).toFixed(2));
@@ -283,6 +481,12 @@ Deno.serve(async (req) => {
     metadata.old_balance = oldBalance;
     metadata.expected_new_balance = expectedNewBalance;
     metadata.balance_difference = partner_paid_amount;
+    
+    logCheckpoint(correlationId, CheckpointStage.BALANCE_CHECK, { 
+      current_balance: oldBalance,
+      required_amount: partner_paid_amount,
+      sufficient: oldBalance >= partner_paid_amount 
+    });
 
     console.log(`[${correlationId}] 💵 Balance Check:`, {
       current_balance: oldBalance,
@@ -298,6 +502,11 @@ Deno.serve(async (req) => {
         required: partner_paid_amount,
         shortage: partner_paid_amount - profile.deposit_wallet_balance,
       });
+      logCheckpoint(correlationId, CheckpointStage.BALANCE_CHECK, { 
+        stage: 'failed',
+        reason: 'insufficient_balance',
+        shortage: partner_paid_amount - profile.deposit_wallet_balance 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
@@ -306,7 +515,7 @@ Deno.serve(async (req) => {
         Date.now() - startTime,
         {
           ...metadata,
-          error_stage: "balance_check",
+          checkpoint: CheckpointStage.BALANCE_CHECK,
           current_balance: profile.deposit_wallet_balance,
           required_amount: partner_paid_amount,
           shortage: partner_paid_amount - profile.deposit_wallet_balance,
@@ -328,56 +537,76 @@ Deno.serve(async (req) => {
 
     // ATOMIC TRANSACTION: Use database function for all-or-nothing execution
     const atomicStartTime = Date.now();
+    logCheckpoint(correlationId, CheckpointStage.ATOMIC_TRANSACTION_START);
     console.log(`[${correlationId}] 🔄 Starting atomic transaction...`);
 
-    // Step 1: Generate unique voucher code
+    // Step 1: Generate unique voucher code with retry logic
+    logCheckpoint(correlationId, CheckpointStage.VOUCHER_CODE_GENERATION, { stage: 'starting' });
     const codeGenStartTime = Date.now();
-    const { data: voucherCode, error: codeError } = await supabaseClient.rpc(
-      "generate_voucher_code"
+    
+    const { data: voucherCode, error: codeError } = await retryWithBackoff(
+      correlationId,
+      'voucher_code_generation',
+      () => supabaseClient.rpc("generate_voucher_code")
     );
+    
     const codeGenDuration = Date.now() - codeGenStartTime;
 
     if (codeError) {
       console.error(`[${correlationId}] ❌ Error generating voucher code:`, codeError);
+      logCheckpoint(correlationId, CheckpointStage.VOUCHER_CODE_GENERATION, { 
+        stage: 'failed',
+        error: codeError.message,
+        duration_ms: codeGenDuration 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
         userId,
         false,
         Date.now() - startTime,
-        { ...metadata, error_stage: "voucher_code_generation", code_gen_duration: codeGenDuration },
+        { ...metadata, checkpoint: CheckpointStage.VOUCHER_CODE_GENERATION, code_gen_duration: codeGenDuration },
         codeError.message
       );
       throw codeError;
     }
 
     metadata.voucher_code = voucherCode;
+    logCheckpoint(correlationId, CheckpointStage.VOUCHER_CODE_GENERATION, { 
+      stage: 'success',
+      voucher_code: voucherCode,
+      duration_ms: codeGenDuration 
+    });
     console.log(`[${correlationId}] ✅ Generated voucher code: ${voucherCode} (${codeGenDuration}ms)`);
 
-    // Step 2: Execute atomic purchase via database function
+    // Step 2: Execute atomic purchase via database function with explicit signature and timeout
     const atomicFunctionStartTime = Date.now();
-    console.log(`[${correlationId}] 🔐 Executing atomic function with params:`, {
-      partner_id: user.id,
-      voucher_code: voucherCode,
-      voucher_amount: body.voucher_amount,
-      partner_paid_amount,
-      commission_amount,
-      commission_rate,
-    });
-
-    const { data: result, error: purchaseError } = await supabaseClient.rpc(
-      "purchase_voucher_atomic",
-      {
-        p_partner_id: user.id,
-        p_voucher_code: voucherCode,
-        p_voucher_amount: body.voucher_amount,
-        p_partner_paid_amount: partner_paid_amount,
-        p_commission_amount: commission_amount,
-        p_commission_rate: commission_rate,
-        p_notes: body.notes || null,
-        p_recipient_username: body.recipient_username || null,
-        p_recipient_email: body.recipient_email || null,
-      }
+    
+    // PHASE 2: Explicit parameter typing for type safety
+    const atomicParams: AtomicFunctionParams = {
+      p_partner_id: user.id,
+      p_voucher_code: voucherCode,
+      p_voucher_amount: body.voucher_amount,
+      p_amount: partner_paid_amount,
+      p_commission_rate: commission_rate,
+      p_notes: body.notes || null,
+      p_recipient_username: body.recipient_username || null,
+      p_recipient_email: body.recipient_email || null,
+      p_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year expiry
+    };
+    
+    console.log(`[${correlationId}] 🔐 Executing atomic function with params:`, atomicParams);
+    
+    // PHASE 2: Wrap atomic operation with timeout and retry logic
+    const { data: result, error: purchaseError } = await withTimeout(
+      correlationId,
+      'atomic_transaction',
+      retryWithBackoff(
+        correlationId,
+        'atomic_transaction',
+        () => supabaseClient.rpc("purchase_voucher_atomic", atomicParams)
+      ),
+      EDGE_FUNCTION_TIMEOUT_MS
     );
 
     const atomicFunctionDuration = Date.now() - atomicFunctionStartTime;
@@ -388,6 +617,13 @@ Deno.serve(async (req) => {
         error: purchaseError,
         duration_ms: atomicFunctionDuration,
         expected_balance_change: partner_paid_amount,
+        is_transient: isTransientError(purchaseError),
+      });
+      logCheckpoint(correlationId, CheckpointStage.ATOMIC_TRANSACTION_START, { 
+        stage: 'failed',
+        error: purchaseError.message,
+        duration_ms: atomicFunctionDuration,
+        is_transient: isTransientError(purchaseError)
       });
       await logMetric(
         supabaseClient,
@@ -397,8 +633,9 @@ Deno.serve(async (req) => {
         Date.now() - startTime,
         {
           ...metadata,
-          error_stage: "atomic_function_execution",
+          checkpoint: CheckpointStage.ATOMIC_TRANSACTION_START,
           atomic_function_duration_ms: atomicFunctionDuration,
+          error_transient: isTransientError(purchaseError),
         },
         purchaseError.message
       );
@@ -412,6 +649,12 @@ Deno.serve(async (req) => {
         duration_ms: atomicFunctionDuration,
         expected_new_balance: expectedNewBalance,
       });
+      logCheckpoint(correlationId, CheckpointStage.ATOMIC_TRANSACTION_START, { 
+        stage: 'business_logic_failed',
+        error: result?.error,
+        error_code: result?.error_code,
+        duration_ms: atomicFunctionDuration 
+      });
       await logMetric(
         supabaseClient,
         correlationId,
@@ -420,7 +663,7 @@ Deno.serve(async (req) => {
         Date.now() - startTime,
         {
           ...metadata,
-          error_stage: "atomic_operation_failed",
+          checkpoint: CheckpointStage.ATOMIC_TRANSACTION_START,
           atomic_function_duration_ms: atomicFunctionDuration,
           function_result: result,
         },
@@ -441,11 +684,17 @@ Deno.serve(async (req) => {
 
     const atomicTotalDuration = Date.now() - atomicStartTime;
     metadata.atomic_total_duration_ms = atomicTotalDuration;
-    metadata.new_balance = result.new_balance;
-    metadata.actual_balance_change = oldBalance - result.new_balance;
+    metadata.new_balance = result.partner_new_balance;
+    metadata.actual_balance_change = oldBalance - result.partner_new_balance;
     metadata.balance_match = Math.abs(metadata.actual_balance_change - partner_paid_amount) < 0.01;
-    metadata.recipient_credited = result.recipient_credited;
     metadata.auto_redeemed = result.auto_redeemed;
+    
+    logCheckpoint(correlationId, CheckpointStage.ATOMIC_TRANSACTION_COMPLETE, {
+      duration_ms: atomicTotalDuration,
+      voucher_id: result.voucher_id,
+      status: result.status,
+      auto_redeemed: result.auto_redeemed
+    });
 
     console.log(`[${correlationId}] ✅ Atomic transaction complete (AUTO-REDEEMED)!`, {
       partner_transaction_id: result.partner_transaction_id,
@@ -471,6 +720,7 @@ Deno.serve(async (req) => {
     });
 
     // Step 3: Send notifications (non-blocking)
+    logCheckpoint(correlationId, CheckpointStage.NOTIFICATION, { stage: 'starting' });
     try {
       // Notify partner about successful purchase
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-partner-notification`, {
@@ -491,11 +741,30 @@ Deno.serve(async (req) => {
         }),
       });
       
+      logCheckpoint(correlationId, CheckpointStage.NOTIFICATION, { stage: 'success' });
+      
       // TODO: Send email to recipient notifying them of the credit
       // This would require a new edge function or email template
-    } catch (emailError) {
-      console.error('[Purchase Voucher] Failed to send notifications:', emailError);
-      // Don't fail the purchase if notifications fail
+    } catch (notificationError: any) {
+      console.error(`[${correlationId}] ⚠️  Notification failed (non-critical):`, notificationError.message);
+      logCheckpoint(correlationId, CheckpointStage.NOTIFICATION, { 
+        stage: 'failed',
+        error: notificationError.message,
+        critical: false 
+      });
+      // Log but don't fail the purchase if notifications fail
+      await logMetric(
+        supabaseClient,
+        correlationId,
+        userId,
+        true, // Still successful purchase
+        Date.now() - startTime,
+        { 
+          ...metadata, 
+          notification_failed: true,
+          notification_error: notificationError.message 
+        }
+      );
     }
 
     const totalDuration = Date.now() - startTime;
@@ -512,6 +781,7 @@ Deno.serve(async (req) => {
       metadata
     );
 
+    logCheckpoint(correlationId, CheckpointStage.SUCCESS, { total_duration_ms: totalDuration });
     console.log(`[${correlationId}] ========== VOUCHER PURCHASE SUCCESS (${totalDuration}ms) ==========`);
 
     return new Response(
@@ -560,8 +830,11 @@ Deno.serve(async (req) => {
     console.error(`[${correlationId}] Error details:`, {
       message: error.message,
       name: error.name,
+      code: error.code,
+      sqlState: error.sqlState,
       stack: error.stack,
       metadata,
+      is_transient: isTransientError(error),
     });
 
     // Only log metric if supabaseClient was successfully created
@@ -572,15 +845,30 @@ Deno.serve(async (req) => {
         userId,
         false,
         totalDuration,
-        { ...metadata, error_stage: "unexpected_error", error_name: error.name },
+        { 
+          ...metadata, 
+          checkpoint: 'unexpected_error',
+          error_name: error.name,
+          error_code: error.code,
+          error_transient: isTransientError(error)
+        },
         error.message
       );
     }
 
+    // Return appropriate status code based on error type
+    const statusCode = error.message?.includes('timeout') ? 504 : 
+                      error.message?.includes('Unauthorized') ? 401 : 500;
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        error_code: error.code || 'UNEXPECTED_ERROR',
+        is_transient: isTransientError(error),
+        correlation_id: correlationId
+      }),
       {
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
