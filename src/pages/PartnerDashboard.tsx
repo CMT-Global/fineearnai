@@ -67,11 +67,13 @@ const PartnerDashboard = () => {
   const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; costAmount: number; commissionRate: number } | null>(null);
 
   // Real-time username validation for voucher recipient
-  // Phase 4: Using 'lookup' context - we want username to EXIST (isAvailable = false)
+  // Phase 4 Fix: Using 'lookup' context - checking if username EXISTS in the system
   const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(recipientUsername, 'lookup');
   
-  // For voucher sending: username must EXIST (isAvailable = false means username is taken/exists)
-  const isUsernameValid = recipientUsername.trim().length >= 3 && isAvailable === false;
+  // In 'lookup' context: isAvailable=false means username EXISTS (which is what we want)
+  // Derive a clearer variable name to avoid confusion
+  const usernameExists = isAvailable === false;
+  const isUsernameValid = recipientUsername.trim().length >= 3 && usernameExists;
   
   // Phase 4: Enhanced balance validation
   const currentAmount = selectedAmount || parseFloat(customAmount) || 0;

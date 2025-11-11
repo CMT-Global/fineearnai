@@ -431,10 +431,9 @@ export const usePurchaseVoucher = () => {
 
       return { previousProfile, previousConfig };
     },
-    onSuccess: async () => {
-      // Wait for database transaction to fully commit before invalidating queries
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+    onSuccess: () => {
+      // Phase 4 Fix: Remove arbitrary delay - optimistic updates handle immediate UI feedback
+      // and invalidateQueries will fetch fresh data from the server
       queryClient.invalidateQueries({ queryKey: ['partner-config'] });
       queryClient.invalidateQueries({ queryKey: ['partner-vouchers'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
