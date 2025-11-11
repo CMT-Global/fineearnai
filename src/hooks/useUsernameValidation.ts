@@ -11,8 +11,15 @@ interface UsernameValidationResult {
 /**
  * Hook to validate username availability in real-time
  * Uses debouncing to avoid excessive API calls
+ * 
+ * @param username - The username to validate
+ * @param context - 'registration' checks if username is available (not taken)
+ *                  'lookup' checks if username exists (is taken)
  */
-export function useUsernameValidation(username: string): UsernameValidationResult {
+export function useUsernameValidation(
+  username: string, 
+  context: 'registration' | 'lookup' = 'registration'
+): UsernameValidationResult {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +67,10 @@ export function useUsernameValidation(username: string): UsernameValidationResul
         const available = !data;
         setIsAvailable(available);
         
-        if (!available) {
+        if (context === 'registration' && !available) {
           setError(`Username "${debouncedUsername}" is already taken`);
+        } else if (context === 'lookup' && available) {
+          setError(`Username "${debouncedUsername}" not found. Please check spelling.`);
         }
       } catch (err) {
         console.error("Unexpected error checking username:", err);

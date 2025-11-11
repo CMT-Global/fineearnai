@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 import { generateCorrelationId } from "@/lib/utils";
+import { formatVoucherErrorToast } from "@/lib/voucher-error-parser";
 
 // 🔧 PHASE 4: Feature flag for server-side status checks
 // Set to false to instantly revert to direct database queries
@@ -375,9 +376,10 @@ export const usePartnerVouchers = () => {
   });
 };
 
-// Purchase voucher
+// Purchase voucher with optimistic updates and enhanced error handling
 export const usePurchaseVoucher = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (data: {
@@ -409,20 +411,48 @@ export const usePurchaseVoucher = () => {
 
       return response.json();
     },
+    // Optimistic update: immediately update local balance
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['profile', user?.id] });
+      await queryClient.cancelQueries({ queryKey: ['partner-config', user?.id] });
+
+      // Snapshot previous values
+      const previousProfile = queryClient.getQueryData(['profile', user?.id]);
+      const previousConfig = queryClient.getQueryData(['partner-config', user?.id]);
+
+      // Optimistically update profile balance (assuming 10% commission)
+      if (previousProfile) {
+        queryClient.setQueryData(['profile', user?.id], (old: any) => ({
+          ...old,
+          deposit_wallet_balance: old.deposit_wallet_balance - (variables.voucher_amount * 0.9)
+        }));
+      }
+
+      return { previousProfile, previousConfig };
+    },
     onSuccess: async () => {
       // Wait for database transaction to fully commit before invalidating queries
-      // This prevents race conditions where UI fetches stale data
       await new Promise(resolve => setTimeout(resolve, 500));
       
       queryClient.invalidateQueries({ queryKey: ['partner-config'] });
       queryClient.invalidateQueries({ queryKey: ['partner-vouchers'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast.success('Voucher purchased successfully!');
+      toast.success('Voucher purchased successfully! Code sent to recipient.');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables, context) => {
+      // Rollback optimistic update
+      if (context?.previousProfile) {
+        queryClient.setQueryData(['profile', user?.id], context.previousProfile);
+      }
+      if (context?.previousConfig) {
+        queryClient.setQueryData(['partner-config', user?.id], context.previousConfig);
+      }
+
       console.error('Error purchasing voucher:', error);
-      toast.error(error.message || 'Failed to purchase voucher');
+      // Use enhanced error parser
+      toast.error(formatVoucherErrorToast(error.message));
     },
   });
 };

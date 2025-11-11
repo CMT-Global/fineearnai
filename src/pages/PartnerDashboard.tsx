@@ -67,10 +67,16 @@ const PartnerDashboard = () => {
   const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; costAmount: number; commissionRate: number } | null>(null);
 
   // Real-time username validation for voucher recipient
-  const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(recipientUsername);
+  // Phase 4: Using 'lookup' context - we want username to EXIST (isAvailable = false)
+  const { isAvailable, isChecking, error: usernameError } = useUsernameValidation(recipientUsername, 'lookup');
   
   // For voucher sending: username must EXIST (isAvailable = false means username is taken/exists)
   const isUsernameValid = recipientUsername.trim().length >= 3 && isAvailable === false;
+  
+  // Phase 4: Enhanced balance validation
+  const currentAmount = selectedAmount || parseFloat(customAmount) || 0;
+  const currentCost = currentAmount * (1 - (partnerConfig?.use_global_commission ? 0.10 : partnerConfig?.commission_rate || 0.10));
+  const hasInsufficientBalance = profile && currentCost > profile.deposit_wallet_balance;
 
   const { data: ranks, isLoading: loadingRanks } = useQuery({
     queryKey: ['partner-ranks'],
@@ -144,13 +150,34 @@ const PartnerDashboard = () => {
   const handleInitiatePurchase = () => {
     const amount = selectedAmount || parseFloat(customAmount);
     
-    if (!amount || amount <= 0) {
-      toast.error("Please enter a valid amount");
+    // Phase 4: Enhanced validation with specific error messages
+    if (!amount || amount <= 0 || isNaN(amount)) {
+      toast.error("Please enter a valid amount greater than $0");
       return;
     }
 
-    if (!recipientUsername.trim() || !isUsernameValid) {
-      toast.error("Please enter a valid recipient username");
+    if (amount > 10000) {
+      toast.error("Maximum voucher amount is $10,000");
+      return;
+    }
+
+    if (!recipientUsername.trim()) {
+      toast.error("Please enter the recipient's username");
+      return;
+    }
+
+    if (recipientUsername.trim().length < 3) {
+      toast.error("Username must be at least 3 characters");
+      return;
+    }
+
+    if (isChecking) {
+      toast.error("Please wait while we verify the username");
+      return;
+    }
+
+    if (!isUsernameValid) {
+      toast.error(usernameError || "Username not found. Please check and try again.");
       return;
     }
 
@@ -160,8 +187,18 @@ const PartnerDashboard = () => {
     
     const costAmount = amount * (1 - commissionRate);
 
-    if (!profile || profile.deposit_wallet_balance < costAmount) {
-      toast.error("Insufficient balance in deposit wallet");
+    // Phase 4: Enhanced balance validation
+    if (!profile) {
+      toast.error("Unable to load your profile. Please refresh the page.");
+      return;
+    }
+
+    if (profile.deposit_wallet_balance < costAmount) {
+      const shortfall = costAmount - profile.deposit_wallet_balance;
+      toast.error(
+        `Insufficient balance. You need ${formatCurrency(shortfall)} more in your deposit wallet.`,
+        { duration: 5000 }
+      );
       return;
     }
 
@@ -407,6 +444,16 @@ const PartnerDashboard = () => {
                   </div>
                 </div>
 
+                {/* Phase 4: Balance warning alert */}
+                {hasInsufficientBalance && currentAmount > 0 && (
+                  <Alert className="border-amber-500/50 bg-amber-500/10">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <AlertDescription>
+                      <strong>Insufficient Balance:</strong> You need {formatCurrency(currentCost)} but only have {formatCurrency(profile?.deposit_wallet_balance || 0)} in your deposit wallet.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button 
                   size="lg" 
                   className="w-full"
@@ -558,36 +605,47 @@ const PartnerDashboard = () => {
           <div className="space-y-4">
             <div>
               <Label>Recipient Username *</Label>
-              <Input
-                placeholder="Enter username"
-                value={recipientUsername}
-                onChange={(e) => setRecipientUsername(e.target.value)}
-                className={recipientUsername.trim() && !isChecking ? (isUsernameValid ? 'border-green-500' : 'border-destructive') : ''}
-              />
-              {recipientUsername.trim().length > 0 && (
-                <div className="text-sm mt-1.5">
-                  {isChecking && (
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Checking username...
-                    </span>
-                  )}
-                  {!isChecking && isUsernameValid && (
-                    <span className="text-green-600 flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Valid username - ready to send
-                    </span>
-                  )}
-                  {!isChecking && recipientUsername.trim().length >= 3 && !isUsernameValid && (
-                    <span className="text-destructive flex items-center gap-1">
-                      <XCircle className="h-3 w-3" /> {usernameError || 'Username not found'}
-                    </span>
-                  )}
-                  {!isChecking && recipientUsername.trim().length < 3 && (
-                    <span className="text-muted-foreground text-xs">
-                      Enter at least 3 characters
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="space-y-1.5">
+                <Input
+                  placeholder="Enter recipient's username"
+                  value={recipientUsername}
+                  onChange={(e) => setRecipientUsername(e.target.value)}
+                  className={recipientUsername.trim() && !isChecking ? (isUsernameValid ? 'border-green-500 focus-visible:ring-green-500' : 'border-destructive focus-visible:ring-destructive') : ''}
+                  disabled={purchaseMutation.isPending}
+                />
+                {/* Phase 4: Enhanced validation feedback */}
+                {recipientUsername.trim().length > 0 && (
+                  <div className="text-sm space-y-1">
+                    {isChecking && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Verifying username exists...</span>
+                      </div>
+                    )}
+                    {!isChecking && isUsernameValid && (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="font-medium">User found! Ready to send voucher.</span>
+                      </div>
+                    )}
+                    {!isChecking && recipientUsername.trim().length >= 3 && !isUsernameValid && (
+                      <div className="flex items-start gap-2 text-destructive">
+                        <XCircle className="h-3.5 w-3.5 mt-0.5" />
+                        <div>
+                          <div className="font-medium">{usernameError || 'User not found'}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Double-check the spelling and try again
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {!isChecking && recipientUsername.trim().length < 3 && (
+                      <div className="text-muted-foreground text-xs">
+                        Username must be at least 3 characters
+                      </div>
+                    )}
+                  </div>
+                )}</div>
             </div>
 
             <div className="bg-muted p-4 rounded-lg space-y-2">
@@ -616,33 +674,55 @@ const PartnerDashboard = () => {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPurchaseDialog(false)}>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setPurchaseDialog(false)}
+              disabled={purchaseMutation.isPending}
+            >
               Cancel
             </Button>
             <Button 
               onClick={handleInitiatePurchase}
-              disabled={purchaseMutation.isPending || !isUsernameValid || isChecking}
+              disabled={purchaseMutation.isPending || !isUsernameValid || isChecking || hasInsufficientBalance}
             >
-              {purchaseMutation.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {purchaseMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Review Purchase
+                </>
               )}
-              Review Purchase
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog - Phase 4: Duplicate Prevention */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      {/* Confirmation Dialog - Phase 4: Enhanced with loading states */}
+      <Dialog open={showConfirmDialog} onOpenChange={(open) => {
+        // Prevent closing during purchase
+        if (!open && purchaseMutation.isPending) return;
+        setShowConfirmDialog(open);
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Confirm Voucher Purchase
+              {purchaseMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
+              {purchaseMutation.isPending ? 'Processing Purchase...' : 'Confirm Voucher Purchase'}
             </DialogTitle>
             <DialogDescription>
-              Please review carefully - this action cannot be undone
+              {purchaseMutation.isPending 
+                ? 'Please wait while we process your purchase'
+                : 'Please review carefully - this action cannot be undone'
+              }
             </DialogDescription>
           </DialogHeader>
 
