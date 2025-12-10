@@ -2321,7 +2321,7 @@ export type Database = {
       get_current_utc_time: { Args: never; Returns: string }
       get_deposit_stats:
         | {
-            Args: { p_end_date?: string; p_start_date?: string }
+            Args: never
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2333,7 +2333,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: never
+            Args: { p_end_date?: string; p_start_date?: string }
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2423,7 +2423,7 @@ export type Database = {
       }
       get_plan_upgrade_stats:
         | {
-            Args: { p_end_date?: string; p_start_date?: string }
+            Args: never
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2435,7 +2435,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: never
+            Args: { p_end_date?: string; p_start_date?: string }
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2458,20 +2458,20 @@ export type Database = {
       }
       get_referral_stats_overview:
         | {
+            Args: never
+            Returns: {
+              daily_breakdown: Json
+              last_7days_count: number
+              today_count: number
+            }[]
+          }
+        | {
             Args: { p_end_date?: string; p_start_date?: string }
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
               today_count: number
               yesterday_count: number
-            }[]
-          }
-        | {
-            Args: never
-            Returns: {
-              daily_breakdown: Json
-              last_7days_count: number
-              today_count: number
             }[]
           }
       get_referrals_with_details: {
@@ -2526,7 +2526,7 @@ export type Database = {
       get_user_detail_aggregated: { Args: { p_user_id: string }; Returns: Json }
       get_user_growth_stats:
         | {
-            Args: { p_end_date?: string; p_start_date?: string }
+            Args: never
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2535,7 +2535,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: never
+            Args: { p_end_date?: string; p_start_date?: string }
             Returns: {
               daily_breakdown: Json
               last_7days_count: number
@@ -2590,7 +2590,6 @@ export type Database = {
             Args: {
               p_amount: number
               p_fee: number
-              p_metadata?: Json
               p_net_amount: number
               p_payment_method: string
               p_payment_processor_id?: string
@@ -2603,6 +2602,7 @@ export type Database = {
             Args: {
               p_amount: number
               p_fee: number
+              p_metadata?: Json
               p_net_amount: number
               p_payment_method: string
               p_payment_processor_id?: string
@@ -2614,11 +2614,9 @@ export type Database = {
       purchase_voucher_atomic:
         | {
             Args: {
-              p_commission_amount: number
               p_commission_rate: number
               p_notes?: string
               p_partner_id: string
-              p_partner_paid_amount: number
               p_recipient_email?: string
               p_recipient_username?: string
               p_voucher_amount: number
@@ -2628,9 +2626,11 @@ export type Database = {
           }
         | {
             Args: {
+              p_commission_amount: number
               p_commission_rate: number
               p_notes?: string
               p_partner_id: string
+              p_partner_paid_amount: number
               p_recipient_email?: string
               p_recipient_username?: string
               p_voucher_amount: number
