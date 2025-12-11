@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     allowedHosts: [
       "fine-earn-app-3h89h.ondigitalocean.app",
+      "demo.piniscripts.com",
     ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
