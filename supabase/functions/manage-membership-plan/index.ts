@@ -1,65 +1,30 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-
-interface ManagePlanRequest {
-  action: 'create_plan' | 'update_plan' | 'delete_plan' | 'activate_plan' | 'deactivate_plan';
-  planId?: string;
-  planData?: {
-    name?: string;
-    display_name?: string;
-    account_type?: string;
-    price?: number;
-    billing_period_unit?: string;
-    billing_period_value?: number;
-    billing_period_days?: number;
-    daily_task_limit?: number;
-    earning_per_task?: number;
-    task_skip_limit_per_day?: number;
-    min_withdrawal?: number;
-    min_daily_withdrawal?: number;
-    max_daily_withdrawal?: number;
-    max_active_referrals?: number;
-    task_commission_rate?: number;
-    deposit_commission_rate?: number;
-    free_plan_expiry_days?: number;
-    free_unlock_withdrawal_enabled?: boolean;
-    free_unlock_withdrawal_days?: number;
-    sub_account_earning_commission_rate?: number;
-    max_group_members?: number;
-    priority_support?: boolean;
-    custom_categories?: boolean;
-    referral_eligible?: boolean; // Phase 3: Control commission generation
-    features?: string[];
-    is_active?: boolean;
-  };
-}
-
 /**
  * Comprehensive server-side validation for membership plan data
  * Single source of truth for all plan validation rules
- */
-function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
+ */ function validatePlanData(planData) {
+  const errors = [];
   // ========== Required Fields Validation ==========
   if (!planData.name || typeof planData.name !== 'string' || planData.name.trim().length === 0) {
     errors.push("Plan name is required and must be a non-empty string");
   }
-
   if (!planData.display_name || typeof planData.display_name !== 'string' || planData.display_name.trim().length === 0) {
     errors.push("Display name is required and must be a non-empty string");
   }
-
   if (!planData.account_type || typeof planData.account_type !== 'string' || planData.account_type.trim().length === 0) {
     errors.push("Account type is required");
   }
-
   // ========== Account Type Validation ==========
-  const validAccountTypes = ['free', 'personal', 'business', 'group'];
+  const validAccountTypes = [
+    'free',
+    'personal',
+    'business',
+    'group'
+  ];
   if (planData.account_type && !validAccountTypes.includes(planData.account_type)) {
     errors.push(`Account type must be one of: ${validAccountTypes.join(', ')}`);
   }
-
   // ========== Price Validation ==========
   if (planData.price !== undefined) {
     if (typeof planData.price !== 'number' || isNaN(planData.price)) {
@@ -70,7 +35,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Price cannot exceed 10000");
     }
   }
-
   // ========== Daily Task Limit Validation ==========
   if (planData.daily_task_limit !== undefined) {
     if (typeof planData.daily_task_limit !== 'number' || isNaN(planData.daily_task_limit)) {
@@ -79,7 +43,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Daily task limit must be between 0 and 1000");
     }
   }
-
   // ========== Task Skip Limit Validation ==========
   if (planData.task_skip_limit_per_day !== undefined) {
     if (typeof planData.task_skip_limit_per_day !== 'number' || isNaN(planData.task_skip_limit_per_day)) {
@@ -88,7 +51,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Task skip limit must be between 0 and 100");
     }
   }
-
   // ========== Earning Per Task Validation ==========
   if (planData.earning_per_task !== undefined) {
     if (typeof planData.earning_per_task !== 'number' || isNaN(planData.earning_per_task)) {
@@ -99,7 +61,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Earning per task cannot exceed 100");
     }
   }
-
   // ========== Commission Rates Validation (0-100%) ==========
   if (planData.task_commission_rate !== undefined) {
     if (typeof planData.task_commission_rate !== 'number' || isNaN(planData.task_commission_rate)) {
@@ -108,7 +69,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Task commission rate must be between 0 and 100");
     }
   }
-
   if (planData.deposit_commission_rate !== undefined) {
     if (typeof planData.deposit_commission_rate !== 'number' || isNaN(planData.deposit_commission_rate)) {
       errors.push("Deposit commission rate must be a valid number");
@@ -116,7 +76,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Deposit commission rate must be between 0 and 100");
     }
   }
-
   // ========== Max Active Referrals Validation ==========
   if (planData.max_active_referrals !== undefined) {
     if (typeof planData.max_active_referrals !== 'number' || isNaN(planData.max_active_referrals)) {
@@ -125,7 +84,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Max active referrals must be between 0 and 999999");
     }
   }
-
   // ========== Withdrawal Amount Validations ==========
   if (planData.min_withdrawal !== undefined) {
     if (typeof planData.min_withdrawal !== 'number' || isNaN(planData.min_withdrawal)) {
@@ -134,7 +92,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Minimum withdrawal must be between 0 and 10000");
     }
   }
-
   if (planData.min_daily_withdrawal !== undefined) {
     if (typeof planData.min_daily_withdrawal !== 'number' || isNaN(planData.min_daily_withdrawal)) {
       errors.push("Minimum daily withdrawal must be a valid number");
@@ -142,7 +99,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Minimum daily withdrawal must be between 0 and 10000");
     }
   }
-
   if (planData.max_daily_withdrawal !== undefined) {
     if (typeof planData.max_daily_withdrawal !== 'number' || isNaN(planData.max_daily_withdrawal)) {
       errors.push("Maximum daily withdrawal must be a valid number");
@@ -150,20 +106,17 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Maximum daily withdrawal must be between 0 and 100000");
     }
   }
-
   // ========== Withdrawal Logic Cross-Validation ==========
   if (planData.min_withdrawal !== undefined && planData.max_daily_withdrawal !== undefined) {
     if (planData.min_withdrawal > planData.max_daily_withdrawal) {
       errors.push("Minimum withdrawal cannot exceed maximum daily withdrawal");
     }
   }
-
   if (planData.min_daily_withdrawal !== undefined && planData.max_daily_withdrawal !== undefined) {
     if (planData.min_daily_withdrawal > planData.max_daily_withdrawal) {
       errors.push("Minimum daily withdrawal cannot exceed maximum daily withdrawal");
     }
   }
-
   // ========== Billing Period Validation ==========
   if (planData.billing_period_days !== undefined) {
     if (typeof planData.billing_period_days !== 'number' || isNaN(planData.billing_period_days)) {
@@ -172,7 +125,6 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Billing period must be between 1 and 365 days");
     }
   }
-
   // ========== Free Plan Expiry Validation ==========
   if (planData.free_plan_expiry_days !== undefined && planData.free_plan_expiry_days !== null) {
     if (typeof planData.free_plan_expiry_days !== 'number' || isNaN(planData.free_plan_expiry_days)) {
@@ -181,323 +133,251 @@ function validatePlanData(planData: any): { valid: boolean; errors: string[] } {
       errors.push("Free plan expiry days must be between 0 and 365 days");
     }
   }
-
   // ========== Business Logic Rules ==========
   if (planData.account_type === 'free' && planData.price && planData.price > 0) {
     errors.push("Free account type cannot have a price greater than 0");
   }
-
   // Phase 3: Free plans must have referral_eligible = false
   if (planData.account_type === 'free' && planData.referral_eligible === true) {
     errors.push("Free account type must have referral_eligible set to false");
   }
-
   // Phase 3: Enforce referral_eligible for free plans
   if (planData.account_type === 'free') {
     planData.referral_eligible = false; // Force to false for free plans
   }
-
   // Validate billing period unit if provided
-  if (planData.billing_period_unit && !['day', 'month', 'year'].includes(planData.billing_period_unit)) {
+  if (planData.billing_period_unit && ![
+    'day',
+    'month',
+    'year'
+  ].includes(planData.billing_period_unit)) {
     errors.push("Billing period unit must be 'day', 'month', or 'year'");
   }
-
   return {
     valid: errors.length === 0,
     errors
   };
 }
-
-Deno.serve(async (req) => {
+Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
+    const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     // Get authenticated user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
-
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-
     if (authError || !user) {
       throw new Error('Unauthorized');
     }
-
     // Check admin role
-    const { data: adminRole } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
-
+    const { data: adminRole } = await supabaseClient.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
     if (!adminRole) {
       throw new Error('Admin access required');
     }
-
-    const { action, planId, planData }: ManagePlanRequest = await req.json();
-
+    const { action, planId, planData } = await req.json();
     console.log(`Admin ${user.id} performing action: ${action}`);
-
     // Validate action
     if (!action) {
       throw new Error('Action is required');
     }
-
-    let result: any = null;
-    let auditDetails: any = {};
-
-    switch (action) {
-      case 'create_plan': {
-        if (!planData) {
-          throw new Error('Plan data is required');
-        }
-
-        // Comprehensive validation using centralized validation function
-        const validation = validatePlanData(planData);
-        if (!validation.valid) {
-          console.error('Validation errors:', validation.errors);
-          throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
-        }
-
-        // Validate plan name is unique
-        const { data: existingPlan } = await supabaseClient
-          .from('membership_plans')
-          .select('id')
-          .eq('name', planData.name)
-          .maybeSingle();
-
-        if (existingPlan) {
-          throw new Error(`Plan with name '${planData.name}' already exists`);
-        }
-
-        // Create the plan
-        const { data: newPlan, error: createError } = await supabaseClient
-          .from('membership_plans')
-          .insert(planData)
-          .select()
-          .single();
-
-        if (createError) {
-          throw new Error(`Failed to create plan: ${createError.message}`);
-        }
-
-        result = newPlan;
-        auditDetails = { action: 'create_plan', plan_data: planData };
-        console.log(`Created plan: ${newPlan.name}`);
-        break;
-      }
-
-      case 'update_plan': {
-        if (!planId) {
-          throw new Error('Plan ID is required for update');
-        }
-
-        if (!planData) {
-          throw new Error('Plan data is required for update');
-        }
-
-        // Comprehensive validation using centralized validation function
-        const validation = validatePlanData(planData);
-        if (!validation.valid) {
-          console.error('Validation errors:', validation.errors);
-          throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
-        }
-
-        // Get current plan
-        const { data: currentPlan, error: fetchError } = await supabaseClient
-          .from('membership_plans')
-          .select('*')
-          .eq('id', planId)
-          .maybeSingle();
-
-        if (fetchError || !currentPlan) {
-          throw new Error('Plan not found');
-        }
-
-        // If name is being changed, check it's unique
-        if (planData.name && planData.name !== currentPlan.name) {
-          const { data: existingPlan } = await supabaseClient
-            .from('membership_plans')
-            .select('id')
-            .eq('name', planData.name)
-            .maybeSingle();
-
+    let result = null;
+    let auditDetails = {};
+    switch(action){
+      case 'create_plan':
+        {
+          if (!planData) {
+            throw new Error('Plan data is required');
+          }
+          // Comprehensive validation using centralized validation function
+          const validation = validatePlanData(planData);
+          if (!validation.valid) {
+            console.error('Validation errors:', validation.errors);
+            throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
+          }
+          // Validate plan name is unique
+          const { data: existingPlan } = await supabaseClient.from('membership_plans').select('id').eq('name', planData.name).maybeSingle();
           if (existingPlan) {
             throw new Error(`Plan with name '${planData.name}' already exists`);
           }
-
-          // Check if any users are subscribed to this plan
-          const { count: subscriberCount } = await supabaseClient
-            .from('profiles')
-            .select('id', { count: 'exact', head: true })
-            .eq('membership_plan', currentPlan.name);
-
-          if (subscriberCount && subscriberCount > 0) {
-            throw new Error(`Cannot rename plan: ${subscriberCount} users are currently subscribed to '${currentPlan.name}'`);
+          // Create the plan
+          const { data: newPlan, error: createError } = await supabaseClient.from('membership_plans').insert(planData).select().single();
+          if (createError) {
+            throw new Error(`Failed to create plan: ${createError.message}`);
           }
+          result = newPlan;
+          auditDetails = {
+            action: 'create_plan',
+            plan_data: planData
+          };
+          console.log(`Created plan: ${newPlan.name}`);
+          break;
         }
-
-        // Update the plan
-        const { data: updatedPlan, error: updateError } = await supabaseClient
-          .from('membership_plans')
-          .update(planData)
-          .eq('id', planId)
-          .select()
-          .single();
-
-        if (updateError) {
-          throw new Error(`Failed to update plan: ${updateError.message}`);
+      case 'update_plan':
+        {
+          if (!planId) {
+            throw new Error('Plan ID is required for update');
+          }
+          if (!planData) {
+            throw new Error('Plan data is required for update');
+          }
+          // Comprehensive validation using centralized validation function
+          const validation = validatePlanData(planData);
+          if (!validation.valid) {
+            console.error('Validation errors:', validation.errors);
+            throw new Error(`Validation failed: ${validation.errors.join('; ')}`);
+          }
+          // Get current plan
+          const { data: currentPlan, error: fetchError } = await supabaseClient.from('membership_plans').select('*').eq('id', planId).maybeSingle();
+          if (fetchError || !currentPlan) {
+            throw new Error('Plan not found');
+          }
+          // If name is being changed, check it's unique
+          if (planData.name && planData.name !== currentPlan.name) {
+            const { data: existingPlan } = await supabaseClient.from('membership_plans').select('id').eq('name', planData.name).maybeSingle();
+            if (existingPlan) {
+              throw new Error(`Plan with name '${planData.name}' already exists`);
+            }
+            // Check if any users are subscribed to this plan
+            const { count: subscriberCount } = await supabaseClient.from('profiles').select('id', {
+              count: 'exact',
+              head: true
+            }).eq('membership_plan', currentPlan.name);
+            if (subscriberCount && subscriberCount > 0) {
+              throw new Error(`Cannot rename plan: ${subscriberCount} users are currently subscribed to '${currentPlan.name}'`);
+            }
+          }
+          // Update the plan
+          const { data: updatedPlan, error: updateError } = await supabaseClient.from('membership_plans').update(planData).eq('id', planId).select().single();
+          if (updateError) {
+            throw new Error(`Failed to update plan: ${updateError.message}`);
+          }
+          result = updatedPlan;
+          auditDetails = {
+            action: 'update_plan',
+            plan_id: planId,
+            old_values: currentPlan,
+            new_values: planData
+          };
+          console.log(`Updated plan: ${updatedPlan.name}`);
+          break;
         }
-
-        result = updatedPlan;
-        auditDetails = {
-          action: 'update_plan',
-          plan_id: planId,
-          old_values: currentPlan,
-          new_values: planData
-        };
-        console.log(`Updated plan: ${updatedPlan.name}`);
-        break;
-      }
-
-      case 'delete_plan': {
-        if (!planId) {
-          throw new Error('Plan ID is required for delete');
+      case 'delete_plan':
+        {
+          if (!planId) {
+            throw new Error('Plan ID is required for delete');
+          }
+          // Get the plan
+          const { data: plan, error: fetchError } = await supabaseClient.from('membership_plans').select('*').eq('id', planId).maybeSingle();
+          if (fetchError || !plan) {
+            throw new Error('Plan not found');
+          }
+          // Prevent deletion of free plan
+          if (plan.name === 'free') {
+            throw new Error('Cannot delete the free plan');
+          }
+          // Check if any users are subscribed to this plan
+          const { data: subscribers, count: subscriberCount } = await supabaseClient.from('profiles').select('id', {
+            count: 'exact',
+            head: true
+          }).eq('membership_plan', plan.name);
+          if (subscriberCount && subscriberCount > 0) {
+            throw new Error(`Cannot delete plan: ${subscriberCount} users are currently subscribed to '${plan.name}'. Deactivate the plan instead.`);
+          }
+          // Delete the plan
+          const { error: deleteError } = await supabaseClient.from('membership_plans').delete().eq('id', planId);
+          if (deleteError) {
+            throw new Error(`Failed to delete plan: ${deleteError.message}`);
+          }
+          result = {
+            deleted: true,
+            plan_name: plan.name
+          };
+          auditDetails = {
+            action: 'delete_plan',
+            plan_id: planId,
+            plan_data: plan
+          };
+          console.log(`Deleted plan: ${plan.name}`);
+          break;
         }
-
-        // Get the plan
-        const { data: plan, error: fetchError } = await supabaseClient
-          .from('membership_plans')
-          .select('*')
-          .eq('id', planId)
-          .maybeSingle();
-
-        if (fetchError || !plan) {
-          throw new Error('Plan not found');
+      case 'activate_plan':
+        {
+          if (!planId) {
+            throw new Error('Plan ID is required');
+          }
+          const { data: updatedPlan, error: updateError } = await supabaseClient.from('membership_plans').update({
+            is_active: true
+          }).eq('id', planId).select().single();
+          if (updateError) {
+            throw new Error(`Failed to activate plan: ${updateError.message}`);
+          }
+          result = updatedPlan;
+          auditDetails = {
+            action: 'activate_plan',
+            plan_id: planId
+          };
+          console.log(`Activated plan: ${updatedPlan.name}`);
+          break;
         }
-
-        // Prevent deletion of free plan
-        if (plan.name === 'free') {
-          throw new Error('Cannot delete the free plan');
+      case 'deactivate_plan':
+        {
+          if (!planId) {
+            throw new Error('Plan ID is required');
+          }
+          // Get the plan
+          const { data: plan } = await supabaseClient.from('membership_plans').select('name').eq('id', planId).maybeSingle();
+          if (plan && plan.name === 'free') {
+            throw new Error('Cannot deactivate the free plan');
+          }
+          const { data: updatedPlan, error: updateError } = await supabaseClient.from('membership_plans').update({
+            is_active: false
+          }).eq('id', planId).select().single();
+          if (updateError) {
+            throw new Error(`Failed to deactivate plan: ${updateError.message}`);
+          }
+          result = updatedPlan;
+          auditDetails = {
+            action: 'deactivate_plan',
+            plan_id: planId
+          };
+          console.log(`Deactivated plan: ${updatedPlan.name}`);
+          break;
         }
-
-        // Check if any users are subscribed to this plan
-        const { data: subscribers, count: subscriberCount } = await supabaseClient
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('membership_plan', plan.name);
-
-        if (subscriberCount && subscriberCount > 0) {
-          throw new Error(`Cannot delete plan: ${subscriberCount} users are currently subscribed to '${plan.name}'. Deactivate the plan instead.`);
-        }
-
-        // Delete the plan
-        const { error: deleteError } = await supabaseClient
-          .from('membership_plans')
-          .delete()
-          .eq('id', planId);
-
-        if (deleteError) {
-          throw new Error(`Failed to delete plan: ${deleteError.message}`);
-        }
-
-        result = { deleted: true, plan_name: plan.name };
-        auditDetails = { action: 'delete_plan', plan_id: planId, plan_data: plan };
-        console.log(`Deleted plan: ${plan.name}`);
-        break;
-      }
-
-      case 'activate_plan': {
-        if (!planId) {
-          throw new Error('Plan ID is required');
-        }
-
-        const { data: updatedPlan, error: updateError } = await supabaseClient
-          .from('membership_plans')
-          .update({ is_active: true })
-          .eq('id', planId)
-          .select()
-          .single();
-
-        if (updateError) {
-          throw new Error(`Failed to activate plan: ${updateError.message}`);
-        }
-
-        result = updatedPlan;
-        auditDetails = { action: 'activate_plan', plan_id: planId };
-        console.log(`Activated plan: ${updatedPlan.name}`);
-        break;
-      }
-
-      case 'deactivate_plan': {
-        if (!planId) {
-          throw new Error('Plan ID is required');
-        }
-
-        // Get the plan
-        const { data: plan } = await supabaseClient
-          .from('membership_plans')
-          .select('name')
-          .eq('id', planId)
-          .maybeSingle();
-
-        if (plan && plan.name === 'free') {
-          throw new Error('Cannot deactivate the free plan');
-        }
-
-        const { data: updatedPlan, error: updateError } = await supabaseClient
-          .from('membership_plans')
-          .update({ is_active: false })
-          .eq('id', planId)
-          .select()
-          .single();
-
-        if (updateError) {
-          throw new Error(`Failed to deactivate plan: ${updateError.message}`);
-        }
-
-        result = updatedPlan;
-        auditDetails = { action: 'deactivate_plan', plan_id: planId };
-        console.log(`Deactivated plan: ${updatedPlan.name}`);
-        break;
-      }
-
       default:
         throw new Error(`Invalid action: ${action}`);
     }
-
     // Log to audit_logs
-    await supabaseClient
-      .from('audit_logs')
-      .insert({
-        admin_id: user.id,
-        action_type: `membership_plan_${action}`,
-        details: auditDetails
-      });
-
-    return new Response(
-      JSON.stringify({ success: true, result }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error: any) {
-    console.error('Error in manage-membership-plan:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: error.message === 'Unauthorized' || error.message === 'Admin access required' ? 403 : 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    await supabaseClient.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: `membership_plan_${action}`,
+      details: auditDetails
+    });
+    return new Response(JSON.stringify({
+      success: true,
+      result
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
-    );
+    });
+  } catch (error) {
+    console.error('Error in manage-membership-plan:', error);
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      status: error.message === 'Unauthorized' || error.message === 'Admin access required' ? 403 : 400,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
   }
 });

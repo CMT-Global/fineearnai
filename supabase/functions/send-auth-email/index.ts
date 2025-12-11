@@ -2,103 +2,45 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
-
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const hookSecret = Deno.env.get("HOOK_SECRET");
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
-
-interface AuthEmailRequest {
-  user: {
-    id: string;
-    email: string;
-    user_metadata?: {
-      username?: string;
-      full_name?: string;
-    };
-  };
-  email_data: {
-    token: string;
-    token_hash: string;
-    redirect_to: string;
-    email_action_type: string;
-    site_url: string;
-  };
-}
-
-interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-  template_type: string;
-  variables: string[];
-  is_active: boolean;
-}
-
 /**
  * Map Supabase auth action types to our template types
- */
-function getTemplateType(emailActionType: string): string {
-  const typeMap: Record<string, string> = {
+ */ function getTemplateType(emailActionType) {
+  const typeMap = {
     "signup": "auth_email_confirmation",
     "magiclink": "auth_magic_link",
     "recovery": "auth_password_reset",
     "email_change": "auth_email_change",
-    "invite": "auth_invite",
+    "invite": "auth_invite"
   };
-  
   return typeMap[emailActionType] || "auth_default";
 }
-
 /**
  * Build authentication link with proper token
- */
-function buildAuthLink(
-  siteUrl: string,
-  type: string,
-  tokenHash: string,
-  redirectTo: string
-): string {
+ */ function buildAuthLink(siteUrl, type, tokenHash, redirectTo) {
   const baseUrl = siteUrl || supabaseUrl;
   return `${baseUrl}/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 }
-
 /**
  * Replace template variables with actual data
- */
-function populateTemplate(
-  templateBody: string,
-  variables: Record<string, string | null>
-): string {
+ */ function populateTemplate(templateBody, variables) {
   let populatedBody = templateBody;
-  
-  for (const [key, value] of Object.entries(variables)) {
+  for (const [key, value] of Object.entries(variables)){
     const regex = new RegExp(`{{${key}}}`, "g");
     populatedBody = populatedBody.replace(regex, value || "");
   }
-  
   return populatedBody;
 }
-
 /**
  * Log email to email_logs table
- */
-async function logEmail(
-  supabase: any,
-  recipientEmail: string,
-  recipientUserId: string,
-  subject: string,
-  body: string,
-  status: "sent" | "failed",
-  templateId?: string,
-  error?: string
-): Promise<void> {
+ */ async function logEmail(supabase, recipientEmail, recipientUserId, subject, body, status, templateId, error) {
   try {
     await supabase.from("email_logs").insert([
       {
@@ -109,51 +51,34 @@ async function logEmail(
         status: status,
         template_id: templateId,
         sent_at: new Date().toISOString(),
-        metadata: error ? { error } : {},
-      },
+        metadata: error ? {
+          error
+        } : {}
+      }
     ]);
   } catch (logError) {
     console.error("Failed to log email:", logError);
   }
 }
-
 /**
  * Fetch email template from database
- */
-async function fetchTemplate(
-  supabase: any,
-  templateType: string
-): Promise<EmailTemplate | null> {
+ */ async function fetchTemplate(supabase, templateType) {
   try {
-    const { data, error } = await supabase
-      .from("email_templates")
-      .select("*")
-      .eq("template_type", templateType)
-      .eq("is_active", true)
-      .single();
-    
+    const { data, error } = await supabase.from("email_templates").select("*").eq("template_type", templateType).eq("is_active", true).single();
     if (error) {
       console.error(`Template fetch error for type ${templateType}:`, error);
       return null;
     }
-    
-    return data as EmailTemplate;
+    return data;
   } catch (error) {
     console.error("Error fetching template:", error);
     return null;
   }
 }
-
 /**
  * Generate fallback email HTML when template is missing
- */
-function generateFallbackEmail(
-  emailActionType: string,
-  username: string,
-  authLink: string,
-  token: string
-): { subject: string; body: string } {
-  const fallbackTemplates: Record<string, { subject: string; body: string }> = {
+ */ function generateFallbackEmail(emailActionType, username, authLink, token) {
+  const fallbackTemplates = {
     recovery: {
       subject: "Reset Your Password",
       body: `
@@ -176,7 +101,7 @@ function generateFallbackEmail(
           </p>
           <p style="color: #666; font-size: 14px;">This link expires in 1 hour.</p>
         </div>
-      `,
+      `
     },
     signup: {
       subject: "Confirm Your Email",
@@ -196,7 +121,7 @@ function generateFallbackEmail(
             If you didn't create this account, you can ignore this email.
           </p>
         </div>
-      `,
+      `
     },
     email_change: {
       subject: "Confirm Email Change",
@@ -215,7 +140,7 @@ function generateFallbackEmail(
             If you didn't request this, please contact support immediately.
           </p>
         </div>
-      `,
+      `
     },
     magiclink: {
       subject: "Your Magic Link",
@@ -235,212 +160,167 @@ function generateFallbackEmail(
             If you didn't request this, you can ignore this email.
           </p>
         </div>
-      `,
-    },
+      `
+    }
   };
-  
   return fallbackTemplates[emailActionType] || fallbackTemplates.recovery;
 }
-
-serve(async (req) => {
+serve(async (req)=>{
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-  
   try {
     console.log("🔐 [Auth Email Hook] Received request");
-    
     // Verify hook secret for security
     const authHeader = req.headers.get("authorization");
     if (hookSecret && authHeader !== `Bearer ${hookSecret}`) {
       console.error("❌ [Auth Email Hook] Invalid hook secret");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        error: "Unauthorized"
+      }), {
+        status: 401,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
     }
-    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const requestData: AuthEmailRequest = await req.json();
-    
+    const requestData = await req.json();
     const { user, email_data } = requestData;
     const { email_action_type, token, token_hash, redirect_to, site_url } = email_data;
-    
     console.log(`📧 [Auth Email Hook] Processing ${email_action_type} for ${user.email}`);
-    
     // Extract user details
     const username = user.user_metadata?.username || user.user_metadata?.full_name || user.email.split("@")[0];
     const userId = user.id;
-    
     // Build authentication link
     const authLink = buildAuthLink(site_url, email_action_type, token_hash, redirect_to);
-    
     // Determine template type
     const templateType = getTemplateType(email_action_type);
     console.log(`🔍 [Auth Email Hook] Template type: ${templateType}`);
-    
     // Fetch custom template
     const template = await fetchTemplate(supabase, templateType);
-    
-    let subject: string;
-    let htmlBody: string;
-    let templateId: string | undefined;
-    
+    let subject;
+    let htmlBody;
+    let templateId;
     if (template) {
       console.log(`✅ [Auth Email Hook] Using custom template: ${template.name}`);
-      
       // Populate template variables
-      const variables: Record<string, string | null> = {
+      const variables = {
         username: username,
         email: user.email,
         reset_link: email_action_type === "recovery" ? authLink : null,
         confirmation_link: email_action_type !== "recovery" ? authLink : null,
         auth_link: authLink,
         token: token,
-        site_url: site_url,
+        site_url: site_url
       };
-      
       subject = template.subject;
       htmlBody = populateTemplate(template.body, variables);
       templateId = template.id;
     } else {
       console.warn(`⚠️ [Auth Email Hook] No custom template found, using fallback`);
-      
       // Use fallback template
       const fallback = generateFallbackEmail(email_action_type, username, authLink, token);
       subject = fallback.subject;
       htmlBody = fallback.body;
     }
-    
     // ============================================
     // FETCH DYNAMIC EMAIL SETTINGS (PHASE 4)
     // ============================================
     console.log(`⚙️  [Auth Email Hook] Fetching dynamic email settings...`);
-    const { data: configData } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
-
+    const { data: configData } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = configData?.value || {
       from_address: 'noreply@mail.fineearn.com',
       from_name: 'FineEarn',
       reply_to_address: 'support@fineearn.com',
       reply_to_name: 'FineEarn Support',
-      platform_name: 'FineEarn',
+      platform_name: 'FineEarn'
     };
-
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`📧 [Auth Email Hook] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
-    
     // ============================================
     // APPLY PROFESSIONAL EMAIL WRAPPER (PHASE 3)
     // ============================================
     console.log(`🎨 [Auth Email Hook] Checking if email needs professional wrapper...`);
-    
     const needsWrapper = !htmlBody.trim().toLowerCase().startsWith('<!doctype html');
-    
     if (needsWrapper) {
       console.log(`🎨 [Auth Email Hook] Template is HTML fragment - applying professional wrapper`);
-      
       htmlBody = wrapInProfessionalTemplate(htmlBody, {
         title: emailSettings.platform_name || 'FineEarn',
         preheader: subject,
         headerGradient: true,
-        includeFooter: true,
+        includeFooter: true
       });
-      
       console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);
     } else {
       console.log(`ℹ️  [Auth Email Hook] Template already has full HTML structure - skipping wrapper`);
     }
-    
     // ============================================
     // SEND EMAIL VIA RESEND
     // ============================================
     console.log(`📤 [Auth Email Hook] Sending email to ${user.email}`);
-    
     // Generate unique tracking ID for spam prevention and monitoring
     const trackingId = `auth-${email_action_type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
     try {
       const emailResponse = await resend.emails.send({
         from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
-        to: [user.email],
+        to: [
+          user.email
+        ],
         subject: subject,
         html: htmlBody,
         reply_to: `${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`,
         headers: {
-          'X-Entity-Ref-ID': trackingId, // Unique tracking ID
-          'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}>`, // RFC 2369 List-Unsubscribe header
-        },
+          'X-Entity-Ref-ID': trackingId,
+          'List-Unsubscribe': `<mailto:${emailSettings.reply_to_address}>`
+        }
       });
-      
       console.log(`✅ [Auth Email Hook] Email sent successfully. Resend ID: ${emailResponse.data?.id}`);
-      
       // Log success
-      await logEmail(
-        supabase,
-        user.email,
-        userId,
-        subject,
-        htmlBody,
-        "sent",
-        templateId
-      );
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Email sent successfully",
-          resend_id: emailResponse.data?.id,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      await logEmail(supabase, user.email, userId, subject, htmlBody, "sent", templateId);
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Email sent successfully",
+        resend_id: emailResponse.data?.id
+      }), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
         }
-      );
-    } catch (emailError: any) {
+      });
+    } catch (emailError) {
       console.error(`❌ [Auth Email Hook] Failed to send email:`, emailError);
-      
       // Log failure
-      await logEmail(
-        supabase,
-        user.email,
-        userId,
-        subject,
-        htmlBody,
-        "failed",
-        templateId,
-        emailError.message
-      );
-      
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to send email",
-          details: emailError.message,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-  } catch (error: any) {
-    console.error("❌ [Auth Email Hook] Unexpected error:", error);
-    
-    return new Response(
-      JSON.stringify({
+      await logEmail(supabase, user.email, userId, subject, htmlBody, "failed", templateId, emailError.message);
+      return new Response(JSON.stringify({
         success: false,
-        error: "Internal server error",
-        details: error.message,
-      }),
-      {
+        error: "Failed to send email",
+        details: emailError.message
+      }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+  } catch (error) {
+    console.error("❌ [Auth Email Hook] Unexpected error:", error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: "Internal server error",
+      details: error.message
+    }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
       }
-    );
+    });
   }
 });

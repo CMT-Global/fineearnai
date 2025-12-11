@@ -1,76 +1,56 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { Resend } from 'https://esm.sh/resend@2.0.0';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
-
-interface NotificationRequest {
-  user_id?: string; // For backward compatibility with partner_id
-  partner_id?: string;
-  notification_type: 'weekly_summary' | 'bonus_calculated' | 'bonus_paid' | 'tier_milestone' | 'application_approved' | 'application_rejected';
-  data?: {
-    week_start_date?: string;
-    week_end_date?: string;
-    total_sales?: number;
-    bonus_amount?: number;
-    tier_name?: string;
-    next_tier_name?: string;
-    amount_to_next_tier?: number;
-    payment_method?: string;
-    transaction_id?: string;
-    rejection_reason?: string;
-    commission_rate?: number;
-    username?: string;
-  };
-}
-
-Deno.serve(async (req) => {
+Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const requestBody: NotificationRequest = await req.json();
+    const requestBody = await req.json();
     const userId = requestBody.user_id || requestBody.partner_id;
     const { notification_type, data = {} } = requestBody;
-
     if (!userId) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'user_id or partner_id is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'user_id or partner_id is required'
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      });
     }
-
     console.log(`[PARTNER-NOTIFICATION] Processing ${notification_type} for user=${userId}`);
-
     // Get user profile details
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('username, email, full_name')
-      .eq('id', userId)
-      .single();
-
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('username, email, full_name').eq('id', userId).single();
     if (profileError || !profile) {
       console.error('[PARTNER-NOTIFICATION] User not found:', profileError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'User not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'User not found'
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 404
+      });
     }
-
     // Generate email content based on notification type
     let subject = '';
     let html = '';
     const userName = profile.full_name || profile.username;
     const username = data.username || profile.username;
-
-    switch (notification_type) {
+    switch(notification_type){
       case 'application_approved':
         subject = '🎉 Your Partner Application Has Been Approved!';
         html = `
@@ -122,7 +102,6 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       case 'application_rejected':
         subject = 'Partner Application Status Update';
         html = `
@@ -176,7 +155,6 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       case 'weekly_summary':
         subject = `Weekly Sales Summary - ${data.week_start_date} to ${data.week_end_date}`;
         html = `
@@ -218,7 +196,6 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       case 'bonus_calculated':
         subject = `🎉 Your Weekly Bonus Has Been Calculated!`;
         html = `
@@ -249,7 +226,6 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       case 'bonus_paid':
         subject = `💰 Your Weekly Bonus Has Been Paid!`;
         html = `
@@ -285,7 +261,6 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       case 'tier_milestone':
         subject = `🏆 Congratulations! You've Reached a New Tier!`;
         html = `
@@ -323,64 +298,72 @@ Deno.serve(async (req) => {
           </div>
         `;
         break;
-
       default:
-        return new Response(
-          JSON.stringify({ success: false, error: 'Invalid notification type' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Invalid notification type'
+        }), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          },
+          status: 400
+        });
     }
-
     // Get email settings
-    const { data: emailConfig } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
-
+    const { data: emailConfig } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = emailConfig?.value || {
       from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
+      from_name: 'FineEarn'
     };
-
     // Send email via Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     const emailResult = await resend.emails.send({
       from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
-      to: [profile.email],
+      to: [
+        profile.email
+      ],
       subject,
-      html,
+      html
     });
-
     if (emailResult.error) {
       console.error('[PARTNER-NOTIFICATION] Email send failed:', emailResult.error);
-      return new Response(
-        JSON.stringify({ success: false, error: emailResult.error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      return new Response(JSON.stringify({
+        success: false,
+        error: emailResult.error.message
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 500
+      });
     }
-
     console.log(`[PARTNER-NOTIFICATION] Email sent successfully to ${profile.email}`);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Notification sent successfully',
-        email_sent_to: profile.email
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
-
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Notification sent successfully',
+      email_sent_to: profile.email
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      },
+      status: 200
+    });
   } catch (error) {
     console.error('[PARTNER-NOTIFICATION] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage,
-        timestamp: new Date().toISOString()
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    return new Response(JSON.stringify({
+      success: false,
+      error: errorMessage,
+      timestamp: new Date().toISOString()
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      },
+      status: 500
+    });
   }
 });

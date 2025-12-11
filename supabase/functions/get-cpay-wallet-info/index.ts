@@ -1,48 +1,50 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { corsHeaders } from '../_shared/cors.ts';
-
 const CPAY_BASE_URL = 'https://api.cpay.world';
-
-Deno.serve(async (req) => {
+Deno.serve(async (req)=>{
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-
   try {
     console.log('[GET-CPAY-WALLET-INFO] 🚀 Starting wallet info fetch...');
-
     // ============================================================
     // STEP 1: AUTHENTICATE USER (ADMIN ONLY)
     // ============================================================
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    );
-
+    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: {
+        headers: {
+          Authorization: req.headers.get('Authorization')
+        }
+      }
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized'
+      }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     // Verify admin role
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin');
-
+    const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin');
     if (!roles || roles.length === 0) {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
+      return new Response(JSON.stringify({
+        error: 'Admin access required'
+      }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     // ============================================================
     // STEP 2: GET CPAY CREDENTIALS & CHECK MODE
     // ============================================================
@@ -56,14 +58,13 @@ Deno.serve(async (req) => {
           mode = String(maybeBody.mode);
         }
       } catch (_) {
-        // ignore body parse errors
+      // ignore body parse errors
       }
     }
     const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
     const CPAY_API_PUBLIC_KEY = Deno.env.get('CPAY_API_PUBLIC_KEY');
     const CPAY_API_PRIVATE_KEY = Deno.env.get('CPAY_API_PRIVATE_KEY');
     const CPAY_WALLET_PASSPHRASE = Deno.env.get('CPAY_WALLET_PASSPHRASE');
-
     // Note: CPAY_ACCOUNT_ID is not used for wallet-auth flow
     if (!CPAY_WALLET_ID || !CPAY_API_PUBLIC_KEY || !CPAY_API_PRIVATE_KEY || !CPAY_WALLET_PASSPHRASE) {
       console.error('[GET-CPAY-WALLET-INFO] ❌ Missing CPAY credentials');
@@ -77,26 +78,28 @@ Deno.serve(async (req) => {
         }
       }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     console.log('[GET-CPAY-WALLET-INFO] ✅ CPAY wallet credentials found');
     console.log('[GET-CPAY-WALLET-INFO] 💼 Wallet ID:', CPAY_WALLET_ID);
-
     // ============================================================
     // STEP 3: PERFORM WALLET AUTHENTICATION (using public/auth flow)
     // ============================================================
     console.log('[GET-CPAY-WALLET-INFO] 🔐 Using wallet-auth flow (same as withdrawals)...');
-    
     // Step 1/2: Account authentication to mirror reliable flow
     console.log('[GET-CPAY-WALLET-INFO] 📡 Step 1/2: Account authentication...');
     const accountAuthRes = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         publicKey: CPAY_API_PUBLIC_KEY,
-        privateKey: CPAY_API_PRIVATE_KEY,
+        privateKey: CPAY_API_PRIVATE_KEY
       })
     });
     const accountAuthText = await accountAuthRes.text();
@@ -107,22 +110,28 @@ Deno.serve(async (req) => {
         error: 'CPAY account authentication failed',
         status: accountAuthRes.status,
         details: accountAuthText
-      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
     }
-
     // Step 2/2: Wallet authentication with passphrase
     console.log('[GET-CPAY-WALLET-INFO] 📡 Step 2/2: Wallet authentication...');
     const walletAuthRes = await fetch(`${CPAY_BASE_URL}/api/public/auth`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         walletId: CPAY_WALLET_ID,
         passphrase: CPAY_WALLET_PASSPHRASE,
         publicKey: CPAY_API_PUBLIC_KEY,
-        privateKey: CPAY_API_PRIVATE_KEY,
+        privateKey: CPAY_API_PRIVATE_KEY
       })
     });
-
     console.log('[GET-CPAY-WALLET-INFO] Step 2 response status:', walletAuthRes.status);
     if (!walletAuthRes.ok) {
       const errorText = await walletAuthRes.text();
@@ -132,9 +141,14 @@ Deno.serve(async (req) => {
         status: walletAuthRes.status,
         details: errorText,
         hint: 'Ensure walletId and passphrase are correct. The key is "passphrase" (not walletPassphrase).'
-      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
     }
-
     const authData = await walletAuthRes.json();
     const walletToken = authData.token || authData.access_token || authData.jwt;
     if (!walletToken) {
@@ -144,17 +158,17 @@ Deno.serve(async (req) => {
         response: authData
       }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     console.log('[GET-CPAY-WALLET-INFO] ✅ Wallet authenticated, token received');
-
     // ============================================================
     // STEP 4: FETCH CURRENCY LIST (using /api/public/currency)
     // ============================================================
     console.log('[GET-CPAY-WALLET-INFO] 💼 Fetching currency list from /api/public/currency...');
-
     const currencyResponse = await fetch(`${CPAY_BASE_URL}/api/public/currency`, {
       method: 'GET',
       headers: {
@@ -162,7 +176,6 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json'
       }
     });
-
     if (!currencyResponse.ok) {
       const errorText = await currencyResponse.text();
       console.error('[GET-CPAY-WALLET-INFO] ❌ Currency list fetch failed:', errorText);
@@ -172,21 +185,18 @@ Deno.serve(async (req) => {
         details: errorText
       }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     const currencyPayload = await currencyResponse.json();
     console.log('[GET-CPAY-WALLET-INFO] 📦 Currency payload type:', typeof currencyPayload);
     console.log('[GET-CPAY-WALLET-INFO] 📦 Currency payload structure:', JSON.stringify(currencyPayload).substring(0, 200));
-    
     // CRITICAL FIX: Handle both direct array and { data: [...] } wrapped responses
-    const currencies = Array.isArray(currencyPayload) 
-      ? currencyPayload 
-      : (currencyPayload.data || []);
-    
+    const currencies = Array.isArray(currencyPayload) ? currencyPayload : currencyPayload.data || [];
     console.log('[GET-CPAY-WALLET-INFO] ✅ Currency list received:', currencies.length, 'currencies');
-    
     if (!Array.isArray(currencies) || currencies.length === 0) {
       console.error('[GET-CPAY-WALLET-INFO] ❌ No currencies found in response');
       return new Response(JSON.stringify({
@@ -195,27 +205,21 @@ Deno.serve(async (req) => {
         rawPayload: currencyPayload
       }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     // ============================================================
     // STEP 5: HANDLE DIFFERENT MODES
     // ============================================================
     if (mode === 'deposit') {
       // Mode: Extract token from last successful CPAY deposit
       console.log('[GET-CPAY-WALLET-INFO] 📦 MODE: Extracting token from last deposit...');
-      
-      const { data: lastDeposit, error: depositError } = await supabase
-        .from('transactions')
-        .select('metadata, created_at')
-        .eq('type', 'deposit')
-        .eq('payment_gateway', 'cpay')
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
+      const { data: lastDeposit, error: depositError } = await supabase.from('transactions').select('metadata, created_at').eq('type', 'deposit').eq('payment_gateway', 'cpay').eq('status', 'completed').order('created_at', {
+        ascending: false
+      }).limit(1).single();
       if (depositError || !lastDeposit) {
         console.log('[GET-CPAY-WALLET-INFO] ❌ No completed CPAY deposits found');
         return new Response(JSON.stringify({
@@ -224,10 +228,12 @@ Deno.serve(async (req) => {
           suggestion: 'Make a small USDT TRC20 deposit first, or use mode=wallet to fetch from wallet API'
         }), {
           status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         });
       }
-
       // Extract wallet info from webhook payload
       const webhookPayload = lastDeposit.metadata?.webhook_payload;
       if (!webhookPayload) {
@@ -237,17 +243,17 @@ Deno.serve(async (req) => {
           suggestion: 'Use mode=wallet instead'
         }), {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         });
       }
-
       const depositWalletId = webhookPayload.wallet?.id;
       const depositCurrency = webhookPayload.currency;
       const depositBlockchain = webhookPayload.blockchain;
-
       console.log('[GET-CPAY-WALLET-INFO] 📋 Deposit wallet ID:', depositWalletId);
       console.log('[GET-CPAY-WALLET-INFO] 💰 Currency:', depositCurrency, '| Blockchain:', depositBlockchain);
-
       // Guard: Ensure currencies is valid array before searching
       if (!Array.isArray(currencies) || currencies.length === 0) {
         return new Response(JSON.stringify({
@@ -256,29 +262,32 @@ Deno.serve(async (req) => {
           suggestion: 'Enable currencies in your CPAY account or try mode=wallet'
         }), {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         });
       }
-
       // Find matching currency in the currency list
-      const matchingCurrency = currencies.find((c: any) => 
-        c.name?.toUpperCase() === depositCurrency?.toUpperCase() &&
-        (c.nodeType?.toLowerCase() === depositBlockchain?.toLowerCase() || 
-         c.blockchain?.toUpperCase() === depositBlockchain?.toUpperCase())
-      );
-
+      const matchingCurrency = currencies.find((c)=>c.name?.toUpperCase() === depositCurrency?.toUpperCase() && (c.nodeType?.toLowerCase() === depositBlockchain?.toLowerCase() || c.blockchain?.toUpperCase() === depositBlockchain?.toUpperCase()));
       if (!matchingCurrency) {
         return new Response(JSON.stringify({
           success: false,
           error: `No matching currency found for ${depositCurrency} on ${depositBlockchain}`,
-          depositInfo: { wallet: depositWalletId, currency: depositCurrency, blockchain: depositBlockchain },
+          depositInfo: {
+            wallet: depositWalletId,
+            currency: depositCurrency,
+            blockchain: depositBlockchain
+          },
           suggestion: 'The currency might not be enabled in your CPAY account'
         }), {
           status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         });
       }
-
       return new Response(JSON.stringify({
         success: true,
         source: 'last_deposit',
@@ -297,32 +306,27 @@ Deno.serve(async (req) => {
         ]
       }, null, 2), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       });
     }
-
     // ============================================================
     // MODE: wallet (default) - Parse and format ALL currencies
     // ============================================================
     console.log('[GET-CPAY-WALLET-INFO] 📦 MODE: Processing all currencies from API...');
     console.log('[GET-CPAY-WALLET-INFO] 📊 Found', currencies.length, 'currencies');
-
     // Find USDT TRC20 specifically using correct CPAY fields
-    const usdtTrc20 = currencies.find((c: any) => 
-      c.name?.toUpperCase() === 'USDT' && 
-      c.nodeType?.toLowerCase() === 'tron' &&
-      c.currencyType === 'token'
-    );
-
-    const formattedCurrencies = currencies.map((currency: any) => ({
-      currencyId: currency._id,  // MongoDB ID - this is what CPAY requires!
-      name: currency.name,
-      nodeType: currency.nodeType,
-      blockchain: currency.blockchain,
-      currencyType: currency.currencyType,
-      isUsdtTrc20: currency._id === usdtTrc20?._id
-    }));
-
+    const usdtTrc20 = currencies.find((c)=>c.name?.toUpperCase() === 'USDT' && c.nodeType?.toLowerCase() === 'tron' && c.currencyType === 'token');
+    const formattedCurrencies = currencies.map((currency)=>({
+        currencyId: currency._id,
+        name: currency.name,
+        nodeType: currency.nodeType,
+        blockchain: currency.blockchain,
+        currencyType: currency.currencyType,
+        isUsdtTrc20: currency._id === usdtTrc20?._id
+      }));
     // ============================================================
     // RETURN RESULTS
     // ============================================================
@@ -332,7 +336,7 @@ Deno.serve(async (req) => {
       walletId: CPAY_WALLET_ID,
       totalTokens: currencies.length,
       usdtTrc20Token: usdtTrc20 ? {
-        currencyId: usdtTrc20._id,  // MongoDB ID from /api/public/currency
+        currencyId: usdtTrc20._id,
         name: usdtTrc20.name,
         nodeType: usdtTrc20.nodeType,
         blockchain: usdtTrc20.blockchain,
@@ -347,31 +351,33 @@ Deno.serve(async (req) => {
         '4. Retry the pending withdrawal from Admin > Withdrawals'
       ]
     };
-
     console.log('[GET-CPAY-WALLET-INFO] 🎉 SUCCESS - Currency info retrieved');
     if (usdtTrc20) {
       console.log('[GET-CPAY-WALLET-INFO] 🎯 USDT TRC20 currencyId (MongoDB _id):', usdtTrc20._id);
     } else {
       console.log('[GET-CPAY-WALLET-INFO] ⚠️ WARNING - USDT TRC20 not found in currency list');
     }
-
     return new Response(JSON.stringify(result, null, 2), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
     });
-
   } catch (error) {
     console.error('[GET-CPAY-WALLET-INFO] ❌ Unexpected error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
     return new Response(JSON.stringify({
       error: 'Internal server error',
       message: errorMessage,
       stack: errorStack
     }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
     });
   }
 });
