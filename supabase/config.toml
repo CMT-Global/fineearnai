@@ -4,6 +4,8 @@ project_id = "vrbtmbaqhhxwesqbcywm"
 enabled = true
 uri = "https://vrbtmbaqhhxwesqbcywm.supabase.co/functions/v1/send-auth-email"
 
+[auth.hook.send_email.secrets]
+
 [functions.send-auth-email]
 verify_jwt = false
 
