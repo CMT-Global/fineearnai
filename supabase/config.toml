@@ -1,8 +1,8 @@
-project_id = "mobikymhzchzakwzpqep"
+project_id = "vrbtmbaqhhxwesqbcywm"
 
 [auth.hook.send_email]
 enabled = true
-uri = "https://mobikymhzchzakwzpqep.supabase.co/functions/v1/send-auth-email"
+uri = "https://vrbtmbaqhhxwesqbcywm.supabase.co/functions/v1/send-auth-email"
 secrets = ["HOOK_SECRET"]
 
 [functions.send-auth-email]
@@ -30,9 +30,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-referral-notification]
-verify_jwt = false
-
-[functions.send-partner-notification]
 verify_jwt = false
 
 [functions.send-test-email]
