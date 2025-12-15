@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseService, supabaseUtils } from '@/integrations/supabase';
 import { useRealtimeProfile } from './useRealtimeProfile';
 import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
@@ -83,24 +83,13 @@ export const useProfile = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) throw profileError;
+      // Fetch profile data using service layer
+      const profileData = await supabaseService.profiles.get(userId);
       
       // Fetch membership plan details to get account_type
       let accountType = null;
       if (profileData.membership_plan) {
-        const { data: planData } = await supabase
-          .from('membership_plans')
-          .select('account_type, name, display_name')
-          .eq('name', profileData.membership_plan)
-          .single();
-        
+        const planData = await supabaseService.membershipPlans.getByName(profileData.membership_plan);
         accountType = planData?.account_type;
       }
       

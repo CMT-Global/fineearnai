@@ -161,20 +161,37 @@ serve(async (req) => {
     console.log('[SEND-DELETION-OTP] OTP stored successfully:', otpRecord.id);
 
     // Send OTP via email using send-template-email function
-    const { data: emailResponse, error: emailError } = await supabaseClient.functions.invoke(
-      'send-template-email',
-      {
-        body: {
-          email: userEmail,
-          template_type: 'account_deletion_otp',
-          variables: {
-            username: profile.username || 'User',
-            otp_code: otpCode,
-            expiry_minutes: '15'
-          }
-        }
-      }
-    );
+    // Use direct HTTP call with service role key
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    const functionUrl = `${supabaseUrl}/functions/v1/send-template-email`;
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
+      body: JSON.stringify({
+        email: userEmail,
+        template_type: 'account_deletion_otp',
+        variables: {
+          username: profile.username || 'User',
+          otp_code: otpCode,
+          expiry_minutes: '15'
+        },
+      }),
+    });
+
+    let emailResponse: any = null;
+    let emailError: any = null;
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      emailError = new Error(`Edge Function returned status ${response.status}: ${errorText}`);
+    } else {
+      emailResponse = await response.json();
+    }
 
     if (emailError) {
       console.error('[SEND-DELETION-OTP] Error sending email:', emailError);

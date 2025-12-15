@@ -50,7 +50,8 @@ export const LoginMessageDialog = ({
         .maybeSingle();
 
       if (error) throw error;
-      return data?.value as unknown as LoginMessageConfig | null;
+      // Return null explicitly instead of undefined to avoid React Query warning
+      return (data?.value as unknown as LoginMessageConfig) || null;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

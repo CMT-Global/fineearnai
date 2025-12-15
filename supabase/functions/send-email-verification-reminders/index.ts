@@ -119,11 +119,17 @@ Deno.serve(async (req) => {
         if (shouldSendReminder) {
           console.log(`[EMAIL-VERIFICATION-REMINDERS] Sending reminder #${reminderNumber} to ${user.username}`);
 
-          // Send email via template
-          const { error: emailError } = await supabase.functions.invoke('send-template-email', {
-            body: {
-              templateType: 'email_verification_reminder',
-              recipientEmail: user.email,
+          // Send email via template - use direct HTTP call with service role key
+          const functionUrl = `${Deno.env.get('SUPABASE_URL')!}/functions/v1/send-template-email`;
+          const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              template_type: 'email_verification_reminder',
               variables: {
                 username: user.username,
                 email: user.email,
@@ -131,8 +137,14 @@ Deno.serve(async (req) => {
                 account_age_days: accountAge.toString(),
                 days_since_signup: accountAge.toString(),
               },
-            },
+            }),
           });
+
+          let emailError: any = null;
+          if (!response.ok) {
+            const errorText = await response.text();
+            emailError = new Error(`Edge Function returned status ${response.status}: ${errorText}`);
+          }
 
           if (emailError) {
             console.error(`[EMAIL-VERIFICATION-REMINDERS] Failed to send email to ${user.username}:`, emailError);

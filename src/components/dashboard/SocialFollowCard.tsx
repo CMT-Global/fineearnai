@@ -61,50 +61,45 @@ export const SocialFollowCard = () => {
             // Telegram button opens dialog instead of direct link
             if (social.name === "Telegram") {
               return (
-                <button
+                <Button
                   key={social.name}
                   onClick={() => setTelegramDialogOpen(true)}
-                  className="block group"
+                  className={`w-full h-auto py-4 flex flex-col items-center gap-2 
+                             ${social.color} text-white transition-all duration-300
+                             hover:scale-105 hover:shadow-lg`}
+                  type="button"
                   aria-label="Open Telegram groups dialog"
                 >
-                  <Button
-                    className={`w-full h-auto py-4 flex flex-col items-center gap-2 
-                               ${social.color} text-white transition-all duration-300
-                               group-hover:scale-105 group-hover:shadow-lg`}
-                    type="button"
-                  >
-                    <social.icon className="w-6 h-6" />
-                    <div className="flex flex-col items-center">
-                      <span className="font-semibold">{social.name}</span>
-                      <span className="text-xs opacity-90">{social.description}</span>
-                      <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
-                    </div>
-                  </Button>
-                </button>
+                  <social.icon className="w-6 h-6" />
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{social.name}</span>
+                    <span className="text-xs opacity-90">{social.description}</span>
+                    <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
+                  </div>
+                </Button>
               );
             }
 
             // Other social links remain as external links
             return (
-              <a
+              <Button
                 key={social.name}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block group"
+                asChild
+                className={`w-full h-auto py-4 ${social.color} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
               >
-                <Button
-                  className={`w-full h-auto py-4 flex flex-col items-center gap-2 
-                             ${social.color} text-white transition-all duration-300
-                             group-hover:scale-105 group-hover:shadow-lg`}
+                <a
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 w-full"
                 >
                   <social.icon className="w-6 h-6" />
                   <div className="flex flex-col items-center">
                     <span className="font-semibold">{social.name}</span>
                     <span className="text-xs opacity-90">{social.description}</span>
                   </div>
-                </Button>
-              </a>
+                </a>
+              </Button>
             );
           })}
         </div>

@@ -35,7 +35,7 @@ async function retryWithBackoff<T>(
       lastError = error;
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt); // Exponential backoff: 1s, 2s, 4s
-        console.log(`⚠️ Retry attempt ${attempt + 1}/${maxRetries} failed. Retrying in ${delay}ms...`);
+        console.error(`⚠️ Retry attempt ${attempt + 1}/${maxRetries} failed. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -79,11 +79,19 @@ serve(async (req: Request) => {
 
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
-  console.log(`📧 [${requestId}] send-template-email request received`);
+  
+  // Use console.error for initial log to ensure visibility in terminal
+  console.error(`📧 [${requestId}] ========================================`);
+  console.error(`📧 [${requestId}] send-template-email request received`);
+  console.error(`📧 [${requestId}] Method: ${req.method}`);
+  console.error(`📧 [${requestId}] URL: ${req.url}`);
 
   try {
+    // @ts-ignore - Deno.env is available at runtime
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // @ts-ignore - Deno.env is available at runtime
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // @ts-ignore - Deno.env is available at runtime
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
     if (!resendApiKey) {
@@ -91,8 +99,13 @@ serve(async (req: Request) => {
       throw new Error('Email service not configured');
     }
 
+    // Log API key status (without exposing the key)
+    console.error(`🔑 [${requestId}] Resend API key configured: ${resendApiKey.substring(0, 7)}...${resendApiKey.substring(resendApiKey.length - 4)}`);
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(resendApiKey);
+    
+    console.error(`✅ [${requestId}] Resend client initialized`);
 
     const { email, template_type, variables }: SendTemplateEmailRequest = await req.json();
 
@@ -108,27 +121,43 @@ serve(async (req: Request) => {
       throw new Error('Valid template_type is required');
     }
 
-    console.log(`📧 [${requestId}] Processing email for: ${email}, template: ${template_type}`);
+    console.error(`📧 [${requestId}] Processing email for: ${email}, template: ${template_type}`);
 
     // Step 1: Fetch email template from database
+    console.error(`🔍 [${requestId}] Looking up template with template_type: "${template_type}"`);
     const { data: template, error: templateError } = await supabase
       .from('email_templates')
-      .select('subject, body, is_active')
+      .select('subject, body, is_active, name, id')
       .eq('template_type', template_type)
       .eq('is_active', true)
       .maybeSingle();
 
     if (templateError) {
       console.error(`❌ [${requestId}] Error fetching template:`, templateError);
+      console.error(`❌ [${requestId}] Template error details:`, JSON.stringify(templateError, null, 2));
       throw new Error(`Failed to fetch email template: ${templateError.message}`);
     }
 
     if (!template) {
       console.error(`❌ [${requestId}] Template not found: ${template_type}`);
-      throw new Error(`Email template '${template_type}' not found or inactive`);
+      console.error(`❌ [${requestId}] Checking if template exists but is inactive...`);
+      
+      // Check if template exists but is inactive
+      const { data: inactiveTemplate } = await supabase
+        .from('email_templates')
+        .select('id, name, is_active')
+        .eq('template_type', template_type)
+        .maybeSingle();
+      
+      if (inactiveTemplate) {
+        console.error(`❌ [${requestId}] Template exists but is_active=${inactiveTemplate.is_active}`);
+        throw new Error(`Email template '${template_type}' exists but is inactive. Please activate it in the admin panel.`);
+      } else {
+        throw new Error(`Email template '${template_type}' not found. Please create it in the admin panel.`);
+      }
     }
 
-    console.log(`✅ [${requestId}] Template fetched: ${template_type}`);
+    console.error(`✅ [${requestId}] Template fetched: ${template_type} (ID: ${template.id}, Name: ${template.name})`);
 
     // Step 2: Fetch email settings from platform_config
     const { data: configData } = await supabase
@@ -167,13 +196,21 @@ serve(async (req: Request) => {
       fromAddress = 'noreply@mail.fineearn.com';
     }
 
-    console.log(`📧 [${requestId}] Email config: from=${fromName} <${fromAddress}>, reply-to=${replyTo}`);
+    // Validate from address format
+    if (!fromAddress || !fromAddress.includes('@')) {
+      console.error(`❌ [${requestId}] Invalid from address format: ${fromAddress}`);
+      throw new Error(`Invalid email from address: ${fromAddress}. Must be in format 'name@domain.com'`);
+    }
+
+    const fromDomain = fromAddress.split('@')[1];
+    console.error(`📧 [${requestId}] Email config: from=${fromName} <${fromAddress}>, reply-to=${replyTo}`);
+    console.error(`📧 [${requestId}] Domain: ${fromDomain} (must be verified in Resend)`);
 
     // Step 3: Replace variables in subject and body
     const subject = replaceVariables(template.subject, variables);
     const body = replaceVariables(template.body, variables);
 
-    console.log(`📝 [${requestId}] Variables replaced in template`);
+    console.error(`📝 [${requestId}] Variables replaced in template`);
 
     // Step 4: Send email via Resend with retry logic
     let emailResponse;
@@ -181,9 +218,15 @@ serve(async (req: Request) => {
     // Generate unique tracking ID for spam prevention and monitoring
     const trackingId = `template-${template_type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
+    console.error(`📤 [${requestId}] Attempting to send email via Resend...`);
+    console.error(`📤 [${requestId}] From: ${fromName} <${fromAddress}>`);
+    console.error(`📤 [${requestId}] To: ${email}`);
+    console.error(`📤 [${requestId}] Subject: ${subject}`);
+    
     try {
       emailResponse = await retryWithBackoff(async () => {
-        return await resend.emails.send({
+        console.error(`🔄 [${requestId}] Calling Resend API...`);
+        const response = await resend.emails.send({
           from: `${fromName} <${fromAddress}>`,
           to: [email],
           subject: subject,
@@ -195,32 +238,75 @@ serve(async (req: Request) => {
             'List-Unsubscribe': `<mailto:${replyTo}>`, // RFC 2369 List-Unsubscribe header
           },
         });
+        console.error(`📥 [${requestId}] Resend API response received:`, JSON.stringify(response, null, 2));
+        return response;
       }, 3, 1000); // 3 retries with exponential backoff
 
-      // Validate provider response
-      if (!emailResponse?.data?.id) {
-        const providerError = (emailResponse as any)?.error?.message || 'Missing message ID from Resend';
+      // Validate provider response - check for errors first
+      if (emailResponse.error) {
+        const providerError = emailResponse.error.message || 'Resend API returned an error';
+        const errorCode = emailResponse.error.name || '';
+        console.error(`❌ [${requestId}] Resend API error:`, JSON.stringify(emailResponse.error, null, 2));
+        
+        // Detect domain verification errors and provide helpful guidance
+        if (providerError.includes('domain') && (providerError.includes('not verified') || providerError.includes('verified'))) {
+          console.error(`❌ [${requestId}] ========================================`);
+          console.error(`❌ [${requestId}] DOMAIN VERIFICATION ERROR DETECTED`);
+          console.error(`❌ [${requestId}] Attempted to send from: ${fromAddress}`);
+          console.error(`❌ [${requestId}] The domain in this address is not verified in Resend.`);
+          console.error(`❌ [${requestId}] To fix this:`);
+          console.error(`❌ [${requestId}] 1. Go to Resend Dashboard → Domains`);
+          console.error(`❌ [${requestId}] 2. Add and verify the domain: ${fromAddress.split('@')[1]}`);
+          console.error(`❌ [${requestId}] 3. Configure DNS records (SPF, DKIM, DMARC)`);
+          console.error(`❌ [${requestId}] 4. Wait for verification (can take up to 48 hours)`);
+          console.error(`❌ [${requestId}] 5. Ensure your Resend API key has access to this domain`);
+          console.error(`❌ [${requestId}] ========================================`);
+          
+          throw new Error(
+            `Domain verification required: The domain '${fromAddress.split('@')[1]}' is not verified in Resend. ` +
+            `Please verify this domain in your Resend dashboard or use a verified domain. ` +
+            `Current from address: ${fromAddress}`
+          );
+        }
+        
         throw new Error(providerError);
       }
 
-      console.log(`✅ [${requestId}] Email sent successfully via Resend. id=${emailResponse.data.id}`);
+      // Check for missing message ID
+      if (!emailResponse?.data?.id) {
+        console.error(`❌ [${requestId}] Missing message ID from Resend response`);
+        console.error(`❌ [${requestId}] Full response:`, JSON.stringify(emailResponse, null, 2));
+        throw new Error('Missing message ID from Resend - email may not have been sent');
+      }
+
+      console.error(`✅ [${requestId}] Email sent successfully via Resend. id=${emailResponse.data.id}`);
     } catch (error: any) {
-      console.error(`❌ [${requestId}] Failed to send email after retries:`, error);
+      console.error(`❌ [${requestId}] Failed to send email after retries`);
+      console.error(`❌ [${requestId}] Error message:`, error.message);
+      console.error(`❌ [${requestId}] Error stack:`, error.stack);
+      console.error(`❌ [${requestId}] Full error:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
       
       // Log failed attempt
-      await supabase.from('email_logs').insert({
-        email: email,
-        template_type: template_type,
-        subject: subject,
-        status: 'failed',
-        error_message: error.message,
-        metadata: {
-          request_id: requestId,
-          variables: variables,
-          retries_exhausted: true,
-        },
-        sent_at: new Date().toISOString(),
-      });
+      try {
+        await supabase.from('email_logs').insert({
+          email: email,
+          template_type: template_type,
+          subject: subject,
+          status: 'failed',
+          error_message: error.message || 'Unknown error',
+          metadata: {
+            request_id: requestId,
+            variables: variables,
+            retries_exhausted: true,
+            error_details: error.toString(),
+            error_stack: error.stack,
+          },
+          sent_at: new Date().toISOString(),
+        });
+        console.error(`💾 [${requestId}] Failed email attempt logged to database`);
+      } catch (logError) {
+        console.error(`❌ [${requestId}] Failed to log error to database:`, logError);
+      }
 
       throw error;
     }
@@ -244,7 +330,8 @@ serve(async (req: Request) => {
       sent_at: new Date().toISOString(),
     });
 
-    console.log(`✅ [${requestId}] Email logged successfully. Total time: ${totalTime}ms`);
+    console.error(`✅ [${requestId}] Email logged successfully. Total time: ${totalTime}ms`);
+    console.error(`📧 [${requestId}] ========================================`);
 
     return new Response(
       JSON.stringify({
@@ -263,8 +350,12 @@ serve(async (req: Request) => {
     const endTime = Date.now();
     const totalTime = endTime - startTime;
     
-    console.error(`❌ [${requestId}] Error in send-template-email:`, error);
+    console.error(`❌ [${requestId}] ========================================`);
+    console.error(`❌ [${requestId}] ERROR in send-template-email`);
+    console.error(`❌ [${requestId}] Error message:`, error.message);
+    console.error(`❌ [${requestId}] Error stack:`, error.stack);
     console.error(`⏱️ [${requestId}] Failed after ${totalTime}ms`);
+    console.error(`❌ [${requestId}] ========================================`);
     
     return new Response(
       JSON.stringify({

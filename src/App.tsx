@@ -584,7 +584,12 @@ const RoutesWrapper = () => {
 
 const App = () => (
   <GlobalErrorBoundary>
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <AdminModeProvider>
           <TooltipProvider>

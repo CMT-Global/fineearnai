@@ -3,7 +3,7 @@
  * Helper functions for notification system functionality
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseService } from "@/integrations/supabase";
 
 export type NotificationType = "plan" | "referral" | "wallet" | "task" | "system";
 export type NotificationPriority = "low" | "medium" | "high";
@@ -24,14 +24,15 @@ export const createNotification = async (
   notification: NotificationData
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data, error } = await supabase.functions.invoke("create-notification", {
-      body: {
-        userId,
-        ...notification,
-      },
+    await supabaseService.notifications.create({
+      user_id: userId,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      priority: notification.priority || 'medium',
+      metadata: notification.metadata || {},
+      read: false,
     });
-
-    if (error) throw error;
 
     return { success: true };
   } catch (error: any) {
@@ -47,13 +48,7 @@ export const markNotificationAsRead = async (
   notificationId: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await supabase
-      .from("notifications" as any)
-      .update({ is_read: true, read_at: new Date().toISOString() })
-      .eq("id", notificationId);
-
-    if (error) throw error;
-
+    await supabaseService.notifications.markAsRead(notificationId);
     return { success: true };
   } catch (error: any) {
     console.error("Error marking notification as read:", error);
@@ -68,14 +63,7 @@ export const markAllNotificationsAsRead = async (
   userId: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await supabase
-      .from("notifications" as any)
-      .update({ is_read: true, read_at: new Date().toISOString() })
-      .eq("user_id", userId)
-      .eq("is_read", false);
-
-    if (error) throw error;
-
+    await supabaseService.notifications.markAllAsRead(userId);
     return { success: true };
   } catch (error: any) {
     console.error("Error marking all notifications as read:", error);

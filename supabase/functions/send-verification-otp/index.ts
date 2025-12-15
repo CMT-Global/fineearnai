@@ -1,3 +1,4 @@
+// @ts-ignore - Deno URL imports work at runtime
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -14,6 +15,7 @@ interface SendOTPRequest {
   email?: string;
 }
 
+// @ts-ignore - Deno global is available at runtime
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -21,11 +23,17 @@ Deno.serve(async (req) => {
   }
 
   const requestId = crypto.randomUUID().substring(0, 8);
+  console.log(`🔐 [${requestId}] ========================================`);
   console.log(`🔐 [${requestId}] Send verification OTP request started`);
+  console.log(`🔐 [${requestId}] Method: ${req.method}`);
+  console.log(`🔐 [${requestId}] URL: ${req.url}`);
+  console.log(`🔐 [${requestId}] Has Auth Header: ${!!req.headers.get("Authorization")}`);
 
   try {
     const supabaseClient = createClient(
+      // @ts-ignore - Deno.env is available at runtime
       Deno.env.get("SUPABASE_URL") ?? "",
+      // @ts-ignore - Deno.env is available at runtime
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
@@ -42,14 +50,31 @@ Deno.serve(async (req) => {
       if (!authError && user) {
         userId = user.id;
         userEmail = user.email || null;
+        console.log(`✅ [${requestId}] User authenticated via JWT: ${userId}`);
+      } else {
+        console.error(`❌ [${requestId}] Auth error:`, authError);
       }
+    } else {
+      console.warn(`⚠️ [${requestId}] No Authorization header provided`);
     }
 
-    // Fallback to request body if no auth header
+    // Fallback to request body if no auth header (for service-to-service calls)
     if (!userId) {
-      const body: SendOTPRequest = await req.json();
-      userId = body.user_id || null;
-      userEmail = body.email || null;
+      try {
+        // Check if request has a body before trying to parse it
+        const contentType = req.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const body: SendOTPRequest = await req.json();
+          userId = body.user_id || null;
+          userEmail = body.email || null;
+          if (userId) {
+            console.log(`✅ [${requestId}] User ID from request body: ${userId}`);
+          }
+        }
+      } catch (bodyError: any) {
+        // No body or invalid JSON - that's okay if we have auth
+        console.log(`ℹ️ [${requestId}] No request body or invalid JSON (this is normal for authenticated requests)`);
+      }
     }
 
     if (!userId) {
@@ -178,55 +203,171 @@ Deno.serve(async (req) => {
 
     // Step 7: Send email via template
     try {
-      const { data: emailResult, error: emailError } = await supabaseClient.functions.invoke(
-        "send-template-email",
-        {
-          body: {
-            template_type: "email_verification_otp",
+      console.log(`📧 [${requestId}] Invoking send-template-email function...`);
+      
+      // @ts-ignore - Deno.env is available at runtime
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      // @ts-ignore - Deno.env is available at runtime
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      
+      // Make direct HTTP call to edge function with service role key
+      const functionUrl = `${supabaseUrl}/functions/v1/send-template-email`;
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          template_type: "email_verification_otp",
+          email: userEmail,
+          variables: {
+            username: username || "User",
+            otp_code: otpCode,
             email: userEmail,
-            variables: {
-              username: username || "User",
-              otp_code: otpCode,
-              email: userEmail,
-              expiry_minutes: "15"
-            }
+            expiry_minutes: "15"
           }
-        }
-      );
+        }),
+      });
 
+      let emailResult: any = null;
+      let emailError: any = null;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        emailError = new Error(`Edge Function returned status ${response.status}: ${errorText}`);
+      } else {
+        emailResult = await response.json();
+      }
+
+      console.log(`📧 [${requestId}] Email function response received:`, {
+        hasError: !!emailError,
+        hasData: !!emailResult,
+        emailResultType: typeof emailResult,
+        emailResultKeys: emailResult ? Object.keys(emailResult) : [],
+        emailResultSuccess: emailResult?.success,
+        emailResultError: emailResult?.error,
+        emailResultEmailId: emailResult?.email_id,
+        emailErrorDetails: emailError
+      });
+
+      // CRITICAL: If there's an invocation error, email definitely failed
       if (emailError) {
-        console.error(`❌ [${requestId}] Email send failed:`, emailError);
-        // Don't fail the request - OTP is still valid for manual entry
+        console.error(`❌ [${requestId}] Email function invocation failed:`, emailError);
         return new Response(
           JSON.stringify({ 
-            success: true,
+            success: false,  // MUST be false
+            error: "Failed to send verification email. Please try again.",
             message: "Verification code generated but email delivery failed. Please try again.",
             otp_id: otpRecord.id,
-            email_error: true
+            email_error: true,
+            error_details: emailError.message || String(emailError)
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      // Check for application-level errors in response
+      // Be more defensive - check for any indication of failure
+      if (!emailResult) {
+        console.error(`❌ [${requestId}] No email result received`);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: "Email service returned no response",
+            message: "Verification code generated but email delivery failed. Please try again.",
+            otp_id: otpRecord.id,
+            email_error: true,
+            error_details: "No response from email service"
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if email send failed (multiple ways to indicate failure)
+      // send-template-email returns: { success: true/false, error?: string, email_id?: string }
+      // IMPORTANT: Check for failure indicators FIRST, before checking success
+      const hasError = !!emailResult.error;
+      const hasEmailId = !!emailResult.email_id && emailResult.email_id.trim() !== '';
+      const isSuccess = emailResult.success === true;
+      
+      // Email failed if: explicit error, no email_id, or success is false
+      const emailFailed = hasError || !hasEmailId || !isSuccess;
+
+      if (emailFailed) {
+        const errorMessage = emailResult?.error || 
+                            (!hasEmailId ? "Email service did not return a message ID" : "Email service returned an error");
+        console.error(`❌ [${requestId}] Email send failed:`, errorMessage);
+        console.error(`❌ [${requestId}] Response analysis:`, {
+          hasError,
+          hasEmailId,
+          isSuccess,
+          emailFailed,
+          emailResultSuccess: emailResult?.success,
+          emailResultError: emailResult?.error,
+          emailResultEmailId: emailResult?.email_id
+        });
+        console.error(`❌ [${requestId}] Full email result:`, JSON.stringify(emailResult, null, 2));
+        
+        return new Response(
+          JSON.stringify({ 
+            success: false,  // ALWAYS false when email fails
+            error: errorMessage,
+            message: "Verification code generated but email delivery failed. Please try again.",
+            otp_id: otpRecord.id,
+            email_error: true,
+            error_details: emailResult
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Final safety check: Only return success if we have a valid email_id
+      // This prevents returning success: true when email actually failed
+      if (!emailResult.email_id || emailResult.email_id.trim() === '') {
+        console.error(`❌ [${requestId}] CRITICAL: Email result has success=true but no email_id!`);
+        console.error(`❌ [${requestId}] This should never happen - treating as failure`);
+        return new Response(
+          JSON.stringify({ 
+            success: false,  // MUST be false - no email_id means email didn't send
+            error: "Email service did not return a message ID",
+            message: "Verification code generated but email delivery failed. Please try again.",
+            otp_id: otpRecord.id,
+            email_error: true,
+            error_details: "Missing email_id in response"
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Success - email was sent (we have email_id as proof)
       console.log(`✅ [${requestId}] Verification email sent successfully to ${userEmail}`);
+      console.log(`✅ [${requestId}] Email ID: ${emailResult.email_id}`);
+      console.log(`✅ [${requestId}] OTP Code: ${otpCode} (for debugging only - remove in production)`);
+      console.log(`🔐 [${requestId}] ========================================`);
 
       return new Response(
         JSON.stringify({ 
           success: true,
           message: "Verification code sent to your email",
           otp_id: otpRecord.id,
-          expires_in_minutes: 15
+          expires_in_minutes: 15,
+          email_id: emailResult.email_id
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
     } catch (emailErr: any) {
-      console.error(`❌ [${requestId}] Email function error:`, emailErr);
+      console.error(`❌ [${requestId}] Email function exception:`, emailErr);
+      console.error(`❌ [${requestId}] Exception stack:`, emailErr.stack);
       return new Response(
         JSON.stringify({ 
-          success: true,
-          message: "Verification code generated but email delivery encountered an issue",
-          otp_id: otpRecord.id
+          success: false,
+          error: "Unexpected error sending email",
+          message: "Verification code generated but email delivery encountered an issue. Please try again.",
+          otp_id: otpRecord.id,
+          email_error: true,
+          error_details: emailErr.message
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -234,6 +375,8 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     console.error(`❌ [${requestId}] Unexpected error:`, error);
+    console.error(`❌ [${requestId}] Error stack:`, error.stack);
+    console.log(`🔐 [${requestId}] ========================================`);
     return new Response(
       JSON.stringify({ error: error.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

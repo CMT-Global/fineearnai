@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseService } from "@/integrations/supabase";
 import { useIsPartner } from "@/hooks/usePartner";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
@@ -110,21 +110,24 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         queryClient.prefetchQuery({
           queryKey: ['dashboard-data-v2', userId],
           queryFn: async () => {
-            const [profileRes, statsRes] = await Promise.all([
-              supabase.from('profiles').select('*').eq('id', userId).single(),
-              supabase.rpc('get_referral_stats', { user_uuid: userId })
+            const [profile, stats] = await Promise.all([
+              supabaseService.profiles.get(userId),
+              supabaseService.rpc.getReferralStats(userId)
             ]);
             
-            const planRes = await supabase
-              .from('membership_plans')
-              .select('*')
-              .eq('name', profileRes.data?.membership_plan)
-              .single();
+            const plan = profile.membership_plan
+              ? await supabaseService.membershipPlans.getByName(profile.membership_plan)
+              : null;
+            
+            // Add earner badge status
+            const accountType = plan?.account_type;
+            const { getEarnerBadgeStatus } = await import('@/lib/earner-badge-utils');
+            const earnerBadge = getEarnerBadgeStatus(accountType);
             
             return {
-              profile: profileRes.data,
-              referralStats: statsRes.data?.[0],
-              membershipPlan: planRes.data
+              profile: { ...profile, earnerBadge },
+              referralStats: stats,
+              membershipPlan: plan
             };
           },
           staleTime: 30000,
@@ -136,24 +139,20 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         queryClient.prefetchQuery({
           queryKey: ['referral-complete-data-v2', userId],
           queryFn: async () => {
-            const [profileRes, statsRes, earningsRes, referralsRes] = await Promise.all([
-              supabase.from('profiles').select('*').eq('id', userId).single(),
-              supabase.rpc('get_referral_stats', { user_uuid: userId }),
-              supabase.from('referral_earnings')
-                .select('*')
-                .eq('referrer_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(20),
-              supabase.functions.invoke('get-paginated-referrals', {
-                body: { page: 1, limit: 20 }
-              })
+            const { supabaseService } = await import('@/integrations/supabase');
+            
+            const [profile, stats, earnings, referrals] = await Promise.all([
+              supabaseService.profiles.get(userId),
+              supabaseService.rpc.getReferralStats(userId),
+              supabaseService.referralEarnings.getByReferrer(userId, 20),
+              supabaseService.referrals.getByReferrer(userId)
             ]);
             
             return { 
-              profile: profileRes.data,
-              stats: statsRes.data?.[0],
-              earnings: earningsRes.data,
-              referrals: referralsRes.data
+              profile,
+              stats,
+              earnings,
+              referrals: referrals.slice(0, 20) // Limit to 20 for prefetch
             };
           },
           staleTime: 30000,
