@@ -24,8 +24,8 @@ export const FloatingTelegramButton = () => {
         id="telegram-button"
         onClick={togglePanel}
         className={cn(
-          "fixed top-1/2 -translate-y-1/2 right-6 lg:right-8 z-50",
-          "w-16 h-16 lg:w-20 lg:h-20",
+          "fixed bottom-36 lg:bottom-20 -translate-y-1/2 right-4 lg:right-5 z-50",
+          "w-8 h-8 lg:w-14 lg:h-14",
           "bg-gradient-to-br from-[#0088cc] to-[#0066aa]",
           "hover:from-[#0099dd] hover:to-[#0077bb]",
           "rounded-full",
@@ -52,7 +52,7 @@ export const FloatingTelegramButton = () => {
           src={telegramIcon} 
           alt="Telegram" 
           className={cn(
-            "relative z-10 w-9 h-9 lg:w-12 lg:h-12 object-contain",
+            "relative z-10 w-6 h-6 lg:w-8 lg:h-8 object-contain",
             "drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)]",
             "transition-transform duration-300 group-hover:rotate-12",
             isPanelOpen && "rotate-12"

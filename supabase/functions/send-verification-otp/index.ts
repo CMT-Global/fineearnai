@@ -4,6 +4,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const generateOTP = (): string => {
   // Generate cryptographically secure 6-digit OTP
+  console.log("Generating otpp in the supabase file");
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
   const otp = (array[0] % 1000000).toString().padStart(6, '0');
@@ -229,6 +230,10 @@ Deno.serve(async (req) => {
           }
         }),
       });
+
+
+      
+
 
       let emailResult: any = null;
       let emailError: any = null;

@@ -179,7 +179,7 @@ const Dashboard = () => {
               <Alert className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                  <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+               
                 </div>
                 <AlertTitle className="text-orange-900 dark:text-orange-100 flex items-center gap-2">
                   {profile.earnerBadge.badgeText}

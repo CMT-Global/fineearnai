@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
-import { supabaseService } from "@/integrations/supabase";
+import { supabase, supabaseService } from "@/integrations/supabase";
 import { useIsPartner } from "@/hooks/usePartner";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
@@ -206,7 +206,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   const NavContent = () => (
     <>
-      <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
+      <div className="p-6 border-b z-50 border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
           <span className="text-xl font-bold">FineEarn</span>
@@ -368,6 +368,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   return (
     <>
+    <div className="max-h-screen sticky top-0 overflow-y-auto " style={{scrollbarWidth: 'none'}}>
       <LogoutConfirmDialog
         open={logoutDialogOpen}
         onOpenChange={setLogoutDialogOpen}
@@ -409,6 +410,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav profile={profile} />
+      </div>
     </>
   );
 };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase";
 
 interface PremiumUpgradeBannerProps {
   userId: string;
@@ -9,14 +10,44 @@ interface PremiumUpgradeBannerProps {
 }
 
 export const PremiumUpgradeBanner = ({ userId, currentPlan, onUpgrade }: PremiumUpgradeBannerProps) => {
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(true);
+
+
+  
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(`premiumUpgradeBannerDismissed_${userId}_${currentPlan}`);
-    if (dismissed === "true") {
-      setIsDismissed(true);
-    }
+    let isMounted= true;
+    (async()=>{
+      try {
+        const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .eq("membership_plan", "premium")
+        .limit(1);
+
+      if (!isMounted) return;
+
+      const isNotPremium = error || (data?.length ?? 0) === 0;
+
+      // If not premium, always hide the banner
+      if (isNotPremium) {
+        setIsDismissed(false);
+        return;
+      }
+        const dismissed = localStorage.getItem(`premiumUpgradeB liek this annerDismissed_${userId}_${currentPlan}`);
+        if (dismissed === "true") {
+          setIsDismissed(true);
+        }
+      } finally {
+        isMounted = false;
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
   }, [userId, currentPlan]);
+  if (isDismissed) return null;
 
   const handleDismiss = () => {
     localStorage.setItem(`premiumUpgradeBannerDismissed_${userId}_${currentPlan}`, "true");
