@@ -70,3 +70,5 @@ ORDER BY r.rolname;
 -- Replace 'YOUR_USER_ID_HERE' with an actual user ID to test
 -- SELECT * FROM public.get_referral_stats('YOUR_USER_ID_HERE'::UUID);
 
+
+

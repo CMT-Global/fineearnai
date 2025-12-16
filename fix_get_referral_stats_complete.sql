@@ -78,3 +78,5 @@ ORDER BY r.rolname;
 -- Step 7: Test the function (uncomment and replace with actual user ID)
 -- SELECT * FROM public.get_referral_stats('c9614630-145c-4119-bcba-0298420d1eb4'::UUID);
 
+
+

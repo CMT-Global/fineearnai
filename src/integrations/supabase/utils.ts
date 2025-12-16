@@ -325,3 +325,5 @@ export function subscribeToNotifications(userId: string, callback: (payload: any
   return subscribeToTable('notifications', `user_id=eq.${userId}`, callback);
 }
 
+
+

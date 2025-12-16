@@ -7,3 +7,5 @@ WHERE table_schema = 'public'
   AND table_name = 'mv_user_referral_stats'
 ORDER BY ordinal_position;
 
+
+

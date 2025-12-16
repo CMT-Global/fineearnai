@@ -32,3 +32,5 @@ export type { Database } from './types';
 // Re-export commonly used types from Supabase
 export type { User, Session } from '@supabase/supabase-js';
 
+
+

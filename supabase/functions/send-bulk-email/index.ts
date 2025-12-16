@@ -176,9 +176,9 @@ const handler = async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       const emailSettings = configData?.value || {
-        from_address: 'noreply@mail.fineearn.com',
+        from_address: 'noreply@profitchips.com',
         from_name: 'FineEarn',
-        reply_to_address: 'support@fineearn.com',
+        reply_to_address: 'support@profitchips.com',
       };
 
       console.log(`✅ [Bulk Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);

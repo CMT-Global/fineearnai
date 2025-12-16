@@ -58,3 +58,5 @@ GRANT EXECUTE ON FUNCTION public.get_referral_stats(UUID) TO service_role;
 -- Step 4: Add comment
 COMMENT ON FUNCTION public.get_referral_stats(UUID) IS 
 'Returns referral statistics for a user. Always returns exactly one row with zero values if no referrals exist.';
+
+

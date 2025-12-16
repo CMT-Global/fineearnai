@@ -123,3 +123,5 @@ After checking the above:
 2. Check Resend dashboard for email delivery status
 3. Verify DNS records are properly configured
 4. Test with a different email address
+
+

@@ -1297,3 +1297,5 @@ export const supabaseService = {
 // Export default for convenience
 export default supabaseService;
 
+
+

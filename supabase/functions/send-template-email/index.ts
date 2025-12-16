@@ -13,7 +13,7 @@ const corsHeaders = {
 // Default Resend domain - can be overridden via platform_config table
 // To change: Update the 'email_from_address' or 'email_settings' key in platform_config table
 // Or set RESEND_DOMAIN environment variable (e.g., "mail.yourdomain.com")
-const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'mail.fineearn.com';
+const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'profitchips.com';
 const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
 
 interface SendTemplateEmailRequest {

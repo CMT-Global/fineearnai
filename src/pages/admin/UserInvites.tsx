@@ -70,7 +70,7 @@ export default function UserInvites() {
       .replace(/{{invitee_name}}/g, inviteeName || "[Invitee Name]")
       .replace(/{{platform_url}}/g, platformUrl)
       .replace(/{{signup_bonus}}/g, signupBonus || "[Signup Bonus]")
-      .replace(/{{support_email}}/g, "support@fineearn.com");
+      .replace(/{{support_email}}/g, "support@profitchips.com");
 
     // Add custom message if provided
     if (customMessage && customMessage.trim()) {

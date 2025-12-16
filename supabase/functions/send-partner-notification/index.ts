@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const emailSettings = emailConfig?.value || {
-      from_address: 'noreply@mail.fineearn.com',
+      from_address: 'noreply@profitchips.com',
       from_name: 'FineEarn',
     };
 

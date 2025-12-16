@@ -129,9 +129,9 @@ serve(async (req) => {
       .maybeSingle();
 
     const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
+      from_address: 'noreply@profitchips.com',
       from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
+      reply_to_address: 'support@profitchips.com',
       reply_to_name: 'FineEarn Support',
       platform_name: 'FineEarn',
       platform_url: 'https://fineearn.com',
