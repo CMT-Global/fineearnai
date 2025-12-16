@@ -304,7 +304,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* FineEarn Earners Guide Button */}
+          {/* ProfitChips Earners Guide Button */}
           <div className="mx-4 lg:mx-8 mt-6">
             <Button
               onClick={() => navigate("/how-it-works")}
@@ -318,7 +318,7 @@ const Dashboard = () => {
               <div className="relative flex items-center justify-center gap-3">
                 <Sparkles className="h-6 w-6 animate-spin-slow" />
                 <div className="flex flex-col items-start">
-                  <span className="text-lg font-bold">FineEarn - Earners Guide</span>
+                  <span className="text-lg font-bold">ProfitChips - Earners Guide</span>
                   <span className="text-xs text-white/80">Learn how to maximize your earnings</span>
                 </div>
                 <div className="ml-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">

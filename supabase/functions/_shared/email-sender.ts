@@ -4,6 +4,15 @@ import { wrapInProfessionalTemplate } from "./email-template-wrapper.ts";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 // ============================================
+// RESEND DOMAIN CONFIGURATION
+// ============================================
+// Default Resend domain - can be overridden via platform_config table
+// To change: Update the 'email_from_address' or 'email_settings' key in platform_config table
+// Or set RESEND_DOMAIN environment variable (e.g., "mail.yourdomain.com")
+const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'mail.fineearn.com';
+const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
+
+// ============================================
 // EMAIL SETTINGS CACHE (60-second TTL)
 // ============================================
 let emailSettingsCache: any = null;
@@ -47,14 +56,15 @@ async function getEmailSettings(supabaseClient: any) {
     }
     
     // Return hardcoded defaults as fallback
+    const defaultDomain = DEFAULT_RESEND_DOMAIN.split('.').slice(-2).join('.'); // Extract base domain (e.g., "fineearn.com" from "mail.fineearn.com")
     return {
-      from_address: 'noreply@mail.fineearn.com',
+      from_address: DEFAULT_FROM_ADDRESS,
       from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
+      reply_to_address: `support@${defaultDomain}`,
       reply_to_name: 'FineEarn Support',
-      support_email: 'support@fineearn.com',
+      support_email: `support@${defaultDomain}`,
       platform_name: 'FineEarn',
-      platform_url: 'https://fineearn.com',
+      platform_url: `https://${defaultDomain}`,
     };
   }
   

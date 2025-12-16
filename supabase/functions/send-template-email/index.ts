@@ -7,6 +7,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================
+// RESEND DOMAIN CONFIGURATION
+// ============================================
+// Default Resend domain - can be overridden via platform_config table
+// To change: Update the 'email_from_address' or 'email_settings' key in platform_config table
+// Or set RESEND_DOMAIN environment variable (e.g., "mail.yourdomain.com")
+const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'mail.fineearn.com';
+const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
+
 interface SendTemplateEmailRequest {
   email: string;
   template_type: string;
@@ -185,15 +194,18 @@ serve(async (req: Request) => {
       }
     }
     // Default fallbacks - using verified domain
-    const baseFromAddress = emailSettings.from_address || 'noreply@mail.fineearn.com';
+    const baseFromAddress = emailSettings.from_address || DEFAULT_FROM_ADDRESS;
     const fromName = emailSettings.from_name || emailSettings.platform_name || 'FineEarn';
     const replyTo = emailSettings.reply_to_address || baseFromAddress;
 
-    // Normalize to verified subdomain if a bare fineearn.com address slips through
+    // Normalize to configured domain if an unverified domain address slips through
     let fromAddress = baseFromAddress;
-    if (fromAddress?.toLowerCase().endsWith('@fineearn.com') && !fromAddress.toLowerCase().includes('@mail.fineearn.com')) {
-      console.warn(`⚠️ [${requestId}] Unverified sender domain detected (${fromAddress}). Normalizing to noreply@mail.fineearn.com`);
-      fromAddress = 'noreply@mail.fineearn.com';
+    const domainFromAddress = fromAddress.split('@')[1]?.toLowerCase();
+    const defaultDomain = DEFAULT_RESEND_DOMAIN.toLowerCase();
+    
+    if (domainFromAddress && domainFromAddress !== defaultDomain && !domainFromAddress.includes(defaultDomain)) {
+      console.warn(`⚠️ [${requestId}] Domain mismatch detected (${fromAddress}). Normalizing to ${DEFAULT_FROM_ADDRESS}`);
+      fromAddress = DEFAULT_FROM_ADDRESS;
     }
 
     // Validate from address format

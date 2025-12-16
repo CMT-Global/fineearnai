@@ -76,16 +76,16 @@ const HowItWorks = () => {
     {
       id: 1,
       icon: Sparkles,
-      title: "What Is FineEarn?",
+      title: "What Is ProfitChips?",
       subtitle: "Your Gateway to Earning with AI",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            FineEarn is a revolutionary platform that connects you with AI training tasks, 
+            ProfitChips is a revolutionary platform that connects you with AI training tasks, 
             enabling you to earn real money by contributing to the advancement of artificial intelligence.
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
-            <h4 className="font-semibold text-primary">Why FineEarn?</h4>
+            <h4 className="font-semibold text-primary">Why ProfitChips?</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
@@ -166,7 +166,7 @@ const HowItWorks = () => {
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            FineEarn offers diverse AI training tasks that help improve machine learning models. 
+            ProfitChips offers diverse AI training tasks that help improve machine learning models. 
             Each task is simple but contributes to advancing AI technology.
           </p>
           <div className="grid gap-3">
@@ -393,7 +393,7 @@ const HowItWorks = () => {
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            Grow your income by referring others to FineEarn. Earn commissions from your referrals' 
+            Grow your income by referring others to ProfitChips. Earn commissions from your referrals' 
             activities and build a sustainable passive income stream.
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
@@ -496,7 +496,7 @@ const HowItWorks = () => {
               <Info className="h-4 w-4 text-blue-600" />
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span className="text-sm text-muted-foreground">
-                  Take a quick tour to learn how FineEarn works and start earning today!
+                  Take a quick tour to learn how ProfitChips works and start earning today!
                 </span>
                 <Button
                   variant="ghost"

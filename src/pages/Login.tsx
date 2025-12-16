@@ -123,7 +123,7 @@ const Login = () => {
                 timestamp: Date.now(),
                 version: '1.0'
               };
-              localStorage.setItem(`fineearn_profile_cache_${session.user.id}`, JSON.stringify(cacheData));
+              localStorage.setItem(`ProfitChips_profile_cache_${session.user.id}`, JSON.stringify(cacheData));
             } catch (err) {
               console.error('Error caching profile:', err);
             }
@@ -165,7 +165,7 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to FineEarn - Continue earning with AI tasks</p>
+          <p className="text-muted-foreground">Sign in to ProfitChips - Continue earning with AI tasks</p>
         </div>
 
         {/* Account Deleted Success Message */}

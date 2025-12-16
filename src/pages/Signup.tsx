@@ -175,7 +175,7 @@ const Signup = () => {
         toast({
           title: "Account created!",
           description: referrerUsername 
-            ? `Welcome to FineEarn! You've been referred by ${referrerUsername}. Please check your email to verify your account.`
+            ? `Welcome to ProfitChips! You've been referred by ${referrerUsername}. Please check your email to verify your account.`
             : "Account created! Please check your email to verify.",
         });
         
@@ -239,8 +239,8 @@ const Signup = () => {
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-muted-foreground">
             {referrerUsername 
-              ? `Invited by ${referrerUsername}. Join FineEarn and start earning!`
-              : "Join FineEarn - Start earning with AI tasks in minutes"}
+              ? `Invited by ${referrerUsername}. Join ProfitChips and start earning!`
+              : "Join ProfitChips - Start earning with AI tasks in minutes"}
           </p>
         </div>
 
@@ -411,7 +411,7 @@ const Signup = () => {
                 isLoading ? "Creating your account..." :
                 isChecking ? "Checking username availability..." :
                 (usernameValue?.length >= 3 && isAvailable === false) ? "Please choose an available username" :
-                "Create your FineEarn account"
+                "Create your ProfitChips account"
               }
             >
               {isLoading ? (

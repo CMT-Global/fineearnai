@@ -209,7 +209,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <div className="p-6 border-b z-50 border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">FineEarn</span>
+          <span className="text-xl font-bold">ProfitChips</span>
         </div>
       </div>
 
@@ -277,7 +277,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">FineEarn</span>
+          <span className="text-xl font-bold">ProfitChips</span>
         </div>
       </div>
 
@@ -378,7 +378,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-          <span className="font-bold">FineEarn</span>
+          <span className="font-bold">ProfitChips</span>
         </div>
         
         <div className="flex items-center gap-2">

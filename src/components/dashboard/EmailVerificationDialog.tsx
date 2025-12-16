@@ -222,7 +222,7 @@ export const EmailVerificationDialog = ({
               <Alert className="mb-2">
                 <Mail className="h-4 w-4" />
                 <AlertDescription className="text-sm">
-                  <strong>Didn't receive the code?</strong> Check your <strong>Spam/Junk</strong> folder and mark FineEarn emails as "Not spam" to ensure future deliveries reach your inbox.
+                  <strong>Didn't receive the code?</strong> Check your <strong>Spam/Junk</strong> folder and mark ProfitChips emails as "Not spam" to ensure future deliveries reach your inbox.
                 </AlertDescription>
               </Alert>
 

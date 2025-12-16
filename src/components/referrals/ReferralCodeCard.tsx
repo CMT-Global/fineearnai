@@ -29,8 +29,8 @@ export const ReferralCodeCard = ({ referralCode, username }: ReferralCodeCardPro
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join FineEarn",
-          text: `Join me on FineEarn and earn money training AI! Use my referral code: ${referralCode}`,
+          title: "Join ProfitChips",
+          text: `Join me on ProfitChips and earn money training AI! Use my referral code: ${referralCode}`,
           url: referralUrl,
         });
       } catch (error) {
