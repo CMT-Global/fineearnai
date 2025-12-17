@@ -105,8 +105,8 @@ export const shortenReferralUrl = (url: string, maxLength: number = 40): string 
 /**
  * Get default referral message
  */
-export const getDefaultReferralMessage = (userName?: string): string => {
-  const base = "Join me on FineEarn and start earning by training AI! Use my referral link to get started:";
+export const getDefaultReferralMessage = (userName?: string, platformName: string = "ProfitChips"): string => {
+  const base = `Join me on ${platformName} and start earning by training AI! Use my referral link to get started:`;
   return userName ? `Hey! ${base}` : base;
 };
 

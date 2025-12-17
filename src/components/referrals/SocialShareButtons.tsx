@@ -4,10 +4,12 @@ import { MessageCircle, Send, Twitter, Facebook } from "lucide-react";
 interface SocialShareButtonsProps {
   referralUrl: string;
   username: string;
+  platformName?: string;
 }
 
-export const SocialShareButtons = ({ referralUrl, username }: SocialShareButtonsProps) => {
-  const shareMessage = `Join me on this amazing earning platform! Use my referral code to get started. ${referralUrl}`;
+export const SocialShareButtons = ({ referralUrl, username, platformName = "ProfitChips" }: SocialShareButtonsProps) => {
+  const shareMessage = `Join me on ${platformName} and start earning by training AI! Use my referral code to get started. ${referralUrl}`;
+  const shareText = `Join me on ${platformName} and start earning by training AI! Use my referral code to get started.`;
   
   const handleWhatsAppShare = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
@@ -15,7 +17,7 @@ export const SocialShareButtons = ({ referralUrl, username }: SocialShareButtons
   };
 
   const handleTelegramShare = () => {
-    const url = `https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(`Join me on this amazing earning platform! Use my referral code to get started.`)}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(shareText)}`;
     window.open(url, "_blank");
   };
 
