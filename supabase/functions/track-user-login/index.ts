@@ -78,8 +78,10 @@ const corsHeaders = {
       });
     }
     console.log(`🔍 [Login Tracking] Extracted IP: ${clientIP}`);
-    // Get location from IPStack
-    const locationData = await getLocationFromIP(clientIP);
+
+    // Get location from IPStack (pass supabase client to read API key from platform_config)
+    const locationData = await getLocationFromIP(clientIP, supabase);
+    
     if (!locationData) {
       console.warn(`⚠️ [Login Tracking] IPStack lookup failed for ${clientIP}`);
       // Update profile with IP and timestamp only (no country data)
