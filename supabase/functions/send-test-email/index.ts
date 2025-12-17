@@ -130,11 +130,11 @@ serve(async (req) => {
 
     const emailSettings = configData?.value || {
       from_address: 'noreply@profitchips.com',
-      from_name: 'FineEarn',
+      from_name: 'ProfitChips',
       reply_to_address: 'support@profitchips.com',
-      reply_to_name: 'FineEarn Support',
-      platform_name: 'FineEarn',
-      platform_url: 'https://fineearn.com',
+      reply_to_name: 'ProfitChips Support',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
     };
 
     console.log(`✅ [Test Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
@@ -234,12 +234,17 @@ serve(async (req) => {
       console.log('[Test Email] Template is HTML fragment - applying professional wrapper');
       const wrapperStart = Date.now();
       
-      personalizedBody = wrapInProfessionalTemplate(personalizedBody, {
-        title: emailSettings.platform_name || 'FineEarn',
+      personalizedBody = await wrapInProfessionalTemplate(personalizedBody, {
+        title: emailSettings.platform_name || 'ProfitChips',
         preheader: personalizedSubject,
         headerGradient: true,
         includeFooter: true,
-      });
+        platformName: emailSettings.platform_name || 'ProfitChips',
+        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+        logoHtml: '',
+      }, supabase);
       
       const wrapperTime = Date.now() - wrapperStart;
       console.log(`[Test Email] ✅ Professional wrapper applied in ${wrapperTime}ms`);

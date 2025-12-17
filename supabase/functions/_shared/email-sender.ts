@@ -1,6 +1,8 @@
+// @ts-ignore - Deno edge function, Resend types available at runtime
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { wrapInProfessionalTemplate } from "./email-template-wrapper.ts";
 
+// @ts-ignore - Deno global is available in Deno runtime
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 // ============================================
@@ -9,6 +11,7 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 // Default Resend domain - can be overridden via platform_config table
 // To change: Update the 'email_from_address' or 'email_settings' key in platform_config table
 // Or set RESEND_DOMAIN environment variable (e.g., "mail.yourdomain.com")
+// @ts-expect-error - Deno global is available in Deno runtime
 const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'profitchips.com';
 const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
 
@@ -59,11 +62,11 @@ async function getEmailSettings(supabaseClient: any) {
     const defaultDomain = DEFAULT_RESEND_DOMAIN.split('.').slice(-2).join('.'); // Extract base domain (e.g., "profitchips.com")
     return {
       from_address: DEFAULT_FROM_ADDRESS,
-      from_name: 'FineEarn',
+      from_name: 'ProfitChips',
       reply_to_address: `support@${defaultDomain}`,
-      reply_to_name: 'FineEarn Support',
+      reply_to_name: 'ProfitChips Support',
       support_email: `support@${defaultDomain}`,
-      platform_name: 'FineEarn',
+      platform_name: 'ProfitChips',
       platform_url: `https://${defaultDomain}`,
     };
   }
@@ -110,6 +113,16 @@ const TEMPLATE_TYPE_MAP: Record<string, string> = {
   'auth_email_change': 'auth_email_change',
   'default_email_change': 'auth_email_change',
 };
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  template_type: string;
+  variables: string[] | string;
+  is_active: boolean;
+}
 
 interface SendTemplateEmailParams {
   templateType: string;
@@ -158,8 +171,8 @@ export async function sendTemplateEmail(
     const mappedTemplateType = TEMPLATE_TYPE_MAP[templateType] || null;
     console.log(`🔍 [Email Sender] Template mapping: "${templateType}" -> "${mappedTemplateType || 'NO MAPPING'}"`);
 
-    let template = null;
-    let templateError = null;
+    let template: EmailTemplate | null = null;
+    let templateError: any = null;
     let discoveryMethod = '';
     let attemptNumber = 0;
 
@@ -191,7 +204,7 @@ export async function sendTemplateEmail(
       if (template) {
         discoveryMethod = `mapped_template_type:${mappedTemplateType}`;
         console.log(`✅ [Email Sender] [Attempt ${attemptNumber}] SUCCESS - Template found!`);
-        console.log(`📄 [Email Sender] Template details: name="${template.name}", type="${template.template_type}", id="${template.id}"`);
+        console.log(`📄 [Email Sender] Template details: name="${(template as EmailTemplate).name}", type="${(template as EmailTemplate).template_type}", id="${(template as EmailTemplate).id}"`);
       } else {
         console.log(`❌ [Email Sender] [Attempt ${attemptNumber}] No template found with template_type="${mappedTemplateType}"`);
       }
@@ -226,7 +239,7 @@ export async function sendTemplateEmail(
       if (template) {
         discoveryMethod = `name:${templateType}`;
         console.log(`✅ [Email Sender] [Attempt ${attemptNumber}] SUCCESS - Template found via name fallback!`);
-        console.log(`📄 [Email Sender] Template details: name="${template.name}", type="${template.template_type}", id="${template.id}"`);
+        console.log(`📄 [Email Sender] Template details: name="${(template as EmailTemplate).name}", type="${(template as EmailTemplate).template_type}", id="${(template as EmailTemplate).id}"`);
       } else {
         console.log(`❌ [Email Sender] [Attempt ${attemptNumber}] No template found with name="${templateType}"`);
       }
@@ -259,7 +272,7 @@ export async function sendTemplateEmail(
       if (template) {
         discoveryMethod = `original_template_type:${templateType}`;
         console.log(`✅ [Email Sender] [Attempt ${attemptNumber}] SUCCESS - Template found via original template_type!`);
-        console.log(`📄 [Email Sender] Template details: name="${template.name}", type="${template.template_type}", id="${template.id}"`);
+        console.log(`📄 [Email Sender] Template details: name="${(template as EmailTemplate).name}", type="${(template as EmailTemplate).template_type}", id="${(template as EmailTemplate).id}"`);
       } else {
         console.log(`❌ [Email Sender] [Attempt ${attemptNumber}] No template found with template_type="${templateType}"`);
       }
@@ -291,6 +304,14 @@ export async function sendTemplateEmail(
     // VARIABLE REPLACEMENT & VALIDATION
     // ============================================
     console.log(`🔄 [Email Sender] Starting variable replacement...`);
+    
+    // TypeScript guard: template is guaranteed to be non-null here due to early return above
+    if (!template) {
+      return {
+        success: false,
+        error: 'Template is null after discovery',
+      };
+    }
     
     let populatedSubject = template.subject;
     let populatedBody = template.body;
@@ -354,12 +375,17 @@ export async function sendTemplateEmail(
       console.log(`🎨 [Email Sender] Template is HTML fragment - applying professional wrapper`);
       const wrapperStart = Date.now();
       
-      populatedBody = wrapInProfessionalTemplate(populatedBody, {
-        title: emailSettings.platform_name || 'FineEarn',
+      populatedBody = await wrapInProfessionalTemplate(populatedBody, {
+        title: emailSettings.platform_name || 'ProfitChips',
         preheader: populatedSubject,
         headerGradient: true,
         includeFooter: true,
-      });
+        platformName: emailSettings.platform_name || 'ProfitChips',
+        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+        logoHtml: '', // Can be added later if logo URL is stored in config
+      }, supabaseClient);
       
       const wrapperTime = Date.now() - wrapperStart;
       console.log(`✅ [Email Sender] Professional wrapper applied in ${wrapperTime}ms`);

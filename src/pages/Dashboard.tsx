@@ -353,28 +353,28 @@ const Dashboard = () => {
 
           {/* Platform Earners Guide Button */}
           {earnersGuideVisible && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <Button
-                onClick={() => navigate("/how-it-works")}
-                size="lg"
-                className="w-full group relative overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] h-auto py-6"
-              >
-                {/* Animated background pulse */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse" />
-                
-                {/* Content */}
-                <div className="relative flex items-center justify-center gap-3">
-                  <Sparkles className="h-6 w-6 animate-spin-slow" />
-                  <div className="flex flex-col items-start">
+          <div className="mx-4 lg:mx-8 mt-6">
+            <Button
+              onClick={() => navigate("/how-it-works")}
+              size="lg"
+              className="w-full group relative overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 text-white hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] h-auto py-6"
+            >
+              {/* Animated background pulse */}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse" />
+              
+              {/* Content */}
+              <div className="relative flex items-center justify-center gap-3">
+                <Sparkles className="h-6 w-6 animate-spin-slow" />
+                <div className="flex flex-col items-start">
                     <span className="text-lg font-bold">{platformName} - Earners Guide</span>
-                    <span className="text-xs text-white/80">Learn how to maximize your earnings</span>
-                  </div>
-                  <div className="ml-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
-                    <Rocket className="h-5 w-5" />
-                  </div>
+                  <span className="text-xs text-white/80">Learn how to maximize your earnings</span>
                 </div>
-              </Button>
-            </div>
+                <div className="ml-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
+                  <Rocket className="h-5 w-5" />
+                </div>
+              </div>
+            </Button>
+          </div>
           )}
 
           {/* Stats Cards */}
@@ -433,20 +433,20 @@ const Dashboard = () => {
 
           {/* Deposit & Withdrawal Quick Guides Section */}
           {guidesSectionVisible && (
-            <div className="px-4 lg:px-8 pb-6">
+          <div className="px-4 lg:px-8 pb-6">
               <InternationalGuideCard title={guidesTitle} description={guidesDescription} />
-            </div>
+          </div>
           )}
 
           {/* Social Media Follow Section */}
           {socialSectionVisible && (
-            <div className="px-4 lg:px-8 pb-6">
+          <div className="px-4 lg:px-8 pb-6">
               <SocialFollowCard
                 facebookUrl={socialFacebookUrl}
                 instagramUrl={socialInstagramUrl}
                 tiktokUrl={socialTiktokUrl}
               />
-            </div>
+          </div>
           )}
 
           {/* Two Column Layout */}

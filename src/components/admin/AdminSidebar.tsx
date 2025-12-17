@@ -122,6 +122,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "Dashboard Content", path: "/admin/content/dashboard" },
         { label: "How It Works Content", path: "/admin/content/how-it-works" },
         { label: "Partner Program Content", path: "/admin/content/partner-program" },
+        { label: "Global Email Template", path: "/admin/content/email-template" },
       ],
     },
     {
@@ -193,7 +194,12 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     if (path === "/admin") {
       return location.pathname === path;
     }
-    return location.pathname.startsWith(path);
+    // Use exact match or ensure the path is followed by a slash (for nested routes)
+    // This prevents "/admin/communications/email" from matching "/admin/communications/email-settings"
+    const exactMatch = location.pathname === path;
+    // Only match if pathname starts with path + "/" (not just any character after)
+    const pathWithSlash = location.pathname.startsWith(path + "/");
+    return exactMatch || pathWithSlash;
   };
 
   const isCategoryActive = (category: NavCategory) => {

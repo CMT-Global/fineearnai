@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     const emailSettings: EmailSettings = emailConfig?.value || {
-      from_name: "FineEarn",
+      from_name: "ProfitChips",
       from_address: "onboarding@resend.dev",
       reply_to_address: "support@profitchips.com",
     };

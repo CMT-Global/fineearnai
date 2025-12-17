@@ -177,8 +177,10 @@ const handler = async (req: Request): Promise<Response> => {
 
       const emailSettings = configData?.value || {
         from_address: 'noreply@profitchips.com',
-        from_name: 'FineEarn',
+        from_name: 'ProfitChips',
         reply_to_address: 'support@profitchips.com',
+        platform_name: 'ProfitChips',
+        platform_url: 'https://profitchips.com',
       };
 
       console.log(`✅ [Bulk Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
@@ -186,12 +188,17 @@ const handler = async (req: Request): Promise<Response> => {
       // Send email to external address
       try {
         // Wrap content in professional template
-        const wrappedBody = wrapInProfessionalTemplate(body, {
-          title: 'FineEarn',
+        const wrappedBody = await wrapInProfessionalTemplate(body, {
+          title: emailSettings.platform_name || 'ProfitChips',
           preheader: subject,
           headerGradient: true,
-          includeFooter: true
-        });
+          includeFooter: true,
+          platformName: emailSettings.platform_name || 'ProfitChips',
+          platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+          supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+          privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+          logoHtml: '',
+        }, supabase);
 
         // Create plain text version by stripping HTML tags
         const textVersion = body.replace(/<[^>]*>/g, '').trim();

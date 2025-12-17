@@ -151,7 +151,8 @@ function generateFallbackEmail(
   emailActionType: string,
   username: string,
   authLink: string,
-  token: string
+  token: string,
+  platformName: string = 'ProfitChips'
 ): { subject: string; body: string } {
   const fallbackTemplates: Record<string, { subject: string; body: string }> = {
     recovery: {
@@ -182,7 +183,7 @@ function generateFallbackEmail(
       subject: "Confirm Your Email",
       body: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333;">Welcome to FineEarn!</h1>
+          <h1 style="color: #333;">Welcome to ${platformName}!</h1>
           <p>Hi ${username},</p>
           <p>Thanks for signing up! Please confirm your email address by clicking the button below:</p>
           <div style="margin: 30px 0;">
@@ -221,7 +222,7 @@ function generateFallbackEmail(
       subject: "Your Magic Link",
       body: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333;">Login to FineEarn</h1>
+          <h1 style="color: #333;">Login to ${platformName}</h1>
           <p>Hi ${username},</p>
           <p>Click the button below to login to your account:</p>
           <div style="margin: 30px 0;">
@@ -308,7 +309,13 @@ serve(async (req) => {
       console.warn(`⚠️ [Auth Email Hook] No custom template found, using fallback`);
       
       // Use fallback template
-      const fallback = generateFallbackEmail(email_action_type, username, authLink, token);
+      const fallback = generateFallbackEmail(
+        email_action_type, 
+        username, 
+        authLink, 
+        token,
+        emailSettings.platform_name || 'ProfitChips'
+      );
       subject = fallback.subject;
       htmlBody = fallback.body;
     }
@@ -325,10 +332,11 @@ serve(async (req) => {
 
     const emailSettings = configData?.value || {
       from_address: 'noreply@profitchips.com',
-      from_name: 'FineEarn',
+      from_name: 'ProfitChips',
       reply_to_address: 'support@profitchips.com',
-      reply_to_name: 'FineEarn Support',
-      platform_name: 'FineEarn',
+      reply_to_name: 'ProfitChips Support',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
     };
 
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
@@ -344,12 +352,17 @@ serve(async (req) => {
     if (needsWrapper) {
       console.log(`🎨 [Auth Email Hook] Template is HTML fragment - applying professional wrapper`);
       
-      htmlBody = wrapInProfessionalTemplate(htmlBody, {
-        title: emailSettings.platform_name || 'FineEarn',
+      htmlBody = await wrapInProfessionalTemplate(htmlBody, {
+        title: emailSettings.platform_name || 'ProfitChips',
         preheader: subject,
         headerGradient: true,
         includeFooter: true,
-      });
+        platformName: emailSettings.platform_name || 'ProfitChips',
+        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+        logoHtml: '',
+      }, supabase);
       
       console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);
     } else {

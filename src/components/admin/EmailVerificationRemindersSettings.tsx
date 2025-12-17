@@ -42,20 +42,27 @@ export function EmailVerificationRemindersSettings() {
         .from("platform_config")
         .select("value")
         .eq("key", "email_verification_reminders")
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        // Only throw if it's not a "no rows" error
+        throw error;
+      }
 
       if (data?.value) {
         setConfig(data.value as unknown as ReminderConfig);
       }
+      // If no data found, keep the default config that's already set in state
     } catch (error: any) {
       console.error("Error fetching reminder config:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load reminder settings",
-        variant: "destructive",
-      });
+      // Only show error toast for actual errors, not missing records
+      if (error.code !== 'PGRST116') {
+        toast({
+          title: "Error",
+          description: "Failed to load reminder settings",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,11 +73,12 @@ export function EmailVerificationRemindersSettings() {
     try {
       const { error } = await supabase
         .from("platform_config")
-        .update({
+        .upsert({
+          key: "email_verification_reminders",
           value: config as any,
+          description: "Email verification reminder settings",
           updated_at: new Date().toISOString(),
-        })
-        .eq("key", "email_verification_reminders");
+        }, { onConflict: "key" });
 
       if (error) throw error;
 

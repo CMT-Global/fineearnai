@@ -236,8 +236,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailSettings = configData?.value || {
       from_address: "noreply@profitchips.com",
-      from_name: "FineEarn",
+      from_name: "ProfitChips",
       reply_to_address: "support@profitchips.com",
+      platform_name: "ProfitChips",
+      platform_url: "https://profitchips.com",
     };
 
     console.log(`✅ [Queue Processor] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
@@ -425,14 +427,19 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`🔑 [Queue Processor] Using idempotency key: ${idempotencyKey}`);
 
         // Prepare batch emails with personalization and idempotency key
-        const batchEmails = chunk.map((recipient) => {
+        const batchEmails = await Promise.all(chunk.map(async (recipient) => {
           const personalizedBody = personalizeContent(job.body, recipient);
-          const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
-            title: "FineEarn",
+          const wrappedBody = await wrapInProfessionalTemplate(personalizedBody, {
+            title: emailSettings.platform_name || "ProfitChips",
             preheader: job.subject,
             headerGradient: true,
             includeFooter: true,
-          });
+            platformName: emailSettings.platform_name || "ProfitChips",
+            platformUrl: emailSettings.platform_url || "https://profitchips.com",
+            supportUrl: `${emailSettings.platform_url || "https://profitchips.com"}/support`,
+            privacyUrl: `${emailSettings.platform_url || "https://profitchips.com"}/privacy`,
+            logoHtml: '',
+          }, supabase);
           const textVersion = personalizedBody.replace(/<[^>]*>/g, "").trim();
 
           return {
@@ -447,7 +454,7 @@ const handler = async (req: Request): Promise<Response> => {
               "Idempotency-Key": idempotencyKey, // PHASE 1: Prevent duplicate sends on retry
             },
           };
-        });
+        }));
 
         // PHASE 2: Send batch using Resend Batch API with 429 retry logic
         const batchResponse = await retryWithBackoff(

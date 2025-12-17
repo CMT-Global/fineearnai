@@ -8,30 +8,49 @@ export interface EmailTemplateOptions {
   preheader?: string;
   headerGradient?: boolean;
   includeFooter?: boolean;
+  platformName?: string;
+  platformUrl?: string;
+  supportUrl?: string;
+  privacyUrl?: string;
+  logoHtml?: string;
 }
 
 /**
  * Wraps email content in a professional, responsive email template
- * Matches the styling of auth emails with gradient header and proper email client support
+ * Uses dynamic platform name and URLs from email settings
  */
 export function wrapInProfessionalTemplate(
   content: string,
   options: EmailTemplateOptions = {}
 ): string {
   const {
-    title = 'FineEarn',
+    title,
     preheader = '',
     headerGradient = true,
     includeFooter = true,
+    platformName = 'ProfitChips',
+    platformUrl = 'https://profitchips.com',
+    supportUrl,
+    privacyUrl,
+    logoHtml = '',
   } = options;
+
+  const displayTitle = title || platformName;
+  const supportLink = supportUrl || `${platformUrl}/support`;
+  const privacyLink = privacyUrl || `${platformUrl}/privacy`;
+  const currentYear = new Date().getFullYear();
+  const preheaderHtml = preheader 
+    ? `<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">${preheader}</div>` 
+    : '';
 
   const gradientHeader = headerGradient
     ? `
           <!-- Gradient Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                ${title}
+              ${logoHtml ? `<div style="margin-bottom: 15px;">${logoHtml}</div>` : ''}
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
+                ${displayTitle}
               </h1>
             </td>
           </tr>`
@@ -42,21 +61,21 @@ export function wrapInProfessionalTemplate(
           <!-- Footer -->
           <tr>
             <td style="background-color: #f8f9fa; padding: 30px 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #6c757d; line-height: 1.6;">
-                <strong style="color: #495057;">FineEarn</strong> - Earn by Training AI
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #495057; line-height: 1.6; font-weight: 500;">
+                <strong style="color: #212529;">${platformName}</strong> - Earn by Training AI
               </p>
-              <p style="margin: 0 0 15px 0; font-size: 13px; color: #868e96; line-height: 1.5;">
-                This email was sent from FineEarn. If you have any questions, please contact our support team.
+              <p style="margin: 0 0 15px 0; font-size: 13px; color: #6c757d; line-height: 1.5;">
+                This email was sent from ${platformName}. If you have any questions, please contact our support team.
               </p>
-              <div style="margin-top: 15px;">
-                <a href="https://fineearn.com" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px;">Website</a>
-                <span style="color: #dee2e6;">|</span>
-                <a href="https://fineearn.com/support" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px;">Support</a>
-                <span style="color: #dee2e6;">|</span>
-                <a href="https://fineearn.com/privacy" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px;">Privacy Policy</a>
+              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                <a href="${platformUrl}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
+                <span style="color: #dee2e6; margin: 0 4px;">|</span>
+                <a href="${supportLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
+                <span style="color: #dee2e6; margin: 0 4px;">|</span>
+                <a href="${privacyLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
               </div>
-              <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd;">
-                © ${new Date().getFullYear()} FineEarn. All rights reserved.
+              <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd; line-height: 1.4;">
+                © ${currentYear} ${platformName}. All rights reserved.
               </p>
             </td>
           </tr>`
@@ -69,7 +88,8 @@ export function wrapInProfessionalTemplate(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
-  <title>${title}</title>
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+  <title>${displayTitle}</title>
   ${preheader ? `<meta name="description" content="${preheader}">` : ''}
   <!--[if mso]>
   <noscript>
@@ -81,31 +101,37 @@ export function wrapInProfessionalTemplate(
   </noscript>
   <![endif]-->
   <style>
-    /* Reset styles */
+    /* Reset styles for email clients */
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; display: block; }
+    
+    /* Prevent spam triggers */
+    .ExternalClass { width: 100%; }
+    .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
     
     /* Responsive styles */
     @media only screen and (max-width: 600px) {
-      .email-container { width: 100% !important; }
-      .mobile-padding { padding: 15px !important; }
-      h1 { font-size: 24px !important; }
-      h2 { font-size: 20px !important; }
+      .email-container { width: 100% !important; max-width: 100% !important; }
+      .mobile-padding { padding: 20px 15px !important; }
+      .header-padding { padding: 30px 15px !important; }
+      h1 { font-size: 24px !important; line-height: 1.3 !important; }
+      h2 { font-size: 20px !important; line-height: 1.3 !important; }
       .button { padding: 12px 25px !important; font-size: 14px !important; }
+      .logo-img { max-width: 120px !important; height: auto !important; }
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f7; line-height: 1.6;">
-  ${preheader ? `<div style="display: none; max-height: 0; overflow: hidden;">${preheader}</div>` : ''}
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f7fa; line-height: 1.6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  ${preheaderHtml}
   
   <!-- Main Container -->
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f7;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f7fa; padding: 20px 0;">
     <tr>
-      <td align="center" style="padding: 40px 15px;">
+      <td align="center" style="padding: 0 15px;">
         
         <!-- Email Content Card -->
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
           
           ${gradientHeader}
           

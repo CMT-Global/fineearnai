@@ -146,7 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailSettings = configData?.value || {
       from_address: 'noreply@profitchips.com',
-      from_name: 'FineEarn',
+      from_name: 'ProfitChips',
       reply_to_address: 'support@profitchips.com',
     };
 

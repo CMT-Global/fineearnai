@@ -52,9 +52,9 @@ const DEFAULT_PARTNER_PROGRAM_CONTENT: PartnerProgramContentConfig = {
   wizard: {
     isEnabled: true,
     slides: [
-      {
+  {
         id: 1,
-        title: "Unlock Your Earning Potential",
+    title: "Unlock Your Earning Potential",
         headline: "Become a Local Partner",
         body:
           "Become a Local Partner in your country and start earning by helping people in your community learn more about the platform and upgrade their accounts with local support.",
@@ -655,7 +655,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
       </div>
     ),
   },
-  ];
+];
 };
 
 export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps) => {

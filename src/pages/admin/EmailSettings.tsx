@@ -32,14 +32,14 @@ const emailSettingsSchema = z.object({
 // Default settings - only essential fields
 const DEFAULT_SETTINGS = {
   from_address: "noreply@profitchips.com",
-  from_name: "FineEarn",
+  from_name: "ProfitChips",
   reply_to_address: "support@profitchips.com",
-  reply_to_name: "FineEarn Support",
+  reply_to_name: "ProfitChips Support",
   support_email: "support@profitchips.com",
-  platform_name: "FineEarn",
-  platform_url: "https://fineearn.com",
-  admin_notification_email: "admin@fineearn.com",
-  footer_text: "This is an automated email from FineEarn. Please do not reply to this email.",
+  platform_name: "ProfitChips",
+  platform_url: "https://profitchips.com",
+  admin_notification_email: "admin@profitchips.com",
+  footer_text: "This is an automated email from ProfitChips. Please do not reply to this email.",
 };
 
 export default function EmailSettings() {
@@ -282,7 +282,7 @@ export default function EmailSettings() {
                       id="from_name"
                       value={settings.from_name}
                       onChange={(e) => handleInputChange('from_name', e.target.value)}
-                      placeholder="FineEarn"
+                      placeholder="ProfitChips"
                     />
                     {errors.from_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -328,7 +328,7 @@ export default function EmailSettings() {
                       id="reply_to_name"
                       value={settings.reply_to_name}
                       onChange={(e) => handleInputChange('reply_to_name', e.target.value)}
-                      placeholder="FineEarn Support"
+                      placeholder="ProfitChips Support"
                     />
                     {errors.reply_to_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -357,7 +357,7 @@ export default function EmailSettings() {
                       id="platform_name"
                       value={settings.platform_name}
                       onChange={(e) => handleInputChange('platform_name', e.target.value)}
-                      placeholder="FineEarn"
+                      placeholder="ProfitChips"
                     />
                     {errors.platform_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -427,7 +427,7 @@ export default function EmailSettings() {
                     id="footer_text"
                     value={settings.footer_text}
                     onChange={(e) => handleInputChange('footer_text', e.target.value)}
-                    placeholder="This is an automated email from FineEarn..."
+                    placeholder="This is an automated email from ProfitChips..."
                     rows={3}
                   />
                   {errors.footer_text && (
