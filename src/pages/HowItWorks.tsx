@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sparkles,
   DollarSign,
@@ -34,6 +36,39 @@ const HowItWorks = () => {
   const { isAdmin } = useAdmin();
   const { data } = useDashboardData(user?.id);
   const { profile } = data || {};
+
+  // Load platform name + How It Works content/visibility from platform_config
+  const { data: howItWorksData, isLoading: isConfigLoading } = useQuery({
+    queryKey: ["how-it-works-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["platform_name", "how_it_works_content"]);
+
+      if (error) throw error;
+
+      const map = new Map<string, any>();
+      data?.forEach((row: any) => {
+        map.set(row.key, row.value);
+      });
+
+      const platformName = (map.get("platform_name") as string) || "ProfitChips";
+      const howItWorks = map.get("how_it_works_content") || {};
+
+      return {
+        platformName,
+        howItWorks,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const platformName = howItWorksData?.platformName || "ProfitChips";
+  const howItWorksConfig = howItWorksData?.howItWorks || {};
+  const slidesConfig: Array<{ id: number; title?: string; subtitle?: string; description?: string }> =
+    howItWorksConfig.slides || [];
+  const isHowItWorksVisible = howItWorksConfig.isVisible ?? true;
 
   const totalSteps = 8;
 
@@ -72,16 +107,42 @@ const HowItWorks = () => {
     navigate("/dashboard");
   };
 
+  // If page is disabled in config, send users back to dashboard
+  useEffect(() => {
+    if (!isHowItWorksVisible) {
+      navigate("/dashboard");
+    }
+  }, [isHowItWorksVisible, navigate]);
+
+  // While config is loading, show a lightweight loading state to avoid flashing full content
+  if (isConfigLoading) {
+    return (
+      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center px-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading How It Works…</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // If hidden, render nothing here; the effect above will navigate away
+  if (!isHowItWorksVisible) {
+    return null;
+  }
+
   const steps = [
     {
       id: 1,
       icon: Sparkles,
-      title: "What Is ProfitChips?",
-      subtitle: "Your Gateway to Earning with AI",
+      title: slidesConfig[0]?.title || "What Is ProfitChips?",
+      subtitle: slidesConfig[0]?.subtitle || "Your Gateway to Earning with AI",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            ProfitChips is a revolutionary platform that connects you with AI training tasks, 
+            {platformName} is a revolutionary platform that connects you with AI training tasks, 
             enabling you to earn real money by contributing to the advancement of artificial intelligence.
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
@@ -111,8 +172,8 @@ const HowItWorks = () => {
     {
       id: 2,
       icon: DollarSign,
-      title: "How You Earn",
-      subtitle: "Simple Tasks, Real Rewards",
+      title: slidesConfig[1]?.title || "How You Earn",
+      subtitle: slidesConfig[1]?.subtitle || "Simple Tasks, Real Rewards",
       content: (
         <div className="space-y-4">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
@@ -161,12 +222,12 @@ const HowItWorks = () => {
     {
       id: 3,
       icon: ListChecks,
-      title: "Types of Tasks",
-      subtitle: "Variety of AI Microtasks",
+      title: slidesConfig[2]?.title || "Types of Tasks",
+      subtitle: slidesConfig[2]?.subtitle || "Variety of AI Microtasks",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            ProfitChips offers diverse AI training tasks that help improve machine learning models. 
+            {platformName} offers diverse AI training tasks that help improve machine learning models. 
             Each task is simple but contributes to advancing AI technology.
           </p>
           <div className="grid gap-3">
@@ -213,8 +274,8 @@ const HowItWorks = () => {
     {
       id: 4,
       icon: Calendar,
-      title: "When You Get Paid",
-      subtitle: "Real-Time Tracking & Weekly Payouts",
+      title: slidesConfig[3]?.title || "When You Get Paid",
+      subtitle: slidesConfig[3]?.subtitle || "Real-Time Tracking & Weekly Payouts",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
@@ -254,8 +315,8 @@ const HowItWorks = () => {
     {
       id: 5,
       icon: Wallet,
-      title: "Withdrawals",
-      subtitle: "Easy & Convenient Cashouts",
+      title: slidesConfig[4]?.title || "Withdrawals",
+      subtitle: slidesConfig[4]?.subtitle || "Easy & Convenient Cashouts",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
@@ -307,8 +368,8 @@ const HowItWorks = () => {
     {
       id: 6,
       icon: TrendingUp,
-      title: "Upgrading Your Account",
-      subtitle: "Boost Your Earning Potential",
+      title: slidesConfig[5]?.title || "Upgrading Your Account",
+      subtitle: slidesConfig[5]?.subtitle || "Boost Your Earning Potential",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
@@ -388,12 +449,12 @@ const HowItWorks = () => {
     {
       id: 7,
       icon: Users,
-      title: "Invite & Earn",
-      subtitle: "Build Your Team",
+      title: slidesConfig[6]?.title || "Invite & Earn",
+      subtitle: slidesConfig[6]?.subtitle || "Build Your Team",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            Grow your income by referring others to ProfitChips. Earn commissions from your referrals' 
+            Grow your income by referring others to {platformName}. Earn commissions from your referrals' 
             activities and build a sustainable passive income stream.
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
@@ -447,8 +508,8 @@ const HowItWorks = () => {
     {
       id: 8,
       icon: Rocket,
-      title: "Ready to Start?",
-      subtitle: "Begin Your Journey",
+      title: slidesConfig[7]?.title || "Ready to Start?",
+      subtitle: slidesConfig[7]?.subtitle || "Begin Your Journey",
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed text-center">

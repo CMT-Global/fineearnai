@@ -120,6 +120,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Settings,
       items: [
         { label: "Dashboard Content", path: "/admin/content/dashboard" },
+        { label: "How It Works Content", path: "/admin/content/how-it-works" },
       ],
     },
     {
