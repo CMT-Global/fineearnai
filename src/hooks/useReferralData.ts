@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/integrations/supabase';
 import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
 export const useReferralData = (userId: string | undefined) => {
@@ -8,32 +8,18 @@ export const useReferralData = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       
-      // ⚡ ALL queries run in parallel - Step 1: Fetch core data
+      // ⚡ ALL queries run in parallel - Step 1: Fetch core data using service layer
       const [profile, stats, earnings, referralData] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.rpc('get_referral_stats', { user_uuid: userId }),
-        supabase.from('referral_earnings')
-          .select('*')
-          .eq('referrer_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(20),
-        // Fetch active referral relationship data
-        supabase
-          .from('referrals')
-          .select('referrer_id, status, total_commission_earned, created_at, referral_code_used')
-          .eq('referred_id', userId)
-          .eq('status', 'active')
-          .maybeSingle()
+        supabaseService.profiles.get(userId),
+        supabaseService.rpc.getReferralStats(userId),
+        supabaseService.referralEarnings.getByReferrer(userId, 20),
+        supabaseService.referrals.getByReferred(userId)
       ]);
       
       // Fetch membership plan for badge status
       let accountType = null;
-      if (profile.data?.membership_plan) {
-        const { data: planData } = await supabase
-          .from('membership_plans')
-          .select('account_type')
-          .eq('name', profile.data.membership_plan)
-          .single();
+      if (profile.membership_plan) {
+        const planData = await supabaseService.membershipPlans.getByName(profile.membership_plan);
         accountType = planData?.account_type;
       }
       
@@ -42,28 +28,24 @@ export const useReferralData = (userId: string | undefined) => {
       
       // Fetch upline profile if referrer exists
       let uplineData = null;
-      if (referralData.data?.referrer_id) {
-        const uplineProfile = await supabase
-          .from('profiles')
-          .select('id, username, membership_plan, account_status')
-          .eq('id', referralData.data.referrer_id)
-          .maybeSingle();
+      if (referralData?.referrer_id) {
+        const uplineProfile = await supabaseService.profiles.get(referralData.referrer_id);
         
-        if (uplineProfile.data) {
+        if (uplineProfile) {
           uplineData = {
-            ...uplineProfile.data,
-            referral_code_used: referralData.data.referral_code_used,
-            total_commission_earned: referralData.data.total_commission_earned,
-            status: referralData.data.status,
-            created_at: referralData.data.created_at
+            ...uplineProfile,
+            referral_code_used: referralData.referral_code_used,
+            total_commission_earned: referralData.total_commission_earned,
+            status: referralData.status,
+            created_at: referralData.created_at
           };
         }
       }
       
       return { 
-        profile: profile.data ? { ...profile.data, earnerBadge } : null,
-        stats: stats.data?.[0],
-        earnings: earnings.data,
+        profile: { ...profile, earnerBadge },
+        stats,
+        earnings: earnings || [],
         upline: uplineData ? {
           id: uplineData.id,
           username: uplineData.username,

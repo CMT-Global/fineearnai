@@ -90,14 +90,22 @@ const handler = async (req)=>{
       });
     }
     // Fetch email settings
-    const { data: emailConfig } = await supabase.from("platform_config").select("value").eq("key", "email_settings").single();
-    const emailSettings = emailConfig?.value || {
-      from_name: "FineEarn",
-      from_address: "onboarding@resend.dev",
-      reply_to_address: "support@fineearn.com"
+    const { data: emailConfig } = await supabase
+      .from("platform_config")
+      .select("value")
+      .eq("key", "email_settings")
+      .maybeSingle();
+
+    const emailSettings: EmailSettings = emailConfig?.value || {
+      from_name: "ProfitChips",
+      from_address: "noreply@profitchips.com",
+      reply_to_address: "support@profitchips.com",
+      platform_name: "ProfitChips",
+      platform_url: "https://profitchips.com",
     };
-    // Get platform URL
-    const platformUrl = Deno.env.get("VITE_SUPABASE_URL")?.replace("/auth/v1", "") || "https://fineearn.com";
+
+    // Get platform URL from email settings or fallback
+    const platformUrl = emailSettings.platform_url || Deno.env.get("VITE_SUPABASE_URL")?.replace("/auth/v1", "") || "https://profitchips.com";
     const bonusText = signupBonus || "Get started with your first tasks!";
     // Replace variables in template
     let personalizedSubject = template.subject.replace(/{{invitee_name}}/g, inviteeName);

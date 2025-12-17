@@ -88,6 +88,19 @@ serve(async (req)=>{
         console.error('[REFERRAL-NOTIFICATION] ⚠️ Notification error:', err);
       }
     })();
+
+    // Fetch platform URL from email settings
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+    
+    const emailSettings = emailConfig?.value || {
+      platform_url: 'https://profitchips.com',
+    };
+    const platformUrl = emailSettings.platform_url || supabaseUrl.replace('/supabase', '') || 'https://profitchips.com';
+
     // Send NEW referral signup email (main task)
     console.log('[REFERRAL-NOTIFICATION] 📧 Sending new referral signup email to:', referrerProfile.email);
     const emailResult = await sendTemplateEmail({
@@ -100,7 +113,7 @@ serve(async (req)=>{
         referral_code: referral_code,
         total_referrals: totalReferrals.toString(),
         total_commission: totalCommission.toFixed(2),
-        platform_url: supabaseUrl.replace('/supabase', '') || 'https://fineearn.com'
+        platform_url: platformUrl
       },
       supabaseClient: supabase
     });
@@ -150,7 +163,7 @@ serve(async (req)=>{
             reward_message: rewardMessage,
             next_milestone: nextMilestone > 0 ? nextMilestone.toString() : 'Keep growing!',
             referrals_to_next: nextMilestone > 0 ? (nextMilestone - totalReferrals).toString() : '0',
-            platform_url: supabaseUrl.replace('/supabase', '') || 'https://fineearn.com'
+            platform_url: platformUrl
           },
           supabaseClient: supabase
         });

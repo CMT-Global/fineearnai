@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicationWizard";
@@ -36,12 +36,47 @@ const BecomePartner = () => {
   
   const { data: profile } = useProfile(user?.id || '');
 
+  const { data: partnerProgramConfig, isLoading: isLoadingPartnerConfig } = useQuery({
+    queryKey: ["partner-program-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "partner_program_config")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return (data?.value as { isEnabled?: boolean }) ?? { isEnabled: true };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: partnerProgramContent } = useQuery({
+    queryKey: ["partner-program-content-meta"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "partner_program_content")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return (data?.value as { wizard?: { isEnabled?: boolean } }) ?? { wizard: { isEnabled: true } };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Destructure partner status for convenience
   const isPartner = partnerStatus?.isPartner ?? false;
   const application = partnerStatus?.application ?? null;
 
-  // Compute ready state - only true when user exists AND query has settled successfully
-  const ready = !!user && partnerStatusSuccess;
+  const isPartnerProgramEnabled = partnerProgramConfig?.isEnabled ?? true;
+  const isWizardEnabled = partnerProgramContent?.wizard?.isEnabled ?? true;
+
+  // Compute ready state - only true when user exists, partner config is loaded AND query has settled successfully
+  const ready = !!user && partnerStatusSuccess && !isLoadingPartnerConfig && isPartnerProgramEnabled;
 
   // Phase 3: Generate correlation ID on mount with useRef guard to prevent duplicates in Strict Mode
   useEffect(() => {
@@ -65,6 +100,13 @@ const BecomePartner = () => {
   useEffect(() => {
     // CRITICAL: Wait for ready state before ANY redirect logic
     if (!ready) {
+      return;
+    }
+    
+    // If partner program is disabled, always send users back to dashboard
+    if (!isPartnerProgramEnabled) {
+      setIsNavigating(true);
+      navigate('/dashboard', { replace: true });
       return;
     }
     
@@ -175,12 +217,12 @@ const BecomePartner = () => {
     );
   }
 
-  // Show loading state while waiting for ready state
+  // Show loading state while waiting for ready state or when partner program is disabled
   if (!ready) {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading..." />
+          <LoadingSpinner size="lg" text={isPartnerProgramEnabled ? "Loading..." : "Redirecting..."} />
         </div>
       </PageLayout>
     );
@@ -212,7 +254,7 @@ const BecomePartner = () => {
     >
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         {/* Intro Wizard - Benefits of becoming a partner */}
-        {!showApplicationWizard && (
+        {!showApplicationWizard && isWizardEnabled && (
           <PartnerWizard
             open={true} 
             onComplete={() => {
@@ -226,7 +268,7 @@ const BecomePartner = () => {
         )}
 
         {/* Application Wizard - Multi-step form */}
-        {showApplicationWizard && (
+        {(showApplicationWizard || !isWizardEnabled) && (
           <PartnerApplicationWizard
             correlationId={correlationId}
             onComplete={() => {

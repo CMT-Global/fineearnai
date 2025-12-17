@@ -586,7 +586,7 @@ const EmailTemplates = () => {
                             placeholder="Compose your email content here. Use {{variable}} for placeholders."
                             maxLength={10000}
                             enableProfessionalTemplate={true}
-                            templateTitle="FineEarn"
+                            templateTitle={undefined}
                             initialWrapperState={formData.use_wrapper_in_editor} // Phase 3: Pass wrapper state
                             onWrapperStateChange={(state) => setFormData({ ...formData, use_wrapper_in_editor: state })} // Phase 3: Handle wrapper changes
                             onEditorReady={handleEditorReady}

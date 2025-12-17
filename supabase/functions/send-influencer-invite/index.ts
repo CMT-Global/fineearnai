@@ -109,9 +109,9 @@ const handler = async (req)=>{
     console.log("[INFLUENCER INVITE] Fetching email settings...");
     const { data: configData } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com'
+      from_address: 'noreply@profitchips.com',
+      from_name: 'ProfitChips',
+      reply_to_address: 'support@profitchips.com',
     };
     console.log("[INFLUENCER INVITE] Using email settings:", emailSettings);
     // Generate referral link (you can customize this based on your needs)

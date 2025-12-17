@@ -91,7 +91,7 @@ export const useWithdrawalValidation = () => {
         .from('platform_config')
         .select('value')
         .eq('key', 'payout_schedule')
-        .single();
+        .maybeSingle();
 
       const schedule = (scheduleConfig?.value && Array.isArray(scheduleConfig.value)) 
         ? scheduleConfig.value as unknown as PayoutSchedule[] 

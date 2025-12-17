@@ -177,9 +177,11 @@ const handler = async (req)=>{
     console.log(`⚙️  [Queue Processor] Fetching email settings...`);
     const { data: configData } = await supabase.from("platform_config").select("value").eq("key", "email_settings").maybeSingle();
     const emailSettings = configData?.value || {
-      from_address: "noreply@mail.fineearn.com",
-      from_name: "FineEarn",
-      reply_to_address: "support@fineearn.com"
+      from_address: "noreply@profitchips.com",
+      from_name: "ProfitChips",
+      reply_to_address: "support@profitchips.com",
+      platform_name: "ProfitChips",
+      platform_url: "https://profitchips.com",
     };
     console.log(`✅ [Queue Processor] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     // STEP 4: Build recipient query based on filter
@@ -341,14 +343,19 @@ const handler = async (req)=>{
         newIdempotencyKeys.push(idempotencyKey);
         console.log(`🔑 [Queue Processor] Using idempotency key: ${idempotencyKey}`);
         // Prepare batch emails with personalization and idempotency key
-        const batchEmails = chunk.map((recipient)=>{
+        const batchEmails = await Promise.all(chunk.map(async (recipient) => {
           const personalizedBody = personalizeContent(job.body, recipient);
-          const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
-            title: "FineEarn",
+          const wrappedBody = await wrapInProfessionalTemplate(personalizedBody, {
+            title: emailSettings.platform_name || "ProfitChips",
             preheader: job.subject,
             headerGradient: true,
-            includeFooter: true
-          });
+            includeFooter: true,
+            platformName: emailSettings.platform_name || "ProfitChips",
+            platformUrl: emailSettings.platform_url || "https://profitchips.com",
+            supportUrl: `${emailSettings.platform_url || "https://profitchips.com"}/support`,
+            privacyUrl: `${emailSettings.platform_url || "https://profitchips.com"}/privacy`,
+            logoHtml: '',
+          }, supabase);
           const textVersion = personalizedBody.replace(/<[^>]*>/g, "").trim();
           return {
             from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
@@ -364,7 +371,8 @@ const handler = async (req)=>{
               "Idempotency-Key": idempotencyKey
             }
           };
-        });
+        }));
+
         // PHASE 2: Send batch using Resend Batch API with 429 retry logic
         const batchResponse = await retryWithBackoff(async ()=>await resend.batch.send(batchEmails), 3, 1000 // Start with 1s delay
         );

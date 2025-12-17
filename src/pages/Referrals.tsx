@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useReferralData } from "@/hooks/useReferralData";
@@ -19,6 +20,7 @@ import { CommissionStructureCard } from "@/components/referrals/CommissionStruct
 import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { Users, ChevronLeft, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Pagination,
   PaginationContent,
@@ -45,6 +47,23 @@ const Referrals = () => {
   // ✅ NEW: Separate hook for paginated referrals
   const { data: paginatedData, isLoading: isReferralsLoading } = usePaginatedReferrals(user?.id, currentPage);
   const { referrals: referredUsers, pagination } = paginatedData || { referrals: [], pagination: null };
+
+  // Fetch platform name from admin panel
+  const { data: platformName } = useQuery({
+    queryKey: ["platform-name"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "platform_name")
+        .maybeSingle();
+
+      if (error) throw error;
+      // platform_name is stored as a string directly, not as an object
+      return (data?.value as string) || "ProfitChips";
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -124,6 +143,7 @@ const Referrals = () => {
                 <ReferralCodeCard
                   referralCode={profile.referral_code}
                   username={profile.username}
+                  platformName={platformName}
                 />
 
                 <div className="mt-4 pt-4 border-t space-y-4">
@@ -137,6 +157,7 @@ const Referrals = () => {
                   <SocialShareButtons
                     referralUrl={`${window.location.origin}/signup?ref=${profile.referral_code}`}
                     username={profile.username}
+                    platformName={platformName}
                   />
                 </div>
               </Card>

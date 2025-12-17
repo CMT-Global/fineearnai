@@ -1,11 +1,10 @@
 project_id = "vrbtmbaqhhxwesqbcywm"
 
+# Auth hook is configured in Supabase Dashboard
 # [auth.hook.send_email]
 # enabled = true
-# uri = "https://vrbtmbaqhhxwesqbcywm.supabase.co/functions/v1/send-auth-email"
-
-# [auth.hook.send_email.secrets]
-# hook_secret = "hooksecret"
+# uri = "https://mobikymhzchzakwzpqep.supabase.co/functions/v1/send-auth-email"
+# secrets = "v1,whsec_placeholder_secret_min_32_chars_long"
 
 [functions.send-auth-email]
 verify_jwt = false
@@ -49,13 +48,7 @@ verify_jwt = false
 [functions.monitor-task-pool]
 verify_jwt = false
 
-[functions.complete-task]
-verify_jwt = true
-
 [functions.deposit]
-verify_jwt = true
-
-[functions.withdraw]
 verify_jwt = true
 
 [functions.upgrade-plan]
@@ -140,9 +133,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-user-invite]
-verify_jwt = false
-
-[functions.send-partner-notification]
 verify_jwt = false
 
 [functions.send-verification-otp]

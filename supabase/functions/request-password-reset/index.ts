@@ -116,21 +116,50 @@ serve(async (req)=>{
       throw new Error('Failed to create password reset token');
     }
     console.log(`✅ [${requestId}] Token stored in database: ${tokenRecord.id}`);
+
+    // Fetch platform URL from email settings
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+    
+    const emailSettings = emailConfig?.value || {
+      platform_url: 'https://profitchips.com',
+    };
+    const platformUrl = emailSettings.platform_url || req.headers.get('origin') || 'https://profitchips.com';
+
     // Generate reset link
-    const resetLink = `${req.headers.get('origin') || 'https://fineearn.com'}/reset-password?token=${token}`;
+    const resetLink = `${platformUrl}/reset-password?token=${token}`;
+
     // Send email using new template email sender
     console.log(`📧 [${requestId}] Sending password reset email to: ${email}`);
-    const { error: emailError } = await supabase.functions.invoke('send-template-email', {
-      body: {
+
+    // Use direct HTTP call to edge function with service role key
+    const functionUrl = `${supabaseUrl}/functions/v1/send-template-email`;
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
+      body: JSON.stringify({
         email: email,
         template_type: 'auth_password_reset',
         variables: {
           username: username,
           reset_link: resetLink,
-          email: email
-        }
-      }
+          email: email,
+        },
+      }),
     });
+
+    let emailError: any = null;
+    if (!response.ok) {
+      const errorText = await response.text();
+      emailError = new Error(`Edge Function returned status ${response.status}: ${errorText}`);
+    }
+
     if (emailError) {
       console.error(`❌ [${requestId}] Error sending email:`, emailError);
     // Don't fail the request - token is already created

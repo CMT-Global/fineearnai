@@ -41,7 +41,20 @@ Deno.serve(async (req)=>{
       console.error('Error querying users for expiry reminders:', reminderQueryError);
     } else if (upcomingExpiryUsers && upcomingExpiryUsers.length > 0) {
       console.log(`Found ${upcomingExpiryUsers.length} users with plans expiring in 1-5 days`);
-      for (const user of upcomingExpiryUsers){
+
+      // Fetch platform URL from email settings once for all reminders
+      const { data: emailConfig } = await supabaseClient
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'email_settings')
+        .maybeSingle();
+      
+      const emailSettings = emailConfig?.value || {
+        platform_url: 'https://profitchips.com',
+      };
+      const platformUrl = emailSettings.platform_url || Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://profitchips.com';
+
+      for (const user of upcomingExpiryUsers) {
         try {
           // Check if we already sent a reminder TODAY for this user
           const reminderCheckDate = new Date();
@@ -86,7 +99,7 @@ Deno.serve(async (req)=>{
               }),
               days_until_expiry: daysUntilExpiry.toString(),
               plan_price: parseFloat(membershipPlan.price).toFixed(2),
-              platform_url: Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://fineearn.com'
+              platform_url: platformUrl
             },
             supabaseClient
           });

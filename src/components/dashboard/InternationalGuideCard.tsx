@@ -7,7 +7,15 @@ import { PaymentGuideDialog } from "./PaymentGuideDialog";
 import { PAYMENT_GUIDES } from "@/data/payment-guides";
 import { PaymentProcessorGuide, GuideType } from "@/types/payment-guides";
 
-export const InternationalGuideCard = () => {
+interface InternationalGuideCardProps {
+  title?: string;
+  description?: string;
+}
+
+export const InternationalGuideCard = ({
+  title = "💳 Deposit & Withdrawal Quick Guides",
+  description = "Learn how to fund your account and withdraw earnings using various payment methods globally",
+}: InternationalGuideCardProps) => {
   const [isProcessorSelectionOpen, setIsProcessorSelectionOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedGuideType, setSelectedGuideType] = useState<GuideType>('deposit');
@@ -35,11 +43,11 @@ export const InternationalGuideCard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
-            💳 Deposit & Withdrawal Quick Guides
+            {title}
             <Badge variant="outline" className="text-xs animate-fade-in">Worldwide</Badge>
           </CardTitle>
           <CardDescription>
-            Learn how to fund your account and withdraw earnings using various payment methods globally
+            {description}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface ReferralCodeCardProps {
   referralCode: string;
   username: string;
+  platformName?: string;
 }
 
-export const ReferralCodeCard = ({ referralCode, username }: ReferralCodeCardProps) => {
+export const ReferralCodeCard = ({ referralCode, username, platformName = "ProfitChips" }: ReferralCodeCardProps) => {
   const [copied, setCopied] = useState(false);
   const referralUrl = `${window.location.origin}/signup?ref=${referralCode}`;
 
@@ -29,8 +30,8 @@ export const ReferralCodeCard = ({ referralCode, username }: ReferralCodeCardPro
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join FineEarn",
-          text: `Join me on FineEarn and earn money training AI! Use my referral code: ${referralCode}`,
+          title: `Join ${platformName}`,
+          text: `Join me on ${platformName} and earn money training AI! Use my referral code: ${referralCode}`,
           url: referralUrl,
         });
       } catch (error) {

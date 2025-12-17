@@ -36,6 +36,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { wrapInProfessionalTemplate, extractContentFromTemplate, createStyledButton } from '@/lib/email-template-wrapper';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RichTextEditorProps {
   value: string;
@@ -95,12 +97,30 @@ export const RichTextEditor = ({
   className,
   disabled = false,
   enableProfessionalTemplate = true,
-  templateTitle = 'FineEarn',
+  templateTitle,
   initialWrapperState = false, // Phase 3: Default to false
   onWrapperStateChange, // Phase 3: Callback for state changes
   onEditorReady,
 }: RichTextEditorProps) => {
   const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(initialWrapperState); // Phase 3: Initialize with passed value
+
+  // Fetch platform name dynamically
+  const { data: platformName } = useQuery({
+    queryKey: ["platform-name-for-editor"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "platform_name")
+        .maybeSingle();
+
+      if (error) throw error;
+      return (data?.value as string) || "ProfitChips";
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const displayTitle = templateTitle || platformName || "ProfitChips";
   
   // Custom mark for highlighting variables
   const VariableMark = Mark.create({
@@ -217,7 +237,9 @@ export const RichTextEditor = ({
       if (checked) {
         // Wrap current content in professional template
         const wrappedContent = wrapInProfessionalTemplate(currentContent, {
-          title: templateTitle,
+          title: displayTitle,
+          platformName: platformName || "ProfitChips",
+          platformUrl: "https://profitchips.com", // Could be fetched from config if needed
           headerGradient: true,
           includeFooter: true,
         });
@@ -229,23 +251,27 @@ export const RichTextEditor = ({
         onChange(plainContent);
       }
     }
-  }, [editor, onChange, templateTitle, onWrapperStateChange]); // Phase 3: Add onWrapperStateChange to dependencies
+  }, [editor, onChange, displayTitle, platformName, onWrapperStateChange]); // Phase 3: Add onWrapperStateChange to dependencies
 
   // Insert styled button
   const handleInsertButton = useCallback(() => {
     if (editor) {
-      const buttonHtml = createStyledButton('Click Here', 'https://fineearn.com', 'primary');
+      const buttonHtml = createStyledButton('Click Here', platformName ? `https://${platformName.toLowerCase().replace(/\s+/g, '')}.com` : 'https://profitchips.com', 'primary');
       editor.commands.insertContent(buttonHtml);
       
       // Update the value with wrapped template if enabled
       const updatedContent = editor.getHTML();
       if (useProfessionalTemplate) {
-        onChange(wrapInProfessionalTemplate(updatedContent, { title: templateTitle }));
+        onChange(wrapInProfessionalTemplate(updatedContent, { 
+          title: displayTitle,
+          platformName: platformName || "ProfitChips",
+          platformUrl: "https://profitchips.com",
+        }));
       } else {
         onChange(updatedContent);
       }
     }
-  }, [editor, onChange, useProfessionalTemplate, templateTitle]);
+  }, [editor, onChange, useProfessionalTemplate, displayTitle, platformName]);
 
   if (!editor) {
     return null;

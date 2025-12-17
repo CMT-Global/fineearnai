@@ -115,7 +115,7 @@ const PaymentSettings = () => {
         .from('platform_config')
         .select('*')
         .eq('key', 'payout_schedule')
-        .single();
+        .maybeSingle();
       
       if (!scheduleError && scheduleData?.value) {
         const dbSchedule = scheduleData.value as unknown as PayoutScheduleDay[];

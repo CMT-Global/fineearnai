@@ -146,20 +146,28 @@ const handler = async (req)=>{
       console.log(`⚙️  [Bulk Email] Fetching dynamic email settings...`);
       const { data: configData } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
       const emailSettings = configData?.value || {
-        from_address: 'noreply@mail.fineearn.com',
-        from_name: 'FineEarn',
-        reply_to_address: 'support@fineearn.com'
+        from_address: 'noreply@profitchips.com',
+        from_name: 'ProfitChips',
+        reply_to_address: 'support@profitchips.com',
+        platform_name: 'ProfitChips',
+        platform_url: 'https://profitchips.com',
       };
       console.log(`✅ [Bulk Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
       // Send email to external address
       try {
         // Wrap content in professional template
-        const wrappedBody = wrapInProfessionalTemplate(body, {
-          title: 'FineEarn',
+        const wrappedBody = await wrapInProfessionalTemplate(body, {
+          title: emailSettings.platform_name || 'ProfitChips',
           preheader: subject,
           headerGradient: true,
-          includeFooter: true
-        });
+          includeFooter: true,
+          platformName: emailSettings.platform_name || 'ProfitChips',
+          platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+          supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+          privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+          logoHtml: '',
+        }, supabase);
+
         // Create plain text version by stripping HTML tags
         const textVersion = body.replace(/<[^>]*>/g, '').trim();
         const emailResponse = await resend.emails.send({

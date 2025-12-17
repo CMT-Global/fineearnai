@@ -77,8 +77,15 @@ const corsHeaders = {
 }
 /**
  * Generate fallback email HTML when template is missing
- */ function generateFallbackEmail(emailActionType, username, authLink, token) {
-  const fallbackTemplates = {
+ */
+function generateFallbackEmail(
+  emailActionType: string,
+  username: string,
+  authLink: string,
+  token: string,
+  platformName: string = 'ProfitChips'
+): { subject: string; body: string } {
+  const fallbackTemplates: Record<string, { subject: string; body: string }> = {
     recovery: {
       subject: "Reset Your Password",
       body: `
@@ -107,7 +114,7 @@ const corsHeaders = {
       subject: "Confirm Your Email",
       body: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333;">Welcome to FineEarn!</h1>
+          <h1 style="color: #333;">Welcome to ${platformName}!</h1>
           <p>Hi ${username},</p>
           <p>Thanks for signing up! Please confirm your email address by clicking the button below:</p>
           <div style="margin: 30px 0;">
@@ -146,7 +153,7 @@ const corsHeaders = {
       subject: "Your Magic Link",
       body: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333;">Login to FineEarn</h1>
+          <h1 style="color: #333;">Login to ${platformName}</h1>
           <p>Hi ${username},</p>
           <p>Click the button below to login to your account:</p>
           <div style="margin: 30px 0;">
@@ -224,7 +231,13 @@ serve(async (req)=>{
     } else {
       console.warn(`⚠️ [Auth Email Hook] No custom template found, using fallback`);
       // Use fallback template
-      const fallback = generateFallbackEmail(email_action_type, username, authLink, token);
+      const fallback = generateFallbackEmail(
+        email_action_type, 
+        username, 
+        authLink, 
+        token,
+        emailSettings.platform_name || 'ProfitChips'
+      );
       subject = fallback.subject;
       htmlBody = fallback.body;
     }
@@ -234,11 +247,12 @@ serve(async (req)=>{
     console.log(`⚙️  [Auth Email Hook] Fetching dynamic email settings...`);
     const { data: configData } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
-      reply_to_name: 'FineEarn Support',
-      platform_name: 'FineEarn'
+      from_address: 'noreply@profitchips.com',
+      from_name: 'ProfitChips',
+      reply_to_address: 'support@profitchips.com',
+      reply_to_name: 'ProfitChips Support',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
     };
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`📧 [Auth Email Hook] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
@@ -249,12 +263,19 @@ serve(async (req)=>{
     const needsWrapper = !htmlBody.trim().toLowerCase().startsWith('<!doctype html');
     if (needsWrapper) {
       console.log(`🎨 [Auth Email Hook] Template is HTML fragment - applying professional wrapper`);
-      htmlBody = wrapInProfessionalTemplate(htmlBody, {
-        title: emailSettings.platform_name || 'FineEarn',
+      
+      htmlBody = await wrapInProfessionalTemplate(htmlBody, {
+        title: emailSettings.platform_name || 'ProfitChips',
         preheader: subject,
         headerGradient: true,
-        includeFooter: true
-      });
+        includeFooter: true,
+        platformName: emailSettings.platform_name || 'ProfitChips',
+        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+        logoHtml: '',
+      }, supabase);
+      
       console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);
     } else {
       console.log(`ℹ️  [Auth Email Hook] Template already has full HTML structure - skipping wrapper`);

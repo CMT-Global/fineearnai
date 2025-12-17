@@ -31,15 +31,15 @@ const emailSettingsSchema = z.object({
 
 // Default settings - only essential fields
 const DEFAULT_SETTINGS = {
-  from_address: "noreply@mail.fineearn.com",
-  from_name: "FineEarn",
-  reply_to_address: "support@fineearn.com",
-  reply_to_name: "FineEarn Support",
-  support_email: "support@fineearn.com",
-  platform_name: "FineEarn",
-  platform_url: "https://fineearn.com",
-  admin_notification_email: "admin@fineearn.com",
-  footer_text: "This is an automated email from FineEarn. Please do not reply to this email.",
+  from_address: "noreply@profitchips.com",
+  from_name: "ProfitChips",
+  reply_to_address: "support@profitchips.com",
+  reply_to_name: "ProfitChips Support",
+  support_email: "support@profitchips.com",
+  platform_name: "ProfitChips",
+  platform_url: "https://profitchips.com",
+  admin_notification_email: "admin@profitchips.com",
+  footer_text: "This is an automated email from ProfitChips. Please do not reply to this email.",
 };
 
 export default function EmailSettings() {
@@ -266,7 +266,7 @@ export default function EmailSettings() {
                       type="email"
                       value={settings.from_address}
                       onChange={(e) => handleInputChange('from_address', e.target.value)}
-                      placeholder="noreply@mail.fineearn.com"
+                      placeholder="noreply@profitchips.com"
                     />
                     {errors.from_address && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -282,7 +282,7 @@ export default function EmailSettings() {
                       id="from_name"
                       value={settings.from_name}
                       onChange={(e) => handleInputChange('from_name', e.target.value)}
-                      placeholder="FineEarn"
+                      placeholder="ProfitChips"
                     />
                     {errors.from_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -312,7 +312,7 @@ export default function EmailSettings() {
                       type="email"
                       value={settings.reply_to_address}
                       onChange={(e) => handleInputChange('reply_to_address', e.target.value)}
-                      placeholder="support@fineearn.com"
+                      placeholder="support@profitchips.com"
                     />
                     {errors.reply_to_address && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -328,7 +328,7 @@ export default function EmailSettings() {
                       id="reply_to_name"
                       value={settings.reply_to_name}
                       onChange={(e) => handleInputChange('reply_to_name', e.target.value)}
-                      placeholder="FineEarn Support"
+                      placeholder="ProfitChips Support"
                     />
                     {errors.reply_to_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -357,7 +357,7 @@ export default function EmailSettings() {
                       id="platform_name"
                       value={settings.platform_name}
                       onChange={(e) => handleInputChange('platform_name', e.target.value)}
-                      placeholder="FineEarn"
+                      placeholder="ProfitChips"
                     />
                     {errors.platform_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -393,7 +393,7 @@ export default function EmailSettings() {
                       type="email"
                       value={settings.support_email}
                       onChange={(e) => handleInputChange('support_email', e.target.value)}
-                      placeholder="support@fineearn.com"
+                      placeholder="support@profitchips.com"
                     />
                     {errors.support_email && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -410,7 +410,7 @@ export default function EmailSettings() {
                       type="email"
                       value={settings.admin_notification_email}
                       onChange={(e) => handleInputChange('admin_notification_email', e.target.value)}
-                      placeholder="admin@fineearn.com"
+                      placeholder="admin@profitchips.com"
                     />
                     {errors.admin_notification_email && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -427,7 +427,7 @@ export default function EmailSettings() {
                     id="footer_text"
                     value={settings.footer_text}
                     onChange={(e) => handleInputChange('footer_text', e.target.value)}
-                    placeholder="This is an automated email from FineEarn..."
+                    placeholder="This is an automated email from ProfitChips..."
                     rows={3}
                   />
                   {errors.footer_text && (

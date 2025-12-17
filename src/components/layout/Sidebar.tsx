@@ -18,10 +18,10 @@ import {
   HelpCircle
 } from "lucide-react";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseService } from "@/integrations/supabase";
 import { useIsPartner } from "@/hooks/usePartner";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
@@ -44,6 +44,33 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { data: isPartner } = useIsPartner();
 
+  // Load feature-flag style platform config for sidebar-controlled sections
+  const { data: sidebarConfig } = useQuery({
+    queryKey: ["sidebar-platform-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["how_it_works_content", "partner_program_config"]);
+
+      if (error) throw error;
+
+      const map = new Map<string, any>();
+      data?.forEach((row: any) => {
+        map.set(row.key, row.value);
+      });
+
+      return {
+        howItWorks: map.get("how_it_works_content") || {},
+        partnerProgram: map.get("partner_program_config") || {},
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isHowItWorksVisible = sidebarConfig?.howItWorks?.isVisible ?? true;
+  const isPartnerProgramEnabled = sidebarConfig?.partnerProgram?.isEnabled ?? true;
+
   // Primary navigation items (shown in bottom nav on mobile + sidebar)
   const basePrimaryNavItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -52,23 +79,25 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Users, label: "Referrals", path: "/referrals" },
   ];
 
-  // Always show partner navigation - changes based on partner status
+  // Partner navigation - changes based on partner status and global partner program toggle
   const partnerNavItem = isPartner
     ? { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true }
     : { icon: Sparkles, label: "Become a Partner", path: "/become-partner", isPartner: false };
 
   const primaryNavItems = [
     ...basePrimaryNavItems,
-    partnerNavItem,
+    ...(isPartnerProgramEnabled ? [partnerNavItem] : []),
     { icon: Crown, label: "Membership", path: "/plans" },
   ];
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
-    { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true },
+    isHowItWorksVisible
+      ? { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true }
+      : null,
     { icon: History, label: "Transactions", path: "/transactions" },
     { icon: Settings, label: "Settings", path: "/settings" },
-  ];
+  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[];
 
   // Combined nav items for desktop sidebar
   const navItems: any[] = [...primaryNavItems, ...secondaryNavItems];
@@ -110,21 +139,24 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         queryClient.prefetchQuery({
           queryKey: ['dashboard-data-v2', userId],
           queryFn: async () => {
-            const [profileRes, statsRes] = await Promise.all([
-              supabase.from('profiles').select('*').eq('id', userId).single(),
-              supabase.rpc('get_referral_stats', { user_uuid: userId })
+            const [profile, stats] = await Promise.all([
+              supabaseService.profiles.get(userId),
+              supabaseService.rpc.getReferralStats(userId)
             ]);
             
-            const planRes = await supabase
-              .from('membership_plans')
-              .select('*')
-              .eq('name', profileRes.data?.membership_plan)
-              .single();
+            const plan = profile.membership_plan
+              ? await supabaseService.membershipPlans.getByName(profile.membership_plan)
+              : null;
+            
+            // Add earner badge status
+            const accountType = plan?.account_type;
+            const { getEarnerBadgeStatus } = await import('@/lib/earner-badge-utils');
+            const earnerBadge = getEarnerBadgeStatus(accountType);
             
             return {
-              profile: profileRes.data,
-              referralStats: statsRes.data?.[0],
-              membershipPlan: planRes.data
+              profile: { ...profile, earnerBadge },
+              referralStats: stats,
+              membershipPlan: plan
             };
           },
           staleTime: 30000,
@@ -136,24 +168,20 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
         queryClient.prefetchQuery({
           queryKey: ['referral-complete-data-v2', userId],
           queryFn: async () => {
-            const [profileRes, statsRes, earningsRes, referralsRes] = await Promise.all([
-              supabase.from('profiles').select('*').eq('id', userId).single(),
-              supabase.rpc('get_referral_stats', { user_uuid: userId }),
-              supabase.from('referral_earnings')
-                .select('*')
-                .eq('referrer_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(20),
-              supabase.functions.invoke('get-paginated-referrals', {
-                body: { page: 1, limit: 20 }
-              })
+            const { supabaseService } = await import('@/integrations/supabase');
+            
+            const [profile, stats, earnings, referrals] = await Promise.all([
+              supabaseService.profiles.get(userId),
+              supabaseService.rpc.getReferralStats(userId),
+              supabaseService.referralEarnings.getByReferrer(userId, 20),
+              supabaseService.referrals.getByReferrer(userId)
             ]);
             
             return { 
-              profile: profileRes.data,
-              stats: statsRes.data?.[0],
-              earnings: earningsRes.data,
-              referrals: referralsRes.data
+              profile,
+              stats,
+              earnings,
+              referrals: referrals.slice(0, 20) // Limit to 20 for prefetch
             };
           },
           staleTime: 30000,
@@ -207,10 +235,10 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   const NavContent = () => (
     <>
-      <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
+      <div className="p-6 border-b z-50 border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">FineEarn</span>
+          <span className="text-xl font-bold">ProfitChips</span>
         </div>
       </div>
 
@@ -278,7 +306,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">FineEarn</span>
+          <span className="text-xl font-bold">ProfitChips</span>
         </div>
       </div>
 
@@ -369,6 +397,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   return (
     <>
+    <div className="max-h-screen sticky top-0 overflow-y-auto " style={{scrollbarWidth: 'none'}}>
       <LogoutConfirmDialog
         open={logoutDialogOpen}
         onOpenChange={setLogoutDialogOpen}
@@ -378,7 +407,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-          <span className="font-bold">FineEarn</span>
+          <span className="font-bold">ProfitChips</span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -410,6 +439,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav profile={profile} />
+      </div>
     </>
   );
 };

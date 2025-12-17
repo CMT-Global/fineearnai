@@ -4,13 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Send, Music } from "lucide-react";
 import { TelegramGroupsDialog } from "@/components/shared/TelegramGroupsDialog";
 
-export const SocialFollowCard = () => {
+interface SocialFollowCardProps {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+}
+
+export const SocialFollowCard = ({
+  facebookUrl = "https://facebook.com/ProfitChips",
+  instagramUrl = "https://www.instagram.com/ProfitChipsofficial/",
+  tiktokUrl = "https://www.tiktok.com/@ProfitChips",
+}: SocialFollowCardProps) => {
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
 
   const socialLinks = [
     {
       name: "Facebook",
-      url: "https://facebook.com/fineearn",
+      url: facebookUrl,
       icon: Facebook,
       color: "bg-[#1877F2] hover:bg-[#0d65d9]",
       description: "Join other members",
@@ -18,7 +28,7 @@ export const SocialFollowCard = () => {
     },
     {
       name: "Instagram", 
-      url: "https://www.instagram.com/fineearnofficial/",
+      url: instagramUrl,
       icon: Instagram,
       color: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#FCAF45] hover:opacity-90",
       description: "Daily earning tips",
@@ -34,7 +44,7 @@ export const SocialFollowCard = () => {
     },
     {
       name: "TikTok",
-      url: "https://www.tiktok.com/@fineearn",
+      url: tiktokUrl,
       icon: Music,
       color: "bg-black hover:bg-gray-900",
       description: "Viral earning hacks",
@@ -61,50 +71,45 @@ export const SocialFollowCard = () => {
             // Telegram button opens dialog instead of direct link
             if (social.name === "Telegram") {
               return (
-                <button
+                <Button
                   key={social.name}
                   onClick={() => setTelegramDialogOpen(true)}
-                  className="block group"
+                  className={`w-full h-auto py-4 flex flex-col items-center gap-2 
+                             ${social.color} text-white transition-all duration-300
+                             hover:scale-105 hover:shadow-lg`}
+                  type="button"
                   aria-label="Open Telegram groups dialog"
                 >
-                  <Button
-                    className={`w-full h-auto py-4 flex flex-col items-center gap-2 
-                               ${social.color} text-white transition-all duration-300
-                               group-hover:scale-105 group-hover:shadow-lg`}
-                    type="button"
-                  >
-                    <social.icon className="w-6 h-6" />
-                    <div className="flex flex-col items-center">
-                      <span className="font-semibold">{social.name}</span>
-                      <span className="text-xs opacity-90">{social.description}</span>
-                      <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
-                    </div>
-                  </Button>
-                </button>
+                  <social.icon className="w-6 h-6" />
+                  <div className="flex flex-col items-center">
+                    <span className="font-semibold">{social.name}</span>
+                    <span className="text-xs opacity-90">{social.description}</span>
+                    <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
+                  </div>
+                </Button>
               );
             }
 
             // Other social links remain as external links
             return (
-              <a
+              <Button
                 key={social.name}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block group"
+                asChild
+                className={`w-full h-auto py-4 ${social.color} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
               >
-                <Button
-                  className={`w-full h-auto py-4 flex flex-col items-center gap-2 
-                             ${social.color} text-white transition-all duration-300
-                             group-hover:scale-105 group-hover:shadow-lg`}
+                <a
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 w-full"
                 >
                   <social.icon className="w-6 h-6" />
                   <div className="flex flex-col items-center">
                     <span className="font-semibold">{social.name}</span>
                     <span className="text-xs opacity-90">{social.description}</span>
                   </div>
-                </Button>
-              </a>
+                </a>
+              </Button>
             );
           })}
         </div>

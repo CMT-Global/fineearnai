@@ -119,6 +119,19 @@ Deno.serve(async (req)=>{
       });
     }
     console.log('[OTP] OTP stored in database, sending email...');
+
+    // Fetch platform URL from email settings
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+    
+    const emailSettings = emailConfig?.value || {
+      platform_url: 'https://profitchips.com',
+    };
+    const platformUrl = emailSettings.platform_url || Deno.env.get('VITE_SUPABASE_URL')?.replace('//', '//app.') || 'https://profitchips.com';
+
     // Send OTP email
     try {
       await sendTemplateEmail({
@@ -131,7 +144,7 @@ Deno.serve(async (req)=>{
           usdc_address: usdcAddress || 'Not provided',
           usdt_address: usdtAddress || 'Not provided',
           expiry_minutes: '10',
-          platform_url: Deno.env.get('VITE_SUPABASE_URL')?.replace('//', '//app.') || 'https://fineearn.com'
+          platform_url: platformUrl,
         },
         supabaseClient: supabase
       });

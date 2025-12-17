@@ -42,6 +42,10 @@ const UserDetail = lazy(() => import("@/pages/admin/UserDetail"));
 const Deposits = lazy(() => import("@/pages/admin/Deposits"));
 const AdminTransactions = lazy(() => import("@/pages/admin/Transactions"));
 const PaymentSettings = lazy(() => import("@/pages/admin/PaymentSettings"));
+const FeeSavingsBannerSettings = lazy(() => import("@/pages/admin/FeeSavingsBannerSettings"));
+const DashboardContentSettings = lazy(() => import("@/pages/admin/DashboardContentSettings"));
+const HowItWorksSettings = lazy(() => import("@/pages/admin/HowItWorksSettings"));
+const EmailTemplateGlobalSettings = lazy(() => import("@/pages/admin/EmailTemplateGlobalSettings"));
 const PlansManage = lazy(() => import("@/pages/admin/PlansManage"));
 const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemManage"));
 const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
@@ -73,6 +77,7 @@ const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
+const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -287,6 +292,56 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <PaymentSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/dashboard"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <DashboardContentSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/how-it-works"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <HowItWorksSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/email-template"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <EmailTemplateGlobalSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/partner-program"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <PartnerProgramSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/fee-savings-banner"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <FeeSavingsBannerSettings />
             </AdminLayout>
           </AdminRoute>
         }
@@ -584,7 +639,12 @@ const RoutesWrapper = () => {
 
 const App = () => (
   <GlobalErrorBoundary>
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <AdminModeProvider>
           <TooltipProvider>

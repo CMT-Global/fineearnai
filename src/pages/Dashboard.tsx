@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
-import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
 import { SocialFollowCard } from "@/components/dashboard/SocialFollowCard";
 import { InternationalGuideCard } from "@/components/dashboard/InternationalGuideCard";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
@@ -35,6 +34,7 @@ import { WalletCard } from "@/components/wallet/WalletCard";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { LoginMessageDialog } from "@/components/shared/LoginMessageDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -50,6 +50,53 @@ const Dashboard = () => {
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
   const { profile, referralStats, membershipPlan } = data || {};
+
+  // Dashboard content & platform name configuration
+  const { data: dashboardContentData } = useQuery({
+    queryKey: ["dashboard-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["platform_name", "dashboard_content"]);
+
+      if (error) throw error;
+
+      const map = new Map<string, any>();
+      data?.forEach((row: any) => {
+        map.set(row.key, row.value);
+      });
+
+      const platformName = (map.get("platform_name") as string) || "ProfitChips";
+      const dashboardContent = map.get("dashboard_content") || {};
+
+      return {
+        platformName,
+        dashboardContent,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const platformName = dashboardContentData?.platformName || "ProfitChips";
+  const earnersGuideVisible =
+    dashboardContentData?.dashboardContent?.earnersGuide?.isVisible ?? true;
+  const guidesSectionVisible =
+    dashboardContentData?.dashboardContent?.guidesSection?.isVisible ?? true;
+  const guidesTitle =
+    dashboardContentData?.dashboardContent?.guidesSection?.title ||
+    "💳 Deposit & Withdrawal Quick Guides";
+  const guidesDescription =
+    dashboardContentData?.dashboardContent?.guidesSection?.description ||
+    "Learn how to fund your account and withdraw earnings using various payment methods globally";
+  const socialSectionVisible =
+    dashboardContentData?.dashboardContent?.socialSection?.isVisible ?? true;
+  const socialFacebookUrl =
+    dashboardContentData?.dashboardContent?.socialSection?.facebookUrl;
+  const socialInstagramUrl =
+    dashboardContentData?.dashboardContent?.socialSection?.instagramUrl;
+  const socialTiktokUrl =
+    dashboardContentData?.dashboardContent?.socialSection?.tiktokUrl;
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -179,7 +226,7 @@ const Dashboard = () => {
               <Alert className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                  <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+               
                 </div>
                 <AlertTitle className="text-orange-900 dark:text-orange-100 flex items-center gap-2">
                   {profile.earnerBadge.badgeText}
@@ -304,7 +351,8 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* FineEarn Earners Guide Button */}
+          {/* Platform Earners Guide Button */}
+          {earnersGuideVisible && (
           <div className="mx-4 lg:mx-8 mt-6">
             <Button
               onClick={() => navigate("/how-it-works")}
@@ -318,7 +366,7 @@ const Dashboard = () => {
               <div className="relative flex items-center justify-center gap-3">
                 <Sparkles className="h-6 w-6 animate-spin-slow" />
                 <div className="flex flex-col items-start">
-                  <span className="text-lg font-bold">FineEarn - Earners Guide</span>
+                    <span className="text-lg font-bold">{platformName} - Earners Guide</span>
                   <span className="text-xs text-white/80">Learn how to maximize your earnings</span>
                 </div>
                 <div className="ml-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
@@ -327,6 +375,7 @@ const Dashboard = () => {
               </div>
             </Button>
           </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
@@ -383,14 +432,22 @@ const Dashboard = () => {
           </div>
 
           {/* Deposit & Withdrawal Quick Guides Section */}
+          {guidesSectionVisible && (
           <div className="px-4 lg:px-8 pb-6">
-            <InternationalGuideCard />
+              <InternationalGuideCard title={guidesTitle} description={guidesDescription} />
           </div>
+          )}
 
           {/* Social Media Follow Section */}
+          {socialSectionVisible && (
           <div className="px-4 lg:px-8 pb-6">
-            <SocialFollowCard />
+              <SocialFollowCard
+                facebookUrl={socialFacebookUrl}
+                instagramUrl={socialInstagramUrl}
+                tiktokUrl={socialTiktokUrl}
+              />
           </div>
+          )}
 
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 lg:px-8 pb-8">
@@ -497,8 +554,6 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Floating Telegram Button */}
-          <FloatingTelegramButton />
         </>
       )}
     </PageLayout>

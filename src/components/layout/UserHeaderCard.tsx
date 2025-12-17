@@ -236,7 +236,7 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
       {/* Earner Verification Badge - PROMINENT */}
       {effectiveBadge && (
         <div className="px-4 pb-3 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center ">
             <Badge 
               variant={effectiveBadge.badgeVariant}
               className="text-xs font-bold"

@@ -117,12 +117,12 @@ serve(async (req)=>{
     console.log(`⚙️  [Test Email] Fetching dynamic email settings...`);
     const { data: configData } = await supabaseClient.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com',
-      reply_to_name: 'FineEarn Support',
-      platform_name: 'FineEarn',
-      platform_url: 'https://fineearn.com'
+      from_address: 'noreply@profitchips.com',
+      from_name: 'ProfitChips',
+      reply_to_address: 'support@profitchips.com',
+      reply_to_name: 'ProfitChips Support',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
     };
     console.log(`✅ [Test Email] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`✅ [Test Email] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
@@ -209,12 +209,19 @@ serve(async (req)=>{
     if (needsWrapper) {
       console.log('[Test Email] Template is HTML fragment - applying professional wrapper');
       const wrapperStart = Date.now();
-      personalizedBody = wrapInProfessionalTemplate(personalizedBody, {
-        title: emailSettings.platform_name || 'FineEarn',
+      
+      personalizedBody = await wrapInProfessionalTemplate(personalizedBody, {
+        title: emailSettings.platform_name || 'ProfitChips',
         preheader: personalizedSubject,
         headerGradient: true,
-        includeFooter: true
-      });
+        includeFooter: true,
+        platformName: emailSettings.platform_name || 'ProfitChips',
+        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+        logoHtml: '',
+      }, supabaseClient);
+      
       const wrapperTime = Date.now() - wrapperStart;
       console.log(`[Test Email] ✅ Professional wrapper applied in ${wrapperTime}ms`);
     } else {

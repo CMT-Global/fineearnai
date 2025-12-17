@@ -48,9 +48,11 @@ const handler = async (req)=>{
     console.log(`⚙️  [Scheduled Emails] Fetching dynamic email settings...`);
     const { data: configData } = await supabase.from('platform_config').select('value').eq('key', 'email_settings').maybeSingle();
     const emailSettings = configData?.value || {
-      from_address: 'noreply@mail.fineearn.com',
-      from_name: 'FineEarn',
-      reply_to_address: 'support@fineearn.com'
+      from_address: 'noreply@profitchips.com',
+      from_name: 'ProfitChips',
+      reply_to_address: 'support@profitchips.com',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
     };
     console.log(`✅ [Scheduled Emails] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
     console.log(`✅ [Scheduled Emails] Reply-To: ${emailSettings.reply_to_address}`);
@@ -78,12 +80,18 @@ const handler = async (req)=>{
           }
           try {
             // Wrap content in professional template
-            const wrappedBody = wrapInProfessionalTemplate(scheduledEmail.body, {
-              title: 'FineEarn',
+            const wrappedBody = await wrapInProfessionalTemplate(scheduledEmail.body, {
+              title: emailSettings.platform_name || 'ProfitChips',
               preheader: scheduledEmail.subject,
               headerGradient: true,
-              includeFooter: true
-            });
+              includeFooter: true,
+              platformName: emailSettings.platform_name || 'ProfitChips',
+              platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+              supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+              privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+              logoHtml: '',
+            }, supabase);
+
             // Create plain text version by stripping HTML tags
             const textVersion = scheduledEmail.body.replace(/<[^>]*>/g, '').trim();
             const emailResponse = await resend.emails.send({
@@ -196,12 +204,18 @@ const handler = async (req)=>{
             // Generate unique tracking ID for spam prevention and monitoring
             const trackingId = `scheduled-${scheduledEmail.id}-${recipient.id}-${Date.now()}`;
             // Wrap personalized content in professional template
-            const wrappedBody = wrapInProfessionalTemplate(personalizedBody, {
-              title: 'FineEarn',
+            const wrappedBody = await wrapInProfessionalTemplate(personalizedBody, {
+              title: emailSettings.platform_name || 'ProfitChips',
               preheader: personalizedSubject,
               headerGradient: true,
-              includeFooter: true
-            });
+              includeFooter: true,
+              platformName: emailSettings.platform_name || 'ProfitChips',
+              platformUrl: emailSettings.platform_url || 'https://profitchips.com',
+              supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
+              privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
+              logoHtml: '',
+            }, supabase);
+
             // Create plain text version by stripping HTML tags
             const textVersion = personalizedBody.replace(/<[^>]*>/g, '').trim();
             // Send email with spam prevention headers
