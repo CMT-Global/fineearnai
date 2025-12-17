@@ -1,5 +1,8 @@
+// @ts-ignore - Deno edge function, std library available at runtime
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore - Deno edge function, Supabase types available at runtime
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.0";
+// @ts-ignore - Deno edge function, Resend types available at runtime
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
@@ -13,6 +16,7 @@ const corsHeaders = {
 // Default Resend domain - can be overridden via platform_config table
 // To change: Update the 'email_from_address' or 'email_settings' key in platform_config table
 // Or set RESEND_DOMAIN environment variable (e.g., "mail.yourdomain.com")
+// @ts-ignore - Deno global is available in Deno runtime
 const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'profitchips.com';
 const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
 
@@ -195,7 +199,7 @@ serve(async (req: Request) => {
     }
     // Default fallbacks - using verified domain
     const baseFromAddress = emailSettings.from_address || DEFAULT_FROM_ADDRESS;
-    const fromName = emailSettings.from_name || emailSettings.platform_name || 'FineEarn';
+    const fromName = emailSettings.from_name || emailSettings.platform_name || 'ProfitChips';
     const replyTo = emailSettings.reply_to_address || baseFromAddress;
 
     // Normalize to configured domain if an unverified domain address slips through

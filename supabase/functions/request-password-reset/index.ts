@@ -141,8 +141,20 @@ serve(async (req: Request) => {
 
     console.log(`✅ [${requestId}] Token stored in database: ${tokenRecord.id}`);
 
+    // Fetch platform URL from email settings
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+    
+    const emailSettings = emailConfig?.value || {
+      platform_url: 'https://profitchips.com',
+    };
+    const platformUrl = emailSettings.platform_url || req.headers.get('origin') || 'https://profitchips.com';
+
     // Generate reset link
-    const resetLink = `${req.headers.get('origin') || 'https://fineearn.com'}/reset-password?token=${token}`;
+    const resetLink = `${platformUrl}/reset-password?token=${token}`;
 
     // Send email using new template email sender
     console.log(`📧 [${requestId}] Sending password reset email to: ${email}`);

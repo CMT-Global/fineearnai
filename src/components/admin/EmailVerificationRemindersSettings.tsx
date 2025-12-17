@@ -57,11 +57,11 @@ export function EmailVerificationRemindersSettings() {
       console.error("Error fetching reminder config:", error);
       // Only show error toast for actual errors, not missing records
       if (error.code !== 'PGRST116') {
-        toast({
-          title: "Error",
-          description: "Failed to load reminder settings",
-          variant: "destructive",
-        });
+      toast({
+        title: "Error",
+        description: "Failed to load reminder settings",
+        variant: "destructive",
+      });
       }
     } finally {
       setIsLoading(false);

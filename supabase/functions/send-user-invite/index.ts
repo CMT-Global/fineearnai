@@ -105,16 +105,18 @@ const handler = async (req: Request): Promise<Response> => {
       .from("platform_config")
       .select("value")
       .eq("key", "email_settings")
-      .single();
+      .maybeSingle();
 
     const emailSettings: EmailSettings = emailConfig?.value || {
       from_name: "ProfitChips",
-      from_address: "onboarding@resend.dev",
+      from_address: "noreply@profitchips.com",
       reply_to_address: "support@profitchips.com",
+      platform_name: "ProfitChips",
+      platform_url: "https://profitchips.com",
     };
 
-    // Get platform URL
-    const platformUrl = Deno.env.get("VITE_SUPABASE_URL")?.replace("/auth/v1", "") || "https://fineearn.com";
+    // Get platform URL from email settings or fallback
+    const platformUrl = emailSettings.platform_url || Deno.env.get("VITE_SUPABASE_URL")?.replace("/auth/v1", "") || "https://profitchips.com";
     const bonusText = signupBonus || "Get started with your first tasks!";
 
     // Replace variables in template

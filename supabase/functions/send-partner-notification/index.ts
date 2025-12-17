@@ -64,11 +64,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch email settings first (needed for dynamic platform name in templates)
+    const { data: emailConfig } = await supabase
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_settings')
+      .maybeSingle();
+
+    const emailSettings = emailConfig?.value || {
+      from_address: 'noreply@profitchips.com',
+      from_name: 'ProfitChips',
+      platform_name: 'ProfitChips',
+      platform_url: 'https://profitchips.com',
+    };
+
     // Generate email content based on notification type
     let subject = '';
     let html = '';
     const userName = profile.full_name || profile.username;
     const username = data.username || profile.username;
+    const platformName = emailSettings.platform_name || 'ProfitChips';
 
     switch (notification_type) {
       case 'application_approved':
@@ -83,7 +98,7 @@ Deno.serve(async (req) => {
             <p style="font-size: 16px; line-height: 1.6;">Hello ${userName},</p>
             
             <p style="font-size: 16px; line-height: 1.6;">
-              We're excited to inform you that your partner application has been approved! Welcome to the FineEarn Partner Program.
+              We're excited to inform you that your partner application has been approved! Welcome to the ${platformName} Partner Program.
             </p>
 
             <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 8px;">
@@ -117,7 +132,7 @@ Deno.serve(async (req) => {
 
             <p style="font-size: 16px; line-height: 1.6; margin-top: 25px;">
               Welcome aboard!<br/>
-              <strong>The FineEarn Team</strong>
+              <strong>The ${platformName} Team</strong>
             </p>
           </div>
         `;
@@ -134,7 +149,7 @@ Deno.serve(async (req) => {
             <p style="font-size: 16px; line-height: 1.6;">Hello ${userName},</p>
             
             <p style="font-size: 16px; line-height: 1.6;">
-              Thank you for your interest in joining the FineEarn Partner Program. After careful review, we're unable to approve your application at this time.
+              Thank you for your interest in joining the ${platformName} Partner Program. After careful review, we're unable to approve your application at this time.
             </p>
 
             ${data.rejection_reason ? `
@@ -155,7 +170,7 @@ Deno.serve(async (req) => {
             </div>
 
             <p style="font-size: 16px; line-height: 1.6;">
-              We appreciate your interest in partnering with FineEarn. While we can't approve your application now, we encourage you to continue growing your skills and network.
+              We appreciate your interest in partnering with ${platformName}. While we can't approve your application now, we encourage you to continue growing your skills and network.
             </p>
 
             <div style="text-align: center; margin: 35px 0;">
@@ -171,7 +186,7 @@ Deno.serve(async (req) => {
 
             <p style="font-size: 16px; line-height: 1.6; margin-top: 25px;">
               Best regards,<br/>
-              <strong>The FineEarn Team</strong>
+              <strong>The ${platformName} Team</strong>
             </p>
           </div>
         `;
@@ -331,17 +346,7 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Get email settings
-    const { data: emailConfig } = await supabase
-      .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
-
-    const emailSettings = emailConfig?.value || {
-      from_address: 'noreply@profitchips.com',
-      from_name: 'FineEarn',
-    };
+    // Email settings already fetched above, reuse them
 
     // Send email via Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));

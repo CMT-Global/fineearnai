@@ -244,7 +244,7 @@ serve(async (req) => {
         supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
         privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
         logoHtml: '',
-      }, supabase);
+      }, supabaseClient);
       
       const wrapperTime = Date.now() - wrapperStart;
       console.log(`[Test Email] ✅ Professional wrapper applied in ${wrapperTime}ms`);
