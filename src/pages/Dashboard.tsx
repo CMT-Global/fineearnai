@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
-import { FloatingTelegramButton } from "@/components/shared/FloatingTelegramButton";
 import { SocialFollowCard } from "@/components/dashboard/SocialFollowCard";
 import { InternationalGuideCard } from "@/components/dashboard/InternationalGuideCard";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
@@ -497,8 +496,6 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Floating Telegram Button */}
-          <FloatingTelegramButton />
         </>
       )}
     </PageLayout>
