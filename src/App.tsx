@@ -76,6 +76,7 @@ const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
+const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -310,6 +311,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <HowItWorksSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/partner-program"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <PartnerProgramSettings />
             </AdminLayout>
           </AdminRoute>
         }

@@ -152,6 +152,7 @@ export default function HowItWorksSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["how-it-works-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["how-it-works-content"] });
       setHasChanges(false);
       toast({
         title: "Settings saved",

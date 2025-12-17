@@ -121,6 +121,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       items: [
         { label: "Dashboard Content", path: "/admin/content/dashboard" },
         { label: "How It Works Content", path: "/admin/content/how-it-works" },
+        { label: "Partner Program Content", path: "/admin/content/partner-program" },
       ],
     },
     {

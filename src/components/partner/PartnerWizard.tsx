@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,18 +32,98 @@ interface PartnerWizardProps {
   onClose: () => void;
 }
 
-const steps = [
+interface PartnerWizardSlideConfig {
+  id: number;
+  title: string;
+  headline: string;
+  body: string;
+}
+
+interface PartnerProgramContentConfig {
+  wizard: {
+    isEnabled: boolean;
+    slides: PartnerWizardSlideConfig[];
+  };
+}
+
+const DEFAULT_PLATFORM_NAME = "ProfitChips";
+
+const DEFAULT_PARTNER_PROGRAM_CONTENT: PartnerProgramContentConfig = {
+  wizard: {
+    isEnabled: true,
+    slides: [
+      {
+        id: 1,
+        title: "Unlock Your Earning Potential",
+        headline: "Become a Local Partner",
+        body:
+          "Become a Local Partner in your country and start earning by helping people in your community learn more about the platform and upgrade their accounts with local support.",
+      },
+      {
+        id: 2,
+        title: "How Regular Users Benefit",
+        headline: "How Regular Users Benefit",
+        body:
+          "Our Partner Network makes it easier than ever for our users to grow and succeed with local payment options and personal support.",
+      },
+      {
+        id: 3,
+        title: "What Do Local Partners Do?",
+        headline: "Your Role is Simple & Profitable",
+        body:
+          "Connect with users who want to upgrade, provide local support and guidance, sell vouchers seamlessly, and earn while helping others grow.",
+      },
+      {
+        id: 4,
+        title: "How Users Benefit & You Profit",
+        headline: "The Secure Agent Deposit Flow",
+        body:
+          "See how users upgrade safely through you while you earn guaranteed profit using the secure voucher and deposit flow.",
+      },
+      {
+        id: 5,
+        title: "How You Make Money",
+        headline: "Crystal Clear Earnings",
+        body:
+          "Understand exactly how much you earn per voucher and how your daily voucher sales scale into strong weekly income.",
+      },
+      {
+        id: 6,
+        title: "Ready to Start Earning?",
+        headline: "You're Almost There!",
+        body:
+          "Join our growing network of successful partners earning daily income. The application takes less than 2 minutes.",
+      },
+    ],
+  },
+};
+
+const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig[]) => {
+  const getSlide = (id: number) => slidesConfig.find((s) => s.id === id);
+  const applyPlatformName = (text: string) => text.replace(/FineEarn/g, platformName);
+
+  const slide1 = getSlide(1);
+  const slide2 = getSlide(2);
+  const slide3 = getSlide(3);
+  const slide4 = getSlide(4);
+  const slide5 = getSlide(5);
+  const slide6 = getSlide(6);
+
+  return [
   {
-    title: "Unlock Your Earning Potential",
+    title: slide1?.title || "Unlock Your Earning Potential",
     icon: Sparkles,
     content: (
       <div className="space-y-6 text-center">
         <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center">
           <Sparkles className="h-10 w-10 text-white" />
         </div>
-        <h2 className="text-3xl font-bold">Become a FineEarn Local Partner</h2>
+        <h2 className="text-3xl font-bold">
+          {slide1?.headline || `Become a ${platformName} Local Partner`}
+        </h2>
         <p className="text-lg text-muted-foreground">
-          Become a Local Partner in your country and start earning an average of{" "}
+          {(slide1?.body && applyPlatformName(slide1.body)) ||
+            `Become a Local Partner in your country and start earning an average of `}
           <span className="inline-flex flex-wrap items-baseline gap-1">
             <CurrencyDisplay 
               amountUSD={1400} 
@@ -51,7 +133,8 @@ const steps = [
             <span className="text-xs text-muted-foreground">($1,400)</span>
             <span className="font-bold text-primary">weekly</span>
           </span>{" "}
-          by helping people in your community learn more about FineEarn & upgrade their accounts with local support.
+          {!slide1?.body &&
+            `by helping people in your community learn more about ${platformName} & upgrade their accounts with local support.`}
         </p>
         <div className="grid grid-cols-3 gap-4 pt-4">
           <Card className="border-primary/20">
@@ -87,15 +170,18 @@ const steps = [
     ),
   },
   {
-    title: "How Regular Users Benefit",
+    title: slide2?.title || "How Regular Users Benefit",
     icon: Users,
     content: (
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold">How Regular Users Benefit</h2>
+          <h2 className="text-3xl font-bold">
+            {slide2?.headline || "How Regular Users Benefit"}
+          </h2>
           <p className="text-lg text-muted-foreground">
-            Our FineEarn Partner Network makes it easier than ever for our users to grow and succeed
+            {(slide2?.body && applyPlatformName(slide2.body)) ||
+              `Our ${platformName} Partner Network makes it easier than ever for our users to grow and succeed`}
           </p>
         </div>
 
@@ -106,7 +192,9 @@ const steps = [
               icon: Globe,
               emoji: "🌍",
               title: "Local Payment Options",
-              description: "Upgrade your account easily using local payment methods through verified FineEarn Partners in your country."
+              description: applyPlatformName(
+                "Upgrade your account easily using local payment methods through verified FineEarn Partners in your country."
+              )
             },
             {
               icon: Heart,
@@ -124,19 +212,25 @@ const steps = [
               icon: Zap,
               emoji: "💸",
               title: "Fast & Hassle-Free Upgrades",
-              description: "No need for crypto deposits — pay locally through the Authorised partners, and your FineEarn account is upgraded instantly."
+              description: applyPlatformName(
+                "No need for crypto deposits — pay locally through the Authorised partners, and your FineEarn account is upgraded instantly."
+              )
             },
             {
               icon: BadgeCheck,
               emoji: "🧭",
               title: "Verified & Trusted Partners",
-              description: "All FineEarn Partners are verified to ensure safe, transparent, and reliable transactions."
+              description: applyPlatformName(
+                "All FineEarn Partners are verified to ensure safe, transparent, and reliable transactions."
+              )
             },
             {
               icon: TrendingUp,
               emoji: "💪",
               title: "Grow Together",
-              description: "Local Partners help you understand how to maximize your earnings and move up faster in FineEarn's earning plans."
+              description: applyPlatformName(
+                "Local Partners help you understand how to maximize your earnings and move up faster in FineEarn's earning plans."
+              )
             },
           ].map((item, idx) => (
             <div key={idx} className="flex gap-4 p-4 rounded-lg bg-muted/50 border hover:border-primary/20 transition-colors">
@@ -159,7 +253,9 @@ const steps = [
         {/* Call-to-Action Footer */}
         <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-5 rounded-lg border-2 border-primary/20 text-center">
           <p className="font-bold text-lg mb-2">
-            Join thousands of FineEarn users already benefiting from our Partner Network
+            {applyPlatformName(
+              "Join thousands of FineEarn users already benefiting from our Partner Network"
+            )}
           </p>
           <p className="text-sm text-muted-foreground">
             Partners make earning and upgrading accessible to everyone, everywhere 🌍
@@ -169,7 +265,7 @@ const steps = [
     ),
   },
   {
-    title: "What Do Local Partners Do?",
+    title: slide3?.title || "What Do Local Partners Do?",
     icon: Users,
     content: (
       <div className="space-y-6">
@@ -241,14 +337,16 @@ const steps = [
     ),
   },
   {
-    title: "How Users Benefit & You Profit",
+    title: slide4?.title || "How Users Benefit & You Profit",
     icon: RefreshCw,
     content: (
       <div className="space-y-6">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">The Secure Agent Deposit Flow</h2>
+          <h2 className="text-2xl font-bold">
+            {slide4?.headline || "The Secure Agent Deposit Flow"}
+          </h2>
           <p className="text-muted-foreground">
-            See how users upgrade safely through you while you earn guaranteed profit
+            {slide4?.body || "See how users upgrade safely through you while you earn guaranteed profit"}
           </p>
         </div>
 
@@ -399,11 +497,13 @@ const steps = [
     ),
   },
   {
-    title: "How You Make Money",
+    title: slide5?.title || "How You Make Money",
     icon: DollarSign,
     content: (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-center">Crystal Clear Earnings</h2>
+        <h2 className="text-2xl font-bold text-center">
+          {slide5?.headline || "Crystal Clear Earnings"}
+        </h2>
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 p-6 rounded-lg border-2 border-green-200 dark:border-green-800">
           <h3 className="text-lg font-bold mb-4 text-center">Example: $100 Voucher Sale</h3>
           <div className="space-y-3">
@@ -462,11 +562,13 @@ const steps = [
     ),
   },
   {
-    title: "Exclusive Partner Benefits",
+    title: slide6?.title || "Ready to Start Earning?",
     icon: CheckCircle,
     content: (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-center">What You Get as a Partner</h2>
+        <h2 className="text-2xl font-bold text-center">
+          {slide6?.headline || "What You Get as a Partner"}
+        </h2>
         <div className="grid gap-4">
           {[
             {
@@ -512,16 +614,19 @@ const steps = [
     ),
   },
   {
-    title: "Ready to Start Earning?",
+    title: slide6?.title || "Ready to Start Earning?",
     icon: Sparkles,
     content: (
       <div className="space-y-6 text-center">
         <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center animate-pulse">
           <CheckCircle className="h-10 w-10 text-white" />
         </div>
-        <h2 className="text-3xl font-bold">You're Almost There!</h2>
+        <h2 className="text-3xl font-bold">
+          {slide6?.headline || "You're Almost There!"}
+        </h2>
         <p className="text-lg text-muted-foreground">
-          Join our growing network of successful partners earning daily income. Application takes less than 2 minutes.
+          {slide6?.body ||
+            "Join our growing network of successful partners earning daily income. Application takes less than 2 minutes."}
         </p>
         <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-6 rounded-lg border">
           <h3 className="font-bold mb-3">What Happens Next:</h3>
@@ -550,10 +655,52 @@ const steps = [
       </div>
     ),
   },
-];
+  ];
+};
 
 export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
+  
+  const { data: configData } = useQuery({
+    queryKey: ["partner-program-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["platform_name", "partner_program_content"]);
+
+      if (error) throw error;
+
+      const map = new Map<string, any>();
+      data?.forEach((row: any) => {
+        map.set(row.key, row.value);
+      });
+
+      const platformName = (map.get("platform_name")?.platformName as string) || DEFAULT_PLATFORM_NAME;
+      const content =
+        (map.get("partner_program_content") as PartnerProgramContentConfig) || DEFAULT_PARTNER_PROGRAM_CONTENT;
+
+      const mergedSlides = DEFAULT_PARTNER_PROGRAM_CONTENT.wizard.slides.map((defaultSlide) => {
+        const existing = content.wizard?.slides?.find((s: PartnerWizardSlideConfig) => s.id === defaultSlide.id);
+        return { ...defaultSlide, ...(existing || {}) };
+      });
+
+      return {
+        platformName,
+        content: {
+          wizard: {
+            isEnabled: content.wizard?.isEnabled ?? true,
+            slides: mergedSlides,
+          },
+        },
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const platformName = configData?.platformName || DEFAULT_PLATFORM_NAME;
+  const wizardConfig = configData?.content?.wizard || DEFAULT_PARTNER_PROGRAM_CONTENT.wizard;
+  const steps = buildSteps(platformName, wizardConfig.slides);
   
   console.log('🎯 [PartnerWizard] Component state:', {
     open,

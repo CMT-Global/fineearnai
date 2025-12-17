@@ -18,7 +18,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase, supabaseService } from "@/integrations/supabase";
@@ -44,6 +44,33 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { data: isPartner } = useIsPartner();
 
+  // Load feature-flag style platform config for sidebar-controlled sections
+  const { data: sidebarConfig } = useQuery({
+    queryKey: ["sidebar-platform-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["how_it_works_content", "partner_program_config"]);
+
+      if (error) throw error;
+
+      const map = new Map<string, any>();
+      data?.forEach((row: any) => {
+        map.set(row.key, row.value);
+      });
+
+      return {
+        howItWorks: map.get("how_it_works_content") || {},
+        partnerProgram: map.get("partner_program_config") || {},
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isHowItWorksVisible = sidebarConfig?.howItWorks?.isVisible ?? true;
+  const isPartnerProgramEnabled = sidebarConfig?.partnerProgram?.isEnabled ?? true;
+
   // Primary navigation items (shown in bottom nav on mobile + sidebar)
   const basePrimaryNavItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -52,23 +79,25 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Users, label: "Referrals", path: "/referrals" },
   ];
 
-  // Always show partner navigation - changes based on partner status
+  // Partner navigation - changes based on partner status and global partner program toggle
   const partnerNavItem = isPartner
     ? { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true }
     : { icon: Sparkles, label: "Become a Partner", path: "/become-partner", isPartner: false };
 
   const primaryNavItems = [
     ...basePrimaryNavItems,
-    partnerNavItem,
+    ...(isPartnerProgramEnabled ? [partnerNavItem] : []),
     { icon: Crown, label: "Membership", path: "/plans" },
   ];
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
-    { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true },
+    isHowItWorksVisible
+      ? { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true }
+      : null,
     { icon: History, label: "Transactions", path: "/transactions" },
     { icon: Settings, label: "Settings", path: "/settings" },
-  ];
+  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[];
 
   // Combined nav items for desktop sidebar
   const navItems: any[] = [...primaryNavItems, ...secondaryNavItems];
