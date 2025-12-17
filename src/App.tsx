@@ -43,6 +43,7 @@ const Deposits = lazy(() => import("@/pages/admin/Deposits"));
 const AdminTransactions = lazy(() => import("@/pages/admin/Transactions"));
 const PaymentSettings = lazy(() => import("@/pages/admin/PaymentSettings"));
 const FeeSavingsBannerSettings = lazy(() => import("@/pages/admin/FeeSavingsBannerSettings"));
+const DashboardContentSettings = lazy(() => import("@/pages/admin/DashboardContentSettings"));
 const PlansManage = lazy(() => import("@/pages/admin/PlansManage"));
 const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemManage"));
 const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
@@ -288,6 +289,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <PaymentSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/content/dashboard"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <DashboardContentSettings />
             </AdminLayout>
           </AdminRoute>
         }

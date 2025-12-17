@@ -116,6 +116,13 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       ],
     },
     {
+      label: "Content Management",
+      icon: Settings,
+      items: [
+        { label: "Dashboard Content", path: "/admin/content/dashboard" },
+      ],
+    },
+    {
       label: "Membership Management",
       icon: Crown,
       items: [

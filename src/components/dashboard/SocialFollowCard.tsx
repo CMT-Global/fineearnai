@@ -4,13 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Send, Music } from "lucide-react";
 import { TelegramGroupsDialog } from "@/components/shared/TelegramGroupsDialog";
 
-export const SocialFollowCard = () => {
+interface SocialFollowCardProps {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+}
+
+export const SocialFollowCard = ({
+  facebookUrl = "https://facebook.com/ProfitChips",
+  instagramUrl = "https://www.instagram.com/ProfitChipsofficial/",
+  tiktokUrl = "https://www.tiktok.com/@ProfitChips",
+}: SocialFollowCardProps) => {
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
 
   const socialLinks = [
     {
       name: "Facebook",
-      url: "https://facebook.com/fineearn",
+      url: facebookUrl,
       icon: Facebook,
       color: "bg-[#1877F2] hover:bg-[#0d65d9]",
       description: "Join other members",
@@ -18,7 +28,7 @@ export const SocialFollowCard = () => {
     },
     {
       name: "Instagram", 
-      url: "https://www.instagram.com/fineearnofficial/",
+      url: instagramUrl,
       icon: Instagram,
       color: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#FCAF45] hover:opacity-90",
       description: "Daily earning tips",
@@ -34,7 +44,7 @@ export const SocialFollowCard = () => {
     },
     {
       name: "TikTok",
-      url: "https://www.tiktok.com/@fineearn",
+      url: tiktokUrl,
       icon: Music,
       color: "bg-black hover:bg-gray-900",
       description: "Viral earning hacks",
