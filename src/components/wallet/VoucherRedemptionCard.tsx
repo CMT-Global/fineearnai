@@ -94,15 +94,6 @@ export const VoucherRedemptionCard = ({ userId, onRedemptionSuccess }: VoucherRe
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Auto-Redemption Notice */}
-          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-xs text-blue-800 dark:text-blue-200">
-              <strong>Note:</strong> New vouchers sent by partners are now automatically credited to your wallet. 
-              This redemption form is only for older voucher codes received before the auto-redemption update.
-            </AlertDescription>
-          </Alert>
-
           <div>
             <Label htmlFor="voucher-code">Voucher Code</Label>
             <Input
@@ -137,7 +128,7 @@ export const VoucherRedemptionCard = ({ userId, onRedemptionSuccess }: VoucherRe
 
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-xs text-muted-foreground">
-              💡 <strong>Tip:</strong> Purchase vouchers from Local Partners at discounted rates and redeem them here to add funds to your deposit wallet.
+              💡 <strong>Tip:</strong> Purchase vouchers from Local Partners and redeem them here to add funds to your deposit wallet.
             </p>
           </div>
         </div>
