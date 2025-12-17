@@ -173,6 +173,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Shield,
       items: [
         { label: "Security Settings", path: "/admin/security-settings" },
+        { label: "IPStack Configuration", path: "/admin/settings/ipstack" },
       ],
     },
     {

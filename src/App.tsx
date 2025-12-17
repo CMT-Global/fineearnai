@@ -55,6 +55,7 @@ const EmailSettings = lazy(() => import("@/pages/admin/EmailSettings"));
 const ScheduledEmails = lazy(() => import("@/pages/admin/ScheduledEmails"));
 const LoginMessage = lazy(() => import("@/pages/admin/LoginMessage"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
+const IPStackSettings = lazy(() => import("@/pages/admin/IPStackSettings"));
 const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
 const CPAYReconciliation = lazy(() => import("@/pages/admin/CPAYReconciliation"));
@@ -492,6 +493,16 @@ const RoutesWrapper = () => {
           <AdminRoute>
             <AdminLayout>
               <SecuritySettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/ipstack"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <IPStackSettings />
             </AdminLayout>
           </AdminRoute>
         }

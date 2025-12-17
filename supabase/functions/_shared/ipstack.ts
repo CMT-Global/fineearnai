@@ -88,6 +88,7 @@ function cleanupCache(): void {
  * Fetches location data from IPStack API with caching and error handling
  * 
  * @param ip - IP address to lookup
+ * @param supabaseClient - Optional Supabase client to fetch API key from platform_config
  * @returns IPStackResponse or null if lookup fails (graceful degradation)
  * 
  * Key features:
@@ -96,8 +97,9 @@ function cleanupCache(): void {
  * - Validates IP format before API call
  * - Handles rate limiting (429) and errors gracefully
  * - Returns null on any failure - never throws
+ * - Reads API key from platform_config if supabaseClient provided, otherwise from env
  */
-export async function getLocationFromIP(ip: string): Promise<IPStackResponse | null> {
+export async function getLocationFromIP(ip: string, supabaseClient?: any): Promise<IPStackResponse | null> {
   try {
     // Validate IP format
     if (!isValidPublicIP(ip)) {
@@ -113,10 +115,34 @@ export async function getLocationFromIP(ip: string): Promise<IPStackResponse | n
       return cached.data;
     }
 
-    // Get API key
-    const apiKey = Deno.env.get('IPSTACK_API_KEY');
+    // Get API key - try platform_config first, then fallback to env
+    let apiKey: string | null = null;
+    
+    if (supabaseClient) {
+      try {
+        const { data: configData } = await supabaseClient
+          .from('platform_config')
+          .select('value')
+          .eq('key', 'ipstack_api_key')
+          .maybeSingle();
+        
+        if (configData?.value && typeof configData.value === 'string') {
+          apiKey = configData.value;
+          console.log('✅ IPStack: API key loaded from platform_config');
+        }
+      } catch (error) {
+        console.warn('⚠️ IPStack: Failed to load API key from platform_config, trying env variable');
+      }
+    }
+    
+    // Fallback to environment variable
     if (!apiKey) {
-      console.error('❌ IPStack: IPSTACK_API_KEY not configured');
+      // @ts-ignore - Deno global is available in Deno runtime
+      apiKey = Deno.env.get('IPSTACK_API_KEY');
+    }
+    
+    if (!apiKey) {
+      console.error('❌ IPStack: IPSTACK_API_KEY not configured in platform_config or environment');
       return null;
     }
 
@@ -126,7 +152,7 @@ export async function getLocationFromIP(ip: string): Promise<IPStackResponse | n
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
     const response = await fetch(
-      `http://api.ipstack.com/${ip}?access_key=${apiKey}`,
+      `https://api.ipstack.com/${ip}?access_key=${apiKey}`,
       {
         method: 'GET',
         signal: controller.signal,
