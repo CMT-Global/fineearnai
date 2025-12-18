@@ -1,3 +1,4 @@
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { getSystemSecrets } from '../_shared/secrets.ts';
 
@@ -6,13 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// @ts-ignore
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // @ts-ignore
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { geminiApiKey } = await getSystemSecrets(supabase);
@@ -54,6 +58,14 @@ Deno.serve(async (req) => {
 
     if (quantity < 1 || quantity > 25) {
       throw new Error('Quantity must be between 1 and 25');
+    }
+
+    interface Task {
+      prompt: string;
+      response_a: string;
+      response_b: string;
+      correct_response: 'a' | 'b';
+      explanation?: string;
     }
 
     console.log(`Generating ${quantity} ${difficulty} ${category} tasks`);
@@ -325,14 +337,14 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 2. Keep response options in template format: ${template?.responseFormat || 'Make options distinct'}
 3. ${category.includes('Sentiment') || category.includes('Review') || category.includes('Feedback') ? '⚠️ MANDATORY: For sentiment tasks, response_a and response_b MUST be EXACTLY "Positive" and "Negative" - no other words, descriptions, or variations allowed!' : 'Make options clearly distinct and easy to understand'}
 4. Use direct, simple sentence structures (Subject-Verb-Object)
-5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
-5. Use concrete, specific examples instead of abstract ideas
-6. Avoid double negatives ("not bad" → use "okay" or "good")
-7. Keep numbers and dates simple
-8. If using names, use common international names (Maria, John, Ahmed, Li)
-9. Both response options must be clearly written and easy to understand
-10. The differences between options should be genuine, not just word swaps
-11. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty as keyof typeof template.maxPromptWords] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty as keyof typeof template.maxResponseWords] || 'specified'} words each`;
+    5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
+    6. Use concrete, specific examples instead of abstract ideas
+    7. Avoid double negatives ("not bad" → use "okay" or "good")
+    8. Keep numbers and dates simple
+    9. If using names, use common international names (Maria, John, Ahmed, Li)
+    10. Both response options must be clearly written and easy to understand
+    11. The differences between options should be genuine, not just word swaps
+    12. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty as keyof typeof template.maxPromptWords] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty as keyof typeof template.maxResponseWords] || 'specified'} words each`;
 
     // Call Google Gemini 3 API directly for task generation
     const aiResponse = await fetch(
@@ -372,7 +384,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     console.log('AI Response:', generatedContent);
 
     // Parse the JSON response
-    let tasks;
+    let tasks: Task[];
     try {
       // Remove markdown code blocks if present
       const cleaned = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -411,7 +423,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
         throw new Error('Failed to generate embedding');
       }
 
-      const embeddingData = await embeddingResponse.json();
+      const embeddingData: any = await embeddingResponse.json();
       const values = embeddingData.embeddings?.[0]?.values;
       if (!values || !Array.isArray(values)) {
         throw new Error('Invalid embedding response from Gemini');
@@ -639,10 +651,10 @@ Make sure your NEW prompts are:
         // Parse retry response
         try {
           const cleaned = retryGeneratedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          const retryTasks = JSON.parse(cleaned);
+          const retryTasks: Task[] = JSON.parse(cleaned);
           
           if (Array.isArray(retryTasks) && retryTasks.length > 0) {
-            tasksToInsert = retryTasks.map(task => ({
+            tasksToInsert = retryTasks.map((task: Task) => ({
               prompt: task.prompt,
               response_a: task.response_a,
               response_b: task.response_b,
