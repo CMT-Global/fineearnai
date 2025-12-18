@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getSystemSecrets } from "../_shared/secrets.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -34,6 +35,9 @@ const handler = async (req: Request): Promise<Response> => {
         },
       }
     );
+
+    const secrets = await getSystemSecrets(supabase);
+    const resend = new Resend(secrets.resendApiKey);
 
     // Verify authentication
     const authHeader = req.headers.get("Authorization");

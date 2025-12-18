@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
+import { getSystemSecrets } from "../_shared/secrets.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const hookSecret = Deno.env.get("HOOK_SECRET");
@@ -263,6 +263,8 @@ serve(async (req) => {
     }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const secrets = await getSystemSecrets(supabase);
+    const resend = new Resend(secrets.resendApiKey);
     const requestData: AuthEmailRequest = await req.json();
     
     const { user, email_data } = requestData;

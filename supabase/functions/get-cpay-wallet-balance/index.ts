@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getSystemSecrets } from '../_shared/secrets.ts';
 
 const CPAY_BASE_URL = 'https://api.cpay.world';
 
@@ -75,10 +76,11 @@ Deno.serve(async (req) => {
     // ============================================================
     // STEP 2: GET CPAY CREDENTIALS
     // ============================================================
-    const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
-    const CPAY_API_PUBLIC_KEY = Deno.env.get('CPAY_API_PUBLIC_KEY');
-    const CPAY_API_PRIVATE_KEY = Deno.env.get('CPAY_API_PRIVATE_KEY');
-    const CPAY_WALLET_PASSPHRASE = Deno.env.get('CPAY_WALLET_PASSPHRASE');
+    const secrets = await getSystemSecrets(supabase);
+    const CPAY_WALLET_ID = secrets.cpay.walletId;
+    const CPAY_API_PUBLIC_KEY = secrets.cpay.publicKey;
+    const CPAY_API_PRIVATE_KEY = secrets.cpay.privateKey;
+    const CPAY_WALLET_PASSPHRASE = secrets.cpay.passphrase;
 
     const missingSecrets: string[] = [];
     if (!CPAY_WALLET_ID) missingSecrets.push('CPAY_WALLET_ID');

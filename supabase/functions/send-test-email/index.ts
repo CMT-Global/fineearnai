@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { wrapInProfessionalTemplate } from "../_shared/email-template-wrapper.ts";
+import { getSystemSecrets } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -252,8 +253,7 @@ serve(async (req) => {
       console.log('[Test Email] ℹ️ Template already has full HTML structure - skipping wrapper');
     }
 
-    // PHASE 2: Check if RESEND_API_KEY is configured
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    const { resendApiKey: RESEND_API_KEY } = await getSystemSecrets(supabaseAdmin);
     console.log('[PHASE 2] Resend API Key configured:', !!RESEND_API_KEY);
     
     if (!RESEND_API_KEY) {

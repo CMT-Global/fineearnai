@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getSystemSecrets } from '../_shared/secrets.ts';
 
 /**
  * Currency Conversion Edge Function
@@ -43,6 +44,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const { openExchangeAppId: apiKey } = await getSystemSecrets(supabase);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -122,7 +124,6 @@ Deno.serve(async (req) => {
       console.log(`🔄 Cache miss for ${currencyCode}, fetching from OpenExchangeRates API...`);
     }
 
-    const apiKey = Deno.env.get('OPENEXCHANGERATES_APP_ID');
     if (!apiKey) {
       console.error('❌ OPENEXCHANGERATES_APP_ID not configured');
       // Fallback to USD

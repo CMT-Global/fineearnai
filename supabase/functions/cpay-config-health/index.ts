@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { getSystemSecrets } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,10 +53,11 @@ serve(async (req) => {
     }
 
     // Check for CPAY credentials existence (without exposing values)
-    const hasPublicKey = !!Deno.env.get('CPAY_API_PUBLIC_KEY');
-    const hasPrivateKey = !!Deno.env.get('CPAY_API_PRIVATE_KEY');
-    const hasWalletId = !!Deno.env.get('CPAY_WALLET_ID');
-    const hasPassphrase = !!Deno.env.get('CPAY_WALLET_PASSPHRASE');
+    const secrets = await getSystemSecrets(supabase);
+    const hasPublicKey = !!secrets.cpay.publicKey;
+    const hasPrivateKey = !!secrets.cpay.privateKey;
+    const hasWalletId = !!secrets.cpay.walletId;
+    const hasPassphrase = !!secrets.cpay.passphrase;
 
     console.log('[CPAY-CONFIG-HEALTH] Credential check:', {
       hasPublicKey,

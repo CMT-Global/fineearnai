@@ -122,13 +122,21 @@ export async function getLocationFromIP(ip: string, supabaseClient?: any): Promi
       try {
         const { data: configData } = await supabaseClient
           .from('platform_config')
-          .select('value')
-          .eq('key', 'ipstack_api_key')
-          .maybeSingle();
+          .select('key, value')
+          .in('key', ['ipstack_api_key', 'ipstack_config'])
+          .order('key', { ascending: false }); // ipstack_config will come before ipstack_api_key
         
-        if (configData?.value && typeof configData.value === 'string') {
-          apiKey = configData.value;
-          console.log('✅ IPStack: API key loaded from platform_config');
+        const configMap: Record<string, any> = {};
+        configData?.forEach((row: any) => {
+          configMap[row.key] = row.value;
+        });
+
+        if (configMap.ipstack_config?.apiKey) {
+          apiKey = configMap.ipstack_config.apiKey;
+          console.log('✅ IPStack: API key loaded from platform_config (ipstack_config)');
+        } else if (configMap.ipstack_api_key && typeof configMap.ipstack_api_key === 'string') {
+          apiKey = configMap.ipstack_api_key;
+          console.log('✅ IPStack: API key loaded from platform_config (ipstack_api_key)');
         }
       } catch (error) {
         console.warn('⚠️ IPStack: Failed to load API key from platform_config, trying env variable');

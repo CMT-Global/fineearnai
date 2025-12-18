@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { Resend } from 'https://esm.sh/resend@2.0.0';
+import { getSystemSecrets } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -349,7 +350,8 @@ Deno.serve(async (req) => {
     // Email settings already fetched above, reuse them
 
     // Send email via Resend
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    const secrets = await getSystemSecrets(supabase);
+    const resend = new Resend(secrets.resendApiKey);
     const emailResult = await resend.emails.send({
       from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
       to: [profile.email],

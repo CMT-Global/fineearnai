@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getSystemSecrets } from '../_shared/secrets.ts';
 
 const CPAY_BASE_URL = 'https://api.cpay.world';
 
@@ -59,10 +60,11 @@ Deno.serve(async (req) => {
         // ignore body parse errors
       }
     }
-    const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
-    const CPAY_API_PUBLIC_KEY = Deno.env.get('CPAY_API_PUBLIC_KEY');
-    const CPAY_API_PRIVATE_KEY = Deno.env.get('CPAY_API_PRIVATE_KEY');
-    const CPAY_WALLET_PASSPHRASE = Deno.env.get('CPAY_WALLET_PASSPHRASE');
+    const secrets = await getSystemSecrets(supabase);
+    const CPAY_WALLET_ID = secrets.cpay.walletId;
+    const CPAY_API_PUBLIC_KEY = secrets.cpay.publicKey;
+    const CPAY_API_PRIVATE_KEY = secrets.cpay.privateKey;
+    const CPAY_WALLET_PASSPHRASE = secrets.cpay.passphrase;
 
     // Note: CPAY_ACCOUNT_ID is not used for wallet-auth flow
     if (!CPAY_WALLET_ID || !CPAY_API_PUBLIC_KEY || !CPAY_API_PRIVATE_KEY || !CPAY_WALLET_PASSPHRASE) {

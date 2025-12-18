@@ -1,9 +1,7 @@
 // @ts-ignore - Deno edge function, Resend types available at runtime
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { wrapInProfessionalTemplate } from "./email-template-wrapper.ts";
-
-// @ts-ignore - Deno global is available in Deno runtime
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { getSystemSecrets } from "./secrets.ts";
 
 // ============================================
 // RESEND DOMAIN CONFIGURATION
@@ -14,6 +12,16 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 // @ts-expect-error - Deno global is available in Deno runtime
 const DEFAULT_RESEND_DOMAIN = Deno.env.get('RESEND_DOMAIN') || 'profitchips.com';
 const DEFAULT_FROM_ADDRESS = `noreply@${DEFAULT_RESEND_DOMAIN}`;
+
+// Global resend client instance (will be initialized on first use)
+let resend: any = null;
+
+async function getResendClient(supabaseClient: any) {
+  if (resend) return resend;
+  const { resendApiKey } = await getSystemSecrets(supabaseClient);
+  resend = new Resend(resendApiKey);
+  return resend;
+}
 
 // ============================================
 // EMAIL SETTINGS CACHE (60-second TTL)
@@ -406,7 +414,8 @@ export async function sendTemplateEmail(
     console.log(`🔖 [Email Sender] Tracking ID: ${trackingId}`);
     
     const sendStart = Date.now();
-    const emailResponse = await resend.emails.send({
+    const resendClient = await getResendClient(supabaseClient);
+    const emailResponse = await resendClient.emails.send({
       from: `${emailSettings.from_name} <${emailSettings.from_address}>`,
       to: [recipientEmail],
       subject: populatedSubject,
