@@ -15,9 +15,9 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { geminiApiKey: lovableApiKey } = await getSystemSecrets(supabase);
+    const { geminiApiKey } = await getSystemSecrets(supabase);
     
-    if (!lovableApiKey) {
+    if (!geminiApiKey) {
       throw new Error('AI API key not configured');
     }
 
@@ -334,20 +334,29 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 10. The differences between options should be genuine, not just word swaps
 11. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty as keyof typeof template.maxPromptWords] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty as keyof typeof template.maxResponseWords] || 'specified'} words each`;
 
-    // Call Lovable AI Gateway
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call Google Gemini 3 API directly for task generation
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiApiKey}`,
+      {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                // Combine system + user prompt into a single Gemini-friendly text block
+                text: `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`,
+              },
+            ],
+          },
         ],
-        temperature: 0.8,
+        generationConfig: {
+          temperature: 1.0,
+        },
       }),
     });
 
@@ -358,7 +367,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     }
 
     const aiData = await aiResponse.json();
-    const generatedContent = aiData.choices[0].message.content;
+    const generatedContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
     
     console.log('AI Response:', generatedContent);
 
@@ -383,24 +392,31 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     
     // Helper function to generate embeddings
     const generateEmbedding = async (text: string): Promise<number[]> => {
-      const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'text-embedding-3-small',
-          input: text,
-        }),
-      });
+      const embeddingResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: {
+              parts: [{ text }],
+            },
+          }),
+        }
+      );
 
       if (!embeddingResponse.ok) {
         throw new Error('Failed to generate embedding');
       }
 
       const embeddingData = await embeddingResponse.json();
-      return embeddingData.data[0].embedding;
+      const values = embeddingData.embeddings?.[0]?.values;
+      if (!values || !Array.isArray(values)) {
+        throw new Error('Invalid embedding response from Gemini');
+      }
+      return values;
     };
 
     // Helper function to calculate cosine similarity
@@ -586,22 +602,31 @@ Make sure your NEW prompts are:
 4. Maintain ${difficulty} difficulty level
 5. Follow all language simplicity and template guidelines`;
 
-        // Call AI for retry generation
-        const retryAiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: retryUserPrompt }
-            ],
-            temperature: 0.9, // Slightly higher temperature for more variety
-          }),
-        });
+        // Call Gemini for retry generation
+        const retryAiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    {
+                      text: `${systemPrompt}\n\nRETRY USER REQUEST:\n${retryUserPrompt}`,
+                    },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 1.0,
+              },
+            }),
+          }
+        );
 
         if (!retryAiResponse.ok) {
           console.error(`Retry AI call failed: ${retryAiResponse.status}`);
@@ -609,7 +634,7 @@ Make sure your NEW prompts are:
         }
 
         const retryAiData = await retryAiResponse.json();
-        const retryGeneratedContent = retryAiData.choices[0].message.content;
+        const retryGeneratedContent = retryAiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         // Parse retry response
         try {
