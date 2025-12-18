@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Sparkles,
   Activity,
+  Globe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
@@ -123,6 +124,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         { label: "How It Works Content", path: "/admin/content/how-it-works" },
         { label: "Partner Program Content", path: "/admin/content/partner-program" },
         { label: "Global Email Template", path: "/admin/content/email-template" },
+        { label: "SEO & Social Settings", path: "/admin/settings/seo", icon: Globe },
       ],
     },
     {

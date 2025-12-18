@@ -76,6 +76,7 @@ const PartnerLeaderboard = lazy(() => import("@/pages/admin/PartnerLeaderboard")
 const AdminPartnerAnalytics = lazy(() => import("@/pages/admin/PartnerAnalytics"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
 const AdminAnalyticsDashboard = lazy(() => import("@/pages/admin/AnalyticsDashboard"));
+const SEOSettings = lazy(() => import("@/pages/admin/SEOSettings"));
 const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
@@ -83,6 +84,8 @@ const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
+import { DynamicSEO } from "@/components/shared/DynamicSEO";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -382,6 +385,16 @@ const RoutesWrapper = () => {
         }
       />
       <Route
+        path="/admin/settings/seo"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <SEOSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/admin/plans/manage"
         element={
           <AdminRoute>
@@ -674,25 +687,28 @@ const RoutesWrapper = () => {
 
 const App = () => (
   <GlobalErrorBoundary>
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <AdminModeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner position="top-right" />
-            <CurrencyProvider>
-              <ReamazeInitializer />
-              <RoutesWrapper />
-            </CurrencyProvider>
-          </TooltipProvider>
-        </AdminModeProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <AdminModeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner position="top-right" />
+              <CurrencyProvider>
+                <DynamicSEO />
+                <ReamazeInitializer />
+                <RoutesWrapper />
+              </CurrencyProvider>
+            </TooltipProvider>
+          </AdminModeProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   </GlobalErrorBoundary>
 );
 
