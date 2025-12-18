@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
     // @ts-ignore
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { geminiApiKey } = await getSystemSecrets(supabase);
+    const { geminiApiKey: rawApiKey } = await getSystemSecrets(supabase);
+    const geminiApiKey = rawApiKey?.trim();
     
     if (!geminiApiKey) {
       throw new Error('AI API key not configured');
@@ -348,11 +349,12 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 
     // Call Google Gemini 3 API directly for task generation
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`,
       {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': geminiApiKey,
       },
       body: JSON.stringify({
         contents: [
@@ -405,11 +407,12 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     // Helper function to generate embeddings
     const generateEmbedding = async (text: string): Promise<number[]> => {
       const embeddingResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiApiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': geminiApiKey,
           },
           body: JSON.stringify({
             content: {
@@ -616,11 +619,12 @@ Make sure your NEW prompts are:
 
         // Call Gemini for retry generation
         const retryAiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'x-goog-api-key': geminiApiKey,
             },
             body: JSON.stringify({
               contents: [
