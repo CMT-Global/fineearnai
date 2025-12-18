@@ -25,57 +25,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Reamaze Live Chat Widget -->
-    <script type="text/javascript" async src="https://cdn.reamaze.com/assets/reamaze-loader.js"></script>
-    <script type="text/javascript">
-      var _support = _support || { 'ui': {}, 'user': {} };
-      _support['account'] = 'ProfitChips';
-      _support['ui']['contactMode'] = 'default';
-      _support['ui']['enableKb'] = 'true';
-      _support['ui']['styles'] = {
-        widgetColor: 'rgb(192, 225, 20)',
-        gradient: true,
-      };
-      _support['ui']['shoutboxFacesMode'] = 'brand-avatar';
-      _support['ui']['widget'] = {
-        icon: 'webChat',
-        displayOn: 'all',
-        fontSize: 'large',
-        allowBotProcessing: true,
-        slug: 'ProfitChips-web-chat',
-        label: {
-          text: 'Need Help? Talk To Us! &#128522;',
-          mode: "prompt-3",
-          delay: 3,
-          duration: 30,
-        },
-        position: 'bottom-right',
-        mobilePosition: 'bottom-right'
-      };
-      _support['apps'] = {
-        faq: {"enabled":true},
-        recentConversations: {},
-        orders: {},
-        shopper: {}
-      };
-      _support['ui']['appOrder'] = ["faq","orders","shopper","recentConversations"];
-    </script>
-    
-    <!-- Hide Reamaze on admin routes -->
-    <script>
-      (function() {
-        function updateAdminMode() {
-          const isAdminRoute = window.location.pathname.startsWith('/admin');
-          document.body.setAttribute('data-admin-mode', isAdminRoute);
-        }
-        
-        updateAdminMode();
-        window.addEventListener('popstate', updateAdminMode);
-        
-        const observer = new MutationObserver(updateAdminMode);
-        observer.observe(document.body, { childList: true, subtree: true });
-      })();
-    </script>
   </body>
 </html>

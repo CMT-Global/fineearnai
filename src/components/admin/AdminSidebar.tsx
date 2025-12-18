@@ -160,6 +160,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Mail,
       items: [
         { label: "Email Settings", path: "/admin/communications/email-settings" },
+        { label: "Live Chat Settings", path: "/admin/communications/reamaze-settings" },
         { label: "Login Message", path: "/admin/communications/login-message" },
         { label: "Bulk Email", path: "/admin/communications/email" },
         { label: "Influencer Invites", path: "/admin/communications/influencer-invites" },

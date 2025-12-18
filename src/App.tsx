@@ -60,6 +60,7 @@ const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
 const CPAYReconciliation = lazy(() => import("@/pages/admin/CPAYReconciliation"));
 const CPAYCheckouts = lazy(() => import("@/pages/admin/CPAYCheckouts"));
+const ReamazeSettings = lazy(() => import("@/pages/admin/ReamazeSettings"));
 const CommissionAudit = lazy(() => import("@/pages/admin/CommissionAudit"));
 const InfluencerInvites = lazy(() => import("@/pages/admin/InfluencerInvites"));
 const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
@@ -79,6 +80,8 @@ const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationSt
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
+
+import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -468,6 +471,16 @@ const RoutesWrapper = () => {
         }
       />
       <Route
+        path="/admin/communications/reamaze-settings"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <ReamazeSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/admin/communications/scheduled"
         element={
           <AdminRoute>
@@ -662,6 +675,7 @@ const App = () => (
             <Toaster />
             <Sonner position="top-right" />
             <CurrencyProvider>
+              <ReamazeInitializer />
               <RoutesWrapper />
             </CurrencyProvider>
           </TooltipProvider>
