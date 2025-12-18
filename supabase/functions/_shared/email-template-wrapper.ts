@@ -1,6 +1,9 @@
 /**
- * Professional Email Template Wrapper
+ * Professional Email Template Wrapper for Deno Edge Functions
  * Provides consistent, beautiful styling for all platform emails
+ * 
+ * This is a Deno-compatible port of src/lib/email-template-wrapper.ts
+ * Pure JavaScript with no React/Node dependencies
  */
 
 export interface EmailTemplateOptions {
@@ -16,33 +19,90 @@ export interface EmailTemplateOptions {
 }
 
 /**
- * Wraps email content in a professional, responsive email template
- * Uses dynamic platform name and URLs from email settings
+ * Fetches global email template from platform_config
+ * Falls back to default template if not found
  */
-export function wrapInProfessionalTemplate(
+export async function getGlobalEmailTemplate(supabaseClient: any): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('platform_config')
+      .select('value')
+      .eq('key', 'email_template_global')
+      .maybeSingle();
+
+    if (error || !data) {
+      console.warn('⚠️  [Email Template] Global template not found, using default');
+      return null;
+    }
+
+    const templateConfig = data.value as { template?: string };
+    return templateConfig?.template || null;
+  } catch (error) {
+    console.error('❌ [Email Template] Error fetching global template:', error);
+    return null;
+  }
+}
+
+/**
+ * Wraps email content using global template from platform_config or fallback
+ * 
+ * @param content - The HTML content to wrap
+ * @param options - Template customization options
+ * @param supabaseClient - Optional Supabase client to fetch global template
+ * @returns Complete HTML email with professional styling
+ */
+export async function wrapInProfessionalTemplate(
   content: string,
-  options: EmailTemplateOptions = {}
-): string {
+  options: EmailTemplateOptions = {},
+  supabaseClient?: any
+): Promise<string> {
   const {
     title,
     preheader = '',
     headerGradient = true,
     includeFooter = true,
-    platformName = 'ProfitChips',
-    platformUrl = 'https://profitchips.com',
+    platformName: providedPlatformName,
+    platformUrl: providedPlatformUrl,
     supportUrl,
     privacyUrl,
     logoHtml,
   } = options;
 
+  // Try to fetch branding and email settings from platform_config
+  let dbPlatformName = 'ProfitChips';
+  let dbPlatformUrl = 'https://profitchips.com';
+  let dbLogoUrl = null;
+
+  if (supabaseClient) {
+    try {
+      const { data: configRows } = await supabaseClient
+        .from('platform_config')
+        .select('key, value')
+        .in('key', ['platform_branding', 'email_settings']);
+
+      if (configRows) {
+        const branding = configRows.find(r => r.key === 'platform_branding')?.value as any;
+        const emailSettings = configRows.find(r => r.key === 'email_settings')?.value as any;
+
+        dbPlatformName = branding?.name || emailSettings?.platform_name || 'ProfitChips';
+        dbPlatformUrl = branding?.url || emailSettings?.platform_url || 'https://profitchips.com';
+        dbLogoUrl = branding?.logoUrl;
+      }
+    } catch (err) {
+      console.warn('⚠️ [Email Wrapper] Failed to fetch DB config:', err);
+    }
+  }
+
+  const platformName = providedPlatformName || dbPlatformName;
+  const platformUrl = providedPlatformUrl || dbPlatformUrl;
   const displayTitle = title || platformName;
   const supportLink = supportUrl || `${platformUrl}/support`;
   const privacyLink = privacyUrl || `${platformUrl}/privacy`;
   const currentYear = new Date().getFullYear();
   
-  // Construct default logo HTML if not provided
-  const defaultLogoUrl = `${platformUrl}/logo_without_bg_text.png`;
-  const defaultLogoHtml = `<img src="${defaultLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
+  // Construct default logo HTML
+  const finalLogoUrl = dbLogoUrl || `${platformUrl}/logo_without_bg_text.png`;
+  const defaultLogoHtml = `<img src="${finalLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
   
   const finalLogoHtml = logoHtml || defaultLogoHtml;
 
@@ -50,11 +110,35 @@ export function wrapInProfessionalTemplate(
     ? `<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">${preheader}</div>` 
     : '';
 
+  // Try to fetch global template from platform_config
+  let globalTemplate: string | null = null;
+  if (supabaseClient) {
+    globalTemplate = await getGlobalEmailTemplate(supabaseClient);
+  }
+
+  // If global template exists, use it with variable replacement
+  if (globalTemplate) {
+    console.log('✅ [Email Template] Using global template from platform_config');
+    return globalTemplate
+      .replace(/\{\{platform_name\}\}/g, platformName)
+      .replace(/\{\{platform_url\}\}/g, platformUrl)
+      .replace(/\{\{support_url\}\}/g, supportLink)
+      .replace(/\{\{privacy_url\}\}/g, privacyLink)
+      .replace(/\{\{current_year\}\}/g, currentYear.toString())
+      .replace(/\{\{logo_html\}\}/g, finalLogoHtml)
+      .replace(/\{\{preheader\}\}/g, preheaderHtml)
+      .replace(/\{\{content\}\}/g, content)
+      .replace(/FineEarn/g, platformName);
+  }
+
+  // Fallback to default template
+  console.log('ℹ️  [Email Template] Using default template (global template not found)');
+
   const gradientHeader = headerGradient
     ? `
           <!-- Gradient Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;" class="header-padding">
               <div style="margin-bottom: 15px;">${finalLogoHtml}</div>
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 ${displayTitle}
@@ -162,16 +246,24 @@ export function wrapInProfessionalTemplate(
 
 /**
  * Creates a styled button for emails
+ * 
+ * @param text - Button text
+ * @param url - Button link URL
+ * @param color - Button color scheme (primary or secondary)
+ * @returns HTML string for styled button
  */
-export function createStyledButton(text: string, url: string, color: 'primary' | 'secondary' = 'primary'): string {
+export function createStyledButton(
+  text: string,
+  url: string,
+  color: 'primary' | 'secondary' = 'primary'
+): string {
   const bgColor = color === 'primary' ? '#16a34a' : '#48bb78';
-  const hoverColor = color === 'primary' ? '#5568d3' : '#38a169';
   
   return `
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 25px 0;">
   <tr>
     <td align="center" style="border-radius: 6px; background-color: ${bgColor};">
-      <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 35px; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">
+      <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 35px; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600;">
         ${text}
       </a>
     </td>
@@ -181,8 +273,15 @@ export function createStyledButton(text: string, url: string, color: 'primary' |
 
 /**
  * Creates an info box for important information
+ * 
+ * @param content - The content to display in the info box
+ * @param type - The type of info box (info, warning, or success)
+ * @returns HTML string for info box
  */
-export function createInfoBox(content: string, type: 'info' | 'warning' | 'success' = 'info'): string {
+export function createInfoBox(
+  content: string,
+  type: 'info' | 'warning' | 'success' = 'info'
+): string {
   const colors = {
     info: { bg: '#e3f2fd', border: '#2196f3', text: '#1565c0' },
     warning: { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
@@ -201,19 +300,4 @@ export function createInfoBox(content: string, type: 'info' | 'warning' | 'succe
     </td>
   </tr>
 </table>`;
-}
-
-/**
- * Helper to extract plain content from HTML (removes wrapper if exists)
- */
-export function extractContentFromTemplate(wrappedHtml: string): string {
-  // Try to extract content between content area markers
-  const contentMatch = wrappedHtml.match(/<!-- Content Area -->[\s\S]*?<td[^>]*>([\s\S]*?)<\/td>[\s\S]*?<!-- Footer -->|<!-- Content Area -->[\s\S]*?<td[^>]*>([\s\S]*?)<\/td>[\s\S]*?<\/table>/);
-  
-  if (contentMatch) {
-    return (contentMatch[1] || contentMatch[2] || '').trim();
-  }
-  
-  // If no wrapper found, return as-is
-  return wrappedHtml;
 }

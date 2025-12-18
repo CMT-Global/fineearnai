@@ -130,7 +130,7 @@ export async function getLocationFromIP(ip: string, supabaseClient?: any): Promi
         configData?.forEach((row: any) => {
           configMap[row.key] = row.value;
         });
-
+        
         if (configMap.ipstack_config?.apiKey) {
           apiKey = configMap.ipstack_config.apiKey;
           console.log('✅ IPStack: API key loaded from platform_config (ipstack_config)');

@@ -804,15 +804,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         </CardHeader>
         <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
-            <p className="text-2xl font-bold text-[hsl(var(--wallet-deposit))]">
+            <p className="text-2xl font-bold text-primary">
               <CurrencyDisplay amountUSD={depositBalance} />
             </p>
             <p className="text-xs text-muted-foreground mb-3">For account upgrades</p>
             <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full" size="sm">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="sm">
                   <ArrowDownRight className="mr-2 h-4 w-4" />
                   Deposit
                 </Button>
@@ -968,15 +968,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
             </Dialog>
           </div>
 
-          <div className="p-4 border rounded-lg">
+          <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">Earnings Wallet</p>
-            <p className="text-2xl font-bold text-[hsl(var(--wallet-earnings))]">
+            <p className="text-2xl font-bold text-primary">
               <CurrencyDisplay amountUSD={earningsBalance} />
             </p>
             <p className="text-xs text-muted-foreground mb-3">From tasks & referrals</p>
             <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full" size="sm">
+                <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" size="sm">
                   <ArrowUpRight className="mr-2 h-4 w-4" />
                   Withdraw
                 </Button>

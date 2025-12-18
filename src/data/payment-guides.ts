@@ -26,19 +26,19 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to your FineEarn account, open the Deposit page → Enter your deposit amount.',
-        highlights: ['FineEarn account', 'Deposit page'],
+        instruction: 'Go to your {{platform}} account, open the Deposit page → Enter your deposit amount.',
+        highlights: ['{{platform}} account', 'Deposit page'],
         delay: '0.2s'
       },
       {
         stepNumber: 4,
-        instruction: 'Choose USDC as the coin → Select Solana as the network → Copy the wallet address shown on FineEarn.',
+        instruction: 'Choose USDC as the coin → Select Solana as the network → Copy the wallet address shown on {{platform}}.',
         highlights: ['USDC', 'Solana'],
         delay: '0.3s'
       },
       {
         stepNumber: 5,
-        instruction: 'Go back to GCrypto → Tap Send Crypto → Paste the FineEarn wallet address you copied.',
+        instruction: 'Go back to GCrypto → Tap Send Crypto → Paste the {{platform}} wallet address you copied.',
         highlights: ['GCrypto', 'Send Crypto'],
         delay: '0.4s'
       },
@@ -58,8 +58,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'On FineEarn, open the Withdraw page → Enter your withdrawal amount.',
-        highlights: ['FineEarn', 'Withdraw page'],
+        instruction: 'On {{platform}}, open the Withdraw page → Enter your withdrawal amount.',
+        highlights: ['{{platform}}', 'Withdraw page'],
         delay: '0.1s'
       },
       {
@@ -81,7 +81,7 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
         delay: '0.4s'
       }
     ],
-    depositAlertMessage: '✅ Once payment is confirmed on the blockchain, your FineEarn deposit wallet will be credited automatically.',
+    depositAlertMessage: '✅ Once payment is confirmed on the blockchain, your {{platform}} deposit wallet will be credited automatically.',
     withdrawalAlertMessage: '💵 Your funds will reflect instantly in your GCash wallet.'
   },
   {
@@ -103,14 +103,14 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'If you don\'t have crypto, click Buy Crypto → Choose your preferred payment method → Purchase cryptocurrency (BTC, ETH, USDC, USDT, TRX, or others supported by FineEarn).',
+        instruction: 'If you don\'t have crypto, click Buy Crypto → Choose your preferred payment method → Purchase cryptocurrency (BTC, ETH, USDC, USDT, TRX, or others supported by {{platform}}).',
         highlights: ['Buy Crypto', 'cryptocurrency', 'BTC, ETH, USDC, USDT, TRX'],
         delay: '0.1s'
       },
       {
         stepNumber: 3,
-        instruction: 'Go to your FineEarn account → Open the Deposit page → Enter your deposit amount.',
-        highlights: ['FineEarn account', 'Deposit page'],
+        instruction: 'Go to your {{platform}} account → Open the Deposit page → Enter your deposit amount.',
+        highlights: ['{{platform}} account', 'Deposit page'],
         delay: '0.2s'
       },
       {
@@ -121,7 +121,7 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 5,
-        instruction: 'Return to Binance → Click Withdraw → Select the same coin and network you chose → Paste the FineEarn wallet address.',
+        instruction: 'Return to Binance → Click Withdraw → Select the same coin and network you chose → Paste the {{platform}} wallet address.',
         highlights: ['Binance', 'Withdraw', 'same coin and network'],
         delay: '0.4s'
       },
@@ -141,7 +141,7 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 2,
-        instruction: 'Select USDC or USDT → Choose the network that matches what FineEarn will send (Solana for USDC or BEP20 (BSC) for USDT).',
+        instruction: 'Select USDC or USDT → Choose the network that matches what {{platform}} will send (Solana for USDC or BEP20 (BSC) for USDT).',
         highlights: ['USDC', 'USDT', 'Solana', 'BEP20 (BSC)'],
         delay: '0.1s'
       },
@@ -153,8 +153,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 4,
-        instruction: 'On FineEarn, open the Withdraw page → Enter your withdrawal amount → Select the matching coin and network (USDC-Solana or USDT-BEP20).',
-        highlights: ['FineEarn', 'Withdraw page', 'matching coin and network'],
+        instruction: 'On {{platform}}, open the Withdraw page → Enter your withdrawal amount → Select the matching coin and network (USDC-Solana or USDT-BEP20).',
+        highlights: ['{{platform}}', 'Withdraw page', 'matching coin and network'],
         delay: '0.3s'
       },
       {
@@ -228,22 +228,22 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 8,
-        instruction: 'Click "Withdraw" → Select the appropriate network (Solana for USDC or BEP20 for USDT) → Enter your FineEarn deposit address.',
-        highlights: ['Withdraw', 'Solana', 'BEP20', 'FineEarn deposit address'],
+        instruction: 'Click "Withdraw" → Select the appropriate network (Solana for USDC or BEP20 for USDT) → Enter your {{platform}} deposit address.',
+        highlights: ['Withdraw', 'Solana', 'BEP20', '{{platform}} deposit address'],
         delay: '0.7s'
       },
       {
         stepNumber: 9,
-        instruction: 'Confirm the withdrawal → Wait 2-5 minutes for crypto to arrive in your FineEarn account.',
-        highlights: ['Confirm', 'FineEarn account'],
+        instruction: 'Confirm the withdrawal → Wait 2-5 minutes for crypto to arrive in your {{platform}} account.',
+        highlights: ['Confirm', '{{platform}} account'],
         delay: '0.8s'
       }
     ],
     withdrawalSteps: [
       {
         stepNumber: 1,
-        instruction: 'First, withdraw your crypto from FineEarn to your Binance wallet using the withdrawal method guides.',
-        highlights: ['withdraw', 'FineEarn', 'Binance wallet'],
+        instruction: 'First, withdraw your crypto from {{platform}} to your Binance wallet using the withdrawal method guides.',
+        highlights: ['withdraw', '{{platform}}', 'Binance wallet'],
         delay: '0s'
       },
       {
@@ -317,8 +317,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to FineEarn → Open Deposit page → Enter the amount you want to deposit.',
-        highlights: ['FineEarn', 'Deposit page'],
+        instruction: 'Go to {{platform}} → Open Deposit page → Enter the amount you want to deposit.',
+        highlights: ['{{platform}}', 'Deposit page'],
         delay: '0.2s'
       },
       {
@@ -329,7 +329,7 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 5,
-        instruction: 'Return to Coinbase → Click Send → Select USDC → Choose Solana network → Paste the FineEarn address.',
+        instruction: 'Return to Coinbase → Click Send → Select USDC → Choose Solana network → Paste the {{platform}} address.',
         highlights: ['Coinbase', 'Send', 'Solana network'],
         delay: '0.4s'
       },
@@ -355,8 +355,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'On FineEarn, navigate to Withdraw page → Enter your withdrawal amount.',
-        highlights: ['FineEarn', 'Withdraw page'],
+        instruction: 'On {{platform}}, navigate to Withdraw page → Enter your withdrawal amount.',
+        highlights: ['{{platform}}', 'Withdraw page'],
         delay: '0.2s'
       },
       {
@@ -406,8 +406,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to FineEarn → Open Deposit page → Enter your deposit amount.',
-        highlights: ['FineEarn', 'Deposit page'],
+        instruction: 'Go to {{platform}} → Open Deposit page → Enter your deposit amount.',
+        highlights: ['{{platform}}', 'Deposit page'],
         delay: '0.2s'
       },
       {
@@ -418,8 +418,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 5,
-        instruction: 'Return to Trust Wallet → Select USDC (Solana) → Tap Send → Paste the FineEarn wallet address.',
-        highlights: ['Trust Wallet', 'Send', 'FineEarn wallet address'],
+        instruction: 'Return to Trust Wallet → Select USDC (Solana) → Tap Send → Paste the {{platform}} wallet address.',
+        highlights: ['Trust Wallet', 'Send', '{{platform}} wallet address'],
         delay: '0.4s'
       },
       {
@@ -444,8 +444,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to FineEarn → Open Withdraw page → Enter your withdrawal amount.',
-        highlights: ['FineEarn', 'Withdraw page'],
+        instruction: 'Go to {{platform}} → Open Withdraw page → Enter your withdrawal amount.',
+        highlights: ['{{platform}}', 'Withdraw page'],
         delay: '0.2s'
       },
       {
@@ -495,8 +495,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to FineEarn → Open Deposit page → Enter the amount to deposit.',
-        highlights: ['FineEarn', 'Deposit page'],
+        instruction: 'Go to {{platform}} → Open Deposit page → Enter the amount to deposit.',
+        highlights: ['{{platform}}', 'Deposit page'],
         delay: '0.2s'
       },
       {
@@ -507,7 +507,7 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 5,
-        instruction: 'Return to MetaMask → Click Send → Paste FineEarn\'s wallet address → Select correct network and token.',
+        instruction: 'Return to MetaMask → Click Send → Paste {{platform}}\'s wallet address → Select correct network and token.',
         highlights: ['MetaMask', 'Send', 'correct network'],
         delay: '0.4s'
       },
@@ -533,8 +533,8 @@ export const PAYMENT_GUIDES: PaymentProcessorGuide[] = [
       },
       {
         stepNumber: 3,
-        instruction: 'Go to FineEarn → Open Withdraw page → Enter withdrawal amount.',
-        highlights: ['FineEarn', 'Withdraw page'],
+        instruction: 'Go to {{platform}} → Open Withdraw page → Enter withdrawal amount.',
+        highlights: ['{{platform}}', 'Withdraw page'],
         delay: '0.2s'
       },
       {

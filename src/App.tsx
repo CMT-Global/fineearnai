@@ -8,6 +8,7 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -76,6 +77,7 @@ const PartnerLeaderboard = lazy(() => import("@/pages/admin/PartnerLeaderboard")
 const AdminPartnerAnalytics = lazy(() => import("@/pages/admin/PartnerAnalytics"));
 const VoucherMonitoring = lazy(() => import("@/pages/admin/VoucherMonitoring"));
 const AdminAnalyticsDashboard = lazy(() => import("@/pages/admin/AnalyticsDashboard"));
+const SEOSettings = lazy(() => import("@/pages/admin/SEOSettings"));
 const BecomePartner = lazy(() => import("./pages/BecomePartner"));
 const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationStatus"));
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
@@ -83,6 +85,8 @@ const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
+import { DynamicSEO } from "@/components/shared/DynamicSEO";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -382,6 +386,16 @@ const RoutesWrapper = () => {
         }
       />
       <Route
+        path="/admin/settings/seo"
+        element={
+          <AdminRoute>
+            <AdminLayout>
+              <SEOSettings />
+            </AdminLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/admin/plans/manage"
         element={
           <AdminRoute>
@@ -674,6 +688,7 @@ const RoutesWrapper = () => {
 
 const App = () => (
   <GlobalErrorBoundary>
+    <HelmetProvider>
     <BrowserRouter
       future={{
         v7_startTransition: true,
@@ -685,14 +700,18 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner position="top-right" />
-            <CurrencyProvider>
-              <ReamazeInitializer />
-              <RoutesWrapper />
-            </CurrencyProvider>
+            <BrandingProvider>
+              <CurrencyProvider>
+                <DynamicSEO />
+                <ReamazeInitializer />
+                <RoutesWrapper />
+              </CurrencyProvider>
+            </BrandingProvider>
           </TooltipProvider>
         </AdminModeProvider>
       </QueryClientProvider>
     </BrowserRouter>
+    </HelmetProvider>
   </GlobalErrorBoundary>
 );
 

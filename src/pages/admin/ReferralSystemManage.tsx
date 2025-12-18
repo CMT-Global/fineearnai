@@ -236,7 +236,7 @@ const ReferralSystemManage = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading referral system..." />
       </div>
     );
@@ -244,14 +244,14 @@ const ReferralSystemManage = () => {
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <p>No referral configuration found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)]">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">

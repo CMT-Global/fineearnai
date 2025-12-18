@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useBranding } from "@/contexts/BrandingContext";
 import { PlatformMigrationBanner } from "@/components/shared/PlatformMigrationBanner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -23,6 +24,7 @@ import {
 
 const Login = () => {
   const navigate = useNavigate();
+  const { platformName, platformLogoUrl } = useBranding();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -160,12 +162,10 @@ const Login = () => {
         <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
+            <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
           <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to ProfitChips - Continue earning with AI tasks</p>
+          <p className="text-muted-foreground">Sign in to {platformName} - Continue earning with AI tasks</p>
         </div>
 
         {/* Account Deleted Success Message */}

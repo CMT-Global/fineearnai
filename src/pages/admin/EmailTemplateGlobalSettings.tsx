@@ -67,7 +67,7 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
       h1 { font-size: 24px !important; line-height: 1.3 !important; }
       h2 { font-size: 20px !important; line-height: 1.3 !important; }
       .button { padding: 12px 25px !important; font-size: 14px !important; }
-      .logo-img { max-width: 120px !important; height: auto !important; }
+      .logo-img { max-width: 150px !important; height: auto !important; }
     }
   </style>
 </head>
@@ -84,7 +84,7 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
           
           <!-- Header with Logo -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;" class="header-padding">
+            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center;" class="header-padding">
               {{logo_html}}
               <h1 style="margin: 15px 0 0 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 {{platform_name}}
@@ -109,11 +109,11 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
                 This email was sent from {{platform_name}}. If you have any questions, please contact our support team.
               </p>
               <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <a href="{{platform_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
+                <a href="{{platform_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="{{support_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
+                <a href="{{support_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="{{privacy_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
+                <a href="{{privacy_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
               </div>
               <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd; line-height: 1.4;">
                 © {{current_year}} {{platform_name}}. All rights reserved.
@@ -238,14 +238,17 @@ export default function EmailTemplateGlobalSettings() {
     }
     
     const currentYear = new Date().getFullYear();
+    const platformUrl = "https://profitchips.com";
+    const logoUrl = `${platformUrl}/logo_without_bg_text.png`;
+    const logoHtml = `<img src="${logoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
 
     return templateConfig.template
       .replace(/\{\{platform_name\}\}/g, platformName)
-      .replace(/\{\{platform_url\}\}/g, "https://profitchips.com")
-      .replace(/\{\{support_url\}\}/g, "https://profitchips.com/support")
-      .replace(/\{\{privacy_url\}\}/g, "https://profitchips.com/privacy")
+      .replace(/\{\{platform_url\}\}/g, platformUrl)
+      .replace(/\{\{support_url\}\}/g, `${platformUrl}/support`)
+      .replace(/\{\{privacy_url\}\}/g, `${platformUrl}/privacy`)
       .replace(/\{\{current_year\}\}/g, currentYear.toString())
-      .replace(/\{\{logo_html\}\}/g, "")
+      .replace(/\{\{logo_html\}\}/g, logoHtml)
       .replace(/\{\{preheader\}\}/g, '<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">Sample email preview</div>')
       .replace(/\{\{content\}\}/g, '<p style="color: #333; font-size: 16px; line-height: 1.6;">This is a sample email content. Replace {{content}} with your actual email body when sending.</p>');
   };

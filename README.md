@@ -1,4 +1,4 @@
-# FineEarn - AI Training Platform
+# ProfitChips - AI Training Platform
 
 A comprehensive platform for earning money by training AI models through simple tasks.
 

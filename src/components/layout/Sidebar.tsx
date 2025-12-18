@@ -23,6 +23,7 @@ import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { supabase, supabaseService } from "@/integrations/supabase";
 import { useIsPartner } from "@/hooks/usePartner";
+import { useBranding } from "@/contexts/BrandingContext";
 import { CurrencySelector } from "@/components/layout/CurrencySelector";
 import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
@@ -43,6 +44,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const [open, setOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { data: isPartner } = useIsPartner();
+  const { platformName, platformLogoUrl } = useBranding();
 
   // Load feature-flag style platform config for sidebar-controlled sections
   const { data: sidebarConfig } = useQuery({
@@ -237,8 +239,8 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
     <>
       <div className="p-6 border-b z-50 border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">ProfitChips</span>
+          <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-14 w-14 object-contain" />
+          <span className="text-xl font-bold">{platformName}</span>
         </div>
       </div>
 
@@ -406,8 +408,8 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* Mobile Sidebar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-          <span className="font-bold">ProfitChips</span>
+          <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-12 w-12 object-contain" />
+          <span className="font-bold">{platformName}</span>
         </div>
         
         <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 import { getSystemSecrets } from '../_shared/secrets.ts';
 
@@ -5,19 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
-Deno.serve(async (req)=>{
+
+// @ts-ignore
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: corsHeaders
     });
   }
   try {
+    // @ts-ignore
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    // @ts-ignore
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { geminiApiKey: lovableApiKey } = await getSystemSecrets(supabase);
+    const { geminiApiKey: rawApiKey } = await getSystemSecrets(supabase);
+    const geminiApiKey = rawApiKey?.trim();
     
-    if (!lovableApiKey) {
+    if (!geminiApiKey) {
       throw new Error('AI API key not configured');
     }
 
@@ -43,6 +49,15 @@ Deno.serve(async (req)=>{
     if (quantity < 1 || quantity > 25) {
       throw new Error('Quantity must be between 1 and 25');
     }
+
+    interface Task {
+      prompt: string;
+      response_a: string;
+      response_b: string;
+      correct_response: 'a' | 'b';
+      explanation?: string;
+    }
+
     console.log(`Generating ${quantity} ${difficulty} ${category} tasks`);
     const categoryTemplates = {
       'Sentiment Analysis': {
@@ -615,34 +630,39 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 3. ${category.includes('Sentiment') || category.includes('Review') || category.includes('Feedback') ? '⚠️ MANDATORY: For sentiment tasks, response_a and response_b MUST be EXACTLY "Positive" and "Negative" - no other words, descriptions, or variations allowed!' : 'Make options clearly distinct and easy to understand'}
 4. Use direct, simple sentence structures (Subject-Verb-Object)
 5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
-5. Use concrete, specific examples instead of abstract ideas
-6. Avoid double negatives ("not bad" → use "okay" or "good")
-7. Keep numbers and dates simple
-8. If using names, use common international names (Maria, John, Ahmed, Li)
-9. Both response options must be clearly written and easy to understand
-10. The differences between options should be genuine, not just word swaps
-11. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty] || 'specified'} words each`;
-    // Call Lovable AI Gateway
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    6. Use concrete, specific examples instead of abstract ideas
+    7. Avoid double negatives ("not bad" → use "okay" or "good")
+    8. Keep numbers and dates simple
+    9. If using names, use common international names (Maria, John, Ahmed, Li)
+    10. Both response options must be clearly written and easy to understand
+    11. The differences between options should be genuine, not just word swaps
+    12. Stay within the word limits: Prompt max ${template?.maxPromptWords[difficulty as keyof typeof template.maxPromptWords] || 'specified'} words, Responses max ${template?.maxResponseWords[difficulty as keyof typeof template.maxResponseWords] || 'specified'} words each`;
+
+    // Call Google Gemini 3 API directly for task generation
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`,
+      {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-goog-api-key': geminiApiKey,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
+        contents: [
           {
             role: 'user',
-            content: userPrompt
-          }
+            parts: [
+              {
+                // Combine system + user prompt into a single Gemini-friendly text block
+                text: `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`,
+              },
+            ],
+          },
         ],
-        temperature: 0.8
-      })
+        generationConfig: {
+          temperature: 1.0,
+        },
+      }),
     });
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
@@ -650,10 +670,11 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
       throw new Error(`AI generation failed: ${aiResponse.status}`);
     }
     const aiData = await aiResponse.json();
-    const generatedContent = aiData.choices[0].message.content;
+    const generatedContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    
     console.log('AI Response:', generatedContent);
     // Parse the JSON response
-    let tasks;
+    let tasks: Task[];
     try {
       // Remove markdown code blocks if present
       const cleaned = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -669,23 +690,33 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     // PHASE 2, 3 & 4: DUPLICATE CHECKING WITH RETRY LOGIC & SEMANTIC SIMILARITY
     // ============================================================================
     // Helper function to generate embeddings
-    const generateEmbedding = async (text)=>{
-      const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+    const generateEmbedding = async (text: string): Promise<number[]> => {
+      const embeddingResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent`,
+        {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+            'x-goog-api-key': geminiApiKey,
         },
         body: JSON.stringify({
-          model: 'text-embedding-3-small',
-          input: text
-        })
-      });
+            content: {
+              parts: [{ text }],
+            },
+        }),
+        }
+      );
+
       if (!embeddingResponse.ok) {
         throw new Error('Failed to generate embedding');
       }
-      const embeddingData = await embeddingResponse.json();
-      return embeddingData.data[0].embedding;
+
+      const embeddingData: any = await embeddingResponse.json();
+      const values = embeddingData.embeddings?.[0]?.values;
+      if (!values || !Array.isArray(values)) {
+        throw new Error('Invalid embedding response from Gemini');
+      }
+      return values;
     };
     // Helper function to calculate cosine similarity
     const cosineSimilarity = (a, b)=>{
@@ -827,48 +858,56 @@ Make sure your NEW prompts are:
 3. Cover different aspects of the ${category} category
 4. Maintain ${difficulty} difficulty level
 5. Follow all language simplicity and template guidelines`;
-        // Call AI for retry generation
-        const retryAiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+
+        // Call Gemini for retry generation
+        const retryAiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`,
+          {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+              'x-goog-api-key': geminiApiKey,
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'system',
-                content: systemPrompt
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    {
+                      text: `${systemPrompt}\n\nRETRY USER REQUEST:\n${retryUserPrompt}`,
+                    },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 1.0,
               },
-              {
-                role: 'user',
-                content: retryUserPrompt
-              }
-            ],
-            temperature: 0.9
-          })
-        });
+          }),
+          }
+        );
+
         if (!retryAiResponse.ok) {
           console.error(`Retry AI call failed: ${retryAiResponse.status}`);
           break; // Exit retry loop on API failure
         }
         const retryAiData = await retryAiResponse.json();
-        const retryGeneratedContent = retryAiData.choices[0].message.content;
+        const retryGeneratedContent = retryAiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
         // Parse retry response
         try {
           const cleaned = retryGeneratedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          const retryTasks = JSON.parse(cleaned);
+          const retryTasks: Task[] = JSON.parse(cleaned);
+          
           if (Array.isArray(retryTasks) && retryTasks.length > 0) {
-            tasksToInsert = retryTasks.map((task)=>({
-                prompt: task.prompt,
-                response_a: task.response_a,
-                response_b: task.response_b,
-                correct_response: task.correct_response,
-                category,
-                difficulty,
-                is_active: true
-              }));
+            tasksToInsert = retryTasks.map((task: Task) => ({
+              prompt: task.prompt,
+              response_a: task.response_a,
+              response_b: task.response_b,
+              correct_response: task.correct_response,
+              category,
+              difficulty,
+              is_active: true,
+            }));
           } else {
             console.error('Retry AI did not return valid tasks');
             break;

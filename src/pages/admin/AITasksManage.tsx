@@ -108,7 +108,7 @@ const AITasksManage = () => {
 
   if (adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -117,7 +117,7 @@ const AITasksManage = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)] p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
         <AdminBreadcrumb 
           items={[

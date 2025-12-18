@@ -69,60 +69,58 @@ const PartnerLeaderboardSettings = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Trophy className="h-8 w-8" />
-            Partner Leaderboard Settings
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Control leaderboard visibility for partners
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Trophy className="h-8 w-8" />
+          Partner Leaderboard Settings
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Control leaderboard visibility for partners
+        </p>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Leaderboard Visibility</CardTitle>
-            <CardDescription>
-              Show or hide the partner leaderboard in the partner dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="leaderboard-toggle" className="text-base">
-                      Enable Partner Leaderboard
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      When enabled, partners can see top performers ranked by sales
-                    </p>
-                  </div>
-                  <Switch
-                    id="leaderboard-toggle"
-                    checked={isEnabled}
-                    onCheckedChange={handleToggle}
-                    disabled={updateMutation.isPending}
-                  />
-                </div>
-
-                <div className="bg-muted/50 p-4 rounded-lg">
+      <Card>
+        <CardHeader>
+          <CardTitle>Leaderboard Visibility</CardTitle>
+          <CardDescription>
+            Show or hide the partner leaderboard in the partner dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="leaderboard-toggle" className="text-base">
+                    Enable Partner Leaderboard
+                  </Label>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Note:</strong> The leaderboard displays top 50 partners with filters for different time periods (week, month, year, all-time). Partners can only see rankings, not detailed sales figures of others.
+                    When enabled, partners can see top performers ranked by sales
                   </p>
                 </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </AdminLayout>
+                <Switch
+                  id="leaderboard-toggle"
+                  checked={isEnabled}
+                  onCheckedChange={handleToggle}
+                  disabled={updateMutation.isPending}
+                />
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> The leaderboard displays top 50 partners with filters for different time periods (week, month, year, all-time). Partners can only see rankings, not detailed sales figures of others.
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
