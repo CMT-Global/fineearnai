@@ -67,7 +67,7 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
       h1 { font-size: 24px !important; line-height: 1.3 !important; }
       h2 { font-size: 20px !important; line-height: 1.3 !important; }
       .button { padding: 12px 25px !important; font-size: 14px !important; }
-      .logo-img { max-width: 120px !important; height: auto !important; }
+      .logo-img { max-width: 150px !important; height: auto !important; }
     }
   </style>
 </head>
@@ -238,14 +238,17 @@ export default function EmailTemplateGlobalSettings() {
     }
     
     const currentYear = new Date().getFullYear();
+    const platformUrl = "https://profitchips.com";
+    const logoUrl = `${platformUrl}/logo_without_bg_text.png`;
+    const logoHtml = `<img src="${logoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
 
     return templateConfig.template
       .replace(/\{\{platform_name\}\}/g, platformName)
-      .replace(/\{\{platform_url\}\}/g, "https://profitchips.com")
-      .replace(/\{\{support_url\}\}/g, "https://profitchips.com/support")
-      .replace(/\{\{privacy_url\}\}/g, "https://profitchips.com/privacy")
+      .replace(/\{\{platform_url\}\}/g, platformUrl)
+      .replace(/\{\{support_url\}\}/g, `${platformUrl}/support`)
+      .replace(/\{\{privacy_url\}\}/g, `${platformUrl}/privacy`)
       .replace(/\{\{current_year\}\}/g, currentYear.toString())
-      .replace(/\{\{logo_html\}\}/g, "")
+      .replace(/\{\{logo_html\}\}/g, logoHtml)
       .replace(/\{\{preheader\}\}/g, '<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">Sample email preview</div>')
       .replace(/\{\{content\}\}/g, '<p style="color: #333; font-size: 16px; line-height: 1.6;">This is a sample email content. Replace {{content}} with your actual email body when sending.</p>');
   };

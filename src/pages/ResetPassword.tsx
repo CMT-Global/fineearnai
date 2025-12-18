@@ -195,6 +195,9 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
+          <div className="flex justify-center mb-4">
+            <img src="/logo_without_bg_text.png" alt="ProfitChips Logo" className="h-24 w-24 object-contain" />
+          </div>
           <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
           <CardDescription>
             {isSuccess

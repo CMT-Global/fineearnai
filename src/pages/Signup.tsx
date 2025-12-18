@@ -232,9 +232,7 @@ const Signup = () => {
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
+            <img src="/logo_without_bg_text.png" alt="ProfitChips Logo" className="h-24 w-24 object-contain" />
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-muted-foreground">

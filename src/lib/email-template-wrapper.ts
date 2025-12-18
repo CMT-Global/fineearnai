@@ -39,6 +39,13 @@ export function wrapInProfessionalTemplate(
   const supportLink = supportUrl || `${platformUrl}/support`;
   const privacyLink = privacyUrl || `${platformUrl}/privacy`;
   const currentYear = new Date().getFullYear();
+  
+  // Construct default logo HTML if not provided
+  const defaultLogoUrl = `${platformUrl}/logo_without_bg_text.png`;
+  const defaultLogoHtml = `<img src="${defaultLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
+  
+  const finalLogoHtml = logoHtml || defaultLogoHtml;
+
   const preheaderHtml = preheader 
     ? `<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">${preheader}</div>` 
     : '';
@@ -48,7 +55,7 @@ export function wrapInProfessionalTemplate(
           <!-- Gradient Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-              ${logoHtml ? `<div style="margin-bottom: 15px;">${logoHtml}</div>` : ''}
+              <div style="margin-bottom: 15px;">${finalLogoHtml}</div>
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 ${displayTitle}
               </h1>
@@ -118,7 +125,7 @@ export function wrapInProfessionalTemplate(
       h1 { font-size: 24px !important; line-height: 1.3 !important; }
       h2 { font-size: 20px !important; line-height: 1.3 !important; }
       .button { padding: 12px 25px !important; font-size: 14px !important; }
-      .logo-img { max-width: 120px !important; height: auto !important; }
+      .logo-img { max-width: 150px !important; height: auto !important; }
     }
   </style>
 </head>
