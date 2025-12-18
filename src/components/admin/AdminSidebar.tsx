@@ -247,7 +247,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         <Button
           onClick={handleExitAdminMode}
           variant="outline"
-          className="w-full border-[hsl(var(--wallet-deposit))] text-[hsl(var(--wallet-deposit))] hover:bg-[hsl(var(--wallet-deposit))]/10"
+          className="w-full border-[hsl(var(--wallet-deposit))] text-[hsl(var(--wallet-deposit))] hover:bg-[hsl(var(--wallet-deposit))]/10 hover:text-[hsl(var(--wallet-deposit))]"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Main App
