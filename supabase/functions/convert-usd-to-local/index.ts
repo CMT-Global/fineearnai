@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { getSystemSecrets } from '../_shared/secrets.ts';
 
@@ -31,6 +31,7 @@ interface ConversionResponse {
   currency: string;
   cached: boolean;
   lastUpdated: string;
+  error?: string;
 }
 
 Deno.serve(async (req) => {
@@ -40,12 +41,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify authentication
+    // Initialize Supabase client with service role to ensure access to config
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { openExchangeAppId: apiKey } = await getSystemSecrets(supabase);
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Fetch secrets using the shared utility
+    const secrets = await getSystemSecrets(supabase);
+    const apiKey = secrets.openExchangeAppId;
 
+    // Verify user authentication (for security, only logged-in users can use this)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
@@ -56,11 +61,13 @@ Deno.serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error('[CONVERT-USD-TO-LOCAL] Auth error:', authError);
       throw new Error('Unauthorized');
     }
 
     // Parse request body
-    const { targetCurrencyCode }: ConversionRequest = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { targetCurrencyCode }: ConversionRequest = body;
 
     // Validate input
     if (!targetCurrencyCode || typeof targetCurrencyCode !== 'string') {
@@ -80,17 +87,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const isDev = Deno.env.get('ENVIRONMENT') !== 'production';
-    
-    if (isDev) {
-      console.log(`💱 Currency conversion request: USD → ${currencyCode} for user ${user.id}`);
-    }
+    console.log(`[CONVERT-USD-TO-LOCAL] 💱 Request: USD → ${currencyCode} for user ${user.id}`);
 
     // If USD, return rate of 1 immediately
     if (currencyCode === 'USD') {
-      if (isDev) {
-        console.log('✅ USD requested, returning rate of 1');
-      }
       return new Response(
         JSON.stringify({
           exchangeRate: 1,
@@ -105,9 +105,7 @@ Deno.serve(async (req) => {
     // Check cache first
     const cachedEntry = exchangeRateCache.get(currencyCode);
     if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
-      if (isDev) {
-        console.log(`✅ Cache hit for ${currencyCode}: ${cachedEntry.rate}`);
-      }
+      console.log(`[CONVERT-USD-TO-LOCAL] ✅ Cache hit for ${currencyCode}: ${cachedEntry.rate}`);
       return new Response(
         JSON.stringify({
           exchangeRate: cachedEntry.rate,
@@ -120,12 +118,8 @@ Deno.serve(async (req) => {
     }
 
     // Cache miss - fetch from OpenExchangeRates API
-    if (isDev) {
-      console.log(`🔄 Cache miss for ${currencyCode}, fetching from OpenExchangeRates API...`);
-    }
-
     if (!apiKey) {
-      console.error('❌ OPENEXCHANGERATES_APP_ID not configured');
+      console.error('[CONVERT-USD-TO-LOCAL] ❌ OpenExchangeRates App ID not configured in Admin Panel or Env');
       // Fallback to USD
       return new Response(
         JSON.stringify({
@@ -134,23 +128,22 @@ Deno.serve(async (req) => {
           cached: false,
           lastUpdated: new Date().toISOString(),
           error: 'API key not configured, falling back to USD',
-        }),
+        } as ConversionResponse),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`[CONVERT-USD-TO-LOCAL] 🔄 Cache miss for ${currencyCode}, fetching from OpenExchangeRates...`);
+
     // Fetch latest rates from OpenExchangeRates
+    // Note: Free plan only supports USD base, which we use here.
     const apiUrl = `https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD&symbols=${currencyCode}`;
     
-    if (isDev) {
-      console.log(`📡 Fetching: ${apiUrl.replace(apiKey, '***')}`);
-    }
-
     const apiResponse = await fetch(apiUrl);
 
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text();
-      console.error(`❌ OpenExchangeRates API error (${apiResponse.status}):`, errorText);
+      console.error(`[CONVERT-USD-TO-LOCAL] ❌ API error (${apiResponse.status}):`, errorText);
       
       // Fallback to USD on API error
       return new Response(
@@ -159,8 +152,8 @@ Deno.serve(async (req) => {
           currency: 'USD',
           cached: false,
           lastUpdated: new Date().toISOString(),
-          error: `API error: ${apiResponse.status}`,
-        }),
+          error: `OpenExchangeRates API error: ${apiResponse.status}`,
+        } as ConversionResponse),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -170,7 +163,7 @@ Deno.serve(async (req) => {
     // Extract exchange rate
     const exchangeRate = apiData.rates?.[currencyCode];
     if (!exchangeRate || typeof exchangeRate !== 'number') {
-      console.error(`❌ Currency ${currencyCode} not found in API response`);
+      console.error(`[CONVERT-USD-TO-LOCAL] ❌ Currency ${currencyCode} not found in API response`);
       
       // Fallback to USD
       return new Response(
@@ -179,8 +172,8 @@ Deno.serve(async (req) => {
           currency: 'USD',
           cached: false,
           lastUpdated: new Date().toISOString(),
-          error: `Currency ${currencyCode} not supported`,
-        }),
+          error: `Currency ${currencyCode} not supported by API`,
+        } as ConversionResponse),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -191,9 +184,7 @@ Deno.serve(async (req) => {
       expiresAt: Date.now() + CACHE_TTL,
     });
     
-    if (isDev) {
-      console.log(`✅ Cached exchange rate for ${currencyCode}: ${exchangeRate} (valid for 24h)`);
-    }
+    console.log(`[CONVERT-USD-TO-LOCAL] ✅ Cached new rate for ${currencyCode}: ${exchangeRate}`);
 
     return new Response(
       JSON.stringify({
@@ -206,7 +197,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('❌ Error in convert-usd-to-local:', error);
+    console.error('[CONVERT-USD-TO-LOCAL] ❌ Critical error:', error);
     
     // Always fallback to USD on critical errors
     return new Response(
@@ -216,7 +207,7 @@ Deno.serve(async (req) => {
         cached: false,
         lastUpdated: new Date().toISOString(),
         error: error.message || 'Internal server error',
-      }),
+      } as ConversionResponse),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
