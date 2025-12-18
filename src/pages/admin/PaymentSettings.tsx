@@ -11,10 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Edit, Trash2, Settings, Loader2, Info } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Settings, Loader2, Info, Wallet, RefreshCw, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface PaymentProcessor {
   id?: string;
@@ -83,6 +83,11 @@ const PaymentSettings = () => {
   // UTC time display
   const [currentUtcTime, setCurrentUtcTime] = useState<string>('');
   const [currentUtcDay, setCurrentUtcDay] = useState<number>(0);
+
+  // CPAY Wallet Balance state
+  const [walletInfo, setWalletInfo] = useState<any>(null);
+  const [fetchingBalance, setFetchingBalance] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Helper function to safely parse numeric inputs
   const parseNumericInput = (value: string): number => {
@@ -462,6 +467,30 @@ const PaymentSettings = () => {
     }
   };
 
+  const fetchCpayBalance = async () => {
+    try {
+      setFetchingBalance(true);
+      const { data, error } = await supabase.functions.invoke('get-cpay-wallet-balance');
+      
+      if (error) throw error;
+      
+      setWalletInfo(data);
+      toast.success("CPAY wallet balance retrieved successfully");
+    } catch (error: any) {
+      console.error("Error fetching CPAY balance:", error);
+      toast.error(error.message || "Failed to fetch CPAY balance. Check your credentials in System Secrets.");
+    } finally {
+      setFetchingBalance(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success("Token ID copied to clipboard");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
@@ -479,6 +508,19 @@ const PaymentSettings = () => {
             <p className="text-muted-foreground">Configure payment processors for deposits and withdrawals</p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              onClick={fetchCpayBalance} 
+              variant="outline" 
+              className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              disabled={fetchingBalance}
+            >
+              {fetchingBalance ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Fetch CPAY Balance
+            </Button>
             <Button onClick={() => navigate("/admin/settings/cpay-checkouts")} variant="outline">
               <Settings className="h-4 w-4 mr-2" />
               Manage CPAY Checkouts
@@ -489,6 +531,96 @@ const PaymentSettings = () => {
             </Button>
           </div>
         </div>
+
+        {/* CPAY Wallet Info Section */}
+        {walletInfo && (
+          <Card className="mb-6 border-blue-200 bg-blue-50/30">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Wallet className="h-5 w-5" />
+                  <CardTitle className="text-lg">CPAY Wallet Status</CardTitle>
+                </div>
+                <Badge variant="outline" className="bg-white border-blue-200 text-blue-700">
+                  {walletInfo.totalTokenCount} Tokens Found
+                </Badge>
+              </div>
+              <CardDescription className="text-blue-600/80">
+                Current balances and Currency IDs for your configured CPAY wallet
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Total Balance (USD)</p>
+                  <p className="text-2xl font-bold text-blue-900">${parseFloat(walletInfo.wallet.balanceUSD).toLocaleString()}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Available Balance</p>
+                  <p className="text-2xl font-bold text-green-600">${parseFloat(walletInfo.wallet.availableBalanceUSD).toLocaleString()}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Hold Balance</p>
+                  <p className="text-2xl font-bold text-orange-500">${parseFloat(walletInfo.wallet.holdBalance).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border border-blue-100 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-blue-50/50">
+                    <TableRow>
+                      <TableHead className="text-blue-700">Token / Network</TableHead>
+                      <TableHead className="text-blue-700">Balance</TableHead>
+                      <TableHead className="text-blue-700">Currency ID (Required for Secrets)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {walletInfo.tokens.map((token: any) => (
+                      <TableRow key={token.currencyId}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-blue-900">{token.name}</span>
+                            <span className="text-[10px] text-blue-500 uppercase font-medium">{token.blockchain} ({token.nodeType})</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono font-medium">
+                          {token.balance}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono border border-slate-200">
+                              {token.currencyId}
+                            </code>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-8 w-8 hover:bg-blue-50 text-blue-600"
+                              onClick={() => copyToClipboard(token.currencyId, token.currencyId)}
+                            >
+                              {copiedId === token.currencyId ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Alert className="bg-white border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertTitle className="text-blue-800 font-bold">Important Instructions</AlertTitle>
+                <AlertDescription className="text-blue-700 space-y-2">
+                  <ul className="list-disc pl-4 mt-2 space-y-1 text-xs">
+                    <li>Copy the <strong>Currency ID</strong> for your withdrawal token (USDT-BSC or USDC-Solana).</li>
+                    <li>Paste it into the <strong>USDT Token ID</strong> field in the <strong>Security &gt; System Secrets</strong> page.</li>
+                    <li>Ensure you have enough native coins (BNB for BSC, SOL for Solana) in your wallet to cover network fees.</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

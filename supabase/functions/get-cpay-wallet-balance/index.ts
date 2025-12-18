@@ -212,22 +212,10 @@ Deno.serve(async (req) => {
 
     console.log('[GET-CPAY-WALLET-BALANCE] ✅ Wallet balance retrieved');
     console.log('[GET-CPAY-WALLET-BALANCE] 💰 Balance:', wallet.balance, '| USD:', wallet.balanceUSD);
-    console.log('[GET-CPAY-WALLET-BALANCE] 🪙 Tokens found:', wallet.tokens?.length || 0);
     
-    if (!wallet.tokens || !Array.isArray(wallet.tokens)) {
-      console.error('[GET-CPAY-WALLET-BALANCE] ❌ No tokens array in wallet response');
-      return new Response(JSON.stringify({
-        error: 'No tokens found in wallet',
-        details: 'Your CPAY wallet returned no token entries. Enable USDT TRC20 in your CPAY account.',
-        wallet: {
-          balance: wallet.balance,
-          balanceUSD: wallet.balanceUSD
-        }
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Ensure tokens is an array, even if empty
+    const walletTokens = Array.isArray(wallet.tokens) ? wallet.tokens : [];
+    console.log('[GET-CPAY-WALLET-BALANCE] 🪙 Tokens found in wallet:', walletTokens.length);
 
     // ============================================================
     // STEP 5: FETCH CURRENCY LIST FOR ENRICHMENT (BEST-EFFORT)
@@ -322,7 +310,7 @@ Deno.serve(async (req) => {
           
           // Also log your wallet tokens
           console.log('[GET-CPAY-WALLET-BALANCE] 💰 YOUR WALLET TOKENS:');
-          console.log(JSON.stringify(wallet.tokens, null, 2));
+          console.log(JSON.stringify(walletTokens, null, 2));
         }
       }
     } catch (currencyError) {
@@ -348,10 +336,10 @@ Deno.serve(async (req) => {
     // ============================================================
     console.log('[GET-CPAY-WALLET-BALANCE] 🗺️  Currency map size:', Object.keys(currencyMap).length);
     console.log('[GET-CPAY-WALLET-BALANCE] 🗺️  Sample currency IDs:', Object.keys(currencyMap).slice(0, 5));
-    console.log('[GET-CPAY-WALLET-BALANCE] 🪙 Wallet token IDs:', wallet.tokens.map((t: CPAYToken) => t.currencyId));
+    console.log('[GET-CPAY-WALLET-BALANCE] 🪙 Wallet token IDs:', walletTokens.map((t: CPAYToken) => t.currencyId));
 
     // Check for mismatches
-    const unmatchedTokens = wallet.tokens.filter((t: CPAYToken) => !currencyMap[t.currencyId]);
+    const unmatchedTokens = walletTokens.filter((t: CPAYToken) => !currencyMap[t.currencyId]);
     if (unmatchedTokens.length > 0) {
       console.warn('[GET-CPAY-WALLET-BALANCE] ⚠️  Unmatched tokens:', unmatchedTokens.length);
       console.warn('[GET-CPAY-WALLET-BALANCE] ⚠️  Unmatched IDs:', unmatchedTokens.map((t: CPAYToken) => t.currencyId));
@@ -361,7 +349,7 @@ Deno.serve(async (req) => {
     // ============================================================
     // ENHANCED TOKEN ENRICHMENT with USDC Solana detection
     // ============================================================
-    const enrichedTokens = (wallet.tokens || []).map((token: CPAYToken) => {
+    const enrichedTokens = walletTokens.map((token: CPAYToken) => {
       const currency = currencyMap[token.currencyId];
       
       // Enhanced USDT TRC20 detection (fixed nodeType check)
@@ -440,17 +428,30 @@ Deno.serve(async (req) => {
         availableBalance: wallet.availableBalance,
         availableBalanceUSD: wallet.availableBalanceUSD,
       },
-      tokens: enrichedTokens, // ALL TOKENS with enhanced detection
-      totalTokenCount: enrichedTokens.length, // NEW - For UI display
-      usdtTrc20: usdtTrc20Token || null, // Legacy token (current)
-      usdcSolana: usdcSolanaToken || null, // NEW - Migration target token
+      tokens: enrichedTokens.length > 0 ? enrichedTokens : currencies
+        .filter(c => c.name?.toUpperCase() === 'USDT' || c.name?.toUpperCase() === 'USDC')
+        .map(c => ({
+          currencyId: c._id,
+          name: c.name,
+          nodeType: c.nodeType,
+          currencyType: c.currencyType,
+          blockchain: c.blockchain || c.nodeType || 'Unknown',
+          balance: "0",
+          holdBalance: "0",
+          isUsdtTrc20: c.name?.toUpperCase() === 'USDT' && (c.nodeType?.toLowerCase() === 'trx' || c.nodeType?.toLowerCase() === 'tron'),
+          isUsdcSolana: c.name?.toUpperCase() === 'USDC' && (c.nodeType?.toLowerCase() === 'solana' || c.nodeType?.toLowerCase() === 'sol'),
+        })),
+      totalTokenCount: enrichedTokens.length,
+      availableCurrencies: currencies.length, // Total available in CPAY
+      usdtTrc20: usdtTrc20Token || null,
+      usdcSolana: usdcSolanaToken || null,
       warnings: warnings.length > 0 ? warnings : undefined,
       tips: [
         '🔵 USDT TRC20 currencyId: Use for current withdrawals (legacy)',
         '🟢 USDC Solana currencyId: Use for new withdrawal system (recommended)',
         'Ensure you have sufficient network fees (TRX for Tron, SOL for Solana)',
         'Copy the 24-character currencyId to update CPAY_USDT_TOKEN_ID secret',
-        `Found ${enrichedTokens.length} total tokens in your CPAY wallet`
+        enrichedTokens.length === 0 ? 'No tokens active in your wallet. Showing available USDT/USDC options.' : `Found ${enrichedTokens.length} total tokens in your CPAY wallet`
       ]
     };
 
