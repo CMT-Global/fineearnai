@@ -1,8 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const resendApiKey = Deno.env.get("RESEND_API_KEY");
+import { getSystemSecrets } from "../_shared/secrets.ts";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
@@ -15,6 +17,8 @@ const handler = async (req)=>{
   }
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { resendApiKey } = await getSystemSecrets(supabase);
+
     // Verify admin authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {

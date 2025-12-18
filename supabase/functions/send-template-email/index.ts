@@ -4,6 +4,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.0";
 // @ts-ignore - Deno edge function, Resend types available at runtime
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { getSystemSecrets } from "../_shared/secrets.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
@@ -87,8 +89,10 @@ serve(async (req)=>{
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     // @ts-ignore - Deno.env is available at runtime
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    // @ts-ignore - Deno.env is available at runtime
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { resendApiKey } = await getSystemSecrets(supabase);
+
     if (!resendApiKey) {
       console.error(`❌ [${requestId}] RESEND_API_KEY not configured`);
       throw new Error('Email service not configured');
@@ -97,7 +101,6 @@ serve(async (req)=>{
     // Log API key status (without exposing the key)
     console.error(`🔑 [${requestId}] Resend API key configured: ${resendApiKey.substring(0, 7)}...${resendApiKey.substring(resendApiKey.length - 4)}`);
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(resendApiKey);
     
     console.error(`✅ [${requestId}] Resend client initialized`);

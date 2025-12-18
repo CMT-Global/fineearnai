@@ -60,3 +60,5 @@ COMMENT ON FUNCTION public.get_referral_stats(UUID) IS
 'Returns referral statistics for a user. Always returns exactly one row with zero values if no referrals exist.';
 
 
+
+

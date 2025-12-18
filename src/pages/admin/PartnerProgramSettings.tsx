@@ -211,7 +211,7 @@ export default function PartnerProgramSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Users className="h-8 w-8 text-primary" />

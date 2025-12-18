@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendTemplateEmail } from "../_shared/email-sender.ts";
+import { getSystemSecrets } from "../_shared/secrets.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
@@ -173,12 +175,13 @@ async function handlePayViaAPI(supabase, withdrawal, adminId) {
   try {
     // Call appropriate payment API
     let apiResponse;
-    switch(provider){
+    const secrets = await getSystemSecrets(supabase);
+    switch (provider) {
       case 'cpay':
-        apiResponse = await processCPAYWithdrawal(withdrawal);
+        apiResponse = await processCPAYWithdrawal(withdrawal, secrets);
         break;
       case 'payeer':
-        apiResponse = await processPayeerWithdrawal(withdrawal);
+        apiResponse = await processPayeerWithdrawal(withdrawal, secrets);
         break;
       default:
         throw new Error(`Payment provider ${provider} not supported for API payments`);
@@ -582,17 +585,25 @@ function detectPaymentProvider(paymentMethod) {
   return 'manual';
 }
 // Process CPAY withdrawal via API with proper authentication flow
-async function processCPAYWithdrawal(withdrawal) {
+async function processCPAYWithdrawal(withdrawal: any, secrets: any): Promise<{ 
+  transaction_hash: string | null; 
+  cpay_withdrawal_id?: string;
+  provider: string; 
+  success: boolean;
+  status: string;
+}> {
   // Helper function to format amount with fixed decimal places
   function formatAmount(value, decimals) {
     return value.toFixed(decimals);
   }
   console.log('[CPAY-WITHDRAWAL] Starting CPAY withdrawal process...');
-  // Validate required CPAY credentials
-  const CPAY_API_PUBLIC_KEY = Deno.env.get('CPAY_API_PUBLIC_KEY');
-  const CPAY_API_PRIVATE_KEY = Deno.env.get('CPAY_API_PRIVATE_KEY');
-  const CPAY_WALLET_ID = Deno.env.get('CPAY_WALLET_ID');
-  const CPAY_WALLET_PASSPHRASE = Deno.env.get('CPAY_WALLET_PASSPHRASE');
+
+  // Validate required CPAY credentials from dynamic secrets
+  const CPAY_API_PUBLIC_KEY = secrets.cpay.publicKey;
+  const CPAY_API_PRIVATE_KEY = secrets.cpay.privateKey;
+  const CPAY_WALLET_ID = secrets.cpay.walletId;
+  const CPAY_WALLET_PASSPHRASE = secrets.cpay.passphrase;
+
   console.log('[CPAY-WITHDRAWAL] 🔍 Credential check:', {
     hasPublicKey: !!CPAY_API_PUBLIC_KEY,
     hasPrivateKey: !!CPAY_API_PRIVATE_KEY,
@@ -686,8 +697,10 @@ async function processCPAYWithdrawal(withdrawal) {
     // STEP 3: Perform Account Wallet Withdrawal (REQUIRES currencyToken)
     // ============================================================
     console.log('[CPAY-WITHDRAWAL] 📡 Step 3/3: Calling CPAY withdrawal endpoint...');
-    // Get USDT token ID from environment
-    const CPAY_USDT_TOKEN_ID = Deno.env.get('CPAY_USDT_TOKEN_ID');
+
+    // Get USDT token ID from dynamic secrets
+    const CPAY_USDT_TOKEN_ID = secrets.cpay.usdtTokenId;
+
     if (!CPAY_USDT_TOKEN_ID) {
       throw new Error('CPAY_USDT_TOKEN_ID not configured - required for Account Wallet withdrawals');
     }
@@ -874,7 +887,13 @@ async function processCPAYWithdrawal(withdrawal) {
   }
 }
 // Process Payeer withdrawal via API (placeholder for future implementation)
-async function processPayeerWithdrawal(withdrawal) {
+async function processPayeerWithdrawal(withdrawal: any, secrets: any): Promise<{ 
+  transaction_hash: string | null; 
+  cpay_withdrawal_id?: string;
+  provider: string; 
+  success: boolean;
+  status: string;
+}> {
   // TODO: Implement Payeer API integration
   throw new Error('Payeer API integration not yet implemented');
 }

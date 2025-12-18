@@ -160,6 +160,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Mail,
       items: [
         { label: "Email Settings", path: "/admin/communications/email-settings" },
+        { label: "Live Chat Settings", path: "/admin/communications/reamaze-settings" },
         { label: "Login Message", path: "/admin/communications/login-message" },
         { label: "Bulk Email", path: "/admin/communications/email" },
         { label: "Influencer Invites", path: "/admin/communications/influencer-invites" },
@@ -173,6 +174,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       icon: Shield,
       items: [
         { label: "Security Settings", path: "/admin/security-settings" },
+        { label: "System Secrets", path: "/admin/security/secrets" },
         { label: "IPStack Configuration", path: "/admin/settings/ipstack" },
       ],
     },
@@ -247,7 +249,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         <Button
           onClick={handleExitAdminMode}
           variant="outline"
-          className="w-full border-[hsl(var(--wallet-deposit))] text-[hsl(var(--wallet-deposit))] hover:bg-[hsl(var(--wallet-deposit))]/10"
+          className="w-full border-[hsl(var(--wallet-deposit))] text-[hsl(var(--wallet-deposit))] hover:bg-[hsl(var(--wallet-deposit))]/10 hover:text-[hsl(var(--wallet-deposit))]"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Main App
