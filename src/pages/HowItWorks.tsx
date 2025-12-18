@@ -12,6 +12,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranding } from "@/contexts/BrandingContext";
 import {
   Sparkles,
   DollarSign,
@@ -34,38 +35,27 @@ const HowItWorks = () => {
   const { formatAmount } = useCurrencyConversion();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { platformName } = useBranding();
   const { data } = useDashboardData(user?.id);
   const { profile } = data || {};
 
-  // Load platform name + How It Works content/visibility from platform_config
+  // Load How It Works content/visibility from platform_config
   const { data: howItWorksData, isLoading: isConfigLoading } = useQuery({
     queryKey: ["how-it-works-content"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_config")
         .select("key, value")
-        .in("key", ["platform_name", "how_it_works_content"]);
+        .eq("key", "how_it_works_content")
+        .maybeSingle();
 
       if (error) throw error;
-
-      const map = new Map<string, any>();
-      data?.forEach((row: any) => {
-        map.set(row.key, row.value);
-      });
-
-      const platformName = (map.get("platform_name") as string) || "ProfitChips";
-      const howItWorks = map.get("how_it_works_content") || {};
-
-      return {
-        platformName,
-        howItWorks,
-      };
+      return (data?.value as any) || {};
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const platformName = howItWorksData?.platformName || "ProfitChips";
-  const howItWorksConfig = howItWorksData?.howItWorks || {};
+  const howItWorksConfig = howItWorksData || {};
   const slidesConfig: Array<{ id: number; title?: string; subtitle?: string; description?: string }> =
     howItWorksConfig.slides || [];
   const isHowItWorksVisible = howItWorksConfig.isVisible ?? true;

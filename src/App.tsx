@@ -8,6 +8,7 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -688,26 +689,28 @@ const RoutesWrapper = () => {
 const App = () => (
   <GlobalErrorBoundary>
     <HelmetProvider>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <QueryClientProvider client={queryClient}>
-          <AdminModeProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner position="top-right" />
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <AdminModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner position="top-right" />
+            <BrandingProvider>
               <CurrencyProvider>
                 <DynamicSEO />
                 <ReamazeInitializer />
                 <RoutesWrapper />
               </CurrencyProvider>
-            </TooltipProvider>
-          </AdminModeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
+            </BrandingProvider>
+          </TooltipProvider>
+        </AdminModeProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
     </HelmetProvider>
   </GlobalErrorBoundary>
 );

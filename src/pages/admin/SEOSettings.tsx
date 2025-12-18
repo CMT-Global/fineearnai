@@ -28,6 +28,12 @@ interface SEOConfig {
   twitterCard: string;
 }
 
+interface BrandingConfig {
+  name: string;
+  logoUrl: string;
+  url: string;
+}
+
 const DEFAULT_SEO: SEOConfig = {
   title: "ProfitChips – Earn Online by Completing AI Tasks",
   description: "ProfitChips lets users earn money online by completing AI-powered tasks and online training. Simple, flexible, and global.",
@@ -45,51 +51,78 @@ const DEFAULT_SEO: SEOConfig = {
   twitterCard: "summary_large_image",
 };
 
+const DEFAULT_BRANDING: BrandingConfig = {
+  name: "ProfitChips",
+  logoUrl: "/logo_without_bg_text.png",
+  url: "https://profitchips.com",
+};
+
 export default function SEOSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [config, setConfig] = useState<SEOConfig>(DEFAULT_SEO);
+  const [branding, setBranding] = useState<BrandingConfig>(DEFAULT_BRANDING);
   const [hasChanges, setHasChanges] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["seo-config"],
+    queryKey: ["seo-branding-config"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_config")
-        .select("value")
-        .eq("key", "seo_config")
-        .maybeSingle();
+        .select("key, value")
+        .in("key", ["seo_config", "platform_branding"]);
 
       if (error) throw error;
-      return (data?.value as SEOConfig) || DEFAULT_SEO;
+      
+      const seoData = data.find(r => r.key === "seo_config")?.value as SEOConfig;
+      const brandingData = data.find(r => r.key === "platform_branding")?.value as BrandingConfig;
+      
+      return {
+        seo: seoData || DEFAULT_SEO,
+        branding: brandingData || DEFAULT_BRANDING
+      };
     },
   });
 
   useEffect(() => {
     if (data) {
-      setConfig(data);
+      setConfig(data.seo);
+      setBranding(data.branding);
     }
   }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (newConfig: SEOConfig) => {
-      const { error } = await supabase
+    mutationFn: async ({ seo, branding }: { seo: SEOConfig, branding: BrandingConfig }) => {
+      const { error: seoError } = await supabase
         .from("platform_config")
         .upsert({
           key: "seo_config",
-          value: newConfig,
+          value: seo,
           description: "Website SEO and Social Sharing configurations",
           updated_at: new Date().toISOString(),
         }, { onConflict: "key" });
 
-      if (error) throw error;
+      if (seoError) throw seoError;
+
+      const { error: brandingError } = await supabase
+        .from("platform_config")
+        .upsert({
+          key: "platform_branding",
+          value: branding,
+          description: "Platform branding settings (Name, Logo, URL)",
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "key" });
+
+      if (brandingError) throw brandingError;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seo-branding-config"] });
+      queryClient.invalidateQueries({ queryKey: ["branding-config"] });
       queryClient.invalidateQueries({ queryKey: ["seo-config"] });
       setHasChanges(false);
       toast({
         title: "Settings saved",
-        description: "SEO and Social Sharing settings have been updated.",
+        description: "SEO and Branding settings have been updated.",
       });
     },
     onError: (error: any) => {
@@ -101,14 +134,20 @@ export default function SEOSettings() {
     },
   });
 
-  const handleChange = (key: keyof SEOConfig, value: string) => {
+  const handleSEOChange = (key: keyof SEOConfig, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleBrandingChange = (key: keyof BrandingConfig, value: string) => {
+    setBranding((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
   const handleReset = () => {
     if (data) {
-      setConfig(data);
+      setConfig(data.seo);
+      setBranding(data.branding);
       setHasChanges(false);
     }
   };
@@ -138,7 +177,7 @@ export default function SEOSettings() {
             <Undo className="h-4 w-4 mr-2" />
             Discard Changes
           </Button>
-          <Button onClick={() => saveMutation.mutate(config)} disabled={!hasChanges || saveMutation.isPending}>
+          <Button onClick={() => saveMutation.mutate({ seo: config, branding })} disabled={!hasChanges || saveMutation.isPending}>
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
@@ -149,8 +188,12 @@ export default function SEOSettings() {
         </div>
       </div>
 
-      <Tabs defaultValue="seo" className="space-y-6">
+      <Tabs defaultValue="branding" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="branding" className="gap-2">
+            <Globe className="h-4 w-4" />
+            General Branding
+          </TabsTrigger>
           <TabsTrigger value="seo" className="gap-2">
             <Globe className="h-4 w-4" />
             SEO Metadata
@@ -160,6 +203,57 @@ export default function SEOSettings() {
             Social Sharing
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="branding" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Branding</CardTitle>
+              <CardDescription>
+                Configure core branding elements that appear across the platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="platformName">Platform Name</Label>
+                <Input
+                  id="platformName"
+                  value={branding.name}
+                  onChange={(e) => handleBrandingChange("name", e.target.value)}
+                  placeholder="e.g. ProfitChips"
+                />
+                <p className="text-xs text-muted-foreground">Used in sidebar, titles, and emails.</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="platformLogo">Platform Logo URL</Label>
+                <div className="flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      id="platformLogo"
+                      value={branding.logoUrl}
+                      onChange={(e) => handleBrandingChange("logoUrl", e.target.value)}
+                      placeholder="/logo_without_bg_text.png"
+                    />
+                    <p className="text-xs text-muted-foreground">Enter image URL or path in public folder.</p>
+                  </div>
+                  <div className="h-12 w-12 border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    <img src={branding.logoUrl} alt="Preview" className="h-full w-full object-contain" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="platformUrl">Platform URL</Label>
+                <Input
+                  id="platformUrl"
+                  value={branding.url}
+                  onChange={(e) => handleBrandingChange("url", e.target.value)}
+                  placeholder="https://profitchips.com"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="seo" className="space-y-6">
           <Card>
@@ -175,7 +269,7 @@ export default function SEOSettings() {
                 <Input
                   id="title"
                   value={config.title}
-                  onChange={(e) => handleChange("title", e.target.value)}
+                  onChange={(e) => handleSEOChange("title", e.target.value)}
                   placeholder="Enter page title"
                 />
                 <p className="text-xs text-muted-foreground">Recommended: 50-60 characters</p>
@@ -186,7 +280,7 @@ export default function SEOSettings() {
                 <Textarea
                   id="description"
                   value={config.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
+                  onChange={(e) => handleSEOChange("description", e.target.value)}
                   placeholder="Enter meta description"
                   rows={3}
                 />
@@ -198,7 +292,7 @@ export default function SEOSettings() {
                 <Input
                   id="keywords"
                   value={config.keywords}
-                  onChange={(e) => handleChange("keywords", e.target.value)}
+                  onChange={(e) => handleSEOChange("keywords", e.target.value)}
                   placeholder="e.g. earn online, AI tasks, ProfitChips"
                 />
                 <p className="text-xs text-muted-foreground">Comma-separated keywords</p>
@@ -210,7 +304,7 @@ export default function SEOSettings() {
                   <Input
                     id="canonicalUrl"
                     value={config.canonicalUrl}
-                    onChange={(e) => handleChange("canonicalUrl", e.target.value)}
+                    onChange={(e) => handleSEOChange("canonicalUrl", e.target.value)}
                     placeholder="https://yourdomain.com"
                   />
                 </div>
@@ -219,7 +313,7 @@ export default function SEOSettings() {
                   <Input
                     id="robots"
                     value={config.robots}
-                    onChange={(e) => handleChange("robots", e.target.value)}
+                    onChange={(e) => handleSEOChange("robots", e.target.value)}
                     placeholder="index, follow"
                   />
                 </div>
@@ -230,7 +324,7 @@ export default function SEOSettings() {
                 <Input
                   id="faviconUrl"
                   value={config.faviconUrl}
-                  onChange={(e) => handleChange("faviconUrl", e.target.value)}
+                  onChange={(e) => handleSEOChange("faviconUrl", e.target.value)}
                   placeholder="/logo_without_bg_text.png"
                 />
                 <p className="text-xs text-muted-foreground">High resolution PNG recommended (192x192 or larger)</p>
@@ -265,7 +359,7 @@ export default function SEOSettings() {
                   <Input
                     id="ogTitle"
                     value={config.ogTitle}
-                    onChange={(e) => handleChange("ogTitle", e.target.value)}
+                    onChange={(e) => handleSEOChange("ogTitle", e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -273,7 +367,7 @@ export default function SEOSettings() {
                   <Textarea
                     id="ogDescription"
                     value={config.ogDescription}
-                    onChange={(e) => handleChange("ogDescription", e.target.value)}
+                    onChange={(e) => handleSEOChange("ogDescription", e.target.value)}
                     rows={2}
                   />
                 </div>
@@ -282,7 +376,7 @@ export default function SEOSettings() {
                   <Input
                     id="ogImage"
                     value={config.ogImage}
-                    onChange={(e) => handleChange("ogImage", e.target.value)}
+                    onChange={(e) => handleSEOChange("ogImage", e.target.value)}
                     placeholder="/logo_without_bg_text.png"
                   />
                 </div>
@@ -291,7 +385,7 @@ export default function SEOSettings() {
                   <Input
                     id="ogUrl"
                     value={config.ogUrl}
-                    onChange={(e) => handleChange("ogUrl", e.target.value)}
+                    onChange={(e) => handleSEOChange("ogUrl", e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -313,7 +407,7 @@ export default function SEOSettings() {
                   <Input
                     id="twitterTitle"
                     value={config.twitterTitle}
-                    onChange={(e) => handleChange("twitterTitle", e.target.value)}
+                    onChange={(e) => handleSEOChange("twitterTitle", e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -321,7 +415,7 @@ export default function SEOSettings() {
                   <Textarea
                     id="twitterDescription"
                     value={config.twitterDescription}
-                    onChange={(e) => handleChange("twitterDescription", e.target.value)}
+                    onChange={(e) => handleSEOChange("twitterDescription", e.target.value)}
                     rows={2}
                   />
                 </div>
@@ -330,7 +424,7 @@ export default function SEOSettings() {
                   <Input
                     id="twitterImage"
                     value={config.twitterImage}
-                    onChange={(e) => handleChange("twitterImage", e.target.value)}
+                    onChange={(e) => handleSEOChange("twitterImage", e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -338,7 +432,7 @@ export default function SEOSettings() {
                   <Input
                     id="twitterCard"
                     value={config.twitterCard}
-                    onChange={(e) => handleChange("twitterCard", e.target.value)}
+                    onChange={(e) => handleSEOChange("twitterCard", e.target.value)}
                     placeholder="summary_large_image"
                   />
                 </div>

@@ -201,7 +201,7 @@ export default function AdminAnalyticsDashboard() {
                       <YAxis className="text-xs" />
                       <Tooltip 
                         labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                        contentStyle={{ backgroundColor: '#123630', border: 'none', borderRadius: '8px', color: '#EAF4F2' }}
                       />
                       <Legend />
                       <Bar 
@@ -270,7 +270,7 @@ export default function AdminAnalyticsDashboard() {
                       <YAxis className="text-xs" />
                       <Tooltip 
                         labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                        contentStyle={{ backgroundColor: '#123630', border: 'none', borderRadius: '8px', color: '#EAF4F2' }}
                       />
                       <Legend />
                       <Bar 

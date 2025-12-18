@@ -493,14 +493,14 @@ const PaymentSettings = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading payment settings..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)]">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -541,7 +541,7 @@ const PaymentSettings = () => {
                   <Wallet className="h-5 w-5" />
                   <CardTitle className="text-lg">CPAY Wallet Status</CardTitle>
                 </div>
-                <Badge variant="outline" className="bg-white border-blue-200 text-blue-700">
+                <Badge variant="outline" className="bg-card border-blue-200/20 text-blue-400">
                   {walletInfo.totalTokenCount} Tokens Found
                 </Badge>
               </div>
@@ -551,21 +551,21 @@ const PaymentSettings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
                   <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Total Balance (USD)</p>
                   <p className="text-2xl font-bold text-blue-900">${parseFloat(walletInfo.wallet.balanceUSD).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
                   <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Available Balance</p>
                   <p className="text-2xl font-bold text-green-600">${parseFloat(walletInfo.wallet.availableBalanceUSD).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
                   <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Hold Balance</p>
                   <p className="text-2xl font-bold text-orange-500">${parseFloat(walletInfo.wallet.holdBalance).toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-blue-100 overflow-hidden">
+              <div className="bg-card rounded-lg border border-blue-100/20 overflow-hidden">
                 <Table>
                   <TableHeader className="bg-blue-50/50">
                     <TableRow>
@@ -607,7 +607,7 @@ const PaymentSettings = () => {
                 </Table>
               </div>
 
-              <Alert className="bg-white border-blue-200">
+              <Alert className="bg-card border-blue-200/20 text-blue-400">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertTitle className="text-blue-800 font-bold">Important Instructions</AlertTitle>
                 <AlertDescription className="text-blue-700 space-y-2">

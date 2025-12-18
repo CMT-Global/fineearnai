@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface LoginMessageConfig {
   enabled: boolean;
@@ -39,20 +40,21 @@ interface LoginMessageConfig {
   priority: "low" | "medium" | "high";
 }
 
-const DEFAULT_CONFIG: LoginMessageConfig = {
-  enabled: true,
-  title: "Welcome to FineEarn!",
-  body: "<p>We're excited to have you here. Start earning today by completing AI training tasks!</p>",
-  show_once_per_session: false,
-  dismissible: true,
-  priority: "medium",
-};
-
 const LoginMessage = () => {
+  const { platformName } = useBranding();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const DEFAULT_CONFIG: LoginMessageConfig = {
+    enabled: true,
+    title: `Welcome to ${platformName}!`,
+    body: "<p>We're excited to have you here. Start earning today by completing AI training tasks!</p>",
+    show_once_per_session: false,
+    dismissible: true,
+    priority: "medium",
+  };
 
   const [config, setConfig] = useState<LoginMessageConfig>(DEFAULT_CONFIG);
   const [showPreview, setShowPreview] = useState(false);

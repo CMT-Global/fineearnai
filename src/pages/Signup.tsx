@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { validateReferralCode } from "@/lib/referral-utils";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { cn } from "@/lib/utils";
+import { useBranding } from "@/contexts/BrandingContext";
 import {
   Form,
   FormControl,
@@ -23,6 +24,7 @@ import {
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { platformName, platformLogoUrl } = useBranding();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -232,13 +234,13 @@ const Signup = () => {
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <img src="/logo_without_bg_text.png" alt="ProfitChips Logo" className="h-24 w-24 object-contain" />
+            <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-muted-foreground">
             {referrerUsername 
-              ? `Invited by ${referrerUsername}. Join ProfitChips and start earning!`
-              : "Join ProfitChips - Start earning with AI tasks in minutes"}
+              ? `Invited by ${referrerUsername}. Join ${platformName} and start earning!`
+              : `Join ${platformName} - Start earning with AI tasks in minutes`}
           </p>
         </div>
 

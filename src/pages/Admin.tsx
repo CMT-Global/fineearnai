@@ -123,7 +123,7 @@ const Admin = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Loading admin panel...</p>

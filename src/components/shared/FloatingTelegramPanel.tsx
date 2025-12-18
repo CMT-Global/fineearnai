@@ -20,13 +20,13 @@ interface TelegramCommunity {
 const activeCommunities: TelegramCommunity[] = [
   {
     name: "Asia Community",
-    url: "https://t.me/FineEarnOfficial",
+    url: "https://t.me/ProfitChipsOfficial",
     flag: "🇵🇭",
     gradient: "from-blue-500 to-red-500"
   },
   {
     name: "European Community",
-    url: "https://t.me/FINEEARNGROUP",
+    url: "https://t.me/ProfitChipsGROUP",
     flag: "🇪🇺",
     gradient: "from-blue-600 to-yellow-400"
   },
@@ -38,7 +38,7 @@ const activeCommunities: TelegramCommunity[] = [
   },
   {
     name: "Marketing Material (Global)",
-    url: "https://t.me/fineearn",
+    url: "https://t.me/ProfitChips",
     flag: "📢",
     gradient: "from-purple-500 to-pink-500"
   }

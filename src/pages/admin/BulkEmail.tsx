@@ -22,8 +22,10 @@ import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
 import { EmailVariableReference } from "@/components/admin/EmailVariableReference";
 import { countries, getCountryName } from "@/lib/countries";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const BulkEmail = () => {
+  const { platformName } = useBranding();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -249,9 +251,9 @@ const BulkEmail = () => {
     let content = formData.body;
     
     // Replace common variables for preview
-    content = content.replace(/{{username}}/g, '<strong style="color: #667eea;">john_doe</strong>');
-    content = content.replace(/{{email}}/g, '<strong style="color: #667eea;">user@example.com</strong>');
-    content = content.replace(/{{full_name}}/g, '<strong style="color: #667eea;">John Doe</strong>');
+    content = content.replace(/{{username}}/g, '<strong style="color: #16a34a;">john_doe</strong>');
+    content = content.replace(/{{email}}/g, '<strong style="color: #16a34a;">user@example.com</strong>');
+    content = content.replace(/{{full_name}}/g, '<strong style="color: #16a34a;">John Doe</strong>');
     
     // Wrap content in professional email template
     return `
@@ -259,9 +261,9 @@ const BulkEmail = () => {
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
           
           <!-- Gradient Header -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <div style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              FineEarn
+              ${platformName}
             </h1>
           </div>
           
@@ -273,13 +275,13 @@ const BulkEmail = () => {
           <!-- Footer -->
           <div style="background-color: #f8f9fa; padding: 30px 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
             <p style="margin: 0 0 10px 0; font-size: 14px; color: #6c757d;">
-              <strong style="color: #495057;">FineEarn</strong> - Earn by Training AI
+              <strong style="color: #495057;">${platformName}</strong> - Earn by Training AI
             </p>
             <p style="margin: 0 0 15px 0; font-size: 13px; color: #868e96;">
-              This email was sent from FineEarn. If you have any questions, please contact our support team.
+              This email was sent from ${platformName}. If you have any questions, please contact our support team.
             </p>
             <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd;">
-              © ${new Date().getFullYear()} FineEarn. All rights reserved.
+              © ${new Date().getFullYear()} ${platformName}. All rights reserved.
             </p>
           </div>
           
@@ -495,14 +497,14 @@ const BulkEmail = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)]">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">

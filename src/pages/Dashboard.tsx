@@ -35,10 +35,12 @@ import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { LoginMessageDialog } from "@/components/shared/LoginMessageDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { platformName } = useBranding();
   const navigate = useNavigate();
   
   // State to track fresh login for login message dialog
@@ -51,52 +53,31 @@ const Dashboard = () => {
   const { data, isLoading, refetch } = useDashboardData(user?.id);
   const { profile, referralStats, membershipPlan } = data || {};
 
-  // Dashboard content & platform name configuration
+  // Dashboard content configuration
   const { data: dashboardContentData } = useQuery({
     queryKey: ["dashboard-content"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_config")
         .select("key, value")
-        .in("key", ["platform_name", "dashboard_content"]);
+        .eq("key", "dashboard_content")
+        .maybeSingle();
 
       if (error) throw error;
-
-      const map = new Map<string, any>();
-      data?.forEach((row: any) => {
-        map.set(row.key, row.value);
-      });
-
-      const platformName = (map.get("platform_name") as string) || "ProfitChips";
-      const dashboardContent = map.get("dashboard_content") || {};
-
-      return {
-        platformName,
-        dashboardContent,
-      };
+      return data?.value as any || {};
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const platformName = dashboardContentData?.platformName || "ProfitChips";
-  const earnersGuideVisible =
-    dashboardContentData?.dashboardContent?.earnersGuide?.isVisible ?? true;
-  const guidesSectionVisible =
-    dashboardContentData?.dashboardContent?.guidesSection?.isVisible ?? true;
-  const guidesTitle =
-    dashboardContentData?.dashboardContent?.guidesSection?.title ||
-    "💳 Deposit & Withdrawal Quick Guides";
-  const guidesDescription =
-    dashboardContentData?.dashboardContent?.guidesSection?.description ||
-    "Learn how to fund your account and withdraw earnings using various payment methods globally";
-  const socialSectionVisible =
-    dashboardContentData?.dashboardContent?.socialSection?.isVisible ?? true;
-  const socialFacebookUrl =
-    dashboardContentData?.dashboardContent?.socialSection?.facebookUrl;
-  const socialInstagramUrl =
-    dashboardContentData?.dashboardContent?.socialSection?.instagramUrl;
-  const socialTiktokUrl =
-    dashboardContentData?.dashboardContent?.socialSection?.tiktokUrl;
+  const dashboardContent = dashboardContentData || {};
+  const earnersGuideVisible = dashboardContent.earnersGuide?.isVisible ?? true;
+  const guidesSectionVisible = dashboardContent.guidesSection?.isVisible ?? true;
+  const guidesTitle = dashboardContent.guidesSection?.title || "💳 Deposit & Withdrawal Quick Guides";
+  const guidesDescription = dashboardContent.guidesSection?.description || "Learn how to fund your account and withdraw earnings using various payment methods globally";
+  const socialSectionVisible = dashboardContent.socialSection?.isVisible ?? true;
+  const socialFacebookUrl = dashboardContent.socialSection?.facebookUrl;
+  const socialInstagramUrl = dashboardContent.socialSection?.instagramUrl;
+  const socialTiktokUrl = dashboardContent.socialSection?.tiktokUrl;
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);

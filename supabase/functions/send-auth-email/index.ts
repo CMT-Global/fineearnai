@@ -326,13 +326,15 @@ serve(async (req) => {
     // FETCH DYNAMIC EMAIL SETTINGS (PHASE 4)
     // ============================================
     console.log(`⚙️  [Auth Email Hook] Fetching dynamic email settings...`);
-    const { data: configData } = await supabase
+    const { data: configRows } = await supabase
       .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
+      .select('key, value')
+      .in('key', ['email_settings', 'platform_branding']);
 
-    const emailSettings = configData?.value || {
+    const emailSettingsRow = configRows?.find(r => r.key === 'email_settings');
+    const platformBrandingRow = configRows?.find(r => r.key === 'platform_branding');
+
+    const emailSettings = emailSettingsRow?.value || {
       from_address: 'noreply@profitchips.com',
       from_name: 'ProfitChips',
       reply_to_address: 'support@profitchips.com',
@@ -341,8 +343,54 @@ serve(async (req) => {
       platform_url: 'https://profitchips.com',
     };
 
+    const platformBranding = platformBrandingRow?.value || {};
+    const platformName = platformBranding.name || emailSettings.platform_name || 'ProfitChips';
+    const platformUrl = platformBranding.url || emailSettings.platform_url || 'https://profitchips.com';
+    const platformLogoUrl = platformBranding.logoUrl || `${platformUrl}/logo_without_bg_text.png`;
+
+    console.log(`📧 [Auth Email Hook] Using settings - Platform: ${platformName}, URL: ${platformUrl}`);
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
-    console.log(`📧 [Auth Email Hook] Reply-To: ${emailSettings.reply_to_name} <${emailSettings.reply_to_address}>`);
+    
+    // ============================================
+    // PREPARE EMAIL CONTENT
+    // ============================================
+    let subject = "";
+    let htmlBody = "";
+    let templateId = null;
+
+    if (template) {
+      console.log(`📝 [Auth Email Hook] Using custom template: ${template.name}`);
+      
+      // Variables for template substitution
+      const variables = {
+        username: username,
+        email: user.email,
+        platform_name: platformName,
+        platform_url: platformUrl,
+        reset_link: email_action_type === "recovery" ? authLink : null,
+        confirmation_link: email_action_type !== "recovery" ? authLink : null,
+        auth_link: authLink,
+        token: token,
+        site_url: site_url,
+      };
+      
+      subject = template.subject.replace(/FineEarn/g, platformName);
+      htmlBody = populateTemplate(template.body, variables).replace(/FineEarn/g, platformName);
+      templateId = template.id;
+    } else {
+      console.warn(`⚠️ [Auth Email Hook] No custom template found, using fallback`);
+      
+      // Use fallback template
+      const fallback = generateFallbackEmail(
+        email_action_type, 
+        username, 
+        authLink, 
+        token,
+        platformName
+      );
+      subject = fallback.subject;
+      htmlBody = fallback.body;
+    }
     
     // ============================================
     // APPLY PROFESSIONAL EMAIL WRAPPER (PHASE 3)
@@ -355,15 +403,15 @@ serve(async (req) => {
       console.log(`🎨 [Auth Email Hook] Template is HTML fragment - applying professional wrapper`);
       
       htmlBody = await wrapInProfessionalTemplate(htmlBody, {
-        title: emailSettings.platform_name || 'ProfitChips',
+        title: platformName,
         preheader: subject,
         headerGradient: true,
         includeFooter: true,
-        platformName: emailSettings.platform_name || 'ProfitChips',
-        platformUrl: emailSettings.platform_url || 'https://profitchips.com',
-        supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
-        privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
-        logoHtml: '',
+        platformName: platformName,
+        platformUrl: platformUrl,
+        supportUrl: `${platformUrl}/support`,
+        privacyUrl: `${platformUrl}/privacy`,
+        logoHtml: `<img src="${platformLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`,
       }, supabase);
       
       console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);

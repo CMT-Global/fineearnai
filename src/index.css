@@ -17,57 +17,73 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 222 47% 11%;
+    --background: 180 74% 6%;
+    --foreground: 168 31% 94%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 171 50% 11%;
+    --card-foreground: 168 31% 94%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 170 49% 12%;
+    --popover-foreground: 168 31% 94%;
 
-    --primary: 222 47% 11%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 76 85% 65%;
+    --primary-foreground: 180 74% 6%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 165 38% 18%;
+    --secondary-foreground: 168 31% 94%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 162 28% 29%;
+    --muted-foreground: 164 16% 67%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 163 33% 23%;
+    --accent-foreground: 168 31% 94%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 79% 63%;
+    --destructive-foreground: 168 31% 94%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
+    --border: 162 28% 29%;
+    --input: 162 28% 29%;
+    --ring: 76 85% 65%;
 
     --radius: 0.75rem;
     
     /* Sidebar colors */
-    --sidebar-bg: 222 47% 11%;
-    --sidebar-fg: 210 40% 98%;
-    --sidebar-accent: 217 33% 25%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-bg: 170 49% 12%;
+    --sidebar-fg: 168 31% 94%;
+    --sidebar-accent: 163 33% 23%;
+    --sidebar-border: 162 28% 29%;
     
     /* Wallet accent colors */
-    --wallet-deposit: 262 83% 58%;
-    --wallet-earnings: 142 76% 36%;
-    --wallet-tasks: 217 91% 60%;
-    --wallet-referrals: 25 95% 53%;
+    --wallet-deposit: 76 85% 65%;
+    --wallet-earnings: 76 85% 65%;
+    --wallet-tasks: 195 86% 64%;
+    --wallet-referrals: 45 86% 62%;
     
     /* Status colors */
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-    --info: 217 91% 60%;
+    --success: 76 85% 65%;
+    --warning: 45 86% 62%;
+    --info: 195 86% 64%;
+
+    /* Chart colors */
+    --chart-1: 76 94% 64%;
+    --chart-2: 76 85% 65%;
+    --chart-3: 195 86% 64%;
+    --chart-4: 45 86% 62%;
+    --chart-5: 0 79% 63%;
+
+    /* Map colors */
+    --map-active: 76 85% 65%;
+    --map-inactive: 168 36% 16%;
+    --map-bg: 171 68% 7%;
+
+    /* Extended text colors */
+    --text-tertiary: 165 13% 50%;
+    --text-disabled: 167 17% 37%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(217 91% 60%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(158 64% 52%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(217 33% 17%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(76 85% 65%) 0%, hsl(75 86% 72%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(76 85% 65%) 0%, hsl(158 64% 52%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(180 74% 6%) 0%, hsl(171 50% 11%) 100%);
     
     /* Shadows */
     --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -79,38 +95,54 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 180 74% 6%;
+    --foreground: 168 31% 94%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 171 50% 11%;
+    --card-foreground: 168 31% 94%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 170 49% 12%;
+    --popover-foreground: 168 31% 94%;
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 76 85% 65%;
+    --primary-foreground: 180 74% 6%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 165 38% 18%;
+    --secondary-foreground: 168 31% 94%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 162 28% 29%;
+    --muted-foreground: 164 16% 67%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 163 33% 23%;
+    --accent-foreground: 168 31% 94%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 79% 63%;
+    --destructive-foreground: 168 31% 94%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 262 83% 58%;
+    --border: 162 28% 29%;
+    --input: 162 28% 29%;
+    --ring: 76 85% 65%;
     
-    --sidebar-bg: 222 47% 11%;
-    --sidebar-fg: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-bg: 170 49% 12%;
+    --sidebar-fg: 168 31% 94%;
+    --sidebar-accent: 163 33% 23%;
+    --sidebar-border: 162 28% 29%;
+
+    /* Chart colors in dark mode */
+    --chart-1: 76 94% 64%;
+    --chart-2: 76 85% 65%;
+    --chart-3: 195 86% 64%;
+    --chart-4: 45 86% 62%;
+    --chart-5: 0 79% 63%;
+
+    /* Map colors */
+    --map-active: 76 85% 65%;
+    --map-inactive: 168 36% 16%;
+    --map-bg: 171 68% 7%;
+
+    /* Extended text colors */
+    --text-tertiary: 165 13% 50%;
+    --text-disabled: 167 17% 37%;
   }
 }
 

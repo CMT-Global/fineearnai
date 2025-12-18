@@ -32,7 +32,7 @@ export function wrapInProfessionalTemplate(
     platformUrl = 'https://profitchips.com',
     supportUrl,
     privacyUrl,
-    logoHtml = '',
+    logoHtml,
   } = options;
 
   const displayTitle = title || platformName;
@@ -54,7 +54,7 @@ export function wrapInProfessionalTemplate(
     ? `
           <!-- Gradient Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
               <div style="margin-bottom: 15px;">${finalLogoHtml}</div>
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 ${displayTitle}
@@ -75,11 +75,11 @@ export function wrapInProfessionalTemplate(
                 This email was sent from ${platformName}. If you have any questions, please contact our support team.
               </p>
               <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <a href="${platformUrl}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
+                <a href="${platformUrl}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="${supportLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
+                <a href="${supportLink}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="${privacyLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
+                <a href="${privacyLink}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
               </div>
               <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd; line-height: 1.4;">
                 © ${currentYear} ${platformName}. All rights reserved.
@@ -164,7 +164,7 @@ export function wrapInProfessionalTemplate(
  * Creates a styled button for emails
  */
 export function createStyledButton(text: string, url: string, color: 'primary' | 'secondary' = 'primary'): string {
-  const bgColor = color === 'primary' ? '#667eea' : '#48bb78';
+  const bgColor = color === 'primary' ? '#16a34a' : '#48bb78';
   const hoverColor = color === 'primary' ? '#5568d3' : '#38a169';
   
   return `

@@ -61,21 +61,48 @@ export async function wrapInProfessionalTemplate(
     preheader = '',
     headerGradient = true,
     includeFooter = true,
-    platformName = 'ProfitChips',
-    platformUrl = 'https://profitchips.com',
+    platformName: providedPlatformName,
+    platformUrl: providedPlatformUrl,
     supportUrl,
     privacyUrl,
-    logoHtml = '',
+    logoHtml,
   } = options;
 
+  // Try to fetch branding and email settings from platform_config
+  let dbPlatformName = 'ProfitChips';
+  let dbPlatformUrl = 'https://profitchips.com';
+  let dbLogoUrl = null;
+
+  if (supabaseClient) {
+    try {
+      const { data: configRows } = await supabaseClient
+        .from('platform_config')
+        .select('key, value')
+        .in('key', ['platform_branding', 'email_settings']);
+
+      if (configRows) {
+        const branding = configRows.find(r => r.key === 'platform_branding')?.value as any;
+        const emailSettings = configRows.find(r => r.key === 'email_settings')?.value as any;
+
+        dbPlatformName = branding?.name || emailSettings?.platform_name || 'ProfitChips';
+        dbPlatformUrl = branding?.url || emailSettings?.platform_url || 'https://profitchips.com';
+        dbLogoUrl = branding?.logoUrl;
+      }
+    } catch (err) {
+      console.warn('⚠️ [Email Wrapper] Failed to fetch DB config:', err);
+    }
+  }
+
+  const platformName = providedPlatformName || dbPlatformName;
+  const platformUrl = providedPlatformUrl || dbPlatformUrl;
   const displayTitle = title || platformName;
   const supportLink = supportUrl || `${platformUrl}/support`;
   const privacyLink = privacyUrl || `${platformUrl}/privacy`;
   const currentYear = new Date().getFullYear();
   
-  // Construct default logo HTML if not provided
-  const defaultLogoUrl = `${platformUrl}/logo_without_bg_text.png`;
-  const defaultLogoHtml = `<img src="${defaultLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
+  // Construct default logo HTML
+  const finalLogoUrl = dbLogoUrl || `${platformUrl}/logo_without_bg_text.png`;
+  const defaultLogoHtml = `<img src="${finalLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
   
   const finalLogoHtml = logoHtml || defaultLogoHtml;
 
@@ -100,7 +127,8 @@ export async function wrapInProfessionalTemplate(
       .replace(/\{\{current_year\}\}/g, currentYear.toString())
       .replace(/\{\{logo_html\}\}/g, finalLogoHtml)
       .replace(/\{\{preheader\}\}/g, preheaderHtml)
-      .replace(/\{\{content\}\}/g, content);
+      .replace(/\{\{content\}\}/g, content)
+      .replace(/FineEarn/g, platformName);
   }
 
   // Fallback to default template
@@ -110,7 +138,7 @@ export async function wrapInProfessionalTemplate(
     ? `
           <!-- Gradient Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;" class="header-padding">
+            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;" class="header-padding">
               <div style="margin-bottom: 15px;">${finalLogoHtml}</div>
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 ${displayTitle}
@@ -131,11 +159,11 @@ export async function wrapInProfessionalTemplate(
                 This email was sent from ${platformName}. If you have any questions, please contact our support team.
               </p>
               <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <a href="${platformUrl}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
+                <a href="${platformUrl}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="${supportLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
+                <a href="${supportLink}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="${privacyLink}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
+                <a href="${privacyLink}" style="color: #16a34a; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
               </div>
               <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd; line-height: 1.4;">
                 © ${currentYear} ${platformName}. All rights reserved.
@@ -229,7 +257,7 @@ export function createStyledButton(
   url: string,
   color: 'primary' | 'secondary' = 'primary'
 ): string {
-  const bgColor = color === 'primary' ? '#667eea' : '#48bb78';
+  const bgColor = color === 'primary' ? '#16a34a' : '#48bb78';
   
   return `
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 25px 0;">

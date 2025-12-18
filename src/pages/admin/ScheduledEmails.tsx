@@ -168,7 +168,7 @@ const ScheduledEmails = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading scheduled emails..." />
       </div>
     );
@@ -178,7 +178,7 @@ const ScheduledEmails = () => {
   const pastDueEmails = pendingEmails.filter(e => new Date(e.scheduled_for) < new Date());
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)]">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
@@ -421,7 +421,7 @@ const ScheduledEmails = () => {
                 <div>
                   <p className="text-sm font-medium mb-2">Body:</p>
                   <div 
-                    className="border rounded-lg p-4 bg-white prose prose-sm max-w-none"
+                    className="border rounded-lg p-4 bg-card prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
                   />
                 </div>

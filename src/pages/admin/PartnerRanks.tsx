@@ -172,215 +172,213 @@ const PartnerRanks = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Award className="h-8 w-8" />
-              Partner Ranks
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Configure rank tiers, sales targets, and commission rates
-            </p>
-          </div>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Rank
-          </Button>
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Award className="h-8 w-8" />
+            Partner Ranks
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Configure rank tiers, sales targets, and commission rates
+          </p>
         </div>
+        <Button onClick={handleCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Rank
+        </Button>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Rank Configuration</CardTitle>
-            <CardDescription>
-              Partners automatically upgrade based on total sales milestones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : ranks && ranks.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Sales Target</TableHead>
-                    <TableHead>Commission Rate</TableHead>
-                    <TableHead>Actions</TableHead>
+      <Card>
+        <CardHeader>
+          <CardTitle>Rank Configuration</CardTitle>
+          <CardDescription>
+            Partners automatically upgrade based on total sales milestones
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : ranks && ranks.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Rank</TableHead>
+                  <TableHead>Sales Target</TableHead>
+                  <TableHead>Commission Rate</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ranks.map((rank) => (
+                  <TableRow key={rank.id}>
+                    <TableCell>
+                      <Badge variant="outline">{rank.rank_order}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getRankColor(rank.rank_name)} text-white`}>
+                        <Award className="h-3 w-3 mr-1" />
+                        {rank.rank_name.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        ${rank.daily_sales_target.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold text-green-600">
+                        {(rank.commission_rate * 100).toFixed(0)}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(rank)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(rank)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ranks.map((rank) => (
-                    <TableRow key={rank.id}>
-                      <TableCell>
-                        <Badge variant="outline">{rank.rank_order}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`${getRankColor(rank.rank_name)} text-white`}>
-                          <Award className="h-3 w-3 mr-1" />
-                          {rank.rank_name.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                          ${rank.daily_sales_target.toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-green-600">
-                          {(rank.commission_rate * 100).toFixed(0)}%
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(rank)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(rank)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12">
-                <Award className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No ranks configured yet</p>
-                <Button onClick={handleCreate} className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Rank
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-12">
+              <Award className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No ranks configured yet</p>
+              <Button onClick={handleCreate} className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Rank
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Edit/Create Dialog */}
-        <Dialog open={editDialog} onOpenChange={setEditDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {selectedRank ? "Edit Rank" : "Create Rank"}
-              </DialogTitle>
-              <DialogDescription>
-                Configure rank details and requirements
-              </DialogDescription>
-            </DialogHeader>
+      {/* Edit/Create Dialog */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedRank ? "Edit Rank" : "Create Rank"}
+            </DialogTitle>
+            <DialogDescription>
+              Configure rank details and requirements
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <Label>Rank Name</Label>
-                <Input
-                  value={formData.rank_name}
-                  onChange={(e) => setFormData({ ...formData, rank_name: e.target.value })}
-                  placeholder="e.g., Bronze, Silver, Gold"
-                />
-              </div>
-
-              <div>
-                <Label>Sales Target ($)</Label>
-                <Input
-                  type="number"
-                  value={formData.daily_sales_target}
-                  onChange={(e) => setFormData({ ...formData, daily_sales_target: parseFloat(e.target.value) })}
-                  placeholder="Total sales needed to reach this rank"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total cumulative sales required to achieve this rank
-                </p>
-              </div>
-
-              <div>
-                <Label>Commission Rate (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.commission_rate * 100}
-                  onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) / 100 })}
-                  placeholder="e.g., 10"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Commission rate for partners at this rank
-                </p>
-              </div>
-
-              <div>
-                <Label>Rank Order</Label>
-                <Input
-                  type="number"
-                  value={formData.rank_order}
-                  onChange={(e) => setFormData({ ...formData, rank_order: parseInt(e.target.value) })}
-                  placeholder="1 = lowest, higher = better"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Lower numbers appear first (e.g., Bronze = 1, Silver = 2)
-                </p>
-              </div>
+          <div className="space-y-4">
+            <div>
+              <Label>Rank Name</Label>
+              <Input
+                value={formData.rank_name}
+                onChange={(e) => setFormData({ ...formData, rank_name: e.target.value })}
+                placeholder="e.g., Bronze, Silver, Gold"
+              />
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {(createMutation.isPending || updateMutation.isPending) && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                )}
-                {selectedRank ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div>
+              <Label>Sales Target ($)</Label>
+              <Input
+                type="number"
+                value={formData.daily_sales_target}
+                onChange={(e) => setFormData({ ...formData, daily_sales_target: parseFloat(e.target.value) })}
+                placeholder="Total sales needed to reach this rank"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Total cumulative sales required to achieve this rank
+              </p>
+            </div>
 
-        {/* Delete Dialog */}
-        <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Rank</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete the {selectedRank?.rank_name} rank?
-                This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
+            <div>
+              <Label>Commission Rate (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.commission_rate * 100}
+                onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) / 100 })}
+                placeholder="e.g., 10"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Commission rate for partners at this rank
+              </p>
+            </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => selectedRank && deleteMutation.mutate(selectedRank.id)}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                )}
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AdminLayout>
+            <div>
+              <Label>Rank Order</Label>
+              <Input
+                type="number"
+                value={formData.rank_order}
+                onChange={(e) => setFormData({ ...formData, rank_order: parseInt(e.target.value) })}
+                placeholder="1 = lowest, higher = better"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Lower numbers appear first (e.g., Bronze = 1, Silver = 2)
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {(createMutation.isPending || updateMutation.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {selectedRank ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Rank</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the {selectedRank?.rank_name} rank?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => selectedRank && deleteMutation.mutate(selectedRank.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

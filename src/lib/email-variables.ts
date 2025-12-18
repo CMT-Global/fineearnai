@@ -56,7 +56,7 @@ export const ALL_AVAILABLE_VARIABLES: EmailVariableCategory = {
   "Platform Variables": [
     { name: "platform_url", description: "Platform homepage URL" },
     { name: "support_email", description: "Support contact email" },
-    { name: "company_name", description: "Platform name (FineEarn)" }
+    { name: "company_name", description: "Platform name (ProfitChips)" }
   ]
 } as const;
 

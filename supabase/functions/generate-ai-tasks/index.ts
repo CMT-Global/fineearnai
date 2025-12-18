@@ -338,7 +338,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
 2. Keep response options in template format: ${template?.responseFormat || 'Make options distinct'}
 3. ${category.includes('Sentiment') || category.includes('Review') || category.includes('Feedback') ? '⚠️ MANDATORY: For sentiment tasks, response_a and response_b MUST be EXACTLY "Positive" and "Negative" - no other words, descriptions, or variations allowed!' : 'Make options clearly distinct and easy to understand'}
 4. Use direct, simple sentence structures (Subject-Verb-Object)
-    5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
+5. Avoid passive voice (say "The staff helped me" not "I was helped by the staff")
     6. Use concrete, specific examples instead of abstract ideas
     7. Avoid double negatives ("not bad" → use "okay" or "good")
     8. Keep numbers and dates simple
@@ -409,16 +409,16 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
       const embeddingResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent`,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
             'x-goog-api-key': geminiApiKey,
-          },
-          body: JSON.stringify({
+        },
+        body: JSON.stringify({
             content: {
               parts: [{ text }],
             },
-          }),
+        }),
         }
       );
 
@@ -621,12 +621,12 @@ Make sure your NEW prompts are:
         const retryAiResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`,
           {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
               'x-goog-api-key': geminiApiKey,
-            },
-            body: JSON.stringify({
+          },
+          body: JSON.stringify({
               contents: [
                 {
                   role: 'user',
@@ -640,7 +640,7 @@ Make sure your NEW prompts are:
               generationConfig: {
                 temperature: 1.0,
               },
-            }),
+          }),
           }
         );
 

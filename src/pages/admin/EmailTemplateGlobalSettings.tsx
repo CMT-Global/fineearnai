@@ -84,7 +84,7 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
           
           <!-- Header with Logo -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;" class="header-padding">
+            <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 40px 20px; text-align: center;" class="header-padding">
               {{logo_html}}
               <h1 style="margin: 15px 0 0 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); letter-spacing: -0.5px;">
                 {{platform_name}}
@@ -109,11 +109,11 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
                 This email was sent from {{platform_name}}. If you have any questions, please contact our support team.
               </p>
               <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <a href="{{platform_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
+                <a href="{{platform_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Website</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="{{support_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
+                <a href="{{support_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Support</a>
                 <span style="color: #dee2e6; margin: 0 4px;">|</span>
-                <a href="{{privacy_url}}" style="color: #667eea; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
+                <a href="{{privacy_url}}" style="color: #166534; text-decoration: none; font-size: 12px; margin: 0 8px; font-weight: 500;">Privacy Policy</a>
               </div>
               <p style="margin: 15px 0 0 0; font-size: 11px; color: #adb5bd; line-height: 1.4;">
                 © {{current_year}} {{platform_name}}. All rights reserved.

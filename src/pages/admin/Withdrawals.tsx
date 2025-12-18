@@ -1051,7 +1051,7 @@ export default function Withdrawals() {
                   <AlertTitle className="text-green-800">USDT TRC20 Token Found! 🎯</AlertTitle>
                   <AlertDescription className="mt-2">
                     <div className="space-y-3">
-                      <div className="font-mono text-sm bg-white p-3 rounded border border-green-200">
+                      <div className="font-mono text-sm bg-muted p-3 rounded border border-green-200/20">
                         <div className="flex items-center justify-between">
                           <div>
                             <strong className="text-green-700">currencyId:</strong>
@@ -1260,7 +1260,7 @@ export default function Withdrawals() {
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertTitle>✅ USDT TRC20 Token Found</AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
-                    <div className="font-mono text-sm bg-white p-3 rounded border">
+                    <div className="font-mono text-sm bg-muted p-3 rounded border border-border">
                       <strong>currencyId (Token ID):</strong><br/>
                       <code className="text-green-700 font-bold text-base">
                         {walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId}

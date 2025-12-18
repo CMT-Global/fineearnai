@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface TelegramGroupsDialogProps {
   open: boolean;
@@ -20,7 +21,7 @@ interface TelegramGroup {
 const telegramGroups: TelegramGroup[] = [
   {
     name: "Asia Community",
-    url: "https://t.me/FineEarnOfficial",
+    url: "https://t.me/ProfitChipsOfficial",
     flag: "🇵🇭",
     description: "Connect with Asian earners, get local tips & support",
     gradient: "from-blue-500 to-red-500",
@@ -28,7 +29,7 @@ const telegramGroups: TelegramGroup[] = [
   },
   {
     name: "European Community",
-    url: "https://t.me/FINEEARNGROUP",
+    url: "https://t.me/ProfitChipsGROUP",
     flag: "🇪🇺",
     description: "Join European members for global strategies & insights",
     gradient: "from-blue-600 to-yellow-400",
@@ -44,7 +45,7 @@ const telegramGroups: TelegramGroup[] = [
   },
   {
     name: "Marketing Material (Global)",
-    url: "https://t.me/fineearn",
+    url: "https://t.me/ProfitChips",
     flag: "📢",
     description: "Get official updates, promotional content & announcements",
     gradient: "from-purple-500 to-pink-500",
@@ -81,6 +82,7 @@ const telegramGroups: TelegramGroup[] = [
 ];
 
 export const TelegramGroupsDialog = ({ open, onOpenChange, trigger }: TelegramGroupsDialogProps) => {
+  const { platformName } = useBranding();
   const handleGroupClick = (groupName: string, url: string | undefined, isComingSoon?: boolean) => {
     if (isComingSoon || !url) return;
     
@@ -100,7 +102,7 @@ export const TelegramGroupsDialog = ({ open, onOpenChange, trigger }: TelegramGr
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
               <span className="text-3xl">💬</span>
-              Choose Your FineEarn Community
+              Choose Your {platformName} Community
             </DialogTitle>
             <DialogDescription className="text-white/90 text-base mt-2">
               Join our NEW communities and expanding network in your region

@@ -28,7 +28,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
 const PartnerAnalytics = () => {
   const navigate = useNavigate();
@@ -180,19 +180,20 @@ const PartnerAnalytics = () => {
                     <YAxis />
                     <Tooltip 
                       formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }}
                     />
                     <Legend />
                     <Line 
                       type="monotone" 
                       dataKey="sales" 
-                      stroke="#8884d8" 
+                      stroke="#B9F94D" 
                       strokeWidth={2}
                       name="Sales"
                     />
                     <Line 
                       type="monotone" 
                       dataKey="commission" 
-                      stroke="#82ca9d" 
+                      stroke="#C9F158" 
                       strokeWidth={2}
                       name="Commission"
                     />
@@ -217,8 +218,9 @@ const PartnerAnalytics = () => {
                       <Tooltip 
                         formatter={(value: number) => `${value} vouchers`}
                         labelFormatter={(label) => `Amount: ${formatCurrency(Number(label))}`}
+                        contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }}
                       />
-                      <Bar dataKey="count" fill="#8884d8" name="Vouchers Sold" />
+                      <Bar dataKey="count" fill="#C9F158" name="Vouchers Sold" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -244,14 +246,14 @@ const PartnerAnalytics = () => {
                         labelLine={false}
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                         outerRadius={100}
-                        fill="#8884d8"
+                        fill="#C9F158"
                         dataKey="value"
                       >
                         {[0, 1, 2].map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>

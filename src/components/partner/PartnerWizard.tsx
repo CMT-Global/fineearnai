@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface PartnerWizardProps {
   open: boolean;
@@ -100,7 +101,7 @@ const DEFAULT_PARTNER_PROGRAM_CONTENT: PartnerProgramContentConfig = {
 
 const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig[]) => {
   const getSlide = (id: number) => slidesConfig.find((s) => s.id === id);
-  const applyPlatformName = (text: string) => text.replace(/FineEarn/g, platformName);
+  const applyPlatformName = (text: string) => text.replace(/ProfitChips/g, platformName);
 
   const slide1 = getSlide(1);
   const slide2 = getSlide(2);
@@ -193,7 +194,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
               emoji: "🌍",
               title: "Local Payment Options",
               description: applyPlatformName(
-                "Upgrade your account easily using local payment methods through verified FineEarn Partners in your country."
+                `Upgrade your account easily using local payment methods through verified ${platformName} Partners in your country.`
               )
             },
             {
@@ -213,7 +214,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
               emoji: "💸",
               title: "Fast & Hassle-Free Upgrades",
               description: applyPlatformName(
-                "No need for crypto deposits — pay locally through the Authorised partners, and your FineEarn account is upgraded instantly."
+                `No need for crypto deposits — pay locally through the Authorised partners, and your ${platformName} account is upgraded instantly.`
               )
             },
             {
@@ -221,7 +222,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
               emoji: "🧭",
               title: "Verified & Trusted Partners",
               description: applyPlatformName(
-                "All FineEarn Partners are verified to ensure safe, transparent, and reliable transactions."
+                `All ${platformName} Partners are verified to ensure safe, transparent, and reliable transactions.`
               )
             },
             {
@@ -229,7 +230,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
               emoji: "💪",
               title: "Grow Together",
               description: applyPlatformName(
-                "Local Partners help you understand how to maximize your earnings and move up faster in FineEarn's earning plans."
+                `Local Partners help you understand how to maximize your earnings and move up faster in ${platformName}'s earning plans.`
               )
             },
           ].map((item, idx) => (
@@ -254,7 +255,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
         <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-5 rounded-lg border-2 border-primary/20 text-center">
           <p className="font-bold text-lg mb-2">
             {applyPlatformName(
-              "Join thousands of FineEarn users already benefiting from our Partner Network"
+              "Join thousands of ProfitChips users already benefiting from our Partner Network"
             )}
           </p>
           <p className="text-sm text-muted-foreground">
@@ -659,6 +660,7 @@ const buildSteps = (platformName: string, slidesConfig: PartnerWizardSlideConfig
 };
 
 export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps) => {
+  const { platformName } = useBranding();
   const [currentStep, setCurrentStep] = useState(0);
   
   const { data: configData } = useQuery({
@@ -698,9 +700,9 @@ export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps)
     staleTime: 5 * 60 * 1000,
   });
 
-  const platformName = configData?.platformName || DEFAULT_PLATFORM_NAME;
+  const { platformName: brandedName } = useBranding();
   const wizardConfig = configData?.content?.wizard || DEFAULT_PARTNER_PROGRAM_CONTENT.wizard;
-  const steps = buildSteps(platformName, wizardConfig.slides);
+  const steps = buildSteps(brandedName, wizardConfig.slides);
   
   console.log('🎯 [PartnerWizard] Component state:', {
     open,
@@ -739,7 +741,7 @@ export const PartnerWizard = ({ open, onComplete, onClose }: PartnerWizardProps)
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         {/* Accessibility: Required by Radix UI for screen readers */}
         <DialogTitle className="sr-only">
-          Become a FineEarn Local Partner - {currentStepData.title}
+          Become a ProfitChips Local Partner - {currentStepData.title}
         </DialogTitle>
         <DialogDescription className="sr-only">
           Learn about the benefits and requirements of becoming a local partner. Step {currentStep + 1} of {steps.length}.

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { ArrowLeft, Mail } from "lucide-react";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,6 +20,7 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { platformName, platformLogoUrl } = useBranding();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<ForgotPasswordFormData>({
@@ -60,7 +62,7 @@ const ForgotPassword = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <img src="/logo_without_bg_text.png" alt="ProfitChips Logo" className="h-24 w-24 object-contain" />
+            <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
           <CardDescription>

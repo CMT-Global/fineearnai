@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
+
     // Fetch secrets using the shared utility
     const secrets = await getSystemSecrets(supabase);
     const apiKey = secrets.openExchangeAppId;
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     // Fetch latest rates from OpenExchangeRates
     // Note: Free plan only supports USD base, which we use here.
     const apiUrl = `https://openexchangerates.org/api/latest.json?app_id=${apiKey}&base=USD&symbols=${currencyCode}`;
-    
+
     const apiResponse = await fetch(apiUrl);
 
     if (!apiResponse.ok) {

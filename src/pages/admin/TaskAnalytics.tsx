@@ -42,7 +42,7 @@ interface TaskStats {
   }>;
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
+const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
 const TaskAnalytics = () => {
   const { user, loading: authLoading } = useAuth();
@@ -223,14 +223,14 @@ const TaskAnalytics = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="min-h-screen bg-[hsl(0,0%,98%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading analytics..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,98%)]">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
@@ -321,7 +321,7 @@ const TaskAnalytics = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" fill="#0088FE" name="Completions" />
+                  <Bar dataKey="completed" fill="#B9F94D" name="Completions" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -349,7 +349,7 @@ const TaskAnalytics = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -368,9 +368,9 @@ const TaskAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="category" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                   <Legend />
-                  <Bar dataKey="accuracy" fill="#00C49F" name="Accuracy %" />
+                  <Bar dataKey="accuracy" fill="#C9F158" name="Accuracy %" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -388,9 +388,9 @@ const TaskAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="difficulty" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                   <Legend />
-                  <Bar dataKey="accuracy" fill="#FFBB28" name="Accuracy %" />
+                  <Bar dataKey="accuracy" fill="#56CCF2" name="Accuracy %" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

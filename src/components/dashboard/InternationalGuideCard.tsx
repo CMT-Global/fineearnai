@@ -6,6 +6,7 @@ import { ProcessorSelectionDialog } from "./ProcessorSelectionDialog";
 import { PaymentGuideDialog } from "./PaymentGuideDialog";
 import { PAYMENT_GUIDES } from "@/data/payment-guides";
 import { PaymentProcessorGuide, GuideType } from "@/types/payment-guides";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface InternationalGuideCardProps {
   title?: string;
@@ -16,10 +17,29 @@ export const InternationalGuideCard = ({
   title = "💳 Deposit & Withdrawal Quick Guides",
   description = "Learn how to fund your account and withdraw earnings using various payment methods globally",
 }: InternationalGuideCardProps) => {
+  const { platformName } = useBranding();
   const [isProcessorSelectionOpen, setIsProcessorSelectionOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedGuideType, setSelectedGuideType] = useState<GuideType>('deposit');
   const [selectedProcessor, setSelectedProcessor] = useState<PaymentProcessorGuide | null>(null);
+
+  // Apply dynamic platform name to guide data
+  const dynamicProcessors = PAYMENT_GUIDES.map(p => ({
+    ...p,
+    description: p.description.replace(/\{\{platform\}\}/g, platformName),
+    depositSteps: p.depositSteps.map(s => ({
+      ...s,
+      instruction: s.instruction.replace(/\{\{platform\}\}/g, platformName),
+      highlights: s.highlights.map(h => h.replace(/\{\{platform\}\}/g, platformName))
+    })),
+    withdrawalSteps: p.withdrawalSteps.map(s => ({
+      ...s,
+      instruction: s.instruction.replace(/\{\{platform\}\}/g, platformName),
+      highlights: s.highlights.map(h => h.replace(/\{\{platform\}\}/g, platformName))
+    })),
+    depositAlertMessage: p.depositAlertMessage?.replace(/\{\{platform\}\}/g, platformName),
+    withdrawalAlertMessage: p.withdrawalAlertMessage?.replace(/\{\{platform\}\}/g, platformName)
+  }));
 
   const handleDepositClick = () => {
     setSelectedGuideType('deposit');
@@ -106,7 +126,7 @@ export const InternationalGuideCard = ({
         open={isProcessorSelectionOpen}
         onOpenChange={setIsProcessorSelectionOpen}
         type={selectedGuideType}
-        processors={PAYMENT_GUIDES}
+        processors={dynamicProcessors}
         onProcessorSelect={handleProcessorSelect}
       />
 

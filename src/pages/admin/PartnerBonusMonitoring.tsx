@@ -172,7 +172,7 @@ export default function PartnerBonusMonitoring() {
     },
   });
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
   if (metricsLoading || partnersLoading || trendLoading || emailLoading) {
     return (

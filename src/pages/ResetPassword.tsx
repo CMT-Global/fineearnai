@@ -12,9 +12,11 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const { platformName, platformLogoUrl } = useBranding();
   const [searchParams] = useSearchParams();
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -196,7 +198,7 @@ const ResetPassword = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <img src="/logo_without_bg_text.png" alt="ProfitChips Logo" className="h-24 w-24 object-contain" />
+            <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
           <CardDescription>

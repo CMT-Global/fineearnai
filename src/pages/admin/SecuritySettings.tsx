@@ -13,15 +13,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import { useBranding } from "@/contexts/BrandingContext";
 
 export default function SecuritySettings() {
   const queryClient = useQueryClient();
+  const { platformName } = useBranding();
   
   // Migration banner states
   const [bannerEnabled, setBannerEnabled] = useState(true);
   const [bannerDismissible, setBannerDismissible] = useState(true);
   const [bannerTitle, setBannerTitle] = useState("⚠️ Important Update for Existing Users");
-  const [bannerSubtitle, setBannerSubtitle] = useState("FineEarn has moved to a new upgraded platform!");
+  const [bannerSubtitle, setBannerSubtitle] = useState(`${platformName} has moved to a new upgraded platform!`);
   const [bannerStep1, setBannerStep1] = useState("Sign up here using the same email you used on old platform.");
   const [bannerStep2, setBannerStep2] = useState("Contact Support so we can transfer your previous data to your new account.");
   const [bannerStep3, setBannerStep3] = useState("Our team will migrate your funds & data to new platform for best experience.");

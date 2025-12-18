@@ -30,6 +30,7 @@ import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface AdminSidebarProps {
   profile: any;
@@ -47,11 +48,13 @@ interface NavItem {
   label: string;
   path: string;
   icon?: any;
+  exact?: boolean;
 }
 
 export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { platformName, platformLogoUrl } = useBranding();
   const { exitAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -146,7 +149,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
         icon: Sparkles,
         items: [
           { label: "Partner Applications", path: "/admin/partners/applications" },
-          { label: "All Partners", path: "/admin/partners" },
+          { label: "All Partners", path: "/admin/partners", exact: true },
           { label: "Partner Analytics", path: "/admin/partner-analytics" },
           { label: "Partner Ranks", path: "/admin/partner-ranks" },
           { label: "Bonus Tiers", path: "/admin/partner-bonus-tiers" },
@@ -195,10 +198,16 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     localStorage.setItem("adminExpandedCategories", JSON.stringify(expandedCategories));
   }, [expandedCategories]);
 
-  const isActive = (path: string) => {
+  const isActive = (path: string, exact?: boolean) => {
     if (path === "/admin") {
       return location.pathname === path;
     }
+    
+    // If exact is true, only match the exact path
+    if (exact) {
+      return location.pathname === path;
+    }
+
     // Use exact match or ensure the path is followed by a slash (for nested routes)
     // This prevents "/admin/communications/email" from matching "/admin/communications/email-settings"
     const exactMatch = location.pathname === path;
@@ -208,7 +217,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
   };
 
   const isCategoryActive = (category: NavCategory) => {
-    return category.items.some((item) => isActive(item.path));
+    return category.items.some((item) => isActive(item.path, item.exact));
   };
 
   const toggleCategory = (label: string) => {
@@ -243,7 +252,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       {/* Admin Header */}
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center gap-2 mb-4">
-          <img src="/logo_without_bg_text.png" alt="Admin Logo" className="h-14 w-14 object-contain" />
+          <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-14 w-14 object-contain" />
           <span className="text-xl font-bold">Admin Panel</span>
         </div>
         
@@ -296,7 +305,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
                     key={item.path}
                     onClick={() => handleNavigation(item.path)}
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 w-full text-left text-sm ${
-                      isActive(item.path)
+                      isActive(item.path, item.exact)
                         ? "bg-[hsl(var(--wallet-deposit))]/20 text-[hsl(var(--wallet-deposit))] font-medium border-l-4 border-[hsl(var(--wallet-deposit))]"
                         : "hover:bg-[hsl(var(--sidebar-accent))]/30 text-[hsl(var(--sidebar-fg))]/80"
                     }`}
@@ -358,7 +367,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       {/* Mobile Admin Sidebar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/logo_without_bg_text.png" alt="Admin Logo" className="h-12 w-12 object-contain" />
+          <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-12 w-12 object-contain" />
           <span className="font-bold">Admin Panel</span>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
