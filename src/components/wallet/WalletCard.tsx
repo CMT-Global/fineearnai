@@ -514,15 +514,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
     
     // Frontend pre-validation (skip schedule check for VIP bypass)
-    // Note: Even if today is not a withdrawal day, we allow the request to go through
-    // The backend will still receive it and admin can approve it
-    // Only show warning for non-VIP users, but don't block
     if (!validation?.hasBypass && validation && !validation.isAllowed) {
-      // Show warning but allow to proceed
-      toast.warning(validation.message + " Your request will be submitted for admin approval.", {
-        duration: 5000,
-      });
-      // Continue with withdrawal request - don't return
+      toast.error(validation.message);
+      return;
     }
 
     try {
@@ -634,9 +628,16 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Note: Withdrawal schedule check removed - users can request withdrawal any time
-      // The request will reach admin panel even if today is not a withdrawal day
-      // Admin can approve it when appropriate
+      // Check withdrawal schedule using the validation hook data (skip for VIP bypass)
+      if (!validation?.hasBypass && !validation?.isAllowed) {
+        toast.error(
+          validation?.message || "Withdrawals are not currently available",
+          {
+            duration: 6000,
+          }
+        );
+        return;
+      }
 
       // PHASE 3: Validate crypto address format
       if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
