@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, ArrowRight } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import { EarnerBadgeStatus, getEarnerBadgeStatus } from "@/lib/earner-badge-utils";
+import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface UserHeaderCardProps {
   profile?: {
@@ -151,47 +151,6 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ') || 'Free';
   
-  // Defensive fallback: Compute earner badge if not present in profile
-  // This guarantees badge visibility even if upstream data pipeline fails
-  const effectiveBadge = useMemo(() => {
-    console.log('🎯 [UserHeaderCard] Computing earner badge:', {
-      hasEarnerBadge: !!profile.earnerBadge,
-      earnerBadge: profile.earnerBadge,
-      membershipPlan: profile.membership_plan,
-      username: profile.username
-    });
-    
-    // Use profile's earnerBadge if available
-    if (profile.earnerBadge) {
-      console.log('✅ Using existing earnerBadge from profile');
-      return profile.earnerBadge;
-    }
-    
-    // Fallback: Compute badge based on membership plan
-    // Determine account type from membership plan
-    const membershipPlan = profile.membership_plan?.toLowerCase() || 'free';
-    let accountType: string;
-    
-    if (membershipPlan === 'free') {
-      accountType = 'free';
-    } else if (membershipPlan.includes('personal')) {
-      accountType = 'personal';
-    } else if (membershipPlan.includes('business')) {
-      accountType = 'business';
-    } else if (membershipPlan.includes('group')) {
-      accountType = 'group';
-    } else {
-      // Default to personal for any paid plan
-      accountType = 'personal';
-    }
-    
-    console.log('🔄 Computing badge via fallback. Account type:', accountType);
-    const computedBadge = getEarnerBadgeStatus(accountType);
-    console.log('✅ Computed badge:', computedBadge);
-    
-    return computedBadge;
-  }, [profile.earnerBadge, profile.membership_plan]);
-  
   return (
     <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-transparent">
       {/* User Avatar & Info */}
@@ -233,39 +192,6 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
         </div>
       </div>
 
-      {/* Earner Verification Badge - PROMINENT */}
-      {effectiveBadge && (
-        <div className="px-4 pb-3 space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Badge 
-              variant={effectiveBadge.badgeVariant}
-              className="text-xs font-bold"
-            >
-              <span className="mr-1">{effectiveBadge.icon}</span>
-              {effectiveBadge.badgeText}
-            </Badge>
-            
-            {/* Upgrade CTA for Unverified Users */}
-            {!effectiveBadge.isVerified && (
-              <Link to="/plans" className="flex-1">
-                <Button 
-                  size="sm" 
-                  variant="default" 
-                  className="w-full h-7 text-xs font-semibold animate-pulse hover:animate-none bg-orange-600 hover:bg-orange-700 text-white"
-                >
-                  Upgrade Now
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </Link>
-            )}
-          </div>
-          
-          {/* Helper Text */}
-          <p className="text-[10px] text-muted-foreground leading-tight">
-            {effectiveBadge.description}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

@@ -194,37 +194,13 @@ const Dashboard = () => {
         <>
           {/* Email Verification Banner - Show if email not verified */}
           {profile.email_verified === false && (
-            <div className="mx-4 lg:mx-8 mt-6">
+            <div className="mx-4 lg:mx-8 mt-4 mb-4">
               <EmailVerificationBanner 
                 onVerifyClick={() => setShowEmailVerification(true)}
               />
             </div>
           )}
 
-          {/* Earner Status Banner - Unverified Users Only */}
-          {profile.earnerBadge && !profile.earnerBadge.isVerified && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <Alert className="bg-orange-500/10 border-orange-500/20">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{profile.earnerBadge.icon}</span>
-               
-                </div>
-                <AlertTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
-                  {profile.earnerBadge.badgeText}
-                </AlertTitle>
-                <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                  <p>{profile.earnerBadge.upgradePrompt}</p>
-                  <Button 
-                    onClick={() => navigate("/plans")}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
-                  >
-                    Upgrade to Verified Earner
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
 
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
