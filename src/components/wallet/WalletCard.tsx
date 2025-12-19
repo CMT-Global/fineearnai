@@ -138,8 +138,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [depositMethod, setDepositMethod] = useState("");
-  const [withdrawMethod, setWithdrawMethod] = useState("");
   const [accountDetails, setAccountDetails] = useState("");
   const [withdrawAmountError, setWithdrawAmountError] = useState<string | null>(null);
   const [depositLoading, setDepositLoading] = useState(false);
@@ -377,8 +375,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   };
 
   const handleDeposit = async () => {
-    if (!depositAmount || !depositMethod) {
-      toast.error("Please fill in all fields");
+    if (!depositAmount) {
+      toast.error("Please enter an amount");
       return;
     }
 
@@ -408,38 +406,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
 
-    // ✅ NEW: Map virtual method to actual processor
-    const virtualMethod = VIRTUAL_DEPOSIT_METHODS.find(vm => vm.id === depositMethod);
-    
-    let selectedProcessor: PaymentProcessor | undefined;
-    let displayMethodName: string;
-    
-    if (virtualMethod && actualDepositProcessor) {
-      // User selected a virtual method - use the actual crypto processor behind the scenes
-      selectedProcessor = actualDepositProcessor;
-      displayMethodName = virtualMethod.displayName; // Store user-friendly name for tracking
-      console.log('🎭 Virtual deposit method selected:', {
-        virtualMethodId: virtualMethod.id,
-        displayName: virtualMethod.displayName,
-        actualProcessorId: actualDepositProcessor.id,
-        actualProcessorName: actualDepositProcessor.name,
-        amountLocal: `${amountLocal} ${userCurrency}`,
-        amountUSD: `$${amountUSD.toFixed(2)} USD`
-      });
-    } else {
-      // User selected an actual processor (fallback for backwards compatibility)
-      selectedProcessor = depositProcessors.find(p => p.name === depositMethod);
-      displayMethodName = depositMethod;
-    }
-    
-    if (!selectedProcessor) {
-      toast.error("Invalid payment method");
+    // ✅ Use the actual deposit processor (CPAY) directly
+    if (!actualDepositProcessor) {
+      toast.error("Payment processor not available. Please try again later.");
       return;
     }
 
     // ✅ Validate against processor limits using USD amount
-    if (amountUSD < selectedProcessor.min_amount || amountUSD > selectedProcessor.max_amount) {
-      toast.error(`Amount must be between $${selectedProcessor.min_amount} and $${selectedProcessor.max_amount} USD`);
+    if (amountUSD < actualDepositProcessor.min_amount || amountUSD > actualDepositProcessor.max_amount) {
+      toast.error(`Amount must be between $${actualDepositProcessor.min_amount} and $${actualDepositProcessor.max_amount} USD`);
       return;
     }
 
@@ -447,36 +422,36 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       setDepositLoading(true);
 
       // Check if it's a CPAY processor
-      if ((selectedProcessor.config as any)?.processor === 'cpay') {
+      if ((actualDepositProcessor.config as any)?.processor === 'cpay') {
         const { data, error } = await supabase.functions.invoke("cpay-deposit", {
           body: { 
             amount: amountUSD, // ✅ Send USD amount to backend
-            currency: (selectedProcessor.config as any).currency || 'USDT',
-            processorId: selectedProcessor.id // ✅ Use actual processor ID
+            currency: (actualDepositProcessor.config as any).currency || 'USDT',
+            processorId: actualDepositProcessor.id // ✅ Use actual processor ID
           },
         });
 
         if (error) throw error;
 
         if (data?.checkout_url) {
-          // Open CPAY checkout in iframe
+          // Open CPAY checkout in iframe - user will select coin here
           setCpayCheckoutUrl(data.checkout_url);
           setCpayTransactionId(data.transaction_id);
           setCpayOrderId(data.order_id);
           setCpayAmount(amountUSD); // ✅ Store USD amount
           setCpayCurrency(data.currency || 'USDT');
           setDepositDialogOpen(false); // Close deposit dialog
-          setShowCpayIframe(true); // Show iframe
-          toast.success("Opening checkout...");
+          setShowCpayIframe(true); // Show iframe - user selects coin in CPAY popup
+          toast.success("Opening payment processor...");
         } else {
           throw new Error("No checkout URL received");
         }
       } else {
-        // Legacy deposit flow
+        // Legacy deposit flow (fallback)
         const { data, error } = await supabase.functions.invoke("deposit", {
           body: {
             amount: amountUSD, // ✅ Send USD amount to backend
-            paymentMethod: displayMethodName, // ✅ Store user-friendly name for tracking
+            paymentMethod: actualDepositProcessor.name,
             gatewayTransactionId: `TXN-${Date.now()}`,
           },
         });
@@ -485,7 +460,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
         toast.success("Deposit successful!");
         setDepositAmount("");
-        setDepositMethod("");
         setDepositDialogOpen(false);
         onBalanceUpdate();
       }
@@ -498,8 +472,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   };
 
   const handleWithdraw = async () => {
-    if (!withdrawAmount || !withdrawMethod || !accountDetails) {
+    if (!withdrawAmount || !accountDetails) {
       toast.error("Please fill in all fields");
+      return;
+    }
+    
+    // Validate crypto selection
+    if (!selectedCrypto || !['usdc-solana', 'usdt-bep20'].includes(selectedCrypto.id)) {
+      toast.error("Please select a valid withdrawal method (USDT-Bep20 or USDC-Solana)");
       return;
     }
 
@@ -534,9 +514,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
     
     // Frontend pre-validation (skip schedule check for VIP bypass)
+    // Note: Even if today is not a withdrawal day, we allow the request to go through
+    // The backend will still receive it and admin can approve it
+    // Only show warning for non-VIP users, but don't block
     if (!validation?.hasBypass && validation && !validation.isAllowed) {
-      toast.error(validation.message);
-      return;
+      // Show warning but allow to proceed
+      toast.warning(validation.message + " Your request will be submitted for admin approval.", {
+        duration: 5000,
+      });
+      // Continue with withdrawal request - don't return
     }
 
     try {
@@ -648,16 +634,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Check withdrawal schedule using the validation hook data (skip for VIP bypass)
-      if (!validation?.hasBypass && !validation?.isAllowed) {
-        toast.error(
-          validation?.message || "Withdrawals are not currently available",
-          {
-            duration: 6000,
-          }
-        );
-        return;
-      }
+      // Note: Withdrawal schedule check removed - users can request withdrawal any time
+      // The request will reach admin panel even if today is not a withdrawal day
+      // Admin can approve it when appropriate
 
       // PHASE 3: Validate crypto address format
       if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
@@ -710,30 +689,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       const amountUSD = convertLocalToUSD(parseFloat(pendingWithdrawalData.amount));
 
-      // ✅ Map virtual method to actual processor
-      const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-      
-      let selectedProcessor: PaymentProcessor | undefined;
-      let displayMethodName: string;
-      
-      if (virtualMethod && actualCryptoProcessor) {
-        selectedProcessor = actualCryptoProcessor;
-        displayMethodName = virtualMethod.displayName;
-        console.log('🎭 Virtual method selected:', {
-          virtualMethodId: virtualMethod.id,
-          displayName: virtualMethod.displayName,
-          actualProcessorId: actualCryptoProcessor.id,
-          actualProcessorName: actualCryptoProcessor.name
-        });
-      } else {
-        selectedProcessor = withdrawalProcessors.find(p => p.name === withdrawMethod);
-        displayMethodName = withdrawMethod;
-      }
-      
-      if (!selectedProcessor) {
-        toast.error("Please select a valid withdrawal method");
+      // ✅ Use the actual crypto processor directly (no virtual methods)
+      if (!actualCryptoProcessor) {
+        toast.error("Withdrawal processor not available. Please try again later.");
         return;
       }
+      
+      const selectedProcessor = actualCryptoProcessor;
+      // Use crypto name as display method (e.g., "USDT (BEP-20)" or "USDC (Solana)")
+      const displayMethodName = selectedCrypto.displayName;
 
       console.log('🔄 Processing withdrawal with processor:', {
         id: selectedProcessor.id,
@@ -761,7 +725,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       toast.success(data.message || "Withdrawal request submitted!");
       setWithdrawAmount("");
-      setWithdrawMethod("");
       setAccountDetails("");
       setWithdrawDialogOpen(false);
       setShowWithdrawalConfirmation(false);
@@ -778,7 +741,6 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const handleCpaySuccess = () => {
     onBalanceUpdate();
     setDepositAmount("");
-    setDepositMethod("");
   };
 
   return (
@@ -851,104 +813,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       )}
                     </p>
                   </div>
-                  <div>
-                    <TooltipProvider>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Label htmlFor="deposit-method">Payment Method</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button type="button" className="inline-flex">
-                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs">
-                            <div className="space-y-1">
-                              <p className="font-semibold text-amber-600 dark:text-amber-400">
-                                💡 Save on Fees!
-                              </p>
-                              <p className="text-sm">
-                                For <strong>GCash/GCrypto</strong> users: Use <strong>USDC (Solana network)</strong> for the lowest transaction fees and fastest confirmations.
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                All other coins work normally too.
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TooltipProvider>
-                    <Select value={depositMethod} onValueChange={setDepositMethod} disabled={loadingProcessors}>
-                      <SelectTrigger id="deposit-method">
-                        <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select payment method"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* ✅ Show virtual methods if deposit processor exists */}
-                        {actualDepositProcessor && VIRTUAL_DEPOSIT_METHODS.length > 0 ? (
-                          VIRTUAL_DEPOSIT_METHODS.map((method) => {
-                            // ✅ Mark GCrypto, Binance, and CoinBase as recommended for USDC
-                            const isRecommended = ['gcrypto-deposit', 'binance-deposit', 'coinbase-deposit'].includes(method.id);
-                            
-                            return (
-                              <SelectItem key={method.id} value={method.id}>
-                                <div className="flex items-center justify-between gap-2 w-full">
-                                  <div className="flex items-center gap-2">
-                                    <span>{method.icon}</span>
-                                    <span>{method.displayName}</span>
-                                  </div>
-                                  {isRecommended && (
-                                    <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-[10px] px-1.5 py-0 shrink-0">
-                                      ⚡ Low Fees
-                                    </Badge>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            );
-                          })
-                        ) : depositProcessors.length === 0 ? (
-                          <SelectItem value="none" disabled>No payment methods available</SelectItem>
-                        ) : (
-                          depositProcessors.map((processor) => (
-                            <SelectItem key={processor.id} value={processor.name}>
-                              {processor.config?.display_name || processor.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {/* ✅ Display method-specific description */}
-                    {depositMethod && (() => {
-                      const virtualMethod = VIRTUAL_DEPOSIT_METHODS.find(vm => vm.id === depositMethod);
-                      const processor = virtualMethod && actualDepositProcessor 
-                        ? actualDepositProcessor 
-                        : depositProcessors.find(p => p.name === depositMethod);
-                      
-                      if (!processor) return null;
-                      
-                      return (
-                        <Alert className="mt-2">
-                          <InfoIcon className="h-4 w-4" />
-                          <AlertDescription className="text-xs space-y-1">
-                            <div>
-                              {virtualMethod ? virtualMethod.description : processor.config?.description}
-                            </div>
-                            
-                            {/* ✅ USDC guidance for recommended methods */}
-                            {virtualMethod && ['gcrypto-deposit', 'binance-deposit', 'coinbase-deposit'].includes(virtualMethod.id) && (
-                              <div className="mt-2 pt-2 border-t border-muted">
-                                <p className="font-semibold text-amber-600 dark:text-amber-400">
-                                  💡 Tip: Use USDC (Solana) for lowest fees!
-                                </p>
-                              </div>
-                            )}
-                            
-                            <div className="mt-1">
-                              <strong>Processing:</strong> Instant confirmation
-                            </div>
-                          </AlertDescription>
-                        </Alert>
-                      );
-                    })()}
-                  </div>
+                  {/* Payment method selection removed - user will select coin in CPAY popup */}
+                  <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                    <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="text-xs">
+                      After clicking "Confirm Deposit", you'll be able to select your preferred cryptocurrency (Bitcoin, USDT, USDC, etc.) in the payment processor.
+                    </AlertDescription>
+                  </Alert>
                   <Button
                     onClick={handleDeposit}
                     disabled={depositLoading}
@@ -1106,12 +977,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     </div>
                     
                     {/* Withdrawal Fee Breakdown */}
-                    {withdrawAmount && withdrawMethod && parseFloat(withdrawAmount) > 0 && (() => {
-                      // ✅ Find processor - could be virtual or actual
-                      const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                      const processor = virtualMethod && actualCryptoProcessor 
-                        ? actualCryptoProcessor 
-                        : withdrawalProcessors.find(p => p.name === withdrawMethod);
+                    {withdrawAmount && selectedCrypto && actualCryptoProcessor && parseFloat(withdrawAmount) > 0 && (() => {
+                      // ✅ Use the actual crypto processor
+                      const processor = actualCryptoProcessor;
                       
                       if (!processor) return null;
                       
@@ -1163,60 +1031,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       );
                     })()}
                     
-                    <div>
-                      <Label htmlFor="withdraw-method">Withdrawal Method</Label>
-                      <Select value={withdrawMethod} onValueChange={setWithdrawMethod} disabled={loadingProcessors}>
-                        <SelectTrigger id="withdraw-method">
-                          <SelectValue placeholder={loadingProcessors ? "Loading..." : "Select withdrawal method"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* ✅ Show virtual methods if crypto processor exists */}
-                          {actualCryptoProcessor && VIRTUAL_WITHDRAWAL_METHODS.length > 0 ? (
-                            VIRTUAL_WITHDRAWAL_METHODS.map((method) => (
-                              <SelectItem key={method.id} value={method.id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{method.icon}</span>
-                                  <span>{method.displayName}</span>
-                                </div>
-                              </SelectItem>
-                            ))
-                          ) : withdrawalProcessors.length === 0 ? (
-                            <SelectItem value="none" disabled>No withdrawal methods available</SelectItem>
-                          ) : (
-                            withdrawalProcessors.map((processor) => (
-                              <SelectItem key={processor.id} value={processor.name}>
-                                {processor.config?.display_name || processor.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {/* ✅ Display method-specific description and fee */}
-                      {withdrawMethod && (() => {
-                        const virtualMethod = VIRTUAL_WITHDRAWAL_METHODS.find(vm => vm.id === withdrawMethod);
-                        const processor = virtualMethod && actualCryptoProcessor 
-                          ? actualCryptoProcessor 
-                          : withdrawalProcessors.find(p => p.name === withdrawMethod);
-                        
-                        if (!processor) return null;
-                        
-                        return (
-                          <Alert className="mt-2">
-                            <InfoIcon className="h-4 w-4" />
-                            <AlertDescription className="text-xs">
-                              {virtualMethod ? virtualMethod.description : processor.config?.description}
-                              <br />
-                              <strong>Fee:</strong> ${processor.fee_fixed || 0}
-                            </AlertDescription>
-                          </Alert>
-                        );
-                      })()}
-                    </div>
-
-                    {/* PHASE 3: Cryptocurrency Selection */}
+                    {/* PHASE 3: Cryptocurrency Selection - Only USDT-Bep20 or USDC-Solana */}
                     <div>
                       <Label htmlFor="crypto-selection">
-                        Select Cryptocurrency
+                        Withdrawal Method (Select Cryptocurrency)
                       </Label>
                       <Select 
                         value={selectedCrypto.id} 
@@ -1367,7 +1185,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       !!withdrawAmountError || 
                       !!cryptoAddressError ||
                       !withdrawAmount || 
-                      !withdrawMethod || 
+                      !selectedCrypto ||
                       !accountDetails ||
                       (!isAdmin && profile && !profile.email_verified)
                     }
