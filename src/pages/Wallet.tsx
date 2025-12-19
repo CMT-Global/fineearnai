@@ -29,7 +29,7 @@ const Wallet = () => {
   const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
   
   // PHASE 4: Check withdrawal validation (includes VIP bypass status)
-  const { data: validation } = useWithdrawalValidation();
+  const { data: validation, isLoading: isValidationLoading = false } = useWithdrawalValidation();
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -48,6 +48,15 @@ const Wallet = () => {
       </div>
     );
   }
+
+  // ✅ Wait for all data to be fully loaded before rendering conditional content
+  // This prevents flickering when data loads from cache then updates with real data
+  // Only render conditional banners when ALL data is ready (not loading, not from cache placeholder)
+  const isDataReady = !isProfileLoading && !isValidationLoading && profile && profile.earnerBadge && validation !== undefined;
+  
+  // Check if we're still using placeholder/cached data (React Query shows isLoading=false for cached data)
+  // We need to ensure we have fresh data, not just cached placeholder
+  const hasFreshData = profile && profile.earnerBadge && !isProfileLoading;
 
   return (
     <PageLayout
@@ -78,8 +87,8 @@ const Wallet = () => {
                 <EmailVerificationBanner onVerifyClick={() => setShowEmailVerification(true)} />
               )}
 
-              {/* PHASE 4: VIP Withdrawal Access Banner */}
-              {validation?.hasBypass && (
+              {/* PHASE 4: VIP Withdrawal Access Banner - Only render when data is ready */}
+              {isDataReady && validation?.hasBypass && (
                 <Alert className="bg-primary/10 border-primary/30">
                   <div className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-primary" />
@@ -100,8 +109,8 @@ const Wallet = () => {
               {/* USDC Fee Savings Banner */}
               <USDCFeeSavingsBanner variant="banner" className="mb-6" />
 
-              {/* Earner Status Banner - Unverified Users Only */}
-              {profile.earnerBadge && !profile.earnerBadge.isVerified && (
+              {/* Earner Status Banner - Unverified Users Only - Only render when data is ready */}
+              {isDataReady && profile.earnerBadge && !profile.earnerBadge.isVerified && (
                 <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.earnerBadge.icon}</span>
