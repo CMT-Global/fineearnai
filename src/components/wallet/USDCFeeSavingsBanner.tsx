@@ -61,7 +61,7 @@ export const USDCFeeSavingsBanner = ({
         .maybeSingle();
 
       if (error) throw error;
-      return data?.value as FeeSavingsBannerConfig || DEFAULT_CONFIG;
+      return (data?.value as unknown as FeeSavingsBannerConfig) || DEFAULT_CONFIG;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
