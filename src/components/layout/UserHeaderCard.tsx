@@ -236,7 +236,7 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
       {/* Earner Verification Badge - PROMINENT */}
       {effectiveBadge && (
         <div className="px-4 pb-3 space-y-2">
-          <div className="flex items-center justify-center ">
+          <div className="flex items-center justify-center gap-2">
             <Badge 
               variant={effectiveBadge.badgeVariant}
               className="text-xs font-bold"
@@ -251,7 +251,7 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
                 <Button 
                   size="sm" 
                   variant="default" 
-                  className="w-full h-7 text-xs font-semibold animate-pulse hover:animate-none"
+                  className="w-full h-7 text-xs font-semibold animate-pulse hover:animate-none bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   Upgrade Now
                   <ArrowRight className="ml-1 h-3 w-3" />
