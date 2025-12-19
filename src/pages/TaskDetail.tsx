@@ -225,24 +225,24 @@ const TaskDetail = () => {
           <h2 className="text-xl font-semibold mb-6">{task.prompt}</h2>
 
           {feedback ? (
-            <div className={`p-6 rounded-lg ${feedback.isCorrect ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+            <div className={`p-6 rounded-lg ${feedback.isCorrect ? 'bg-[hsl(var(--success))]/10 border-2 border-[hsl(var(--success))]/20' : 'bg-[hsl(var(--destructive))]/10 border-2 border-[hsl(var(--destructive))]/20'}`}>
               <div className="flex items-center gap-3 mb-4">
                 {feedback.isCorrect ? (
                   <>
-                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    <CheckCircle2 className="h-6 w-6 text-[hsl(var(--success))]" />
                     <div>
-                      <p className="font-semibold text-green-900 dark:text-green-100">Correct!</p>
-                      <p className="text-sm text-green-700 dark:text-green-300">
+                      <p className="font-semibold text-[hsl(var(--success))]">Correct!</p>
+                      <p className="text-sm text-[hsl(var(--success))]/80">
                         You earned {formatCurrency(feedback.earnedAmount)}
                       </p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    <XCircle className="h-6 w-6 text-[hsl(var(--destructive))]" />
                     <div>
-                      <p className="font-semibold text-red-900 dark:text-red-100">Incorrect</p>
-                      <p className="text-sm text-red-700 dark:text-red-300">
+                      <p className="font-semibold text-[hsl(var(--destructive))]">Incorrect</p>
+                      <p className="text-sm text-[hsl(var(--destructive))]/80">
                         No earnings for this task
                       </p>
                     </div>
@@ -250,12 +250,12 @@ const TaskDetail = () => {
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className={`p-3 rounded border ${selectedResponse === 'a' ? (feedback.correctAnswer === 'a' ? 'border-green-500' : 'border-red-500') : 'border-transparent'}`}>
+                <div className={`p-3 rounded border-2 ${selectedResponse === 'a' ? (feedback.correctAnswer === 'a' ? 'border-[hsl(var(--success))] bg-[hsl(var(--success))]/10' : 'border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10') : 'border-transparent bg-muted/30'}`}>
                   <p className="font-medium text-sm mb-1">Option A:</p>
                   <p className="text-sm">{task.response_a}</p>
                   {selectedResponse === 'a' && <Badge className="mt-2">Your Answer</Badge>}
                 </div>
-                <div className={`p-3 rounded border ${selectedResponse === 'b' ? (feedback.correctAnswer === 'b' ? 'border-green-500' : 'border-red-500') : 'border-transparent'}`}>
+                <div className={`p-3 rounded border-2 ${selectedResponse === 'b' ? (feedback.correctAnswer === 'b' ? 'border-[hsl(var(--success))] bg-[hsl(var(--success))]/10' : 'border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10') : 'border-transparent bg-muted/30'}`}>
                   <p className="font-medium text-sm mb-1">Option B:</p>
                   <p className="text-sm">{task.response_b}</p>
                   {selectedResponse === 'b' && <Badge className="mt-2">Your Answer</Badge>}
