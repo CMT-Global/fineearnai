@@ -67,14 +67,14 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
 
       {!isEligible ? (
         <div className="space-y-4">
-          <div className="p-4 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-lg">
+          <div className="p-4 bg-orange-500/10 dark:bg-orange-500/20 border border-orange-500/30 dark:border-orange-500/30 rounded-lg">
             <div className="flex gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-1">
+                <p className="text-sm font-medium text-foreground mb-1">
                   Referral Income Not Available For Free Accounts
                 </p>
-                <p className="text-sm text-orange-700 dark:text-orange-300">
+                <p className="text-sm text-foreground/80">
                   You need to upgrade your account to start earning commissions.
                 </p>
               </div>
@@ -92,30 +92,30 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
-              <p className="text-sm text-muted-foreground mb-1">Task Commission</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="p-4 border rounded-lg bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
+              <p className="text-sm text-foreground mb-1">Task Commission</p>
+              <p className="text-2xl font-bold text-blue-500 dark:text-blue-400">
                 {(commissions?.taskCommissionRate * 100).toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-foreground/80 mt-1">
                 Earn from every task your referrals complete
               </p>
             </div>
 
-            <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
-              <p className="text-sm text-muted-foreground mb-1">Deposit Commission</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div className="p-4 border rounded-lg bg-green-500/10 dark:bg-green-500/20 border-green-500/30 dark:border-green-500/30">
+              <p className="text-sm text-foreground mb-1">Deposit Commission</p>
+              <p className="text-2xl font-bold text-green-500 dark:text-green-400">
                 {(commissions?.depositCommissionRate * 100).toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-foreground/80 mt-1">
                 Earn when referrals upgrade their plans
               </p>
             </div>
           </div>
 
-          <div className="p-4 bg-accent/50 border rounded-lg">
-            <p className="text-sm font-medium mb-2">Current Plan: {userPlan.toUpperCase()}</p>
-            <p className="text-xs text-muted-foreground">
+          <div className="p-4 bg-accent/30 dark:bg-accent/20 border border-border rounded-lg">
+            <p className="text-sm font-medium mb-2 text-foreground">Current Plan: {userPlan.toUpperCase()}</p>
+            <p className="text-xs text-foreground/80">
               Upgrade to a higher tier plan to unlock better commission rates and more active referral slots.
             </p>
             <Button 
