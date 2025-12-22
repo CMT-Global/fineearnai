@@ -57,9 +57,9 @@ export const ProcessorSelectionDialog = ({
   const isDeposit = type === 'deposit';
   const icon = isDeposit ? <ArrowDownToLine className="h-5 w-5" /> : <ArrowUpFromLine className="h-5 w-5" />;
   const colorClass = isDeposit ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400';
-  const bgClass = isDeposit ? 'bg-green-50 dark:bg-green-950/20' : 'bg-blue-50 dark:bg-blue-950/20';
-  const borderClass = isDeposit ? 'border-green-200 dark:border-green-800' : 'border-blue-200 dark:border-blue-800';
-  const hoverBorderClass = isDeposit ? 'hover:border-green-400' : 'hover:border-blue-400';
+  const borderClass = isDeposit ? 'border-green-500/50 dark:border-green-500/50' : 'border-blue-500/50 dark:border-blue-500/50';
+  const hoverBorderClass = isDeposit ? 'hover:border-green-500 dark:hover:border-green-500' : 'hover:border-blue-500 dark:hover:border-blue-500';
+  const topRecBorderClass = isDeposit ? 'border-green-500 dark:border-green-500 hover:border-green-400 dark:hover:border-green-400' : 'border-blue-500 dark:border-blue-500 hover:border-blue-400 dark:hover:border-blue-400';
 
   // Get user's country for recommendations
   const userCountry = profile?.registration_country || profile?.country || null;
@@ -78,7 +78,7 @@ export const ProcessorSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl animate-scale-in">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl animate-fade-in">
             {icon}
@@ -89,50 +89,51 @@ export const ProcessorSelectionDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Binance P2P Guide - Prominent Section */}
-        {p2pGuide && (
-          <div className="mb-4 animate-fade-in">
-            <Card 
-              className={`cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.01] border-2 ${
-                isDeposit ? 'border-green-300 dark:border-green-700' : 'border-blue-300 dark:border-blue-700'
-              } ${bgClass}`}
-              onClick={() => onProcessorSelect(p2pGuide)}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🌍</span>
-                      <CardTitle className={`text-lg ${colorClass}`}>
-                        {isDeposit ? '💵 Buy Crypto with Bank/Mobile Money' : '💰 Sell Crypto for Cash'}
-                      </CardTitle>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth min-h-0 space-y-4">
+          {/* Binance P2P Guide - Prominent Section */}
+          {p2pGuide && (
+            <div className="animate-fade-in px-2">
+              <Card 
+                className={`cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.01] border-2 ${
+                  isDeposit ? 'border-green-500/50 dark:border-green-500/50 hover:border-green-500 dark:hover:border-green-500' : 'border-blue-500/50 dark:border-blue-500/50 hover:border-blue-500 dark:hover:border-blue-500'
+                }`}
+                onClick={() => onProcessorSelect(p2pGuide)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🌍</span>
+                        <CardTitle className={`text-lg ${colorClass}`}>
+                          {isDeposit ? '💵 Buy Crypto with Bank/Mobile Money' : '💰 Sell Crypto for Cash'}
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-sm">
+                        {isDeposit 
+                          ? 'Learn how to buy cryptocurrency using your local bank or mobile money via Binance P2P - works worldwide!' 
+                          : 'Learn how to convert your crypto earnings to cash in your bank or mobile money via Binance P2P'}
+                      </CardDescription>
                     </div>
-                    <CardDescription className="text-sm">
-                      {isDeposit 
-                        ? 'Learn how to buy cryptocurrency using your local bank or mobile money via Binance P2P - works worldwide!' 
-                        : 'Learn how to convert your crypto earnings to cash in your bank or mobile money via Binance P2P'}
-                    </CardDescription>
+                    <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                      Beginner Friendly
+                    </Badge>
                   </div>
-                  <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                    Beginner Friendly
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Badge className={`${isDeposit ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
-                    View Complete Guide →
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {isDeposit ? '9 easy steps' : '8 easy steps'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Badge className={`${isDeposit ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
+                      View Complete Guide →
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {isDeposit ? '9 easy steps' : '8 easy steps'}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scroll-smooth">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2">
           {regularProcessors.map(({ processor, recommendation }, index) => {
             const isTopRecommendation = index === 0 && recommendation.score >= 100;
             
@@ -141,15 +142,15 @@ export const ProcessorSelectionDialog = ({
                 key={processor.id}
                 className={`group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border-2 ${
                   isTopRecommendation 
-                    ? 'border-primary/50 hover:border-primary' 
-                    : `${hoverBorderClass} ${bgClass}`
+                    ? topRecBorderClass 
+                    : `${borderClass} ${hoverBorderClass}`
                 } focus-within:ring-2 focus-within:ring-offset-2 animate-fade-in relative`}
                 style={{ animationDelay: `${index * 0.1}s` }}
                 onClick={() => onProcessorSelect(processor)}
               >
                 {/* Top Recommendation Badge */}
                 {isTopRecommendation && (
-                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1 flex items-center gap-1 shadow-lg z-10 animate-scale-in">
+                  <div className={`absolute -top-2 -right-2 ${isDeposit ? 'bg-green-600 dark:bg-green-700' : 'bg-blue-600 dark:bg-blue-700'} text-white text-xs font-bold rounded-full px-2 py-1 flex items-center gap-1 shadow-lg z-10 animate-scale-in`}>
                     <Sparkles className="h-3 w-3" />
                     Best Match
                   </div>
@@ -217,6 +218,7 @@ export const ProcessorSelectionDialog = ({
               </Card>
             );
           })}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
