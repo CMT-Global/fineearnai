@@ -115,15 +115,15 @@ const Referrals = () => {
 
               {/* Earner Status Banner - Unverified Users Only */}
               {profile?.earnerBadge && !profile.earnerBadge.isVerified && (
-                <Alert className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
-                  <AlertTitle className="text-orange-900 dark:text-orange-100">
+                  <AlertTitle className="text-orange-700 dark:text-orange-400">
                     {profile.earnerBadge.badgeText} - No Referral Commissions
                   </AlertTitle>
-                  <AlertDescription className="text-orange-800 dark:text-orange-200 space-y-3">
+                  <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
                     <p>{profile.earnerBadge.upgradePrompt}</p>
                     <Button 
                       onClick={() => navigate("/plans")}

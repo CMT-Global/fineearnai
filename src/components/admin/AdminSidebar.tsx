@@ -306,7 +306,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
                     onClick={() => handleNavigation(item.path)}
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 w-full text-left text-sm ${
                       isActive(item.path, item.exact)
-                        ? "bg-[hsl(var(--wallet-deposit))]/20 text-[hsl(var(--wallet-deposit))] font-medium border-l-4 border-[hsl(var(--wallet-deposit))]"
+                        ? "bg-primary/20 text-primary font-medium border-l-4 border-primary"
                         : "hover:bg-[hsl(var(--sidebar-accent))]/30 text-[hsl(var(--sidebar-fg))]/80"
                     }`}
                   >

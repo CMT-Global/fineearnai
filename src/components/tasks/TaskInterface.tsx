@@ -94,19 +94,19 @@ const TaskInterfaceComponent = ({
         <div
           className={`p-6 rounded-lg mb-6 ${
             feedback.isCorrect
-              ? "bg-green-50 dark:bg-green-950/30 border-2 border-green-500/20"
-              : "bg-red-50 dark:bg-red-950/30 border-2 border-red-500/20"
+              ? "bg-[hsl(var(--success))]/10 border-2 border-[hsl(var(--success))]/20"
+              : "bg-[hsl(var(--destructive))]/10 border-2 border-[hsl(var(--destructive))]/20"
           }`}
         >
           <div className="flex items-center gap-3 mb-4">
             {feedback.isCorrect ? (
               <>
-                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="h-6 w-6 text-[hsl(var(--success))]" />
                 <div>
-                  <p className="font-semibold text-green-900 dark:text-green-100 text-lg">
+                  <p className="font-semibold text-[hsl(var(--success))] text-lg">
                     Correct Answer!
                   </p>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm text-[hsl(var(--success))]/80">
                     You earned <CurrencyDisplay 
                       amountUSD={feedback.earnedAmount}
                       showSymbol={true}
@@ -119,12 +119,12 @@ const TaskInterfaceComponent = ({
               </>
             ) : (
               <>
-                <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <XCircle className="h-6 w-6 text-[hsl(var(--destructive))]" />
                 <div>
-                  <p className="font-semibold text-red-900 dark:text-red-100 text-lg">
+                  <p className="font-semibold text-[hsl(var(--destructive))] text-lg">
                     Incorrect Answer
                   </p>
-                  <p className="text-sm text-red-700 dark:text-red-300">
+                  <p className="text-sm text-[hsl(var(--destructive))]/80">
                     No earnings for this task
                   </p>
                 </div>
@@ -137,8 +137,8 @@ const TaskInterfaceComponent = ({
               className={`p-4 rounded border-2 ${
                 selectedResponse === "a"
                   ? feedback.correctAnswer === "a"
-                    ? "border-green-500 bg-green-100/50 dark:bg-green-900/20"
-                    : "border-red-500 bg-red-100/50 dark:bg-red-900/20"
+                    ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
+                    : "border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10"
                   : "border-transparent bg-muted/30"
               }`}
             >
@@ -150,7 +150,7 @@ const TaskInterfaceComponent = ({
                 </Badge>
               )}
               {feedback.correctAnswer === "a" && (
-                <Badge className="mt-2 bg-green-500 text-white">
+                <Badge className="mt-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
                   Correct Answer
                 </Badge>
               )}
@@ -160,8 +160,8 @@ const TaskInterfaceComponent = ({
               className={`p-4 rounded border-2 ${
                 selectedResponse === "b"
                   ? feedback.correctAnswer === "b"
-                    ? "border-green-500 bg-green-100/50 dark:bg-green-900/20"
-                    : "border-red-500 bg-red-100/50 dark:bg-red-900/20"
+                    ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
+                    : "border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10"
                   : "border-transparent bg-muted/30"
               }`}
             >
@@ -173,7 +173,7 @@ const TaskInterfaceComponent = ({
                 </Badge>
               )}
               {feedback.correctAnswer === "b" && (
-                <Badge className="mt-2 bg-green-500 text-white">
+                <Badge className="mt-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
                   Correct Answer
                 </Badge>
               )}

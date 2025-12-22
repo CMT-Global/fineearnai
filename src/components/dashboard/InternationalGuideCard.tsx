@@ -97,14 +97,14 @@ export const InternationalGuideCard = ({
 
             {/* Withdraw Card */}
             <Card 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border-2 border-blue-500/20 hover:border-info bg-card/50 hover:bg-card focus-within:ring-2 focus-within:ring-info focus-within:ring-offset-2"
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border-2 border-blue-500/20 hover:border-blue-500 bg-card/50 hover:bg-card focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               onClick={handleWithdrawClick}
             >
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-2 p-3 bg-info/10 rounded-full w-16 h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                  <ArrowUpFromLine className="h-8 w-8 text-info transition-transform duration-300 group-hover:-translate-y-1" />
+                <div className="mx-auto mb-2 p-3 bg-blue-500/10 rounded-full w-16 h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                  <ArrowUpFromLine className="h-8 w-8 text-blue-500 transition-transform duration-300 group-hover:-translate-y-1" />
                 </div>
-                <CardTitle className="text-xl transition-colors duration-200 group-hover:text-info">
+                <CardTitle className="text-xl transition-colors duration-200 group-hover:text-blue-500">
                   💰 How to Withdraw
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export const InternationalGuideCard = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
-                <Badge variant="secondary" className="bg-info text-white hover:bg-info/90 transition-all duration-200 group-hover:shadow-md">
+                <Badge variant="secondary" className="bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 group-hover:shadow-md group-hover:scale-105">
                   Click to View Options
                 </Badge>
               </CardContent>

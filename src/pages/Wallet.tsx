@@ -29,7 +29,7 @@ const Wallet = () => {
   const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useProfile(user?.id);
   
   // PHASE 4: Check withdrawal validation (includes VIP bypass status)
-  const { data: validation } = useWithdrawalValidation();
+  const { data: validation, isLoading: isValidationLoading = false } = useWithdrawalValidation();
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -48,6 +48,15 @@ const Wallet = () => {
       </div>
     );
   }
+
+  // ✅ Wait for all data to be fully loaded before rendering conditional content
+  // This prevents flickering when data loads from cache then updates with real data
+  // Only render conditional banners when ALL data is ready (not loading, not from cache placeholder)
+  const isDataReady = !isProfileLoading && !isValidationLoading && profile && profile.earnerBadge && validation !== undefined;
+  
+  // Check if we're still using placeholder/cached data (React Query shows isLoading=false for cached data)
+  // We need to ensure we have fresh data, not just cached placeholder
+  const hasFreshData = profile && profile.earnerBadge && !isProfileLoading;
 
   return (
     <PageLayout
@@ -78,20 +87,20 @@ const Wallet = () => {
                 <EmailVerificationBanner onVerifyClick={() => setShowEmailVerification(true)} />
               )}
 
-              {/* PHASE 4: VIP Withdrawal Access Banner */}
-              {validation?.hasBypass && (
-                <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+              {/* PHASE 4: VIP Withdrawal Access Banner - Only render when data is ready */}
+              {isDataReady && validation?.hasBypass && (
+                <Alert className="bg-primary/10 border-primary/30">
                   <div className="flex items-center gap-2">
-                    <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                    <Crown className="h-5 w-5 text-primary" />
+                    <Sparkles className="h-4 w-4 text-primary" />
                   </div>
-                  <AlertTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                  <AlertTitle className="text-foreground flex items-center gap-2">
                     VIP Withdrawal Access Enabled
-                    <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+                    <Badge variant="default" className="bg-primary hover:bg-primary/90">
                       24/7 Access
                     </Badge>
                   </AlertTitle>
-                  <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  <AlertDescription className="text-muted-foreground">
                     Your account has unrestricted withdrawal access. You can withdraw any day at any time without schedule restrictions.
                   </AlertDescription>
                 </Alert>
@@ -100,17 +109,17 @@ const Wallet = () => {
               {/* USDC Fee Savings Banner */}
               <USDCFeeSavingsBanner variant="banner" className="mb-6" />
 
-              {/* Earner Status Banner - Unverified Users Only */}
-              {profile.earnerBadge && !profile.earnerBadge.isVerified && (
-                <Alert className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+              {/* Earner Status Banner - Unverified Users Only - Only render when data is ready */}
+              {isDataReady && profile.earnerBadge && !profile.earnerBadge.isVerified && (
+                <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
-                  <AlertTitle className="text-orange-900 dark:text-orange-100">
+                  <AlertTitle className="text-orange-700 dark:text-orange-400">
                     {profile.earnerBadge.badgeText} - Limited Withdrawal Access
                   </AlertTitle>
-                  <AlertDescription className="text-orange-800 dark:text-orange-200 space-y-3">
+                  <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
                     <p>{profile.earnerBadge.upgradePrompt}</p>
                     <Button 
                       onClick={() => navigate("/plans")}

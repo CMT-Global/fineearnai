@@ -51,7 +51,7 @@ export const USDCFeeSavingsBanner = ({
   className 
 }: USDCFeeSavingsBannerProps) => {
   // Fetch banner config
-  const { data: configData } = useQuery({
+  const { data: configData, isLoading } = useQuery({
     queryKey: ['fee-savings-banner-config'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -61,12 +61,17 @@ export const USDCFeeSavingsBanner = ({
         .maybeSingle();
 
       if (error) throw error;
-      return data?.value as FeeSavingsBannerConfig || DEFAULT_CONFIG;
+      return (data?.value as unknown as FeeSavingsBannerConfig) || DEFAULT_CONFIG;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const config = configData || DEFAULT_CONFIG;
+  // Don't render until config is loaded to prevent flickering
+  if (isLoading || !configData) {
+    return null;
+  }
+
+  const config = configData;
 
   // Don't render if not visible
   if (!config.isVisible) {

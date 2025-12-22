@@ -194,37 +194,13 @@ const Dashboard = () => {
         <>
           {/* Email Verification Banner - Show if email not verified */}
           {profile.email_verified === false && (
-            <div className="mx-4 lg:mx-8 mt-6">
+            <div className="mx-4 lg:mx-8 mt-4 mb-4">
               <EmailVerificationBanner 
                 onVerifyClick={() => setShowEmailVerification(true)}
               />
             </div>
           )}
 
-          {/* Earner Status Banner - Unverified Users Only */}
-          {profile.earnerBadge && !profile.earnerBadge.isVerified && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <Alert className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-orange-500/20">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{profile.earnerBadge.icon}</span>
-               
-                </div>
-                <AlertTitle className="text-orange-400 flex items-center gap-2">
-                  {profile.earnerBadge.badgeText}
-                </AlertTitle>
-                <AlertDescription className="text-orange-200/80 space-y-3">
-                  <p>{profile.earnerBadge.upgradePrompt}</p>
-                  <Button 
-                    onClick={() => navigate("/plans")}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
-                  >
-                    Upgrade to Verified Earner
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
 
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
@@ -258,7 +234,7 @@ const Dashboard = () => {
                 </Button>
                 {planStatus && (planStatus.status === 'expired' || planStatus.status === 'expiring_soon') ? (
                   <Button 
-                    className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+                    className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
                     onClick={() => navigate("/plans")}
                   >
                     <AlertCircle className="h-4 w-4" />
@@ -267,7 +243,7 @@ const Dashboard = () => {
                   </Button>
                 ) : (
                   <Button 
-                    className="gap-2 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
+                    className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
                     onClick={() => navigate("/plans")}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -309,7 +285,7 @@ const Dashboard = () => {
                 <AlertTitle>Plan Expired</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>Your {profile.membership_plan} plan has expired. Upgrade now to continue enjoying premium benefits.</span>
-                  <Button size="sm" variant="destructive" onClick={() => navigate("/plans")}>
+                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
                     Upgrade Now
                   </Button>
                 </AlertDescription>
@@ -319,12 +295,12 @@ const Dashboard = () => {
 
           {planStatus && planStatus.status === 'expiring_soon' && (
             <div className="mx-4 lg:mx-8 mt-6">
-              <Alert className="bg-amber-500/10 border-amber-500/20">
-                <Clock className="h-4 w-4 text-amber-500" />
-                <AlertTitle className="text-amber-400">Plan Expiring Soon</AlertTitle>
-                <AlertDescription className="flex items-center justify-between text-amber-200/80">
+              <Alert className="bg-yellow-500/10 border-yellow-500/20">
+                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+                <AlertTitle className="text-yellow-700 dark:text-yellow-400">Plan Expiring Soon</AlertTitle>
+                <AlertDescription className="flex items-center justify-between text-yellow-800 dark:text-yellow-300">
                   <span>Your {profile.membership_plan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew now to avoid losing access.</span>
-                  <Button size="sm" variant="default" onClick={() => navigate("/plans")}>
+                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
                     Renew Account
                   </Button>
                 </AlertDescription>
