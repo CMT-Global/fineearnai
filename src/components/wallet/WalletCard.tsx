@@ -815,9 +815,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     </p>
                   </div>
                   {/* Payment method selection removed - user will select coin in CPAY popup */}
-                  <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                    <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <AlertDescription className="text-xs">
+                  <Alert className="bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
+                    <InfoIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                    <AlertDescription className="text-xs text-foreground">
                       After clicking "Confirm Deposit", you'll be able to select your preferred cryptocurrency (Bitcoin, USDT, USDC, etc.) in the payment processor.
                     </AlertDescription>
                   </Alert>
@@ -996,9 +996,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                       const netAmountUSD = amountUSD - totalFee;
                       
                       return (
-                        <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                          <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          <AlertDescription>
+                        <Alert className="bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
+                          <InfoIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                          <AlertDescription className="text-foreground">
                             <div className="text-xs space-y-1">
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Withdrawal Amount:</span>
@@ -1085,15 +1085,15 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     </div>
 
                     {/* Currency & Network Badge */}
-                    <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                      <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      <AlertTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    <Alert className="bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
+                      <InfoIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                      <AlertTitle className="text-foreground flex items-center gap-2">
                         Withdrawal Currency & Network
                         <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
                           {selectedCrypto.icon} {selectedCrypto.displayName}
                         </Badge>
                       </AlertTitle>
-                      <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
+                      <AlertDescription className="text-foreground text-sm">
                         Your withdrawal will be sent as <strong>{selectedCrypto.symbol}</strong> on the <strong>{selectedCrypto.network}</strong> network. 
                         Make sure your wallet supports {selectedCrypto.symbol} on {selectedCrypto.networkShort}.
                       </AlertDescription>

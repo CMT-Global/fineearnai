@@ -17,7 +17,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
-import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle, Wallet, Loader2 } from "lucide-react";
+import { Calendar, User, Mail, Award, Target, Users, Shield, MapPin, Globe, Info, Check, ChevronsUpDown, DollarSign, CheckCircle, AlertCircle, Wallet, Loader2, Languages } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SUPPORTED_CRYPTOCURRENCIES, validateCryptoAddress, getCryptoById } from "@/types/crypto-currencies";
@@ -30,6 +30,8 @@ import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { SUPPORTED_LANGUAGES, getLanguageName, getLanguageFlag, SupportedLanguage } from "@/lib/country-language-map";
 
 const Settings = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -39,9 +41,12 @@ const Settings = () => {
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
   const [isCurrencyPopoverOpen, setIsCurrencyPopoverOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage | "">("");
+  const [isLanguagePopoverOpen, setIsLanguagePopoverOpen] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { userCurrency, updateUserCurrency, convertAmount, isLoading: isCurrencyLoading } = useCurrencyConversion();
+  const { userLanguage, updateUserLanguage, isAutoDetected, isLoading: isLanguageLoading } = useLanguage();
   
   // Cryptocurrency address state
   const [usdcSolanaAddress, setUsdcSolanaAddress] = useState("");
@@ -80,6 +85,11 @@ const Settings = () => {
       // Initialize selected currency from profile
       if (data?.preferred_currency) {
         setSelectedCurrency(data.preferred_currency);
+      }
+      
+      // Initialize selected language from profile
+      if (data?.preferred_language) {
+        setSelectedLanguage(data.preferred_language as SupportedLanguage);
       }
       
       // Initialize crypto addresses from profile
@@ -183,6 +193,20 @@ const Settings = () => {
     },
   });
 
+  // Update language mutation
+  const updateLanguageMutation = useMutation({
+    mutationFn: async (languageCode: SupportedLanguage) => {
+      await updateUserLanguage(languageCode);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Language preference updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update language: ${error.message}`);
+    },
+  });
+
   // Update cryptocurrency addresses mutation
   const updateCryptoAddressesMutation = useMutation({
     mutationFn: async () => {
@@ -216,6 +240,12 @@ const Settings = () => {
   const handleCurrencyUpdate = () => {
     if (selectedCurrency && selectedCurrency !== userCurrency) {
       updateCurrencyMutation.mutate(selectedCurrency);
+    }
+  };
+
+  const handleLanguageUpdate = () => {
+    if (selectedLanguage && selectedLanguage !== userLanguage) {
+      updateLanguageMutation.mutate(selectedLanguage);
     }
   };
 
@@ -803,6 +833,124 @@ const Settings = () => {
                   <AlertDescription>
                     Currency conversion affects display only. All transactions are processed in USD. 
                     Exchange rates are updated every 24 hours.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Language Preferences */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Languages className="h-5 w-5" />
+                  Language Preferences
+                </CardTitle>
+                <CardDescription>
+                  Choose your preferred display language
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Current Language Display */}
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <Label className="text-sm font-medium">Current Language</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary" className="text-base">
+                        {getLanguageFlag(userLanguage)} {getLanguageName(userLanguage)}
+                      </Badge>
+                      {isAutoDetected && (
+                        <span className="text-xs text-muted-foreground">
+                          (Auto-detected)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Language Selector */}
+                <div className="space-y-2">
+                  <Label>Select Language</Label>
+                  <Popover open={isLanguagePopoverOpen} onOpenChange={setIsLanguagePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={isLanguagePopoverOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedLanguage ? (
+                          <span className="flex items-center gap-2">
+                            <span>{getLanguageFlag(selectedLanguage)}</span>
+                            {getLanguageName(selectedLanguage)} ({selectedLanguage.toUpperCase()})
+                          </span>
+                        ) : (
+                          "Select language..."
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[500px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search language..." />
+                        <CommandList>
+                          <CommandEmpty>No language found.</CommandEmpty>
+                          <CommandGroup>
+                            {SUPPORTED_LANGUAGES.map((lang) => (
+                              <CommandItem
+                                key={lang}
+                                value={`${lang} ${getLanguageName(lang)}`}
+                                onSelect={() => {
+                                  setSelectedLanguage(lang);
+                                  setIsLanguagePopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedLanguage === lang
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <span className="mr-2">{getLanguageFlag(lang)}</span>
+                                <span className="font-medium mr-2">{getLanguageName(lang)}</span>
+                                <span className="text-muted-foreground font-mono">{lang.toUpperCase()}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Update Button */}
+                <Button
+                  onClick={handleLanguageUpdate}
+                  disabled={
+                    updateLanguageMutation.isPending ||
+                    !selectedLanguage ||
+                    selectedLanguage === userLanguage ||
+                    isLanguageLoading
+                  }
+                  className="w-full"
+                >
+                  {updateLanguageMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Language"
+                  )}
+                </Button>
+
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Auto-Detection</AlertTitle>
+                  <AlertDescription>
+                    Your language is automatically detected from your IP address on first visit. 
+                    You can override this setting at any time.
                   </AlertDescription>
                 </Alert>
               </CardContent>

@@ -23,14 +23,14 @@ export const PaymentGuideDialog = ({
   const steps = isDeposit ? processor.depositSteps : processor.withdrawalSteps;
   const alertMessage = isDeposit ? processor.depositAlertMessage : processor.withdrawalAlertMessage;
   
-  const colorClass = isDeposit ? 'text-green-700 dark:text-green-300' : 'text-blue-700 dark:text-blue-300';
-  const bgClass = isDeposit ? 'bg-green-100 dark:bg-green-900/30' : 'bg-blue-100 dark:bg-blue-900/30';
-  const stepBgClass = isDeposit ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400';
-  const hoverBgClass = isDeposit ? 'hover:bg-green-50/50 dark:hover:bg-green-950/10' : 'hover:bg-blue-50/50 dark:hover:bg-blue-950/10';
+  const colorClass = isDeposit ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400';
+  const bgClass = isDeposit ? 'bg-green-500/10 dark:bg-green-500/20' : 'bg-blue-500/10 dark:bg-blue-500/20';
+  const stepBgClass = isDeposit ? 'text-green-500 dark:text-green-400' : 'text-blue-500 dark:text-blue-400';
+  const hoverBgClass = isDeposit ? 'hover:bg-green-500/5 dark:hover:bg-green-500/10' : 'hover:bg-blue-500/5 dark:hover:bg-blue-500/10';
   const badgeBgClass = isDeposit ? 'bg-green-600 hover:bg-green-600' : 'bg-blue-600 hover:bg-blue-600';
-  const alertBgClass = isDeposit ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800';
-  const alertTextClass = isDeposit ? 'text-green-800 dark:text-green-200' : 'text-blue-800 dark:text-blue-200';
-  const alertIconClass = isDeposit ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400';
+  const alertBgClass = isDeposit ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30 dark:border-green-500/30' : 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30';
+  const alertTextClass = isDeposit ? 'text-green-400 dark:text-green-300' : 'text-blue-400 dark:text-blue-300';
+  const alertIconClass = isDeposit ? 'text-green-500 dark:text-green-400' : 'text-blue-500 dark:text-blue-400';
 
   const renderStepText = (instruction: string, highlights: string[]) => {
     if (highlights.length === 0) {
@@ -66,7 +66,7 @@ export const PaymentGuideDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl animate-scale-in">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2 text-2xl animate-fade-in">
             {isDeposit ? '💸' : '💰'} How to {isDeposit ? 'Deposit' : 'Withdraw'} {isDeposit ? 'Using' : 'to'} {processor.displayName}
@@ -79,7 +79,7 @@ export const PaymentGuideDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scroll-smooth">
+        <div className="space-y-4 flex-1 overflow-y-auto pr-2 scroll-smooth min-h-0">
           {steps.map((step) => (
             <div
               key={step.stepNumber}
