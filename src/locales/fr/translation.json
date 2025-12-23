@@ -1,0 +1,55 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "clear": "Effacer",
+    "apply": "Appliquer",
+    "reset": "Réinitialiser"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "wallet": "Portefeuille",
+    "transactions": "Transactions",
+    "tasks": "Tâches",
+    "referrals": "Parrainages",
+    "settings": "Paramètres",
+    "plans": "Plans d'adhésion",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "signup": "S'inscrire"
+  },
+  "language": {
+    "select": "Sélectionner la langue",
+    "current": "Langue actuelle",
+    "autoDetected": "Détecté automatiquement",
+    "english": "Anglais",
+    "spanish": "Espagnol",
+    "french": "Français",
+    "german": "Allemand",
+    "italian": "Italien"
+  },
+  "currency": {
+    "select": "Sélectionner la devise",
+    "current": "Devise actuelle"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "languageDescription": "Choisissez votre langue préférée",
+    "currency": "Devise",
+    "currencyDescription": "Choisissez votre devise préférée"
+  }
+}

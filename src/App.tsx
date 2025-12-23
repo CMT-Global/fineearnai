@@ -8,6 +8,7 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
@@ -702,9 +703,11 @@ const App = () => (
             <Sonner position="top-right" />
             <BrandingProvider>
               <CurrencyProvider>
-                <DynamicSEO />
-                <ReamazeInitializer />
-                <RoutesWrapper />
+                <LanguageProvider>
+                  <DynamicSEO />
+                  <ReamazeInitializer />
+                  <RoutesWrapper />
+                </LanguageProvider>
               </CurrencyProvider>
             </BrandingProvider>
           </TooltipProvider>

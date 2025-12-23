@@ -1,0 +1,55 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "back": "Indietro",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "submit": "Invia",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "clear": "Cancella",
+    "apply": "Applica",
+    "reset": "Reimposta"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "wallet": "Portafoglio",
+    "transactions": "Transazioni",
+    "tasks": "Attività",
+    "referrals": "Referral",
+    "settings": "Impostazioni",
+    "plans": "Piani di Abbonamento",
+    "logout": "Esci",
+    "login": "Accedi",
+    "signup": "Registrati"
+  },
+  "language": {
+    "select": "Seleziona Lingua",
+    "current": "Lingua Corrente",
+    "autoDetected": "Rilevata automaticamente",
+    "english": "Inglese",
+    "spanish": "Spagnolo",
+    "french": "Francese",
+    "german": "Tedesco",
+    "italian": "Italiano"
+  },
+  "currency": {
+    "select": "Seleziona Valuta",
+    "current": "Valuta Corrente"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "language": "Lingua",
+    "languageDescription": "Scegli la tua lingua preferita",
+    "currency": "Valuta",
+    "currencyDescription": "Scegli la tua valuta preferita"
+  }
+}
