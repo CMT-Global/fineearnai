@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const TaskDetail = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { formatAmount } = useCurrencyConversion();
   const [task, setTask] = useState<any>(null);
   const [selectedResponse, setSelectedResponse] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -151,7 +153,7 @@ const TaskDetail = () => {
       setFeedback(data);
 
       if (data.isCorrect) {
-        toast.success(`Correct! You earned ${formatCurrency(data.earnedAmount)}`);
+        toast.success(`Correct! You earned ${formatAmount(data.earnedAmount)}`);
       } else {
         toast.error("Incorrect answer");
       }
