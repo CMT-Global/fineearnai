@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { TaskStats } from "@/components/tasks/TaskStats";
@@ -55,6 +56,7 @@ const Tasks = () => {
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { formatAmount } = useCurrencyConversion();
 
   // Use unified profile hook with earnerBadge computation
   const { data: profile, isLoading: isProfileLoading } = useProfile(user?.id);
@@ -115,9 +117,10 @@ const Tasks = () => {
       throw lastError;
     },
     enabled: !!user,
-    staleTime: 10000,    // Cache for 10 seconds
+    staleTime: 0,        // Always consider data stale - fetch fresh on every request after invalidation
     gcTime: 60000,       // Keep in cache for 1 minute
     retry: false,        // Disable automatic retry since we handle it manually
+    refetchOnWindowFocus: true, // Refetch when window regains focus to ensure fresh data
   });
 
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
@@ -184,11 +187,16 @@ const Tasks = () => {
       
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.info(`Task skipped (${data.remainingSkips} skips remaining)`);
       setFeedback(null);
       setSelectedResponse("");
-      refetchTask();
+      // Invalidate cache and refetch to ensure skipped task is not shown again
+      await queryClient.invalidateQueries({ 
+        queryKey: ['next-task', user?.id],
+        refetchType: 'active'
+      });
+      await refetchTask();
     },
     onError: (error: any) => {
       if (error.message?.includes('skip_limit_reached')) {
@@ -225,11 +233,11 @@ const Tasks = () => {
       if (data.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setFeedback(data);
 
       if (data.isCorrect) {
-        toast.success(`Correct! You earned $${data.earnedAmount.toFixed(2)}`);
+        toast.success(`Correct! You earned ${formatAmount(data.earnedAmount)}`);
       } else {
         toast.error("Incorrect answer");
       }
@@ -265,13 +273,19 @@ const Tasks = () => {
           setIsSubmitting(false);
         }, 2000);
       } else {
-        // More tasks available - invalidate and refetch
-        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+        // More tasks available - immediately invalidate cache and refetch to ensure fresh data
+        // This ensures the completed task is excluded from the next fetch
+        await queryClient.invalidateQueries({ 
+          queryKey: ['next-task', user?.id],
+          refetchType: 'active' // Force immediate refetch
+        });
+        
+        // Refetch immediately to get next task (excluding the one just completed)
+        await refetchTask();
         
         setTimeout(() => {
           setFeedback(null);
           setSelectedResponse("");
-          refetchTask();
           // Release submission lock after 1-second cooldown
           setIsSubmitting(false);
         }, 2000);

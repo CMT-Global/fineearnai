@@ -1,8 +1,21 @@
--- Create app_role enum
-CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+-- Create app_role enum (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 
+    FROM pg_type 
+    WHERE typname = 'app_role' 
+    AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+  ) THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+    RAISE NOTICE 'Created app_role enum type';
+  ELSE
+    RAISE NOTICE 'app_role enum type already exists';
+  END IF;
+END $$;
 
--- Create profiles table
-CREATE TABLE public.profiles (
+-- Create profiles table (idempotent)
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE NOT NULL,
   full_name TEXT,
@@ -23,8 +36,8 @@ CREATE TABLE public.profiles (
   CONSTRAINT username_length CHECK (char_length(username) >= 3 AND char_length(username) <= 30)
 );
 
--- Create user_roles table
-CREATE TABLE public.user_roles (
+-- Create user_roles table (idempotent)
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   role public.app_role NOT NULL,
@@ -36,8 +49,10 @@ CREATE TABLE public.user_roles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- Create security definer function to check user roles
-CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
+-- Create security definer function to check user roles (idempotent)
+-- Use CASCADE to drop all dependent objects (policies, functions, etc.) then recreate
+DROP FUNCTION IF EXISTS public.has_role(UUID, public.app_role) CASCADE;
+CREATE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
 RETURNS BOOLEAN
 LANGUAGE SQL
 STABLE
@@ -117,45 +132,53 @@ BEGIN
 END;
 $$;
 
--- Trigger to create profile on user signup
+-- Trigger to create profile on user signup (idempotent)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- RLS Policies for profiles
+-- RLS Policies for profiles (idempotent)
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users can view their own profile"
   ON public.profiles
   FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
   ON public.profiles
   FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
 CREATE POLICY "Admins can view all profiles"
   ON public.profiles
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles;
 CREATE POLICY "Admins can update all profiles"
   ON public.profiles
   FOR UPDATE
   USING (public.has_role(auth.uid(), 'admin'));
 
--- RLS Policies for user_roles
+-- RLS Policies for user_roles (idempotent)
+DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
 CREATE POLICY "Users can view their own roles"
   ON public.user_roles
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles;
 CREATE POLICY "Admins can view all roles"
   ON public.user_roles
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can manage roles" ON public.user_roles;
 CREATE POLICY "Admins can manage roles"
   ON public.user_roles
   FOR ALL
