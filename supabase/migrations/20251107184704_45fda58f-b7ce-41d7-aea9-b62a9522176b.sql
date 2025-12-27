@@ -2,6 +2,8 @@
 -- This function calls all 5 existing stats functions and merges their daily breakdowns
 -- into a single table structure optimized for frontend rendering
 
+DROP FUNCTION IF EXISTS public.get_last_7days_activity();
+
 CREATE OR REPLACE FUNCTION public.get_last_7days_activity()
 RETURNS TABLE (
   activity_date DATE,

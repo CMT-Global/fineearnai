@@ -1,7 +1,17 @@
 -- Set up CRON job for auto-refreshing materialized views
 
--- Enable pg_cron extension
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- Enable pg_cron extension (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_cron'
+  ) THEN
+    CREATE EXTENSION pg_cron;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
 
 -- Unschedule existing job if it exists (using DO block to handle errors gracefully)
 DO $$

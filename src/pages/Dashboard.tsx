@@ -36,8 +36,10 @@ import { LoginMessageDialog } from "@/components/shared/LoginMessageDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const { platformName } = useBranding();
@@ -152,7 +154,7 @@ const Dashboard = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
       </div>
     );
   }
@@ -163,7 +165,7 @@ const Dashboard = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={isLoading || !profile}
-      loadingText="Loading dashboard..."
+      loadingText={t("dashboard.loadingDashboard")}
     >
       {/* Login Message Dialog - Phase 3 with proper trigger reset */}
       {user && (
@@ -206,8 +208,8 @@ const Dashboard = () => {
           <header className="bg-card border-b px-4 lg:px-8 py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold">Welcome back, {profile.username}!</h1>
-                <p className="text-muted-foreground">Manage your account and track your progress.</p>
+                <h1 className="text-2xl font-bold">{t("dashboard.welcomeBack", { username: profile.username })}</h1>
+                <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
@@ -216,7 +218,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/plans")}
                 >
                   <Crown className="h-4 w-4" />
-                  <span className="hidden sm:inline">Membership</span>
+                  <span className="hidden sm:inline">{t("dashboard.membership")}</span>
                   <Badge 
                     variant={
                       planStatus?.status === 'expired' ? 'destructive' :
@@ -227,9 +229,9 @@ const Dashboard = () => {
                   >
                     {profile.membership_plan}
                     {planStatus && planStatus.status !== 'active' && planStatus.daysUntilExpiry > 0 && 
-                      ` (${planStatus.daysUntilExpiry}d left)`
+                      ` (${t("dashboard.daysLeft", { days: planStatus.daysUntilExpiry })})`
                     }
-                    {planStatus?.status === 'expired' && ' (Expired)'}
+                    {planStatus?.status === 'expired' && ` (${t("dashboard.expired")})`}
                   </Badge>
                 </Button>
                 {planStatus && (planStatus.status === 'expired' || planStatus.status === 'expiring_soon') ? (
@@ -238,8 +240,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/plans")}
                   >
                     <AlertCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">{planStatus.status === 'expired' ? 'Upgrade Now' : 'Renew Account'}</span>
-                    <span className="sm:hidden">Renew</span>
+                    <span className="hidden sm:inline">{planStatus.status === 'expired' ? t("dashboard.upgradeNow") : t("dashboard.renewAccount")}</span>
+                    <span className="sm:hidden">{t("dashboard.renewAccount")}</span>
                   </Button>
                 ) : (
                   <Button 
@@ -247,8 +249,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/plans")}
                   >
                     <Sparkles className="h-4 w-4" />
-                    <span className="hidden sm:inline">Upgrade Account</span>
-                    <span className="sm:hidden">Upgrade</span>
+                    <span className="hidden sm:inline">{t("dashboard.upgradeAccount")}</span>
+                    <span className="sm:hidden">{t("dashboard.upgradeAccount")}</span>
                   </Button>
                 )}
               </div>
@@ -282,11 +284,11 @@ const Dashboard = () => {
             <div className="mx-4 lg:mx-8 mt-6">
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Plan Expired</AlertTitle>
+                <AlertTitle>{t("dashboard.planExpired")}</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
-                  <span>Your {profile.membership_plan} plan has expired. Upgrade now to continue enjoying premium benefits.</span>
+                  <span>{t("dashboard.planExpiredDescription", { plan: profile.membership_plan })}</span>
                   <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
-                    Upgrade Now
+                    {t("dashboard.upgradeNow")}
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -297,11 +299,16 @@ const Dashboard = () => {
             <div className="mx-4 lg:mx-8 mt-6">
               <Alert className="bg-yellow-500/10 border-yellow-500/20">
                 <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-                <AlertTitle className="text-yellow-700 dark:text-yellow-400">Plan Expiring Soon</AlertTitle>
+                <AlertTitle className="text-yellow-700 dark:text-yellow-400">{t("dashboard.planExpiringSoon")}</AlertTitle>
                 <AlertDescription className="flex items-center justify-between text-yellow-800 dark:text-yellow-300">
-                  <span>Your {profile.membership_plan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew now to avoid losing access.</span>
+                  <span>
+                    {planStatus.daysUntilExpiry === 1 
+                      ? t("dashboard.planExpiringSoonDescription", { plan: profile.membership_plan, days: planStatus.daysUntilExpiry })
+                      : t("dashboard.planExpiringSoonDescriptionPlural", { plan: profile.membership_plan, days: planStatus.daysUntilExpiry })
+                    }
+                  </span>
                   <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
-                    Renew Account
+                    {t("dashboard.renewAccount")}
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -323,8 +330,8 @@ const Dashboard = () => {
               <div className="relative flex items-center justify-center gap-3">
                 <Sparkles className="h-6 w-6 animate-spin-slow" />
                 <div className="flex flex-col items-start text-primary-foreground">
-                    <span className="text-lg font-bold">{platformName} - Earners Guide</span>
-                  <span className="text-xs opacity-80">Learn how to maximize your earnings</span>
+                    <span className="text-lg font-bold">{t("dashboard.earnersGuide", { platform: platformName })}</span>
+                  <span className="text-xs opacity-80">{t("dashboard.earnersGuideSubtitle")}</span>
                 </div>
                 <div className="ml-4 h-10 w-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
                   <Rocket className="h-5 w-5" />
@@ -345,12 +352,12 @@ const Dashboard = () => {
               <Card className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Tasks Today</p>
+                    <p className="text-sm text-muted-foreground mb-1">{t("dashboard.tasksToday")}</p>
                     <p className="text-3xl font-bold">
                       {profile?.tasks_completed_today || 0}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      <CurrencyDisplay amountUSD={Number(profile?.total_earned || 0)} /> total earned
+                      <CurrencyDisplay amountUSD={Number(profile?.total_earned || 0)} /> {t("dashboard.totalEarned")}
                     </p>
                   </div>
                   <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
@@ -362,14 +369,14 @@ const Dashboard = () => {
             <Card className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Referrals</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t("dashboard.referrals")}</p>
                   <p className="text-3xl font-bold">{referralStats?.total_referrals || 0}</p>
                   <div className="flex flex-col gap-0.5 mt-1">
                     <p className="text-xs text-muted-foreground">
-                      {referralStats?.active_referrals || 0} active
+                      {referralStats?.active_referrals || 0} {t("dashboard.active")}
                     </p>
                     <p className="text-xs font-semibold text-[hsl(var(--wallet-referrals))]">
-                      <CurrencyDisplay amountUSD={Number(referralStats?.total_earnings || 0)} /> earned
+                      <CurrencyDisplay amountUSD={Number(referralStats?.total_earnings || 0)} /> {t("dashboard.earned")}
                     </p>
                   </div>
                 </div>
@@ -383,7 +390,7 @@ const Dashboard = () => {
                 className="w-full mt-2"
                 onClick={() => navigate("/referrals")}
               >
-                View Details
+                {t("dashboard.viewDetails")}
               </Button>
             </Card>
           </div>
@@ -413,31 +420,31 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
-                  <h2 className="font-semibold">Today's Progress</h2>
+                  <h2 className="font-semibold">{t("dashboard.todaysProgress")}</h2>
                 </div>
                 <Button 
                   size="sm" 
                   className="bg-primary text-primary-foreground hover:opacity-90"
                   onClick={() => navigate("/tasks")}
                 >
-                  Start Tasks
+                  {t("dashboard.startTasks")}
                 </Button>
               </div>
               
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium mb-2">Keep up the great work!</p>
+                  <p className="text-sm font-medium mb-2">{t("dashboard.keepUpGreatWork")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Complete AI training tasks to earn money and help improve artificial intelligence
+                    {t("dashboard.completeTasksDescription")}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Daily Progress</span>
+                    <span className="text-muted-foreground">{t("dashboard.dailyProgress")}</span>
                     <span className="font-medium">
                       {profile?.tasks_completed_today || 0}/
-                      {membershipPlan?.daily_task_limit || 10} tasks
+                      {membershipPlan?.daily_task_limit || 10} {t("dashboard.tasks")}
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -455,7 +462,7 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
             <Card className="p-6">
-              <h2 className="font-semibold mb-4">Quick Actions</h2>
+              <h2 className="font-semibold mb-4">{t("dashboard.quickActions")}</h2>
               <div className="space-y-2">
                 <Button 
                   variant="outline" 
@@ -463,7 +470,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/tasks")}
                 >
                   <Zap className="h-4 w-4 text-[hsl(var(--wallet-tasks))]" />
-                  Start AI Tasks
+                  {t("dashboard.startAITasks")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -471,7 +478,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/transactions")}
                 >
                   <DollarSign className="h-4 w-4 text-[hsl(var(--wallet-earnings))]" />
-                  Transaction History
+                  {t("dashboard.transactionHistory")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -479,7 +486,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/referrals")}
                 >
                   <UserPlus className="h-4 w-4 text-[hsl(var(--wallet-referrals))]" />
-                  Invite Friends
+                  {t("dashboard.inviteFriends")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -487,7 +494,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/plans")}
                 >
                   <Crown className="h-4 w-4 text-[hsl(var(--wallet-deposit))]" />
-                  Upgrade Plan
+                  {t("dashboard.upgradePlan")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -495,7 +502,7 @@ const Dashboard = () => {
                   onClick={() => navigate("/settings")}
                 >
                   <Settings className="h-4 w-4 text-muted-foreground" />
-                  Account Settings
+                  {t("dashboard.accountSettings")}
                 </Button>
               </div>
             </Card>
@@ -507,7 +514,7 @@ const Dashboard = () => {
               userId={user?.id || ''} 
               maxItems={5} 
               showPagination={false} 
-              title="Recent Activity"
+              title={t("dashboard.recentActivity")}
             />
           </div>
 

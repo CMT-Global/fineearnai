@@ -31,6 +31,7 @@ import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useTranslation } from "react-i18next";
 
 interface AdminSidebarProps {
   profile: any;
@@ -52,6 +53,7 @@ interface NavItem {
 }
 
 export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { platformName, platformLogoUrl } = useBranding();
@@ -83,112 +85,112 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
 
   const navCategories: NavCategory[] = [
     {
-      label: "Overview",
+      label: t("admin.sidebar.categories.overview"),
       icon: LayoutDashboard,
       items: [
-        { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
-        { label: "Platform Analytics", path: "/admin/analytics/dashboard", icon: TrendingUp },
+        { label: t("admin.sidebar.items.dashboard"), path: "/admin", icon: LayoutDashboard },
+        { label: t("admin.sidebar.items.platformAnalytics"), path: "/admin/analytics/dashboard", icon: TrendingUp },
       ],
       defaultOpen: true,
     },
     {
-      label: "User Management",
+      label: t("admin.sidebar.categories.userManagement"),
       icon: Users,
       items: [
-        { label: "All Users", path: "/admin/users" },
+        { label: t("admin.sidebar.items.allUsers"), path: "/admin/users" },
       ],
     },
     {
-      label: "Task Management",
+      label: t("admin.sidebar.categories.taskManagement"),
       icon: Zap,
       items: [
-        { label: "Generate AI Tasks", path: "/admin/tasks/generate" },
-        { label: "Manage AI Tasks", path: "/admin/tasks/manage" },
-        { label: "Task Analytics", path: "/admin/analytics/tasks" },
+        { label: t("admin.sidebar.items.generateAITasks"), path: "/admin/tasks/generate" },
+        { label: t("admin.sidebar.items.manageAITasks"), path: "/admin/tasks/manage" },
+        { label: t("admin.sidebar.items.taskAnalytics"), path: "/admin/analytics/tasks" },
       ],
     },
     {
-      label: "Financial Management",
+      label: t("admin.sidebar.categories.financialManagement"),
       icon: DollarSign,
       items: [
-        { label: "All Transactions", path: "/admin/transactions" },
-        { label: "Deposits", path: "/admin/deposits" },
-        { label: "Withdrawals", path: "/admin/withdrawals" },
-        { label: "Payment Settings", path: "/admin/settings/payments" },
-        { label: "CPAY Checkouts", path: "/admin/settings/cpay-checkouts" },
-        { label: "Fee Savings Banner", path: "/admin/settings/fee-savings-banner" },
+        { label: t("admin.sidebar.items.allTransactions"), path: "/admin/transactions" },
+        { label: t("admin.sidebar.items.deposits"), path: "/admin/deposits" },
+        { label: t("admin.sidebar.items.withdrawals"), path: "/admin/withdrawals" },
+        { label: t("admin.sidebar.items.paymentSettings"), path: "/admin/settings/payments" },
+        { label: t("admin.sidebar.items.cpayCheckouts"), path: "/admin/settings/cpay-checkouts" },
+        { label: t("admin.sidebar.items.feeSavingsBanner"), path: "/admin/settings/fee-savings-banner" },
       ],
     },
     {
-      label: "Content Management",
+      label: t("admin.sidebar.categories.contentManagement"),
       icon: Settings,
       items: [
-        { label: "Dashboard Content", path: "/admin/content/dashboard" },
-        { label: "How It Works Content", path: "/admin/content/how-it-works" },
-        { label: "Partner Program Content", path: "/admin/content/partner-program" },
-        { label: "Global Email Template", path: "/admin/content/email-template" },
-        { label: "SEO & Social Settings", path: "/admin/settings/seo", icon: Globe },
+        { label: t("admin.sidebar.items.dashboardContent"), path: "/admin/content/dashboard" },
+        { label: t("admin.sidebar.items.howItWorksContent"), path: "/admin/content/how-it-works" },
+        { label: t("admin.sidebar.items.partnerProgramContent"), path: "/admin/content/partner-program" },
+        { label: t("admin.sidebar.items.globalEmailTemplate"), path: "/admin/content/email-template" },
+        { label: t("admin.sidebar.items.seoSocialSettings"), path: "/admin/settings/seo", icon: Globe },
       ],
     },
     {
-      label: "Membership Management",
+      label: t("admin.sidebar.categories.membershipManagement"),
       icon: Crown,
       items: [
-        { label: "Plans Configuration", path: "/admin/plans/manage" },
+        { label: t("admin.sidebar.items.plansConfiguration"), path: "/admin/plans/manage" },
       ],
     },
     {
-      label: "Referral Management",
+      label: t("admin.sidebar.categories.referralManagement"),
       icon: TrendingUp,
       items: [
-        { label: "Referral System", path: "/admin/referrals/manage" },
+        { label: t("admin.sidebar.items.referralSystem"), path: "/admin/referrals/manage" },
       ],
     },
       {
-        label: "Partner Management",
+        label: t("admin.sidebar.categories.partnerManagement"),
         icon: Sparkles,
         items: [
-          { label: "Partner Applications", path: "/admin/partners/applications" },
-          { label: "All Partners", path: "/admin/partners", exact: true },
-          { label: "Partner Analytics", path: "/admin/partner-analytics" },
-          { label: "Partner Ranks", path: "/admin/partner-ranks" },
-          { label: "Bonus Tiers", path: "/admin/partner-bonus-tiers" },
-          { label: "Bonus Payouts", path: "/admin/partner-bonus-payouts" },
-          { label: "Bonus Monitoring", path: "/admin/partner-bonus-monitoring" },
-          { label: "Leaderboard", path: "/admin/partner-leaderboard-stats" },
-          { label: "Leaderboard Settings", path: "/admin/partner-leaderboard" },
-          { label: "Voucher Monitoring", path: "/admin/partners/vouchers" },
+          { label: t("admin.sidebar.items.partnerApplications"), path: "/admin/partners/applications" },
+          { label: t("admin.sidebar.items.allPartners"), path: "/admin/partners", exact: true },
+          { label: t("admin.sidebar.items.partnerAnalytics"), path: "/admin/partner-analytics" },
+          { label: t("admin.sidebar.items.partnerRanks"), path: "/admin/partner-ranks" },
+          { label: t("admin.sidebar.items.bonusTiers"), path: "/admin/partner-bonus-tiers" },
+          { label: t("admin.sidebar.items.bonusPayouts"), path: "/admin/partner-bonus-payouts" },
+          { label: t("admin.sidebar.items.bonusMonitoring"), path: "/admin/partner-bonus-monitoring" },
+          { label: t("admin.sidebar.items.leaderboard"), path: "/admin/partner-leaderboard-stats" },
+          { label: t("admin.sidebar.items.leaderboardSettings"), path: "/admin/partner-leaderboard" },
+          { label: t("admin.sidebar.items.voucherMonitoring"), path: "/admin/partners/vouchers" },
         ],
       },
     {
-      label: "Communications",
+      label: t("admin.sidebar.categories.communications"),
       icon: Mail,
       items: [
-        { label: "Email Settings", path: "/admin/communications/email-settings" },
-        { label: "Live Chat Settings", path: "/admin/communications/reamaze-settings" },
-        { label: "Login Message", path: "/admin/communications/login-message" },
-        { label: "Bulk Email", path: "/admin/communications/email" },
-        { label: "Influencer Invites", path: "/admin/communications/influencer-invites" },
-        { label: "User Invites", path: "/admin/communications/user-invites" },
-        { label: "Email Templates", path: "/admin/communications/templates" },
-        { label: "Scheduled Emails", path: "/admin/communications/scheduled" },
+        { label: t("admin.sidebar.items.emailSettings"), path: "/admin/communications/email-settings" },
+        { label: t("admin.sidebar.items.liveChatSettings"), path: "/admin/communications/reamaze-settings" },
+        { label: t("admin.sidebar.items.loginMessage"), path: "/admin/communications/login-message" },
+        { label: t("admin.sidebar.items.bulkEmail"), path: "/admin/communications/email" },
+        { label: t("admin.sidebar.items.influencerInvites"), path: "/admin/communications/influencer-invites" },
+        { label: t("admin.sidebar.items.userInvites"), path: "/admin/communications/user-invites" },
+        { label: t("admin.sidebar.items.emailTemplates"), path: "/admin/communications/templates" },
+        { label: t("admin.sidebar.items.scheduledEmails"), path: "/admin/communications/scheduled" },
       ],
     },
     {
-      label: "Security",
+      label: t("admin.sidebar.categories.security"),
       icon: Shield,
       items: [
-        { label: "Security Settings", path: "/admin/security-settings" },
-        { label: "System Secrets", path: "/admin/security/secrets" },
-        { label: "IPStack Configuration", path: "/admin/settings/ipstack" },
+        { label: t("admin.sidebar.items.securitySettings"), path: "/admin/security-settings" },
+        { label: t("admin.sidebar.items.systemSecrets"), path: "/admin/security/secrets" },
+        { label: t("admin.sidebar.items.ipstackConfiguration"), path: "/admin/settings/ipstack" },
       ],
     },
     {
-      label: "Monitoring",
+      label: t("admin.sidebar.categories.monitoring"),
       icon: Activity,
       items: [
-        { label: "Daily Reset Logs", path: "/admin/monitoring/daily-reset-logs" },
-        { label: "Commission Audit", path: "/admin/monitoring/commission-audit" },
+        { label: t("admin.sidebar.items.dailyResetLogs"), path: "/admin/monitoring/daily-reset-logs" },
+        { label: t("admin.sidebar.items.commissionAudit"), path: "/admin/monitoring/commission-audit" },
       ],
     },
   ];
@@ -248,12 +250,12 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
   };
 
   const NavContent = () => (
-    <>
+    <div className="flex flex-col h-full">
       {/* Admin Header */}
-      <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
+      <div className="p-6 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
         <div className="flex items-center gap-2 mb-4">
           <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-14 w-14 object-contain" />
-          <span className="text-xl font-bold">Admin Panel</span>
+          <span className="text-xl font-bold">{t("admin.sidebar.adminPanel")}</span>
         </div>
         
         {/* Back to Main App Button */}
@@ -263,12 +265,12 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
           className="w-full border-[hsl(var(--wallet-deposit))] text-[hsl(var(--wallet-deposit))] hover:bg-[hsl(var(--wallet-deposit))]/10 hover:text-[hsl(var(--wallet-deposit))]"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Main App
+          {t("admin.sidebar.backToMainApp")}
         </Button>
       </div>
 
       {/* Navigation Categories */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navCategories.map((category) => {
           const isExpanded = expandedCategories.includes(category.label);
           const categoryActive = isCategoryActive(category);
@@ -327,7 +329,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       </nav>
 
       {/* Admin Profile & Logout */}
-      <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3">
+      <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3 flex-shrink-0">
         <div className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--sidebar-accent))]/30 rounded-lg">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] flex items-center justify-center text-white font-bold flex-shrink-0">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
@@ -337,7 +339,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="default" className="text-xs px-2 py-0 bg-[hsl(var(--wallet-deposit))]">
                 <Shield className="h-3 w-3 mr-1" />
-                Admin
+                {t("admin.sidebar.admin")}
               </Badge>
             </div>
           </div>
@@ -351,10 +353,10 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
           className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
           <LogOut className="h-5 w-5 mr-2" />
-          Logout
+          {t("admin.sidebar.logout")}
         </Button>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -368,7 +370,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-12 w-12 object-contain" />
-          <span className="font-bold">Admin Panel</span>
+          <span className="font-bold">{t("admin.sidebar.adminPanel")}</span>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -385,7 +387,7 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       </div>
 
       {/* Desktop Admin Sidebar */}
-      <aside className="hidden lg:flex w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
         <NavContent />
       </aside>
     </>

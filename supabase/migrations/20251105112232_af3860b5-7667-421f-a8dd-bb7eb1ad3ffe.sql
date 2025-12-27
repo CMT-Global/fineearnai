@@ -43,12 +43,14 @@ ON public.email_verification_reminders(last_reminder_sent_at);
 ALTER TABLE public.email_verification_reminders ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view their own reminder records" ON public.email_verification_reminders;
 CREATE POLICY "Users can view their own reminder records"
 ON public.email_verification_reminders
 FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all reminder records" ON public.email_verification_reminders;
 CREATE POLICY "Admins can view all reminder records"
 ON public.email_verification_reminders
 FOR SELECT
@@ -60,6 +62,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Service role can manage reminders" ON public.email_verification_reminders;
 CREATE POLICY "Service role can manage reminders"
 ON public.email_verification_reminders
 FOR ALL

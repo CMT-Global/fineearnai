@@ -13,6 +13,7 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useTranslation } from "react-i18next";
 
 // Eager-loaded critical routes
 import Login from "./pages/Login";
@@ -107,6 +108,7 @@ const RoutesWrapper = () => {
   const location = useLocation();
   const { isAdminMode, isTransitioning, enterAdminMode, exitAdminMode } = useAdminMode();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const { t } = useTranslation();
 
   // Auto-enter admin mode when navigating to /admin/*
   // Auto-exit admin mode when navigating away from /admin/*
@@ -125,7 +127,7 @@ const RoutesWrapper = () => {
         <div className="text-center space-y-4">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-muted-foreground">
-            {isAdminMode ? "Entering Admin Mode..." : "Returning to Main App..."}
+            {isAdminMode ? t("app.enteringAdminMode") : t("app.returningToMainApp")}
           </p>
         </div>
       </div>
@@ -187,7 +189,7 @@ const RoutesWrapper = () => {
       
       {/* Main content loading */}
       <main className="flex-1 flex items-center justify-center lg:mt-0 mt-16 pb-24 lg:pb-0">
-        <LoadingSpinner size="lg" text="Loading page..." />
+        <LoadingSpinner size="lg" text={t("app.loadingPage")} />
       </main>
     </div>
   );

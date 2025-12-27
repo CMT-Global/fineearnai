@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Trash2, Plus, Shield, Globe, Ban, Crown, Activity, Clock, AlertTriangle, MessageSquare, Eye, Save, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { useBranding } from "@/contexts/BrandingContext";
 
 export default function SecuritySettings() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { platformName } = useBranding();
   
@@ -102,7 +104,7 @@ export default function SecuritySettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['migration-banner-config-admin'] });
       queryClient.invalidateQueries({ queryKey: ['migration-banner-config'] });
-      toast.success("Migration banner settings saved successfully");
+      toast.success(t("toasts.admin.migrationBannerSaved"));
     },
     onError: (error: any) => {
       toast.error(`Failed to save banner settings: ${error.message}`);
@@ -111,11 +113,11 @@ export default function SecuritySettings() {
   
   const handleSaveBanner = () => {
     if (!bannerTitle.trim() || !bannerSubtitle.trim()) {
-      toast.error("Title and subtitle are required");
+      toast.error(t("toasts.admin.titleAndSubtitleRequired"));
       return;
     }
     if (!bannerStep1.trim() || !bannerStep2.trim() || !bannerStep3.trim()) {
-      toast.error("All three steps are required");
+      toast.error(t("toasts.admin.allThreeStepsRequired"));
       return;
     }
     saveBannerMutation.mutate();
@@ -132,7 +134,7 @@ export default function SecuritySettings() {
       setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
       setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
       setBannerSupportLink(bannerConfig.support_link ?? "/settings");
-      toast.info("Banner settings reset to saved values");
+      toast.info(t("toasts.admin.bannerSettingsReset"));
     }
   };
 
@@ -179,16 +181,16 @@ export default function SecuritySettings() {
 
   const handleAddCountry = () => {
     if (!newCountry.trim()) {
-      toast.error("Please enter a country code");
+      toast.error(t("toasts.admin.pleaseEnterCountryCode"));
       return;
     }
     const countryCode = newCountry.trim().toUpperCase();
     if (countryCode.length !== 2) {
-      toast.error("Country code must be 2 characters (ISO 3166-1 alpha-2)");
+      toast.error(t("toasts.admin.countryCodeMustBe2Chars"));
       return;
     }
     if (blockedCountries.includes(countryCode)) {
-      toast.error("Country already blocked");
+      toast.error(t("toasts.admin.countryAlreadyBlocked"));
       return;
     }
     setBlockedCountries([...blockedCountries, countryCode]);
@@ -203,18 +205,18 @@ export default function SecuritySettings() {
 
   const handleAddIP = () => {
     if (!newIP.trim()) {
-      toast.error("Please enter an IP address");
+      toast.error(t("toasts.admin.pleaseEnterIPAddress"));
       return;
     }
     const ip = newIP.trim();
     // Basic IP validation
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
     if (!ipRegex.test(ip)) {
-      toast.error("Invalid IP address format");
+      toast.error(t("toasts.admin.invalidIPAddressFormat"));
       return;
     }
     if (blockedIPs.includes(ip)) {
-      toast.error("IP address already blocked");
+      toast.error(t("toasts.admin.ipAddressAlreadyBlocked"));
       return;
     }
     setBlockedIPs([...blockedIPs, ip]);
@@ -229,7 +231,7 @@ export default function SecuritySettings() {
 
   const handleSaveSettings = () => {
     // In a real implementation, this would save to database via edge function
-    toast.success("Security settings saved successfully");
+    toast.success(t("toasts.admin.securitySettingsSaved"));
   };
 
   return (

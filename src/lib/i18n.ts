@@ -34,6 +34,8 @@ const resources = {
   },
 };
 
+// Initialize i18n synchronously - this ensures it's ready before components use it
+// We disable automatic language detection here because LanguageContext handles it
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -42,15 +44,12 @@ i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'es', 'fr', 'de', 'it'],
     
-    // Detection options
+    // Detection options - DISABLED because LanguageContext handles language detection
+    // This prevents conflicts between i18next's detector and our custom LanguageContext
     detection: {
-      // Order of detection methods
-      order: ['localStorage', 'navigator'],
-      
-      // Keys to look language up in
+      // Disable automatic detection - LanguageContext will handle it
+      order: [],
       lookupLocalStorage: 'i18nextLng',
-      
-      // Cache user language
       caches: ['localStorage'],
     },
     

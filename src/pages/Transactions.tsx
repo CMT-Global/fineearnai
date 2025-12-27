@@ -22,8 +22,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 const Transactions = () => {
+  const { t } = useTranslation();
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -92,7 +94,7 @@ const Transactions = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
       </div>
     );
   }
@@ -103,13 +105,13 @@ const Transactions = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={!profile}
-      loadingText="Loading transactions..."
+      loadingText={t("transactions.loadingTransactions")}
     >
       <div className="container max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Transaction History</h1>
+          <h1 className="text-3xl font-bold">{t("transactions.title")}</h1>
           <p className="text-muted-foreground">
-            View all your wallet transactions
+            {t("transactions.subtitle")}
           </p>
         </div>
 
@@ -121,7 +123,7 @@ const Transactions = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by description, ID, or payment gateway..."
+                  placeholder={t("transactions.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -160,60 +162,60 @@ const Transactions = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
                 {/* Transaction Type Filter */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Transaction Type</label>
+                  <label className="text-sm font-medium mb-2 block">{t("transactions.transactionType")}</label>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All types" />
+                      <SelectValue placeholder={t("transactions.allTypes")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="deposit">Deposit</SelectItem>
-                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                      <SelectItem value="task_earning">Task Earning</SelectItem>
-                      <SelectItem value="referral_commission">Referral Commission</SelectItem>
-                      <SelectItem value="plan_upgrade">Plan Upgrade</SelectItem>
-                      <SelectItem value="transfer">Transfer</SelectItem>
-                      <SelectItem value="adjustment">Adjustment</SelectItem>
+                      <SelectItem value="all">{t("transactions.allTypes")}</SelectItem>
+                      <SelectItem value="deposit">{t("transactions.deposit")}</SelectItem>
+                      <SelectItem value="withdrawal">{t("transactions.withdrawal")}</SelectItem>
+                      <SelectItem value="task_earning">{t("transactions.taskEarning")}</SelectItem>
+                      <SelectItem value="referral_commission">{t("transactions.referralCommission")}</SelectItem>
+                      <SelectItem value="plan_upgrade">{t("transactions.planUpgrade")}</SelectItem>
+                      <SelectItem value="transfer">{t("transactions.transfer")}</SelectItem>
+                      <SelectItem value="adjustment">{t("transactions.adjustment")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Status Filter */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <label className="text-sm font-medium mb-2 block">{t("transactions.status")}</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All statuses" />
+                      <SelectValue placeholder={t("transactions.allStatuses")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="all">{t("transactions.allStatuses")}</SelectItem>
+                      <SelectItem value="completed">{t("transactions.completed")}</SelectItem>
+                      <SelectItem value="pending">{t("transactions.pending")}</SelectItem>
+                      <SelectItem value="failed">{t("transactions.failed")}</SelectItem>
+                      <SelectItem value="cancelled">{t("transactions.cancelled")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Sort By */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Sort By</label>
+                  <label className="text-sm font-medium mb-2 block">{t("transactions.sortBy")}</label>
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sort by" />
+                      <SelectValue placeholder={t("transactions.sortBy")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="oldest">Oldest First</SelectItem>
-                      <SelectItem value="amount-high">Amount (High to Low)</SelectItem>
-                      <SelectItem value="amount-low">Amount (Low to High)</SelectItem>
+                      <SelectItem value="newest">{t("transactions.newest")}</SelectItem>
+                      <SelectItem value="oldest">{t("transactions.oldest")}</SelectItem>
+                      <SelectItem value="amount-high">{t("transactions.amountHighToLow")}</SelectItem>
+                      <SelectItem value="amount-low">{t("transactions.amountLowToHigh")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Date Range Picker */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Date Range</label>
+                  <label className="text-sm font-medium mb-2 block">{t("transactions.dateRange")}</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -233,7 +235,7 @@ const Transactions = () => {
                             format(dateRange.from, "MMM dd, yyyy")
                           )
                         ) : (
-                          <span>Pick a date range</span>
+                          <span>{t("transactions.pickDateRange")}</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -245,7 +247,7 @@ const Transactions = () => {
                           className="w-full justify-start"
                           onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
                         >
-                          Last 7 days
+                          {t("transactions.last7Days")}
                         </Button>
                         <Button
                           variant="outline"
@@ -253,7 +255,7 @@ const Transactions = () => {
                           className="w-full justify-start"
                           onClick={() => setDateRange({ from: subDays(new Date(), 30), to: new Date() })}
                         >
-                          Last 30 days
+                          {t("transactions.last30Days")}
                         </Button>
                         <Button
                           variant="outline"
@@ -261,7 +263,7 @@ const Transactions = () => {
                           className="w-full justify-start"
                           onClick={() => setDateRange({ from: subDays(new Date(), 90), to: new Date() })}
                         >
-                          Last 90 days
+                          {t("transactions.last90Days")}
                         </Button>
                         {(dateRange.from || dateRange.to) && (
                           <Button
@@ -271,7 +273,7 @@ const Transactions = () => {
                             onClick={() => setDateRange({ from: undefined, to: undefined })}
                           >
                             <X className="h-4 w-4 mr-2" />
-                            Clear dates
+                            {t("transactions.clearDates")}
                           </Button>
                         )}
                       </div>
@@ -291,7 +293,7 @@ const Transactions = () => {
                   <div className="md:col-span-2 lg:col-span-4 flex justify-end">
                     <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                       <X className="h-4 w-4 mr-2" />
-                      Clear all filters ({activeFiltersCount})
+                      {t("transactions.clearAllFilters", { count: activeFiltersCount })}
                     </Button>
                   </div>
                 )}

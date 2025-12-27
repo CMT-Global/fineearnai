@@ -17,7 +17,14 @@
     "filter": "Filtra",
     "clear": "Cancella",
     "apply": "Applica",
-    "reset": "Reimposta"
+    "reset": "Reimposta",
+    "saving": "Salvataggio...",
+    "updating": "Aggiornamento...",
+    "verifying": "Verifica...",
+    "change": "Modifica",
+    "warning": "Avviso",
+    "yes": "Sì",
+    "no": "No"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -39,17 +46,1143 @@
     "spanish": "Spagnolo",
     "french": "Francese",
     "german": "Tedesco",
-    "italian": "Italiano"
+    "italian": "Italiano",
+    "update": "Aggiorna Lingua",
+    "selectPlaceholder": "Seleziona lingua...",
+    "searchPlaceholder": "Cerca lingua...",
+    "notFound": "Nessuna lingua trovata."
   },
   "currency": {
     "select": "Seleziona Valuta",
-    "current": "Valuta Corrente"
+    "current": "Valuta Corrente",
+    "selectPlaceholder": "Seleziona valuta...",
+    "searchPlaceholder": "Cerca valuta...",
+    "notFound": "Nessuna valuta trovata.",
+    "livePreview": "Anteprima in Tempo Reale",
+    "displayOnly": "Solo Visualizzazione",
+    "displayOnlyDescription": "La conversione della valuta influisce solo sulla visualizzazione. Tutte le transazioni vengono elaborate in USD. I tassi di cambio vengono aggiornati ogni 24 ore.",
+    "update": "Aggiorna Valuta"
   },
   "settings": {
     "title": "Impostazioni",
-    "language": "Lingua",
-    "languageDescription": "Scegli la tua lingua preferita",
-    "currency": "Valuta",
-    "currencyDescription": "Scegli la tua valuta preferita"
+    "subtitle": "Gestisci le impostazioni e le preferenze del tuo account",
+    "language": {
+      "title": "Preferenze Lingua",
+      "description": "Scegli la tua lingua di visualizzazione preferita",
+      "current": "Lingua Corrente",
+      "select": "Seleziona Lingua",
+      "update": "Aggiorna Lingua",
+      "autoDetection": "Rilevamento Automatico",
+      "autoDetectionDescription": "La tua lingua viene rilevata automaticamente dal tuo indirizzo IP al primo accesso. Puoi modificare questa impostazione in qualsiasi momento."
+    },
+    "currency": {
+      "title": "Preferenze Valuta",
+      "description": "Scegli la tua valuta di visualizzazione preferita"
+    },
+    "accountInfo": {
+      "title": "Informazioni Account",
+      "description": "I dettagli del tuo account",
+      "username": "Nome Utente",
+      "email": "Email",
+      "memberSince": "Membro dal",
+      "membershipPlan": "Piano di Abbonamento"
+    },
+    "emailVerification": {
+      "title": "Verifica Email",
+      "description": "Verifica la tua email per sbloccare tutte le funzionalità",
+      "verified": "La tua email è verificata",
+      "verifiedOn": "Verificata il",
+      "notVerified": "La tua email non è verificata. Alcune funzionalità potrebbero essere limitate fino a quando non verifichi il tuo indirizzo email.",
+      "verifyNow": "Verifica Email Ora"
+    },
+    "accountStats": {
+      "title": "Statistiche Account",
+      "description": "Panoramica della tua attività",
+      "tasksCompleted": "Attività Completate",
+      "totalReferrals": "Referral Totali",
+      "daysActive": "Giorni Attivi"
+    },
+    "security": {
+      "title": "Sicurezza Account e Posizione",
+      "description": "Informazioni sulla posizione del tuo account",
+      "registrationLocation": "Posizione di Registrazione",
+      "lastLoginLocation": "Posizione Ultimo Accesso",
+      "country": "Paese",
+      "registeredOn": "Registrato il",
+      "lastLogin": "Ultimo accesso",
+      "noLoginData": "Nessun dato di accesso disponibile",
+      "neverLoggedIn": "Mai effettuato accesso",
+      "locationTracking": "Tracciamento Posizione",
+      "locationTrackingDescription": "Tracciamo le posizioni di registrazione e accesso per motivi di sicurezza. Questo ci aiuta a proteggere il tuo account da accessi non autorizzati."
+    },
+    "editProfile": {
+      "title": "Modifica Profilo",
+      "description": "Aggiorna le tue informazioni personali",
+      "fullName": "Nome Completo",
+      "fullNamePlaceholder": "Inserisci il tuo nome completo",
+      "phone": "Numero di Telefono",
+      "phonePlaceholder": "Inserisci il tuo numero di telefono (opzionale)",
+      "country": "Paese",
+      "countryPlaceholder": "Seleziona paese",
+      "detected": "Rilevato",
+      "fromRegistration": "dalla tua registrazione",
+      "fromLastLogin": "dal tuo ultimo accesso",
+      "saveChanges": "Salva Modifiche"
+    },
+    "withdrawalAddresses": {
+      "title": "Indirizzi di Prelievo",
+      "description": "Gestisci i tuoi indirizzi di prelievo criptovaluta",
+      "securityNotice": "Proteggi i Tuoi Indirizzi",
+      "securityNoticeDescription": "Per motivi di sicurezza, invieremo un codice di verifica alla tua email quando aggiorni questi indirizzi. Assicurati che i tuoi indirizzi di prelievo siano corretti per evitare perdite di fondi.",
+      "save": "Salva Indirizzi di Prelievo",
+      "infoTitle": "Indirizzi di Prelievo",
+      "infoDescription": "Questi indirizzi verranno utilizzati per i prelievi di criptovaluta. Controlla attentamente i tuoi indirizzi prima di salvare. L'invio di fondi a un indirizzo errato può comportare una perdita permanente."
+    },
+    "changePassword": {
+      "title": "Cambia Password",
+      "description": "Aggiorna la password del tuo account",
+      "newPassword": "Nuova Password",
+      "newPasswordPlaceholder": "Inserisci nuova password",
+      "confirmPassword": "Conferma Password",
+      "confirmPasswordPlaceholder": "Conferma nuova password"
+    },
+    "dangerZone": {
+      "title": "Zona Pericolo",
+      "description": "Azioni irreversibili che influiranno permanentemente sul tuo account",
+      "warning": "Avviso",
+      "warningDescription": "L'eliminazione del tuo account rimuoverà permanentemente tutti i tuoi dati, inclusi guadagni, cronologia transazioni, referral e record delle attività. Questa azione non può essere annullata.",
+      "deleteAccount": "Elimina il Mio Account"
+    },
+    "otpVerification": {
+      "title": "Verifica la Tua Email",
+      "description": "Inserisci il codice di verifica a 6 cifre inviato alla tua email per confermare le modifiche all'indirizzo",
+      "code": "Codice di Verifica",
+      "codePlaceholder": "Inserisci codice a 6 cifre",
+      "expiresIn": "Il codice scade tra 10 minuti",
+      "verifyAndSave": "Verifica e Salva"
+    },
+    "toasts": {
+      "profileUpdated": "Profilo aggiornato con successo",
+      "profileUpdateFailed": "Impossibile aggiornare il profilo",
+      "passwordChanged": "Password modificata con successo",
+      "passwordChangeFailed": "Impossibile modificare la password",
+      "currencyUpdated": "Preferenza valuta aggiornata con successo",
+      "currencyUpdateFailed": "Impossibile aggiornare la valuta",
+      "languageUpdated": "Preferenza lingua aggiornata con successo",
+      "languageUpdateFailed": "Impossibile aggiornare la lingua",
+      "addressesUpdated": "Indirizzi criptovaluta aggiornati con successo",
+      "addressesUpdateFailed": "Impossibile aggiornare gli indirizzi",
+      "otpSent": "Codice di verifica inviato alla tua email",
+      "otpFailed": "Impossibile inviare il codice di verifica",
+      "otpInvalid": "Inserisci un codice di verifica a 6 cifre valido",
+      "verificationFailed": "Verifica fallita. Riprova.",
+      "atLeastOneAddress": "Inserisci almeno un indirizzo criptovaluta",
+      "fixValidationErrors": "Correggi gli errori di convalida dell'indirizzo"
+    }
+  },
+  "dashboard": {
+    "welcomeBack": "Bentornato, {{username}}!",
+    "subtitle": "Gestisci il tuo account e tieni traccia dei tuoi progressi.",
+    "membership": "Abbonamento",
+    "upgradeAccount": "Aggiorna Account",
+    "upgradeNow": "Aggiorna Ora",
+    "renewAccount": "Rinnova Account",
+    "planExpired": "Piano Scaduto",
+    "planExpiredDescription": "Il tuo piano {{plan}} è scaduto. Aggiorna ora per continuare a godere dei vantaggi premium.",
+    "planExpiringSoon": "Piano in Scadenza",
+    "planExpiringSoonDescription": "Il tuo piano {{plan}} scade tra {{days}} giorno. Rinnova ora per evitare di perdere l'accesso.",
+    "planExpiringSoonDescriptionPlural": "Il tuo piano {{plan}} scade tra {{days}} giorni. Rinnova ora per evitare di perdere l'accesso.",
+    "daysLeft": "{{days}}g rimasti",
+    "expired": "Scaduto",
+    "earnersGuide": "{{platform}} - Guida per Guadagnatori",
+    "earnersGuideSubtitle": "Scopri come massimizzare i tuoi guadagni",
+    "tasksToday": "Attività di Oggi",
+    "totalEarned": "guadagnato totale",
+    "referrals": "Referral",
+    "active": "attivo",
+    "earned": "guadagnato",
+    "viewDetails": "Visualizza Dettagli",
+    "todaysProgress": "Progressi di Oggi",
+    "startTasks": "Inizia Attività",
+    "keepUpGreatWork": "Continua così!",
+    "completeTasksDescription": "Completa attività di addestramento AI per guadagnare denaro e aiutare a migliorare l'intelligenza artificiale",
+    "dailyProgress": "Progresso Giornaliero",
+    "tasks": "attività",
+    "quickActions": "Azioni Rapide",
+    "startAITasks": "Inizia Attività AI",
+    "transactionHistory": "Cronologia Transazioni",
+    "inviteFriends": "Invita Amici",
+    "upgradePlan": "Aggiorna Piano",
+    "accountSettings": "Impostazioni Account",
+    "recentActivity": "Attività Recente",
+    "loadingDashboard": "Caricamento dashboard...",
+    "authenticating": "Autenticazione...",
+    "guides": {
+      "title": "💳 Guide Rapide per Depositi e Prelievi",
+      "description": "Scopri come finanziare il tuo account e prelevare guadagni utilizzando vari metodi di pagamento a livello globale",
+      "worldwide": "Mondiale",
+      "howToDeposit": "💸 Come Depositare",
+      "howToDepositDescription": "Finanzia il tuo account utilizzando più metodi di pagamento",
+      "howToWithdraw": "💰 Come Prelevare",
+      "howToWithdrawDescription": "Preleva guadagni utilizzando più metodi di prelievo",
+      "clickToViewOptions": "Clicca per vedere le opzioni"
+    },
+    "social": {
+      "stayConnected": "Resta Connesso, Guadagna in Modo Più Intelligente!",
+      "stayConnectedDescription": "Seguici per <strong>{{exclusiveTips}}</strong>, aggiornamenti della piattaforma e connettiti con una comunità fiorente di guadagnatori di successo.",
+      "exclusiveEarningTips": "consigli esclusivi sui guadagni",
+      "facebookDescription": "Unisciti ad altri membri",
+      "instagramDescription": "Consigli quotidiani sui guadagni",
+      "telegramDescription": "Ricevi aggiornamenti quotidiani",
+      "telegramGroups": "(3 gruppi)",
+      "tiktokDescription": "Trucchi virali per guadagnare",
+      "proTip": "Consiglio professionale:",
+      "proTipDescription": "I nostri follower sui social ottengono <strong>{{earlyAccess}}</strong> a nuove opportunità di guadagno e campagne bonus esclusive!",
+      "earlyAccess": "accesso anticipato"
+    }
+  },
+  "login": {
+    "title": "Bentornato",
+    "subtitle": "Accedi a {{platform}} - Continua a guadagnare con attività AI",
+    "email": "Email",
+    "emailPlaceholder": "Inserisci la tua email",
+    "password": "Password",
+    "passwordPlaceholder": "Inserisci la tua password",
+    "forgotPassword": "Password dimenticata?",
+    "signingIn": "Accesso in corso...",
+    "signIn": "Accedi",
+    "noAccount": "Non hai un account?",
+    "signUp": "Registrati",
+    "loginFailed": "Accesso fallito",
+    "invalidCredentials": "Email o password non valide. Riprova.",
+    "welcomeBack": "Bentornato!",
+    "redirecting": "Reindirizzamento alla dashboard...",
+    "error": "Errore",
+    "unexpectedError": "Si è verificato un errore imprevisto. Riprova.",
+    "accountDeleted": "Account Eliminato con Successo",
+    "accountDeletedDescription": "Il tuo account è stato eliminato permanentemente. Tutti i tuoi dati sono stati rimossi dai nostri sistemi."
+  },
+  "tasks": {
+    "title": "Attività di Addestramento AI",
+    "subtitle": "Completa attività per guadagnare denaro e aiutare ad addestrare l'AI",
+    "loadingTasks": "Caricamento attività...",
+    "understandingAITraining": "Comprensione dell'Addestramento AI:",
+    "understandingAITrainingDescription": "La risposta 'corretta' per queste attività è determinata dall'analisi collettiva e dal consenso di molti valutatori umani, non dalla conoscenza AI preesistente. I tuoi contributi sono vitali per perfezionare e far avanzare i modelli AI.",
+    "limitedTaskAccess": "Accesso Limitato alle Attività",
+    "upgradeNow": "Aggiorna Ora",
+    "recentActivity": "Attività Recente",
+    "stats": {
+      "systemTime": "Ora di sistema: UTC (Reimpostazione giornaliera alle 00:01 UTC)",
+      "todaysProgress": "Progresso di Oggi",
+      "remainingTasks": "Attività Rimanenti",
+      "earningsWallet": "Portafoglio Guadagni",
+      "skipsRemaining": "salti rimanenti"
+    },
+    "dailyLimit": {
+      "congratulations": "Congratulazioni!",
+      "completedAllTasks": "Hai completato tutte le tue attività per oggi!",
+      "tasksCompleted": "Attività Completate",
+      "currentPlan": "Piano Attuale",
+      "upgradePlan": "Aggiorna il Tuo Piano",
+      "unlockMoreTasks": "Sblocca più attività giornaliere e aumenta i tuoi guadagni!",
+      "comeBackTomorrow": "Torna domani",
+      "resetAtMidnight": "Il tuo limite giornaliero di attività verrà reimpostato a mezzanotte",
+      "greatJobToday": "Ottimo lavoro oggi! Continua così. 💪"
+    },
+    "noTasks": {
+      "title": "Nessuna Attività Disponibile al Momento",
+      "description": "Tutte le attività disponibili sono state completate. Nuove attività verranno aggiunte presto.",
+      "checkBackLater": "Per favore, torna più tardi per nuove attività di addestramento AI.",
+      "checkAgain": "Controlla di Nuovo"
+    },
+    "interface": {
+      "taskQuestion": "Domanda dell'Attività:",
+      "reward": "Ricompensa",
+      "correctAnswer": "Risposta Corretta!",
+      "youEarned": "Corretto! Hai guadagnato {{amount}}",
+      "incorrectAnswer": "Risposta Incorretta",
+      "noEarnings": "Nessun guadagno per questa attività",
+      "optionA": "Opzione A",
+      "optionB": "Opzione B",
+      "yourAnswer": "La Tua Risposta",
+      "correctAnswerBadge": "Risposta Corretta",
+      "chooseBestResponse": "Scegli la migliore risposta dalle opzioni seguenti:",
+      "loadingNextTask": "Caricamento prossima attività...",
+      "skipTask": "Salta Attività",
+      "submitting": "Invio in corso...",
+      "submitAnswer": "Invia Risposta"
+    },
+    "toasts": {
+      "dailySkipLimitReached": "Limite giornaliero di salti raggiunto!",
+      "incorrectAnswer": "Risposta incorretta",
+      "allTasksCompleted": "Congratulazioni! Hai completato tutte le tue attività per oggi!",
+      "dailyTaskLimitReached": "Limite giornaliero di attività raggiunto!",
+      "noMoreTasks": "Nessuna altra attività disponibile al momento",
+      "failedToLoadTask": "Impossibile caricare l'attività",
+      "taskSkipped": "Attività saltata",
+      "pleaseSelectAnswer": "Per favore seleziona una risposta"
+    }
+  },
+  "wallet": {
+    "title": "Portafoglio",
+    "subtitle": "Gestisci depositi, guadagni e transazioni",
+    "loadingWallet": "Caricamento portafoglio...",
+    "vipWithdrawalAccess": "Accesso Prelievo VIP Abilitato",
+    "vip24_7Access": "Accesso 24/7",
+    "vipDescription": "Il tuo account ha accesso illimitato ai prelievi. Puoi prelevare qualsiasi giorno in qualsiasi momento senza restrizioni di programma.",
+    "limitedWithdrawalAccess": "Accesso Prelievo Limitato",
+    "becomeVerifiedEarner": "Diventa un Guadagnatore Verificato",
+    "recentTransactions": "Transazioni Recenti",
+    "recentTransactionsSubtitle": "Visualizza la cronologia delle transazioni del tuo portafoglio",
+    "voucherRedemption": {
+      "title": "Riscatta Voucher",
+      "description": "Inserisci il tuo codice voucher per aggiungere fondi al tuo portafoglio di deposito",
+      "voucherCode": "Codice Voucher",
+      "voucherCodePlaceholder": "FE-XXXX-XXXX-XXXX",
+      "enterVoucherCode": "Inserisci il codice voucher",
+      "redeem": "Riscatta Voucher",
+      "redeeming": "Riscattando...",
+      "tip": "💡 Suggerimento: Acquista voucher da Partner Locali e riscattali qui per aggiungere fondi al tuo portafoglio di deposito.",
+      "pleaseEnterCode": "Per favore inserisci un codice voucher",
+      "pleaseLogIn": "Per favore accedi per riscattare i voucher",
+      "redeemedSuccessfully": "Voucher riscattato con successo!",
+      "creditedToWallet": "{{amount}} USD accreditati sul tuo portafoglio di deposito",
+      "failedToRedeem": "Impossibile riscattare il voucher"
+    }
+  },
+  "transactions": {
+    "title": "Cronologia Transazioni",
+    "subtitle": "Visualizza tutte le transazioni del tuo portafoglio",
+    "loadingTransactions": "Caricamento transazioni...",
+    "searchPlaceholder": "Cerca per descrizione, ID o gateway di pagamento...",
+    "transactionType": "Tipo di Transazione",
+    "allTypes": "Tutti i Tipi",
+    "deposit": "Deposito",
+    "withdrawal": "Prelievo",
+    "taskEarning": "Guadagno da Attività",
+    "referralCommission": "Commissione Referral",
+    "planUpgrade": "Aggiornamento Piano",
+    "transfer": "Trasferimento",
+    "adjustment": "Rettifica",
+    "status": "Stato",
+    "allStatuses": "Tutti gli Stati",
+    "completed": "Completato",
+    "pending": "In Attesa",
+    "failed": "Fallito",
+    "cancelled": "Annullato",
+    "sortBy": "Ordina Per",
+    "newest": "Più Recente",
+    "oldest": "Più Vecchio",
+    "amountHighToLow": "Importo (Da Alto a Basso)",
+    "amountLowToHigh": "Importo (Da Basso ad Alto)",
+    "dateRange": "Intervallo Date",
+    "from": "Da",
+    "to": "A",
+    "clearFilters": "Cancella Filtri",
+    "noTransactions": "Nessuna transazione trovata",
+    "noTransactionsDescription": "Prova ad aggiustare i tuoi filtri o controlla più tardi.",
+    "showing": "Mostrando",
+    "of": "di",
+    "results": "risultati"
+  },
+  "referrals": {
+    "title": "Programma Referral",
+    "subtitle": "Invita amici e guadagna commissioni dalle loro attività.",
+    "loadingReferrals": "Caricamento referral...",
+    "noReferralCommissions": "Nessuna Commissione Referral",
+    "upgradeToEarnCommissions": "Aggiorna per Guadagnare Commissioni",
+    "yourReferralLink": "Il Tuo Link Referral e Commissione",
+    "commissionHistory": "Cronologia Commissioni",
+    "commissionStructure": "Struttura Commissioni",
+    "myUpline": "Il Mio Upline",
+    "noUpline": "Nessun Upline",
+    "signedUpWithoutReferral": "Ti sei registrato senza un link referral",
+    "uplineUsername": "Nome Utente Upline",
+    "uplinePlan": "Piano Upline",
+    "referralCodeUsed": "Codice Referral Utilizzato",
+    "referralStatus": "Stato Referral",
+    "totalCommissionEarnedByUpline": "Commissione Totale Guadagnata dall'Upline",
+    "referredOn": "Consigliato il",
+    "referredBy": "Consigliato da",
+    "referralCode": "Codice Referral",
+    "yourReferralCode": "Il Tuo Codice Referral",
+    "referralLink": "Link Referral",
+    "copyLink": "Copia Link",
+    "share": "Condividi",
+    "shareLinkDescription": "Condividi questo link con gli amici per guadagnare commissioni dalle loro attività completate!",
+    "toasts": {
+      "referralLinkCopied": "Link referral copiato!",
+      "failedToCopyLink": "Impossibile copiare il link"
+    },
+    "yourReferrals": "I Tuoi Referral",
+    "noReferrals": "Nessun referral ancora",
+    "noReferralsDescription": "Condividi il tuo link referral per iniziare a guadagnare commissioni!",
+    "page": "Pagina",
+    "of": "di",
+    "planNames": {
+      "free": "Gratuito",
+      "basic": "Base",
+      "premium": "Premium",
+      "pro": "Pro",
+      "personal": "Personale",
+      "business": "Business",
+      "group": "Gruppo"
+    },
+    "statuses": {
+      "active": "Attivo",
+      "inactive": "Inattivo",
+      "pending": "In Attesa",
+      "suspended": "Sospeso"
+    }
+  },
+  "membershipPlans": {
+    "title": "Piani di Abbonamento",
+    "subtitle": "Scegli il piano che funziona meglio per te",
+    "loadingPlans": "Caricamento piani...",
+    "currentPlan": "Piano Corrente",
+    "upgrade": "Aggiorna",
+    "downgrade": "Degrada",
+    "renew": "Rinnova",
+    "upgradePlan": "Aggiorna Piano",
+    "confirmUpgrade": "Conferma Aggiornamento",
+    "upgradeConfirmation": "Sei sicuro di voler aggiornare a {{plan}}?",
+    "upgradeDescription": "Questo aggiornerà il tuo account e addebiterà il tuo portafoglio deposito.",
+    "prorationCredit": "Credito di Proporzione",
+    "daysRemaining": "Giorni Rimanenti",
+    "originalPrice": "Prezzo Originale",
+    "newCost": "Nuovo Costo",
+    "savings": "Risparmi",
+    "insufficientBalance": "Saldo insufficiente",
+    "needMore": "Ti servono ${{amount}} in più. Reindirizzamento al portafoglio...",
+    "alreadyOnPlan": "Sei già su questo piano",
+    "cannotDowngrade": "Impossibile degradare a un piano più economico",
+    "cannotDowngradeToFree": "Impossibile degradare al piano gratuito. Contatta il supporto.",
+    "upgrading": "Aggiornamento in corso...",
+    "upgradeSuccess": "Piano aggiornato con successo!",
+    "upgradeFailed": "Impossibile aggiornare il piano",
+    "features": "Caratteristiche",
+    "dailyTasks": "Attività Giornaliere",
+    "earningPerTask": "Guadagno per Attività",
+    "minWithdrawal": "Prelievo Minimo",
+    "taskCommission": "Commissione Attività",
+    "depositCommission": "Commissione Deposito"
+  },
+  "notFound": {
+    "title": "404 - Pagina Non Trovata",
+    "description": "La pagina che stai cercando non esiste.",
+    "goHome": "Vai alla Home"
+  },
+  "forgotPassword": {
+    "title": "Password Dimenticata",
+    "subtitle": "Inserisci la tua email e ti invieremo un link di reset",
+    "email": "Email",
+    "emailPlaceholder": "Inserisci la tua email",
+    "sendResetLink": "Invia Link di Reset",
+    "sending": "Invio in corso...",
+    "resetLinkSent": "Link di reset inviato!",
+    "checkEmail": "Controlla la tua email per il link di reset password.",
+    "backToLogin": "Torna al Login"
+  },
+  "resetPassword": {
+    "title": "Reimposta Password",
+    "subtitle": "Inserisci la tua nuova password",
+    "newPassword": "Nuova Password",
+    "newPasswordPlaceholder": "Inserisci nuova password",
+    "confirmPassword": "Conferma Password",
+    "confirmPasswordPlaceholder": "Conferma nuova password",
+    "resetPassword": "Reimposta Password",
+    "resetting": "Reimpostazione in corso...",
+    "passwordReset": "Password Reimpostata",
+    "passwordResetSuccess": "La tua password è stata reimpostata con successo. Reindirizzamento al login...",
+    "passwordResetFailed": "Impossibile reimpostare la password"
+  },
+  "admin": {
+    "dashboard": "Pannello di Amministrazione",
+    "subtitle": "Panoramica e gestione della piattaforma",
+    "loadingPanel": "Caricamento pannello di amministrazione...",
+    "accessDenied": "Accesso negato. Privilegi di amministratore richiesti.",
+    "failedToLoadStats": "Impossibile caricare le statistiche",
+    "totalUsers": "Utenti Totali",
+    "activeToday": "attivi oggi",
+    "totalDeposits": "Depositi Totali",
+    "completedDeposits": "depositi completati",
+    "totalWithdrawals": "Prelievi Totali",
+    "completedPayouts": "pagamenti completati",
+    "pendingWithdrawals": "Prelievi in Attesa",
+    "requiresApproval": "Richiede approvazione",
+    "membershipDistribution": "Distribuzione Membri",
+    "membershipDistributionDescription": "Panoramica dei livelli di appartenenza degli utenti",
+    "last7DaysActivity": "Attività Ultimi 7 Giorni",
+    "last7DaysActivityDescription": "Riepilogo giornaliero delle metriche della piattaforma",
+    "analytics": {
+      "title": "Dashboard Analitico",
+      "subtitle": "Monitora le prestazioni della piattaforma e le metriche di attività degli utenti",
+      "error": {
+        "loadFailed": "Impossibile caricare i dati analitici"
+      },
+      "stats": {
+        "newUsersToday": "Nuovi Utenti Oggi",
+        "depositsToday": "Depositi Oggi",
+        "newReferralsToday": "Nuovi Riferimenti Oggi",
+        "withdrawalsToday": "Prelievi Oggi",
+        "vsYesterday": "vs ieri"
+      },
+      "charts": {
+        "userGrowthTrend": "Tendenza di Crescita Utenti",
+        "userGrowthDescription": "Conteggio giornaliero di nuove registrazioni utenti nel periodo selezionato. Traccia le tendenze di acquisizione utenti e identifica i giorni di alta crescita.",
+        "depositVolumeTrend": "Tendenza del Volume dei Depositi",
+        "depositVolumeDescription": "Importi totali dei depositi (in USD) per giorno nel periodo selezionato. Monitora le tendenze dei ricavi e identifica i giorni di picco dei depositi.",
+        "referralActivity": "Attività di Riferimento",
+        "referralActivityDescription": "Conteggio giornaliero di nuovi riferimenti (utenti che si sono uniti tramite link di riferimento) nel periodo selezionato. Misura l'efficacia del programma di riferimento.",
+        "depositsVsWithdrawals": "Depositi vs Prelievi",
+        "depositsVsWithdrawalsDescription": "Confronto giornaliero degli afflussi di depositi vs i deflussi di prelievi (in USD). Monitora il bilancio del flusso di cassa e identifica le tendenze di liquidità.",
+        "newUsers": "Nuovi Utenti",
+        "volume": "Volume",
+        "referrals": "Riferimenti",
+        "deposits": "Depositi",
+        "withdrawals": "Prelievi"
+      },
+      "segmentation": {
+        "title": "Segmentazione Utenti e Analisi ad Alto Valore",
+        "subtitle": "Identifica segmenti di utenti ad alto valore mediante distribuzione geografica e prestazioni dei principali referenti"
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Come Funziona",
+    "dismiss": "Rimuovi",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "getStarted": "Inizia",
+    "step": "Passo {{number}}",
+    "loading": "Caricamento di Come Funziona...",
+    "goToDashboard": "Vai alla Dashboard",
+    "stepOfTotal": "Passo {{current}} di {{total}}",
+    "goToStepAria": "Vai al passo {{step}}",
+    "steps": {
+      "1": {
+        "title": "Cos'è ProfitChips?",
+        "subtitle": "La tua porta d'accesso per guadagnare con l'IA",
+        "description": "{{platformName}} è una piattaforma rivoluzionaria che ti collega a task di training dell'IA, permettendoti di guadagnare denaro reale contribuendo all'avanzamento dell'intelligenza artificiale.",
+        "whyTitle": "Perché ProfitChips?",
+        "whyBullets": {
+          "1": "Non servono competenze specialistiche: solo comprensione di base e attenzione ai dettagli",
+          "2": "Lavora da qualsiasi luogo con una connessione internet",
+          "3": "Orari flessibili: lavora al tuo ritmo",
+          "4": "Guadagni trasparenti e sistema di pagamento semplice"
+        }
+      },
+      "2": {
+        "title": "Come guadagni",
+        "subtitle": "Task semplici, ricompense reali",
+        "earningPotentialLabel": "Potenziale di guadagno",
+        "earningPotentialSuffix": "a settimana con un account aggiornato",
+        "description": "Ogni task completato correttamente ti fa guadagnare denaro che va direttamente nel tuo wallet dei guadagni. La tua tariffa dipende dal piano di membership.",
+        "howSteps": {
+          "1": {
+            "title": "Completa task di IA",
+            "description": "Valuta risposte dell'IA e seleziona la migliore"
+          },
+          "2": {
+            "title": "Guadagna subito",
+            "description": "Vieni pagato immediatamente per le risposte corrette"
+          },
+          "3": {
+            "title": "Preleva settimanalmente",
+            "description": "Incassa i tuoi guadagni nei giorni di pagamento stabiliti"
+          }
+        }
+      },
+      "3": {
+        "title": "Tipi di task",
+        "subtitle": "Varietà di microtask di IA",
+        "description": "{{platformName}} offre task di training dell'IA diversificati che aiutano a migliorare i modelli di machine learning. Ogni task è semplice ma contribuisce ad avanzare la tecnologia IA.",
+        "taskTypes": {
+          "chatbot": {
+            "title": "Training chatbot",
+            "description": "Valuta le risposte dell'IA nelle conversazioni e seleziona quelle più naturali e utili."
+          },
+          "sentiment": {
+            "title": "Analisi del sentiment",
+            "description": "Rivedi frammenti di testo e aiuta l'IA a comprendere emozioni e opinioni umane con precisione."
+          },
+          "classification": {
+            "title": "Classificazione dei contenuti",
+            "description": "Categorizza ed etichetta contenuti per aiutare l'IA a organizzare le informazioni in modo efficace."
+          },
+          "dataQuality": {
+            "title": "Revisione qualità dei dati",
+            "description": "Valida risposte generate dall'IA per accuratezza, pertinenza e appropriatezza."
+          }
+        }
+      }
+    }
+  },
+  "partner": {
+    "dashboard": {
+      "title": "Partner Dashboard",
+      "subtitle": "Manage your voucher sales and track your earnings",
+      "currentRank": "Current Rank",
+      "commissionRate": "{{rate}}% Commission Rate",
+      "depositWallet": "Deposit Wallet",
+      "availableForPurchases": "Available for voucher purchases",
+      "todaysSales": "Today's Sales",
+      "totalVouchersSold": "Total Vouchers Sold",
+      "purchaseVoucher": "Purchase Voucher",
+      "voucherHistory": "Voucher History",
+      "paymentMethods": "Payment Methods",
+      "addPaymentMethod": "Add Payment Method",
+      "removePaymentMethod": "Remove",
+      "savePaymentMethods": "Save Payment Methods",
+      "paymentMethodType": "Payment Method Type",
+      "paymentMethodDetails": "Payment Method Details",
+      "enterRecipientUsername": "Enter recipient's username",
+      "userNotFound": "User not found",
+      "processingPurchase": "Processing Purchase...",
+      "confirmVoucherPurchase": "Confirm Voucher Purchase",
+      "pleaseWaitProcessing": "Please wait while we process your purchase",
+      "redirecting": "Redirecting...",
+      "errorLoadingDashboard": "There was an error loading your partner dashboard. Please try again.",
+      "viewAnalytics": "View Analytics Dashboard",
+      "verifyingUsername": "Verifying username exists...",
+      "userFound": "User found! Ready to send voucher.",
+      "doubleCheckSpelling": "Double-check the spelling and try again",
+      "reviewPurchase": "Review Purchase",
+      "reviewCarefully": "Please review carefully - this action cannot be undone",
+      "warningFinal": "Once confirmed, this voucher purchase is final. Please verify the recipient username and amount before proceeding.",
+      "confirmAndPurchase": "Confirm & Purchase",
+      "buyVouchers": "Buy Vouchers",
+      "myVouchers": "My Vouchers",
+      "weeklyBonuses": "Weekly Bonuses",
+      "rankProgress": "Rank Progress",
+      "purchaseDescription": "Buy vouchers at {{rate}}% discount and sell them for instant profit",
+      "insufficientBalance": "Insufficient Balance:",
+      "insufficientBalanceDescription": "You need {{needed}} but only have {{have}} in your deposit wallet.",
+      "continueToPurchase": "Continue to Purchase",
+      "paymentMethodsDescription": "Configure how customers should pay you for vouchers",
+      "howCustomerPaymentsWork": "How Customer Payments Work",
+      "customerPaymentStep1": "Customer contacts you to purchase a voucher (via WhatsApp, Telegram, etc.)",
+      "customerPaymentStep2": "Customer sends payment using one of your configured methods below",
+      "customerPaymentStep3": "You purchase the voucher from your dashboard and send the code to customer",
+      "customerPaymentStep4": "Customer redeems the voucher and you keep your commission! 🎉",
+      "yourPaymentMethods": "Your Payment Methods",
+      "noPaymentMethods": "No payment methods added yet",
+      "noPaymentMethodsDescription": "Add methods below so customers know how to pay you",
+      "paymentMethodTypePlaceholder": "e.g., Bank Transfer, GCash",
+      "paymentMethodDetailsPlaceholder": "Account number/details"
+    },
+    "voucher": {
+      "amount": "Voucher Amount",
+      "recipientUsername": "Recipient Username",
+      "selectAmount": "Select Amount or Enter Custom",
+      "customAmount": "Custom Amount",
+      "enterCustomAmount": "Enter custom amount",
+      "cost": "Your Cost",
+      "commission": "Commission",
+      "youWillPay": "You will pay",
+      "youWillEarn": "You will earn",
+      "discount": "discount",
+      "profit": "Your Profit"
+    },
+    "leaderboard": {
+      "title": "Partner Leaderboard",
+      "subtitle": "Top performing partners in the community",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "thisYear": "This Year",
+      "allTime": "All Time",
+      "vouchers": "vouchers",
+      "earned": "earned",
+      "noDataAvailable": "No leaderboard data available for this period"
+    },
+    "becomePartner": {
+      "errors": {
+        "network": "Unable to load partner status. Please check your connection and try again.",
+        "sessionExpired": "Your session has expired. Please refresh the page or log in again.",
+        "pageLoad": "There was an error loading the partner application page. Please try again."
+      }
+    },
+    "applicationStatus": {
+      "title": "Partner Application Status",
+      "subtitle": "View your partner application details and current status",
+      "backToDashboard": "Back to Dashboard",
+      "loading": "Loading application status...",
+      "sections": {
+        "rejectionReason": "Reason for Rejection",
+        "applicationDetails": "Application Details",
+        "submitted": "Submitted {{timeAgo}}",
+        "contactInformation": "Contact Information",
+        "networkAndExperience": "Network & Experience",
+        "supportAndCapabilities": "Support & Capabilities",
+        "motivationAndAgreement": "Motivation & Agreement"
+      },
+      "fields": {
+        "preferredContact": "Preferred Contact:",
+        "whatsapp": "WhatsApp:",
+        "telegram": "Telegram:",
+        "managesCommunity": "Manages Community:",
+        "communitySize": "Community Size:",
+        "hasPromotedPlatforms": "Has Promoted Platforms:",
+        "monthlyOnboarding": "Monthly Onboarding:",
+        "timeCommitment": "Time Commitment:",
+        "platformPromotionDetails": "Platform Promotion Details:",
+        "networkDescription": "Network Description:",
+        "communityLinks": "Community Links:",
+        "canProvideLocalSupport": "Can Provide Local Support:",
+        "canOrganizeTraining": "Can Organize Training:",
+        "supportMethod": "Support Method:",
+        "localPaymentMethods": "Local Payment Methods:",
+        "whyPartner": "Why I want to be a partner:",
+        "agreedToGuidelines": "Agreed to Guidelines:"
+      },
+      "values": {
+        "members": "{{count}} members",
+        "users": "{{count}} users",
+        "hoursPerWeek": "{{count}} hours/week"
+      },
+      "actions": {
+        "returnToDashboard": "Return to Dashboard",
+        "cannotEditWhileReview": "You cannot edit your application while it's under review",
+        "underReview": "Application Under Review",
+        "goToPartnerDashboard": "Go to Partner Dashboard"
+      },
+      "status": {
+        "pending": {
+          "label": "Pending Review",
+          "description": "Your application is under review. We typically respond within 24-48 hours."
+        },
+        "approved": {
+          "label": "Approved",
+          "description": "Congratulations! Your partner application has been approved."
+        },
+        "rejected": {
+          "label": "Not Approved",
+          "description": "Your application was not approved at this time."
+        }
+      }
+    },
+    "analytics": {
+      "title": "Partner Analytics",
+      "subtitle": "Track your sales performance and earnings",
+      "selectRange": "Select range",
+      "errors": {
+        "loadFailed": "There was an error loading your partner analytics. Please try again."
+      },
+      "noData": "No analytics data available",
+      "ranges": {
+        "week": "Last 7 Days",
+        "month": "Last 30 Days",
+        "quarter": "Last 90 Days",
+        "year": "Last Year"
+      },
+      "overview": {
+        "totalSales": "Total Sales",
+        "commissionEarned": "Commission Earned",
+        "conversionRate": "Conversion Rate",
+        "activeVouchers": "Active Vouchers",
+        "vouchers": "{{count}} vouchers",
+        "redeemed": "{{amount}} redeemed",
+        "expired": "{{count}} expired",
+        "redeemedRatio": "{{redeemed}} / {{total}} redeemed"
+      },
+      "charts": {
+        "salesTrendTitle": "Sales Trend - {{range}}",
+        "salesTrendDescription": "Daily sales and commission performance",
+        "salesSeries": "Sales",
+        "commissionSeries": "Commission",
+        "commissionTimelineTitle": "Commission Earnings Timeline",
+        "commissionTimelineDescription": "Track your earnings from redeemed vouchers",
+        "topSellingAmountsTitle": "Top Selling Voucher Amounts",
+        "topSellingAmountsDescription": "Most popular voucher denominations",
+        "voucherStatusDistributionTitle": "Voucher Status Distribution",
+        "voucherStatusDistributionDescription": "Breakdown by redemption status",
+        "vouchersSold": "Vouchers Sold",
+        "amountLabel": "Amount: {{amount}}",
+        "vouchersTooltip": "{{count}} vouchers",
+        "status": {
+          "redeemed": "Redeemed",
+          "active": "Active",
+          "expired": "Expired"
+        }
+      }
+    },
+    "voucherDetails": {
+      "title": "Voucher Details",
+      "voucherCode": "Voucher Code",
+      "completeInformation": "Complete information for voucher {{code}}",
+      "financialBreakdown": "Financial Breakdown",
+      "voucherAmount": "Voucher Amount",
+      "partnerPaid": "Partner Paid",
+      "commissionEarned": "Commission Earned",
+      "commissionRate": "Commission Rate",
+      "userInformation": "User Information",
+      "createdBy": "Created By",
+      "partner": "Partner",
+      "redeemedBy": "Redeemed By",
+      "timeline": "Timeline",
+      "created": "Created",
+      "expires": "Expires",
+      "redeemed": "Redeemed",
+      "transactionReferences": "Transaction References",
+      "purchaseTransactionId": "Purchase Transaction ID",
+      "redemptionTransactionId": "Redemption Transaction ID",
+      "noTransactionIds": "No transaction IDs available",
+      "notes": "Notes",
+      "voucherId": "Voucher ID",
+      "status": {
+        "active": "Active",
+        "redeemed": "Redeemed",
+        "expired": "Expired"
+      },
+      "type": {
+        "sent": "Sent",
+        "received": "Received"
+      }
+    },
+    "toasts": {
+      "enterValidAmount": "Please enter a valid amount greater than $0",
+      "maxVoucherAmount": "Maximum voucher amount is $10,000",
+      "enterRecipientUsername": "Please enter the recipient's username",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "waitVerifyUsername": "Please wait while we verify the username",
+      "usernameNotFound": "Username not found. Please check and try again.",
+      "unableToLoadProfile": "Unable to load your profile. Please refresh the page.",
+      "insufficientBalance": "Insufficient balance. You need {{amount}} more in your deposit wallet.",
+      "fillPaymentMethodFields": "Please fill in all payment method fields",
+      "voucherPurchaseSuccess": "Voucher purchased successfully!",
+      "voucherPurchaseFailed": "Failed to purchase voucher. Please try again."
+    }
+  },
+  "wallet": {
+    "components": {
+      "walletBalance": "Saldo del Portafoglio",
+      "manageDepositsEarnings": "Gestisci i tuoi depositi e guadagni",
+      "depositWallet": "Portafoglio di Deposito",
+      "forAccountUpgrades": "Per aggiornamenti dell'account",
+      "earningsWallet": "Portafoglio di Guadagni",
+      "fromTasksReferrals": "Da attività e referral",
+      "deposit": "Deposita",
+      "withdraw": "Preleva",
+      "makeDeposit": "Effettua un Deposito",
+      "addFundsToDepositWallet": "Aggiungi fondi al tuo portafoglio di deposito",
+      "amount": "Importo",
+      "available": "Disponibile",
+      "confirmDeposit": "Conferma Deposito",
+      "processing": "Elaborazione...",
+      "afterClickingConfirm": "Dopo aver cliccato su \"Conferma Deposito\", potrai selezionare la tua criptovaluta preferita (Bitcoin, USDT, USDC, ecc.) nel processore di pagamento.",
+      "earningsBalance": "Saldo dei Guadagni",
+      "depositBalance": "Saldo del Deposito",
+      "availableBalance": "Saldo Disponibile",
+      "pendingWithdrawals": "Prelievi in Attesa",
+      "withdrawalAmount": "Importo del Prelievo",
+      "selectWithdrawalMethod": "Seleziona Metodo di Prelievo",
+      "enterAmount": "Inserisci importo",
+      "enterAmountInCurrency": "Inserisci importo in {{currency}}",
+      "requestWithdrawal": "Richiedi Prelievo",
+      "withdrawFundsFromEarningsWallet": "Preleva fondi dal tuo portafoglio di guadagni",
+      "emailVerificationRequired": "Verifica Email Richiesta",
+      "emailVerificationRequiredDescription": "Devi verificare il tuo indirizzo email prima di richiedere un prelievo. Si prega di verificare la tua email per continuare.",
+      "vipWithdrawalAccess": "Accesso VIP ai Prelievi",
+      "unrestricted": "Senza Restrizioni",
+      "vipWithdrawalDescription": "Il tuo account ha accesso giornaliero ai prelievi. Puoi prelevare qualsiasi giorno in qualsiasi momento senza restrizioni di orario.",
+      "all": "Tutto",
+      "withdrawalMethodSelect": "Metodo di Prelievo (Seleziona Criptovaluta)",
+      "withdrawalCurrencyNetwork": "Valuta e Rete di Prelievo",
+      "withdrawalCurrencyDescription": "Il tuo prelievo sarà inviato come {{symbol}} sulla rete {{network}}. Assicurati che il tuo portafoglio supporti {{symbol}} su {{networkShort}}.",
+      "howToGetAddress": "Come ottenere il tuo indirizzo {{crypto}}?",
+      "stepByStepGuide": "Guida Passo-Passo:",
+      "step1": "Apri il tuo portafoglio crypto o exchange (Binance, Gcrypto, Coinbase, ecc.)",
+      "step2": "Naviga alla sezione Deposito o Ricevi",
+      "step3": "Cerca {{symbol}}",
+      "step4": "Quando ti viene chiesto di selezionare una rete, scegli {{network}}",
+      "step5": "Copia l'indirizzo del portafoglio visualizzato",
+      "step6": "Incolla l'indirizzo nel campo sottostante",
+      "exampleAddressFormat": "Formato indirizzo di esempio:",
+      "important": "Importante:",
+      "importantDescription": "Verifica sempre di aver selezionato la rete {{network}}! L'invio alla rete sbagliata comporterà la perdita di fondi.",
+      "walletAddress": "Indirizzo Portafoglio {{symbol}} {{networkShort}} *",
+      "enterWalletAddress": "Inserisci il tuo indirizzo portafoglio {{crypto}} dove desideri ricevere fondi.",
+      "processingFee": "Commissione di Elaborazione:",
+      "youWillReceive": "Riceverai:",
+      "recommended": "Consigliato",
+      "processingWithdrawal": "Elaborazione prelievo...",
+      "withdrawalConfirmation": "Conferma Prelievo",
+      "confirmWithdrawal": "Conferma Prelievo",
+      "cancel": "Annulla",
+      "voucherRedemption": {
+        "title": "Riscatta Buono",
+        "enterVoucherCode": "Inserisci codice buono",
+        "redeem": "Riscatta",
+        "redeeming": "Riscatto in corso...",
+        "voucherCodePlaceholder": "Inserisci il tuo codice buono"
+      },
+      "withdrawalCountdown": {
+        "nextWithdrawalIn": "Prossimo prelievo tra",
+        "days": "giorni",
+        "hours": "ore",
+        "minutes": "minuti",
+        "availableNow": "Disponibile ora"
+      }
+    },
+    "toasts": {
+      "failedToLoadPaymentMethods": "Failed to load payment methods",
+      "pleaseEnterAmount": "Please enter an amount",
+      "pleaseEnterValidAmount": "Please enter a valid amount",
+      "paymentProcessorNotAvailable": "Payment processor not available. Please try again later.",
+      "openingPaymentProcessor": "Opening payment processor...",
+      "depositSuccessful": "Deposit successful!",
+      "fillAllFields": "Please fill in all fields",
+      "selectValidWithdrawalMethod": "Please select a valid withdrawal method (USDT-Bep20 or USDC-Solana)",
+      "enterValidAmount": "Please enter a valid amount",
+      "insufficientBalance": "Insufficient balance",
+      "emailVerificationRequired": "Email verification required. Please verify your email before requesting a withdrawal.",
+      "mustBeLoggedIn": "You must be logged in to withdraw",
+      "pendingWithdrawalExists": "You already have a pending withdrawal request. Please wait for it to be processed.",
+      "failedToLoadProfile": "Failed to load profile information",
+      "failedToLoadMembershipPlan": "Failed to load membership plan details",
+      "cryptocurrencySelectionRequired": "Cryptocurrency selection is required",
+      "invalidCryptocurrency": "Invalid cryptocurrency selected. Please try again.",
+      "withdrawalProcessorNotAvailable": "Withdrawal processor not available. Please try again later."
+    }
+  },
+  "components": {
+    "sidebar": {
+      "partnerHub": "Partner Hub",
+      "becomePartner": "Become a Partner",
+      "howItWorks": "How It Works"
+    },
+    "loginMessage": {
+      "dismiss": "Dismiss",
+      "close": "Close"
+    },
+    "platformMigration": {
+      "title": "Important Update for Existing Users",
+      "subtitle": "{{platform}} has moved to a new upgraded platform!",
+      "step1": "Sign up here using the same email you used on old platform.",
+      "step2": "Contact Support so we can transfer your previous data to your new account.",
+      "step3": "Our team will migrate your funds & data to new platform for best experience.",
+      "cutoffDate": "Cutoff Date",
+      "supportLink": "Contact Support"
+    }
+  },
+  "errors": {
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidUsername": "Username must be 3-30 characters and contain only letters, numbers, and underscores",
+      "passwordTooShort": "Password must be at least 6 characters long",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "invalidAmount": "Please enter a valid amount",
+      "amountTooSmall": "Amount must be greater than 0",
+      "amountTooLarge": "Amount exceeds maximum allowed",
+      "insufficientBalance": "Insufficient balance",
+      "usernameNotFound": "Username not found",
+      "invalidVoucherCode": "Invalid voucher code"
+    },
+    "general": {
+      "somethingWentWrong": "Something went wrong. Please try again.",
+      "networkError": "Network error. Please check your connection and try again.",
+      "unauthorized": "You are not authorized to perform this action",
+      "notFound": "The requested resource was not found",
+      "serverError": "Server error. Please try again later.",
+      "timeout": "Request timed out. Please try again."
+    },
+    "admin": {
+      "accessDenied": "Access denied. Admin privileges required.",
+      "failedToLoadData": "Failed to load data",
+      "failedToSave": "Failed to save changes",
+      "failedToDelete": "Failed to delete item"
+    }
+  },
+  "toasts": {
+    "general": {
+      "success": "Operation completed successfully",
+      "error": "An error occurred",
+      "info": "Information",
+      "warning": "Warning"
+    },
+    "tasks": {
+      "dailySkipLimitReached": "Daily skip limit reached!",
+      "incorrectAnswer": "Incorrect answer",
+      "allTasksCompleted": "Congratulations! You've completed all your tasks for today!",
+      "dailyTaskLimitReached": "Daily task limit reached!",
+      "noMoreTasks": "No more tasks available at the moment",
+      "failedToLoadTask": "Failed to load task",
+      "taskSkipped": "Task skipped",
+      "pleaseSelectAnswer": "Please select an answer"
+    },
+    "partner": {
+      "enterValidAmount": "Please enter a valid amount greater than $0",
+      "maxVoucherAmount": "Maximum voucher amount is $10,000",
+      "enterRecipientUsername": "Please enter the recipient's username",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "waitVerifyUsername": "Please wait while we verify the username",
+      "usernameNotFound": "Username not found. Please check and try again.",
+      "unableToLoadProfile": "Unable to load your profile. Please refresh the page.",
+      "insufficientBalance": "Insufficient balance. You need {{amount}} more in your deposit wallet.",
+      "fillPaymentMethodFields": "Please fill in all payment method fields",
+      "voucherPurchaseSuccess": "Voucher purchased successfully!",
+      "voucherPurchaseFailed": "Failed to purchase voucher. Please try again."
+    },
+    "wallet": {
+      "failedToLoadPaymentMethods": "Failed to load payment methods",
+      "pleaseEnterAmount": "Please enter an amount",
+      "pleaseEnterValidAmount": "Please enter a valid amount",
+      "paymentProcessorNotAvailable": "Payment processor not available. Please try again later.",
+      "openingPaymentProcessor": "Opening payment processor...",
+      "depositSuccessful": "Deposit successful!",
+      "fillAllFields": "Please fill in all fields",
+      "selectValidWithdrawalMethod": "Please select a valid withdrawal method (USDT-Bep20 or USDC-Solana)",
+      "enterValidAmount": "Please enter a valid amount",
+      "insufficientBalance": "Insufficient balance",
+      "emailVerificationRequired": "Email verification required. Please verify your email before requesting a withdrawal.",
+      "mustBeLoggedIn": "You must be logged in to withdraw",
+      "pendingWithdrawalExists": "You already have a pending withdrawal request. Please wait for it to be processed.",
+      "failedToLoadProfile": "Failed to load profile information",
+      "failedToLoadMembershipPlan": "Failed to load membership plan details",
+      "cryptocurrencySelectionRequired": "Cryptocurrency selection is required",
+      "invalidCryptocurrency": "Invalid cryptocurrency selected. Please try again.",
+      "withdrawalProcessorNotAvailable": "Withdrawal processor not available. Please try again later."
+    },
+    "admin": {
+      "accessDenied": "Access denied. Admin privileges required.",
+      "failedToLoadTransactions": "Failed to load transactions",
+      "transactionsExported": "Transactions exported to CSV",
+      "failedToExport": "Failed to export transactions",
+      "migrationBannerSaved": "Migration banner settings saved successfully",
+      "titleAndSubtitleRequired": "Title and subtitle are required",
+      "allThreeStepsRequired": "All three steps are required",
+      "bannerSettingsReset": "Banner settings reset to saved values",
+      "pleaseEnterCountryCode": "Please enter a country code",
+      "countryCodeMustBe2Chars": "Country code must be 2 characters (ISO 3166-1 alpha-2)",
+      "countryAlreadyBlocked": "Country already blocked",
+      "pleaseEnterIPAddress": "Please enter an IP address",
+      "invalidIPAddressFormat": "Invalid IP address format",
+      "ipAddressAlreadyBlocked": "IP address already blocked",
+      "securitySettingsSaved": "Security settings saved successfully",
+      "failedToLoadScheduledEmails": "Failed to load scheduled emails",
+      "scheduledEmailDeleted": "Scheduled email deleted",
+      "failedToDeleteScheduledEmail": "Failed to delete scheduled email",
+      "scheduledEmailCancelled": "Scheduled email cancelled",
+      "failedToCancelScheduledEmail": "Failed to cancel scheduled email",
+      "scheduledEmailsProcessingTriggered": "Scheduled emails processing triggered",
+      "failedToProcessScheduledEmails": "Failed to process scheduled emails",
+      "failedToLoadReferralSystemConfig": "Failed to load referral system configuration",
+      "signupBonusAmountMustBeNonNegative": "Signup bonus amount must be non-negative",
+      "referralSystemConfigUpdated": "Referral system configuration updated successfully",
+      "failedToSaveConfig": "Failed to save configuration",
+      "pleaseEnterReferralCode": "Please enter a referral code to test",
+      "referralCodeNotFound": "Referral code not found",
+      "referralCodeInactive": "Code belongs to {{username}} but account is {{status}}",
+      "referralCodeValid": "Valid! Code belongs to active user: {{username}}",
+      "failedToTestReferralCode": "Failed to test referral code",
+      "referralDataExported": "Referral data exported successfully",
+      "failedToExportReferralData": "Failed to export referral data",
+      "failedToLoadMembershipPlans": "Failed to load membership plans",
+      "pleaseFixValidationErrors": "Please fix validation errors before saving",
+      "invalidJSONFormatForFeatures": "Invalid JSON format for features. Must be an array.",
+      "planUpdated": "Plan updated successfully",
+      "planCreated": "Plan created successfully",
+      "failedToSaveMembershipPlan": "Failed to save membership plan",
+      "cannotDeletePlanWithSubscribers": "Cannot delete plan with {{count}} active subscribers",
+      "membershipPlanDeleted": "Membership plan deleted",
+      "failedToDeleteMembershipPlan": "Failed to delete membership plan. Plan may have active subscribers.",
+      "planActivated": "Plan activated",
+      "planDeactivated": "Plan deactivated",
+      "failedToUpdatePlanStatus": "Failed to update plan status",
+      "failedToLoadCPAYCheckouts": "Failed to load CPAY checkouts",
+      "failedToLoadPayoutConfig": "Failed to load payout configuration",
+      "failedToLoadPaymentProcessors": "Failed to load payment processors",
+      "pleaseFillAllRequiredFields": "Please fill in all required fields",
+      "pleaseSelectCPAYCheckout": "Please select a CPAY checkout for deposit processor",
+      "paymentProcessorUpdated": "Payment processor updated successfully",
+      "paymentProcessorCreated": "Payment processor created successfully",
+      "failedToSavePaymentProcessor": "Failed to save payment processor",
+      "paymentProcessorDeleted": "Payment processor deleted",
+      "failedToDeletePaymentProcessor": "Failed to delete payment processor",
+      "paymentProcessorActivated": "Payment processor activated",
+      "paymentProcessorDeactivated": "Payment processor deactivated",
+      "failedToUpdatePaymentProcessor": "Failed to update payment processor",
+      "pleaseEnableAtLeastOnePayoutDay": "Please enable at least one payout day",
+      "invalidTimeWindow": "Invalid time window for {{dayName}}: Start time must be before end time",
+      "payoutScheduleUpdated": "Payout schedule updated: {{count}} day(s) enabled with time windows",
+      "failedToUpdatePayoutSchedule": "Failed to update payout schedule",
+      "cpayWalletBalanceRetrieved": "CPAY wallet balance retrieved successfully",
+      "failedToFetchCPAYBalance": "Failed to fetch CPAY balance. Check your credentials in System Secrets.",
+      "tokenIDCopied": "Token ID copied to clipboard",
+      "rankCreated": "Rank created successfully",
+      "failedToCreateRank": "Failed to create rank",
+      "rankUpdated": "Rank updated successfully",
+      "failedToUpdateRank": "Failed to update rank",
+      "rankDeleted": "Rank deleted successfully",
+      "failedToDeleteRank": "Failed to delete rank",
+      "invalidScheduleMissingDays": "Invalid schedule: Missing days detected. Please refresh the page."
+    },
+    "settings": {
+      "emailVerified": "Email verified successfully!"
+    },
+    "referrals": {
+      "failedToLoadCommissionRates": "Failed to load commission rates"
+    },
+    "language": {
+      "failedToUpdate": "Failed to update language. Please try again."
+    }
+  },
+  "app": {
+    "enteringAdminMode": "Accesso alla modalità amministratore...",
+    "returningToMainApp": "Ritorno all’app principale...",
+    "loadingPage": "Caricamento pagina..."
+  },
+  "depositResult": {
+    "title": {
+      "success": "Deposito riuscito!",
+      "failed": "Deposito non riuscito",
+      "processing": "Elaborazione deposito"
+    },
+    "description": {
+      "success": "Il tuo deposito è stato elaborato con successo. Il saldo verrà aggiornato a breve.",
+      "failed": "Non siamo riusciti a elaborare il tuo deposito. Riprova o contatta l'assistenza.",
+      "processing": "Il tuo deposito è in elaborazione. Potrebbero volerci alcuni minuti."
+    },
+    "nextSteps": {
+      "title": "Passi successivi:",
+      "step1": "Controlla il saldo del tuo wallet di deposito",
+      "step2": "Usa i fondi per aggiornare il tuo account",
+      "step3": "Visualizza la cronologia delle transazioni"
+    },
+    "commonIssues": {
+      "title": "Problemi comuni:",
+      "issue1": "Il pagamento è stato annullato",
+      "issue2": "Fondi insufficienti",
+      "issue3": "Timeout di rete",
+      "footer": "Riprova o contatta l'assistenza se il problema persiste."
+    },
+    "actions": {
+      "goToWallet": "Vai al Wallet",
+      "tryAgain": "Riprova"
+    },
+    "redirecting": "Reindirizzamento al wallet tra {{seconds}} secondi..."
+  },
+  "masterLogin": {
+    "validating": {
+      "title": "Verifica accesso master",
+      "description": "Attendi mentre autentichiamo la tua sessione..."
+    },
+    "success": {
+      "title": "Accesso riuscito",
+      "description": "Reindirizzamento alla dashboard..."
+    },
+    "error": {
+      "title": "Autenticazione non riuscita",
+      "description": "Il link di accesso master non è valido o è scaduto. Reindirizzamento al login..."
+    },
+    "errors": {
+      "missingToken": "Token mancante",
+      "invalidResponse": "Risposta di autenticazione non valida"
+    },
+    "toasts": {
+      "success": "Accesso master riuscito! Reindirizzamento...",
+      "failed": "Accesso master non riuscito"
+    }
   }
 }

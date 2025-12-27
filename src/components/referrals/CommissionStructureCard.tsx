@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface CommissionStructureCardProps {
   userPlan: string;
@@ -16,6 +17,7 @@ interface PlanCommissions {
 }
 
 export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [commissions, setCommissions] = useState<PlanCommissions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
       }
     } catch (error) {
       console.error("Error loading commission rates:", error);
-      toast.error("Failed to load commission rates");
+      toast.error(t("toasts.referrals.failedToLoadCommissionRates"));
     } finally {
       setLoading(false);
     }

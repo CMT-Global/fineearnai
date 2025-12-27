@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner";
 import { ArrowLeft, Mail } from "lucide-react";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useTranslation } from "react-i18next";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,6 +20,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { platformName, platformLogoUrl } = useBranding();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -41,19 +43,19 @@ const ForgotPassword = () => {
 
       // Check for rate limiting error
       if (result?.error === 'rate_limit_exceeded') {
-        toast.error(result.message || 'Too many password reset requests. Please try again later.');
+        toast.error(result.message || t("forgotPassword.rateLimitExceeded"));
         return;
       }
 
       if (!result?.success) {
-        throw new Error(result?.message || 'Failed to send reset email');
+        throw new Error(result?.message || t("forgotPassword.failedToSend"));
       }
 
       setIsSubmitted(true);
-      toast.success("Password reset email sent");
+      toast.success(t("forgotPassword.resetLinkSent"));
     } catch (error: any) {
       console.error('Password reset request failed:', error);
-      toast.error(error.message || 'Failed to send reset email. Please try again.');
+      toast.error(error.message || t("forgotPassword.failedToSend"));
     }
   };
 
@@ -64,11 +66,11 @@ const ForgotPassword = () => {
           <div className="flex justify-center mb-4">
             <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("forgotPassword.title")}</CardTitle>
           <CardDescription>
             {isSubmitted
-              ? "Check your email for a password reset link"
-              : "Enter your email address and we'll send you a link to reset your password"}
+              ? t("forgotPassword.subtitleSubmitted")
+              : t("forgotPassword.subtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,14 +82,14 @@ const ForgotPassword = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("forgotPassword.email")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder={t("forgotPassword.emailPlaceholder")}
                             className="pl-10"
                           />
                         </div>
@@ -102,7 +104,7 @@ const ForgotPassword = () => {
                   className="w-full"
                   disabled={form.formState.isSubmitting}
                 >
-                  {form.formState.isSubmitting ? "Sending..." : "Send Reset Link"}
+                  {form.formState.isSubmitting ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
                 </Button>
               </form>
             </Form>
@@ -110,8 +112,7 @@ const ForgotPassword = () => {
             <div className="space-y-4">
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
                 <p className="text-sm text-center">
-                  If an account exists with this email, you will receive a password reset link shortly.
-                  Please check your inbox and spam folder.
+                  {t("forgotPassword.checkEmail")}
                 </p>
               </div>
               <Button
@@ -119,7 +120,7 @@ const ForgotPassword = () => {
                 className="w-full"
                 onClick={() => navigate("/login")}
               >
-                Return to Login
+                {t("forgotPassword.returnToLogin")}
               </Button>
             </div>
           )}
@@ -132,7 +133,7 @@ const ForgotPassword = () => {
                 onClick={() => navigate("/login")}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
+                {t("forgotPassword.backToLogin")}
               </Button>
             </div>
           )}

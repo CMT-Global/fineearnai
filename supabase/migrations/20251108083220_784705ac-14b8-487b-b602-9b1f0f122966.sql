@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS withdrawal_address_otps (
 -- Add RLS policies
 ALTER TABLE withdrawal_address_otps ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role manages withdrawal address OTPs" ON withdrawal_address_otps;
 CREATE POLICY "Service role manages withdrawal address OTPs"
 ON withdrawal_address_otps
 FOR ALL

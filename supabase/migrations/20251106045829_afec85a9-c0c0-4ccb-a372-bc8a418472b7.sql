@@ -67,11 +67,13 @@ CREATE INDEX IF NOT EXISTS idx_bonus_tiers_order
 
 -- 5. Add updated_at triggers
 -- ============================================================================
+DROP TRIGGER IF EXISTS update_partner_bonus_tiers_updated_at ON public.partner_bonus_tiers;
 CREATE TRIGGER update_partner_bonus_tiers_updated_at
   BEFORE UPDATE ON public.partner_bonus_tiers
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_partner_weekly_bonuses_updated_at ON public.partner_weekly_bonuses;
 CREATE TRIGGER update_partner_weekly_bonuses_updated_at
   BEFORE UPDATE ON public.partner_weekly_bonuses
   FOR EACH ROW
@@ -86,6 +88,7 @@ ALTER TABLE public.partner_weekly_bonuses ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 
 -- Admins can manage all bonus tiers
+DROP POLICY IF EXISTS "Admins can manage bonus tiers" ON public.partner_bonus_tiers;
 CREATE POLICY "Admins can manage bonus tiers"
   ON public.partner_bonus_tiers
   FOR ALL
@@ -93,6 +96,7 @@ CREATE POLICY "Admins can manage bonus tiers"
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Anyone can view active bonus tiers
+DROP POLICY IF EXISTS "Anyone can view active bonus tiers" ON public.partner_bonus_tiers;
 CREATE POLICY "Anyone can view active bonus tiers"
   ON public.partner_bonus_tiers
   FOR SELECT
@@ -103,6 +107,7 @@ CREATE POLICY "Anyone can view active bonus tiers"
 -- ============================================================================
 
 -- Admins can view all weekly bonuses
+DROP POLICY IF EXISTS "Admins can view all weekly bonuses" ON public.partner_weekly_bonuses;
 CREATE POLICY "Admins can view all weekly bonuses"
   ON public.partner_weekly_bonuses
   FOR SELECT
@@ -110,6 +115,7 @@ CREATE POLICY "Admins can view all weekly bonuses"
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can update weekly bonuses
+DROP POLICY IF EXISTS "Admins can update weekly bonuses" ON public.partner_weekly_bonuses;
 CREATE POLICY "Admins can update weekly bonuses"
   ON public.partner_weekly_bonuses
   FOR UPDATE
@@ -117,6 +123,7 @@ CREATE POLICY "Admins can update weekly bonuses"
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Partners can view their own weekly bonuses
+DROP POLICY IF EXISTS "Partners can view their own weekly bonuses" ON public.partner_weekly_bonuses;
 CREATE POLICY "Partners can view their own weekly bonuses"
   ON public.partner_weekly_bonuses
   FOR SELECT
@@ -124,6 +131,7 @@ CREATE POLICY "Partners can view their own weekly bonuses"
   USING (auth.uid() = partner_id);
 
 -- System can insert weekly bonus records
+DROP POLICY IF EXISTS "System can insert weekly bonuses" ON public.partner_weekly_bonuses;
 CREATE POLICY "System can insert weekly bonuses"
   ON public.partner_weekly_bonuses
   FOR INSERT
@@ -133,12 +141,15 @@ CREATE POLICY "System can insert weekly bonuses"
 -- 9. Insert default bonus tiers (seed data)
 -- ============================================================================
 INSERT INTO public.partner_bonus_tiers (tier_name, min_weekly_sales, max_weekly_sales, bonus_percentage, tier_order, is_active)
-VALUES 
+SELECT * FROM (VALUES 
   ('Starter', 0, 500, 0.01, 1, true),
   ('Bronze', 501, 1000, 0.015, 2, true),
   ('Silver', 1001, 2500, 0.02, 3, true),
   ('Gold', 2501, 999999999, 0.03, 4, true)
-ON CONFLICT (tier_name) DO NOTHING;
+) AS v(tier_name, min_weekly_sales, max_weekly_sales, bonus_percentage, tier_order, is_active)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.partner_bonus_tiers WHERE tier_name = v.tier_name
+);
 
 -- 10. Add comments for documentation
 -- ============================================================================

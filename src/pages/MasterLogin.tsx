@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const MasterLogin = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"validating" | "success" | "error">("validating");
@@ -18,7 +20,7 @@ const MasterLogin = () => {
         const token = searchParams.get("token");
 
         if (!token) {
-          throw new Error("No token provided");
+          throw new Error("missing_token");
         }
 
         console.log("🔐 [MasterLogin] Processing master login", {
@@ -48,7 +50,7 @@ const MasterLogin = () => {
             has_access_token: !!data?.access_token,
             has_refresh_token: !!data?.refresh_token
           });
-          throw new Error("Invalid authentication response");
+          throw new Error("invalid_auth_response");
         }
 
         console.log("✅ [MasterLogin] Tokens received", {
@@ -79,7 +81,7 @@ const MasterLogin = () => {
         console.log(`✅ [MasterLogin] Session created successfully - Total time: ${totalDuration}ms`);
         
         setStatus("success");
-        toast.success("Master login successful! Redirecting...");
+        toast.success(t("masterLogin.toasts.success"));
 
         // Redirect to dashboard after brief delay
         console.log("🔄 [MasterLogin] Redirecting to dashboard in 1s");
@@ -95,7 +97,13 @@ const MasterLogin = () => {
         });
         
         setStatus("error");
-        toast.error(error.message || "Master login failed");
+        if (error?.message === "missing_token") {
+          toast.error(t("masterLogin.errors.missingToken"));
+        } else if (error?.message === "invalid_auth_response") {
+          toast.error(t("masterLogin.errors.invalidResponse"));
+        } else {
+          toast.error(t("masterLogin.toasts.failed"));
+        }
 
         // Redirect to login page after error
         console.log("🔄 [MasterLogin] Redirecting to login page in 3s");
@@ -116,9 +124,9 @@ const MasterLogin = () => {
             {status === "validating" && (
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <h2 className="text-xl font-semibold">Validating Master Login</h2>
+                <h2 className="text-xl font-semibold">{t("masterLogin.validating.title")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Please wait while we authenticate your session...
+                  {t("masterLogin.validating.description")}
                 </p>
               </>
             )}
@@ -138,9 +146,9 @@ const MasterLogin = () => {
                     <path d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold">Login Successful</h2>
+                <h2 className="text-xl font-semibold">{t("masterLogin.success.title")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Redirecting to dashboard...
+                  {t("masterLogin.success.description")}
                 </p>
               </>
             )}
@@ -160,9 +168,9 @@ const MasterLogin = () => {
                     <path d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold">Authentication Failed</h2>
+                <h2 className="text-xl font-semibold">{t("masterLogin.error.title")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  The master login link is invalid or has expired. Redirecting to login...
+                  {t("masterLogin.error.description")}
                 </p>
               </>
             )}

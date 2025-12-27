@@ -13,8 +13,10 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useTranslation } from "react-i18next";
 
 const ResetPassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { platformName, platformLogoUrl } = useBranding();
   const [searchParams] = useSearchParams();
@@ -40,8 +42,8 @@ const ResetPassword = () => {
       if (!token) {
         console.error('No token found in URL');
         setIsValidToken(false);
-        setTokenError("No reset token provided");
-        toast.error("Invalid reset link");
+        setTokenError(t("resetPassword.noToken"));
+        toast.error(t("resetPassword.invalidResetLink"));
         setTimeout(() => navigate("/forgot-password"), 3000);
         return;
       }
@@ -64,16 +66,16 @@ const ResetPassword = () => {
           
           // Set specific error messages based on error type
           if (result?.error === 'token_expired') {
-            setTokenError("This reset link has expired. Please request a new password reset.");
+            setTokenError(t("resetPassword.tokenExpired"));
           } else if (result?.error === 'token_used') {
-            setTokenError("This reset link has already been used. Please request a new password reset.");
+            setTokenError(t("resetPassword.tokenUsed"));
           } else if (result?.error === 'invalid_token') {
-            setTokenError("This reset link is invalid. Please request a new password reset.");
+            setTokenError(t("resetPassword.invalidToken"));
           } else {
-            setTokenError(result?.message || "Invalid reset link");
+            setTokenError(result?.message || t("resetPassword.invalidLinkDescription"));
           }
           
-          toast.error(result?.message || "Invalid reset link");
+          toast.error(result?.message || t("resetPassword.invalidResetLink"));
           setTimeout(() => navigate("/forgot-password"), 5000);
           return;
         }
@@ -86,8 +88,8 @@ const ResetPassword = () => {
       } catch (error: any) {
         console.error('Unexpected error during token verification:', error);
         setIsValidToken(false);
-        setTokenError("An error occurred while verifying your reset link. Please try again.");
-        toast.error("Failed to verify reset link");
+        setTokenError(t("resetPassword.verificationError"));
+        toast.error(t("resetPassword.failedToVerify"));
         setTimeout(() => navigate("/forgot-password"), 3000);
       }
     };
@@ -97,7 +99,7 @@ const ResetPassword = () => {
 
   const onSubmit = async (data: ChangePasswordFormData) => {
     if (!token) {
-      toast.error("No reset token found");
+      toast.error(t("resetPassword.noTokenFound"));
       return;
     }
 
@@ -122,24 +124,24 @@ const ResetPassword = () => {
         
         // Handle specific error cases
         if (result?.error === 'token_expired') {
-          toast.error("This reset link has expired. Please request a new password reset.");
+          toast.error(t("resetPassword.tokenExpired"));
           setTimeout(() => navigate("/forgot-password"), 2000);
           return;
         } else if (result?.error === 'token_used') {
-          toast.error("This reset link has already been used.");
+          toast.error(t("resetPassword.tokenUsed"));
           setTimeout(() => navigate("/forgot-password"), 2000);
           return;
         } else if (result?.error === 'weak_password') {
-          toast.error("Password must be at least 6 characters long");
+          toast.error(t("resetPassword.weakPassword"));
           return;
         }
         
-        throw new Error(result?.message || 'Failed to reset password');
+        throw new Error(result?.message || t("resetPassword.passwordResetFailed"));
       }
 
       console.log('Password reset successful');
       setIsSuccess(true);
-      toast.success("Password changed successfully! You can now login with your new password.");
+      toast.success(t("resetPassword.passwordResetSuccess"));
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -147,14 +149,14 @@ const ResetPassword = () => {
       }, 3000);
     } catch (error: any) {
       console.error('Unexpected error during password reset:', error);
-      toast.error(error.message || 'Failed to change password. Please try again.');
+      toast.error(error.message || t("resetPassword.failedToChangePassword"));
     }
   };
 
   if (isValidToken === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Verifying reset link..." />
+        <LoadingSpinner size="lg" text={t("resetPassword.verifyingLink")} />
       </div>
     );
   }
@@ -166,17 +168,17 @@ const ResetPassword = () => {
           <CardHeader>
             <div className="flex items-center gap-2 mb-2">
               <AlertCircle className="h-6 w-6 text-destructive" />
-              <CardTitle className="text-2xl font-bold text-destructive">Invalid Link</CardTitle>
+              <CardTitle className="text-2xl font-bold text-destructive">{t("resetPassword.invalidLink")}</CardTitle>
             </div>
             <CardDescription>
-              {tokenError || "This password reset link is invalid or has expired."}
+              {tokenError || t("resetPassword.invalidLinkDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <Alert>
                 <AlertDescription>
-                  Redirecting you to request a new password reset link...
+                  {t("resetPassword.redirectingToRequest")}
                 </AlertDescription>
               </Alert>
               <Button
@@ -184,7 +186,7 @@ const ResetPassword = () => {
                 className="w-full"
                 onClick={() => navigate("/forgot-password")}
               >
-                Request New Reset Link
+                {t("resetPassword.requestNewResetLink")}
               </Button>
             </div>
           </CardContent>
@@ -200,11 +202,11 @@ const ResetPassword = () => {
           <div className="flex justify-center mb-4">
             <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("resetPassword.title")}</CardTitle>
           <CardDescription>
             {isSuccess
-              ? "Your password has been changed successfully"
-              : `Create a new password for ${userEmail}`}
+              ? t("resetPassword.subtitleSuccess")
+              : t("resetPassword.subtitle", { email: userEmail })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -213,7 +215,7 @@ const ResetPassword = () => {
               <div className="flex flex-col items-center justify-center py-6">
                 <CheckCircle className="h-16 w-16 text-primary mb-4" />
                 <p className="text-center text-muted-foreground">
-                  Redirecting to login page...
+                  {t("resetPassword.redirectingToLogin")}
                 </p>
               </div>
               <Button
@@ -221,7 +223,7 @@ const ResetPassword = () => {
                 className="w-full"
                 onClick={() => navigate("/login")}
               >
-                Go to Login Now
+                {t("resetPassword.goToLoginNow")}
               </Button>
             </div>
           ) : (
@@ -230,7 +232,7 @@ const ResetPassword = () => {
                 {timeRemaining > 0 && (
                   <Alert>
                     <AlertDescription className="text-sm">
-                      ⏱️ This link expires in <strong>{timeRemaining} minutes</strong>
+                      ⏱️ {t("resetPassword.linkExpiresIn", { minutes: timeRemaining })}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -240,14 +242,14 @@ const ResetPassword = () => {
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>{t("resetPassword.newPassword")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type="password"
-                            placeholder="Enter new password"
+                            placeholder={t("resetPassword.newPasswordPlaceholder")}
                             className="pl-10"
                           />
                         </div>
@@ -262,14 +264,14 @@ const ResetPassword = () => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>{t("resetPassword.confirmPassword")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type="password"
-                            placeholder="Confirm new password"
+                            placeholder={t("resetPassword.confirmPasswordPlaceholder")}
                             className="pl-10"
                           />
                         </div>
@@ -284,7 +286,7 @@ const ResetPassword = () => {
                   className="w-full"
                   disabled={form.formState.isSubmitting}
                 >
-                  {form.formState.isSubmitting ? "Changing Password..." : "Change Password"}
+                  {form.formState.isSubmitting ? t("resetPassword.changingPassword") : t("resetPassword.resetPassword")}
                 </Button>
               </form>
             </Form>

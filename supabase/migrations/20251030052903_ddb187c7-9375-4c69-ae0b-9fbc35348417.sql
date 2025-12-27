@@ -1,4 +1,6 @@
 -- Add RLS policy to allow users to view their upline's profile
+DROP POLICY IF EXISTS "Users can view their upline profile" ON profiles;
+
 CREATE POLICY "Users can view their upline profile"
 ON profiles FOR SELECT
 USING (

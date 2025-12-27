@@ -7,6 +7,3 @@ GRANT EXECUTE ON FUNCTION public.get_referral_stats(UUID) TO anon;
 
 
 
-
-
-

@@ -81,6 +81,3 @@ ORDER BY r.rolname;
 
 
 
-
-
-

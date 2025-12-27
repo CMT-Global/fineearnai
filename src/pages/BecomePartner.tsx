@@ -13,8 +13,10 @@ import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import { generateCorrelationId } from "@/lib/utils";
 import { partnerDebugLogger } from "@/lib/partner-debug-logger";
+import { useTranslation } from "react-i18next";
 
 const BecomePartner = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
@@ -169,9 +171,9 @@ const BecomePartner = () => {
     });
 
     const customMessage = isNetworkError 
-      ? "Unable to load partner status. Please check your connection and try again."
+      ? t("partner.becomePartner.errors.network")
       : isAuthError
-      ? "Your session has expired. Please refresh the page or log in again."
+      ? t("partner.becomePartner.errors.sessionExpired")
       : undefined;
 
     return (
@@ -211,7 +213,7 @@ const BecomePartner = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
+          <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
       </PageLayout>
     );
@@ -222,7 +224,10 @@ const BecomePartner = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text={isPartnerProgramEnabled ? "Loading..." : "Redirecting..."} />
+          <LoadingSpinner
+            size="lg"
+            text={isPartnerProgramEnabled ? t("common.loading") : t("partner.dashboard.redirecting")}
+          />
         </div>
       </PageLayout>
     );
@@ -239,7 +244,7 @@ const BecomePartner = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
+          <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
       </PageLayout>
     );
@@ -247,7 +252,7 @@ const BecomePartner = () => {
 
   return (
     <PartnerErrorBoundary
-      fallbackMessage="There was an error loading the partner application page. Please try again."
+      fallbackMessage={t("partner.becomePartner.errors.pageLoad")}
       onReset={() => {
         refetchPartnerStatus();
       }}

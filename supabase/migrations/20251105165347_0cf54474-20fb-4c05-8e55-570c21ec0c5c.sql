@@ -47,24 +47,28 @@ CREATE INDEX IF NOT EXISTS idx_bulk_email_jobs_batch_id
 ALTER TABLE public.bulk_email_jobs ENABLE ROW LEVEL SECURITY;
 
 -- Admins can view all bulk email jobs
+DROP POLICY IF EXISTS "Admins can view all bulk email jobs" ON public.bulk_email_jobs;
 CREATE POLICY "Admins can view all bulk email jobs"
   ON public.bulk_email_jobs
   FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can insert bulk email jobs
+DROP POLICY IF EXISTS "Admins can create bulk email jobs" ON public.bulk_email_jobs;
 CREATE POLICY "Admins can create bulk email jobs"
   ON public.bulk_email_jobs
   FOR INSERT
   WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
 -- Admins can update bulk email jobs (for status changes, progress updates)
+DROP POLICY IF EXISTS "Admins can update bulk email jobs" ON public.bulk_email_jobs;
 CREATE POLICY "Admins can update bulk email jobs"
   ON public.bulk_email_jobs
   FOR UPDATE
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Service role can update jobs (for queue processor)
+DROP POLICY IF EXISTS "Service role can update bulk email jobs" ON public.bulk_email_jobs;
 CREATE POLICY "Service role can update bulk email jobs"
   ON public.bulk_email_jobs
   FOR UPDATE

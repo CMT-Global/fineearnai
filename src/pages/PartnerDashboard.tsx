@@ -16,6 +16,7 @@ import { useUsernameValidation } from "@/hooks/useUsernameValidation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RankProgressCard } from "@/components/partner/RankProgressCard";
 import { PartnerLeaderboard } from "@/components/partner/PartnerLeaderboard";
 import { WeeklyBonusProgressCard } from "@/components/partner/WeeklyBonusProgressCard";
@@ -46,6 +47,7 @@ import {
 const PRESET_AMOUNTS = [5, 10, 20, 50, 100, 200, 500];
 
 const PartnerDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: isPartner, isLoading: checkingPartner } = useIsPartner();
@@ -154,32 +156,32 @@ const PartnerDashboard = () => {
     
     // Phase 4: Enhanced validation with specific error messages
     if (!amount || amount <= 0 || isNaN(amount)) {
-      toast.error("Please enter a valid amount greater than $0");
+      toast.error(t("partner.toasts.enterValidAmount"));
       return;
     }
 
     if (amount > 10000) {
-      toast.error("Maximum voucher amount is $10,000");
+      toast.error(t("partner.toasts.maxVoucherAmount"));
       return;
     }
 
     if (!recipientUsername.trim()) {
-      toast.error("Please enter the recipient's username");
+      toast.error(t("partner.toasts.enterRecipientUsername"));
       return;
     }
 
     if (recipientUsername.trim().length < 3) {
-      toast.error("Username must be at least 3 characters");
+      toast.error(t("partner.toasts.usernameMinLength"));
       return;
     }
 
     if (isChecking) {
-      toast.error("Please wait while we verify the username");
+      toast.error(t("partner.toasts.waitVerifyUsername"));
       return;
     }
 
     if (!isUsernameValid) {
-      toast.error(usernameError || "Username not found. Please check and try again.");
+      toast.error(usernameError || t("partner.toasts.usernameNotFound"));
       return;
     }
 
@@ -191,7 +193,7 @@ const PartnerDashboard = () => {
 
     // Phase 4: Enhanced balance validation
     if (!profile) {
-      toast.error("Unable to load your profile. Please refresh the page.");
+      toast.error(t("partner.toasts.unableToLoadProfile"));
       return;
     }
 
@@ -235,7 +237,7 @@ const PartnerDashboard = () => {
 
   const addPaymentMethod = () => {
     if (!newPaymentMethod.type || !newPaymentMethod.details) {
-      toast.error("Please fill in all payment method fields");
+      toast.error(t("partner.toasts.fillPaymentMethodFields"));
       return;
     }
 
@@ -275,17 +277,17 @@ const PartnerDashboard = () => {
 
   return (
     <PartnerErrorBoundary
-      fallbackMessage="There was an error loading your partner dashboard. Please try again."
+      fallbackMessage={t("partner.dashboard.errorLoadingDashboard")}
     >
       <PageLayout profile={profile} onSignOut={signOut}>
         <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Partner Dashboard</h1>
+            <h1 className="text-3xl font-bold">{t("partner.dashboard.title")}</h1>
           </div>
           <p className="text-muted-foreground">
-            Manage your voucher sales and track your earnings
+            {t("partner.dashboard.subtitle")}
           </p>
         </div>
 
@@ -299,13 +301,13 @@ const PartnerDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Current Rank
+                {t("partner.dashboard.currentRank")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {getRankBadge(partnerConfig?.current_rank || 'bronze')}
               <p className="text-xs text-muted-foreground mt-2">
-                {(commissionRate * 100).toFixed(0)}% Commission Rate
+                {t("partner.dashboard.commissionRate", { rate: (commissionRate * 100).toFixed(0) })}
               </p>
             </CardContent>
           </Card>
@@ -313,7 +315,7 @@ const PartnerDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Deposit Wallet
+                {t("partner.dashboard.depositWallet")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -321,7 +323,7 @@ const PartnerDashboard = () => {
                 {formatCurrency(profile?.deposit_wallet_balance || 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Available for voucher purchases
+                {t("partner.dashboard.availableForPurchases")}
               </p>
             </CardContent>
           </Card>
@@ -329,7 +331,7 @@ const PartnerDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Today's Sales
+                {t("partner.dashboard.todaysSales")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -342,7 +344,7 @@ const PartnerDashboard = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Vouchers Sold
+                {t("partner.dashboard.totalVouchersSold")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -360,7 +362,7 @@ const PartnerDashboard = () => {
             className="w-full sm:w-auto"
           >
             <TrendingUp className="h-4 w-4 mr-2" />
-            View Analytics Dashboard
+            {t("partner.dashboard.viewAnalytics")}
           </Button>
         </div>
 
@@ -373,37 +375,37 @@ const PartnerDashboard = () => {
           <TabsList>
             <TabsTrigger value="purchase">
               <Plus className="h-4 w-4 mr-2" />
-              Buy Vouchers
+              {t("partner.dashboard.buyVouchers")}
             </TabsTrigger>
             <TabsTrigger value="vouchers">
               <Ticket className="h-4 w-4 mr-2" />
-              My Vouchers
+              {t("partner.dashboard.myVouchers")}
             </TabsTrigger>
             <TabsTrigger value="bonuses">
               <DollarSign className="h-4 w-4 mr-2" />
-              Weekly Bonuses
+              {t("partner.dashboard.weeklyBonuses")}
             </TabsTrigger>
             <TabsTrigger value="rank-progress">
               <Award className="h-4 w-4 mr-2" />
-              Rank Progress
+              {t("partner.dashboard.rankProgress")}
             </TabsTrigger>
             <TabsTrigger value="payment-methods">
               <Settings className="h-4 w-4 mr-2" />
-              Payment Methods
+              {t("partner.dashboard.paymentMethods")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="purchase">
             <Card>
               <CardHeader>
-                <CardTitle>Purchase Top-Up Vouchers</CardTitle>
+                <CardTitle>{t("partner.dashboard.purchaseVoucher")}</CardTitle>
                 <CardDescription>
-                  Buy vouchers at {(commissionRate * 100).toFixed(0)}% discount and sell them for instant profit
+                  {t("partner.dashboard.purchaseDescription", { rate: (commissionRate * 100).toFixed(0) })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label className="mb-3 block">Select Amount or Enter Custom</Label>
+                  <Label className="mb-3 block">{t("partner.voucher.selectAmount")}</Label>
                   <div className="grid grid-cols-4 gap-3">
                     {PRESET_AMOUNTS.map((amount) => {
                       const cost = amount * (1 - commissionRate);
@@ -421,10 +423,10 @@ const PartnerDashboard = () => {
                         >
                           <span className="text-lg font-bold">${amount}</span>
                           <span className="text-xs text-muted-foreground mt-1">
-                            Cost: ${cost.toFixed(2)}
+                            {t("partner.voucher.cost")}: ${cost.toFixed(2)}
                           </span>
                           <span className="text-xs text-green-600 font-semibold">
-                            Profit: ${profit.toFixed(2)}
+                            {t("partner.voucher.profit")}: ${profit.toFixed(2)}
                           </span>
                         </Button>
                       );
@@ -451,7 +453,7 @@ const PartnerDashboard = () => {
                   <Alert className="border-amber-500/50 bg-amber-500/10">
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
                     <AlertDescription>
-                      <strong>Insufficient Balance:</strong> You need {formatCurrency(currentCost)} but only have {formatCurrency(profile?.deposit_wallet_balance || 0)} in your deposit wallet.
+                      <strong>{t("partner.dashboard.insufficientBalance")}</strong> {t("partner.dashboard.insufficientBalanceDescription", { needed: formatCurrency(currentCost), have: formatCurrency(profile?.deposit_wallet_balance || 0) })}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -463,7 +465,7 @@ const PartnerDashboard = () => {
                   disabled={!selectedAmount && !customAmount}
                 >
                   <DollarSign className="h-5 w-5 mr-2" />
-                  Continue to Purchase
+                  {t("partner.dashboard.continueToPurchase")}
                 </Button>
               </CardContent>
             </Card>
@@ -490,9 +492,9 @@ const PartnerDashboard = () => {
           <TabsContent value="payment-methods">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Methods</CardTitle>
+                <CardTitle>{t("partner.dashboard.paymentMethods")}</CardTitle>
                 <CardDescription>
-                  Configure how customers should pay you for vouchers
+                  {t("partner.dashboard.paymentMethodsDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -500,35 +502,35 @@ const PartnerDashboard = () => {
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                   <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
                     <DollarSign className="h-5 w-5" />
-                    How Customer Payments Work
+                    {t("partner.dashboard.howCustomerPaymentsWork")}
                   </h4>
                   <div className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
                     <div className="flex gap-3">
                       <span className="font-bold text-blue-600 dark:text-blue-400">1.</span>
-                      <p>Customer contacts you to purchase a voucher (via WhatsApp, Telegram, etc.)</p>
+                      <p>{t("partner.dashboard.customerPaymentStep1")}</p>
                     </div>
                     <div className="flex gap-3">
                       <span className="font-bold text-blue-600 dark:text-blue-400">2.</span>
-                      <p>Customer sends payment using one of your configured methods below</p>
+                      <p>{t("partner.dashboard.customerPaymentStep2")}</p>
                     </div>
                     <div className="flex gap-3">
                       <span className="font-bold text-blue-600 dark:text-blue-400">3.</span>
-                      <p>You purchase the voucher from your dashboard and send the code to customer</p>
+                      <p>{t("partner.dashboard.customerPaymentStep3")}</p>
                     </div>
                     <div className="flex gap-3">
                       <span className="font-bold text-blue-600 dark:text-blue-400">4.</span>
-                      <p>Customer redeems the voucher and you keep your commission! 🎉</p>
+                      <p>{t("partner.dashboard.customerPaymentStep4")}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold">Your Payment Methods</h4>
+                  <h4 className="font-semibold">{t("partner.dashboard.yourPaymentMethods")}</h4>
                   {paymentMethods.length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed rounded-lg">
                       <DollarSign className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-muted-foreground">No payment methods added yet</p>
-                      <p className="text-sm text-muted-foreground mt-1">Add methods below so customers know how to pay you</p>
+                      <p className="text-muted-foreground">{t("partner.dashboard.noPaymentMethods")}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t("partner.dashboard.noPaymentMethodsDescription")}</p>
                     </div>
                   ) : (
                     paymentMethods.map((method, idx) => (
@@ -552,9 +554,9 @@ const PartnerDashboard = () => {
                 <div className="space-y-4 pt-4 border-t">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Payment Type</Label>
+                      <Label>{t("partner.dashboard.paymentMethodType")}</Label>
                       <Input
-                        placeholder="e.g., Bank Transfer, GCash"
+                        placeholder={t("partner.dashboard.paymentMethodTypePlaceholder")}
                         value={newPaymentMethod.type}
                         onChange={(e) =>
                           setNewPaymentMethod({ ...newPaymentMethod, type: e.target.value })
@@ -562,9 +564,9 @@ const PartnerDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>Account Details</Label>
+                      <Label>{t("partner.dashboard.paymentMethodDetails")}</Label>
                       <Input
-                        placeholder="Account number/details"
+                        placeholder={t("partner.dashboard.paymentMethodDetailsPlaceholder")}
                         value={newPaymentMethod.details}
                         onChange={(e) =>
                           setNewPaymentMethod({ ...newPaymentMethod, details: e.target.value })
@@ -574,7 +576,7 @@ const PartnerDashboard = () => {
                   </div>
                   <Button onClick={addPaymentMethod} variant="outline" className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Payment Method
+                    {t("partner.dashboard.addPaymentMethod")}
                   </Button>
                 </div>
 
@@ -586,7 +588,7 @@ const PartnerDashboard = () => {
                   {updatePaymentMutation.isPending && (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
-                  Save Payment Methods
+                  {t("partner.dashboard.savePaymentMethods")}
                 </Button>
               </CardContent>
             </Card>
@@ -598,18 +600,18 @@ const PartnerDashboard = () => {
       <Dialog open={purchaseDialog} onOpenChange={setPurchaseDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Voucher Purchase</DialogTitle>
+            <DialogTitle>{t("partner.dashboard.confirmVoucherPurchase")}</DialogTitle>
             <DialogDescription>
-              Review details before purchasing the voucher
+              {t("partner.dashboard.pleaseWaitProcessing")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label>Recipient Username *</Label>
+              <Label>{t("partner.voucher.recipientUsername")} *</Label>
               <div className="space-y-1.5">
                 <Input
-                  placeholder="Enter recipient's username"
+                  placeholder={t("partner.dashboard.enterRecipientUsername")}
                   value={recipientUsername}
                   onChange={(e) => setRecipientUsername(e.target.value)}
                   className={recipientUsername.trim() && !isChecking ? (isUsernameValid ? 'border-green-500 focus-visible:ring-green-500' : 'border-destructive focus-visible:ring-destructive') : ''}
@@ -621,29 +623,29 @@ const PartnerDashboard = () => {
                     {isChecking && (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Verifying username exists...</span>
+                        <span>{t("partner.dashboard.verifyingUsername")}</span>
                       </div>
                     )}
                     {!isChecking && isUsernameValid && (
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="font-medium">User found! Ready to send voucher.</span>
+                        <span className="font-medium">{t("partner.dashboard.userFound")}</span>
                       </div>
                     )}
                     {!isChecking && recipientUsername.trim().length >= 3 && !isUsernameValid && (
                       <div className="flex items-start gap-2 text-destructive">
                         <XCircle className="h-3.5 w-3.5 mt-0.5" />
                         <div>
-                          <div className="font-medium">{usernameError || 'User not found'}</div>
+                          <div className="font-medium">{usernameError || t("partner.dashboard.userNotFound")}</div>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            Double-check the spelling and try again
+                            {t("partner.dashboard.doubleCheckSpelling")}
                           </div>
                         </div>
                       </div>
                     )}
                     {!isChecking && recipientUsername.trim().length < 3 && (
                       <div className="text-muted-foreground text-xs">
-                        Username must be at least 3 characters
+                        {t("partner.toasts.usernameMinLength")}
                       </div>
                     )}
                   </div>
@@ -652,13 +654,13 @@ const PartnerDashboard = () => {
 
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex justify-between">
-                <span>Voucher Value:</span>
+                <span>{t("partner.voucher.amount")}:</span>
                 <span className="font-bold">
                   {formatCurrency(selectedAmount || parseFloat(customAmount) || 0)}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Your Cost ({(commissionRate * 100).toFixed(0)}% discount):</span>
+                <span>{t("partner.voucher.cost")} ({(commissionRate * 100).toFixed(0)}% {t("partner.voucher.discount")}):</span>
                 <span>
                   {formatCurrency(
                     (selectedAmount || parseFloat(customAmount) || 0) * (1 - commissionRate)
@@ -666,7 +668,7 @@ const PartnerDashboard = () => {
                 </span>
               </div>
               <div className="flex justify-between text-green-600 font-semibold pt-2 border-t">
-                <span>Your Profit:</span>
+                <span>{t("partner.voucher.profit")}:</span>
                 <span>
                   {formatCurrency(
                     (selectedAmount || parseFloat(customAmount) || 0) * commissionRate
@@ -682,7 +684,7 @@ const PartnerDashboard = () => {
               onClick={() => setPurchaseDialog(false)}
               disabled={purchaseMutation.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button 
               onClick={handleInitiatePurchase}
@@ -691,12 +693,12 @@ const PartnerDashboard = () => {
               {purchaseMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <DollarSign className="h-4 w-4 mr-2" />
-                  Review Purchase
+                  {t("partner.dashboard.reviewPurchase")}
                 </>
               )}
             </Button>
@@ -718,12 +720,12 @@ const PartnerDashboard = () => {
               ) : (
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
               )}
-              {purchaseMutation.isPending ? 'Processing Purchase...' : 'Confirm Voucher Purchase'}
+              {purchaseMutation.isPending ? t("partner.dashboard.processingPurchase") : t("partner.dashboard.confirmVoucherPurchase")}
             </DialogTitle>
             <DialogDescription>
               {purchaseMutation.isPending 
-                ? 'Please wait while we process your purchase'
-                : 'Please review carefully - this action cannot be undone'
+                ? t("partner.dashboard.pleaseWaitProcessing")
+                : t("partner.dashboard.reviewCarefully")
               }
             </DialogDescription>
           </DialogHeader>
@@ -731,30 +733,29 @@ const PartnerDashboard = () => {
           <Alert className="border-amber-500/50 bg-amber-500/10">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <AlertDescription className="text-sm">
-              <strong>Warning:</strong> Once confirmed, this voucher purchase is final. 
-              Please verify the recipient username and amount before proceeding.
+              <strong>{t("common.warning")}:</strong> {t("partner.dashboard.warningFinal")}
             </AlertDescription>
           </Alert>
 
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-muted-foreground">Recipient:</span>
+              <span className="text-muted-foreground">{t("partner.voucher.recipientUsername")}:</span>
               <span className="font-semibold">{recipientUsername}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-muted-foreground">Voucher Amount:</span>
+              <span className="text-muted-foreground">{t("partner.voucher.amount")}:</span>
               <span className="font-bold text-lg">
                 {pendingPurchase && formatCurrency(pendingPurchase.amount)}
               </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-muted-foreground">Your Cost:</span>
+              <span className="text-muted-foreground">{t("partner.voucher.cost")}:</span>
               <span className="font-semibold">
                 {pendingPurchase && formatCurrency(pendingPurchase.costAmount)}
               </span>
             </div>
             <div className="flex justify-between items-center py-2 bg-green-500/10 rounded-lg px-3">
-              <span className="text-green-700 dark:text-green-400 font-medium">Your Profit:</span>
+              <span className="text-green-700 dark:text-green-400 font-medium">{t("partner.voucher.profit")}:</span>
               <span className="text-green-700 dark:text-green-400 font-bold">
                 {pendingPurchase && formatCurrency(pendingPurchase.amount * pendingPurchase.commissionRate)}
               </span>
@@ -767,7 +768,7 @@ const PartnerDashboard = () => {
               onClick={() => setShowConfirmDialog(false)}
               disabled={purchaseMutation.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button 
               onClick={handleConfirmPurchase}
@@ -777,10 +778,10 @@ const PartnerDashboard = () => {
               {purchaseMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  {t("common.saving")}
                 </>
               ) : (
-                'Confirm & Purchase'
+                t("partner.dashboard.confirmAndPurchase")
               )}
             </Button>
           </DialogFooter>

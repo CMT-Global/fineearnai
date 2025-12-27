@@ -7,6 +7,7 @@ import { PaymentGuideDialog } from "./PaymentGuideDialog";
 import { PAYMENT_GUIDES } from "@/data/payment-guides";
 import { PaymentProcessorGuide, GuideType } from "@/types/payment-guides";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useTranslation } from "react-i18next";
 
 interface InternationalGuideCardProps {
   title?: string;
@@ -14,10 +15,15 @@ interface InternationalGuideCardProps {
 }
 
 export const InternationalGuideCard = ({
-  title = "💳 Deposit & Withdrawal Quick Guides",
-  description = "Learn how to fund your account and withdraw earnings using various payment methods globally",
+  title,
+  description,
 }: InternationalGuideCardProps) => {
+  const { t } = useTranslation();
   const { platformName } = useBranding();
+  
+  // Use translations if title/description not provided
+  const displayTitle = title || t("dashboard.guides.title");
+  const displayDescription = description || t("dashboard.guides.description");
   const [isProcessorSelectionOpen, setIsProcessorSelectionOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedGuideType, setSelectedGuideType] = useState<GuideType>('deposit');
@@ -63,11 +69,11 @@ export const InternationalGuideCard = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
-            {title}
-            <Badge variant="outline" className="text-xs animate-fade-in">Worldwide</Badge>
+            {displayTitle}
+            <Badge variant="outline" className="text-xs animate-fade-in">{t("dashboard.guides.worldwide")}</Badge>
           </CardTitle>
           <CardDescription>
-            {description}
+            {displayDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,15 +88,15 @@ export const InternationalGuideCard = ({
                   <ArrowDownToLine className="h-8 w-8 text-primary transition-transform duration-300 group-hover:translate-y-1" />
                 </div>
                 <CardTitle className="text-xl transition-colors duration-200 group-hover:text-primary">
-                  💸 How to Deposit
+                  {t("dashboard.guides.howToDeposit")}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Fund your account using multiple payment methods
+                  {t("dashboard.guides.howToDepositDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
                 <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 group-hover:shadow-md">
-                  Click to View Options
+                  {t("dashboard.guides.clickToViewOptions")}
                 </Badge>
               </CardContent>
             </Card>
@@ -105,15 +111,15 @@ export const InternationalGuideCard = ({
                   <ArrowUpFromLine className="h-8 w-8 text-blue-500 transition-transform duration-300 group-hover:-translate-y-1" />
                 </div>
                 <CardTitle className="text-xl transition-colors duration-200 group-hover:text-blue-500">
-                  💰 How to Withdraw
+                  {t("dashboard.guides.howToWithdraw")}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Cash out earnings using multiple withdrawal methods
+                  {t("dashboard.guides.howToWithdrawDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
                 <Badge variant="secondary" className="bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 group-hover:shadow-md group-hover:scale-105">
-                  Click to View Options
+                  {t("dashboard.guides.clickToViewOptions")}
                 </Badge>
               </CardContent>
             </Card>

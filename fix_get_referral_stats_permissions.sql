@@ -24,6 +24,3 @@ ORDER BY r.rolname;
 
 
 
-
-
-

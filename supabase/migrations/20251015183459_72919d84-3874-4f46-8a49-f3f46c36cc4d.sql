@@ -1,11 +1,40 @@
 -- Phase 1: Critical Infrastructure - Cron Jobs Setup
 
--- 1. Enable required extensions for cron jobs
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+-- 1. Enable required extensions for cron jobs (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_cron'
+  ) THEN
+    CREATE EXTENSION pg_cron;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
 
--- 2. Daily Reset Cron Job (runs at midnight UTC daily)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_net'
+  ) THEN
+    CREATE EXTENSION pg_net;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
+-- 2. Daily Reset Cron Job (runs at midnight UTC daily) (idempotent)
 -- This resets tasks_completed_today and skips_today for all users
+DO $$
+BEGIN
+  PERFORM cron.unschedule('daily-reset-user-counters');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
 SELECT cron.schedule(
   'daily-reset-user-counters',
   '0 0 * * *', -- Every day at midnight UTC
@@ -19,8 +48,16 @@ SELECT cron.schedule(
   $$
 );
 
--- 3. Commission Queue Processor Cron Job (runs every 5 minutes)
+-- 3. Commission Queue Processor Cron Job (runs every 5 minutes) (idempotent)
 -- This processes pending referral commissions in batches
+DO $$
+BEGIN
+  PERFORM cron.unschedule('process-commission-queue');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
 SELECT cron.schedule(
   'process-commission-queue',
   '*/5 * * * *', -- Every 5 minutes
@@ -46,19 +83,45 @@ CREATE TABLE IF NOT EXISTS public.task_pool_metrics (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Enable RLS on task_pool_metrics
-ALTER TABLE public.task_pool_metrics ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on task_pool_metrics (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'task_pool_metrics' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.task_pool_metrics ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- RLS policies for task_pool_metrics
-CREATE POLICY "Admins can view task pool metrics"
-  ON public.task_pool_metrics
-  FOR SELECT
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Service role can insert metrics"
-  ON public.task_pool_metrics
-  FOR INSERT
-  WITH CHECK (true);
+-- RLS policies for task_pool_metrics (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'task_pool_metrics' 
+    AND policyname = 'Admins can view task pool metrics'
+  ) THEN
+    CREATE POLICY "Admins can view task pool metrics"
+      ON public.task_pool_metrics
+      FOR SELECT
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'task_pool_metrics' 
+    AND policyname = 'Service role can insert metrics'
+  ) THEN
+    CREATE POLICY "Service role can insert metrics"
+      ON public.task_pool_metrics
+      FOR INSERT
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- 5. Create function to get task pool health
 CREATE OR REPLACE FUNCTION public.get_task_pool_health()
@@ -124,7 +187,15 @@ BEGIN
 END;
 $$;
 
--- 6. Create cron job for task pool monitoring (runs every 30 minutes)
+-- 6. Create cron job for task pool monitoring (runs every 30 minutes) (idempotent)
+DO $$
+BEGIN
+  PERFORM cron.unschedule('monitor-task-pool');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
 SELECT cron.schedule(
   'monitor-task-pool',
   '*/30 * * * *', -- Every 30 minutes
@@ -156,19 +227,45 @@ CREATE INDEX IF NOT EXISTS idx_edge_function_metrics_function_name
 CREATE INDEX IF NOT EXISTS idx_edge_function_metrics_created_at 
   ON public.edge_function_metrics(created_at DESC);
 
--- Enable RLS
-ALTER TABLE public.edge_function_metrics ENABLE ROW LEVEL SECURITY;
+-- Enable RLS (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'edge_function_metrics' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.edge_function_metrics ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- RLS policies
-CREATE POLICY "Admins can view all metrics"
-  ON public.edge_function_metrics
-  FOR SELECT
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Service role can insert metrics"
-  ON public.edge_function_metrics
-  FOR INSERT
-  WITH CHECK (true);
+-- RLS policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'edge_function_metrics' 
+    AND policyname = 'Admins can view all metrics'
+  ) THEN
+    CREATE POLICY "Admins can view all metrics"
+      ON public.edge_function_metrics
+      FOR SELECT
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'edge_function_metrics' 
+    AND policyname = 'Service role can insert metrics'
+  ) THEN
+    CREATE POLICY "Service role can insert metrics"
+      ON public.edge_function_metrics
+      FOR INSERT
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 COMMENT ON TABLE public.task_pool_metrics IS 'Tracks task availability and health metrics';
 COMMENT ON TABLE public.edge_function_metrics IS 'Tracks edge function performance and errors';

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ interface ReferralStats {
 }
 
 const ReferralSystemManage = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -47,10 +49,10 @@ const ReferralSystemManage = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -94,7 +96,7 @@ const ReferralSystemManage = () => {
       });
     } catch (error: any) {
       console.error("Error loading data:", error);
-      toast.error("Failed to load referral system configuration");
+      toast.error(t("toasts.admin.failedToLoadReferralSystemConfig"));
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,7 @@ const ReferralSystemManage = () => {
 
     // Validation
     if (config.signup_bonus_enabled && config.signup_bonus_amount < 0) {
-      toast.error("Signup bonus amount must be non-negative");
+      toast.error(t("toasts.admin.signupBonusAmountMustBeNonNegative"));
       return;
     }
 
@@ -121,11 +123,11 @@ const ReferralSystemManage = () => {
 
       if (error) throw error;
 
-      toast.success("Referral system configuration updated successfully");
+      toast.success(t("toasts.admin.referralSystemConfigUpdated"));
       loadData();
     } catch (error: any) {
       console.error("Error saving configuration:", error);
-      toast.error(error.message || "Failed to save configuration");
+      toast.error(error.message || t("toasts.admin.failedToSaveConfig"));
     } finally {
       setSaving(false);
     }
@@ -133,7 +135,7 @@ const ReferralSystemManage = () => {
 
   const handleTestReferralCode = async () => {
     if (!testCode.trim()) {
-      toast.error("Please enter a referral code to test");
+      toast.error(t("toasts.admin.pleaseEnterReferralCode"));
       return;
     }
 
@@ -149,22 +151,22 @@ const ReferralSystemManage = () => {
       if (!data) {
         setTestResult({
           valid: false,
-          message: "Referral code not found",
+          message: t("toasts.admin.referralCodeNotFound"),
         });
       } else if (data.account_status !== "active") {
         setTestResult({
           valid: false,
-          message: `Code belongs to ${data.username} but account is ${data.account_status}`,
+          message: t("toasts.admin.referralCodeInactive", { username: data.username, status: data.account_status }),
         });
       } else {
         setTestResult({
           valid: true,
-          message: `Valid! Code belongs to active user: ${data.username}`,
+          message: t("toasts.admin.referralCodeValid", { username: data.username }),
         });
       }
     } catch (error: any) {
       console.error("Error testing code:", error);
-      toast.error("Failed to test referral code");
+      toast.error(t("toasts.admin.failedToTestReferralCode"));
     }
   };
 
@@ -227,17 +229,17 @@ const ReferralSystemManage = () => {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success("Referral data exported successfully");
+      toast.success(t("toasts.admin.referralDataExported"));
     } catch (error: any) {
       console.error("Error exporting data:", error);
-      toast.error("Failed to export referral data");
+      toast.error(t("toasts.admin.failedToExportReferralData"));
     }
   };
 
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading referral system..." />
+        <LoadingSpinner size="lg" text={t("admin.referralSystemManage.loadingReferralSystem")} />
       </div>
     );
   }
@@ -245,7 +247,7 @@ const ReferralSystemManage = () => {
   if (!config) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>No referral configuration found</p>
+        <p>{t("admin.referralSystemManage.noReferralConfigurationFound")}</p>
       </div>
     );
   }
@@ -256,29 +258,29 @@ const ReferralSystemManage = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.referralSystemManage.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Referral System Management</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.referralSystemManage.title")}</h1>
           <p className="text-muted-foreground">
-            Configure signup bonuses and monitor referral program performance
+            {t("admin.referralSystemManage.subtitle")}
           </p>
         </div>
 
         {/* Informational Alert */}
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Commission Configuration</AlertTitle>
+          <AlertTitle>{t("admin.referralSystemManage.commissionConfiguration")}</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
             <span>
-              Referral commission rates (task commission and deposit commission) are configured per membership plan.
+              {t("admin.referralSystemManage.commissionDescription")}
             </span>
             <Button 
               variant="link" 
               className="h-auto p-0 ml-4"
               onClick={() => navigate('/admin/plans/manage')}
             >
-              Manage Plans →
+              {t("admin.referralSystemManage.managePlans")}
             </Button>
           </AlertDescription>
         </Alert>
@@ -288,7 +290,7 @@ const ReferralSystemManage = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Referrals
+                {t("admin.referralSystemManage.totalReferrals")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -302,7 +304,7 @@ const ReferralSystemManage = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Active Referrals
+                {t("admin.referralSystemManage.activeReferrals")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -316,7 +318,7 @@ const ReferralSystemManage = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Commission Paid
+                {t("admin.referralSystemManage.totalCommissionPaid")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -332,7 +334,7 @@ const ReferralSystemManage = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Avg Commission/Referral
+                {t("admin.referralSystemManage.avgCommissionPerReferral")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -347,9 +349,9 @@ const ReferralSystemManage = () => {
           {/* Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Signup Bonus Configuration</CardTitle>
+              <CardTitle>{t("admin.referralSystemManage.signupBonusConfiguration")}</CardTitle>
               <CardDescription>
-                Configure bonus rewards for new user signups
+                {t("admin.referralSystemManage.signupBonusDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -357,8 +359,8 @@ const ReferralSystemManage = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-base font-semibold">Signup Bonus</Label>
-                    <p className="text-sm text-muted-foreground">Give bonus to new users who sign up with a referral code</p>
+                    <Label className="text-base font-semibold">{t("admin.referralSystemManage.signupBonus")}</Label>
+                    <p className="text-sm text-muted-foreground">{t("admin.referralSystemManage.signupBonusHelp")}</p>
                   </div>
                   <Switch
                     checked={config.signup_bonus_enabled}
@@ -370,7 +372,7 @@ const ReferralSystemManage = () => {
 
                 {config.signup_bonus_enabled && (
                   <div>
-                    <Label>Signup Bonus Amount ($)</Label>
+                    <Label>{t("admin.referralSystemManage.signupBonusAmount")}</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -384,7 +386,7 @@ const ReferralSystemManage = () => {
                       }
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Amount credited to new user's account upon signup
+                      {t("admin.referralSystemManage.signupBonusAmountHelp")}
                     </p>
                   </div>
                 )}
@@ -392,7 +394,7 @@ const ReferralSystemManage = () => {
 
               <Button onClick={handleSave} disabled={saving} className="w-full">
                 <Save className="mr-2 h-4 w-4" />
-                {saving ? "Saving..." : "Save Configuration"}
+                {saving ? t("common.saving") : t("admin.referralSystemManage.saveConfiguration")}
               </Button>
             </CardContent>
           </Card>
@@ -402,15 +404,15 @@ const ReferralSystemManage = () => {
             {/* Test Referral Code */}
             <Card>
               <CardHeader>
-                <CardTitle>Test Referral Code</CardTitle>
+                <CardTitle>{t("admin.referralSystemManage.testReferralCode")}</CardTitle>
                 <CardDescription>
-                  Validate if a referral code exists and is active
+                  {t("admin.referralSystemManage.testReferralCodeDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter referral code"
+                    placeholder={t("admin.referralSystemManage.enterReferralCode")}
                     value={testCode}
                     onChange={(e) => {
                       setTestCode(e.target.value.toUpperCase());
@@ -422,7 +424,7 @@ const ReferralSystemManage = () => {
                       }
                     }}
                   />
-                  <Button onClick={handleTestReferralCode}>Test</Button>
+                  <Button onClick={handleTestReferralCode}>{t("admin.referralSystemManage.test")}</Button>
                 </div>
 
                 {testResult && (
@@ -449,14 +451,14 @@ const ReferralSystemManage = () => {
             {/* Export Data */}
             <Card>
               <CardHeader>
-                <CardTitle>Export Referral Data</CardTitle>
+                <CardTitle>{t("admin.referralSystemManage.exportReferralData")}</CardTitle>
                 <CardDescription>
-                  Download all referral relationships and commissions as CSV
+                  {t("admin.referralSystemManage.exportReferralDataDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={handleExportData} variant="outline" className="w-full">
-                  Export to CSV
+                  {t("admin.referralSystemManage.exportToCSV")}
                 </Button>
               </CardContent>
             </Card>
@@ -464,13 +466,13 @@ const ReferralSystemManage = () => {
             {/* Quick Stats */}
             <Card>
               <CardHeader>
-                <CardTitle>System Status</CardTitle>
+                <CardTitle>{t("admin.referralSystemManage.systemStatus")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-muted-foreground">Signup Bonus</span>
+                  <span className="text-sm text-muted-foreground">{t("admin.referralSystemManage.signupBonusStatus")}</span>
                   <Badge variant={config.signup_bonus_enabled ? "default" : "secondary"}>
-                    {config.signup_bonus_enabled ? `$${config.signup_bonus_amount}` : "Disabled"}
+                    {config.signup_bonus_enabled ? `$${config.signup_bonus_amount}` : t("admin.referralSystemManage.disabled")}
                   </Badge>
                 </div>
               </CardContent>

@@ -12,8 +12,10 @@ import { ArrowLeft, CheckCircle2, XCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 
 const TaskDetail = () => {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { formatAmount } = useCurrencyConversion();
@@ -54,7 +56,7 @@ const TaskDetail = () => {
 
       // Check if user has reached daily limit
       if (profile.tasks_completed_today >= (plan?.daily_task_limit || 0)) {
-        toast.error("Daily task limit reached!");
+        toast.error(t("tasks.toasts.dailyTaskLimitReached"));
         navigate("/tasks");
         return;
       }
@@ -82,7 +84,7 @@ const TaskDetail = () => {
         .single();
 
       if (taskError || !nextTask) {
-        toast.info("No more tasks available at the moment");
+        toast.info(t("tasks.toasts.noMoreTasks"));
         navigate("/tasks");
         return;
       }
@@ -90,7 +92,7 @@ const TaskDetail = () => {
       setTask(nextTask);
     } catch (error) {
       console.error("Error loading task:", error);
-      toast.error("Failed to load task");
+      toast.error(t("tasks.toasts.failedToLoadTask"));
       navigate("/tasks");
     }
   };
@@ -112,7 +114,7 @@ const TaskDetail = () => {
         .single();
 
       if (profile.skips_today >= (plan?.task_skip_limit_per_day || 0)) {
-        toast.error("Daily skip limit reached!");
+        toast.error(t("tasks.toasts.dailySkipLimitReached"));
         return;
       }
 
@@ -122,7 +124,7 @@ const TaskDetail = () => {
         .update({ skips_today: profile.skips_today + 1 })
         .eq("id", user?.id);
 
-      toast.info("Task skipped");
+      toast.info(t("tasks.toasts.taskSkipped"));
       loadNextTask();
     } catch (error: any) {
       console.error("Error skipping task:", error);
@@ -132,7 +134,7 @@ const TaskDetail = () => {
 
   const handleSubmitAnswer = async () => {
     if (!selectedResponse) {
-      toast.error("Please select an answer");
+      toast.error(t("tasks.toasts.pleaseSelectAnswer"));
       return;
     }
 
@@ -155,7 +157,7 @@ const TaskDetail = () => {
       if (data.isCorrect) {
         toast.success(`Correct! You earned ${formatAmount(data.earnedAmount)}`);
       } else {
-        toast.error("Incorrect answer");
+        toast.error(t("tasks.toasts.incorrectAnswer"));
       }
 
       // Wait 3 seconds to show feedback, then load next task

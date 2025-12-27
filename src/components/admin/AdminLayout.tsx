@@ -55,14 +55,14 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex w-full animate-fade-in text-foreground">
+    <div className="min-h-screen bg-background w-full animate-fade-in text-foreground">
       <AdminSidebar 
         profile={profile}
         onSignOut={signOut}
       />
       
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto pt-16 lg:pt-0 bg-background">
+      <main className="pt-16 lg:pt-0 lg:ml-80 bg-background min-h-screen">
         {children}
       </main>
     </div>

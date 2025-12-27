@@ -73,6 +73,3 @@ ORDER BY r.rolname;
 
 
 
-
-
-

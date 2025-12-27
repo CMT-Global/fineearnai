@@ -21,8 +21,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "react-i18next";
 
 const Signup = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { platformName, platformLogoUrl } = useBranding();
   const { toast } = useToast();
@@ -47,8 +49,8 @@ const Signup = () => {
       } else {
         console.error('[REFERRAL] ❌ Invalid referral code format:', upperCode);
         toast({
-          title: "Invalid referral code",
-          description: "The referral code format is invalid.",
+          title: t("signup.invalidReferralCode"),
+          description: t("signup.invalidReferralCodeFormat"),
           variant: "destructive",
         });
       }
@@ -98,8 +100,8 @@ const Signup = () => {
     // Block submission if username is not available
     if (isChecking) {
       toast({
-        title: "Please wait",
-        description: "Checking username availability...",
+        title: t("signup.pleaseWait"),
+        description: t("signup.checkingUsername"),
         variant: "destructive",
       });
       return;
@@ -107,8 +109,8 @@ const Signup = () => {
 
     if (isAvailable === false) {
       toast({
-        title: "Username unavailable",
-        description: "Please choose a different username",
+        title: t("signup.usernameUnavailable"),
+        description: t("signup.chooseDifferentUsername"),
         variant: "destructive",
       });
       return;
@@ -137,13 +139,13 @@ const Signup = () => {
       if (signupError) {
         if (signupError.message.includes("already registered")) {
           toast({
-            title: "Account exists",
-            description: "This email is already registered. Please login instead.",
+            title: t("signup.accountExists"),
+            description: t("signup.emailAlreadyRegistered"),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Signup failed",
+            title: t("signup.signupFailed"),
             description: signupError.message,
             variant: "destructive",
           });
@@ -175,10 +177,10 @@ const Signup = () => {
         });
         
         toast({
-          title: "Account created!",
+          title: t("signup.accountCreated"),
           description: referrerUsername 
-            ? `Welcome to ProfitChips! You've been referred by ${referrerUsername}. Please check your email to verify your account.`
-            : "Account created! Please check your email to verify.",
+            ? t("signup.accountCreatedWithReferrer", { platform: platformName, referrer: referrerUsername })
+            : t("signup.checkEmail"),
         });
         
         // Clear the stored referral code
@@ -186,8 +188,8 @@ const Signup = () => {
         localStorage.removeItem("pending_referral_code");
       } else {
         toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
+          title: t("signup.accountCreated"),
+          description: t("signup.checkEmail"),
         });
       }
 
@@ -206,8 +208,8 @@ const Signup = () => {
       
       if (isUsernameConflict || isUsernameTakenError) {
         toast({
-          title: "Username already exists",
-          description: `The username "${data.username}" is already taken. Please try another.`,
+          title: t("signup.usernameAlreadyExists"),
+          description: t("signup.usernameTaken", { username: data.username }),
           variant: "destructive",
         });
         
@@ -219,8 +221,8 @@ const Signup = () => {
         }
       } else {
         toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again.",
+          title: t("signup.error"),
+          description: t("signup.unexpectedError"),
           variant: "destructive",
         });
       }
@@ -236,11 +238,11 @@ const Signup = () => {
           <div className="flex justify-center">
             <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold">Create Account</h1>
+          <h1 className="text-2xl font-bold">{t("signup.title")}</h1>
           <p className="text-muted-foreground">
             {referrerUsername 
-              ? `Invited by ${referrerUsername}. Join ${platformName} and start earning!`
-              : `Join ${platformName} - Start earning with AI tasks in minutes`}
+              ? t("signup.subtitleWithReferrer", { referrer: referrerUsername, platform: platformName })
+              : t("signup.subtitle", { platform: platformName })}
           </p>
         </div>
 
@@ -252,7 +254,7 @@ const Signup = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center justify-between">
-                          <span>Username</span>
+                          <span>{t("signup.username")}</span>
                           {usernameValue && usernameValue.length >= 3 && (
                             <span className={cn(
                               "text-xs font-normal",
@@ -260,9 +262,9 @@ const Signup = () => {
                               !isChecking && isAvailable === true && "text-green-600",
                               !isChecking && isAvailable === false && "text-destructive"
                             )}>
-                              {isChecking && "Checking..."}
-                              {!isChecking && isAvailable === true && "✓ Available"}
-                              {!isChecking && isAvailable === false && "✗ Taken"}
+                              {isChecking && t("signup.usernameChecking")}
+                              {!isChecking && isAvailable === true && t("signup.usernameAvailable")}
+                              {!isChecking && isAvailable === false && t("signup.usernameTakenBadge")}
                             </span>
                           )}
                         </FormLabel>
@@ -270,7 +272,7 @@ const Signup = () => {
                           <div className="relative">
                             <Input
                               {...field}
-                              placeholder="Choose a unique username"
+                              placeholder={t("signup.usernamePlaceholder")}
                               disabled={isLoading}
                               className={cn(
                                 "h-11 pr-10 transition-all duration-200",
@@ -299,7 +301,7 @@ const Signup = () => {
                         {/* Helper text - always visible */}
                         {(!usernameValue || usernameValue.length < 3) && !usernameError && (
                           <p className="text-xs text-muted-foreground">
-                            3-30 characters • Letters, numbers, and underscores only
+                            {t("signup.usernameHelper")}
                           </p>
                         )}
                         
@@ -311,12 +313,12 @@ const Signup = () => {
                         )}
                         {usernameValue && usernameValue.length >= 3 && !isChecking && isAvailable === true && (
                           <p className="text-sm text-green-600 font-medium animate-in slide-in-from-top-1 duration-200">
-                            ✓ Great choice! This username is available
+                            {t("signup.usernameGreatChoice")}
                           </p>
                         )}
                         {isChecking && (
                           <p className="text-sm text-blue-600 font-medium animate-pulse">
-                            ⏳ Checking availability...
+                            {t("signup.usernameCheckingAvailability")}
                           </p>
                         )}
                         
@@ -330,11 +332,11 @@ const Signup = () => {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>{t("signup.fullName")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter your first name"
+                      placeholder={t("signup.fullNamePlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -349,12 +351,12 @@ const Signup = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("signup.email")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t("signup.emailPlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -369,12 +371,12 @@ const Signup = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("signup.password")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="password"
-                      placeholder="Create a strong password"
+                      placeholder={t("signup.passwordPlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -389,11 +391,11 @@ const Signup = () => {
               name="referralCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <FormLabel>{t("signup.referralCode")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter referral code if you have one"
+                      placeholder={t("signup.referralCodePlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -422,12 +424,12 @@ const Signup = () => {
               ) : isChecking ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validating username...
+                  {t("signup.usernameChecking")}
                 </>
               ) : (
                 <>
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Create Account
+                  {t("signup.createAccount")}
                 </>
               )}
             </Button>
@@ -435,12 +437,12 @@ const Signup = () => {
         </Form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("signup.alreadyHaveAccount")}{" "}
           <Link 
             to={referralCodeFromUrl ? `/login?ref=${referralCodeFromUrl}` : "/login"}
             className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium"
           >
-            Sign in
+            {t("signup.signInLink")}
           </Link>
         </p>
 

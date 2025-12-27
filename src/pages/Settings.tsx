@@ -32,8 +32,10 @@ import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificatio
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPPORTED_LANGUAGES, getLanguageName, getLanguageFlag, SupportedLanguage } from "@/lib/country-language-map";
+import { useTranslation } from "react-i18next";
 
 const Settings = () => {
+  const { t } = useTranslation();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -88,8 +90,8 @@ const Settings = () => {
       }
       
       // Initialize selected language from profile
-      if (data?.preferred_language) {
-        setSelectedLanguage(data.preferred_language as SupportedLanguage);
+      if ((data as any)?.preferred_language) {
+        setSelectedLanguage((data as any).preferred_language as SupportedLanguage);
       }
       
       // Initialize crypto addresses from profile
@@ -153,10 +155,10 @@ const Settings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated successfully");
+      toast.success(t("settings.toasts.profileUpdated"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update profile: ${error.message}`);
+      toast.error(`${t("settings.toasts.profileUpdateFailed")}: ${error.message}`);
     },
   });
 
@@ -172,10 +174,10 @@ const Settings = () => {
     onSuccess: () => {
       passwordForm.reset();
       setIsPasswordFormOpen(false);
-      toast.success("Password changed successfully");
+      toast.success(t("settings.toasts.passwordChanged"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to change password: ${error.message}`);
+      toast.error(`${t("settings.toasts.passwordChangeFailed")}: ${error.message}`);
     },
   });
 
@@ -186,10 +188,10 @@ const Settings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Currency preference updated successfully");
+      toast.success(t("settings.toasts.currencyUpdated"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update currency: ${error.message}`);
+      toast.error(`${t("settings.toasts.currencyUpdateFailed")}: ${error.message}`);
     },
   });
 
@@ -200,10 +202,10 @@ const Settings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Language preference updated successfully");
+      toast.success(t("settings.toasts.languageUpdated"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update language: ${error.message}`);
+      toast.error(`${t("settings.toasts.languageUpdateFailed")}: ${error.message}`);
     },
   });
 
@@ -222,10 +224,10 @@ const Settings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Cryptocurrency addresses updated successfully");
+      toast.success(t("settings.toasts.addressesUpdated"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update addresses: ${error.message}`);
+      toast.error(`${t("settings.toasts.addressesUpdateFailed")}: ${error.message}`);
     },
   });
 
@@ -264,12 +266,12 @@ const Settings = () => {
     setCryptoAddressErrors(errors);
     
     if (Object.keys(errors).length > 0) {
-      toast.error("Please fix the address validation errors");
+      toast.error(t("settings.toasts.fixValidationErrors"));
       return;
     }
 
     if (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) {
-      toast.error("Please enter at least one cryptocurrency address");
+      toast.error(t("settings.toasts.atLeastOneAddress"));
       return;
     }
 
@@ -291,10 +293,10 @@ const Settings = () => {
 
       setOtpSent(true);
       setShowWithdrawalOTP(true);
-      toast.success('Verification code sent to your email');
+      toast.success(t('settings.toasts.otpSent'));
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
-      toast.error(error.message || 'Failed to send verification code');
+      toast.error(error.message || t('settings.toasts.otpFailed'));
     } finally {
       setSendingOTP(false);
     }
@@ -302,7 +304,7 @@ const Settings = () => {
 
   const handleVerifyAndSaveAddresses = async () => {
     if (!withdrawalOTP || withdrawalOTP.length !== 6) {
-      toast.error('Please enter a valid 6-digit verification code');
+      toast.error(t('settings.toasts.otpInvalid'));
       return;
     }
 
@@ -328,10 +330,10 @@ const Settings = () => {
       setShowWithdrawalOTP(false);
       setWithdrawalOTP('');
       setOtpSent(false);
-      toast.success('Withdrawal addresses updated successfully');
+      toast.success(t('settings.toasts.addressesUpdated'));
     } catch (error: any) {
       console.error('Verification failed:', error);
-      toast.error(error.message || 'Verification failed. Please try again.');
+      toast.error(error.message || t('settings.toasts.verificationFailed'));
     } finally {
       setVerifyingOTP(false);
     }
@@ -345,7 +347,7 @@ const Settings = () => {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
       </div>
     );
   }
@@ -356,12 +358,12 @@ const Settings = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={isLoading || !profile}
-      loadingText="Loading settings..."
+      loadingText={t("common.loading")}
     >
       <div className="max-w-4xl mx-auto space-y-8 p-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-              <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
+              <h1 className="text-3xl font-bold text-foreground">{t("settings.title")}</h1>
+              <p className="text-muted-foreground mt-2">{t("settings.subtitle")}</p>
             </div>
 
             {/* Account Information */}
@@ -369,18 +371,18 @@ const Settings = () => {
             <Dialog open={showWithdrawalOTP} onOpenChange={setShowWithdrawalOTP}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Verify Your Email</DialogTitle>
+                  <DialogTitle>{t("settings.otpVerification.title")}</DialogTitle>
                   <DialogDescription>
-                    Enter the 6-digit verification code sent to your email to confirm the address changes
+                    {t("settings.otpVerification.description")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="otp">Verification Code</Label>
+                    <Label htmlFor="otp">{t("settings.otpVerification.code")}</Label>
                     <Input
                       id="otp"
                       type="text"
-                      placeholder="Enter 6-digit code"
+                      placeholder={t("settings.otpVerification.codePlaceholder")}
                       value={withdrawalOTP}
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -390,7 +392,7 @@ const Settings = () => {
                       className="text-center text-2xl tracking-widest font-mono"
                     />
                     <p className="text-xs text-muted-foreground text-center">
-                      Code expires in 10 minutes
+                      {t("settings.otpVerification.expiresIn")}
                     </p>
                   </div>
                   <Button
@@ -401,10 +403,10 @@ const Settings = () => {
                     {verifyingOTP ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Verifying...
+                        {t("common.verifying")}
                       </>
                     ) : (
-                      'Verify & Save'
+                      t("settings.otpVerification.verifyAndSave")
                     )}
                   </Button>
                   <Button
@@ -416,7 +418,7 @@ const Settings = () => {
                     disabled={verifyingOTP}
                     className="w-full"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </div>
               </DialogContent>
@@ -424,13 +426,13 @@ const Settings = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>Your account details</CardDescription>
+                <CardTitle>{t("settings.accountInfo.title")}</CardTitle>
+                <CardDescription>{t("settings.accountInfo.description")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm text-muted-foreground">Username</Label>
+                    <Label className="text-sm text-muted-foreground">{t("settings.accountInfo.username")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <Badge variant="secondary">{profile?.username}</Badge>
@@ -438,7 +440,7 @@ const Settings = () => {
                   </div>
                   
                   <div>
-                    <Label className="text-sm text-muted-foreground">Email</Label>
+                    <Label className="text-sm text-muted-foreground">{t("settings.accountInfo.email")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{profile?.email || user?.email}</span>
@@ -446,7 +448,7 @@ const Settings = () => {
                   </div>
 
                   <div>
-                    <Label className="text-sm text-muted-foreground">Member Since</Label>
+                    <Label className="text-sm text-muted-foreground">{t("settings.accountInfo.memberSince")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
@@ -456,7 +458,7 @@ const Settings = () => {
                   </div>
 
                   <div>
-                    <Label className="text-sm text-muted-foreground">Membership Plan</Label>
+                    <Label className="text-sm text-muted-foreground">{t("settings.accountInfo.membershipPlan")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Award className="h-4 w-4 text-muted-foreground" />
                       <Badge variant="default" className="capitalize">
@@ -471,17 +473,17 @@ const Settings = () => {
             {/* PHASE 6B: Email Verification Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Email Verification</CardTitle>
-                <CardDescription>Verify your email to unlock all features</CardDescription>
+                <CardTitle>{t("settings.emailVerification.title")}</CardTitle>
+                <CardDescription>{t("settings.emailVerification.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {profile?.email_verified ? (
                   <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                     <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">Your email is verified</span>
+                    <span className="font-medium">{t("settings.emailVerification.verified")}</span>
                     {profile?.email_verified_at && (
                       <span className="text-sm text-muted-foreground ml-2">
-                        (Verified on {new Date(profile.email_verified_at).toLocaleDateString()})
+                        ({t("settings.emailVerification.verifiedOn")} {new Date(profile.email_verified_at).toLocaleDateString()})
                       </span>
                     )}
                   </div>
@@ -490,7 +492,7 @@ const Settings = () => {
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        Your email is not verified. Some features may be limited until you verify your email address.
+                        {t("settings.emailVerification.notVerified")}
                       </AlertDescription>
                     </Alert>
                     <Button 
@@ -498,7 +500,7 @@ const Settings = () => {
                       className="w-full sm:w-auto"
                     >
                       <Mail className="mr-2 h-4 w-4" />
-                      Verify Email Now
+                      {t("settings.emailVerification.verifyNow")}
                     </Button>
                   </div>
                 )}
@@ -508,8 +510,8 @@ const Settings = () => {
             {/* Account Statistics */}
             <Card>
               <CardHeader>
-                <CardTitle>Account Statistics</CardTitle>
-                <CardDescription>Your activity overview</CardDescription>
+                <CardTitle>{t("settings.accountStats.title")}</CardTitle>
+                <CardDescription>{t("settings.accountStats.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -517,7 +519,7 @@ const Settings = () => {
                     <Target className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{stats?.totalTasks || 0}</p>
-                      <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                      <p className="text-sm text-muted-foreground">{t("settings.accountStats.tasksCompleted")}</p>
                     </div>
                   </div>
 
@@ -525,7 +527,7 @@ const Settings = () => {
                     <Users className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{stats?.totalReferrals || 0}</p>
-                      <p className="text-sm text-muted-foreground">Total Referrals</p>
+                      <p className="text-sm text-muted-foreground">{t("settings.accountStats.totalReferrals")}</p>
                     </div>
                   </div>
 
@@ -535,7 +537,7 @@ const Settings = () => {
                       <p className="text-2xl font-bold">
                         {profile?.created_at ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
                       </p>
-                      <p className="text-sm text-muted-foreground">Days Active</p>
+                      <p className="text-sm text-muted-foreground">{t("settings.accountStats.daysActive")}</p>
                     </div>
                   </div>
                 </div>
@@ -547,10 +549,10 @@ const Settings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Account Security & Location
+                  {t("settings.security.title")}
                 </CardTitle>
                 <CardDescription>
-                  Your account location information
+                  {t("settings.security.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -559,16 +561,16 @@ const Settings = () => {
                   <div className="flex items-start gap-3 p-4 border rounded-lg">
                     <MapPin className="h-5 w-5 text-primary mt-0.5" />
                     <div className="flex-1">
-                      <Label className="text-sm font-medium">Registration Location</Label>
+                      <Label className="text-sm font-medium">{t("settings.security.registrationLocation")}</Label>
                       <p className="text-sm text-muted-foreground mt-1">
                         {profile?.registration_country_name ? (
-                          <>Country: {profile.registration_country_name} ({profile.registration_country})</>
+                          <>{t("settings.security.country")}: {profile.registration_country_name} ({profile.registration_country})</>
                         ) : (
-                          "Location data not available"
+                          t("settings.security.noLoginData")
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Registered on {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "Unknown"}
+                        {t("settings.security.registeredOn")} {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "Unknown"}
                       </p>
                     </div>
                   </div>
@@ -577,19 +579,19 @@ const Settings = () => {
                   <div className="flex items-start gap-3 p-4 border rounded-lg">
                     <Globe className="h-5 w-5 text-primary mt-0.5" />
                     <div className="flex-1">
-                      <Label className="text-sm font-medium">Last Login Location</Label>
+                      <Label className="text-sm font-medium">{t("settings.security.lastLoginLocation")}</Label>
                       <p className="text-sm text-muted-foreground mt-1">
                         {profile?.last_login_country_name ? (
-                          <>Country: {profile.last_login_country_name} ({profile.last_login_country})</>
+                          <>{t("settings.security.country")}: {profile.last_login_country_name} ({profile.last_login_country})</>
                         ) : (
-                          "No login data available yet"
+                          t("settings.security.noLoginData")
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {profile?.last_login ? (
-                          <>Last login: {new Date(profile.last_login).toLocaleString()}</>
+                          <>{t("settings.security.lastLogin")}: {new Date(profile.last_login).toLocaleString()}</>
                         ) : (
-                          "Never logged in"
+                          t("settings.security.neverLoggedIn")
                         )}
                       </p>
                     </div>
@@ -598,9 +600,9 @@ const Settings = () => {
                   {/* Security Note */}
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertTitle>Location Tracking</AlertTitle>
+                    <AlertTitle>{t("settings.security.locationTracking")}</AlertTitle>
                     <AlertDescription>
-                      We track your registration and login locations for security purposes. This helps us protect your account from unauthorized access.
+                      {t("settings.security.locationTrackingDescription")}
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -610,8 +612,8 @@ const Settings = () => {
             {/* Edit Profile */}
             <Card>
               <CardHeader>
-                <CardTitle>Edit Profile</CardTitle>
-                <CardDescription>Update your personal information</CardDescription>
+                <CardTitle>{t("settings.editProfile.title")}</CardTitle>
+                <CardDescription>{t("settings.editProfile.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...profileForm}>
@@ -621,9 +623,9 @@ const Settings = () => {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>{t("settings.editProfile.fullName")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter your full name" />
+                            <Input {...field} placeholder={t("settings.editProfile.fullNamePlaceholder")} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -635,9 +637,9 @@ const Settings = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>{t("settings.editProfile.phone")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter your phone number (optional)" />
+                            <Input {...field} placeholder={t("settings.editProfile.phonePlaceholder")} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -649,7 +651,7 @@ const Settings = () => {
                       name="country"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Country</FormLabel>
+                          <FormLabel>{t("settings.editProfile.country")}</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -663,16 +665,16 @@ const Settings = () => {
                                 >
                                   {field.value
                                     ? getCountryName(field.value) || field.value
-                                    : "Select country"}
+                                    : t("settings.editProfile.countryPlaceholder")}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-[400px] p-0" align="start">
                               <Command>
-                                <CommandInput placeholder="Search country..." />
+                                <CommandInput placeholder={t("common.search") + "..."} />
                                 <CommandList>
-                                  <CommandEmpty>No country found.</CommandEmpty>
+                                  <CommandEmpty>{t("common.error")}</CommandEmpty>
                                   <CommandGroup>
                                     {countries.map((country) => (
                                       <CommandItem
@@ -700,9 +702,9 @@ const Settings = () => {
                           </Popover>
                           {(profile?.registration_country || profile?.last_login_country) && (
                             <p className="text-xs text-muted-foreground">
-                              Detected: {getCountryName(profile?.registration_country || profile?.last_login_country || "")} (
-                              {profile?.registration_country || profile?.last_login_country}) from your{" "}
-                              {profile?.registration_country ? "registration" : "last login"}
+                              {t("settings.editProfile.detected")}: {getCountryName(profile?.registration_country || profile?.last_login_country || "")} (
+                              {profile?.registration_country || profile?.last_login_country}) {t("settings.editProfile.fromRegistration")}
+                              {profile?.registration_country ? "" : " " + t("settings.editProfile.fromLastLogin")}
                             </p>
                           )}
                           <FormMessage />
@@ -711,7 +713,7 @@ const Settings = () => {
                     />
 
                     <Button type="submit" disabled={updateProfileMutation.isPending}>
-                      {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                      {updateProfileMutation.isPending ? t("common.saving") : t("settings.editProfile.saveChanges")}
                     </Button>
                   </form>
                 </Form>
@@ -823,16 +825,15 @@ const Settings = () => {
                   }
                   className="w-full"
                 >
-                  {updateCurrencyMutation.isPending ? "Updating..." : "Update Currency"}
+                  {updateCurrencyMutation.isPending ? t("common.updating") : t("currency.update")}
                 </Button>
 
                 {/* Information Alert */}
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertTitle>Display Only</AlertTitle>
+                  <AlertTitle>{t("currency.displayOnly")}</AlertTitle>
                   <AlertDescription>
-                    Currency conversion affects display only. All transactions are processed in USD. 
-                    Exchange rates are updated every 24 hours.
+                    {t("currency.displayOnlyDescription")}
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -843,24 +844,24 @@ const Settings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Languages className="h-5 w-5" />
-                  Language Preferences
+                  {t("settings.language.title")}
                 </CardTitle>
                 <CardDescription>
-                  Choose your preferred display language
+                  {t("settings.language.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Current Language Display */}
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
                   <div>
-                    <Label className="text-sm font-medium">Current Language</Label>
+                    <Label className="text-sm font-medium">{t("settings.language.current")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary" className="text-base">
                         {getLanguageFlag(userLanguage)} {getLanguageName(userLanguage)}
                       </Badge>
                       {isAutoDetected && (
                         <span className="text-xs text-muted-foreground">
-                          (Auto-detected)
+                          ({t("language.autoDetected")})
                         </span>
                       )}
                     </div>
@@ -869,7 +870,7 @@ const Settings = () => {
 
                 {/* Language Selector */}
                 <div className="space-y-2">
-                  <Label>Select Language</Label>
+                  <Label>{t("settings.language.select")}</Label>
                   <Popover open={isLanguagePopoverOpen} onOpenChange={setIsLanguagePopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -884,16 +885,16 @@ const Settings = () => {
                             {getLanguageName(selectedLanguage)} ({selectedLanguage.toUpperCase()})
                           </span>
                         ) : (
-                          "Select language..."
+                          t("language.selectPlaceholder")
                         )}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[500px] p-0" align="start">
                       <Command>
-                        <CommandInput placeholder="Search language..." />
+                        <CommandInput placeholder={t("language.searchPlaceholder")} />
                         <CommandList>
-                          <CommandEmpty>No language found.</CommandEmpty>
+                          <CommandEmpty>{t("language.notFound")}</CommandEmpty>
                           <CommandGroup>
                             {SUPPORTED_LANGUAGES.map((lang) => (
                               <CommandItem
@@ -938,19 +939,18 @@ const Settings = () => {
                   {updateLanguageMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
+                      {t("common.updating")}
                     </>
                   ) : (
-                    "Update Language"
+                    t("settings.language.update")
                   )}
                 </Button>
 
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertTitle>Auto-Detection</AlertTitle>
+                  <AlertTitle>{t("settings.language.autoDetection")}</AlertTitle>
                   <AlertDescription>
-                    Your language is automatically detected from your IP address on first visit. 
-                    You can override this setting at any time.
+                    {t("settings.language.autoDetectionDescription")}
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -961,10 +961,10 @@ const Settings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Withdrawal Addresses
+                  {t("settings.withdrawalAddresses.title")}
                 </CardTitle>
                 <CardDescription>
-                  Manage your cryptocurrency withdrawal addresses
+                  {t("settings.withdrawalAddresses.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1023,10 +1023,9 @@ const Settings = () => {
                 {/* Security Notice */}
                 <Alert>
                   <Shield className="h-4 w-4" />
-                  <AlertTitle>Secure Your Addresses</AlertTitle>
+                  <AlertTitle>{t("settings.withdrawalAddresses.securityNotice")}</AlertTitle>
                   <AlertDescription>
-                    For security, we'll send a verification code to your email when you update these addresses.
-                    Make sure your withdrawal addresses are correct to avoid loss of funds.
+                    {t("settings.withdrawalAddresses.securityNoticeDescription")}
                   </AlertDescription>
                 </Alert>
 
@@ -1040,16 +1039,15 @@ const Settings = () => {
                   }
                   className="w-full"
                 >
-                  {updateCryptoAddressesMutation.isPending ? "Saving..." : "Save Withdrawal Addresses"}
+                  {updateCryptoAddressesMutation.isPending ? t("common.saving") : t("settings.withdrawalAddresses.save")}
                 </Button>
 
                 {/* Information Alert */}
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertTitle>Withdrawal Addresses</AlertTitle>
+                  <AlertTitle>{t("settings.withdrawalAddresses.infoTitle")}</AlertTitle>
                   <AlertDescription>
-                    These addresses will be used for cryptocurrency withdrawals. Please double-check your addresses before saving.
-                    Sending funds to an incorrect address may result in permanent loss.
+                    {t("settings.withdrawalAddresses.infoDescription")}
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -1058,13 +1056,13 @@ const Settings = () => {
             {/* Change Password */}
             <Card>
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Update your account password</CardDescription>
+                <CardTitle>{t("settings.changePassword.title")}</CardTitle>
+                <CardDescription>{t("settings.changePassword.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {!isPasswordFormOpen ? (
                   <Button onClick={() => setIsPasswordFormOpen(true)} variant="outline">
-                    Change Password
+                    {t("settings.changePassword.title")}
                   </Button>
                 ) : (
                   <Form {...passwordForm}>
@@ -1074,9 +1072,9 @@ const Settings = () => {
                         name="newPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>New Password</FormLabel>
+                            <FormLabel>{t("settings.changePassword.newPassword")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" placeholder="Enter new password" />
+                              <Input {...field} type="password" placeholder={t("settings.changePassword.newPasswordPlaceholder")} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1088,9 +1086,9 @@ const Settings = () => {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
+                            <FormLabel>{t("settings.changePassword.confirmPassword")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" placeholder="Confirm new password" />
+                              <Input {...field} type="password" placeholder={t("settings.changePassword.confirmPasswordPlaceholder")} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1099,13 +1097,13 @@ const Settings = () => {
 
                       <div className="flex gap-2">
                         <Button type="submit" disabled={changePasswordMutation.isPending}>
-                          {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                          {changePasswordMutation.isPending ? t("common.saving") : t("settings.changePassword.title")}
                         </Button>
                         <Button type="button" variant="ghost" onClick={() => {
                           setIsPasswordFormOpen(false);
                           passwordForm.reset();
                         }}>
-                          Cancel
+                          {t("common.cancel")}
                         </Button>
                       </div>
                     </form>
@@ -1154,7 +1152,7 @@ const Settings = () => {
           onVerificationSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ["profile"] });
             setShowEmailVerification(false);
-            toast.success("Email verified successfully!");
+            toast.success(t("toasts.settings.emailVerified"));
           }}
         />
 
