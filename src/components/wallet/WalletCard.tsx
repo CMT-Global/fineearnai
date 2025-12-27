@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Wallet, ArrowUpRight, ArrowDownRight, Loader2, InfoIcon, AlertCircle, Crown, Sparkles, HelpCircle } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { CPAYCheckoutIframe } from "./CPAYCheckoutIframe";
@@ -132,6 +133,7 @@ interface WalletCardProps {
 }
 
 export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }: WalletCardProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { data: profile } = useProfile(user?.id);
@@ -296,7 +298,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
     } catch (error) {
       console.error("Error loading payment processors:", error);
-      toast.error("Failed to load payment methods");
+      toast.error(t("wallet.toasts.failedToLoadPaymentMethods"));
     } finally {
       setLoadingProcessors(false);
     }
@@ -376,13 +378,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
   const handleDeposit = async () => {
     if (!depositAmount) {
-      toast.error("Please enter an amount");
+      toast.error(t("wallet.toasts.pleaseEnterAmount"));
       return;
     }
 
     const amountLocal = parseFloat(depositAmount);
     if (isNaN(amountLocal) || amountLocal <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error(t("wallet.toasts.pleaseEnterValidAmount"));
       return;
     }
 
@@ -408,7 +410,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     // ✅ Use the actual deposit processor (CPAY) directly
     if (!actualDepositProcessor) {
-      toast.error("Payment processor not available. Please try again later.");
+      toast.error(t("wallet.toasts.paymentProcessorNotAvailable"));
       return;
     }
 
@@ -442,7 +444,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           setCpayCurrency(data.currency || 'USDT');
           setDepositDialogOpen(false); // Close deposit dialog
           setShowCpayIframe(true); // Show iframe - user selects coin in CPAY popup
-          toast.success("Opening payment processor...");
+          toast.success(t("wallet.toasts.openingPaymentProcessor"));
         } else {
           throw new Error("No checkout URL received");
         }
@@ -458,7 +460,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
         if (error) throw error;
 
-        toast.success("Deposit successful!");
+        toast.success(t("wallet.toasts.depositSuccessful"));
         setDepositAmount("");
         setDepositDialogOpen(false);
         onBalanceUpdate();
@@ -473,19 +475,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || !accountDetails) {
-      toast.error("Please fill in all fields");
+      toast.error(t("wallet.toasts.fillAllFields"));
       return;
     }
     
     // Validate crypto selection
     if (!selectedCrypto || !['usdc-solana', 'usdt-bep20'].includes(selectedCrypto.id)) {
-      toast.error("Please select a valid withdrawal method (USDT-Bep20 or USDC-Solana)");
+      toast.error(t("wallet.toasts.selectValidWithdrawalMethod"));
       return;
     }
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error(t("wallet.toasts.pleaseEnterValidAmount"));
       return;
     }
 
@@ -502,13 +504,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     // Validate against earnings balance (in USD)
     if (amountUSD > earningsBalance) {
-      toast.error("Insufficient balance");
+      toast.error(t("wallet.toasts.insufficientBalance"));
       return;
     }
     
     // PHASE 5.d: Check email verification (admins bypass this check)
     if (!isAdmin && profile && !profile.email_verified) {
-      toast.error("Email verification required. Please verify your email before requesting a withdrawal.");
+      toast.error(t("wallet.toasts.emailVerificationRequired"));
       setWithdrawDialogOpen(false);
       return;
     }
@@ -525,7 +527,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("You must be logged in to withdraw");
+        toast.error(t("wallet.toasts.mustBeLoggedIn"));
         return;
       }
 
@@ -542,7 +544,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
 
       if (pendingWithdrawals) {
-        toast.error("You already have a pending withdrawal request. Please wait for it to be processed.");
+        toast.error(t("wallet.toasts.pendingWithdrawalExists"));
         return;
       }
 
@@ -554,7 +556,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         .single();
 
       if (profileError || !profile) {
-        toast.error("Failed to load profile information");
+        toast.error(t("wallet.toasts.failedToLoadProfile"));
         return;
       }
 
@@ -566,7 +568,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         .single();
 
       if (planError || !plan) {
-        toast.error("Failed to load membership plan details");
+        toast.error(t("wallet.toasts.failedToLoadMembershipPlan"));
         return;
       }
 
@@ -671,7 +673,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     try {
       // ✅ PHASE 2: Defensive validation for cryptoId
       if (!pendingWithdrawalData.cryptoId) {
-        toast.error("Cryptocurrency selection is required");
+        toast.error(t("wallet.toasts.cryptocurrencySelectionRequired"));
         console.error('❌ Missing cryptoId:', pendingWithdrawalData);
         setWithdrawLoading(false);
         return;
@@ -680,7 +682,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       // Validate cryptoId format
       const validCryptoIds = ['usdc-solana', 'usdt-bep20'];
       if (!validCryptoIds.includes(pendingWithdrawalData.cryptoId)) {
-        toast.error("Invalid cryptocurrency selected. Please try again.");
+        toast.error(t("wallet.toasts.invalidCryptocurrency"));
         console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected one of:', validCryptoIds);
         setWithdrawLoading(false);
         return;
@@ -692,7 +694,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       // ✅ Use the actual crypto processor directly (no virtual methods)
       if (!actualCryptoProcessor) {
-        toast.error("Withdrawal processor not available. Please try again later.");
+        toast.error(t("wallet.toasts.withdrawalProcessorNotAvailable"));
         return;
       }
       
@@ -761,30 +763,30 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Wallet Balance
+            {t("wallet.components.walletBalance")}
           </CardTitle>
-          <CardDescription>Manage your deposits and earnings</CardDescription>
+          <CardDescription>{t("wallet.components.manageDepositsEarnings")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-1">Deposit Wallet</p>
+            <p className="text-sm text-muted-foreground mb-1">{t("wallet.components.depositWallet")}</p>
             <p className="text-2xl font-bold text-primary">
               <CurrencyDisplay amountUSD={depositBalance} />
             </p>
-            <p className="text-xs text-muted-foreground mb-3">For account upgrades</p>
+            <p className="text-xs text-muted-foreground mb-3">{t("wallet.components.forAccountUpgrades")}</p>
             <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="sm">
                   <ArrowDownRight className="mr-2 h-4 w-4" />
-                  Deposit
+                  {t("wallet.components.deposit")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Make a Deposit</DialogTitle>
+                  <DialogTitle>{t("wallet.components.makeDeposit")}</DialogTitle>
                   <DialogDescription>
-                    Add funds to your deposit wallet
+                    {t("wallet.components.addFundsToDepositWallet")}
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -794,19 +796,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="deposit-amount">
-                      Amount ({userCurrency})
+                      {t("wallet.components.amount")} ({userCurrency})
                     </Label>
                     <Input
                       id="deposit-amount"
                       type="number"
-                      placeholder={`Enter amount in ${userCurrency}`}
+                      placeholder={t("wallet.components.enterAmountInCurrency", { currency: userCurrency })}
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="0"
                       step="0.01"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Available: <CurrencyDisplay amountUSD={depositBalance} />
+                      {t("wallet.components.available")}: <CurrencyDisplay amountUSD={depositBalance} />
                       {userCurrency !== 'USD' && depositAmount && parseFloat(depositAmount) > 0 && (
                         <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
                           ≈ ${convertLocalToUSD(parseFloat(depositAmount)).toFixed(2)} USD
@@ -818,7 +820,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                   <Alert className="bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
                     <InfoIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                     <AlertDescription className="text-xs text-foreground">
-                      After clicking "Confirm Deposit", you'll be able to select your preferred cryptocurrency (Bitcoin, USDT, USDC, etc.) in the payment processor.
+                      {t("wallet.components.afterClickingConfirm")}
                     </AlertDescription>
                   </Alert>
                   <Button
@@ -829,10 +831,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     {depositLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        {t("wallet.components.processing")}
                       </>
                     ) : (
-                      "Confirm Deposit"
+                      t("wallet.components.confirmDeposit")
                     )}
                   </Button>
                 </div>
@@ -841,24 +843,24 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           </div>
 
           <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-1">Earnings Wallet</p>
+            <p className="text-sm text-muted-foreground mb-1">{t("wallet.components.earningsWallet")}</p>
             <p className="text-2xl font-bold text-primary">
               <CurrencyDisplay amountUSD={earningsBalance} />
             </p>
-            <p className="text-xs text-muted-foreground mb-3">From tasks & referrals</p>
+            <p className="text-xs text-muted-foreground mb-3">{t("wallet.components.fromTasksReferrals")}</p>
             <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" size="sm">
                   <ArrowUpRight className="mr-2 h-4 w-4" />
-                  Withdraw
+                  {t("wallet.components.withdraw")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="p-0 gap-0 overflow-hidden max-h-[92vh] w-[96vw] max-w-[440px] sm:w-[90vw] sm:max-w-[520px] md:w-[600px] lg:w-[640px]">
                 {/* Fixed Header */}
                 <DialogHeader className="p-3 sm:p-4 md:p-6 border-b">
-                  <DialogTitle>Request Withdrawal</DialogTitle>
+                  <DialogTitle>{t("wallet.components.requestWithdrawal")}</DialogTitle>
                   <DialogDescription>
-                    Withdraw funds from your earnings wallet
+                    {t("wallet.components.withdrawFundsFromEarningsWallet")}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -882,9 +884,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     {!isAdmin && profile && !profile.email_verified && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Email Verification Required</AlertTitle>
+                        <AlertTitle>{t("wallet.components.emailVerificationRequired")}</AlertTitle>
                         <AlertDescription>
-                          You must verify your email address before requesting a withdrawal. Please verify your email to proceed.
+                          {t("wallet.components.emailVerificationRequiredDescription")}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -897,13 +899,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           <Sparkles className="h-4 w-4 text-primary" />
                         </div>
                         <AlertTitle className="text-foreground flex items-center gap-2">
-                          VIP Withdrawal Access
+                          {t("wallet.components.vipWithdrawalAccess")}
                           <Badge variant="default" className="bg-primary hover:bg-primary/90">
-                            Unrestricted
+                            {t("wallet.components.unrestricted")}
                           </Badge>
                         </AlertTitle>
                         <AlertDescription className="text-muted-foreground">
-                          Your account has Daily withdrawals access. You can withdraw any day at any time without schedule restrictions.
+                          {t("wallet.components.vipWithdrawalDescription")}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -928,7 +930,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="withdraw-amount">
-                          Amount ({userCurrency})
+                          {t("wallet.components.amount")} ({userCurrency})
                         </Label>
                         <Button
                           type="button"
@@ -938,13 +940,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           disabled={earningsBalance === 0 || withdrawLoading}
                           className="h-7 px-3 text-xs"
                         >
-                          All
+                          {t("wallet.components.all")}
                         </Button>
                       </div>
                       <Input
                         id="withdraw-amount"
                         type="number"
-                        placeholder={`Enter amount in ${userCurrency}`}
+                        placeholder={t("wallet.components.enterAmountInCurrency", { currency: userCurrency })}
                         value={withdrawAmount}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -958,7 +960,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         className={withdrawAmountError ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Available: <CurrencyDisplay amountUSD={earningsBalance} />
+                        {t("wallet.components.available")}: <CurrencyDisplay amountUSD={earningsBalance} />
                         {userCurrency !== 'USD' && withdrawAmount && parseFloat(withdrawAmount) > 0 && (
                           <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
                             ≈ ${convertLocalToUSD(parseFloat(withdrawAmount)).toFixed(2)} USD
@@ -1001,13 +1003,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           <AlertDescription className="text-foreground">
                             <div className="text-xs space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Withdrawal Amount:</span>
+                                <span className="text-muted-foreground">{t("wallet.components.withdrawalAmount")}:</span>
                                 <span className="font-semibold">
                                   <CurrencyDisplay amountUSD={amountUSD} />
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Processing Fee:</span>
+                                <span className="text-muted-foreground">{t("wallet.components.processingFee")}</span>
                                 <span className="font-semibold text-red-600 dark:text-red-400">
                                   - <CurrencyDisplay amountUSD={totalFee} />
                                 </span>
@@ -1021,7 +1023,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                               )}
                               <div className="border-t border-blue-200 dark:border-blue-800 pt-1 mt-1"></div>
                               <div className="flex justify-between">
-                                <span className="font-semibold text-muted-foreground">You will receive:</span>
+                                <span className="font-semibold text-muted-foreground">{t("wallet.components.youWillReceive")}</span>
                                 <span className="font-bold text-green-600 dark:text-green-400 text-sm">
                                   <CurrencyDisplay amountUSD={netAmountUSD} />
                                 </span>
@@ -1035,7 +1037,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     {/* PHASE 3: Cryptocurrency Selection - Only USDT-Bep20 or USDC-Solana */}
                     <div>
                       <Label htmlFor="crypto-selection">
-                        Withdrawal Method (Select Cryptocurrency)
+                        {t("wallet.components.withdrawalMethodSelect")}
                       </Label>
                       <Select 
                         value={selectedCrypto.id} 
@@ -1074,7 +1076,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                                 </div>
                                 {crypto.isDefault && (
                                   <Badge variant="secondary" className="ml-2 shrink-0">
-                                    Recommended
+                                    {t("wallet.components.recommended")}
                                   </Badge>
                                 )}
                               </div>
@@ -1088,14 +1090,17 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     <Alert className="bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 dark:border-blue-500/30">
                       <InfoIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       <AlertTitle className="text-foreground flex items-center gap-2">
-                        Withdrawal Currency & Network
+                        {t("wallet.components.withdrawalCurrencyNetwork")}
                         <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
                           {selectedCrypto.icon} {selectedCrypto.displayName}
                         </Badge>
                       </AlertTitle>
                       <AlertDescription className="text-foreground text-sm">
-                        Your withdrawal will be sent as <strong>{selectedCrypto.symbol}</strong> on the <strong>{selectedCrypto.network}</strong> network. 
-                        Make sure your wallet supports {selectedCrypto.symbol} on {selectedCrypto.networkShort}.
+                        {t("wallet.components.withdrawalCurrencyDescription", {
+                          symbol: selectedCrypto.symbol,
+                          network: selectedCrypto.network,
+                          networkShort: selectedCrypto.networkShort
+                        })}
                       </AlertDescription>
                     </Alert>
 
@@ -1103,28 +1108,28 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     <Collapsible className="w-full">
                       <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                         <HelpCircle className="h-4 w-4" />
-                        <span className="underline">How to get your {selectedCrypto.displayName} address?</span>
+                        <span className="underline">{t("wallet.components.howToGetAddress", { crypto: selectedCrypto.displayName })}</span>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-3">
                         <div className="text-sm space-y-3 bg-muted/50 p-4 rounded-lg border border-border">
-                          <p className="font-semibold text-foreground">Step-by-Step Guide:</p>
+                          <p className="font-semibold text-foreground">{t("wallet.components.stepByStepGuide")}</p>
                           <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                            <li>Open your crypto wallet or exchange (Binance, Gcrypto, Coinbase, etc.)</li>
-                            <li>Navigate to <strong className="text-foreground">Deposit</strong> or <strong className="text-foreground">Receive</strong> section</li>
-                            <li>Search for <strong className="text-foreground">{selectedCrypto.symbol}</strong> {selectedCrypto.id === 'usdc-solana' && '(not USDT)'}</li>
-                            <li>When prompted to select a network, choose <strong className="text-foreground">{selectedCrypto.network}</strong></li>
-                            <li>Copy the displayed wallet address</li>
-                            <li>Paste the address in the field below</li>
+                            <li>{t("wallet.components.step1")}</li>
+                            <li>{t("wallet.components.step2")}</li>
+                            <li>{t("wallet.components.step3", { symbol: selectedCrypto.symbol })} {selectedCrypto.id === 'usdc-solana' && '(not USDT)'}</li>
+                            <li>{t("wallet.components.step4", { network: selectedCrypto.network })}</li>
+                            <li>{t("wallet.components.step5")}</li>
+                            <li>{t("wallet.components.step6")}</li>
                           </ol>
                           {selectedCrypto.addressExample && (
                             <div className="mt-2 p-2 bg-muted rounded border">
-                              <p className="text-xs text-muted-foreground mb-1">Example address format:</p>
+                              <p className="text-xs text-muted-foreground mb-1">{t("wallet.components.exampleAddressFormat")}</p>
                               <code className="text-xs font-mono break-all">{selectedCrypto.addressExample}</code>
                             </div>
                           )}
                           <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-3">
                             <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium text-xs">
-                              ⚠️ <strong>Important:</strong> Always verify you've selected {selectedCrypto.network} network! Sending to the wrong network will result in loss of funds.
+                              ⚠️ <strong>{t("wallet.components.important")}</strong> {t("wallet.components.importantDescription", { network: selectedCrypto.network })}
                             </AlertDescription>
                           </Alert>
                         </div>
@@ -1133,7 +1138,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
                     <div>
                       <Label htmlFor="account-details">
-                        {selectedCrypto.symbol} {selectedCrypto.networkShort} Wallet Address *
+                        {t("wallet.components.walletAddress", {
+                          symbol: selectedCrypto.symbol,
+                          networkShort: selectedCrypto.networkShort
+                        })}
                       </Label>
                       <Textarea
                         id="account-details"
@@ -1162,7 +1170,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                         </Alert>
                       )}
                       <p className="text-xs text-muted-foreground mt-2">
-                        Enter your {selectedCrypto.displayName} wallet address where you want to receive funds.
+                        {t("wallet.components.enterWalletAddress", { crypto: selectedCrypto.displayName })}
                       </p>
                     </div>
                   </div>
@@ -1195,10 +1203,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                     {withdrawLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        {t("wallet.components.processing")}
                       </>
                     ) : (
-                      "Request Withdrawal"
+                      t("wallet.components.requestWithdrawal")
                     )}
                   </Button>
                 </div>

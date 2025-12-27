@@ -2,12 +2,14 @@
 -- This migration recreates atomic functions with detailed RAISE NOTICE logging
 -- to diagnose why commissions are not being processed
 
--- ============================================================================
--- Drop and Recreate complete_task_atomic with Logging
--- ============================================================================
-DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric);
-
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  -- ============================================================================
+  -- Drop and Recreate complete_task_atomic with Logging
+  -- ============================================================================
+  DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric);
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -354,13 +356,14 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
-
--- ============================================================================
--- Drop and Recreate credit_deposit_atomic with Logging
--- ============================================================================
-DROP FUNCTION IF EXISTS public.credit_deposit_atomic(uuid, numeric, text, text, text, jsonb);
-
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+$exec$;
+  
+  -- ============================================================================
+  -- Drop and Recreate credit_deposit_atomic with Logging
+  -- ============================================================================
+  DROP FUNCTION IF EXISTS public.credit_deposit_atomic(uuid, numeric, text, text, text, jsonb);
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -621,6 +624,9 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
-
-COMMENT ON FUNCTION public.complete_task_atomic IS 'Phase 4: Enhanced with comprehensive logging for commission debugging';
-COMMENT ON FUNCTION public.credit_deposit_atomic IS 'Phase 4: Enhanced with comprehensive logging for commission debugging';
+$exec$;
+  
+  -- Add comments
+  EXECUTE $exec$COMMENT ON FUNCTION public.complete_task_atomic IS 'Phase 4: Enhanced with comprehensive logging for commission debugging'$exec$;
+  EXECUTE $exec$COMMENT ON FUNCTION public.credit_deposit_atomic IS 'Phase 4: Enhanced with comprehensive logging for commission debugging'$exec$;
+END $$;

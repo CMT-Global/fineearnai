@@ -2,9 +2,11 @@
 -- This migration updates complete_task_atomic to add explicit check for upline's account_type
 -- This prevents free plan uplines from earning task commissions even if task_commission_rate is accidentally set > 0
 
-DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric);
-
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric);
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -262,3 +264,5 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'error', SQLERRM, 'error_code', 'TRANSACTION_FAILED');
 END;
 $function$;
+$exec$;
+END $$;

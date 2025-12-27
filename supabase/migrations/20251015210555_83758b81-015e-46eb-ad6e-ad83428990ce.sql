@@ -1,10 +1,38 @@
--- Enable pg_cron extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA cron;
+-- Enable pg_cron extension if not already enabled (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_cron'
+  ) THEN
+    CREATE EXTENSION pg_cron WITH SCHEMA cron;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
 
--- Enable pg_net extension for HTTP requests
-CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA net;
+-- Enable pg_net extension for HTTP requests (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_net'
+  ) THEN
+    CREATE EXTENSION pg_net WITH SCHEMA net;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
 
--- Create CRON job to reset daily task limits at midnight UTC every day
+-- Create CRON job to reset daily task limits at midnight UTC every day (idempotent)
+DO $$
+BEGIN
+  PERFORM cron.unschedule('reset-daily-task-limits');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
 SELECT cron.schedule(
   'reset-daily-task-limits',
   '0 0 * * *', -- Every day at midnight UTC (00:00)

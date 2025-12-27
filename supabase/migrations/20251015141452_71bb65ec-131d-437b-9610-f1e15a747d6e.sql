@@ -1,5 +1,5 @@
--- Create payment processors table for configuring payment methods
-CREATE TABLE public.payment_processors (
+-- Create payment processors table for configuring payment methods (idempotent)
+CREATE TABLE IF NOT EXISTS public.payment_processors (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   processor_type TEXT NOT NULL,
@@ -14,20 +14,46 @@ CREATE TABLE public.payment_processors (
   UNIQUE(name, processor_type)
 );
 
--- Enable RLS
-ALTER TABLE public.payment_processors ENABLE ROW LEVEL SECURITY;
+-- Enable RLS (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'payment_processors' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.payment_processors ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- Create policies
-CREATE POLICY "Admins can manage payment processors"
-ON public.payment_processors
-FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
+-- Create policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'payment_processors' 
+    AND policyname = 'Admins can manage payment processors'
+  ) THEN
+    CREATE POLICY "Admins can manage payment processors"
+    ON public.payment_processors
+    FOR ALL
+    USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'payment_processors' 
+    AND policyname = 'Anyone can view active payment processors'
+  ) THEN
+    CREATE POLICY "Anyone can view active payment processors"
+    ON public.payment_processors
+    FOR SELECT
+    USING (is_active = true);
+  END IF;
+END $$;
 
-CREATE POLICY "Anyone can view active payment processors"
-ON public.payment_processors
-FOR SELECT
-USING (is_active = true);
-
--- Create index for performance
-CREATE INDEX idx_payment_processors_active ON public.payment_processors(is_active);
-CREATE INDEX idx_payment_processors_type ON public.payment_processors(processor_type);
+-- Create index for performance (idempotent)
+CREATE INDEX IF NOT EXISTS idx_payment_processors_active ON public.payment_processors(is_active);
+CREATE INDEX IF NOT EXISTS idx_payment_processors_type ON public.payment_processors(processor_type);

@@ -1,10 +1,12 @@
 -- Phase 2: Update Atomic Commission Functions
 -- Add referral_eligible checks to prevent free accounts from generating commissions
 
--- ============================================================================
--- UPDATE complete_task_atomic: Add referral eligibility check for task commissions
--- ============================================================================
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  -- ============================================================================
+  -- UPDATE complete_task_atomic: Add referral eligibility check for task commissions
+  -- ============================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid, 
   p_task_id uuid, 
   p_selected_response text, 
@@ -255,11 +257,12 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'error', SQLERRM, 'error_code', 'TRANSACTION_FAILED');
 END;
 $function$;
-
--- ============================================================================
--- UPDATE credit_deposit_atomic: Add referral eligibility check for deposit commissions
--- ============================================================================
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+$exec$;
+  
+  -- ============================================================================
+  -- UPDATE credit_deposit_atomic: Add referral eligibility check for deposit commissions
+  -- ============================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -488,3 +491,5 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
+$exec$;
+END $$;

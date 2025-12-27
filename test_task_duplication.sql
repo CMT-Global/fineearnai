@@ -99,3 +99,4 @@ LEFT JOIN ai_tasks t ON t.id = tc.task_id
 WHERE u.id IS NULL OR t.id IS NULL OR t.is_active = false
 LIMIT 20;
 
+

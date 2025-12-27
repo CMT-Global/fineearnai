@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Trophy, Medal, Award, TrendingUp } from "lucide-react";
 import { PartnerLeaderboardSkeleton } from "@/components/partner/PartnerLeaderboardSkeleton";
+import { useTranslation } from "react-i18next";
 
 export const PartnerLeaderboard = () => {
+  const { t } = useTranslation();
   const [timePeriod, setTimePeriod] = useState("month");
 
   const { data, isLoading } = useQuery({
@@ -52,10 +54,10 @@ export const PartnerLeaderboard = () => {
           <div>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Partner Leaderboard
+              {t("partner.leaderboard.title")}
             </CardTitle>
             <CardDescription>
-              Top performing partners in the community
+              {t("partner.leaderboard.subtitle")}
             </CardDescription>
           </div>
           <Select value={timePeriod} onValueChange={setTimePeriod}>
@@ -63,10 +65,10 @@ export const PartnerLeaderboard = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
-              <SelectItem value="all_time">All Time</SelectItem>
+              <SelectItem value="week">{t("partner.leaderboard.thisWeek")}</SelectItem>
+              <SelectItem value="month">{t("partner.leaderboard.thisMonth")}</SelectItem>
+              <SelectItem value="year">{t("partner.leaderboard.thisYear")}</SelectItem>
+              <SelectItem value="all_time">{t("partner.leaderboard.allTime")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -101,7 +103,7 @@ export const PartnerLeaderboard = () => {
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Trophy className="h-3 w-3" />
-                      {partner.vouchers_sold} vouchers
+                      {partner.vouchers_sold} {t("partner.leaderboard.vouchers")}
                     </span>
                   </div>
                 </div>
@@ -111,7 +113,7 @@ export const PartnerLeaderboard = () => {
                     {formatCurrency(partner.total_sales)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatCurrency(partner.total_commission)} earned
+                    {formatCurrency(partner.total_commission)} {t("partner.leaderboard.earned")}
                   </p>
                 </div>
               </div>
@@ -121,7 +123,7 @@ export const PartnerLeaderboard = () => {
           <div className="text-center py-12">
             <Award className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
-              No leaderboard data available for this period
+              {t("partner.leaderboard.noDataAvailable")}
             </p>
           </div>
         )}

@@ -28,12 +28,14 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_created
 ALTER TABLE public.commission_audit_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Admins can view all audit logs
+DROP POLICY IF EXISTS "Admins can view audit logs" ON public.commission_audit_log;
 CREATE POLICY "Admins can view audit logs" 
   ON public.commission_audit_log
   FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- RLS Policy: Service role can insert audit logs
+DROP POLICY IF EXISTS "Service role can insert audit logs" ON public.commission_audit_log;
 CREATE POLICY "Service role can insert audit logs" 
   ON public.commission_audit_log
   FOR INSERT

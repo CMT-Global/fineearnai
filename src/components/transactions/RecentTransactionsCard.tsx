@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalRequests } from "@/hooks/useWithdrawalRequests";
@@ -56,13 +57,16 @@ export const RecentTransactionsCard = ({
   userId, 
   maxItems = 10, 
   showPagination = true,
-  title = "Recent Transactions",
+  title,
   externalFilter,
   hideTitle = false,
   hideTabs = false
 }: RecentTransactionsCardProps) => {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<"all" | "deposit" | "earnings" | "withdrawals">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const displayTitle = title || t("wallet.recentTransactions");
 
   // Enable real-time transaction updates
   useRealtimeTransactions(userId);
@@ -118,8 +122,8 @@ export const RecentTransactionsCard = ({
     <Card className="p-6">
       {!hideTitle && (
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-1">{title}</h2>
-          <p className="text-sm text-muted-foreground">View your wallet transaction history</p>
+          <h2 className="text-xl font-semibold mb-1">{displayTitle}</h2>
+          <p className="text-sm text-muted-foreground">{t("wallet.recentTransactionsSubtitle")}</p>
         </div>
       )}
 

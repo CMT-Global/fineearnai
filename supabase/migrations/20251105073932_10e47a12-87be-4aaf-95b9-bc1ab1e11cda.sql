@@ -22,6 +22,7 @@ CREATE INDEX idx_password_reset_tokens_expires_at ON public.password_reset_token
 ALTER TABLE public.password_reset_tokens ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Only service role can manage tokens (backend edge functions)
+DROP POLICY IF EXISTS "Service role can manage tokens" ON public.password_reset_tokens;
 CREATE POLICY "Service role can manage tokens"
   ON public.password_reset_tokens
   FOR ALL

@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface MembershipPlan {
   id: string;
@@ -46,6 +47,7 @@ interface MembershipPlan {
 }
 
 export default function MembershipPlans() {
+  const { t } = useTranslation();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -96,31 +98,31 @@ export default function MembershipPlans() {
   const handleUpgradeClick = async (plan: any) => {
     // User must be authenticated (guaranteed by ProtectedRoute)
     if (!user || !profile) {
-      toast.error("Please refresh the page and try again");
+      toast.error(t("common.error"));
       return;
     }
 
     if (plan.name === currentPlan) {
-      toast.info("You are already on this plan");
+      toast.info(t("membershipPlans.alreadyOnPlan"));
       return;
     }
 
     // ✅ CRITICAL: Price-based downgrade prevention
     if (currentPlanObj && plan.price < currentPlanObj.price) {
-      toast.error(`Cannot downgrade to a cheaper plan. Your current plan (${currentPlanObj.display_name}) costs $${currentPlanObj.price.toFixed(2)}, and ${plan.display_name} costs $${plan.price.toFixed(2)}.`);
+      toast.error(t("membershipPlans.cannotDowngrade"));
       return;
     }
 
     // Explicit free plan check (redundant but clear)
     if (plan.name === "free" && currentPlanPrice > 0) {
-      toast.error("Cannot downgrade to free plan. Please contact support.");
+      toast.error(t("membershipPlans.cannotDowngradeToFree"));
       return;
     }
 
     // Check if sufficient funds
     if (depositBalance < plan.price) {
       const shortfall = plan.price - depositBalance;
-      toast.error(`Insufficient balance. You need $${shortfall.toFixed(2)} more. Redirecting to wallet...`, {
+      toast.error(t("membershipPlans.needMore", { amount: shortfall.toFixed(2) }), {
         duration: 4000
       });
       setTimeout(() => navigate("/wallet"), 2000);
@@ -164,7 +166,7 @@ export default function MembershipPlans() {
     try {
       // Check network connectivity first
       if (!navigator.onLine) {
-        toast.error("No internet connection. Please check your network and try again.");
+        toast.error(t("membershipPlans.noInternetConnection"));
         setUpgrading(null);
         return;
       }
@@ -177,12 +179,12 @@ export default function MembershipPlans() {
       if (error) {
         // Determine error type
         if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
-          toast.error("Network error during upgrade. Please check your connection and try again.");
+          toast.error(t("membershipPlans.networkError"));
         } else if (error.message?.includes('JWT') || error.message?.includes('auth')) {
-          toast.error("Authentication error. Please log in again and retry.");
+          toast.error(t("membershipPlans.authError"));
           setTimeout(() => navigate('/login'), 2000);
         } else {
-          toast.error("Failed to process upgrade. Please try again or contact support.");
+          toast.error(t("membershipPlans.upgradeFailed"));
         }
         throw error;
       }
@@ -193,10 +195,10 @@ export default function MembershipPlans() {
       }
 
       const prorationInfo = data.prorationApplied 
-        ? ` (Saved $${data.prorationDetails?.savings || 0} from proration)`
+        ? ` (${t("membershipPlans.youSaveAmount")} $${data.prorationDetails?.savings || 0} ${t("membershipPlans.withProration")})`
         : '';
       
-      toast.success(`Successfully upgraded to ${selectedPlan.display_name}!${prorationInfo}`);
+      toast.success(t("membershipPlans.upgradeSuccess", { plan: selectedPlan.display_name }) + prorationInfo);
       setCurrentPlan(selectedPlan.name);
       setProrationDetails(null);
       setSelectedPlan(null);
@@ -208,9 +210,9 @@ export default function MembershipPlans() {
       
       // Show user-friendly error if no specific error was already shown
       if (!navigator.onLine) {
-        toast.error("Lost internet connection. Please try again when connected.");
+        toast.error(t("membershipPlans.noInternetConnection"));
       } else if (error.message && !error.message.includes('Failed to fetch')) {
-        toast.error(error.message || "Failed to upgrade plan. Please try again.");
+        toast.error(error.message || t("membershipPlans.upgradeFailed"));
       }
     } finally {
       setUpgrading(null);
@@ -221,7 +223,7 @@ export default function MembershipPlans() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
       </div>
     );
   }
@@ -238,13 +240,13 @@ export default function MembershipPlans() {
     const getErrorTitle = () => {
       switch (errorType) {
         case 'network':
-          return 'Connection Error';
+          return t("membershipPlans.connectionError");
         case 'auth':
-          return 'Authentication Required';
+          return t("membershipPlans.authenticationRequired");
         case 'data':
-          return 'Data Not Available';
+          return t("membershipPlans.dataNotAvailable");
         default:
-          return 'Unable to Load Plans';
+          return t("membershipPlans.unableToLoadPlans");
       }
     };
 
@@ -261,7 +263,7 @@ export default function MembershipPlans() {
               onClick={() => navigate('/login')}
               className="w-full"
             >
-              Log In Again
+              {t("membershipPlans.logInAgain")}
             </Button>
           )}
           
@@ -275,16 +277,16 @@ export default function MembershipPlans() {
                 {retrying ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Retrying...
+                    {t("membershipPlans.retrying")}
                   </>
                 ) : (
-                  'Try Again'
+                  t("membershipPlans.tryAgain")
                 )}
               </Button>
               
               {errorType === 'network' && (
                 <p className="text-xs text-muted-foreground">
-                  Check your internet connection and try again
+                  {t("membershipPlans.checkConnection")}
                 </p>
               )}
             </div>
@@ -337,15 +339,15 @@ export default function MembershipPlans() {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={loading || !profile}
-      loadingText="Loading membership plans..."
+      loadingText={t("membershipPlans.loadingPlans")}
     >
       {profile && (
         <>
           <div className="container mx-auto px-4 lg:px-8 py-8">
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold mb-4">Membership Plans</h1>
+                <h1 className="text-4xl font-bold mb-4">{t("membershipPlans.title")}</h1>
                 <p className="text-muted-foreground text-lg">
-                  Choose the perfect plan to maximize your earnings
+                  {t("membershipPlans.choosePlan")}
                 </p>
               </div>
 
@@ -353,9 +355,9 @@ export default function MembershipPlans() {
               {planStatus && planStatus.status === 'expired' && (
                 <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Plan Expired</AlertTitle>
+                  <AlertTitle>{t("membershipPlans.planExpired")}</AlertTitle>
                   <AlertDescription>
-                    Your {currentPlan} plan has expired. Upgrade now to continue enjoying premium benefits.
+                    {t("membershipPlans.planExpiredDescription", { plan: currentPlan })}
                   </AlertDescription>
                 </Alert>
               )}
@@ -363,9 +365,9 @@ export default function MembershipPlans() {
               {planStatus && planStatus.status === 'expiring_soon' && (
                 <Alert className="mb-6 max-w-3xl mx-auto bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
                   <Clock className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-amber-900 dark:text-amber-100">Plan Expiring Soon</AlertTitle>
+                  <AlertTitle className="text-amber-900 dark:text-amber-100">{t("membershipPlans.planExpiringSoon")}</AlertTitle>
                   <AlertDescription className="text-amber-800 dark:text-amber-200">
-                    Your {currentPlan} plan expires in {planStatus.daysUntilExpiry} day{planStatus.daysUntilExpiry !== 1 ? 's' : ''}. Renew your account to avoid losing access.
+                    {t("membershipPlans.planExpiringSoonDescription", { plan: currentPlan, days: planStatus.daysUntilExpiry })}
                   </AlertDescription>
                 </Alert>
               )}
@@ -375,10 +377,10 @@ export default function MembershipPlans() {
                 <Alert className="mb-8 max-w-4xl mx-auto bg-orange-500/10 border-2 border-orange-500/30 animate-fade-in">
                   <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   <AlertTitle className="text-orange-900 dark:text-orange-100 text-lg font-bold">
-                    🎉 Limited Time: Get Pro-Rated Pricing on All Upgrades!
+                    {t("membershipPlans.limitedTimeBanner")}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-200 mt-2">
-                    Upgrade now and only pay for the remaining days of your billing period. Start earning more immediately with higher task limits and better rates!
+                    {t("membershipPlans.limitedTimeBannerDescription")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -387,10 +389,10 @@ export default function MembershipPlans() {
                 <Alert className="mb-8 max-w-3xl mx-auto">
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    Your current deposit wallet balance: <strong><CurrencyDisplay amountUSD={depositBalance} /></strong>
+                    {t("membershipPlans.currentBalance")} <strong><CurrencyDisplay amountUSD={depositBalance} /></strong>
                     {depositBalance === 0 && (
                       <span className="text-muted-foreground">
-                        {" "}- Please <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>deposit funds</Button> to upgrade your plan.
+                        {" "}- {t("membershipPlans.depositFundsDescription")} <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/wallet")}>{t("membershipPlans.depositFunds")}</Button>.
                       </span>
                     )}
                   </AlertDescription>
@@ -408,15 +410,15 @@ export default function MembershipPlans() {
             <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Confirm Plan Upgrade</DialogTitle>
+                  <DialogTitle>{t("membershipPlans.confirmUpgrade")}</DialogTitle>
                   <DialogDescription>
-                    You are about to upgrade to {selectedPlan?.display_name}
+                    {t("membershipPlans.confirmUpgradeDescription", { plan: selectedPlan?.display_name })}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Current Balance:</span>
+                    <span className="text-muted-foreground">{t("membershipPlans.currentBalanceLabel")}</span>
                     <span className="font-semibold"><CurrencyDisplay amountUSD={depositBalance} /></span>
                   </div>
 
@@ -426,39 +428,39 @@ export default function MembershipPlans() {
                         <div className="bg-primary/5 rounded-lg p-3 space-y-2">
                           <div className="font-semibold text-sm flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-primary" />
-                            Proration Applied
+                            {t("membershipPlans.prorationApplied")}
                           </div>
                           <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Original Price:</span>
+                              <span className="text-muted-foreground">{t("membershipPlans.originalPrice")}</span>
                               <span className="line-through"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.originalPrice)} /></span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Credit ({prorationDetails.daysRemaining} days unused):</span>
+                              <span className="text-muted-foreground">{t("membershipPlans.credit", { days: prorationDetails.daysRemaining })}</span>
                               <span className="text-green-600">-<CurrencyDisplay amountUSD={parseFloat(prorationDetails.credit)} /></span>
                             </div>
                             <div className="flex justify-between font-bold text-base border-t pt-2">
-                              <span>You Pay:</span>
+                              <span>{t("membershipPlans.youPay")}</span>
                               <span className="text-primary"><CurrencyDisplay amountUSD={parseFloat(prorationDetails.newCost)} /></span>
                             </div>
                           </div>
                         </div>
                         <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-2 text-center">
                           <span className="text-sm text-green-700 dark:text-green-400 font-semibold">
-                            You save <CurrencyDisplay amountUSD={parseFloat(prorationDetails.savings)} /> with proration!
+                            {t("membershipPlans.youSaveAmount")} <CurrencyDisplay amountUSD={parseFloat(prorationDetails.savings)} /> {t("membershipPlans.withProration")}
                           </span>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div className="flex justify-between items-center border-t pt-4">
-                      <span className="text-muted-foreground">Upgrade Cost:</span>
+                      <span className="text-muted-foreground">{t("membershipPlans.upgradeCost")}</span>
                       <span className="font-bold text-xl text-primary"><CurrencyDisplay amountUSD={selectedPlan?.price || 0} /></span>
                     </div>
                   )}
 
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Balance After:</span>
+                    <span className="text-muted-foreground">{t("membershipPlans.balanceAfter")}</span>
                     <span className="font-semibold">
                       <CurrencyDisplay amountUSD={depositBalance - parseFloat(prorationDetails?.newCost || selectedPlan?.price || 0)} />
                     </span>
@@ -471,10 +473,10 @@ export default function MembershipPlans() {
                     setSelectedPlan(null);
                     setProrationDetails(null);
                   }}>
-                    Cancel
+                    {t("membershipPlans.cancel")}
                   </Button>
                   <Button onClick={confirmUpgrade}>
-                    Confirm Upgrade
+                    {t("membershipPlans.confirmUpgradeButton")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

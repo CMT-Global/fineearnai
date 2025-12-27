@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ interface MembershipPlan {
 }
 
 const PlansManage = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -80,12 +82,14 @@ const PlansManage = () => {
     }
   }, [user, authLoading, navigate]);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -126,7 +130,7 @@ const PlansManage = () => {
       setPlans(plansWithStats);
     } catch (error: any) {
       console.error("Error loading plans:", error);
-      toast.error("Failed to load membership plans");
+      toast.error(t("toasts.admin.failedToLoadMembershipPlans"));
     } finally {
       setLoading(false);
     }
@@ -141,7 +145,7 @@ const PlansManage = () => {
       const validation = validateMembershipPlan(formData);
       if (!validation.isValid) {
         setValidationErrors(validation.errors);
-        toast.error("Please fix validation errors before saving");
+        toast.error(t("toasts.admin.pleaseFixValidationErrors"));
         return;
       }
 
@@ -152,7 +156,7 @@ const PlansManage = () => {
           throw new Error("Features must be an array");
         }
       } catch {
-        toast.error("Invalid JSON format for features. Must be an array.");
+        toast.error(t("toasts.admin.invalidJSONFormatForFeatures"));
         return;
       }
 
@@ -190,24 +194,24 @@ const PlansManage = () => {
 
       if (error) throw error;
 
-      toast.success(editingPlan ? "Plan updated successfully" : "Plan created successfully");
+      toast.success(editingPlan ? t("toasts.admin.planUpdated") : t("toasts.admin.planCreated"));
       setDialogOpen(false);
       setEditingPlan(null);
       resetForm();
       loadPlans();
     } catch (error: any) {
       console.error("Error saving plan:", error);
-      toast.error(error.message || "Failed to save membership plan");
+      toast.error(error.message || t("toasts.admin.failedToSaveMembershipPlan"));
     }
   };
 
   const handleDelete = async (plan: MembershipPlan) => {
     if (plan.subscriber_count && plan.subscriber_count > 0) {
-      toast.error(`Cannot delete plan with ${plan.subscriber_count} active subscribers`);
+      toast.error(t("toasts.admin.cannotDeletePlanWithSubscribers", { count: plan.subscriber_count }));
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this membership plan?")) {
+    if (!confirm(t("admin.plansManage.confirmDeletePlan"))) {
       return;
     }
 
@@ -221,11 +225,11 @@ const PlansManage = () => {
 
       if (error) throw error;
 
-      toast.success("Membership plan deleted");
+      toast.success(t("toasts.admin.membershipPlanDeleted"));
       loadPlans();
     } catch (error: any) {
       console.error("Error deleting plan:", error);
-      toast.error(error.message || "Failed to delete membership plan. Plan may have active subscribers.");
+      toast.error(error.message || t("toasts.admin.failedToDeleteMembershipPlan"));
     }
   };
 
@@ -242,11 +246,11 @@ const PlansManage = () => {
 
       if (error) throw error;
 
-      toast.success(`Plan ${!plan.is_active ? "activated" : "deactivated"}`);
+      toast.success(!plan.is_active ? t("toasts.admin.planActivated") : t("toasts.admin.planDeactivated"));
       loadPlans();
     } catch (error: any) {
       console.error("Error toggling plan:", error);
-      toast.error("Failed to update plan status");
+      toast.error(t("toasts.admin.failedToUpdatePlanStatus"));
     }
   };
 

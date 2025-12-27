@@ -21,30 +21,34 @@ CREATE TABLE IF NOT EXISTS public.partner_onboarding (
 ALTER TABLE public.partner_onboarding ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Partners can view their own onboarding" ON public.partner_onboarding;
 CREATE POLICY "Partners can view their own onboarding"
   ON public.partner_onboarding
   FOR SELECT
   USING (auth.uid() = partner_id);
 
+DROP POLICY IF EXISTS "Partners can update their own onboarding" ON public.partner_onboarding;
 CREATE POLICY "Partners can update their own onboarding"
   ON public.partner_onboarding
   FOR UPDATE
   USING (auth.uid() = partner_id)
   WITH CHECK (auth.uid() = partner_id);
 
+DROP POLICY IF EXISTS "System can insert onboarding records" ON public.partner_onboarding;
 CREATE POLICY "System can insert onboarding records"
   ON public.partner_onboarding
   FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Admins can view all onboarding records" ON public.partner_onboarding;
 CREATE POLICY "Admins can view all onboarding records"
   ON public.partner_onboarding
   FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Create index for performance
-CREATE INDEX idx_partner_onboarding_partner_id ON public.partner_onboarding(partner_id);
-CREATE INDEX idx_partner_onboarding_setup_completed ON public.partner_onboarding(setup_completed);
+CREATE INDEX IF NOT EXISTS idx_partner_onboarding_partner_id ON public.partner_onboarding(partner_id);
+CREATE INDEX IF NOT EXISTS idx_partner_onboarding_setup_completed ON public.partner_onboarding(setup_completed);
 
 -- Create trigger to automatically create onboarding record when partner role is assigned
 CREATE OR REPLACE FUNCTION create_partner_onboarding()
@@ -59,12 +63,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_partner_role_assigned ON public.user_roles;
 CREATE TRIGGER on_partner_role_assigned
   AFTER INSERT ON public.user_roles
   FOR EACH ROW
   EXECUTE FUNCTION create_partner_onboarding();
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_partner_onboarding_updated_at ON public.partner_onboarding;
 CREATE TRIGGER update_partner_onboarding_updated_at
   BEFORE UPDATE ON public.partner_onboarding
   FOR EACH ROW

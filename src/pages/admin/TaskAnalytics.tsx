@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, Target, Award, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -45,6 +46,7 @@ interface TaskStats {
 const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
 const TaskAnalytics = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -59,7 +61,7 @@ const TaskAnalytics = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
   }, [isAdmin, adminLoading, navigate]);
@@ -215,7 +217,7 @@ const TaskAnalytics = () => {
       });
     } catch (error: any) {
       console.error("Error loading analytics:", error);
-      toast.error("Failed to load task analytics");
+      toast.error(t("toasts.admin.failedToLoadData"));
     } finally {
       setLoading(false);
     }

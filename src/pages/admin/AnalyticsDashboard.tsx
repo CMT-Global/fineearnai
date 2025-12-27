@@ -11,6 +11,7 @@ import { ComparisonPresetSelector, type ComparisonPreset } from "@/components/ad
 import { InsightsSummaryCard } from "@/components/admin/InsightsSummaryCard";
 import { CountrySegmentationCard } from "@/components/admin/CountrySegmentationCard";
 import { TopReferrersCard } from "@/components/admin/TopReferrersCard";
+import { useTranslation } from "react-i18next";
 
 const StatCard = ({ 
   title, 
@@ -25,6 +26,7 @@ const StatCard = ({
   icon: any; 
   prefix?: string;
 }) => {
+  const { t } = useTranslation();
   const percentChange = previousValue && previousValue > 0 
     ? ((value - previousValue) / previousValue) * 100 
     : 0;
@@ -50,7 +52,7 @@ const StatCard = ({
               {Math.abs(percentChange).toFixed(1)}%
             </span>
             <span className="ml-1">
-              vs yesterday <span className="text-[10px]">({prefix}{previousValue.toLocaleString()})</span>
+              {t("admin.analytics.stats.vsYesterday")} <span className="text-[10px]">({prefix}{previousValue.toLocaleString()})</span>
             </span>
           </div>
         )}
@@ -96,6 +98,8 @@ const LoadingSkeleton = () => (
 );
 
 export default function AdminAnalyticsDashboard() {
+  const { t } = useTranslation();
+  
   // Initialize with last 7 days
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: format(subDays(new Date(), 6), "yyyy-MM-dd"),
@@ -123,9 +127,9 @@ export default function AdminAnalyticsDashboard() {
         {/* Page Header */}
         <div className="space-y-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("admin.analytics.title")}</h1>
             <p className="text-muted-foreground">
-              Monitor platform performance and user activity metrics
+              {t("admin.analytics.subtitle")}
             </p>
           </div>
           
@@ -141,7 +145,7 @@ export default function AdminAnalyticsDashboard() {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>
-              Failed to load analytics data: {error.message}
+              {t("admin.analytics.error.loadFailed")}: {error.message}
             </AlertDescription>
           </Alert>
         )}
@@ -156,26 +160,26 @@ export default function AdminAnalyticsDashboard() {
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
-                title="New Users Today"
+                title={t("admin.analytics.stats.newUsersToday")}
                 value={analytics.userGrowth?.today_count || 0}
                 previousValue={analytics.userGrowth?.yesterday_count || 0}
                 icon={Users}
               />
               <StatCard
-                title="Deposits Today"
+                title={t("admin.analytics.stats.depositsToday")}
                 value={analytics.deposits?.today_volume || 0}
                 previousValue={analytics.deposits?.yesterday_volume || 0}
                 icon={DollarSign}
                 prefix="$"
               />
               <StatCard
-                title="New Referrals Today"
+                title={t("admin.analytics.stats.newReferralsToday")}
                 value={analytics.referrals?.today_count || 0}
                 previousValue={analytics.referrals?.yesterday_count || 0}
                 icon={UserPlus}
               />
               <StatCard
-                title="Withdrawals Today"
+                title={t("admin.analytics.stats.withdrawalsToday")}
                 value={analytics.withdrawals?.today_volume || 0}
                 previousValue={analytics.withdrawals?.yesterday_volume || 0}
                 icon={ArrowDownCircle}
@@ -187,7 +191,7 @@ export default function AdminAnalyticsDashboard() {
               {/* User Growth Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>User Growth Trend</CardTitle>
+                  <CardTitle>{t("admin.analytics.charts.userGrowthTrend")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -207,13 +211,13 @@ export default function AdminAnalyticsDashboard() {
                       <Bar 
                         dataKey="count" 
                         fill="hsl(var(--primary))" 
-                        name="New Users"
+                        name={t("admin.analytics.charts.newUsers")}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Daily count of new user registrations over the selected period. Track user acquisition trends and identify high-growth days.
+                    {t("admin.analytics.charts.userGrowthDescription")}
                   </p>
                 </CardContent>
               </Card>
@@ -221,7 +225,7 @@ export default function AdminAnalyticsDashboard() {
               {/* Deposit Volume Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Deposit Volume Trend</CardTitle>
+                  <CardTitle>{t("admin.analytics.charts.depositVolumeTrend")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -235,20 +239,20 @@ export default function AdminAnalyticsDashboard() {
                       <YAxis className="text-xs" />
                       <Tooltip 
                         labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
-                        formatter={(value: any) => [`$${value.toLocaleString()}`, 'Volume']}
+                        formatter={(value: any) => [`$${value.toLocaleString()}`, t("admin.analytics.charts.volume")]}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
                       <Legend />
                       <Bar 
                         dataKey="volume" 
                         fill="hsl(var(--primary))" 
-                        name="Volume"
+                        name={t("admin.analytics.charts.volume")}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Total deposit amounts (in USD) per day over the selected period. Monitor revenue trends and identify peak deposit days.
+                    {t("admin.analytics.charts.depositVolumeDescription")}
                   </p>
                 </CardContent>
               </Card>
@@ -256,7 +260,7 @@ export default function AdminAnalyticsDashboard() {
               {/* Referrals Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Referral Activity</CardTitle>
+                  <CardTitle>{t("admin.analytics.charts.referralActivity")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -276,13 +280,13 @@ export default function AdminAnalyticsDashboard() {
                       <Bar 
                         dataKey="count" 
                         fill="hsl(var(--chart-2))" 
-                        name="Referrals"
+                        name={t("admin.analytics.charts.referrals")}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Daily count of new referrals (users who joined via referral links) over the selected period. Measure referral program effectiveness.
+                    {t("admin.analytics.charts.referralActivityDescription")}
                   </p>
                 </CardContent>
               </Card>
@@ -290,7 +294,7 @@ export default function AdminAnalyticsDashboard() {
               {/* Deposits vs Withdrawals Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Deposits vs Withdrawals</CardTitle>
+                  <CardTitle>{t("admin.analytics.charts.depositsVsWithdrawals")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -312,7 +316,7 @@ export default function AdminAnalyticsDashboard() {
                         labelFormatter={(date) => format(new Date(date), 'EEE, MMM dd, yyyy')}
                         formatter={(value: any, name: string) => [
                           `$${Number(value).toLocaleString()}`, 
-                          name === 'deposits' ? 'Deposits' : 'Withdrawals'
+                          name === 'deposits' ? t("admin.analytics.charts.deposits") : t("admin.analytics.charts.withdrawals")
                         ]}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                       />
@@ -320,19 +324,19 @@ export default function AdminAnalyticsDashboard() {
                       <Bar 
                         dataKey="deposits" 
                         fill="hsl(var(--chart-1))" 
-                        name="Deposits"
+                        name={t("admin.analytics.charts.deposits")}
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar 
                         dataKey="withdrawals" 
                         fill="hsl(var(--chart-4))" 
-                        name="Withdrawals"
+                        name={t("admin.analytics.charts.withdrawals")}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-sm text-muted-foreground mt-3">
-                    Daily comparison of deposit inflows vs withdrawal outflows (in USD). Monitor cash flow balance and identify liquidity trends.
+                    {t("admin.analytics.charts.depositsVsWithdrawalsDescription")}
                   </p>
                 </CardContent>
               </Card>
@@ -341,9 +345,9 @@ export default function AdminAnalyticsDashboard() {
             {/* User Segmentation Section */}
             <div className="space-y-4">
               <div className="space-y-1">
-                <h2 className="text-2xl font-bold tracking-tight">User Segmentation & High-Value Analysis</h2>
+                <h2 className="text-2xl font-bold tracking-tight">{t("admin.analytics.segmentation.title")}</h2>
                 <p className="text-muted-foreground">
-                  Identify high-value user segments by geographic distribution and top referrer performance
+                  {t("admin.analytics.segmentation.subtitle")}
                 </p>
               </div>
               

@@ -1,7 +1,9 @@
 -- Emergency fix: force recreation of credit_deposit_atomic_v2 with correct fields and types
-DROP FUNCTION IF EXISTS public.credit_deposit_atomic_v2(uuid, numeric, text, text, text, jsonb);
-
-CREATE FUNCTION public.credit_deposit_atomic_v2(
+DO $$
+BEGIN
+  DROP FUNCTION IF EXISTS public.credit_deposit_atomic_v2(uuid, numeric, text, text, text, jsonb);
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic_v2(
   p_user_id uuid,
   p_amount numeric,
   p_tracking_id text,
@@ -13,7 +15,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
-AS $$
+AS $function$
 DECLARE
   v_current_balance NUMERIC;
   v_new_balance NUMERIC;
@@ -250,4 +252,6 @@ EXCEPTION
       'error_code', SQLSTATE
     );
 END;
-$$;
+$function$;
+$exec$;
+END $$;

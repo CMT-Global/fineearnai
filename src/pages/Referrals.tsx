@@ -29,8 +29,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useTranslation } from "react-i18next";
 
 const Referrals = () => {
+  const { t } = useTranslation();
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -75,7 +77,7 @@ const Referrals = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
       </div>
     );
   }
@@ -86,16 +88,16 @@ const Referrals = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={isReferralDataLoading || !profile}
-      loadingText="Loading referrals..."
+      loadingText={t("referrals.loadingReferrals")}
     >
       {profile && (
         <>
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
               <div className="flex-1 mb-4">
-                <h1 className="text-2xl font-bold">Referral Program</h1>
+                <h1 className="text-2xl font-bold">{t("referrals.title")}</h1>
                 <p className="text-muted-foreground">
-                  Invite friends and earn commissions from their activities.
+                  {t("referrals.subtitle")}
                 </p>
               </div>
 
@@ -121,7 +123,7 @@ const Referrals = () => {
                     <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
                   <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {profile.earnerBadge.badgeText} - No Referral Commissions
+                    {profile.earnerBadge.badgeText} - {t("referrals.noReferralCommissions")}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
                     <p>{profile.earnerBadge.upgradePrompt}</p>
@@ -129,7 +131,7 @@ const Referrals = () => {
                       onClick={() => navigate("/plans")}
                       className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
                     >
-                      Upgrade to Earn Commissions
+                      {t("referrals.upgradeToEarnCommissions")}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </AlertDescription>
@@ -138,7 +140,7 @@ const Referrals = () => {
 
               {/* Referral Code Card - Full Width */}
               <Card className="p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">Your Referral Link & Commission</h2>
+                <h2 className="text-xl font-semibold mb-4">{t("referrals.yourReferralLink")}</h2>
                 
                 <ReferralCodeCard
                   referralCode={profile.referral_code}
@@ -172,23 +174,24 @@ const Referrals = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  <h2 className="text-xl font-semibold">Your Referrals</h2>
+                  <h2 className="text-xl font-semibold">{t("referrals.yourReferrals")}</h2>
                 </div>
                 {pagination && pagination.totalCount > 0 && (
                   <span className="text-sm text-muted-foreground">
-                    Total: {pagination.totalCount} referral{pagination.totalCount !== 1 ? 's' : ''}
+                    {t("referrals.totalReferrals", { count: pagination.totalCount })}
                   </span>
                 )}
               </div>
 
               {isReferralsLoading ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>Loading referrals...</p>
+                  <p>{t("referrals.loadingReferrals")}</p>
                 </div>
               ) : referredUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>No referrals yet. Share your link to get started!</p>
+                  <p>{t("referrals.noReferrals")}</p>
+                  <p className="text-sm mt-2">{t("referrals.noReferralsDescription")}</p>
                 </div>
               ) : (
                 <>
@@ -197,22 +200,22 @@ const Referrals = () => {
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Username
+                            {t("referrals.tableHeaders.username")}
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Membership
+                            {t("referrals.tableHeaders.membership")}
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Status
+                            {t("referrals.tableHeaders.status")}
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Total Commission
+                            {t("referrals.tableHeaders.totalCommission")}
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Last Activity
+                            {t("referrals.tableHeaders.lastActivity")}
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                            Joined
+                            {t("referrals.tableHeaders.joined")}
                           </th>
                         </tr>
                       </thead>
@@ -220,14 +223,24 @@ const Referrals = () => {
                         {referredUsers.map((referral) => (
                           <tr key={referral.id} className="border-b last:border-0">
                             <td className="py-3 px-4">{referral.referredUser.username}</td>
-                            <td className="py-3 px-4 capitalize">{referral.referredUser.membershipPlan}</td>
+                            <td className="py-3 px-4 capitalize">
+                              {(() => {
+                                const planKey = `referrals.planNames.${referral.referredUser.membershipPlan}`;
+                                const translated = t(planKey);
+                                return translated !== planKey ? translated : referral.referredUser.membershipPlan;
+                              })()}
+                            </td>
                             <td className="py-3 px-4">
                               <span className={`text-xs px-2 py-1 rounded-full ${
                                 referral.status === 'active'
                                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                   : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
                               }`}>
-                                {referral.status}
+                                {(() => {
+                                  const statusKey = `referrals.statuses.${referral.status}`;
+                                  const translated = t(statusKey);
+                                  return translated !== statusKey ? translated : referral.status;
+                                })()}
                               </span>
                             </td>
                             <td className="py-3 px-4 font-medium text-[hsl(var(--wallet-earnings))]">
@@ -236,7 +249,7 @@ const Referrals = () => {
                             <td className="py-3 px-4 text-sm text-muted-foreground">
                               {referral.referredUser.lastActivity 
                                 ? new Date(referral.referredUser.lastActivity).toLocaleDateString()
-                                : 'Never'}
+                                : t("referrals.never")}
                             </td>
                             <td className="py-3 px-4 text-sm text-muted-foreground">
                               {new Date(referral.createdAt).toLocaleDateString()}
@@ -251,7 +264,7 @@ const Referrals = () => {
                   {pagination && pagination.totalPages > 1 && (
                     <div className="mt-6 flex items-center justify-between">
                       <p className="text-sm text-muted-foreground">
-                        Page {currentPage} of {pagination.totalPages}
+                        {t("referrals.page")} {currentPage} {t("referrals.of")} {pagination.totalPages}
                       </p>
                       
                       <Pagination>
@@ -265,7 +278,7 @@ const Referrals = () => {
                               className="gap-1"
                             >
                               <ChevronLeft className="h-4 w-4" />
-                              Previous
+                              {t("referrals.previous")}
                             </Button>
                           </PaginationItem>
 
@@ -302,7 +315,7 @@ const Referrals = () => {
                               disabled={!pagination.hasNextPage}
                               className="gap-1"
                             >
-                              Next
+                              {t("referrals.next")}
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </PaginationItem>

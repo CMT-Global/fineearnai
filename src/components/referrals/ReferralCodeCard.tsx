@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Copy, Check, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ReferralCodeCardProps {
   referralCode: string;
@@ -12,6 +13,7 @@ interface ReferralCodeCardProps {
 }
 
 export const ReferralCodeCard = ({ referralCode, username, platformName = "ProfitChips" }: ReferralCodeCardProps) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const referralUrl = `${window.location.origin}/signup?ref=${referralCode}`;
 
@@ -19,10 +21,10 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
     try {
       await navigator.clipboard.writeText(referralUrl);
       setCopied(true);
-      toast.success("Referral link copied!");
+      toast.success(t("referrals.toasts.referralLinkCopied"));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error("Failed to copy link");
+      toast.error(t("referrals.toasts.failedToCopyLink"));
     }
   };
 
@@ -44,11 +46,11 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Your Referral Code</h2>
+      <h2 className="text-xl font-semibold mb-4">{t("referrals.yourReferralCode")}</h2>
       
       <div className="space-y-4">
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Referral Code</label>
+          <label className="text-sm text-muted-foreground mb-2 block">{t("referrals.referralCode")}</label>
           <div className="flex gap-2">
             <Input
               value={referralCode}
@@ -67,7 +69,7 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
         </div>
 
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Referral Link</label>
+          <label className="text-sm text-muted-foreground mb-2 block">{t("referrals.referralLink")}</label>
           <div className="flex gap-2">
             <Input
               value={referralUrl}
@@ -91,7 +93,7 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
             className="flex-1 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
           >
             <Copy className="h-4 w-4 mr-2" />
-            Copy Link
+            {t("referrals.copyLink")}
           </Button>
           <Button
             onClick={handleShare}
@@ -99,13 +101,13 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
             className="flex-1"
           >
             <Share2 className="h-4 w-4 mr-2" />
-            Share
+            {t("referrals.share")}
           </Button>
         </div>
 
         <div className="bg-[hsl(var(--wallet-referrals))]/5 border border-[hsl(var(--wallet-referrals))]/20 rounded-lg p-4">
           <p className="text-sm text-muted-foreground">
-            Share this link with friends to earn commission from their completed tasks!
+            {t("referrals.shareLinkDescription")}
           </p>
         </div>
       </div>

@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_verification_otps_expires ON public.email_verific
 ALTER TABLE public.email_verification_otps ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Only service role (edge functions) can manage
+DROP POLICY IF EXISTS "Service role manages OTPs" ON public.email_verification_otps;
 CREATE POLICY "Service role manages OTPs" ON public.email_verification_otps
   FOR ALL 
   USING (true);

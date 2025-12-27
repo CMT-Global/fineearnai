@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
@@ -52,6 +53,7 @@ interface Feedback {
 }
 
 const Tasks = () => {
+  const { t } = useTranslation();
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -117,10 +119,9 @@ const Tasks = () => {
       throw lastError;
     },
     enabled: !!user,
-    staleTime: 0,        // Always consider data stale - fetch fresh on every request after invalidation
+    staleTime: 10000,    // Cache for 10 seconds
     gcTime: 60000,       // Keep in cache for 1 minute
     retry: false,        // Disable automatic retry since we handle it manually
-    refetchOnWindowFocus: true, // Refetch when window regains focus to ensure fresh data
   });
 
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
@@ -187,33 +188,28 @@ const Tasks = () => {
       
       return data;
     },
-    onSuccess: async (data) => {
-      toast.info(`Task skipped (${data.remainingSkips} skips remaining)`);
+    onSuccess: (data) => {
+      toast.info(`${t("tasks.toasts.taskSkipped")} (${data.remainingSkips} ${t("tasks.stats.skipsRemaining")})`);
       setFeedback(null);
       setSelectedResponse("");
-      // Invalidate cache and refetch to ensure skipped task is not shown again
-      await queryClient.invalidateQueries({ 
-        queryKey: ['next-task', user?.id],
-        refetchType: 'active'
-      });
-      await refetchTask();
+      refetchTask();
     },
     onError: (error: any) => {
       if (error.message?.includes('skip_limit_reached')) {
-        toast.error("Daily skip limit reached!");
+        toast.error(t("tasks.toasts.dailySkipLimitReached"));
       } else {
-        toast.error(error.message || "Failed to skip task");
+        toast.error(error.message || t("tasks.toasts.failedToLoadTask"));
       }
     },
   });
 
   const handleSkipTask = useCallback(async () => {
     if (!userStats || userStats.skipsToday >= userStats.skipLimit) {
-      toast.error("Daily skip limit reached!");
+      toast.error(t("tasks.toasts.dailySkipLimitReached"));
       return;
     }
     skipMutation.mutate();
-  }, [userStats, skipMutation]);
+  }, [userStats, skipMutation, t]);
 
   // Submit mutation - Phase 1: No optimistic updates, server response is single source of truth
   const submitMutation = useMutation({
@@ -233,13 +229,13 @@ const Tasks = () => {
       if (data.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setFeedback(data);
 
       if (data.isCorrect) {
-        toast.success(`Correct! You earned ${formatAmount(data.earnedAmount)}`);
+        toast.success(t("tasks.interface.youEarned", { amount: formatAmount(data.earnedAmount) }));
       } else {
-        toast.error("Incorrect answer");
+        toast.error(t("tasks.toasts.incorrectAnswer"));
       }
 
       // Check if daily limit reached after this task
@@ -249,13 +245,13 @@ const Tasks = () => {
       
       if (remainingAfter === 0 || tasksCompletedAfter >= dailyLimit) {
         // Daily limit reached - show congratulatory message
-        toast.success("Congratulations! You've completed all your tasks for today!");
+        toast.success(t("tasks.toasts.allTasksCompleted"));
         
         // Set query data to show daily limit UI
         queryClient.setQueryData(['next-task', user?.id], {
           success: false,
           error: 'daily_limit_reached',
-          message: 'You have completed all your tasks for today!',
+          message: t("tasks.toasts.allTasksCompleted"),
           task: null,
           userStats: {
             ...userStats,
@@ -273,26 +269,20 @@ const Tasks = () => {
           setIsSubmitting(false);
         }, 2000);
       } else {
-        // More tasks available - immediately invalidate cache and refetch to ensure fresh data
-        // This ensures the completed task is excluded from the next fetch
-        await queryClient.invalidateQueries({ 
-          queryKey: ['next-task', user?.id],
-          refetchType: 'active' // Force immediate refetch
-        });
-        
-        // Refetch immediately to get next task (excluding the one just completed)
-        await refetchTask();
+        // More tasks available - invalidate and refetch
+        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
         
         setTimeout(() => {
           setFeedback(null);
           setSelectedResponse("");
+          refetchTask();
           // Release submission lock after 1-second cooldown
           setIsSubmitting(false);
         }, 2000);
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to submit answer");
+      toast.error(error.message || t("tasks.toasts.failedToLoadTask"));
       // Release submission lock on error
       setIsSubmitting(false);
     },
@@ -310,7 +300,7 @@ const Tasks = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Authenticating...</p>
+          <p className="text-muted-foreground">{t("login.signingIn")}</p>
         </div>
       </div>
     );
@@ -322,14 +312,14 @@ const Tasks = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={isProfileLoading || !profile}
-      loadingText="Loading tasks..."
+      loadingText={t("tasks.loadingTasks")}
     >
       {/* Header */}
       <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div>
-            <h1 className="text-2xl font-bold">AI Training Tasks</h1>
+            <h1 className="text-2xl font-bold">{t("tasks.title")}</h1>
             <p className="text-muted-foreground">
-              Complete tasks to earn money and help train AI
+              {t("tasks.subtitle")}
             </p>
           </div>
         </header>
@@ -340,10 +330,8 @@ const Tasks = () => {
           <Alert className="mb-6">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Understanding AI Training:</strong> The 'correct' response for these
-              tasks is determined by the collective analysis and consensus of many human
-              evaluators, not by pre-existing AI knowledge. Your contributions are vital for
-              refining and advancing AI models.
+              <strong>{t("tasks.understandingAITraining")}</strong>{" "}
+              {t("tasks.understandingAITrainingDescription")}
             </AlertDescription>
           </Alert>
 
@@ -355,7 +343,7 @@ const Tasks = () => {
                 <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
               </div>
               <AlertTitle className="text-orange-700 dark:text-orange-400">
-                {profile.earnerBadge.badgeText} - Limited Task Access
+                {profile.earnerBadge.badgeText} - {t("tasks.limitedTaskAccess")}
               </AlertTitle>
               <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
                 <p>{profile.earnerBadge.upgradePrompt}</p>
@@ -363,7 +351,7 @@ const Tasks = () => {
                   onClick={() => navigate("/plans")}
                   className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
                 >
-                  Upgrade Now
+                  {t("tasks.upgradeNow")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </AlertDescription>
@@ -410,7 +398,7 @@ const Tasks = () => {
               userId={user?.id || ''} 
               maxItems={5} 
               showPagination={false} 
-              title="Recent Activity"
+              title={t("tasks.recentActivity")}
             />
           </div>
         </div>

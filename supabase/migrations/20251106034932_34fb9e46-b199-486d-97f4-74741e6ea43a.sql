@@ -37,26 +37,30 @@ CREATE TABLE IF NOT EXISTS public.partner_applications (
 );
 
 -- Create indexes for partner_applications
-CREATE INDEX idx_partner_applications_user_id ON public.partner_applications(user_id);
-CREATE INDEX idx_partner_applications_status ON public.partner_applications(status);
-CREATE INDEX idx_partner_applications_created_at ON public.partner_applications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_partner_applications_user_id ON public.partner_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_partner_applications_status ON public.partner_applications(status);
+CREATE INDEX IF NOT EXISTS idx_partner_applications_created_at ON public.partner_applications(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE public.partner_applications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for partner_applications
+DROP POLICY IF EXISTS "Users can view their own applications" ON public.partner_applications;
 CREATE POLICY "Users can view their own applications"
   ON public.partner_applications FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create their own applications" ON public.partner_applications;
 CREATE POLICY "Users can create their own applications"
   ON public.partner_applications FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all applications" ON public.partner_applications;
 CREATE POLICY "Admins can view all applications"
   ON public.partner_applications FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can update applications" ON public.partner_applications;
 CREATE POLICY "Admins can update applications"
   ON public.partner_applications FOR UPDATE
   USING (has_role(auth.uid(), 'admin'::app_role));
@@ -93,31 +97,36 @@ CREATE TABLE IF NOT EXISTS public.partner_config (
 );
 
 -- Create indexes for partner_config
-CREATE INDEX idx_partner_config_user_id ON public.partner_config(user_id);
-CREATE INDEX idx_partner_config_current_rank ON public.partner_config(current_rank);
-CREATE INDEX idx_partner_config_daily_sales ON public.partner_config(daily_sales DESC);
+CREATE INDEX IF NOT EXISTS idx_partner_config_user_id ON public.partner_config(user_id);
+CREATE INDEX IF NOT EXISTS idx_partner_config_current_rank ON public.partner_config(current_rank);
+CREATE INDEX IF NOT EXISTS idx_partner_config_daily_sales ON public.partner_config(daily_sales DESC);
 
 -- Enable RLS
 ALTER TABLE public.partner_config ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for partner_config
+DROP POLICY IF EXISTS "Partners can view their own config" ON public.partner_config;
 CREATE POLICY "Partners can view their own config"
   ON public.partner_config FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Partners can update their own payment methods" ON public.partner_config;
 CREATE POLICY "Partners can update their own payment methods"
   ON public.partner_config FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all partner configs" ON public.partner_config;
 CREATE POLICY "Admins can view all partner configs"
   ON public.partner_config FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can update all partner configs" ON public.partner_config;
 CREATE POLICY "Admins can update all partner configs"
   ON public.partner_config FOR UPDATE
   USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "System can insert partner configs" ON public.partner_config;
 CREATE POLICY "System can insert partner configs"
   ON public.partner_config FOR INSERT
   WITH CHECK (true);
@@ -137,16 +146,18 @@ CREATE TABLE IF NOT EXISTS public.partner_ranks (
 );
 
 -- Create index for partner_ranks
-CREATE INDEX idx_partner_ranks_order ON public.partner_ranks(rank_order ASC);
+CREATE INDEX IF NOT EXISTS idx_partner_ranks_order ON public.partner_ranks(rank_order ASC);
 
 -- Enable RLS
 ALTER TABLE public.partner_ranks ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for partner_ranks
+DROP POLICY IF EXISTS "Anyone can view partner ranks" ON public.partner_ranks;
 CREATE POLICY "Anyone can view partner ranks"
   ON public.partner_ranks FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage partner ranks" ON public.partner_ranks;
 CREATE POLICY "Admins can manage partner ranks"
   ON public.partner_ranks FOR ALL
   USING (has_role(auth.uid(), 'admin'::app_role));
@@ -191,32 +202,37 @@ CREATE TABLE IF NOT EXISTS public.vouchers (
 );
 
 -- Create indexes for vouchers
-CREATE INDEX idx_vouchers_voucher_code ON public.vouchers(voucher_code);
-CREATE INDEX idx_vouchers_partner_id ON public.vouchers(partner_id);
-CREATE INDEX idx_vouchers_status ON public.vouchers(status);
-CREATE INDEX idx_vouchers_expires_at ON public.vouchers(expires_at);
-CREATE INDEX idx_vouchers_redeemed_by ON public.vouchers(redeemed_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_vouchers_voucher_code ON public.vouchers(voucher_code);
+CREATE INDEX IF NOT EXISTS idx_vouchers_partner_id ON public.vouchers(partner_id);
+CREATE INDEX IF NOT EXISTS idx_vouchers_status ON public.vouchers(status);
+CREATE INDEX IF NOT EXISTS idx_vouchers_expires_at ON public.vouchers(expires_at);
+CREATE INDEX IF NOT EXISTS idx_vouchers_redeemed_by ON public.vouchers(redeemed_by_user_id);
 
 -- Enable RLS
 ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for vouchers
+DROP POLICY IF EXISTS "Partners can view their own vouchers" ON public.vouchers;
 CREATE POLICY "Partners can view their own vouchers"
   ON public.vouchers FOR SELECT
   USING (auth.uid() = partner_id);
 
+DROP POLICY IF EXISTS "Users can view vouchers they redeemed" ON public.vouchers;
 CREATE POLICY "Users can view vouchers they redeemed"
   ON public.vouchers FOR SELECT
   USING (auth.uid() = redeemed_by_user_id);
 
+DROP POLICY IF EXISTS "Admins can view all vouchers" ON public.vouchers;
 CREATE POLICY "Admins can view all vouchers"
   ON public.vouchers FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "System can insert vouchers" ON public.vouchers;
 CREATE POLICY "System can insert vouchers"
   ON public.vouchers FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "System can update vouchers" ON public.vouchers;
 CREATE POLICY "System can update vouchers"
   ON public.vouchers FOR UPDATE
   USING (true);
@@ -243,23 +259,26 @@ CREATE TABLE IF NOT EXISTS public.partner_activity_log (
 );
 
 -- Create indexes for partner_activity_log
-CREATE INDEX idx_partner_activity_log_partner_id ON public.partner_activity_log(partner_id);
-CREATE INDEX idx_partner_activity_log_activity_type ON public.partner_activity_log(activity_type);
-CREATE INDEX idx_partner_activity_log_created_at ON public.partner_activity_log(created_at DESC);
-CREATE INDEX idx_partner_activity_log_voucher_id ON public.partner_activity_log(voucher_id);
+CREATE INDEX IF NOT EXISTS idx_partner_activity_log_partner_id ON public.partner_activity_log(partner_id);
+CREATE INDEX IF NOT EXISTS idx_partner_activity_log_activity_type ON public.partner_activity_log(activity_type);
+CREATE INDEX IF NOT EXISTS idx_partner_activity_log_created_at ON public.partner_activity_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_partner_activity_log_voucher_id ON public.partner_activity_log(voucher_id);
 
 -- Enable RLS
 ALTER TABLE public.partner_activity_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for partner_activity_log
+DROP POLICY IF EXISTS "Partners can view their own activity" ON public.partner_activity_log;
 CREATE POLICY "Partners can view their own activity"
   ON public.partner_activity_log FOR SELECT
   USING (auth.uid() = partner_id);
 
+DROP POLICY IF EXISTS "Admins can view all activity" ON public.partner_activity_log;
 CREATE POLICY "Admins can view all activity"
   ON public.partner_activity_log FOR SELECT
   USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "System can insert activity logs" ON public.partner_activity_log;
 CREATE POLICY "System can insert activity logs"
   ON public.partner_activity_log FOR INSERT
   WITH CHECK (true);
@@ -422,16 +441,19 @@ $$;
 
 -- 8. CREATE TRIGGER FOR UPDATED_AT TIMESTAMPS
 -- ============================================================================
+DROP TRIGGER IF EXISTS update_partner_applications_updated_at ON public.partner_applications;
 CREATE TRIGGER update_partner_applications_updated_at
   BEFORE UPDATE ON public.partner_applications
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_partner_config_updated_at ON public.partner_config;
 CREATE TRIGGER update_partner_config_updated_at
   BEFORE UPDATE ON public.partner_config
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_partner_ranks_updated_at ON public.partner_ranks;
 CREATE TRIGGER update_partner_ranks_updated_at
   BEFORE UPDATE ON public.partner_ranks
   FOR EACH ROW

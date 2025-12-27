@@ -4,9 +4,11 @@
 -- 2. Downline must be on referral_eligible plan (for task commissions)
 -- But for DEPOSIT commissions, downline can be on ANY plan as long as upline is paid
 
-DROP FUNCTION IF EXISTS public.credit_deposit_atomic(uuid, numeric, text, text, text, jsonb);
-
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+DO $$
+BEGIN
+  DROP FUNCTION IF EXISTS public.credit_deposit_atomic(uuid, numeric, text, text, text, jsonb);
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -236,3 +238,5 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
+$exec$;
+END $$;

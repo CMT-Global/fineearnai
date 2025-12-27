@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info, RefreshCw } from "lucide-react";
@@ -7,6 +8,7 @@ interface NoTasksAvailableProps {
 }
 
 export const NoTasksAvailable = ({ onRefresh }: NoTasksAvailableProps) => {
+  const { t } = useTranslation();
   return (
     <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-background">
       <CardHeader className="text-center space-y-4 pb-4">
@@ -15,20 +17,20 @@ export const NoTasksAvailable = ({ onRefresh }: NoTasksAvailableProps) => {
         </div>
         <div>
           <CardTitle className="text-2xl font-bold">
-            No Tasks Available Right Now
+            {t("tasks.noTasks.title")}
           </CardTitle>
           <CardDescription className="text-base mt-2">
-            All available tasks have been completed. New tasks will be added soon.
+            {t("tasks.noTasks.description")}
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 text-center pb-6">
         <p className="text-sm text-muted-foreground">
-          Please check back later for new AI training tasks.
+          {t("tasks.noTasks.checkBackLater")}
         </p>
         <Button onClick={onRefresh} variant="outline" className="mt-2">
           <RefreshCw className="mr-2 h-4 w-4" />
-          Check Again
+          {t("tasks.noTasks.checkAgain")}
         </Button>
       </CardContent>
     </Card>

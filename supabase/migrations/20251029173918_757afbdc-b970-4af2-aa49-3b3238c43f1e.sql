@@ -2,7 +2,9 @@
 -- Update complete_task_atomic to use 'task_commission'
 -- Update credit_deposit_atomic to use 'deposit_commission'
 
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -207,9 +209,10 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'error', SQLERRM, 'error_code', 'TRANSACTION_FAILED');
 END;
 $function$;
-
--- Update credit_deposit_atomic to use 'deposit_commission'
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+$exec$;
+  
+  -- Update credit_deposit_atomic to use 'deposit_commission'
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -468,3 +471,5 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
+$exec$;
+END $$;

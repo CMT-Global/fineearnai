@@ -88,21 +88,26 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
   return useQuery({
     queryKey: ["admin-analytics", dateRange],
     queryFn: async () => {
-      // Prepare date parameters
-      const params = dateRange ? {
-        p_start_date: dateRange.startDate,
-        p_end_date: dateRange.endDate
-      } : {};
+      // Prepare date parameters - always pass them explicitly to match function signature
+      // Functions have defaults, but we pass explicit values to avoid schema cache issues
+      const endDate = dateRange?.endDate || new Date().toISOString().split('T')[0];
+      const startDate = dateRange?.startDate || new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Pass parameters as object - PostgREST uses named parameters, order shouldn't matter
+      const params = {
+        p_start_date: startDate,
+        p_end_date: endDate
+      };
 
       // Fetch all analytics data in parallel
       const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes, withdrawalsRes, countryStatsRes, topReferrersRes] = await Promise.all([
-        supabase.rpc("get_user_growth_stats" as any, params),
-        supabase.rpc("get_deposit_stats" as any, params),
-        supabase.rpc("get_referral_stats_overview" as any, params),
+        supabase.rpc("get_user_growth_stats", params),
+        supabase.rpc("get_deposit_stats", params),
+        supabase.rpc("get_referral_stats_overview", params),
         supabase.rpc("get_plan_upgrade_stats", params),
-        supabase.rpc("get_withdrawal_stats" as any, params),
-        supabase.rpc("get_country_stats" as any, params),
-        supabase.rpc("get_top_referrers" as any, params),
+        supabase.rpc("get_withdrawal_stats", params),
+        supabase.rpc("get_country_stats", params),
+        supabase.rpc("get_top_referrers", params),
       ]);
 
       // Check for errors

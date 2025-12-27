@@ -4,9 +4,30 @@
 -- This migration sets up automated cleanup of old pending deposit transactions
 -- Runs daily at 3:00 AM UTC to remove transactions older than 24 hours
 
--- Enable required extensions for CRON scheduling
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+-- Enable required extensions for CRON scheduling (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_cron'
+  ) THEN
+    CREATE EXTENSION pg_cron;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_net'
+  ) THEN
+    CREATE EXTENSION pg_net;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
 
 -- Create a monitoring view for pending transactions health
 CREATE OR REPLACE VIEW public.pending_transactions_health AS
@@ -25,8 +46,16 @@ WHERE type = 'deposit'
 COMMENT ON VIEW public.pending_transactions_health IS 
 'Monitoring view for pending transaction cleanup system. Shows counts and health metrics.';
 
--- Schedule the cleanup function to run daily at 3:00 AM UTC
+-- Schedule the cleanup function to run daily at 3:00 AM UTC (idempotent)
 -- Using pg_cron to invoke the Edge Function via pg_net
+DO $$
+BEGIN
+  PERFORM cron.unschedule('cleanup-pending-transactions-daily');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END $$;
+
 SELECT cron.schedule(
   'cleanup-pending-transactions-daily',
   '0 3 * * *', -- Every day at 3:00 AM UTC

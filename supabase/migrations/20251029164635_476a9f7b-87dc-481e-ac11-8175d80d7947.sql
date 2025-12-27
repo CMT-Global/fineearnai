@@ -4,10 +4,12 @@
 -- functions to eliminate the need for queue-based processing
 -- ============================================================================
 
--- ============================================================================
--- 1. UPDATE complete_task_atomic: Add Task Commission Processing
--- ============================================================================
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  -- ============================================================================
+  -- 1. UPDATE complete_task_atomic: Add Task Commission Processing
+  -- ============================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -310,11 +312,12 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
-
--- ============================================================================
--- 2. UPDATE credit_deposit_atomic: Add Deposit Commission Processing
--- ============================================================================
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+$exec$;
+  
+  -- ============================================================================
+  -- 2. UPDATE credit_deposit_atomic: Add Deposit Commission Processing
+  -- ============================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -541,6 +544,8 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
+$exec$;
+END $$;
 
 -- ============================================================================
 -- 3. VERIFY process_plan_upgrade_atomic already has commission logic

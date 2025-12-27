@@ -93,7 +93,8 @@ ALTER TABLE public.membership_plans
 
 -- Profiles performance indexes
 CREATE INDEX IF NOT EXISTS idx_profiles_referral_code ON public.profiles(referral_code);
-CREATE INDEX IF NOT EXISTS idx_profiles_referred_by ON public.profiles(referred_by) WHERE referred_by IS NOT NULL;
+-- Note: referred_by column was removed in favor of referrals table, so this index is no longer needed
+-- CREATE INDEX IF NOT EXISTS idx_profiles_referred_by ON public.profiles(referred_by) WHERE referred_by IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_membership_plan ON public.profiles(membership_plan);
 CREATE INDEX IF NOT EXISTS idx_profiles_plan_expires_at ON public.profiles(plan_expires_at) WHERE plan_expires_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_auto_renew ON public.profiles(auto_renew) WHERE auto_renew = true;
@@ -120,55 +121,162 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_log_activity_type ON public.user_ac
 -- 2.4 ROW LEVEL SECURITY POLICIES
 -- =============================================
 
--- Enable RLS on new tables
-ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.referral_program_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.group_account_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_activity_log ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on new tables (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referrals' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referral_program_config' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.referral_program_config ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'group_account_config' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.group_account_config ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'user_activity_log' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.user_activity_log ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- Referrals policies
-CREATE POLICY "Users can view their own referrals as referrer"
-  ON public.referrals FOR SELECT
-  USING (auth.uid() = referrer_id);
+-- Referrals policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referrals' 
+    AND policyname = 'Users can view their own referrals as referrer'
+  ) THEN
+    CREATE POLICY "Users can view their own referrals as referrer"
+      ON public.referrals FOR SELECT
+      USING (auth.uid() = referrer_id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referrals' 
+    AND policyname = 'Users can view their own referrals as referred'
+  ) THEN
+    CREATE POLICY "Users can view their own referrals as referred"
+      ON public.referrals FOR SELECT
+      USING (auth.uid() = referred_id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referrals' 
+    AND policyname = 'Admins can manage all referrals'
+  ) THEN
+    CREATE POLICY "Admins can manage all referrals"
+      ON public.referrals FOR ALL
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
-CREATE POLICY "Users can view their own referrals as referred"
-  ON public.referrals FOR SELECT
-  USING (auth.uid() = referred_id);
+-- Referral program config policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referral_program_config' 
+    AND policyname = 'Anyone can view referral program config'
+  ) THEN
+    CREATE POLICY "Anyone can view referral program config"
+      ON public.referral_program_config FOR SELECT
+      USING (true);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'referral_program_config' 
+    AND policyname = 'Admins can manage referral program config'
+  ) THEN
+    CREATE POLICY "Admins can manage referral program config"
+      ON public.referral_program_config FOR ALL
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
-CREATE POLICY "Admins can manage all referrals"
-  ON public.referrals FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role));
+-- Group account config policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'group_account_config' 
+    AND policyname = 'Anyone can view group account config'
+  ) THEN
+    CREATE POLICY "Anyone can view group account config"
+      ON public.group_account_config FOR SELECT
+      USING (true);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'group_account_config' 
+    AND policyname = 'Admins can manage group account config'
+  ) THEN
+    CREATE POLICY "Admins can manage group account config"
+      ON public.group_account_config FOR ALL
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
--- Referral program config policies
-CREATE POLICY "Anyone can view referral program config"
-  ON public.referral_program_config FOR SELECT
-  USING (true);
-
-CREATE POLICY "Admins can manage referral program config"
-  ON public.referral_program_config FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
--- Group account config policies
-CREATE POLICY "Anyone can view group account config"
-  ON public.group_account_config FOR SELECT
-  USING (true);
-
-CREATE POLICY "Admins can manage group account config"
-  ON public.group_account_config FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
--- User activity log policies
-CREATE POLICY "Users can view their own activity log"
-  ON public.user_activity_log FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Admins can view all activity logs"
-  ON public.user_activity_log FOR SELECT
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Service role can insert activity logs"
-  ON public.user_activity_log FOR INSERT
-  WITH CHECK (true);
+-- User activity log policies (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'user_activity_log' 
+    AND policyname = 'Users can view their own activity log'
+  ) THEN
+    CREATE POLICY "Users can view their own activity log"
+      ON public.user_activity_log FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'user_activity_log' 
+    AND policyname = 'Admins can view all activity logs'
+  ) THEN
+    CREATE POLICY "Admins can view all activity logs"
+      ON public.user_activity_log FOR SELECT
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'user_activity_log' 
+    AND policyname = 'Service role can insert activity logs'
+  ) THEN
+    CREATE POLICY "Service role can insert activity logs"
+      ON public.user_activity_log FOR INSERT
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- =============================================
 -- 2.5 DATABASE FUNCTIONS

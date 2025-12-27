@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ interface ScheduledEmail {
 }
 
 const ScheduledEmails = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -45,10 +47,10 @@ const ScheduledEmails = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -70,7 +72,7 @@ const ScheduledEmails = () => {
       setScheduledEmails(data || []);
     } catch (error: any) {
       console.error("Error loading scheduled emails:", error);
-      toast.error("Failed to load scheduled emails");
+      toast.error(t("toasts.admin.failedToLoadScheduledEmails"));
     } finally {
       setLoading(false);
     }
@@ -87,13 +89,13 @@ const ScheduledEmails = () => {
 
       if (error) throw error;
 
-      toast.success("Scheduled email deleted");
+      toast.success(t("toasts.admin.scheduledEmailDeleted"));
       setDeleteDialogOpen(false);
       setSelectedEmail(null);
       loadScheduledEmails();
     } catch (error: any) {
       console.error("Error deleting scheduled email:", error);
-      toast.error("Failed to delete scheduled email");
+      toast.error(t("toasts.admin.failedToDeleteScheduledEmail"));
     }
   };
 
@@ -106,11 +108,11 @@ const ScheduledEmails = () => {
 
       if (error) throw error;
 
-      toast.success("Scheduled email cancelled");
+      toast.success(t("toasts.admin.scheduledEmailCancelled"));
       loadScheduledEmails();
     } catch (error: any) {
       console.error("Error cancelling scheduled email:", error);
-      toast.error("Failed to cancel scheduled email");
+      toast.error(t("toasts.admin.failedToCancelScheduledEmail"));
     }
   };
 
@@ -122,7 +124,7 @@ const ScheduledEmails = () => {
 
       if (error) throw error;
 
-      toast.success("Scheduled emails processing triggered");
+      toast.success(t("toasts.admin.scheduledEmailsProcessingTriggered"));
       
       // Reload after a delay to see updated statuses
       setTimeout(() => {
@@ -130,7 +132,7 @@ const ScheduledEmails = () => {
       }, 2000);
     } catch (error: any) {
       console.error("Error processing scheduled emails:", error);
-      toast.error("Failed to process scheduled emails");
+      toast.error(t("toasts.admin.failedToProcessScheduledEmails"));
     } finally {
       setProcessing(false);
     }
@@ -153,23 +155,25 @@ const ScheduledEmails = () => {
   };
 
   const getRecipientSummary = (filter: any) => {
-    if (!filter) return "Unknown";
+    if (!filter) return t("admin.scheduledEmails.recipientSummary.unknown");
     
-    if (filter.type === "all") return "All Users";
-    if (filter.type === "plan") return `Plan: ${filter.plan}`;
-    if (filter.type === "country") return `Country: ${filter.country}`;
+    if (filter.type === "all") return t("admin.scheduledEmails.recipientSummary.allUsers");
+    if (filter.type === "plan") return t("admin.scheduledEmails.recipientSummary.plan", { plan: filter.plan });
+    if (filter.type === "country") return t("admin.scheduledEmails.recipientSummary.country", { country: filter.country });
     if (filter.type === "usernames") {
       const count = filter.usernames?.split(",").length || 0;
-      return `${count} specific user${count !== 1 ? 's' : ''}`;
+      return count === 1 
+        ? t("admin.scheduledEmails.recipientSummary.specificUsers", { count })
+        : t("admin.scheduledEmails.recipientSummary.specificUsersPlural", { count });
     }
     
-    return "Custom";
+    return t("admin.scheduledEmails.recipientSummary.custom");
   };
 
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading scheduled emails..." />
+        <LoadingSpinner size="lg" text={t("admin.scheduledEmails.loadingScheduledEmails")} />
       </div>
     );
   }
@@ -183,14 +187,14 @@ const ScheduledEmails = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.scheduledEmails.backToAdmin")}
           </Button>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Scheduled Emails</h1>
+              <h1 className="text-3xl font-bold mb-2">{t("admin.scheduledEmails.title")}</h1>
               <p className="text-muted-foreground">
-                Manage and monitor scheduled email campaigns
+                {t("admin.scheduledEmails.subtitle")}
               </p>
             </div>
             
@@ -199,7 +203,7 @@ const ScheduledEmails = () => {
               disabled={processing || pastDueEmails.length === 0}
             >
               <PlayCircle className="mr-2 h-4 w-4" />
-              Process Due Emails ({pastDueEmails.length})
+              {t("admin.scheduledEmails.processDueEmails")} ({pastDueEmails.length})
             </Button>
           </div>
         </div>
@@ -209,7 +213,7 @@ const ScheduledEmails = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending
+                {t("admin.scheduledEmails.pending")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -222,7 +226,7 @@ const ScheduledEmails = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Past Due
+                {t("admin.scheduledEmails.pastDue")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -235,7 +239,7 @@ const ScheduledEmails = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Sent
+                {t("admin.scheduledEmails.sent")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -248,7 +252,7 @@ const ScheduledEmails = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Failed
+                {t("admin.scheduledEmails.failed")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -262,9 +266,11 @@ const ScheduledEmails = () => {
         {/* Scheduled Emails Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Scheduled Emails</CardTitle>
+            <CardTitle>{t("admin.scheduledEmails.allScheduledEmails")}</CardTitle>
             <CardDescription>
-              {scheduledEmails.length} scheduled email{scheduledEmails.length !== 1 ? 's' : ''}
+              {scheduledEmails.length === 1 
+                ? t("admin.scheduledEmails.scheduledEmailsCount", { count: scheduledEmails.length })
+                : t("admin.scheduledEmails.scheduledEmailsCountPlural", { count: scheduledEmails.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -272,19 +278,19 @@ const ScheduledEmails = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Recipients</TableHead>
-                    <TableHead>Scheduled For</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.scheduledEmails.subject")}</TableHead>
+                    <TableHead>{t("admin.scheduledEmails.recipients")}</TableHead>
+                    <TableHead>{t("admin.scheduledEmails.scheduledFor")}</TableHead>
+                    <TableHead>{t("admin.scheduledEmails.status")}</TableHead>
+                    <TableHead>{t("admin.scheduledEmails.created")}</TableHead>
+                    <TableHead className="text-right">{t("admin.scheduledEmails.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {scheduledEmails.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No scheduled emails found
+                        {t("admin.scheduledEmails.noScheduledEmailsFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -305,7 +311,7 @@ const ScheduledEmails = () => {
                             <div className="flex items-center gap-2">
                               {isPastDue && (
                                 <Badge variant="destructive" className="text-xs">
-                                  PAST DUE
+                                  {t("admin.scheduledEmails.pastDueBadge")}
                                 </Badge>
                               )}
                               <div className="flex flex-col">
@@ -322,7 +328,7 @@ const ScheduledEmails = () => {
                             {getStatusBadge(email.status)}
                             {email.sent_at && (
                               <div className="text-xs text-muted-foreground mt-1">
-                                Sent: {format(new Date(email.sent_at), "MMM dd, hh:mm a")}
+                                {t("admin.scheduledEmails.sentAt", { date: format(new Date(email.sent_at), "MMM dd, hh:mm a") })}
                               </div>
                             )}
                           </TableCell>
@@ -380,15 +386,15 @@ const ScheduledEmails = () => {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Scheduled Email</AlertDialogTitle>
+              <AlertDialogTitle>{t("admin.scheduledEmails.deleteScheduledEmail")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this scheduled email? This action cannot be undone.
+                {t("admin.scheduledEmails.deleteConfirmation")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-                Delete
+                {t("common.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -398,21 +404,21 @@ const ScheduledEmails = () => {
         <AlertDialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <AlertDialogHeader>
-              <AlertDialogTitle>Email Preview</AlertDialogTitle>
+              <AlertDialogTitle>{t("admin.scheduledEmails.emailPreview")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Scheduled for: {selectedEmail && format(new Date(selectedEmail.scheduled_for), "MMMM dd, yyyy 'at' hh:mm a")}
+                {selectedEmail && t("admin.scheduledEmails.scheduledForDate", { date: format(new Date(selectedEmail.scheduled_for), "MMMM dd, yyyy 'at' hh:mm a") })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             
             {selectedEmail && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium mb-1">Subject:</p>
+                  <p className="text-sm font-medium mb-1">{t("admin.scheduledEmails.subject")}:</p>
                   <p className="text-sm bg-muted p-2 rounded">{selectedEmail.subject}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm font-medium mb-1">Recipients:</p>
+                  <p className="text-sm font-medium mb-1">{t("admin.scheduledEmails.recipients")}:</p>
                   <p className="text-sm text-muted-foreground">
                     {getRecipientSummary(selectedEmail.recipient_filter)}
                   </p>
@@ -430,7 +436,7 @@ const ScheduledEmails = () => {
             
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setPreviewOpen(false)}>
-                Close
+                {t("common.close")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

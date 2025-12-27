@@ -1,5 +1,5 @@
--- Create withdrawal_requests table
-CREATE TABLE public.withdrawal_requests (
+-- Create withdrawal_requests table (idempotent)
+CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   amount NUMERIC(10, 2) NOT NULL,
@@ -37,47 +37,110 @@ VALUES
   ('withdrawal_fee_percentage', '2'::jsonb, 'Withdrawal fee percentage')
 ON CONFLICT (key) DO NOTHING;
 
--- Enable RLS
-ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.platform_config ENABLE ROW LEVEL SECURITY;
+-- Enable RLS (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'withdrawal_requests' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'platform_config' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.platform_config ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- RLS Policies for withdrawal_requests
-CREATE POLICY "Users can view their own withdrawal requests"
-  ON public.withdrawal_requests FOR SELECT
-  USING (auth.uid() = user_id);
+-- RLS Policies for withdrawal_requests (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'withdrawal_requests' 
+    AND policyname = 'Users can view their own withdrawal requests'
+  ) THEN
+    CREATE POLICY "Users can view their own withdrawal requests"
+      ON public.withdrawal_requests FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'withdrawal_requests' 
+    AND policyname = 'Users can create their own withdrawal requests'
+  ) THEN
+    CREATE POLICY "Users can create their own withdrawal requests"
+      ON public.withdrawal_requests FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'withdrawal_requests' 
+    AND policyname = 'Admins can view all withdrawal requests'
+  ) THEN
+    CREATE POLICY "Admins can view all withdrawal requests"
+      ON public.withdrawal_requests FOR SELECT
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'withdrawal_requests' 
+    AND policyname = 'Admins can update withdrawal requests'
+  ) THEN
+    CREATE POLICY "Admins can update withdrawal requests"
+      ON public.withdrawal_requests FOR UPDATE
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
-CREATE POLICY "Users can create their own withdrawal requests"
-  ON public.withdrawal_requests FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+-- RLS Policies for platform_config (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'platform_config' 
+    AND policyname = 'Anyone can view platform config'
+  ) THEN
+    CREATE POLICY "Anyone can view platform config"
+      ON public.platform_config FOR SELECT
+      USING (true);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'platform_config' 
+    AND policyname = 'Admins can manage platform config'
+  ) THEN
+    CREATE POLICY "Admins can manage platform config"
+      ON public.platform_config FOR ALL
+      USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
-CREATE POLICY "Admins can view all withdrawal requests"
-  ON public.withdrawal_requests FOR SELECT
-  USING (has_role(auth.uid(), 'admin'::app_role));
+-- Add indexes (idempotent)
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user_id ON public.withdrawal_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status ON public.withdrawal_requests(status);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_created_at ON public.withdrawal_requests(created_at DESC);
 
-CREATE POLICY "Admins can update withdrawal requests"
-  ON public.withdrawal_requests FOR UPDATE
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
--- RLS Policies for platform_config
-CREATE POLICY "Anyone can view platform config"
-  ON public.platform_config FOR SELECT
-  USING (true);
-
-CREATE POLICY "Admins can manage platform config"
-  ON public.platform_config FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
--- Add indexes
-CREATE INDEX idx_withdrawal_requests_user_id ON public.withdrawal_requests(user_id);
-CREATE INDEX idx_withdrawal_requests_status ON public.withdrawal_requests(status);
-CREATE INDEX idx_withdrawal_requests_created_at ON public.withdrawal_requests(created_at DESC);
-
--- Trigger for updated_at
+-- Trigger for updated_at (idempotent)
+DROP TRIGGER IF EXISTS update_withdrawal_requests_updated_at ON public.withdrawal_requests;
 CREATE TRIGGER update_withdrawal_requests_updated_at
   BEFORE UPDATE ON public.withdrawal_requests
   FOR EACH ROW
   EXECUTE FUNCTION public.update_tasks_updated_at();
 
+DROP TRIGGER IF EXISTS update_platform_config_updated_at ON public.platform_config;
 CREATE TRIGGER update_platform_config_updated_at
   BEFORE UPDATE ON public.platform_config
   FOR EACH ROW

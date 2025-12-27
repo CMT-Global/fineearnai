@@ -28,8 +28,10 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { QueryErrorBoundary } from "@/components/shared/QueryErrorBoundary";
 import { PartnerErrorBoundary } from "@/components/partner/PartnerErrorBoundary";
 import { generateCorrelationId } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const PartnerApplicationStatus = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
@@ -112,7 +114,7 @@ const PartnerApplicationStatus = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
+          <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
       </PageLayout>
     );
@@ -123,7 +125,7 @@ const PartnerApplicationStatus = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Loading application status..." />
+          <LoadingSpinner size="lg" text={t("partner.applicationStatus.loading")} />
         </div>
       </PageLayout>
     );
@@ -134,7 +136,7 @@ const PartnerApplicationStatus = () => {
     return (
       <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="lg" text="Redirecting..." />
+          <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
       </PageLayout>
     );
@@ -154,23 +156,23 @@ const PartnerApplicationStatus = () => {
       pending: { 
         variant: "secondary", 
         icon: Clock, 
-        label: "Pending Review",
+        label: t("partner.applicationStatus.status.pending.label"),
         color: "text-yellow-600",
-        description: "Your application is under review. We typically respond within 24-48 hours."
+        description: t("partner.applicationStatus.status.pending.description")
       },
       approved: { 
         variant: "default", 
         icon: CheckCircle, 
-        label: "Approved",
+        label: t("partner.applicationStatus.status.approved.label"),
         color: "text-green-600",
-        description: "Congratulations! Your partner application has been approved."
+        description: t("partner.applicationStatus.status.approved.description")
       },
       rejected: { 
         variant: "destructive", 
         icon: XCircle, 
-        label: "Not Approved",
+        label: t("partner.applicationStatus.status.rejected.label"),
         color: "text-destructive",
-        description: "Your application was not approved at this time."
+        description: t("partner.applicationStatus.status.rejected.description")
       },
     };
 
@@ -197,15 +199,15 @@ const PartnerApplicationStatus = () => {
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("partner.applicationStatus.backToDashboard")}
           </Button>
           
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Partner Application Status</h1>
+            <h1 className="text-3xl font-bold">{t("partner.applicationStatus.title")}</h1>
           </div>
           <p className="text-muted-foreground">
-            View your partner application details and current status
+            {t("partner.applicationStatus.subtitle")}
           </p>
         </div>
 
@@ -240,7 +242,7 @@ const PartnerApplicationStatus = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-destructive" />
-                Reason for Rejection
+                {t("partner.applicationStatus.sections.rejectionReason")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -252,9 +254,11 @@ const PartnerApplicationStatus = () => {
         {/* Application Details */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Application Details</CardTitle>
+            <CardTitle>{t("partner.applicationStatus.sections.applicationDetails")}</CardTitle>
             <CardDescription>
-              Submitted {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}
+              {t("partner.applicationStatus.sections.submitted", {
+                timeAgo: formatDistanceToNow(new Date(application.created_at), { addSuffix: true }),
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -262,22 +266,22 @@ const PartnerApplicationStatus = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <MessageSquare className="h-4 w-4 text-primary" />
-                Contact Information
+                {t("partner.applicationStatus.sections.contactInformation")}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pl-6">
                 <div>
-                  <span className="text-muted-foreground">Preferred Contact:</span>
+                  <span className="text-muted-foreground">{t("partner.applicationStatus.fields.preferredContact")}</span>
                   <p className="font-medium capitalize">{application.preferred_contact_method}</p>
                 </div>
                 {application.whatsapp_number && (
                   <div>
-                    <span className="text-muted-foreground">WhatsApp:</span>
+                    <span className="text-muted-foreground">{t("partner.applicationStatus.fields.whatsapp")}</span>
                     <p className="font-medium">{application.whatsapp_number}</p>
                   </div>
                 )}
                 {application.telegram_username && (
                   <div>
-                    <span className="text-muted-foreground">Telegram:</span>
+                    <span className="text-muted-foreground">{t("partner.applicationStatus.fields.telegram")}</span>
                     <p className="font-medium">@{application.telegram_username}</p>
                   </div>
                 )}
@@ -292,71 +296,77 @@ const PartnerApplicationStatus = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <Globe className="h-4 w-4 text-primary" />
-                    Network & Experience
+                    {t("partner.applicationStatus.sections.networkAndExperience")}
                   </div>
                   <div className="space-y-3 pl-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       {application.manages_community !== null && (
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Manages Community:</span>
+                            <span className="text-muted-foreground">{t("partner.applicationStatus.fields.managesCommunity")}</span>
                             {application.manages_community ? (
-                              <Badge variant="default">Yes</Badge>
+                              <Badge variant="default">{t("common.yes")}</Badge>
                             ) : (
-                              <Badge variant="secondary">No</Badge>
+                              <Badge variant="secondary">{t("common.no")}</Badge>
                             )}
                           </div>
                         </div>
                       )}
                       {application.community_member_count && (
                         <div>
-                          <span className="text-muted-foreground">Community Size:</span>
-                          <p className="font-medium">{application.community_member_count} members</p>
+                          <span className="text-muted-foreground">{t("partner.applicationStatus.fields.communitySize")}</span>
+                          <p className="font-medium">
+                            {t("partner.applicationStatus.values.members", { count: application.community_member_count })}
+                          </p>
                         </div>
                       )}
                       {application.promoted_platforms !== null && (
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Has Promoted Platforms:</span>
+                            <span className="text-muted-foreground">{t("partner.applicationStatus.fields.hasPromotedPlatforms")}</span>
                             {application.promoted_platforms ? (
-                              <Badge variant="default">Yes</Badge>
+                              <Badge variant="default">{t("common.yes")}</Badge>
                             ) : (
-                              <Badge variant="secondary">No</Badge>
+                              <Badge variant="secondary">{t("common.no")}</Badge>
                             )}
                           </div>
                         </div>
                       )}
                       {application.expected_monthly_onboarding && (
                         <div>
-                          <span className="text-muted-foreground">Monthly Onboarding:</span>
-                          <p className="font-medium">{application.expected_monthly_onboarding} users</p>
+                          <span className="text-muted-foreground">{t("partner.applicationStatus.fields.monthlyOnboarding")}</span>
+                          <p className="font-medium">
+                            {t("partner.applicationStatus.values.users", { count: application.expected_monthly_onboarding })}
+                          </p>
                         </div>
                       )}
                       {application.weekly_time_commitment && (
                         <div>
-                          <span className="text-muted-foreground">Time Commitment:</span>
-                          <p className="font-medium">{application.weekly_time_commitment} hours/week</p>
+                          <span className="text-muted-foreground">{t("partner.applicationStatus.fields.timeCommitment")}</span>
+                          <p className="font-medium">
+                            {t("partner.applicationStatus.values.hoursPerWeek", { count: application.weekly_time_commitment })}
+                          </p>
                         </div>
                       )}
                     </div>
 
                     {application.platform_promotion_details && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground">Platform Promotion Details:</span>
+                        <span className="text-muted-foreground">{t("partner.applicationStatus.fields.platformPromotionDetails")}</span>
                         <p className="mt-1 p-3 bg-muted/50 rounded-lg">{application.platform_promotion_details}</p>
                       </div>
                     )}
 
                     {application.network_description && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground">Network Description:</span>
+                        <span className="text-muted-foreground">{t("partner.applicationStatus.fields.networkDescription")}</span>
                         <p className="mt-1 p-3 bg-muted/50 rounded-lg">{application.network_description}</p>
                       </div>
                     )}
 
                     {application.community_group_links && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground">Community Links:</span>
+                        <span className="text-muted-foreground">{t("partner.applicationStatus.fields.communityLinks")}</span>
                         <p className="mt-1 p-3 bg-muted/50 rounded-lg break-all">{application.community_group_links}</p>
                       </div>
                     )}
@@ -372,18 +382,18 @@ const PartnerApplicationStatus = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <HeartHandshake className="h-4 w-4 text-primary" />
-                    Support & Capabilities
+                    {t("partner.applicationStatus.sections.supportAndCapabilities")}
                   </div>
                   <div className="space-y-3 pl-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       {application.can_provide_local_support !== null && (
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Can Provide Local Support:</span>
+                            <span className="text-muted-foreground">{t("partner.applicationStatus.fields.canProvideLocalSupport")}</span>
                             {application.can_provide_local_support ? (
-                              <Badge variant="default">Yes</Badge>
+                              <Badge variant="default">{t("common.yes")}</Badge>
                             ) : (
-                              <Badge variant="secondary">No</Badge>
+                              <Badge variant="secondary">{t("common.no")}</Badge>
                             )}
                           </div>
                         </div>
@@ -391,18 +401,18 @@ const PartnerApplicationStatus = () => {
                       {application.organize_training_sessions !== null && (
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Can Organize Training:</span>
+                            <span className="text-muted-foreground">{t("partner.applicationStatus.fields.canOrganizeTraining")}</span>
                             {application.organize_training_sessions ? (
-                              <Badge variant="default">Yes</Badge>
+                              <Badge variant="default">{t("common.yes")}</Badge>
                             ) : (
-                              <Badge variant="secondary">No</Badge>
+                              <Badge variant="secondary">{t("common.no")}</Badge>
                             )}
                           </div>
                         </div>
                       )}
                       {application.support_preference && (
                         <div>
-                          <span className="text-muted-foreground">Support Method:</span>
+                          <span className="text-muted-foreground">{t("partner.applicationStatus.fields.supportMethod")}</span>
                           <p className="font-medium capitalize">{application.support_preference}</p>
                         </div>
                       )}
@@ -410,7 +420,7 @@ const PartnerApplicationStatus = () => {
 
                     {application.local_payment_methods && (
                       <div className="text-sm">
-                        <span className="text-muted-foreground">Local Payment Methods:</span>
+                        <span className="text-muted-foreground">{t("partner.applicationStatus.fields.localPaymentMethods")}</span>
                         <p className="mt-1 p-3 bg-muted/50 rounded-lg">{application.local_payment_methods}</p>
                       </div>
                     )}
@@ -425,23 +435,23 @@ const PartnerApplicationStatus = () => {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Shield className="h-4 w-4 text-primary" />
-                  Motivation & Agreement
+                  {t("partner.applicationStatus.sections.motivationAndAgreement")}
                 </div>
                 <div className="space-y-3 pl-6">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Why I want to be a partner:</span>
+                    <span className="text-muted-foreground">{t("partner.applicationStatus.fields.whyPartner")}</span>
                     <p className="mt-1 p-3 bg-muted/50 rounded-lg">{application.motivation_text}</p>
                   </div>
                   <div className="text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Agreed to Guidelines:</span>
+                      <span className="text-muted-foreground">{t("partner.applicationStatus.fields.agreedToGuidelines")}</span>
                       {application.agrees_to_guidelines ? (
                         <Badge variant="default">
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          Yes
+                          {t("common.yes")}
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">No</Badge>
+                        <Badge variant="secondary">{t("common.no")}</Badge>
                       )}
                     </div>
                   </div>
@@ -458,7 +468,7 @@ const PartnerApplicationStatus = () => {
             onClick={() => navigate('/dashboard')}
             className="flex-1"
           >
-            Return to Dashboard
+            {t("partner.applicationStatus.actions.returnToDashboard")}
           </Button>
           
           {/* NEW: How It Works button */}
@@ -468,7 +478,7 @@ const PartnerApplicationStatus = () => {
             className="flex-1"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            How It Works
+            {t("howItWorks.title")}
           </Button>
           
           {application.status === 'pending' && (
@@ -476,9 +486,9 @@ const PartnerApplicationStatus = () => {
               variant="secondary"
               disabled
               className="flex-1 cursor-not-allowed"
-              title="You cannot edit your application while it's under review"
+              title={t("partner.applicationStatus.actions.cannotEditWhileReview")}
             >
-              Application Under Review
+              {t("partner.applicationStatus.actions.underReview")}
             </Button>
           )}
           {application.status === 'approved' && (
@@ -487,7 +497,7 @@ const PartnerApplicationStatus = () => {
               onClick={() => navigate('/partner/dashboard')}
               className="flex-1"
             >
-              Go to Partner Dashboard
+              {t("partner.applicationStatus.actions.goToPartnerDashboard")}
             </Button>
           )}
         </div>

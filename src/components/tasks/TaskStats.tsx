@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Zap, Wallet, Loader2, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,7 @@ const TaskStatsComponent = ({
   isLoading = false,
   isSyncing = false,
 }: TaskStatsProps) => {
+  const { t } = useTranslation();
   const progressPercentage = (tasksCompletedToday / dailyLimit) * 100;
 
   if (isLoading) {
@@ -63,7 +65,7 @@ const TaskStatsComponent = ({
       {/* System Time Badge */}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-2 border border-border">
         <Clock className="h-3 w-3" />
-        <span>System time: UTC (Resets daily at 00:01 UTC)</span>
+        <span>{t("tasks.stats.systemTime")}</span>
       </div>
 
       {/* Stats Grid */}
@@ -77,7 +79,7 @@ const TaskStatsComponent = ({
             </div>
             <div>
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                Today's Progress
+                {t("tasks.stats.todaysProgress")}
                 {isSyncing && <Loader2 className="h-3 w-3 animate-spin" />}
               </p>
               <p className="text-2xl font-bold">
@@ -102,7 +104,7 @@ const TaskStatsComponent = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              Remaining Tasks
+              {t("tasks.stats.remainingTasks")}
               {isSyncing && <Loader2 className="h-3 w-3 animate-spin" />}
             </p>
             <p className="text-2xl font-bold">{remainingTasks}</p>
@@ -118,7 +120,7 @@ const TaskStatsComponent = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
-              Earnings Wallet
+              {t("tasks.stats.earningsWallet")}
               {isSyncing && <Loader2 className="h-3 w-3 animate-spin" />}
             </p>
             <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={earningsBalance} /></p>

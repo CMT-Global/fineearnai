@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Send, Music } from "lucide-react";
 import { TelegramGroupsDialog } from "@/components/shared/TelegramGroupsDialog";
+import { useTranslation, Trans } from "react-i18next";
 
 interface SocialFollowCardProps {
   facebookUrl?: string;
@@ -15,6 +16,7 @@ export const SocialFollowCard = ({
   instagramUrl = "https://www.instagram.com/ProfitChipsofficial/",
   tiktokUrl = "https://www.tiktok.com/@ProfitChips",
 }: SocialFollowCardProps) => {
+  const { t } = useTranslation();
   const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
 
   const socialLinks = [
@@ -23,7 +25,7 @@ export const SocialFollowCard = ({
       url: facebookUrl,
       icon: Facebook,
       color: "bg-[#1877F2] hover:bg-[#0d65d9]",
-      description: "Join other members",
+      description: t("dashboard.social.facebookDescription"),
       isExternal: true
     },
     {
@@ -31,7 +33,7 @@ export const SocialFollowCard = ({
       url: instagramUrl,
       icon: Instagram,
       color: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#FCAF45] hover:opacity-90",
-      description: "Daily earning tips",
+      description: t("dashboard.social.instagramDescription"),
       isExternal: true
     },
     {
@@ -39,7 +41,7 @@ export const SocialFollowCard = ({
       url: "", // No direct URL - opens dialog
       icon: Send,
       color: "bg-[#0088cc] hover:bg-[#0077b5]",
-      description: "Get Daily Updates",
+      description: t("dashboard.social.telegramDescription"),
       isExternal: false
     },
     {
@@ -47,7 +49,7 @@ export const SocialFollowCard = ({
       url: tiktokUrl,
       icon: Music,
       color: "bg-black hover:bg-gray-900",
-      description: "Viral earning hacks",
+      description: t("dashboard.social.tiktokDescription"),
       isExternal: true
     }
   ];
@@ -57,11 +59,18 @@ export const SocialFollowCard = ({
       <CardHeader>
         <div className="flex items-center gap-2">
           <span className="text-2xl">🚀</span>
-          <CardTitle className="text-xl">Stay Connected, Earn Smarter!</CardTitle>
+          <CardTitle className="text-xl">{t("dashboard.social.stayConnected")}</CardTitle>
         </div>
         <CardDescription className="text-base">
-          Follow us for <span className="font-semibold text-primary">exclusive earning tips</span>, 
-          platform updates, and connect with a thriving community of successful earners.
+          <Trans
+            i18nKey="dashboard.social.stayConnectedDescription"
+            components={{
+              strong: <span className="font-semibold text-primary" />
+            }}
+            values={{
+              exclusiveTips: t("dashboard.social.exclusiveEarningTips")
+            }}
+          />
         </CardDescription>
       </CardHeader>
       
@@ -84,7 +93,7 @@ export const SocialFollowCard = ({
                   <div className="flex flex-col items-center">
                     <span className="font-semibold">{social.name}</span>
                     <span className="text-xs opacity-90">{social.description}</span>
-                    <span className="text-xs opacity-75 mt-0.5">(3 groups)</span>
+                    <span className="text-xs opacity-75 mt-0.5">{t("dashboard.social.telegramGroups")}</span>
                   </div>
                 </Button>
               );
@@ -116,9 +125,16 @@ export const SocialFollowCard = ({
         
         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
           <p className="text-sm text-center text-muted-foreground">
-            💡 <span className="font-medium">Pro tip:</span> Our social followers get{" "}
-            <span className="text-primary font-semibold">early access</span> to new earning 
-            opportunities and exclusive bonus campaigns!
+            💡 <span className="font-medium">{t("dashboard.social.proTip")}</span>{" "}
+            <Trans
+              i18nKey="dashboard.social.proTipDescription"
+              components={{
+                strong: <span className="text-primary font-semibold" />
+              }}
+              values={{
+                earlyAccess: t("dashboard.social.earlyAccess")
+              }}
+            />
           </p>
         </div>
       </CardContent>

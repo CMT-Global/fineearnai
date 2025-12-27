@@ -18,9 +18,10 @@ CREATE INDEX IF NOT EXISTS idx_profiles_plan_expires
   ON public.profiles(membership_plan, plan_expires_at) 
   WHERE plan_expires_at IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_profiles_referrer 
-  ON public.profiles(referred_by) 
-  WHERE referred_by IS NOT NULL;
+-- Note: referred_by column was removed in favor of referrals table, so this index is no longer needed
+-- CREATE INDEX IF NOT EXISTS idx_profiles_referrer 
+--   ON public.profiles(referred_by) 
+--   WHERE referred_by IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status_created 
   ON public.withdrawal_requests(status, created_at DESC);

@@ -39,7 +39,7 @@ export function LanguageSelector() {
       setOpen(false);
     } catch (error) {
       console.error("Failed to update language:", error);
-      toast.error("Failed to update language. Please try again.");
+      toast.error(t("toasts.language.failedToUpdate"));
     } finally {
       setIsUpdating(false);
     }
@@ -86,11 +86,11 @@ export function LanguageSelector() {
         >
           <Command className="bg-popover">
             <CommandInput 
-              placeholder={t('language.select') + '...'} 
+              placeholder={t("language.searchPlaceholder")} 
               className="bg-popover"
             />
             <CommandList className="bg-popover">
-              <CommandEmpty>{t('common.error')}</CommandEmpty>
+              <CommandEmpty>{t("language.notFound")}</CommandEmpty>
               <CommandGroup>
                 {SUPPORTED_LANGUAGES.map((lang) => {
                   const isSelected = lang === userLanguage;
@@ -125,7 +125,7 @@ export function LanguageSelector() {
                       </div>
                       {isSelected && (
                         <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                          Current
+                          {t('language.current')}
                         </span>
                       )}
                     </CommandItem>

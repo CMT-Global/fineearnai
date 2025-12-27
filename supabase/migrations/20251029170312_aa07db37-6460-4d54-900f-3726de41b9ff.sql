@@ -1,9 +1,11 @@
 -- FORCE REFRESH: Drop and recreate complete_task_atomic with commission logic
 -- This ensures a clean slate and no caching issues
 
-DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric) CASCADE;
-
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  DROP FUNCTION IF EXISTS public.complete_task_atomic(uuid, uuid, text, integer, boolean, numeric) CASCADE;
+  
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -197,5 +199,7 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'error', SQLERRM, 'error_code', 'TRANSACTION_FAILED');
 END;
 $function$;
-
-COMMENT ON FUNCTION public.complete_task_atomic IS 'Phase 4 FINAL: Commission processing with simplified logic';
+$exec$;
+  
+  EXECUTE $exec$COMMENT ON FUNCTION public.complete_task_atomic IS 'Phase 4 FINAL: Commission processing with simplified logic'$exec$;
+END $$;

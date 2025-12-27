@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,7 @@ interface PayoutScheduleDay {
 }
 
 const PaymentSettings = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -201,10 +203,10 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   // Load all payment processors
   const loadProcessors = async () => {
@@ -220,7 +222,7 @@ const PaymentSettings = () => {
       setProcessors(data || []);
     } catch (error: any) {
       console.error("Error loading processors:", error);
-      toast.error("Failed to load payment processors");
+      toast.error(t("toasts.admin.failedToLoadPaymentProcessors"));
     } finally {
       setLoading(false);
     }
@@ -250,13 +252,13 @@ const PaymentSettings = () => {
   // Save processor (create or update)
   const handleSave = async () => {
     if (!processorName || !processorType) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("toasts.admin.pleaseFillAllRequiredFields"));
       return;
     }
 
     // Validate CPAY deposit requires checkout selection
     if (preset === "cpay_deposit" && !selectedCheckoutId) {
-      toast.error("Please select a CPAY checkout for deposit processor");
+      toast.error(t("toasts.admin.pleaseSelectCPAYCheckout"));
       return;
     }
 
@@ -294,7 +296,7 @@ const PaymentSettings = () => {
           .eq("id", editingProcessor.id);
 
         if (error) throw error;
-        toast.success("Payment processor updated successfully");
+        toast.success(t("toasts.admin.paymentProcessorUpdated"));
       } else {
         // Create new processor
         const { error } = await supabase
@@ -302,7 +304,7 @@ const PaymentSettings = () => {
           .insert([processorData]);
 
         if (error) throw error;
-        toast.success("Payment processor created successfully");
+        toast.success(t("toasts.admin.paymentProcessorCreated"));
       }
 
       setDialogOpen(false);
@@ -310,7 +312,7 @@ const PaymentSettings = () => {
       loadProcessors();
     } catch (error: any) {
       console.error("Error saving processor:", error);
-      toast.error(error.message || "Failed to save payment processor");
+      toast.error(error.message || t("toasts.admin.failedToSavePaymentProcessor"));
     } finally {
       setSaving(false);
     }
@@ -348,11 +350,11 @@ const PaymentSettings = () => {
 
       if (error) throw error;
 
-      toast.success(`Payment processor ${!processor.is_active ? "activated" : "deactivated"}`);
+      toast.success(!processor.is_active ? t("toasts.admin.paymentProcessorActivated") : t("toasts.admin.paymentProcessorDeactivated"));
       loadProcessors();
     } catch (error: any) {
       console.error("Error toggling processor:", error);
-      toast.error("Failed to update payment processor");
+      toast.error(t("toasts.admin.failedToUpdatePaymentProcessor"));
     }
   };
 
@@ -419,7 +421,7 @@ const PaymentSettings = () => {
     );
     
     if (!allDaysPresent) {
-      toast.error('Invalid schedule: Missing days detected. Please refresh the page.');
+      toast.error(t("toasts.admin.invalidScheduleMissingDays"));
       console.error('Missing days in payout schedule:', payoutSchedule);
       return;
     }
@@ -427,7 +429,7 @@ const PaymentSettings = () => {
     // Validation: At least one day must be enabled
     const enabledDays = payoutSchedule.filter(s => s.enabled);
     if (enabledDays.length === 0) {
-      toast.error("Please enable at least one payout day");
+      toast.error(t("toasts.admin.pleaseEnableAtLeastOnePayoutDay"));
       return;
     }
 
@@ -435,7 +437,7 @@ const PaymentSettings = () => {
     for (const day of enabledDays) {
       if (day.start_time >= day.end_time) {
         const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day.day];
-        toast.error(`Invalid time window for ${dayName}: Start time must be before end time`);
+        toast.error(t("toasts.admin.invalidTimeWindow", { dayName }));
         return;
       }
     }
@@ -454,14 +456,14 @@ const PaymentSettings = () => {
 
       if (error) throw error;
       
-      toast.success(`Payout schedule updated: ${enabledDays.length} day(s) enabled with time windows`);
+      toast.success(t("toasts.admin.payoutScheduleUpdated", { count: enabledDays.length }));
       console.log('Saved payout schedule:', payoutSchedule);
       
       // Refresh withdrawal allowed status
       checkWithdrawalAllowed();
     } catch (error: any) {
       console.error("Error saving payout config:", error);
-      toast.error("Failed to update payout schedule: " + error.message);
+      toast.error(t("toasts.admin.failedToUpdatePayoutSchedule") + ": " + error.message);
     } finally {
       setSavingPayoutConfig(false);
     }
@@ -475,10 +477,10 @@ const PaymentSettings = () => {
       if (error) throw error;
       
       setWalletInfo(data);
-      toast.success("CPAY wallet balance retrieved successfully");
+      toast.success(t("toasts.admin.cpayWalletBalanceRetrieved"));
     } catch (error: any) {
       console.error("Error fetching CPAY balance:", error);
-      toast.error(error.message || "Failed to fetch CPAY balance. Check your credentials in System Secrets.");
+      toast.error(error.message || t("toasts.admin.failedToFetchCPAYBalance"));
     } finally {
       setFetchingBalance(false);
     }
@@ -487,7 +489,7 @@ const PaymentSettings = () => {
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    toast.success("Token ID copied to clipboard");
+    toast.success(t("toasts.admin.tokenIDCopied"));
     setTimeout(() => setCopiedId(null), 2000);
   };
 

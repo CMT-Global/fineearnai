@@ -14,14 +14,15 @@ CREATE TABLE IF NOT EXISTS public.account_deletion_otps (
 );
 
 -- Create index for faster lookups
-CREATE INDEX idx_account_deletion_otps_user_id ON public.account_deletion_otps(user_id);
-CREATE INDEX idx_account_deletion_otps_otp_code ON public.account_deletion_otps(otp_code);
-CREATE INDEX idx_account_deletion_otps_expires_at ON public.account_deletion_otps(expires_at);
+CREATE INDEX IF NOT EXISTS idx_account_deletion_otps_user_id ON public.account_deletion_otps(user_id);
+CREATE INDEX IF NOT EXISTS idx_account_deletion_otps_otp_code ON public.account_deletion_otps(otp_code);
+CREATE INDEX IF NOT EXISTS idx_account_deletion_otps_expires_at ON public.account_deletion_otps(expires_at);
 
 -- Enable RLS
 ALTER TABLE public.account_deletion_otps ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Service role manages OTPs (same as email_verification_otps)
+DROP POLICY IF EXISTS "Service role manages OTPs" ON public.account_deletion_otps;
 CREATE POLICY "Service role manages OTPs"
 ON public.account_deletion_otps
 FOR ALL

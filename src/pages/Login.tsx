@@ -21,8 +21,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { platformName, platformLogoUrl } = useBranding();
   const { toast } = useToast();
@@ -77,13 +79,13 @@ const Login = () => {
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast({
-            title: "Login failed",
-            description: "Invalid email or password. Please try again.",
+            title: t("login.loginFailed"),
+            description: t("login.invalidCredentials"),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Login failed",
+            title: t("login.loginFailed"),
             description: error.message,
             variant: "destructive",
           });
@@ -137,15 +139,15 @@ const Login = () => {
       }
 
       toast({
-        title: "Welcome back!",
-        description: "Redirecting to dashboard...",
+        title: t("login.welcomeBack"),
+        description: t("login.redirecting"),
       });
 
       navigate("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: t("login.error"),
+        description: t("login.unexpectedError"),
         variant: "destructive",
       });
     } finally {
@@ -164,17 +166,17 @@ const Login = () => {
           <div className="flex justify-center">
             <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-24 w-24 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to {platformName} - Continue earning with AI tasks</p>
+          <h1 className="text-2xl font-bold">{t("login.title")}</h1>
+          <p className="text-muted-foreground">{t("login.subtitle", { platform: platformName })}</p>
         </div>
 
         {/* Account Deleted Success Message */}
         {showDeletedMessage && (
           <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <AlertTitle className="text-green-800 dark:text-green-200">Account Deleted Successfully</AlertTitle>
+            <AlertTitle className="text-green-800 dark:text-green-200">{t("login.accountDeleted")}</AlertTitle>
             <AlertDescription className="text-green-700 dark:text-green-300">
-              Your account has been permanently deleted. All your data has been removed from our systems.
+              {t("login.accountDeletedDescription")}
             </AlertDescription>
           </Alert>
         )}
@@ -186,12 +188,12 @@ const Login = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("login.email")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t("login.emailPlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -206,12 +208,12 @@ const Login = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("login.password")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder={t("login.passwordPlaceholder")}
                       disabled={isLoading}
                       className="h-11"
                     />
@@ -226,7 +228,7 @@ const Login = () => {
                 to="/forgot-password"
                 className="text-sm text-muted-foreground hover:text-[hsl(var(--wallet-deposit))] transition-colors"
               >
-                Forgot password?
+                {t("login.forgotPassword")}
               </Link>
             </div>
 
@@ -235,18 +237,18 @@ const Login = () => {
               className="w-full h-11 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? t("login.signingIn") : t("login.signIn")}
             </Button>
           </form>
         </Form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          {t("login.noAccount")}{" "}
           <Link
             to={referralCode ? `/signup?ref=${referralCode}` : "/signup"}
             className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium"
           >
-            Sign up
+            {t("login.signUp")}
           </Link>
         </p>
       </Card>

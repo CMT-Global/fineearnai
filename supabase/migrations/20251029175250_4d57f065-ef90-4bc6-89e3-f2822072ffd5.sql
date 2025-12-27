@@ -6,10 +6,12 @@
 -- for better clarity and UX in the frontend display.
 -- ================================================================
 
--- ================================================================
--- 1. UPDATE complete_task_atomic: Include username in task commission
--- ================================================================
-CREATE OR REPLACE FUNCTION public.complete_task_atomic(
+DO $$
+BEGIN
+  -- ================================================================
+  -- 1. UPDATE complete_task_atomic: Include username in task commission
+  -- ================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.complete_task_atomic(
   p_user_id uuid,
   p_task_id uuid,
   p_selected_response text,
@@ -225,11 +227,12 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'error', SQLERRM, 'error_code', 'TRANSACTION_FAILED');
 END;
 $function$;
-
--- ================================================================
--- 2. UPDATE credit_deposit_atomic: Include username in deposit commission
--- ================================================================
-CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
+$exec$;
+  
+  -- ================================================================
+  -- 2. UPDATE credit_deposit_atomic: Include username in deposit commission
+  -- ================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.credit_deposit_atomic(
   p_user_id uuid,
   p_amount numeric,
   p_order_id text,
@@ -491,11 +494,12 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
-
--- ================================================================
--- 3. UPDATE process_plan_upgrade_atomic: Include username in upgrade commission
--- ================================================================
-CREATE OR REPLACE FUNCTION public.process_plan_upgrade_atomic(
+$exec$;
+  
+  -- ================================================================
+  -- 3. UPDATE process_plan_upgrade_atomic: Include username in upgrade commission
+  -- ================================================================
+  EXECUTE $exec$CREATE OR REPLACE FUNCTION public.process_plan_upgrade_atomic(
   p_user_id uuid,
   p_plan_name text,
   p_final_cost numeric,
@@ -720,3 +724,5 @@ EXCEPTION WHEN OTHERS THEN
   );
 END;
 $function$;
+$exec$;
+END $$;

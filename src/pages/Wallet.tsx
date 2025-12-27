@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
@@ -17,9 +18,9 @@ import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 import { VoucherRedemptionCard } from "@/components/wallet/VoucherRedemptionCard";
-import { useState } from "react";
 
 const Wallet = () => {
+  const { t } = useTranslation();
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const Wallet = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <LoadingSpinner size="lg" text={t("login.signingIn")} />
       </div>
     );
   }
@@ -64,7 +65,7 @@ const Wallet = () => {
       isAdmin={isAdmin}
       onSignOut={signOut}
       isLoading={isProfileLoading || !profile}
-      loadingText="Loading wallet..."
+      loadingText={t("wallet.loadingWallet")}
     >
       {profile && (
         <>
@@ -75,8 +76,8 @@ const Wallet = () => {
                   <WalletIcon className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Wallet</h1>
-                  <p className="text-muted-foreground">Manage your deposits, earnings, and transactions</p>
+                  <h1 className="text-2xl font-bold">{t("wallet.title")}</h1>
+                  <p className="text-muted-foreground">{t("wallet.subtitle")}</p>
                 </div>
               </div>
             </header>
@@ -95,13 +96,13 @@ const Wallet = () => {
                     <Sparkles className="h-4 w-4 text-primary" />
                   </div>
                   <AlertTitle className="text-foreground flex items-center gap-2">
-                    VIP Withdrawal Access Enabled
+                    {t("wallet.vipWithdrawalAccess")}
                     <Badge variant="default" className="bg-primary hover:bg-primary/90">
-                      24/7 Access
+                      {t("wallet.vip24_7Access")}
                     </Badge>
                   </AlertTitle>
                   <AlertDescription className="text-muted-foreground">
-                    Your account has unrestricted withdrawal access. You can withdraw any day at any time without schedule restrictions.
+                    {t("wallet.vipDescription")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -117,7 +118,7 @@ const Wallet = () => {
                     <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
                   <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {profile.earnerBadge.badgeText} - Limited Withdrawal Access
+                    {profile.earnerBadge.badgeText} - {t("wallet.limitedWithdrawalAccess")}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
                     <p>{profile.earnerBadge.upgradePrompt}</p>
@@ -125,7 +126,7 @@ const Wallet = () => {
                       onClick={() => navigate("/plans")}
                       className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
                     >
-                      Become a Verified Earner
+                      {t("wallet.becomeVerifiedEarner")}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </AlertDescription>
@@ -152,7 +153,7 @@ const Wallet = () => {
                 userId={user?.id || ''} 
                 maxItems={10} 
                 showPagination={true} 
-                title="Recent Transactions"
+                title={t("wallet.recentTransactions")}
               />
             </div>
 

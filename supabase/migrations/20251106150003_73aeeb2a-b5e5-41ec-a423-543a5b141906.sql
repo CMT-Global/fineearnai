@@ -15,14 +15,15 @@ CREATE TABLE IF NOT EXISTS public.partner_debug_logs (
 );
 
 -- Create index for faster queries by correlation_id and user_id
-CREATE INDEX idx_partner_debug_logs_correlation_id ON public.partner_debug_logs(correlation_id);
-CREATE INDEX idx_partner_debug_logs_user_id ON public.partner_debug_logs(user_id);
-CREATE INDEX idx_partner_debug_logs_created_at ON public.partner_debug_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_partner_debug_logs_correlation_id ON public.partner_debug_logs(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_partner_debug_logs_user_id ON public.partner_debug_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_partner_debug_logs_created_at ON public.partner_debug_logs(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE public.partner_debug_logs ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies: Only admins can read, authenticated users can insert their own logs
+DROP POLICY IF EXISTS "Admins can view all debug logs" ON public.partner_debug_logs;
 CREATE POLICY "Admins can view all debug logs"
 ON public.partner_debug_logs
 FOR SELECT
@@ -34,6 +35,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can insert their own debug logs" ON public.partner_debug_logs;
 CREATE POLICY "Users can insert their own debug logs"
 ON public.partner_debug_logs
 FOR INSERT

@@ -22,28 +22,58 @@ COMMENT ON COLUMN public.daily_reset_logs.triggered_by IS 'Source of reset trigg
 COMMENT ON COLUMN public.daily_reset_logs.execution_time_ms IS 'Time taken to complete reset in milliseconds';
 COMMENT ON COLUMN public.daily_reset_logs.details IS 'Additional metadata (UTC time, EAT time, user IDs, etc.)';
 
--- Create index for efficient date-based queries
-CREATE INDEX idx_reset_logs_date ON public.daily_reset_logs(reset_date DESC);
+-- Create index for efficient date-based queries (idempotent)
+CREATE INDEX IF NOT EXISTS idx_reset_logs_date ON public.daily_reset_logs(reset_date DESC);
 
--- Create index for triggered_by queries
-CREATE INDEX idx_reset_logs_triggered_by ON public.daily_reset_logs(triggered_by);
+-- Create index for triggered_by queries (idempotent)
+CREATE INDEX IF NOT EXISTS idx_reset_logs_triggered_by ON public.daily_reset_logs(triggered_by);
 
--- Enable Row Level Security
-ALTER TABLE public.daily_reset_logs ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'daily_reset_logs' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.daily_reset_logs ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- Only admins can view reset logs
-CREATE POLICY "Admins can view reset logs"
-ON public.daily_reset_logs
-FOR SELECT
-TO authenticated
-USING (has_role(auth.uid(), 'admin'::app_role));
+-- Only admins can view reset logs (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'daily_reset_logs' 
+    AND policyname = 'Admins can view reset logs'
+  ) THEN
+    CREATE POLICY "Admins can view reset logs"
+    ON public.daily_reset_logs
+    FOR SELECT
+    TO authenticated
+    USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
--- Only service role can insert reset logs (via edge functions)
-CREATE POLICY "Service role can insert reset logs"
-ON public.daily_reset_logs
-FOR INSERT
-TO authenticated
-WITH CHECK (true);
+-- Only service role can insert reset logs (via edge functions) (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'daily_reset_logs' 
+    AND policyname = 'Service role can insert reset logs'
+  ) THEN
+    CREATE POLICY "Service role can insert reset logs"
+    ON public.daily_reset_logs
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Verify table creation
 SELECT 

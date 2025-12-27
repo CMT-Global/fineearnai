@@ -1,5 +1,5 @@
--- Create email templates table
-CREATE TABLE public.email_templates (
+-- Create email templates table (idempotent)
+CREATE TABLE IF NOT EXISTS public.email_templates (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   subject TEXT NOT NULL,
@@ -12,8 +12,8 @@ CREATE TABLE public.email_templates (
   created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
--- Create email logs table to track sent emails
-CREATE TABLE public.email_logs (
+-- Create email logs table to track sent emails (idempotent)
+CREATE TABLE IF NOT EXISTS public.email_logs (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   recipient_email TEXT NOT NULL,
   recipient_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -28,8 +28,8 @@ CREATE TABLE public.email_logs (
   sent_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
--- Create scheduled emails table
-CREATE TABLE public.scheduled_emails (
+-- Create scheduled emails table (idempotent)
+CREATE TABLE IF NOT EXISTS public.scheduled_emails (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   subject TEXT NOT NULL,
   body TEXT NOT NULL,
@@ -42,42 +42,102 @@ CREATE TABLE public.scheduled_emails (
   created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
--- Enable RLS
-ALTER TABLE public.email_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.scheduled_emails ENABLE ROW LEVEL SECURITY;
+-- Enable RLS (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'email_templates' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.email_templates ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'email_logs' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_tables 
+    WHERE schemaname = 'public' 
+    AND tablename = 'scheduled_emails' 
+    AND rowsecurity = true
+  ) THEN
+    ALTER TABLE public.scheduled_emails ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- Create policies for email_templates
-CREATE POLICY "Admins can manage email templates"
-ON public.email_templates
-FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
+-- Create policies for email_templates (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'email_templates' 
+    AND policyname = 'Admins can manage email templates'
+  ) THEN
+    CREATE POLICY "Admins can manage email templates"
+    ON public.email_templates
+    FOR ALL
+    USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
--- Create policies for email_logs
-CREATE POLICY "Admins can view email logs"
-ON public.email_logs
-FOR SELECT
-USING (has_role(auth.uid(), 'admin'::app_role));
+-- Create policies for email_logs (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'email_logs' 
+    AND policyname = 'Admins can view email logs'
+  ) THEN
+    CREATE POLICY "Admins can view email logs"
+    ON public.email_logs
+    FOR SELECT
+    USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'email_logs' 
+    AND policyname = 'Admins can insert email logs'
+  ) THEN
+    CREATE POLICY "Admins can insert email logs"
+    ON public.email_logs
+    FOR INSERT
+    WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
-CREATE POLICY "Admins can insert email logs"
-ON public.email_logs
-FOR INSERT
-WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+-- Create policies for scheduled_emails (idempotent)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'scheduled_emails' 
+    AND policyname = 'Admins can manage scheduled emails'
+  ) THEN
+    CREATE POLICY "Admins can manage scheduled emails"
+    ON public.scheduled_emails
+    FOR ALL
+    USING (has_role(auth.uid(), 'admin'::app_role));
+  END IF;
+END $$;
 
--- Create policies for scheduled_emails
-CREATE POLICY "Admins can manage scheduled emails"
-ON public.scheduled_emails
-FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
+-- Create indexes for performance (idempotent)
+CREATE INDEX IF NOT EXISTS idx_email_logs_recipient ON public.email_logs(recipient_email);
+CREATE INDEX IF NOT EXISTS idx_email_logs_status ON public.email_logs(status);
+CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON public.email_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status ON public.scheduled_emails(status);
+CREATE INDEX IF NOT EXISTS idx_scheduled_emails_scheduled_for ON public.scheduled_emails(scheduled_for);
 
--- Create indexes for performance
-CREATE INDEX idx_email_logs_recipient ON public.email_logs(recipient_email);
-CREATE INDEX idx_email_logs_status ON public.email_logs(status);
-CREATE INDEX idx_email_logs_created_at ON public.email_logs(created_at DESC);
-CREATE INDEX idx_scheduled_emails_status ON public.scheduled_emails(status);
-CREATE INDEX idx_scheduled_emails_scheduled_for ON public.scheduled_emails(scheduled_for);
-
--- Insert default email templates
+-- Insert default email templates (idempotent)
 INSERT INTO public.email_templates (name, subject, body, template_type, variables) VALUES
 ('welcome', 'Welcome to Our Platform!', 
 '<h1>Welcome {{username}}!</h1>
@@ -133,4 +193,5 @@ INSERT INTO public.email_templates (name, subject, body, template_type, variable
 <p>Total earnings from referrals: {{total_earnings}}</p>
 <p>Keep sharing and earning more rewards!</p>', 
 'referral', 
-'["username", "milestone", "total_earnings"]'::jsonb);
+'["username", "milestone", "total_earnings"]'::jsonb)
+ON CONFLICT (name) DO NOTHING;

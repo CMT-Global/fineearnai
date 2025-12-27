@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/pagination";
 import { ArrowLeft, Download, Search, Filter, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
@@ -48,6 +49,7 @@ const getPageNumber = (index: number, currentPage: number, totalPages: number): 
 };
 
 const Transactions = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -70,7 +72,7 @@ const Transactions = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
   }, [isAdmin, adminLoading, navigate]);
@@ -120,7 +122,7 @@ const Transactions = () => {
       setTotalPages(Math.ceil((count || 0) / limit));
     } catch (error: any) {
       console.error("Error loading transactions:", error);
-      toast.error("Failed to load transactions");
+      toast.error(t("toasts.admin.failedToLoadTransactions"));
     } finally {
       setLoading(false);
     }
@@ -150,7 +152,7 @@ const Transactions = () => {
     a.href = url;
     a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
-    toast.success("Transactions exported to CSV");
+    toast.success(t("toasts.admin.transactionsExported"));
   };
 
   const isCredit = (type: string) => {

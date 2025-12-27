@@ -17,8 +17,10 @@ import {
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Last7DaysActivityTable } from "@/components/admin/Last7DaysActivityTable";
+import { useTranslation } from "react-i18next";
 
 const Admin = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -33,10 +35,10 @@ const Admin = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -115,7 +117,7 @@ const Admin = () => {
       });
     } catch (error: any) {
       console.error("Error loading stats:", error);
-      toast.error("Failed to load statistics");
+      toast.error(t("admin.failedToLoadStats"));
     } finally {
       setLoading(false);
     }
@@ -126,7 +128,7 @@ const Admin = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading admin panel...</p>
+          <p className="text-muted-foreground">{t("admin.loadingPanel")}</p>
         </div>
       </div>
     );
@@ -141,10 +143,10 @@ const Admin = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t("admin.dashboard")}</h1>
         </div>
         <p className="text-muted-foreground">
-          Platform overview and management
+          {t("admin.subtitle")}
         </p>
       </div>
 
@@ -153,7 +155,7 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Users
+              {t("admin.totalUsers")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -162,7 +164,7 @@ const Admin = () => {
               <Users className="h-8 w-8 text-blue-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.activeUsers || 0} active today
+              {stats?.activeUsers || 0} {t("admin.activeToday")}
             </p>
           </CardContent>
         </Card>
@@ -170,7 +172,7 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Deposits
+              {t("admin.totalDeposits")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -181,7 +183,7 @@ const Admin = () => {
               <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.totalDepositCount || 0} completed deposits
+              {stats?.totalDepositCount || 0} {t("admin.completedDeposits")}
             </p>
           </CardContent>
         </Card>
@@ -189,7 +191,7 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Withdrawals
+              {t("admin.totalWithdrawals")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,7 +202,7 @@ const Admin = () => {
               <DollarSign className="h-8 w-8 text-red-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.totalWithdrawalCount || 0} completed payouts
+              {stats?.totalWithdrawalCount || 0} {t("admin.completedPayouts")}
             </p>
           </CardContent>
         </Card>
@@ -208,7 +210,7 @@ const Admin = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Withdrawals
+              {t("admin.pendingWithdrawals")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -217,7 +219,7 @@ const Admin = () => {
               <AlertCircle className="h-8 w-8 text-orange-500" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Requires approval
+              {t("admin.requiresApproval")}
             </p>
           </CardContent>
         </Card>
@@ -227,8 +229,8 @@ const Admin = () => {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Membership Distribution</CardTitle>
-            <CardDescription>Overview of user membership tiers</CardDescription>
+            <CardTitle>{t("admin.membershipDistribution")}</CardTitle>
+            <CardDescription>{t("admin.membershipDistributionDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -251,8 +253,8 @@ const Admin = () => {
         {/* Last 7 Days Activity */}
         <Card>
           <CardHeader>
-            <CardTitle>Last 7 Days Activity</CardTitle>
-            <CardDescription>Daily breakdown of platform metrics</CardDescription>
+            <CardTitle>{t("admin.last7DaysActivity")}</CardTitle>
+            <CardDescription>{t("admin.last7DaysActivityDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Last7DaysActivityTable />

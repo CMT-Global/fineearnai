@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ interface PartnerRank {
 }
 
 const PartnerRanks = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
@@ -72,12 +74,12 @@ const PartnerRanks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-ranks'] });
-      toast.success("Rank created successfully");
+      toast.success(t("toasts.admin.rankCreated"));
       setEditDialog(false);
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to create rank");
+      toast.error(error.message || t("toasts.admin.failedToCreateRank"));
     },
   });
 
@@ -92,13 +94,13 @@ const PartnerRanks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-ranks'] });
-      toast.success("Rank updated successfully");
+      toast.success(t("toasts.admin.rankUpdated"));
       setEditDialog(false);
       setSelectedRank(null);
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update rank");
+      toast.error(error.message || t("toasts.admin.failedToUpdateRank"));
     },
   });
 
@@ -113,12 +115,12 @@ const PartnerRanks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-ranks'] });
-      toast.success("Rank deleted successfully");
+      toast.success(t("toasts.admin.rankDeleted"));
       setDeleteDialog(false);
       setSelectedRank(null);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to delete rank");
+      toast.error(error.message || t("toasts.admin.failedToDeleteRank"));
     },
   });
 
@@ -177,23 +179,23 @@ const PartnerRanks = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Award className="h-8 w-8" />
-            Partner Ranks
+            {t("admin.partnerRanks.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Configure rank tiers, sales targets, and commission rates
+            {t("admin.partnerRanks.subtitle")}
           </p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Rank
+          {t("admin.partnerRanks.addRank")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Rank Configuration</CardTitle>
+          <CardTitle>{t("admin.partnerRanks.rankConfiguration")}</CardTitle>
           <CardDescription>
-            Partners automatically upgrade based on total sales milestones
+            {t("admin.partnerRanks.rankConfigurationDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -205,11 +207,11 @@ const PartnerRanks = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Rank</TableHead>
-                  <TableHead>Sales Target</TableHead>
-                  <TableHead>Commission Rate</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("admin.partnerRanks.order")}</TableHead>
+                  <TableHead>{t("admin.partnerRanks.rank")}</TableHead>
+                  <TableHead>{t("admin.partnerRanks.salesTarget")}</TableHead>
+                  <TableHead>{t("admin.partnerRanks.commissionRate")}</TableHead>
+                  <TableHead>{t("admin.partnerRanks.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,10 +262,10 @@ const PartnerRanks = () => {
           ) : (
             <div className="text-center py-12">
               <Award className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No ranks configured yet</p>
+              <p className="text-muted-foreground">{t("admin.partnerRanks.noRanksConfigured")}</p>
               <Button onClick={handleCreate} className="mt-4">
                 <Plus className="h-4 w-4 mr-2" />
-                Create First Rank
+                {t("admin.partnerRanks.createFirstRank")}
               </Button>
             </div>
           )}
@@ -275,67 +277,67 @@ const PartnerRanks = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedRank ? "Edit Rank" : "Create Rank"}
+              {selectedRank ? t("admin.partnerRanks.editRank") : t("admin.partnerRanks.createRank")}
             </DialogTitle>
             <DialogDescription>
-              Configure rank details and requirements
+              {t("admin.partnerRanks.rankDetails")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label>Rank Name</Label>
+              <Label>{t("admin.partnerRanks.rankName")}</Label>
               <Input
                 value={formData.rank_name}
                 onChange={(e) => setFormData({ ...formData, rank_name: e.target.value })}
-                placeholder="e.g., Bronze, Silver, Gold"
+                placeholder={t("admin.partnerRanks.rankNamePlaceholder")}
               />
             </div>
 
             <div>
-              <Label>Sales Target ($)</Label>
+              <Label>{t("admin.partnerRanks.salesTarget")}</Label>
               <Input
                 type="number"
                 value={formData.daily_sales_target}
                 onChange={(e) => setFormData({ ...formData, daily_sales_target: parseFloat(e.target.value) })}
-                placeholder="Total sales needed to reach this rank"
+                placeholder={t("admin.partnerRanks.salesTargetPlaceholder")}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Total cumulative sales required to achieve this rank
+                {t("admin.partnerRanks.salesTargetHelp")}
               </p>
             </div>
 
             <div>
-              <Label>Commission Rate (%)</Label>
+              <Label>{t("admin.partnerRanks.commissionRatePercent")}</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={formData.commission_rate * 100}
                 onChange={(e) => setFormData({ ...formData, commission_rate: parseFloat(e.target.value) / 100 })}
-                placeholder="e.g., 10"
+                placeholder={t("admin.partnerRanks.commissionRatePlaceholder")}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Commission rate for partners at this rank
+                {t("admin.partnerRanks.commissionRateHelp")}
               </p>
             </div>
 
             <div>
-              <Label>Rank Order</Label>
+              <Label>{t("admin.partnerRanks.rankOrder")}</Label>
               <Input
                 type="number"
                 value={formData.rank_order}
                 onChange={(e) => setFormData({ ...formData, rank_order: parseInt(e.target.value) })}
-                placeholder="1 = lowest, higher = better"
+                placeholder={t("admin.partnerRanks.rankOrderPlaceholder")}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Lower numbers appear first (e.g., Bronze = 1, Silver = 2)
+                {t("admin.partnerRanks.rankOrderHelp")}
               </p>
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialog(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button 
               onClick={handleSubmit}
@@ -344,7 +346,7 @@ const PartnerRanks = () => {
               {(createMutation.isPending || updateMutation.isPending) && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              {selectedRank ? "Update" : "Create"}
+              {selectedRank ? t("admin.partnerRanks.update") : t("admin.partnerRanks.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -354,16 +356,15 @@ const PartnerRanks = () => {
       <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Rank</DialogTitle>
+            <DialogTitle>{t("admin.partnerRanks.deleteRank")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the {selectedRank?.rank_name} rank?
-              This action cannot be undone.
+              {t("admin.partnerRanks.deleteRankConfirmation", { rankName: selectedRank?.rank_name })}
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button 
               variant="destructive"
@@ -373,7 +374,7 @@ const PartnerRanks = () => {
               {deleteMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Delete
+              {t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

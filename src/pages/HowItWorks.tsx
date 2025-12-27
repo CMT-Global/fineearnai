@@ -25,8 +25,10 @@ import {
   X,
   Info
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const HowItWorks = () => {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showBanner, setShowBanner] = useState(
     localStorage.getItem("howItWorksBannerDismissed") !== "true"
@@ -111,7 +113,7 @@ const HowItWorks = () => {
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading How It Works…</p>
+            <p className="text-sm text-muted-foreground">{t("howItWorks.loading")}</p>
           </div>
         </div>
       </PageLayout>
@@ -127,32 +129,31 @@ const HowItWorks = () => {
     {
       id: 1,
       icon: Sparkles,
-      title: slidesConfig[0]?.title || "What Is ProfitChips?",
-      subtitle: slidesConfig[0]?.subtitle || "Your Gateway to Earning with AI",
+      title: slidesConfig[0]?.title || t("howItWorks.steps.1.title"),
+      subtitle: slidesConfig[0]?.subtitle || t("howItWorks.steps.1.subtitle"),
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            {platformName} is a revolutionary platform that connects you with AI training tasks, 
-            enabling you to earn real money by contributing to the advancement of artificial intelligence.
+            {t("howItWorks.steps.1.description", { platformName })}
           </p>
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
-            <h4 className="font-semibold text-primary">Why ProfitChips?</h4>
+            <h4 className="font-semibold text-primary">{t("howItWorks.steps.1.whyTitle")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>No specialized skills required - just basic comprehension and attention to detail</span>
+                <span>{t("howItWorks.steps.1.whyBullets.1")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Work from anywhere with an internet connection</span>
+                <span>{t("howItWorks.steps.1.whyBullets.2")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Flexible hours - work at your own pace</span>
+                <span>{t("howItWorks.steps.1.whyBullets.3")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Transparent earnings and straightforward payment system</span>
+                <span>{t("howItWorks.steps.1.whyBullets.4")}</span>
               </li>
             </ul>
           </div>
@@ -162,20 +163,19 @@ const HowItWorks = () => {
     {
       id: 2,
       icon: DollarSign,
-      title: slidesConfig[1]?.title || "How You Earn",
-      subtitle: slidesConfig[1]?.subtitle || "Simple Tasks, Real Rewards",
+      title: slidesConfig[1]?.title || t("howItWorks.steps.2.title"),
+      subtitle: slidesConfig[1]?.subtitle || t("howItWorks.steps.2.subtitle"),
       content: (
         <div className="space-y-4">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
-            <p className="text-sm text-muted-foreground mb-2">Earning Potential</p>
+            <p className="text-sm text-muted-foreground mb-2">{t("howItWorks.steps.2.earningPotentialLabel")}</p>
             <p className="text-3xl font-bold text-green-600 mb-1">
               Up to {formatAmount(240)}
             </p>
-            <p className="text-xs text-muted-foreground">per week with an upgraded account</p>
+            <p className="text-xs text-muted-foreground">{t("howItWorks.steps.2.earningPotentialSuffix")}</p>
           </div>
           <p className="text-muted-foreground leading-relaxed">
-            Every task you complete correctly earns you money that goes directly into your earnings wallet. 
-            Your earning rate depends on your membership plan.
+            {t("howItWorks.steps.2.description")}
           </p>
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
@@ -183,8 +183,8 @@ const HowItWorks = () => {
                 <span className="text-sm font-semibold text-primary">1</span>
               </div>
               <div>
-                <h5 className="font-medium mb-1">Complete AI Tasks</h5>
-                <p className="text-sm text-muted-foreground">Review AI responses and select the best answer</p>
+                <h5 className="font-medium mb-1">{t("howItWorks.steps.2.howSteps.1.title")}</h5>
+                <p className="text-sm text-muted-foreground">{t("howItWorks.steps.2.howSteps.1.description")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
@@ -192,8 +192,8 @@ const HowItWorks = () => {
                 <span className="text-sm font-semibold text-primary">2</span>
               </div>
               <div>
-                <h5 className="font-medium mb-1">Earn Instantly</h5>
-                <p className="text-sm text-muted-foreground">Get paid immediately for correct answers</p>
+                <h5 className="font-medium mb-1">{t("howItWorks.steps.2.howSteps.2.title")}</h5>
+                <p className="text-sm text-muted-foreground">{t("howItWorks.steps.2.howSteps.2.description")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
@@ -201,8 +201,8 @@ const HowItWorks = () => {
                 <span className="text-sm font-semibold text-primary">3</span>
               </div>
               <div>
-                <h5 className="font-medium mb-1">Withdraw Weekly</h5>
-                <p className="text-sm text-muted-foreground">Cash out your earnings on designated payout days</p>
+                <h5 className="font-medium mb-1">{t("howItWorks.steps.2.howSteps.3.title")}</h5>
+                <p className="text-sm text-muted-foreground">{t("howItWorks.steps.2.howSteps.3.description")}</p>
               </div>
             </div>
           </div>
@@ -212,49 +212,48 @@ const HowItWorks = () => {
     {
       id: 3,
       icon: ListChecks,
-      title: slidesConfig[2]?.title || "Types of Tasks",
-      subtitle: slidesConfig[2]?.subtitle || "Variety of AI Microtasks",
+      title: slidesConfig[2]?.title || t("howItWorks.steps.3.title"),
+      subtitle: slidesConfig[2]?.subtitle || t("howItWorks.steps.3.subtitle"),
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
-            {platformName} offers diverse AI training tasks that help improve machine learning models. 
-            Each task is simple but contributes to advancing AI technology.
+            {t("howItWorks.steps.3.description", { platformName })}
           </p>
           <div className="grid gap-3">
             <div className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <h5 className="font-semibold mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary"></span>
-                Chatbot Training
+                {t("howItWorks.steps.3.taskTypes.chatbot.title")}
               </h5>
               <p className="text-sm text-muted-foreground">
-                Evaluate AI responses to conversations and select the most natural, helpful answers.
+                {t("howItWorks.steps.3.taskTypes.chatbot.description")}
               </p>
             </div>
             <div className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <h5 className="font-semibold mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary"></span>
-                Sentiment Analysis
+                {t("howItWorks.steps.3.taskTypes.sentiment.title")}
               </h5>
               <p className="text-sm text-muted-foreground">
-                Review text snippets and help AI understand human emotions and opinions accurately.
+                {t("howItWorks.steps.3.taskTypes.sentiment.description")}
               </p>
             </div>
             <div className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <h5 className="font-semibold mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary"></span>
-                Content Classification
+                {t("howItWorks.steps.3.taskTypes.classification.title")}
               </h5>
               <p className="text-sm text-muted-foreground">
-                Categorize and label content to help AI learn to organize information effectively.
+                {t("howItWorks.steps.3.taskTypes.classification.description")}
               </p>
             </div>
             <div className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <h5 className="font-semibold mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary"></span>
-                Data Quality Review
+                {t("howItWorks.steps.3.taskTypes.dataQuality.title")}
               </h5>
               <p className="text-sm text-muted-foreground">
-                Validate AI-generated responses for accuracy, relevance, and appropriateness.
+                {t("howItWorks.steps.3.taskTypes.dataQuality.description")}
               </p>
             </div>
           </div>
@@ -581,7 +580,7 @@ const HowItWorks = () => {
             <div className="mb-6">
               <Progress value={progressPercentage} className="h-2" />
               <p className="text-center text-sm text-muted-foreground mt-2">
-                Step {currentStep} of {totalSteps}
+                {t("howItWorks.stepOfTotal", { current: currentStep, total: totalSteps })}
               </p>
             </div>
             
@@ -596,16 +595,16 @@ const HowItWorks = () => {
                 disabled={currentStep === 1}
                 className="min-w-[100px]"
               >
-                Previous
+                {t("howItWorks.previous")}
               </Button>
 
               {currentStep < totalSteps ? (
                 <Button onClick={handleNext} className="min-w-[100px]">
-                  Next
+                  {t("howItWorks.next")}
                 </Button>
               ) : (
                 <Button onClick={handleGoToDashboard} className="min-w-[140px]">
-                  Go To Dashboard
+                  {t("howItWorks.goToDashboard")}
                 </Button>
               )}
             </div>
@@ -626,7 +625,7 @@ const HowItWorks = () => {
                       ? "bg-primary/60"
                       : "bg-gray-300"
                   }`}
-                  aria-label={`Go to step ${step}`}
+                  aria-label={t("howItWorks.goToStepAria", { step })}
                 />
               ))}
             </div>

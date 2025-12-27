@@ -48,7 +48,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    */
   const changeLanguage = useCallback((lang: SupportedLanguage) => {
     setUserLanguage(lang);
-    i18n.changeLanguage(lang);
+    // Ensure i18n is initialized before changing language
+    if (i18n.isInitialized) {
+      i18n.changeLanguage(lang).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    } else {
+      // If i18n is not initialized yet, set it directly
+      i18n.language = lang;
+    }
     localStorage.setItem(STORAGE_KEY, lang);
     setIsAutoDetected(false);
   }, []);
@@ -177,6 +185,31 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setError(null);
 
       try {
+        // Ensure i18n is initialized (it should already be from main.tsx, but check to be safe)
+        // Don't call init() again if already initialized as it can cause issues
+        if (!i18n.isInitialized) {
+          // If somehow not initialized, wait a bit for it to initialize
+          // This shouldn't happen in normal flow since main.tsx imports i18n
+          await new Promise(resolve => {
+            if (i18n.isInitialized) {
+              resolve(undefined);
+            } else {
+              // Wait for initialization
+              const checkInterval = setInterval(() => {
+                if (i18n.isInitialized) {
+                  clearInterval(checkInterval);
+                  resolve(undefined);
+                }
+              }, 10);
+              // Timeout after 1 second
+              setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve(undefined);
+              }, 1000);
+            }
+          });
+        }
+
         // Priority 1: Check localStorage (user's manual selection)
         const storedLang = localStorage.getItem(STORAGE_KEY);
         if (storedLang && isSupportedLanguage(storedLang)) {

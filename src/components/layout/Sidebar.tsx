@@ -29,6 +29,7 @@ import { MobileCurrencyBadge } from "@/components/layout/MobileCurrencyBadge";
 import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { MobileUserBadge } from "@/components/layout/MobileUserBadge";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   profile: any;
@@ -37,6 +38,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -75,30 +77,30 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   // Primary navigation items (shown in bottom nav on mobile + sidebar)
   const basePrimaryNavItems = [
-    { icon: Home, label: "Dashboard", path: "/dashboard" },
-    { icon: Zap, label: "Tasks", path: "/tasks" },
-    { icon: Wallet, label: "Wallet", path: "/wallet" },
-    { icon: Users, label: "Referrals", path: "/referrals" },
+    { icon: Home, label: t("navigation.dashboard"), path: "/dashboard" },
+    { icon: Zap, label: t("navigation.tasks"), path: "/tasks" },
+    { icon: Wallet, label: t("navigation.wallet"), path: "/wallet" },
+    { icon: Users, label: t("navigation.referrals"), path: "/referrals" },
   ];
 
   // Partner navigation - changes based on partner status and global partner program toggle
   const partnerNavItem = isPartner
-    ? { icon: Sparkles, label: "Partner Hub", path: "/partner/dashboard", isPartner: true }
-    : { icon: Sparkles, label: "Become a Partner", path: "/become-partner", isPartner: false };
+    ? { icon: Sparkles, label: t("components.sidebar.partnerHub"), path: "/partner/dashboard", isPartner: true }
+    : { icon: Sparkles, label: t("components.sidebar.becomePartner"), path: "/become-partner", isPartner: false };
 
   const primaryNavItems = [
     ...basePrimaryNavItems,
     ...(isPartnerProgramEnabled ? [partnerNavItem] : []),
-    { icon: Crown, label: "Membership", path: "/plans" },
+    { icon: Crown, label: t("navigation.plans"), path: "/plans" },
   ];
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
   const secondaryNavItems = [
     isHowItWorksVisible
-      ? { icon: HelpCircle, label: "How It Works", path: "/how-it-works", highlight: true }
+      ? { icon: HelpCircle, label: t("components.sidebar.howItWorks"), path: "/how-it-works", highlight: true }
       : null,
-    { icon: History, label: "Transactions", path: "/transactions" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: History, label: t("navigation.transactions"), path: "/transactions" },
+    { icon: Settings, label: t("navigation.settings"), path: "/settings" },
   ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[];
 
   // Combined nav items for desktop sidebar
@@ -296,7 +298,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
           <LogOut className="h-5 w-5 mr-2" />
-          Logout
+          {t("navigation.logout")}
         </Button>
       </div>
     </>
@@ -391,7 +393,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
         >
           <LogOut className="h-5 w-5 mr-2" />
-          Logout
+          {t("navigation.logout")}
         </Button>
       </div>
     </>
