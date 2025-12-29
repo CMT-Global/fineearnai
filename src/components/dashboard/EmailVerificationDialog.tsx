@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface EmailVerificationDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const EmailVerificationDialog = ({
   userEmail,
   onVerificationSuccess,
 }: EmailVerificationDialogProps) => {
+  const { t } = useTranslation();
   const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -69,7 +71,7 @@ export const EmailVerificationDialog = ({
       if (!response.data) {
         console.error('[EMAIL-VERIFY] No response data received');
         setError("No response from server. Please try again.");
-        toast.error("No response from server. Please try again.");
+        toast.error(t("admin.toasts.noResponseFromServer"));
         return;
       }
 
@@ -79,8 +81,8 @@ export const EmailVerificationDialog = ({
         console.error('[EMAIL-VERIFY] Email delivery error:', errorMsg);
         console.error('[EMAIL-VERIFY] Full error details:', response.data);
         setError("Email delivery failed. Please check your email settings or contact support.");
-        toast.error("Email delivery failed", {
-          description: "The verification code was generated but couldn't be sent. Please try again or contact support.",
+        toast.error(t("admin.toasts.emailDeliveryFailed"), {
+          description: t("admin.toasts.emailDeliveryFailedDescription"),
           duration: 5000
         });
         return;
@@ -100,12 +102,12 @@ export const EmailVerificationDialog = ({
       if (response.data.success === true && !response.data.email_error) {
         console.log('[EMAIL-VERIFY] OTP sent successfully');
         setOtpSent(true);
-        toast.success("Verification code sent! Check your email (including spam/junk folder).");
+        toast.success(t("admin.toasts.verificationCodeSentCheckEmail"));
       } else {
         // Defensive: if success is not explicitly true, treat as error
         console.error('[EMAIL-VERIFY] Ambiguous response:', response.data);
         setError("Unexpected response from server. Please try again.");
-        toast.error("Failed to send verification code. Please try again.");
+        toast.error(t("admin.toasts.failedToSendVerificationCode"));
       }
     } catch (err: any) {
       console.error("[EMAIL-VERIFY] Unexpected error:", err);
@@ -148,7 +150,7 @@ export const EmailVerificationDialog = ({
         throw new Error(response.data?.error || "Invalid verification code");
       }
 
-      toast.success("Email verified successfully!");
+      toast.success(t("admin.toasts.emailVerifiedSuccessfully"));
       onVerificationSuccess();
       onOpenChange(false);
       

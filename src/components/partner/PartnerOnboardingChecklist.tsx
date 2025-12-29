@@ -18,6 +18,7 @@ import { usePartnerOnboarding, useUpdateOnboardingStep, useDismissOnboarding } f
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface ChecklistStep {
   key: keyof import("@/hooks/usePartnerOnboarding").OnboardingSteps;
@@ -73,6 +74,7 @@ const ONBOARDING_STEPS: ChecklistStep[] = [
 ];
 
 export const PartnerOnboardingChecklist = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: onboarding, isLoading } = usePartnerOnboarding();
   const updateStep = useUpdateOnboardingStep();
@@ -135,9 +137,9 @@ export const PartnerOnboardingChecklist = () => {
   const handleMarkComplete = async (stepKey: string) => {
     try {
       await updateStep.mutateAsync({ step: stepKey, value: true });
-      toast.success("Step marked as complete!");
+      toast.success(t("partner.toasts.stepMarkedAsComplete"));
     } catch (error) {
-      toast.error("Failed to update step");
+      toast.error(t("partner.toasts.failedToUpdateStep"));
       console.error(error);
     }
   };
@@ -145,9 +147,9 @@ export const PartnerOnboardingChecklist = () => {
   const handleDismiss = async () => {
     try {
       await dismissOnboarding.mutateAsync();
-      toast.success("Onboarding checklist dismissed");
+      toast.success(t("partner.toasts.onboardingChecklistDismissed"));
     } catch (error) {
-      toast.error("Failed to dismiss checklist");
+      toast.error(t("partner.toasts.failedToDismissChecklist"));
       console.error(error);
     }
   };

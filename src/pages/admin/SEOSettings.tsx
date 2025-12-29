@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Globe, Share2, Save, Undo, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface SEOConfig {
   title: string;
@@ -58,31 +60,16 @@ const DEFAULT_BRANDING: BrandingConfig = {
 };
 
 export default function SEOSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [config, setConfig] = useState<SEOConfig>(DEFAULT_SEO);
   const [branding, setBranding] = useState<BrandingConfig>(DEFAULT_BRANDING);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["seo-branding-config"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("key, value")
-        .in("key", ["seo_config", "platform_branding"]);
-
-      if (error) throw error;
-      
-      const seoData = data.find(r => r.key === "seo_config")?.value as SEOConfig;
-      const brandingData = data.find(r => r.key === "platform_branding")?.value as BrandingConfig;
-      
-      return {
-        seo: seoData || DEFAULT_SEO,
-        branding: brandingData || DEFAULT_BRANDING
-      };
-    },
-  });
+  // Force re-render when language changes
 
   useEffect(() => {
     if (data) {
@@ -121,14 +108,14 @@ export default function SEOSettings() {
       queryClient.invalidateQueries({ queryKey: ["seo-config"] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "SEO and Branding settings have been updated.",
+        title: t("admin.contentManagement.seoSettings.settingsSaved"),
+        description: t("admin.contentManagement.seoSettings.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving settings",
-        description: error.message || "An unexpected error occurred.",
+        title: t("admin.contentManagement.seoSettings.errorSaving"),
+        description: error.message || t("admin.contentManagement.seoSettings.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -166,16 +153,16 @@ export default function SEOSettings() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Globe className="h-8 w-8 text-primary" />
-            Website SEO & Social Settings
+            {t("admin.contentManagement.seoSettings.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage how your website appears on search engines and social media platforms.
+            {t("admin.contentManagement.seoSettings.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={handleReset} disabled={!hasChanges || saveMutation.isPending}>
             <Undo className="h-4 w-4 mr-2" />
-            Discard Changes
+            {t("admin.contentManagement.seoSettings.discardChanges")}
           </Button>
           <Button onClick={() => saveMutation.mutate({ seo: config, branding })} disabled={!hasChanges || saveMutation.isPending}>
             {saveMutation.isPending ? (
@@ -183,7 +170,7 @@ export default function SEOSettings() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Settings
+            {t("admin.contentManagement.seoSettings.saveSettings")}
           </Button>
         </div>
       </div>
@@ -192,40 +179,40 @@ export default function SEOSettings() {
         <TabsList>
           <TabsTrigger value="branding" className="gap-2">
             <Globe className="h-4 w-4" />
-            General Branding
+            {t("admin.contentManagement.seoSettings.tabs.branding")}
           </TabsTrigger>
           <TabsTrigger value="seo" className="gap-2">
             <Globe className="h-4 w-4" />
-            SEO Metadata
+            {t("admin.contentManagement.seoSettings.tabs.seo")}
           </TabsTrigger>
           <TabsTrigger value="social" className="gap-2">
             <Share2 className="h-4 w-4" />
-            Social Sharing
+            {t("admin.contentManagement.seoSettings.tabs.social")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Platform Branding</CardTitle>
+              <CardTitle>{t("admin.contentManagement.seoSettings.branding.title")}</CardTitle>
               <CardDescription>
-                Configure core branding elements that appear across the platform.
+                {t("admin.contentManagement.seoSettings.branding.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="platformName">Platform Name</Label>
+                <Label htmlFor="platformName">{t("admin.contentManagement.seoSettings.branding.platformName")}</Label>
                 <Input
                   id="platformName"
                   value={branding.name}
                   onChange={(e) => handleBrandingChange("name", e.target.value)}
                   placeholder="e.g. ProfitChips"
                 />
-                <p className="text-xs text-muted-foreground">Used in sidebar, titles, and emails.</p>
+                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.branding.platformNameHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="platformLogo">Platform Logo URL</Label>
+                <Label htmlFor="platformLogo">{t("admin.contentManagement.seoSettings.branding.platformLogo")}</Label>
                 <div className="flex gap-4">
                   <div className="flex-1 space-y-2">
                     <Input
@@ -234,7 +221,7 @@ export default function SEOSettings() {
                       onChange={(e) => handleBrandingChange("logoUrl", e.target.value)}
                       placeholder="/logo_without_bg_text.png"
                     />
-                    <p className="text-xs text-muted-foreground">Enter image URL or path in public folder.</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.branding.platformLogoHint")}</p>
                   </div>
                   <div className="h-12 w-12 border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                     <img src={branding.logoUrl} alt="Preview" className="h-full w-full object-contain" />
@@ -243,7 +230,7 @@ export default function SEOSettings() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="platformUrl">Platform URL</Label>
+                <Label htmlFor="platformUrl">{t("admin.contentManagement.seoSettings.branding.platformUrl")}</Label>
                 <Input
                   id="platformUrl"
                   value={branding.url}
@@ -258,25 +245,25 @@ export default function SEOSettings() {
         <TabsContent value="seo" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Search Engine Optimization</CardTitle>
+              <CardTitle>{t("admin.contentManagement.seoSettings.seo.title")}</CardTitle>
               <CardDescription>
-                Configure the primary metadata for search engine indexing.
+                {t("admin.contentManagement.seoSettings.seo.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">Page Title</Label>
+                <Label htmlFor="title">{t("admin.contentManagement.seoSettings.seo.pageTitle")}</Label>
                 <Input
                   id="title"
                   value={config.title}
                   onChange={(e) => handleSEOChange("title", e.target.value)}
                   placeholder="Enter page title"
                 />
-                <p className="text-xs text-muted-foreground">Recommended: 50-60 characters</p>
+                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.pageTitleHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="description">Meta Description</Label>
+                <Label htmlFor="description">{t("admin.contentManagement.seoSettings.seo.metaDescription")}</Label>
                 <Textarea
                   id="description"
                   value={config.description}
@@ -284,23 +271,23 @@ export default function SEOSettings() {
                   placeholder="Enter meta description"
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">Recommended: 150-160 characters</p>
+                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.metaDescriptionHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="keywords">Keywords</Label>
+                <Label htmlFor="keywords">{t("admin.contentManagement.seoSettings.seo.keywords")}</Label>
                 <Input
                   id="keywords"
                   value={config.keywords}
                   onChange={(e) => handleSEOChange("keywords", e.target.value)}
                   placeholder="e.g. earn online, AI tasks, ProfitChips"
                 />
-                <p className="text-xs text-muted-foreground">Comma-separated keywords</p>
+                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.keywordsHint")}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="canonicalUrl">Canonical URL</Label>
+                  <Label htmlFor="canonicalUrl">{t("admin.contentManagement.seoSettings.seo.canonicalUrl")}</Label>
                   <Input
                     id="canonicalUrl"
                     value={config.canonicalUrl}
@@ -309,7 +296,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="robots">Robots Meta</Label>
+                  <Label htmlFor="robots">{t("admin.contentManagement.seoSettings.seo.robotsMeta")}</Label>
                   <Input
                     id="robots"
                     value={config.robots}
@@ -320,23 +307,23 @@ export default function SEOSettings() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="faviconUrl">Favicon URL (PNG)</Label>
+                <Label htmlFor="faviconUrl">{t("admin.contentManagement.seoSettings.seo.faviconUrl")}</Label>
                 <Input
                   id="faviconUrl"
                   value={config.faviconUrl}
                   onChange={(e) => handleSEOChange("faviconUrl", e.target.value)}
                   placeholder="/logo_without_bg_text.png"
                 />
-                <p className="text-xs text-muted-foreground">High resolution PNG recommended (192x192 or larger)</p>
+                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.faviconUrlHint")}</p>
               </div>
             </CardContent>
           </Card>
 
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>SEO Tip</AlertTitle>
+            <AlertTitle>{t("admin.contentManagement.seoSettings.seo.tipTitle")}</AlertTitle>
             <AlertDescription>
-              Changes to SEO metadata may take several days or even weeks to be reflected in search engine results as crawlers need to re-index your site.
+              {t("admin.contentManagement.seoSettings.seo.tipDescription")}
             </AlertDescription>
           </Alert>
         </TabsContent>
@@ -347,15 +334,15 @@ export default function SEOSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-blue-600">
                   <Share2 className="h-5 w-5" />
-                  Open Graph (Facebook/LinkedIn)
+                  {t("admin.contentManagement.seoSettings.social.openGraph.title")}
                 </CardTitle>
                 <CardDescription>
-                  How your site appears when shared on Facebook, LinkedIn, WhatsApp, etc.
+                  {t("admin.contentManagement.seoSettings.social.openGraph.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="ogTitle">OG Title</Label>
+                  <Label htmlFor="ogTitle">{t("admin.contentManagement.seoSettings.social.openGraph.ogTitle")}</Label>
                   <Input
                     id="ogTitle"
                     value={config.ogTitle}
@@ -363,7 +350,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogDescription">OG Description</Label>
+                  <Label htmlFor="ogDescription">{t("admin.contentManagement.seoSettings.social.openGraph.ogDescription")}</Label>
                   <Textarea
                     id="ogDescription"
                     value={config.ogDescription}
@@ -372,7 +359,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogImage">OG Image URL</Label>
+                  <Label htmlFor="ogImage">{t("admin.contentManagement.seoSettings.social.openGraph.ogImage")}</Label>
                   <Input
                     id="ogImage"
                     value={config.ogImage}
@@ -381,7 +368,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogUrl">OG URL</Label>
+                  <Label htmlFor="ogUrl">{t("admin.contentManagement.seoSettings.social.openGraph.ogUrl")}</Label>
                   <Input
                     id="ogUrl"
                     value={config.ogUrl}
@@ -395,15 +382,15 @@ export default function SEOSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sky-500">
                   <Share2 className="h-5 w-5" />
-                  Twitter / X Cards
+                  {t("admin.contentManagement.seoSettings.social.twitter.title")}
                 </CardTitle>
                 <CardDescription>
-                  How your site appears when shared on Twitter/X.
+                  {t("admin.contentManagement.seoSettings.social.twitter.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterTitle">Twitter Title</Label>
+                  <Label htmlFor="twitterTitle">{t("admin.contentManagement.seoSettings.social.twitter.twitterTitle")}</Label>
                   <Input
                     id="twitterTitle"
                     value={config.twitterTitle}
@@ -411,7 +398,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterDescription">Twitter Description</Label>
+                  <Label htmlFor="twitterDescription">{t("admin.contentManagement.seoSettings.social.twitter.twitterDescription")}</Label>
                   <Textarea
                     id="twitterDescription"
                     value={config.twitterDescription}
@@ -420,7 +407,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterImage">Twitter Image URL</Label>
+                  <Label htmlFor="twitterImage">{t("admin.contentManagement.seoSettings.social.twitter.twitterImage")}</Label>
                   <Input
                     id="twitterImage"
                     value={config.twitterImage}
@@ -428,7 +415,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterCard">Card Type</Label>
+                  <Label htmlFor="twitterCard">{t("admin.contentManagement.seoSettings.social.twitter.cardType")}</Label>
                   <Input
                     id="twitterCard"
                     value={config.twitterCard}

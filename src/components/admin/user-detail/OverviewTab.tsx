@@ -12,6 +12,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getDateLocale } from "@/lib/date-locale";
 import { ManualEmailVerificationDialog } from "../dialogs/ManualEmailVerificationDialog";
 
 interface OverviewTabProps {
@@ -37,8 +40,13 @@ export const OverviewTab = ({
   onManageRoles,
   onUserUpdated,
 }: OverviewTabProps) => {
+  const { t } = useTranslation();
+  const { userLanguage } = useLanguage();
   const { toast } = useToast();
   const [isTogglingBypass, setIsTogglingBypass] = useState(false);
+  
+  // Get date locale for formatting
+  const dateLocale = getDateLocale(userLanguage);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [lastBypassUpdate, setLastBypassUpdate] = useState<{ admin: string; timestamp: string } | null>(null);
   const [showEmailVerificationDialog, setShowEmailVerificationDialog] = useState(false);
@@ -440,7 +448,7 @@ export const OverviewTab = ({
                 )}
                 {profile.email_verified_at && (
                   <span className="text-xs text-muted-foreground">
-                    on {format(new Date(profile.email_verified_at), "PPp")}
+                    on {format(new Date(profile.email_verified_at), "PPp", { locale: dateLocale })}
                   </span>
                 )}
                 <Button
@@ -560,7 +568,7 @@ export const OverviewTab = ({
                 <p className="text-sm text-muted-foreground">Referred On</p>
                 <p className="font-medium">
                   {referralDetails?.created_at 
-                    ? format(new Date(referralDetails.created_at), "PPP")
+                    ? format(new Date(referralDetails.created_at), "PPP", { locale: dateLocale })
                     : "-"}
                 </p>
               </div>
@@ -628,7 +636,7 @@ export const OverviewTab = ({
                   <span className="font-mono text-xs">{profile.last_login_ip || "N/A"}</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {profile.last_login && formatDistanceToNow(new Date(profile.last_login), { addSuffix: true })}
+                  {profile.last_login && formatDistanceToNow(new Date(profile.last_login), { addSuffix: true, locale: dateLocale })}
                 </div>
               </div>
             </div>
@@ -703,7 +711,7 @@ export const OverviewTab = ({
               <div>
                 <p className="text-sm font-medium">Joined</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.created_at ? format(new Date(profile.created_at), "PPP") : "-"}
+                  {profile.created_at ? format(new Date(profile.created_at), "PPP", { locale: dateLocale }) : "-"}
                 </p>
               </div>
             </div>
@@ -712,7 +720,7 @@ export const OverviewTab = ({
               <div>
                 <p className="text-sm font-medium">Last Login</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.last_login ? format(new Date(profile.last_login), "PPP") : "Never"}
+                  {profile.last_login ? format(new Date(profile.last_login), "PPP", { locale: dateLocale }) : t("common.never")}
                 </p>
               </div>
             </div>
@@ -721,7 +729,7 @@ export const OverviewTab = ({
               <div>
                 <p className="text-sm font-medium">Last Activity</p>
                 <p className="text-sm text-muted-foreground">
-                  {profile.last_activity ? format(new Date(profile.last_activity), "PPP") : "Never"}
+                  {profile.last_activity ? format(new Date(profile.last_activity), "PPP", { locale: dateLocale }) : t("common.never")}
                 </p>
               </div>
             </div>
@@ -753,8 +761,8 @@ export const OverviewTab = ({
               <p className="text-sm text-muted-foreground">Expires At</p>
               <p className="font-medium">
                 {profile.plan_expires_at
-                  ? format(new Date(profile.plan_expires_at), "PPP")
-                  : "No expiry"}
+                  ? format(new Date(profile.plan_expires_at), "PPP", { locale: dateLocale })
+                  : t("common.noExpiry")}
               </p>
             </div>
             <div>
@@ -879,8 +887,8 @@ export const OverviewTab = ({
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Clock className="h-3.5 w-3.5" />
                     <span>
-                      Modified {formatDistanceToNow(new Date(lastBypassUpdate.timestamp), { addSuffix: true })}
-                      {' by '}
+                      {t("common.modified")} {formatDistanceToNow(new Date(lastBypassUpdate.timestamp), { addSuffix: true, locale: dateLocale })}
+                      {' '}{t("common.by")}{' '}
                       <span className="font-semibold">{lastBypassUpdate.admin}</span>
                     </span>
                   </div>

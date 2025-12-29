@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 import { generateCorrelationId } from "@/lib/utils";
 import { formatVoucherErrorToast } from "@/lib/voucher-error-parser";
+import { useTranslation } from "react-i18next";
 
 // 🔧 PHASE 4: Feature flag for server-side status checks
 // Set to false to instantly revert to direct database queries
@@ -303,7 +304,7 @@ export const useSubmitPartnerApplication = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-status'] });
-      toast.success('Application submitted successfully! We will review it within 24 hours.');
+      toast.success(t('partner.toasts.applicationSubmittedSuccessfully'));
     },
     onError: (error: Error) => {
       console.error('Error submitting application:', error);
@@ -378,6 +379,7 @@ export const usePartnerVouchers = () => {
 
 // Purchase voucher with optimistic updates and enhanced error handling
 export const usePurchaseVoucher = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -438,7 +440,7 @@ export const usePurchaseVoucher = () => {
       queryClient.invalidateQueries({ queryKey: ['partner-vouchers'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast.success('Voucher purchased successfully! Code sent to recipient.');
+      toast.success(t('partner.toasts.voucherPurchasedSuccessfully'));
     },
     onError: (error: Error, variables, context) => {
       // Rollback optimistic update
@@ -458,6 +460,7 @@ export const usePurchaseVoucher = () => {
 
 // Update payment methods
 export const useUpdatePaymentMethods = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -474,11 +477,11 @@ export const useUpdatePaymentMethods = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-config'] });
-      toast.success('Payment methods updated successfully!');
+      toast.success(t('partner.toasts.paymentMethodsUpdatedSuccessfully'));
     },
     onError: (error: Error) => {
       console.error('Error updating payment methods:', error);
-      toast.error('Failed to update payment methods');
+      toast.error(t('partner.toasts.failedToUpdatePaymentMethods'));
     },
   });
 };

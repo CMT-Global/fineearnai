@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,11 +42,23 @@ interface WeeklyBonus {
 }
 
 export default function PartnerBonusPayouts() {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [weekFilter, setWeekFilter] = useState<string>("all");
   const [selectedBonus, setSelectedBonus] = useState<WeeklyBonus | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
 
   // Fetch weekly bonuses
   const { data: bonuses, isLoading } = useQuery({
@@ -112,10 +126,10 @@ export default function PartnerBonusPayouts() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["partner-weekly-bonuses"] });
-      toast.success(`Calculation complete: ${data.bonuses_calculated} bonuses calculated`);
+      toast.success(t("admin.partnerBonusPayouts.toasts.calculationComplete", { count: data.bonuses_calculated }));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to calculate bonuses: ${error.message}`);
+      toast.error(t("admin.partnerBonusPayouts.toasts.calculationFailed", { error: error.message }));
     },
   });
 
@@ -128,26 +142,26 @@ export default function PartnerBonusPayouts() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["partner-weekly-bonuses"] });
-      toast.success(`Payout complete: ${data.bonuses_paid} bonuses paid`);
+      toast.success(t("admin.partnerBonusPayouts.toasts.payoutComplete", { count: data.bonuses_paid }));
       if (data.bonuses_failed > 0) {
-        toast.warning(`${data.bonuses_failed} bonuses failed. Check logs for details.`);
+        toast.warning(t("admin.partnerBonusPayouts.toasts.payoutFailed", { count: data.bonuses_failed }));
       }
     },
     onError: (error: Error) => {
-      toast.error(`Failed to process payouts: ${error.message}`);
+      toast.error(t("admin.partnerBonusPayouts.toasts.payoutProcessFailed", { error: error.message }));
     },
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
-        return <Badge className="bg-success/10 text-success hover:bg-success/20"><CheckCircle2 className="h-3 w-3 mr-1" />Paid</Badge>;
+        return <Badge className="bg-success/10 text-success hover:bg-success/20"><CheckCircle2 className="h-3 w-3 mr-1" />{t("admin.partnerBonusPayouts.status.paid")}</Badge>;
       case "calculated":
-        return <Badge className="bg-warning/10 text-warning hover:bg-warning/20"><Clock className="h-3 w-3 mr-1" />Ready</Badge>;
+        return <Badge className="bg-warning/10 text-warning hover:bg-warning/20"><Clock className="h-3 w-3 mr-1" />{t("admin.partnerBonusPayouts.status.ready")}</Badge>;
       case "pending":
-        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{t("admin.partnerBonusPayouts.status.pending")}</Badge>;
       case "failed":
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t("admin.partnerBonusPayouts.status.failed")}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -162,8 +176,8 @@ export default function PartnerBonusPayouts() {
     <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Partner Bonus Payouts</h1>
-            <p className="text-muted-foreground">Monitor and manage weekly bonus calculations and payouts</p>
+            <h1 className="text-3xl font-bold">{t("admin.partnerBonusPayouts.title")}</h1>
+            <p className="text-muted-foreground">{t("admin.partnerBonusPayouts.subtitle")}</p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -172,14 +186,14 @@ export default function PartnerBonusPayouts() {
               disabled={triggerCalculationMutation.isPending}
             >
               <PlayCircle className="mr-2 h-4 w-4" />
-              Calculate Bonuses
+              {t("admin.partnerBonusPayouts.actions.calculateBonuses")}
             </Button>
             <Button
               onClick={() => triggerPayoutMutation.mutate()}
               disabled={triggerPayoutMutation.isPending || stats.totalPending === 0}
             >
               <DollarSign className="mr-2 h-4 w-4" />
-              Process Payouts ({stats.totalPending})
+              {t("admin.partnerBonusPayouts.actions.processPayouts", { count: stats.totalPending })}
             </Button>
           </div>
         </div>
@@ -188,58 +202,58 @@ export default function PartnerBonusPayouts() {
         <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Payouts</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.pendingPayouts")}</CardTitle>
               <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalPending}</div>
-              <p className="text-xs text-muted-foreground">${stats.totalAmount.toFixed(2)} total</p>
+              <p className="text-xs text-muted-foreground">{t("admin.partnerBonusPayouts.stats.totalAmount", { amount: stats.totalAmount.toFixed(2) })}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bonuses Paid</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.bonusesPaid")}</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalPaid}</div>
-              <p className="text-xs text-muted-foreground">This month</p>
+              <p className="text-xs text-muted-foreground">{t("admin.partnerBonusPayouts.stats.thisMonth")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.totalPaid")}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${stats.totalPaidAmount.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
+              <p className="text-xs text-muted-foreground">{t("admin.partnerBonusPayouts.stats.allTime")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Partners</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.activePartners")}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.uniquePartners}</div>
-              <p className="text-xs text-muted-foreground">Earning bonuses</p>
+              <p className="text-xs text-muted-foreground">{t("admin.partnerBonusPayouts.stats.earningBonuses")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Bonus</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.avgBonus")}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 ${stats.totalPaid > 0 ? (stats.totalPaidAmount / stats.totalPaid).toFixed(2) : "0.00"}
               </div>
-              <p className="text-xs text-muted-foreground">Per payout</p>
+              <p className="text-xs text-muted-foreground">{t("admin.partnerBonusPayouts.stats.perPayout")}</p>
             </CardContent>
           </Card>
         </div>
@@ -249,29 +263,29 @@ export default function PartnerBonusPayouts() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Weekly Bonuses</CardTitle>
-                <CardDescription>View and manage all partner bonus records</CardDescription>
+                <CardTitle>{t("admin.partnerBonusPayouts.weeklyBonuses.title")}</CardTitle>
+                <CardDescription>{t("admin.partnerBonusPayouts.weeklyBonuses.description")}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder={t("admin.partnerBonusPayouts.filters.filterByStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="calculated">Ready to Pay</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="all">{t("admin.partnerBonusPayouts.filters.allStatuses")}</SelectItem>
+                    <SelectItem value="pending">{t("admin.partnerBonusPayouts.status.pending")}</SelectItem>
+                    <SelectItem value="calculated">{t("admin.partnerBonusPayouts.status.ready")}</SelectItem>
+                    <SelectItem value="paid">{t("admin.partnerBonusPayouts.status.paid")}</SelectItem>
+                    <SelectItem value="failed">{t("admin.partnerBonusPayouts.status.failed")}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={weekFilter} onValueChange={setWeekFilter}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by week" />
+                    <SelectValue placeholder={t("admin.partnerBonusPayouts.filters.filterByWeek")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Weeks</SelectItem>
+                    <SelectItem value="all">{t("admin.partnerBonusPayouts.filters.allWeeks")}</SelectItem>
                     {uniqueWeeks.map((week) => (
                       <SelectItem key={week} value={week}>
                         {format(new Date(week), "MMM d, yyyy")}
@@ -285,20 +299,20 @@ export default function PartnerBonusPayouts() {
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">Loading bonuses...</div>
+                <div className="text-muted-foreground">{t("admin.partnerBonusPayouts.loading")}</div>
               </div>
             ) : bonuses && bonuses.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Partner</TableHead>
-                    <TableHead>Week Period</TableHead>
-                    <TableHead>Total Sales</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Bonus %</TableHead>
-                    <TableHead>Bonus Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.partner")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.weekPeriod")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.totalSales")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.tier")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.bonusPercent")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.bonusAmount")}</TableHead>
+                    <TableHead>{t("admin.partnerBonusPayouts.table.status")}</TableHead>
+                    <TableHead className="text-right">{t("admin.partnerBonusPayouts.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -343,11 +357,11 @@ export default function PartnerBonusPayouts() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Bonus Records</h3>
+                <h3 className="text-lg font-semibold mb-2">{t("admin.partnerBonusPayouts.noRecords.title")}</h3>
                 <p className="text-muted-foreground mb-4">
                   {statusFilter !== "all" || weekFilter !== "all" 
-                    ? "No bonuses match your filters" 
-                    : "Trigger a bonus calculation to get started"
+                    ? t("admin.partnerBonusPayouts.noRecords.noMatch")
+                    : t("admin.partnerBonusPayouts.noRecords.getStarted")
                   }
                 </p>
               </div>
@@ -359,53 +373,53 @@ export default function PartnerBonusPayouts() {
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Bonus Details</DialogTitle>
-              <DialogDescription>Complete information about this weekly bonus</DialogDescription>
+              <DialogTitle>{t("admin.partnerBonusPayouts.details.title")}</DialogTitle>
+              <DialogDescription>{t("admin.partnerBonusPayouts.details.description")}</DialogDescription>
             </DialogHeader>
             {selectedBonus && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Partner</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.partner")}</p>
                     <p className="font-medium">{selectedBonus.profiles?.username}</p>
                     <p className="text-xs text-muted-foreground">{selectedBonus.profiles?.email}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Week Period</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.weekPeriod")}</p>
                     <p className="font-medium">
                       {format(new Date(selectedBonus.week_start_date), "MMM d")} - {format(new Date(selectedBonus.week_end_date), "MMM d, yyyy")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Sales</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.totalSales")}</p>
                     <p className="font-medium text-lg">${selectedBonus.total_weekly_sales.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Qualified Tier</p>
-                    <p className="font-medium">{selectedBonus.partner_bonus_tiers?.tier_name || "None"}</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.qualifiedTier")}</p>
+                    <p className="font-medium">{selectedBonus.partner_bonus_tiers?.tier_name || t("common.none")}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Bonus Percentage</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.bonusPercentage")}</p>
                     <p className="font-medium text-primary text-lg">{(selectedBonus.bonus_percentage * 100).toFixed(2)}%</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Bonus Amount</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.bonusAmount")}</p>
                     <p className="font-bold text-success text-lg">${selectedBonus.bonus_amount.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Status</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.status")}</p>
                     <div className="mt-1">{getStatusBadge(selectedBonus.status)}</div>
                   </div>
                   {selectedBonus.paid_at && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Paid At</p>
+                      <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.paidAt")}</p>
                       <p className="font-medium">{format(new Date(selectedBonus.paid_at), "MMM d, yyyy HH:mm")}</p>
                     </div>
                   )}
                 </div>
                 {selectedBonus.transaction_id && (
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">Transaction ID</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.partnerBonusPayouts.details.transactionId")}</p>
                     <p className="font-mono text-xs">{selectedBonus.transaction_id}</p>
                 </div>
               )}

@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface CPAYTransaction {
   id: string;
@@ -31,6 +34,9 @@ interface CPAYTransaction {
 }
 
 const CPAYMonitoring = () => {
+  const { t } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  useLanguageSync();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -47,10 +53,10 @@ const CPAYMonitoring = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -80,7 +86,7 @@ const CPAYMonitoring = () => {
       setTransactions(data || []);
     } catch (error: any) {
       console.error("Error loading CPAY transactions:", error);
-      toast.error("Failed to load CPAY transactions");
+      toast.error(t("admin.cpayMonitoring.errorFailedToLoad"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -124,10 +130,10 @@ const CPAYMonitoring = () => {
     ).length,
   };
 
-  if (authLoading || adminLoading || loading) {
+  if (authLoading || adminLoading || loading || isLanguageLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading CPAY monitoring..." />
+        <LoadingSpinner size="lg" text={t("admin.cpayMonitoring.loading")} />
       </div>
     );
   }
@@ -138,19 +144,19 @@ const CPAYMonitoring = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.cpayMonitoring.backToAdmin")}
           </Button>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">CPAY Transaction Monitoring</h1>
+              <h1 className="text-3xl font-bold mb-2">{t("admin.cpayMonitoring.title")}</h1>
               <p className="text-muted-foreground">
-                Monitor and track all CPAY payment gateway transactions
+                {t("admin.cpayMonitoring.subtitle")}
               </p>
             </div>
             <Button onClick={handleRefresh} disabled={refreshing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh
+              {t("common.refresh")}
             </Button>
           </div>
         </div>
@@ -159,49 +165,49 @@ const CPAYMonitoring = () => {
         <div className="grid gap-4 md:grid-cols-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.cpayMonitoring.stats.totalDeposits")}</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(stats.totalDeposits)}
               </div>
-              <p className="text-xs text-muted-foreground">Completed via CPAY</p>
+              <p className="text-xs text-muted-foreground">{t("admin.cpayMonitoring.stats.completedViaCPAY")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.cpayMonitoring.stats.totalWithdrawals")}</CardTitle>
               <TrendingDown className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
                 {formatCurrency(stats.totalWithdrawals)}
               </div>
-              <p className="text-xs text-muted-foreground">Processed via CPAY</p>
+              <p className="text-xs text-muted-foreground">{t("admin.cpayMonitoring.stats.processedViaCPAY")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending Deposits</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.cpayMonitoring.stats.pendingDeposits")}</CardTitle>
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pendingDeposits}</div>
-              <p className="text-xs text-muted-foreground">Awaiting confirmation</p>
+              <p className="text-xs text-muted-foreground">{t("admin.cpayMonitoring.stats.awaitingConfirmation")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending Withdrawals</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.cpayMonitoring.stats.pendingWithdrawals")}</CardTitle>
               <DollarSign className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pendingWithdrawals}</div>
-              <p className="text-xs text-muted-foreground">Awaiting processing</p>
+              <p className="text-xs text-muted-foreground">{t("admin.cpayMonitoring.stats.awaitingProcessing")}</p>
             </CardContent>
           </Card>
         </div>
@@ -209,19 +215,19 @@ const CPAYMonitoring = () => {
         {/* Transactions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
-            <CardDescription>All CPAY payment gateway transactions</CardDescription>
+            <CardTitle>{t("admin.cpayMonitoring.transactionHistory")}</CardTitle>
+            <CardDescription>{t("admin.cpayMonitoring.transactionHistoryDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="all">All ({transactions.length})</TabsTrigger>
+                <TabsTrigger value="all">{t("admin.cpayMonitoring.tabs.all")} ({transactions.length})</TabsTrigger>
                 <TabsTrigger value="deposits">
-                  Deposits (
+                  {t("admin.cpayMonitoring.tabs.deposits")} (
                   {transactions.filter((tx) => tx.type === "deposit").length})
                 </TabsTrigger>
                 <TabsTrigger value="withdrawals">
-                  Withdrawals (
+                  {t("admin.cpayMonitoring.tabs.withdrawals")} (
                   {transactions.filter((tx) => tx.type === "withdrawal").length})
                 </TabsTrigger>
               </TabsList>
@@ -231,13 +237,13 @@ const CPAYMonitoring = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Gateway ID</TableHead>
-                        <TableHead>Metadata</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.date")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.user")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.type")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.amount")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.status")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.gatewayId")}</TableHead>
+                        <TableHead>{t("admin.cpayMonitoring.table.metadata")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -247,7 +253,7 @@ const CPAYMonitoring = () => {
                             colSpan={7}
                             className="text-center text-muted-foreground"
                           >
-                            No CPAY transactions found
+                            {t("admin.cpayMonitoring.noTransactions")}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -259,7 +265,7 @@ const CPAYMonitoring = () => {
                             <TableCell>
                               <div>
                                 <p className="font-medium">
-                                  {tx.profiles?.username || "Unknown"}
+                                  {tx.profiles?.username || t("admin.cpayMonitoring.unknown")}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   {tx.profiles?.email}
@@ -278,10 +284,10 @@ const CPAYMonitoring = () => {
                             </TableCell>
                             <TableCell className="text-xs">
                               {tx.metadata?.order_id && (
-                                <div>Order: {tx.metadata.order_id}</div>
+                                <div>{t("admin.cpayMonitoring.order")}: {tx.metadata.order_id}</div>
                               )}
                               {tx.metadata?.payout_id && (
-                                <div>Payout: {tx.metadata.payout_id}</div>
+                                <div>{t("admin.cpayMonitoring.payout")}: {tx.metadata.payout_id}</div>
                               )}
                             </TableCell>
                           </TableRow>

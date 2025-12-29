@@ -6,6 +6,7 @@ import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { TrendingUp, User, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslation } from "react-i18next";
 
 interface CommissionHistoryListProps {
   userId: string;
@@ -28,6 +29,7 @@ interface UserProfile {
 }
 
 export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) => {
+  const { t } = useTranslation();
   const [earnings, setEarnings] = useState<CommissionEarning[]>([]);
   const [users, setUsers] = useState<Map<string, UserProfile>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
       }
     } catch (error) {
       console.error("Error loading commission history:", error);
-      toast.error("Failed to load commission history");
+      toast.error(t("referrals.toasts.failedToLoadCommissionHistory"));
     } finally {
       setLoading(false);
     }

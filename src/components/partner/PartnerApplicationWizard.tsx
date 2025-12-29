@@ -37,6 +37,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
 import { usePartnerApplicationDraft } from "@/hooks/usePartnerApplicationDraft";
 import {
@@ -59,6 +60,7 @@ interface PartnerApplicationWizardProps {
 }
 
 export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }: PartnerApplicationWizardProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
@@ -235,8 +237,8 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
       });
       
       setCurrentSection(draftSection);
-      toast.info("Draft restored", {
-        description: "Your previous application progress has been restored.",
+      toast.info(t("partner.toasts.draftRestored"), {
+        description: t("partner.toasts.draftRestoredDescription"),
       });
     }
   }, [hasExistingDraft]);
@@ -382,7 +384,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
       setCurrentSection((prev) => Math.min(prev + 1, sections.length - 1));
     } else {
       setValidationErrors(validation.errors);
-      toast.error("Please complete all required fields");
+      toast.error(t("partner.toasts.pleaseCompleteAllRequiredFields"));
       // Scroll to top to show error alert
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -464,8 +466,8 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
       clearDraft();
       console.log('🗑️ [PartnerApplicationWizard] Draft cleared');
       
-      toast.success("Application submitted successfully!", {
-        description: "We'll review your application and get back to you soon.",
+      toast.success(t("partner.toasts.applicationSubmittedSuccessfully"), {
+        description: t("partner.toasts.applicationSubmittedDescription"),
       });
       
       console.log('🎉 [PartnerApplicationWizard] Calling onComplete...');
@@ -476,8 +478,8 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
         stack: error.stack,
         fullError: error
       });
-      toast.error("Failed to submit application", {
-        description: error.message || "Please try again later.",
+      toast.error(t("partner.toasts.failedToSubmitApplication"), {
+        description: error.message || t("common.errors.general.somethingWentWrong"),
       });
     } finally {
       console.log('🔄 [PartnerApplicationWizard] Setting isSubmitting to false');

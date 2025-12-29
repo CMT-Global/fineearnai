@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, Save, RotateCcw, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface ReamazeConfig {
   isEnabled: boolean;
@@ -23,25 +25,15 @@ const DEFAULT_CONFIG: ReamazeConfig = {
 };
 
 export default function ReamazeSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [config, setConfig] = useState<ReamazeConfig>(DEFAULT_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Fetch Reamaze settings
-  const { data: configData, isLoading } = useQuery({
-    queryKey: ['reamaze-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'reamaze_config')
-        .maybeSingle();
-
-      if (error) throw error;
-      return (data?.value as unknown as ReamazeConfig) || DEFAULT_CONFIG;
-    },
-  });
+  // Force re-render when language changes
 
   // Update state when data loads
   useEffect(() => {
@@ -69,14 +61,14 @@ export default function ReamazeSettings() {
       queryClient.invalidateQueries({ queryKey: ['reamaze-config'] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "Reamaze configuration has been updated successfully.",
+        title: t("admin.contentManagement.reamazeSettings.settingsSaved"),
+        description: t("admin.contentManagement.reamazeSettings.settingsSavedDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Error saving settings",
-        description: error.message,
+        title: t("admin.contentManagement.reamazeSettings.errorSaving"),
+        description: error.message || t("admin.contentManagement.reamazeSettings.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -104,8 +96,8 @@ export default function ReamazeSettings() {
     }
     setHasChanges(false);
     toast({
-      title: "Changes discarded",
-      description: "Settings have been reverted to the last saved state.",
+      title: t("admin.contentManagement.reamazeSettings.changesDiscarded"),
+      description: t("admin.contentManagement.reamazeSettings.changesDiscardedDescription"),
     });
   };
 
@@ -121,16 +113,16 @@ export default function ReamazeSettings() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <AdminBreadcrumb
         items={[
-          { label: "Communications" },
-          { label: "Live Chat Settings" },
+          { label: t("admin.contentManagement.reamazeSettings.breadcrumb.communications") },
+          { label: t("admin.contentManagement.reamazeSettings.breadcrumb.liveChatSettings") },
         ]}
       />
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Live Chat Settings</h1>
+          <h1 className="text-3xl font-bold">{t("admin.contentManagement.reamazeSettings.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Configure Reamaze Live Chat integration and visibility
+            {t("admin.contentManagement.reamazeSettings.subtitle")}
           </p>
         </div>
 
@@ -141,7 +133,7 @@ export default function ReamazeSettings() {
             disabled={!hasChanges || saveMutation.isPending}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Discard Changes
+            {t("admin.contentManagement.reamazeSettings.discardChanges")}
           </Button>
 
           <Button
@@ -153,16 +145,16 @@ export default function ReamazeSettings() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Settings
+            {t("admin.contentManagement.reamazeSettings.saveSettings")}
           </Button>
         </div>
       </div>
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>Important</AlertTitle>
+        <AlertTitle>{t("admin.contentManagement.reamazeSettings.important")}</AlertTitle>
         <AlertDescription>
-          The live chat will only appear on the public platform and user dashboard. It is automatically hidden on all admin panel pages to avoid interference with admin tools.
+          {t("admin.contentManagement.reamazeSettings.importantDescription")}
         </AlertDescription>
       </Alert>
 
@@ -170,9 +162,9 @@ export default function ReamazeSettings() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Enable Live Chat</CardTitle>
+              <CardTitle>{t("admin.contentManagement.reamazeSettings.enableLiveChat.title")}</CardTitle>
               <CardDescription>
-                Turn Reamaze Live Chat on or off for all users.
+                {t("admin.contentManagement.reamazeSettings.enableLiveChat.description")}
               </CardDescription>
             </div>
             <Switch
@@ -185,14 +177,14 @@ export default function ReamazeSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reamaze Embed Code</CardTitle>
+          <CardTitle>{t("admin.contentManagement.reamazeSettings.embedCode.title")}</CardTitle>
           <CardDescription>
-            Paste your Reamaze installation script here. You can find this in your Reamaze account settings under Settings &gt; Installation.
+            {t("admin.contentManagement.reamazeSettings.embedCode.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="embed_code">JavaScript Embed Code</Label>
+            <Label htmlFor="embed_code">{t("admin.contentManagement.reamazeSettings.embedCode.label")}</Label>
             <Textarea
               id="embed_code"
               value={config.embedCode}
@@ -206,13 +198,13 @@ export default function ReamazeSettings() {
           <div className="bg-muted p-4 rounded-lg flex gap-3">
             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground space-y-2">
-              <p className="font-medium text-foreground">How to get your code:</p>
+              <p className="font-medium text-foreground">{t("admin.contentManagement.reamazeSettings.embedCode.howToGetCode")}</p>
               <ol className="list-decimal ml-4 space-y-1">
-                <li>Log in to your <strong>Reamaze.com</strong> account.</li>
-                <li>Go to <strong>Settings</strong> &gt; <strong>Installation</strong>.</li>
-                <li>Choose <strong>Shoutbox</strong> or <strong>Web Chat</strong>.</li>
-                <li>Copy the entire script block and paste it above.</li>
-                <li>Ensure the code includes both the <code>reamaze-loader.js</code> script and the <code>_support</code> configuration block.</li>
+                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step1")}</li>
+                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step2")}</li>
+                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step3")}</li>
+                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step4")}</li>
+                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step5")}</li>
               </ol>
             </div>
           </div>

@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowLeft, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface CPAYCheckout {
   id: string;
@@ -27,6 +30,9 @@ interface CPAYCheckout {
 }
 
 const CPAYCheckouts = () => {
+  const { t } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  useLanguageSync();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -51,10 +57,10 @@ const CPAYCheckouts = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -76,7 +82,7 @@ const CPAYCheckouts = () => {
       setCheckouts(data || []);
     } catch (error: any) {
       console.error("Error loading checkouts:", error);
-      toast.error("Failed to load CPAY checkouts");
+      toast.error(t("admin.cpayCheckouts.errorFailedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -85,7 +91,7 @@ const CPAYCheckouts = () => {
   const handleSave = async () => {
     try {
       if (!formData.checkout_id || !formData.checkout_url) {
-        toast.error("Please fill in all required fields");
+        toast.error(t("admin.cpayCheckouts.errorFillRequiredFields"));
         return;
       }
 
@@ -93,7 +99,7 @@ const CPAYCheckouts = () => {
       try {
         new URL(formData.checkout_url);
       } catch {
-        toast.error("Invalid checkout URL format");
+        toast.error(t("admin.cpayCheckouts.errorInvalidUrl"));
         return;
       }
 
@@ -110,7 +116,7 @@ const CPAYCheckouts = () => {
           .eq("id", editingCheckout.id);
 
         if (error) throw error;
-        toast.success("CPAY checkout updated successfully");
+        toast.success(t("admin.cpayCheckouts.successUpdated"));
       } else {
         const { error } = await supabase
           .from("cpay_checkouts")
@@ -121,7 +127,7 @@ const CPAYCheckouts = () => {
           }]);
 
         if (error) throw error;
-        toast.success("CPAY checkout added successfully");
+        toast.success(t("admin.cpayCheckouts.successAdded"));
       }
 
       setDialogOpen(false);
@@ -130,12 +136,12 @@ const CPAYCheckouts = () => {
       loadCheckouts();
     } catch (error: any) {
       console.error("Error saving checkout:", error);
-      toast.error(error.message || "Failed to save CPAY checkout");
+      toast.error(error.message || t("admin.cpayCheckouts.errorFailedToSave"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this CPAY checkout?")) {
+    if (!confirm(t("admin.cpayCheckouts.confirmDelete"))) {
       return;
     }
 
@@ -147,11 +153,11 @@ const CPAYCheckouts = () => {
 
       if (error) throw error;
 
-      toast.success("CPAY checkout deleted");
+      toast.success(t("admin.cpayCheckouts.successDeleted"));
       loadCheckouts();
     } catch (error: any) {
       console.error("Error deleting checkout:", error);
-      toast.error("Failed to delete CPAY checkout");
+      toast.error(t("admin.cpayCheckouts.errorFailedToDelete"));
     }
   };
 
@@ -164,11 +170,11 @@ const CPAYCheckouts = () => {
 
       if (error) throw error;
 
-      toast.success(`CPAY checkout ${!checkout.is_active ? "activated" : "deactivated"}`);
+      toast.success(!checkout.is_active ? t("admin.cpayCheckouts.successActivated") : t("admin.cpayCheckouts.successDeactivated"));
       loadCheckouts();
     } catch (error: any) {
       console.error("Error toggling checkout:", error);
-      toast.error("Failed to update CPAY checkout");
+      toast.error(t("admin.cpayCheckouts.errorFailedToUpdate"));
     }
   };
 
@@ -202,10 +208,10 @@ const CPAYCheckouts = () => {
     setDialogOpen(true);
   };
 
-  if (authLoading || adminLoading || loading) {
+  if (authLoading || adminLoading || loading || isLanguageLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading CPAY checkouts..." />
+        <LoadingSpinner size="lg" text={t("admin.cpayCheckouts.loading")} />
       </div>
     );
   }
@@ -216,12 +222,12 @@ const CPAYCheckouts = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.cpayCheckouts.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">CPAY Checkout Configuration</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.cpayCheckouts.title")}</h1>
           <p className="text-muted-foreground">
-            Manage pre-configured CPAY checkout pages for deposits
+            {t("admin.cpayCheckouts.subtitle")}
           </p>
         </div>
 
@@ -229,58 +235,58 @@ const CPAYCheckouts = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>CPAY Checkouts</CardTitle>
+                <CardTitle>{t("admin.cpayCheckouts.cardTitle")}</CardTitle>
                 <CardDescription>
-                  Add checkouts created in your CPAY dashboard
+                  {t("admin.cpayCheckouts.cardDescription")}
                 </CardDescription>
               </div>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={openAddDialog}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Checkout
+                    {t("admin.cpayCheckouts.addCheckout")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>
-                      {editingCheckout ? "Edit" : "Add"} CPAY Checkout
+                      {editingCheckout ? t("admin.cpayCheckouts.editTitle") : t("admin.cpayCheckouts.addTitle")}
                     </DialogTitle>
                     <DialogDescription>
-                      Configure a pre-generated checkout from your CPAY dashboard
+                      {t("admin.cpayCheckouts.dialogDescription")}
                     </DialogDescription>
                   </DialogHeader>
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="checkout_id">Checkout ID *</Label>
+                      <Label htmlFor="checkout_id">{t("admin.cpayCheckouts.checkoutId")} *</Label>
                       <Input
                         id="checkout_id"
                         value={formData.checkout_id}
                         onChange={(e) => setFormData({ ...formData, checkout_id: e.target.value })}
-                        placeholder="e.g., a55901c9-7cab-44a5-adf9-5a1562056256"
+                        placeholder={t("admin.cpayCheckouts.checkoutIdPlaceholder")}
                         disabled={!!editingCheckout}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        From CPAY dashboard checkout URL
+                        {t("admin.cpayCheckouts.checkoutIdHint")}
                       </p>
                     </div>
 
                     <div>
-                      <Label htmlFor="checkout_url">Full Checkout URL *</Label>
+                      <Label htmlFor="checkout_url">{t("admin.cpayCheckouts.checkoutUrl")} *</Label>
                       <Input
                         id="checkout_url"
                         value={formData.checkout_url}
                         onChange={(e) => setFormData({ ...formData, checkout_url: e.target.value })}
-                        placeholder="https://checkouts.fineearn.com/checkout/{id}"
+                        placeholder={t("admin.cpayCheckouts.checkoutUrlPlaceholder")}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Use custom domain URL for better branding
+                        {t("admin.cpayCheckouts.checkoutUrlHint")}
                       </p>
                     </div>
 
                     <div>
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="currency">{t("admin.cpayCheckouts.currency")}</Label>
                       <Input
                         id="currency"
                         value={formData.currency}
@@ -291,7 +297,7 @@ const CPAYCheckouts = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="min_amount">Min Amount ($)</Label>
+                        <Label htmlFor="min_amount">{t("admin.cpayCheckouts.minAmount")}</Label>
                         <Input
                           id="min_amount"
                           type="number"
@@ -304,7 +310,7 @@ const CPAYCheckouts = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="max_amount">Max Amount ($)</Label>
+                        <Label htmlFor="max_amount">{t("admin.cpayCheckouts.maxAmount")}</Label>
                         <Input
                           id="max_amount"
                           type="number"
@@ -325,16 +331,16 @@ const CPAYCheckouts = () => {
                           setFormData({ ...formData, is_active: checked })
                         }
                       />
-                      <Label htmlFor="is_active">Active</Label>
+                      <Label htmlFor="is_active">{t("admin.cpayCheckouts.active")}</Label>
                     </div>
                   </div>
 
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave}>
-                      {editingCheckout ? "Update" : "Add"} Checkout
+                      {editingCheckout ? t("common.update") : t("common.add")} {t("admin.cpayCheckouts.checkout")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -346,18 +352,18 @@ const CPAYCheckouts = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Checkout ID</TableHead>
-                    <TableHead>Currency</TableHead>
-                    <TableHead>Limits</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.cpayCheckouts.table.checkoutId")}</TableHead>
+                    <TableHead>{t("admin.cpayCheckouts.table.currency")}</TableHead>
+                    <TableHead>{t("admin.cpayCheckouts.table.limits")}</TableHead>
+                    <TableHead>{t("admin.cpayCheckouts.table.status")}</TableHead>
+                    <TableHead className="text-right">{t("admin.cpayCheckouts.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {checkouts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        No CPAY checkouts configured
+                        {t("admin.cpayCheckouts.noCheckouts")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -387,7 +393,7 @@ const CPAYCheckouts = () => {
                               onCheckedChange={() => handleToggleActive(checkout)}
                             />
                             <Badge variant={checkout.is_active ? "default" : "secondary"}>
-                              {checkout.is_active ? "Active" : "Inactive"}
+                              {checkout.is_active ? t("admin.cpayCheckouts.status.active") : t("admin.cpayCheckouts.status.inactive")}
                             </Badge>
                           </div>
                         </TableCell>

@@ -14,6 +14,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 // Eager-loaded critical routes
 import Login from "./pages/Login";
@@ -109,6 +110,7 @@ const RoutesWrapper = () => {
   const { isAdminMode, isTransitioning, enterAdminMode, exitAdminMode } = useAdminMode();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const { t } = useTranslation();
+  useLanguageSync(); // Global language sync - ensures all components re-render when language changes
 
   // Auto-enter admin mode when navigating to /admin/*
   // Auto-exit admin mode when navigating away from /admin/*

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface MembershipPlan {
   id: string;
@@ -26,6 +27,7 @@ const PLANS_CACHE_KEY = 'membership_plans_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function useMembershipPlans() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function useMembershipPlans() {
     setErrorType(null);
     
     if (!navigator.onLine) {
-      toast.error("No internet connection. Please check your network.");
+      toast.error(t("common.errors.networkError"));
       setRetrying(false);
       return;
     }

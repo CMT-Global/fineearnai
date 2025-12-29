@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,17 +40,11 @@ interface PartnerRank {
 
 const PartnerRanks = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [editDialog, setEditDialog] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState(false);
-  const [selectedRank, setSelectedRank] = useState<PartnerRank | null>(null);
+  useLanguageSync(); // Sync language and force re-render when language changes
   
-  const [formData, setFormData] = useState({
-    rank_name: "",
-    daily_sales_target: 0,
-    commission_rate: 0.10,
-    rank_order: 1,
-  });
+  const queryClient = useQueryClient();
+  
+  // Force re-render when language changes
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['partner-ranks'],

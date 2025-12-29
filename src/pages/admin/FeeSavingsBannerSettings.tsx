@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Zap, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface FeeSavingsBannerConfig {
   isVisible: boolean;
@@ -48,25 +50,15 @@ const DEFAULT_CONFIG: FeeSavingsBannerConfig = {
 };
 
 export default function FeeSavingsBannerSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [config, setConfig] = useState<FeeSavingsBannerConfig>(DEFAULT_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Fetch banner config
-  const { data: configData, isLoading } = useQuery({
-    queryKey: ['fee-savings-banner-config'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'fee_savings_banner')
-        .maybeSingle();
-
-      if (error) throw error;
-      return (data?.value as FeeSavingsBannerConfig) || DEFAULT_CONFIG;
-    },
-  });
+  // Force re-render when language changes
 
   // Update config when data loads
   useEffect(() => {
@@ -94,14 +86,14 @@ export default function FeeSavingsBannerSettings() {
       queryClient.invalidateQueries({ queryKey: ['fee-savings-banner-config'] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "Fee savings banner settings have been updated successfully.",
+        title: t("admin.contentManagement.feeSavingsBanner.settingsSaved"),
+        description: t("admin.contentManagement.feeSavingsBanner.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving settings",
-        description: error.message || "Failed to save settings. Please try again.",
+        title: t("admin.contentManagement.feeSavingsBanner.errorSaving"),
+        description: error.message || t("admin.contentManagement.feeSavingsBanner.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -136,18 +128,18 @@ export default function FeeSavingsBannerSettings() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Zap className="h-8 w-8 text-amber-600" />
-            Fee Savings Banner Settings
+            {t("admin.contentManagement.feeSavingsBanner.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Configure the "Save on Fees" banner that appears on the wallet page and deposit dialog
+            {t("admin.contentManagement.feeSavingsBanner.subtitle")}
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Banner Configuration</CardTitle>
+            <CardTitle>{t("admin.contentManagement.feeSavingsBanner.configuration.title")}</CardTitle>
             <CardDescription>
-              Control visibility and customize the content of the fee savings banner
+              {t("admin.contentManagement.feeSavingsBanner.configuration.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -155,10 +147,10 @@ export default function FeeSavingsBannerSettings() {
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-0.5">
                 <Label htmlFor="isVisible" className="text-base font-semibold">
-                  Show Banner
+                  {t("admin.contentManagement.feeSavingsBanner.configuration.showBanner")}
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Toggle visibility of the fee savings banner on wallet page and deposit dialog
+                  {t("admin.contentManagement.feeSavingsBanner.configuration.showBannerDescription")}
                 </p>
               </div>
               <Switch
@@ -170,7 +162,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Banner Title</Label>
+              <Label htmlFor="title">{t("admin.contentManagement.feeSavingsBanner.configuration.bannerTitle")}</Label>
               <Input
                 id="title"
                 value={config.title}
@@ -181,7 +173,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Recommended Badge */}
             <div className="space-y-2">
-              <Label htmlFor="recommendedBadge">Recommended Badge Text</Label>
+              <Label htmlFor="recommendedBadge">{t("admin.contentManagement.feeSavingsBanner.configuration.recommendedBadge")}</Label>
               <Input
                 id="recommendedBadge"
                 value={config.recommendedBadge}
@@ -192,7 +184,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Subtitle */}
             <div className="space-y-2">
-              <Label htmlFor="subtitle">Subtitle</Label>
+              <Label htmlFor="subtitle">{t("admin.contentManagement.feeSavingsBanner.configuration.subtitle")}</Label>
               <Input
                 id="subtitle"
                 value={config.subtitle}
@@ -203,9 +195,9 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Option 1 */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <Label className="text-base font-semibold">First Payment Option</Label>
+              <Label className="text-base font-semibold">{t("admin.contentManagement.feeSavingsBanner.configuration.firstPaymentOption")}</Label>
               <div className="space-y-2">
-                <Label htmlFor="option1-label">Option Label</Label>
+                <Label htmlFor="option1-label">{t("admin.contentManagement.feeSavingsBanner.configuration.optionLabel")}</Label>
                 <Input
                   id="option1-label"
                   value={config.option1.label}
@@ -219,9 +211,9 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Option 2 */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <Label className="text-base font-semibold">Second Payment Option</Label>
+              <Label className="text-base font-semibold">{t("admin.contentManagement.feeSavingsBanner.configuration.secondPaymentOption")}</Label>
               <div className="space-y-2">
-                <Label htmlFor="option2-label">Option Label</Label>
+                <Label htmlFor="option2-label">{t("admin.contentManagement.feeSavingsBanner.configuration.optionLabel")}</Label>
                 <Input
                   id="option2-label"
                   value={config.option2.label}
@@ -235,7 +227,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Highlight Text */}
             <div className="space-y-2">
-              <Label htmlFor="highlightText">Highlight Text</Label>
+              <Label htmlFor="highlightText">{t("admin.contentManagement.feeSavingsBanner.configuration.highlightText")}</Label>
               <Input
                 id="highlightText"
                 value={config.highlightText}
@@ -246,7 +238,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Benefits Text */}
             <div className="space-y-2">
-              <Label htmlFor="benefitsText">Benefits Text</Label>
+              <Label htmlFor="benefitsText">{t("admin.contentManagement.feeSavingsBanner.configuration.benefitsText")}</Label>
               <Textarea
                 id="benefitsText"
                 value={config.benefitsText}
@@ -258,7 +250,7 @@ export default function FeeSavingsBannerSettings() {
 
             {/* Footer Text */}
             <div className="space-y-2">
-              <Label htmlFor="footerText">Footer Text</Label>
+              <Label htmlFor="footerText">{t("admin.contentManagement.feeSavingsBanner.configuration.footerText")}</Label>
               <Textarea
                 id="footerText"
                 value={config.footerText}
@@ -276,7 +268,7 @@ export default function FeeSavingsBannerSettings() {
                 disabled={saveMutation.isPending}
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Reset to Defaults
+                {t("admin.contentManagement.feeSavingsBanner.resetToDefaults")}
               </Button>
               <Button
                 onClick={handleSave}
@@ -285,12 +277,12 @@ export default function FeeSavingsBannerSettings() {
                 {saveMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    {t("common.saving")}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {t("common.saveChanges")}
                   </>
                 )}
               </Button>
@@ -300,7 +292,7 @@ export default function FeeSavingsBannerSettings() {
               <Alert>
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
-                  Settings saved successfully! Changes will be reflected on the wallet page and deposit dialog.
+                  {t("admin.contentManagement.feeSavingsBanner.successMessage")}
                 </AlertDescription>
               </Alert>
             )}
@@ -309,7 +301,7 @@ export default function FeeSavingsBannerSettings() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Failed to save settings. Please try again.
+                  {t("admin.contentManagement.feeSavingsBanner.errorMessage")}
                 </AlertDescription>
               </Alert>
             )}

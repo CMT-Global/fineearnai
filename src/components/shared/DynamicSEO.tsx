@@ -51,10 +51,11 @@ export const DynamicSEO = () => {
 
       if (error) {
         console.error("Error fetching SEO config:", error);
-        return null;
+        return DEFAULT_SEO;
       }
 
-      return data?.value as SEOConfig;
+      // Ensure we always return a valid SEOConfig object, never null or undefined
+      return (data?.value as unknown as SEOConfig) || DEFAULT_SEO;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

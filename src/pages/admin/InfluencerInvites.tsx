@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +30,8 @@ interface EmailTemplate {
 }
 
 const InfluencerInvites = () => {
+  const { t } = useTranslation();
+  const { userLanguage } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -52,10 +56,10 @@ const InfluencerInvites = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -82,11 +86,11 @@ const InfluencerInvites = () => {
           variables: data.variables as string[]
         });
       } else {
-        toast.error("Influencer invite template not found");
+        toast.error(t("admin.influencerInvites.templateNotFound"));
       }
     } catch (error: any) {
       console.error("Error loading template:", error);
-      toast.error("Failed to load email template");
+      toast.error(t("admin.influencerInvites.failedToLoadTemplate"));
     } finally {
       setLoading(false);
     }
@@ -95,14 +99,14 @@ const InfluencerInvites = () => {
   const handleSend = async () => {
     try {
       if (!formData.email || !formData.influencerName) {
-        toast.error("Please fill in email and influencer name");
+        toast.error(t("admin.influencerInvites.fillEmailAndName"));
         return;
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error("Please enter a valid email address");
+        toast.error(t("admin.influencerInvites.invalidEmail"));
         return;
       }
 
@@ -119,7 +123,7 @@ const InfluencerInvites = () => {
 
       if (error) throw error;
 
-      toast.success(`Influencer invite sent successfully to ${formData.email}!`);
+      toast.success(t("admin.influencerInvites.inviteSentSuccess", { email: formData.email }));
       
       // Reset form
       setFormData({
@@ -130,7 +134,7 @@ const InfluencerInvites = () => {
       });
     } catch (error: any) {
       console.error("Error sending invite:", error);
-      toast.error(error.message || "Failed to send invite");
+      toast.error(error.message || t("admin.influencerInvites.failedToSend"));
     } finally {
       setSending(false);
     }
@@ -158,7 +162,7 @@ const InfluencerInvites = () => {
     if (formData.customMessage) {
       content = `<div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #ffc107;">
         <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #856404;">
-          <strong>Personal Message:</strong><br/>${formData.customMessage}
+          <strong>${t("admin.influencerInvites.personalMessageLabel")}:</strong><br/>${formData.customMessage}
         </p>
       </div>` + content;
     }
@@ -169,7 +173,7 @@ const InfluencerInvites = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading..." />
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }
@@ -180,11 +184,11 @@ const InfluencerInvites = () => {
         <div className="container mx-auto px-4 py-8">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.influencerInvites.backToAdmin")}
           </Button>
           <Alert variant="destructive">
             <AlertDescription>
-              Influencer invite template not found. Please contact support.
+              {t("admin.influencerInvites.templateNotFoundContact")}
             </AlertDescription>
           </Alert>
         </div>
@@ -198,12 +202,12 @@ const InfluencerInvites = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.influencerInvites.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Influencer Invites</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.influencerInvites.title")}</h1>
           <p className="text-muted-foreground">
-            Send personalized invitations to potential influencer partners
+            {t("admin.influencerInvites.subtitle")}
           </p>
         </div>
 
@@ -212,15 +216,15 @@ const InfluencerInvites = () => {
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="compose">
               <Send className="h-4 w-4 mr-2" />
-              Compose
+              {t("admin.influencerInvites.tabs.compose")}
             </TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-2" />
-              History
+              {t("admin.influencerInvites.tabs.history")}
             </TabsTrigger>
             <TabsTrigger value="best-practices">
               <Info className="h-4 w-4 mr-2" />
-              Best Practices
+              {t("admin.influencerInvites.tabs.bestPractices")}
             </TabsTrigger>
           </TabsList>
 
@@ -231,38 +235,38 @@ const InfluencerInvites = () => {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Send Influencer Invite</CardTitle>
+                    <CardTitle>{t("admin.influencerInvites.sendInvite")}</CardTitle>
                     <CardDescription>
-                      Invite potential partners to join your influencer program
+                      {t("admin.influencerInvites.sendInviteDescription")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Email */}
                     <div>
-                      <Label htmlFor="email">Influencer Email *</Label>
+                      <Label htmlFor="email">{t("admin.influencerInvites.influencerEmail")}</Label>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="influencer@example.com"
+                        placeholder={t("admin.influencerInvites.emailPlaceholder")}
                       />
                     </div>
 
                     {/* Name */}
                     <div>
-                      <Label htmlFor="name">Influencer Name *</Label>
+                      <Label htmlFor="name">{t("admin.influencerInvites.influencerName")}</Label>
                       <Input
                         id="name"
                         value={formData.influencerName}
                         onChange={(e) => setFormData({ ...formData, influencerName: e.target.value })}
-                        placeholder="John Doe"
+                        placeholder={t("admin.influencerInvites.namePlaceholder")}
                       />
                     </div>
 
                     {/* Commission Rate */}
                     <div>
-                      <Label htmlFor="commission">Commission Rate (%)</Label>
+                      <Label htmlFor="commission">{t("admin.influencerInvites.commissionRate")}</Label>
                       <Input
                         id="commission"
                         type="number"
@@ -273,7 +277,7 @@ const InfluencerInvites = () => {
                         placeholder="15"
                       />
                       <p className="text-sm text-muted-foreground mt-1">
-                        Default: 15% - Adjust based on partnership tier
+                        {t("admin.influencerInvites.commissionRateHint")}
                       </p>
                     </div>
 
@@ -281,24 +285,24 @@ const InfluencerInvites = () => {
                     <Alert>
                       <Mail className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Template:</strong> {template.name}
+                        <strong>{t("admin.influencerInvites.template")}:</strong> {template.name}
                         <br />
-                        <strong>Subject:</strong> {template.subject}
+                        <strong>{t("admin.influencerInvites.subject")}:</strong> {template.subject}
                       </AlertDescription>
                     </Alert>
 
                     {/* Custom Message */}
                     <div>
-                      <Label htmlFor="message">Personal Message (Optional)</Label>
+                      <Label htmlFor="message">{t("admin.influencerInvites.personalMessage")}</Label>
                       <Textarea
                         id="message"
                         value={formData.customMessage}
                         onChange={(e) => setFormData({ ...formData, customMessage: e.target.value })}
-                        placeholder="Add a personal note to the invitation..."
+                        placeholder={t("admin.influencerInvites.personalMessagePlaceholder")}
                         rows={4}
                       />
                       <p className="text-sm text-muted-foreground mt-1">
-                        This will appear at the top of the email as a highlighted message
+                        {t("admin.influencerInvites.personalMessageHint")}
                       </p>
                     </div>
 
@@ -306,8 +310,7 @@ const InfluencerInvites = () => {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Template Variables:</strong> The template automatically includes:
-                        influencer name, commission rate, referral link, and support contact
+                        <strong>{t("admin.influencerInvites.templateVariables")}:</strong> {t("admin.influencerInvites.templateVariablesDescription")}
                       </AlertDescription>
                     </Alert>
 
@@ -319,7 +322,7 @@ const InfluencerInvites = () => {
                       disabled={!formData.email || !formData.influencerName}
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      Preview Email
+                      {t("admin.influencerInvites.previewEmail")}
                     </Button>
 
                     {/* Send Button */}
@@ -332,12 +335,12 @@ const InfluencerInvites = () => {
                       {sending ? (
                         <>
                           <LoadingSpinner size="sm" className="mr-2" />
-                          Sending...
+                          {t("admin.influencerInvites.sending")}
                         </>
                       ) : (
                         <>
                           <Send className="mr-2 h-5 w-5" />
-                          Send Invite
+                          {t("admin.influencerInvites.sendInviteButton")}
                         </>
                       )}
                     </Button>
@@ -350,21 +353,21 @@ const InfluencerInvites = () => {
                 {/* Quick Stats */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Template Info</CardTitle>
+                    <CardTitle>{t("admin.influencerInvites.templateInfo")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Template Name</p>
+                        <p className="text-muted-foreground">{t("admin.influencerInvites.templateName")}</p>
                         <p className="font-medium">{template.name}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Subject Line</p>
+                        <p className="text-muted-foreground">{t("admin.influencerInvites.subjectLine")}</p>
                         <p className="font-medium">{template.subject}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Variables</p>
-                        <p className="font-medium">{template.variables.length} variables</p>
+                        <p className="text-muted-foreground">{t("admin.influencerInvites.variables")}</p>
+                        <p className="font-medium">{t("admin.influencerInvites.variablesCount", { count: template.variables.length })}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -373,15 +376,15 @@ const InfluencerInvites = () => {
                 {/* Tips */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Best Practices</CardTitle>
+                    <CardTitle>{t("admin.influencerInvites.bestPractices")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="text-sm space-y-2 text-muted-foreground">
-                      <li>• Personalize with influencer's name</li>
-                      <li>• Adjust commission rate based on tier</li>
-                      <li>• Add a personal touch with custom message</li>
-                      <li>• Preview before sending</li>
-                      <li>• Follow up within 48 hours</li>
+                      <li>• {t("admin.influencerInvites.bestPractice1")}</li>
+                      <li>• {t("admin.influencerInvites.bestPractice2")}</li>
+                      <li>• {t("admin.influencerInvites.bestPractice3")}</li>
+                      <li>• {t("admin.influencerInvites.bestPractice4")}</li>
+                      <li>• {t("admin.influencerInvites.bestPractice5")}</li>
                     </ul>
                   </CardContent>
                 </Card>
@@ -392,16 +395,16 @@ const InfluencerInvites = () => {
             <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Email Preview</DialogTitle>
+                  <DialogTitle>{t("admin.influencerInvites.emailPreview")}</DialogTitle>
                   <DialogDescription>
-                    Review how the influencer invite will appear
+                    {t("admin.influencerInvites.emailPreviewDescription")}
                   </DialogDescription>
                 </DialogHeader>
                 
                 <div className="space-y-4">
                   {/* Subject Preview */}
                   <div>
-                    <Label className="text-sm font-medium">Subject</Label>
+                    <Label className="text-sm font-medium">{t("admin.influencerInvites.subject")}</Label>
                     <div className="mt-1 p-3 bg-muted rounded-lg">
                       <p className="font-medium">{template.subject}</p>
                     </div>
@@ -411,15 +414,15 @@ const InfluencerInvites = () => {
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>To:</strong> {formData.email} ({formData.influencerName})
+                      <strong>{t("admin.influencerInvites.to")}:</strong> {formData.email} ({formData.influencerName})
                       <br />
-                      <strong>Commission Rate:</strong> {formData.commissionRate}%
+                      <strong>{t("admin.influencerInvites.commissionRate")}:</strong> {formData.commissionRate}%
                     </AlertDescription>
                   </Alert>
                   
                   {/* Body Preview */}
                   <div>
-                    <Label className="text-sm font-medium">Email Body</Label>
+                    <Label className="text-sm font-medium">{t("admin.influencerInvites.emailBody")}</Label>
                     <div className="mt-1 border rounded-lg bg-card p-6">
                       <div
                         className="prose prose-sm max-w-none"
@@ -431,7 +434,7 @@ const InfluencerInvites = () => {
                 
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
-                    Close Preview
+                    {t("admin.influencerInvites.closePreview")}
                   </Button>
                   <Button 
                     onClick={() => {
@@ -441,7 +444,7 @@ const InfluencerInvites = () => {
                     disabled={sending}
                   >
                     <Send className="mr-2 h-4 w-4" />
-                    Send Invite
+                    {t("admin.influencerInvites.sendInviteButton")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

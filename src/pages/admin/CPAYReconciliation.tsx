@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RefreshCw, AlertTriangle, CheckCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface ReconciliationIssue {
   id: string;
@@ -23,6 +26,9 @@ interface ReconciliationIssue {
 }
 
 export default function CPAYReconciliation() {
+  const { t } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  useLanguageSync();
   const [loading, setLoading] = useState(false);
 
   const { data: issues, isLoading, refetch } = useQuery({
@@ -47,15 +53,16 @@ export default function CPAYReconciliation() {
         .lt('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString());
 
       stuckDeposits?.forEach((tx: any) => {
+        const minutes = Math.round((Date.now() - new Date(tx.created_at).getTime()) / 60000);
         issues.push({
           id: `stuck-${tx.id}`,
           type: 'stuck_pending',
           severity: 'high',
           transaction_id: tx.id,
           user_id: tx.user_id,
-          username: tx.profiles?.username || 'Unknown',
+          username: tx.profiles?.username || t("admin.cpayReconciliation.unknown"),
           amount: tx.amount,
-          description: `Deposit stuck in pending for ${Math.round((Date.now() - new Date(tx.created_at).getTime()) / 60000)} minutes`,
+          description: t("admin.cpayReconciliation.depositStuck", { minutes }),
           created_at: tx.created_at,
           gateway_transaction_id: tx.gateway_transaction_id,
         });
@@ -77,15 +84,16 @@ export default function CPAYReconciliation() {
         .lt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
       stuckWithdrawals?.forEach((wr: any) => {
+        const hours = Math.round((Date.now() - new Date(wr.created_at).getTime()) / 3600000);
         issues.push({
           id: `stuck-wd-${wr.id}`,
           type: 'stuck_pending',
           severity: 'critical',
           transaction_id: wr.id,
           user_id: wr.user_id,
-          username: wr.profiles?.username || 'Unknown',
+          username: wr.profiles?.username || t("admin.cpayReconciliation.unknown"),
           amount: wr.amount,
-          description: `Withdrawal pending for ${Math.round((Date.now() - new Date(wr.created_at).getTime()) / 3600000)} hours`,
+          description: t("admin.cpayReconciliation.withdrawalPending", { hours }),
           created_at: wr.created_at,
         });
       });
@@ -98,9 +106,9 @@ export default function CPAYReconciliation() {
     setLoading(true);
     try {
       await refetch();
-      toast.success('Reconciliation refreshed');
+      toast.success(t("admin.cpayReconciliation.successRefreshed"));
     } catch (error) {
-      toast.error('Failed to refresh');
+      toast.error(t("admin.cpayReconciliation.errorFailedToRefresh"));
     } finally {
       setLoading(false);
     }
@@ -108,12 +116,12 @@ export default function CPAYReconciliation() {
 
   const handleExport = () => {
     if (!issues || issues.length === 0) {
-      toast.error('No issues to export');
+      toast.error(t("admin.cpayReconciliation.errorNoIssuesToExport"));
       return;
     }
 
     const csv = [
-      ['Type', 'Severity', 'Transaction ID', 'User', 'Amount', 'Description', 'Date'].join(','),
+      [t("admin.cpayReconciliation.csv.type"), t("admin.cpayReconciliation.csv.severity"), t("admin.cpayReconciliation.csv.transactionId"), t("admin.cpayReconciliation.csv.user"), t("admin.cpayReconciliation.csv.amount"), t("admin.cpayReconciliation.csv.description"), t("admin.cpayReconciliation.csv.date")].join(','),
       ...issues.map(issue => [
         issue.type,
         issue.severity,
@@ -132,7 +140,7 @@ export default function CPAYReconciliation() {
     a.download = `cpay-reconciliation-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    toast.success('Report exported');
+    toast.success(t("admin.cpayReconciliation.successExported"));
   };
 
   const getSeverityColor = (severity: string) => {
@@ -159,17 +167,17 @@ export default function CPAYReconciliation() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">CPAY Reconciliation</h1>
-          <p className="text-muted-foreground">Detect and resolve payment issues</p>
+          <h1 className="text-3xl font-bold">{t("admin.cpayReconciliation.title")}</h1>
+          <p className="text-muted-foreground">{t("admin.cpayReconciliation.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleExport} variant="outline" disabled={!issues || issues.length === 0}>
             <Download className="h-4 w-4 mr-2" />
-            Export Report
+            {t("admin.cpayReconciliation.exportReport")}
           </Button>
           <Button onClick={handleRefresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
       </div>
@@ -178,7 +186,7 @@ export default function CPAYReconciliation() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Issues</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.cpayReconciliation.stats.totalIssues")}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -188,7 +196,7 @@ export default function CPAYReconciliation() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.cpayReconciliation.stats.critical")}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -200,7 +208,7 @@ export default function CPAYReconciliation() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.cpayReconciliation.stats.highPriority")}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -212,15 +220,15 @@ export default function CPAYReconciliation() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Status</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.cpayReconciliation.stats.status")}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {issues?.length === 0 ? (
-                <span className="text-green-500">Healthy</span>
+                <span className="text-green-500">{t("admin.cpayReconciliation.stats.healthy")}</span>
               ) : (
-                <span className="text-orange-500">Review</span>
+                <span className="text-orange-500">{t("admin.cpayReconciliation.stats.review")}</span>
               )}
             </div>
           </CardContent>
@@ -230,22 +238,22 @@ export default function CPAYReconciliation() {
       {/* Issues Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Detected Issues</CardTitle>
+          <CardTitle>{t("admin.cpayReconciliation.detectedIssues")}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading reconciliation data...</div>
+            <div className="text-center py-8">{t("admin.cpayReconciliation.loading")}</div>
           ) : issues && issues.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.type")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.severity")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.user")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.amount")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.description")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.date")}</TableHead>
+                  <TableHead>{t("admin.cpayReconciliation.table.action")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,7 +276,7 @@ export default function CPAYReconciliation() {
                     <TableCell>{format(new Date(issue.created_at), 'MMM dd, HH:mm')}</TableCell>
                     <TableCell>
                       <Button size="sm" variant="outline">
-                        Investigate
+                        {t("admin.cpayReconciliation.investigate")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -278,8 +286,8 @@ export default function CPAYReconciliation() {
           ) : (
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <p className="text-lg font-medium">All Clear!</p>
-              <p className="text-muted-foreground">No reconciliation issues detected</p>
+              <p className="text-lg font-medium">{t("admin.cpayReconciliation.allClear")}</p>
+              <p className="text-muted-foreground">{t("admin.cpayReconciliation.noIssuesDetected")}</p>
             </div>
           )}
         </CardContent>

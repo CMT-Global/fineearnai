@@ -17,7 +17,7 @@ import {
   ArrowRight,
   HelpCircle
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
@@ -37,7 +37,7 @@ interface SidebarProps {
   onSignOut: () => void;
 }
 
-export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
+export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,60 +75,66 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   const isHowItWorksVisible = sidebarConfig?.howItWorks?.isVisible ?? true;
   const isPartnerProgramEnabled = sidebarConfig?.partnerProgram?.isEnabled ?? true;
 
-  // Primary navigation items (shown in bottom nav on mobile + sidebar)
-  const basePrimaryNavItems = [
+  // Primary navigation items (shown in bottom nav on mobile + sidebar) - memoized
+  const basePrimaryNavItems = useMemo(() => [
     { icon: Home, label: t("navigation.dashboard"), path: "/dashboard" },
     { icon: Zap, label: t("navigation.tasks"), path: "/tasks" },
     { icon: Wallet, label: t("navigation.wallet"), path: "/wallet" },
     { icon: Users, label: t("navigation.referrals"), path: "/referrals" },
-  ];
+  ], [t]);
 
-  // Partner navigation - changes based on partner status and global partner program toggle
-  const partnerNavItem = isPartner
+  // Partner navigation - changes based on partner status and global partner program toggle - memoized
+  const partnerNavItem = useMemo(() => isPartner
     ? { icon: Sparkles, label: t("components.sidebar.partnerHub"), path: "/partner/dashboard", isPartner: true }
-    : { icon: Sparkles, label: t("components.sidebar.becomePartner"), path: "/become-partner", isPartner: false };
+    : { icon: Sparkles, label: t("components.sidebar.becomePartner"), path: "/become-partner", isPartner: false },
+  [isPartner, t]);
 
-  const primaryNavItems = [
+  const primaryNavItems = useMemo(() => [
     ...basePrimaryNavItems,
     ...(isPartnerProgramEnabled ? [partnerNavItem] : []),
     { icon: Crown, label: t("navigation.plans"), path: "/plans" },
-  ];
+  ], [basePrimaryNavItems, isPartnerProgramEnabled, partnerNavItem, t]);
 
-  // Secondary navigation items (shown only in hamburger menu on mobile + sidebar)
-  const secondaryNavItems = [
+  // Secondary navigation items (shown only in hamburger menu on mobile + sidebar) - memoized
+  const secondaryNavItems = useMemo(() => [
     isHowItWorksVisible
       ? { icon: HelpCircle, label: t("components.sidebar.howItWorks"), path: "/how-it-works", highlight: true }
       : null,
     { icon: History, label: t("navigation.transactions"), path: "/transactions" },
     { icon: Settings, label: t("navigation.settings"), path: "/settings" },
-  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[];
+  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[], [isHowItWorksVisible, t]);
 
-  // Combined nav items for desktop sidebar
-  const navItems: any[] = [...primaryNavItems, ...secondaryNavItems];
+  // Combined nav items for desktop sidebar - memoized to prevent recreation on every render
+  const navItems: any[] = useMemo(() => [...primaryNavItems, ...secondaryNavItems], [primaryNavItems, secondaryNavItems]);
 
-  const isActive = (path: string) => location.pathname === path;
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  // Memoize active path check to prevent unnecessary re-renders
+  const currentPath = location.pathname;
+  const isActive = useMemo(() => {
+    return (path: string) => currentPath === path;
+  }, [currentPath]);
+  
+  const isAdminRoute = useMemo(() => currentPath.startsWith('/admin'), [currentPath]);
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = useCallback((path: string) => {
     navigate(path);
     setOpen(false);
-  };
+  }, [navigate]);
 
-  const handleSwitchToAdmin = () => {
+  const handleSwitchToAdmin = useCallback(() => {
     enterAdminMode();
     navigate("/admin");
     setOpen(false);
-  };
+  }, [enterAdminMode, navigate]);
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = useCallback(() => {
     setLogoutDialogOpen(true);
-  };
+  }, []);
 
-  const handleLogoutConfirm = () => {
+  const handleLogoutConfirm = useCallback(() => {
     setLogoutDialogOpen(false);
     setOpen(false);
     onSignOut();
-  };
+  }, [onSignOut]);
 
   // ✅ Phase 4: Prefetch data on hover for instant page loads
   const handlePrefetch = (path: string) => {
@@ -238,8 +244,8 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
   };
 
   const NavContent = () => (
-    <>
-      <div className="p-6 border-b z-50 border-[hsl(var(--sidebar-border))]">
+    <div className="flex flex-col h-full">
+      <div className="p-6 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
         <div className="flex items-center gap-2">
           <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-14 w-14 object-contain" />
           <span className="text-xl font-bold">{platformName}</span>
@@ -252,7 +258,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* Currency Selector - Top Position */}
       <CurrencySelector />
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navItems.map((item: any) => (
           <button
             key={item.path}
@@ -290,7 +296,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       )}
 
       {/* Logout Section - Bottom */}
-      <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
+      <div className="p-4 border-t border-[hsl(var(--sidebar-border))] space-y-3 flex-shrink-0">
         <Button
           onClick={handleLogoutClick}
           variant="destructive"
@@ -301,7 +307,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
           {t("navigation.logout")}
         </Button>
       </div>
-    </>
+    </div>
   );
 
   // Mobile hamburger menu content - only secondary items
@@ -401,7 +407,6 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   return (
     <>
-    <div className="max-h-screen sticky top-0 overflow-y-auto " style={{scrollbarWidth: 'none'}}>
       <LogoutConfirmDialog
         open={logoutDialogOpen}
         onOpenChange={setLogoutDialogOpen}
@@ -427,7 +432,7 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
+            <SheetContent side="left" className="w-80 p-0">
               <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
                 <MobileMenuContent />
               </div>
@@ -437,13 +442,14 @@ export const Sidebar = ({ profile, isAdmin, onSignOut }: SidebarProps) => {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
         <NavContent />
       </aside>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav profile={profile} />
-      </div>
     </>
   );
-};
+});
+
+Sidebar.displayName = "Sidebar";

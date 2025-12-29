@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const DailyResetLogs = () => {
+  const { t } = useTranslation();
+  const { userLanguage } = useLanguage();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [triggeredBy, setTriggeredBy] = useState<string>('');
@@ -37,14 +41,14 @@ const DailyResetLogs = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Daily Reset Logs</h1>
+            <h1 className="text-3xl font-bold">{t("admin.dailyResetLogs.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              Monitor daily counter reset operations and performance
+              {t("admin.dailyResetLogs.subtitle")}
             </p>
           </div>
           <Button onClick={() => refetch()} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
 
@@ -52,7 +56,7 @@ const DailyResetLogs = () => {
         <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Users Reset</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.dailyResetLogs.stats.avgUsersReset")}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -61,13 +65,13 @@ const DailyResetLogs = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats?.avgUsersReset.toLocaleString()}</div>
               )}
-              <p className="text-xs text-muted-foreground">Last 30 resets</p>
+              <p className="text-xs text-muted-foreground">{t("admin.dailyResetLogs.stats.last30Resets")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Execution</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.dailyResetLogs.stats.avgExecution")}</CardTitle>
               <Zap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -76,13 +80,13 @@ const DailyResetLogs = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats?.avgExecutionTime}ms</div>
               )}
-              <p className="text-xs text-muted-foreground">Average time</p>
+              <p className="text-xs text-muted-foreground">{t("admin.dailyResetLogs.stats.averageTime")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Max Execution</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.dailyResetLogs.stats.maxExecution")}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -91,13 +95,13 @@ const DailyResetLogs = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats?.maxExecutionTime}ms</div>
               )}
-              <p className="text-xs text-muted-foreground">Peak time</p>
+              <p className="text-xs text-muted-foreground">{t("admin.dailyResetLogs.stats.peakTime")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Min Execution</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.dailyResetLogs.stats.minExecution")}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -106,13 +110,13 @@ const DailyResetLogs = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats?.minExecutionTime}ms</div>
               )}
-              <p className="text-xs text-muted-foreground">Best time</p>
+              <p className="text-xs text-muted-foreground">{t("admin.dailyResetLogs.stats.bestTime")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Resets</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("admin.dailyResetLogs.stats.totalResets")}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -121,7 +125,7 @@ const DailyResetLogs = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats?.totalResets}</div>
               )}
-              <p className="text-xs text-muted-foreground">Last 30 days</p>
+              <p className="text-xs text-muted-foreground">{t("admin.dailyResetLogs.stats.last30Days")}</p>
             </CardContent>
           </Card>
         </div>
@@ -131,14 +135,14 @@ const DailyResetLogs = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Filters
+              {t("admin.dailyResetLogs.filters.title")}
             </CardTitle>
-            <CardDescription>Filter reset logs by date range and trigger type</CardDescription>
+            <CardDescription>{t("admin.dailyResetLogs.filters.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date From</label>
+                <label className="text-sm font-medium">{t("admin.dailyResetLogs.filters.dateFrom")}</label>
                 <Input
                   type="date"
                   value={dateFrom}
@@ -146,7 +150,7 @@ const DailyResetLogs = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date To</label>
+                <label className="text-sm font-medium">{t("admin.dailyResetLogs.filters.dateTo")}</label>
                 <Input
                   type="date"
                   value={dateTo}
@@ -154,21 +158,21 @@ const DailyResetLogs = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Triggered By</label>
+                <label className="text-sm font-medium">{t("admin.dailyResetLogs.filters.triggeredBy")}</label>
                 <Select value={triggeredBy} onValueChange={setTriggeredBy}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All triggers" />
+                    <SelectValue placeholder={t("admin.dailyResetLogs.filters.allTriggers")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All triggers</SelectItem>
-                    <SelectItem value="cron">CRON Job</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="all">{t("admin.dailyResetLogs.filters.allTriggers")}</SelectItem>
+                    <SelectItem value="cron">{t("admin.dailyResetLogs.filters.cronJob")}</SelectItem>
+                    <SelectItem value="manual">{t("admin.dailyResetLogs.filters.manual")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex items-end">
                 <Button onClick={handleClearFilters} variant="outline" className="w-full">
-                  Clear Filters
+                  {t("admin.dailyResetLogs.filters.clearFilters")}
                 </Button>
               </div>
             </div>
@@ -178,16 +182,16 @@ const DailyResetLogs = () => {
         {/* Logs Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Reset Operations Log</CardTitle>
+            <CardTitle>{t("admin.dailyResetLogs.logs.title")}</CardTitle>
             <CardDescription>
-              Detailed execution history of daily counter resets
+              {t("admin.dailyResetLogs.logs.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>
-                  Error loading logs: {error.message}
+                  {t("admin.dailyResetLogs.logs.errorLoading", { error: error.message })}
                 </AlertDescription>
               </Alert>
             )}
@@ -203,13 +207,13 @@ const DailyResetLogs = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Reset Date</TableHead>
-                      <TableHead>Users Reset</TableHead>
-                      <TableHead>Execution Time</TableHead>
-                      <TableHead>Triggered By</TableHead>
-                      <TableHead>UTC Time</TableHead>
-                      <TableHead>EAT Time</TableHead>
-                      <TableHead>Request ID</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.resetDate")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.usersReset")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.executionTime")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.triggeredBy")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.utcTime")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.eatTime")}</TableHead>
+                      <TableHead>{t("admin.dailyResetLogs.logs.requestId")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -256,9 +260,9 @@ const DailyResetLogs = () => {
             ) : (
               <div className="text-center py-12">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No reset logs found</p>
+                <p className="text-muted-foreground">{t("admin.dailyResetLogs.logs.noLogsFound")}</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Logs will appear here after daily reset operations run
+                  {t("admin.dailyResetLogs.logs.noLogsDescription")}
                 </p>
               </div>
             )}

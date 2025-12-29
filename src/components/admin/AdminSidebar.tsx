@@ -25,7 +25,7 @@ import {
   Activity,
   Globe,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +52,7 @@ interface NavItem {
   exact?: boolean;
 }
 
-export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
+export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,23 +200,28 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     localStorage.setItem("adminExpandedCategories", JSON.stringify(expandedCategories));
   }, [expandedCategories]);
 
-  const isActive = (path: string, exact?: boolean) => {
-    if (path === "/admin") {
-      return location.pathname === path;
-    }
-    
-    // If exact is true, only match the exact path
-    if (exact) {
-      return location.pathname === path;
-    }
+  // Memoize current path to prevent unnecessary re-renders
+  const currentPath = location.pathname;
+  
+  const isActive = useMemo(() => {
+    return (path: string, exact?: boolean) => {
+      if (path === "/admin") {
+        return currentPath === path;
+      }
+      
+      // If exact is true, only match the exact path
+      if (exact) {
+        return currentPath === path;
+      }
 
-    // Use exact match or ensure the path is followed by a slash (for nested routes)
-    // This prevents "/admin/communications/email" from matching "/admin/communications/email-settings"
-    const exactMatch = location.pathname === path;
-    // Only match if pathname starts with path + "/" (not just any character after)
-    const pathWithSlash = location.pathname.startsWith(path + "/");
-    return exactMatch || pathWithSlash;
-  };
+      // Use exact match or ensure the path is followed by a slash (for nested routes)
+      // This prevents "/admin/communications/email" from matching "/admin/communications/email-settings"
+      const exactMatch = currentPath === path;
+      // Only match if pathname starts with path + "/" (not just any character after)
+      const pathWithSlash = currentPath.startsWith(path + "/");
+      return exactMatch || pathWithSlash;
+    };
+  }, [currentPath]);
 
   const isCategoryActive = (category: NavCategory) => {
     return category.items.some((item) => isActive(item.path, item.exact));
@@ -228,26 +233,26 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
     );
   };
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = useCallback((path: string) => {
     navigate(path);
     setOpen(false);
-  };
+  }, [navigate]);
 
-  const handleExitAdminMode = () => {
+  const handleExitAdminMode = useCallback(() => {
     exitAdminMode();
     navigate("/dashboard");
     setOpen(false);
-  };
+  }, [exitAdminMode, navigate]);
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = useCallback(() => {
     setLogoutDialogOpen(true);
-  };
+  }, []);
 
-  const handleLogoutConfirm = () => {
+  const handleLogoutConfirm = useCallback(() => {
     setLogoutDialogOpen(false);
     setOpen(false);
     onSignOut();
-  };
+  }, [onSignOut]);
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
@@ -392,4 +397,6 @@ export const AdminSidebar = ({ profile, onSignOut }: AdminSidebarProps) => {
       </aside>
     </>
   );
-};
+});
+
+AdminSidebar.displayName = "AdminSidebar";

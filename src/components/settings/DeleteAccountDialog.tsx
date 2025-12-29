@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -31,6 +32,7 @@ interface DeleteAccountDialogProps {
 }
 
 export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogProps) {
+  const { t } = useTranslation();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
@@ -88,7 +90,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
 
   const handleSendOtp = async () => {
     if (!understood) {
-      toast.error("Please confirm you understand this action is irreversible");
+      toast.error(t("settings.deleteAccountDialog.errors.pleaseConfirm"));
       return;
     }
 
@@ -111,8 +113,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
       // Handle Supabase client errors (network, timeout, etc.)
       if (error) {
         console.error('[DELETE-ACCOUNT] Function invocation error:', error);
-        toast.error("Failed to send verification code", {
-          description: "Network error. Please try again."
+        toast.error(t("settings.deleteAccountDialog.errors.failedToSend"), {
+          description: t("settings.deleteAccountDialog.errors.networkError")
         });
         return;
       }
@@ -125,8 +127,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
           const retryTime = new Date(Date.now() + 15 * 60 * 1000);
           setRateLimitedUntil(retryTime);
           
-          toast.error("Too many requests", {
-            description: "Please wait 15 minutes before trying again",
+          toast.error(t("settings.deleteAccountDialog.errors.tooManyRequestsError"), {
+            description: t("settings.deleteAccountDialog.errors.tooManyRequestsDescription"),
             duration: 5000
           });
         } else {
@@ -137,16 +139,16 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
 
       // ✅ SUCCESS - Backend returns { success: true, message: '...', expires_at: '...' }
       console.log('[DELETE-ACCOUNT] OTP sent successfully');
-      toast.success("Verification code sent!", {
-        description: "Check your email for the 6-digit code"
+      toast.success(t("settings.deleteAccountDialog.errors.verificationCodeSent"), {
+        description: t("settings.deleteAccountDialog.errors.checkEmail")
       });
       setStep(2);
       
     } catch (error: any) {
       // This should rarely be hit - only for unexpected exceptions
       console.error("[DELETE-ACCOUNT] Unexpected error:", error);
-      toast.error("Failed to send verification code", {
-        description: "An unexpected error occurred"
+      toast.error(t("settings.deleteAccountDialog.errors.failedToSend"), {
+        description: t("settings.deleteAccountDialog.errors.networkError")
       });
     } finally {
       setSendingOtp(false);
@@ -155,7 +157,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
 
   const handleVerifyAndDelete = async () => {
     if (otpCode.length !== 6) {
-      toast.error("Please enter the complete 6-digit code");
+      toast.error(t("settings.deleteAccountDialog.errors.pleaseEnterCompleteCode"));
       return;
     }
 
@@ -168,7 +170,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
       if (error) throw error;
 
       if (data?.error) {
-        toast.error("Verification failed", {
+        toast.error(t("settings.deleteAccountDialog.errors.verificationFailed"), {
           description: data.error
         });
         setLoading(false);
@@ -176,8 +178,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
       }
 
       // Success - account deleted
-      toast.success("Account deleted successfully", {
-        description: "You will be logged out shortly..."
+      toast.success(t("settings.deleteAccountDialog.errors.accountDeletedSuccess"), {
+        description: t("settings.deleteAccountDialog.errors.loggedOutShortly")
       });
 
       // Wait 2 seconds before logout to show success message
@@ -187,8 +189,8 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
       }, 2000);
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
-      toast.error("Failed to delete account", {
-        description: error.message || "Please try again"
+      toast.error(t("settings.deleteAccountDialog.errors.failedToDelete"), {
+        description: error.message || t("settings.deleteAccountDialog.errors.pleaseTryAgain")
       });
       setLoading(false);
     }
@@ -204,10 +206,10 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 <div className="p-2 bg-destructive/10 rounded-full">
                   <Trash2 className="h-5 w-5 text-destructive" />
                 </div>
-                <DialogTitle className="text-xl">Delete Your Account</DialogTitle>
+                <DialogTitle className="text-xl">{t("settings.deleteAccountDialog.title")}</DialogTitle>
               </div>
               <DialogDescription>
-                This action is permanent and cannot be undone
+                {t("settings.deleteAccountDialog.description")}
               </DialogDescription>
             </DialogHeader>
 
@@ -215,14 +217,14 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong className="block mb-2">The following will be permanently deleted:</strong>
+                  <strong className="block mb-2">{t("settings.deleteAccountDialog.willBeDeleted")}</strong>
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>Your profile and account credentials</li>
-                    <li>All earnings and wallet balances</li>
-                    <li>Complete transaction history</li>
-                    <li>Referral network and commissions</li>
-                    <li>Task completion records</li>
-                    <li>Any pending withdrawals or deposits</li>
+                    <li>{t("settings.deleteAccountDialog.item1")}</li>
+                    <li>{t("settings.deleteAccountDialog.item2")}</li>
+                    <li>{t("settings.deleteAccountDialog.item3")}</li>
+                    <li>{t("settings.deleteAccountDialog.item4")}</li>
+                    <li>{t("settings.deleteAccountDialog.item5")}</li>
+                    <li>{t("settings.deleteAccountDialog.item6")}</li>
                   </ul>
                 </AlertDescription>
               </Alert>
@@ -230,8 +232,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
               <Alert>
                 <ShieldAlert className="h-4 w-4" />
                 <AlertDescription className="text-sm">
-                  <strong>Before proceeding:</strong> Make sure you've withdrawn all available funds 
-                  and there are no pending transactions on your account.
+                  <strong>{t("settings.deleteAccountDialog.beforeProceeding")}</strong> {t("settings.deleteAccountDialog.beforeProceedingDescription")}
                 </AlertDescription>
               </Alert>
 
@@ -246,7 +247,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                   htmlFor="understand"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  I understand this action is permanent and cannot be undone
+                  {t("settings.deleteAccountDialog.understandCheckbox")}
                 </label>
               </div>
 
@@ -254,9 +255,9 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 <Alert variant="destructive" className="mt-2">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    <strong>Too many verification attempts.</strong>
+                    <strong>{t("settings.deleteAccountDialog.tooManyAttempts")}</strong>
                     <p className="mt-1">
-                      Please try again in <span className="font-mono font-semibold">{countdown}</span>
+                      {t("settings.deleteAccountDialog.tryAgainIn", { countdown: <span className="font-mono font-semibold">{countdown}</span> })}
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -271,7 +272,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 disabled={sendingOtp}
                 className="w-full sm:w-auto"
               >
-                Cancel
+                {t("settings.deleteAccountDialog.cancel")}
               </Button>
               <Button
                 type="button"
@@ -283,12 +284,12 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 {sendingOtp ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending Code...
+                    {t("settings.deleteAccountDialog.sendingCode")}
                   </>
                 ) : rateLimitedUntil ? (
-                  `Try again in ${countdown}`
+                  t("settings.deleteAccountDialog.tryAgainInCountdown", { countdown })
                 ) : (
-                  "Continue to Verification"
+                  t("settings.deleteAccountDialog.continueToVerification")
                 )}
               </Button>
             </DialogFooter>
@@ -300,17 +301,17 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 <div className="p-2 bg-destructive/10 rounded-full">
                   <ShieldAlert className="h-5 w-5 text-destructive" />
                 </div>
-                <DialogTitle className="text-xl">Enter Verification Code</DialogTitle>
+                <DialogTitle className="text-xl">{t("settings.deleteAccountDialog.enterVerificationCode")}</DialogTitle>
               </div>
               <DialogDescription>
-                We've sent a 6-digit code to your email. Enter it below to confirm deletion.
+                {t("settings.deleteAccountDialog.verificationCodeDescription")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-6">
               <div className="space-y-3">
                 <Label htmlFor="otp" className="text-center block">
-                  Verification Code
+                  {t("settings.deleteAccountDialog.verificationCode")}
                 </Label>
                 <div className="flex justify-center">
                   <InputOTP
@@ -330,7 +331,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                   </InputOTP>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Code expires in 15 minutes
+                  {t("settings.deleteAccountDialog.codeExpiresIn")}
                 </p>
                 
                 {/* Resend Code Button */}
@@ -355,7 +356,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                             ) : (
                               <>
                                 <RefreshCw className="mr-1 h-3 w-3" />
-                                Resend Code
+                                {t("settings.deleteAccountDialog.resendCode")}
                               </>
                             )}
                           </Button>
@@ -364,7 +365,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                       {rateLimitedUntil && (
                         <TooltipContent>
                           <p className="text-xs">
-                            Too many requests. Try again in {countdown}
+                            {t("settings.deleteAccountDialog.errors.tooManyRequests", { countdown })}
                           </p>
                         </TooltipContent>
                       )}
@@ -377,9 +378,9 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription className="text-sm">
-                    <strong>Too many verification attempts.</strong>
+                    <strong>{t("settings.deleteAccountDialog.tooManyAttempts")}</strong>
                     <p className="mt-1">
-                      Please try again in <span className="font-mono font-semibold">{countdown}</span>
+                      {t("settings.deleteAccountDialog.tryAgainIn", { countdown: <span className="font-mono font-semibold">{countdown}</span> })}
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -388,8 +389,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-sm">
-                  Once you verify this code, your account will be <strong>immediately and permanently deleted</strong>. 
-                  This cannot be undone.
+                  {t("settings.deleteAccountDialog.finalWarning")}
                 </AlertDescription>
               </Alert>
             </div>
@@ -402,7 +402,7 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 disabled={loading}
                 className="w-full sm:w-auto"
               >
-                Back
+                {t("settings.deleteAccountDialog.back")}
               </Button>
               <Button
                 type="button"
@@ -414,10 +414,10 @@ export function DeleteAccountDialog({ open, onOpenChange }: DeleteAccountDialogP
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting Account...
+                    {t("settings.deleteAccountDialog.deletingAccount")}
                   </>
                 ) : (
-                  "Delete My Account"
+                  t("settings.deleteAccountDialog.deleteMyAccount")
                 )}
               </Button>
             </DialogFooter>

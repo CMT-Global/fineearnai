@@ -6,9 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface AITask {
   id: string;
@@ -23,6 +26,8 @@ interface AITask {
 }
 
 const AITasksManage = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<AITask[]>([]);
@@ -54,7 +59,7 @@ const AITasksManage = () => {
       setTasks(data || []);
     } catch (error) {
       console.error("Error loading tasks:", error);
-      toast.error("Failed to load tasks");
+      toast.error(t("admin.aiTasksManage.errorFailedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -69,16 +74,16 @@ const AITasksManage = () => {
 
       if (error) throw error;
 
-      toast.success(currentStatus ? "Task deactivated" : "Task activated");
+      toast.success(currentStatus ? t("admin.aiTasksManage.taskDeactivated") : t("admin.aiTasksManage.taskActivated"));
       loadTasks();
     } catch (error) {
       console.error("Error toggling task status:", error);
-      toast.error("Failed to update task status");
+      toast.error(t("admin.aiTasksManage.errorFailedToUpdateStatus"));
     }
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    if (!confirm(t("admin.aiTasksManage.confirmDelete"))) return;
 
     try {
       const { error } = await supabase
@@ -88,11 +93,11 @@ const AITasksManage = () => {
 
       if (error) throw error;
 
-      toast.success("Task deleted");
+      toast.success(t("admin.aiTasksManage.taskDeleted"));
       loadTasks();
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast.error("Failed to delete task");
+      toast.error(t("admin.aiTasksManage.errorFailedToDelete"));
     }
   };
 
@@ -109,7 +114,7 @@ const AITasksManage = () => {
   if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <p>{t("common.loading")}</p>
       </div>
     );
   }
@@ -121,21 +126,21 @@ const AITasksManage = () => {
       <div className="container mx-auto">
         <AdminBreadcrumb 
           items={[
-            { label: "Task Management" },
-            { label: "Manage AI Tasks" }
+            { label: t("admin.sidebar.categories.taskManagement") },
+            { label: t("admin.sidebar.items.manageAITasks") }
           ]} 
         />
         
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">AI Task Management</h1>
+            <h1 className="text-3xl font-bold">{t("admin.aiTasksManage.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              Manage all AI training tasks ({filteredTasks.length} tasks)
+              {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
             </p>
           </div>
           <Button onClick={() => navigate("/admin/tasks/generate")}>
             <Plus className="h-4 w-4 mr-2" />
-            Generate Tasks
+            {t("admin.aiTasksManage.generateTasks")}
           </Button>
         </div>
 
@@ -143,13 +148,13 @@ const AITasksManage = () => {
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Category</label>
+              <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.category")}</label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t("admin.aiTasksManage.allCategories")}</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -160,30 +165,30 @@ const AITasksManage = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Difficulty</label>
+              <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.difficulty")}</label>
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="all">{t("admin.aiTasksManage.allDifficulties")}</SelectItem>
+                  <SelectItem value="easy">{t("admin.aiTasksManage.easy")}</SelectItem>
+                  <SelectItem value="medium">{t("admin.aiTasksManage.medium")}</SelectItem>
+                  <SelectItem value="hard">{t("admin.aiTasksManage.hard")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Status</label>
+              <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.status")}</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">{t("admin.aiTasksManage.allStatus")}</SelectItem>
+                  <SelectItem value="active">{t("admin.aiTasksManage.active")}</SelectItem>
+                  <SelectItem value="inactive">{t("admin.aiTasksManage.inactive")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -200,52 +205,72 @@ const AITasksManage = () => {
                     <Badge variant="secondary">{task.category}</Badge>
                     <Badge variant="outline">{task.difficulty}</Badge>
                     <Badge variant={task.is_active ? "default" : "secondary"}>
-                      {task.is_active ? "Active" : "Inactive"}
+                      {task.is_active ? t("admin.aiTasksManage.active") : t("admin.aiTasksManage.inactive")}
                     </Badge>
                   </div>
                   <p className="text-lg font-semibold mb-3">{task.prompt}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className={`p-3 rounded-lg border ${task.correct_response === 'a' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-muted'}`}>
-                      <p className="text-sm font-medium mb-1">Option A:</p>
+                      <p className="text-sm font-medium mb-1">{t("admin.aiTasksManage.optionA")}</p>
                       <p className="text-sm">{task.response_a}</p>
                     </div>
                     <div className={`p-3 rounded-lg border ${task.correct_response === 'b' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-muted'}`}>
-                      <p className="text-sm font-medium mb-1">Option B:</p>
+                      <p className="text-sm font-medium mb-1">{t("admin.aiTasksManage.optionB")}</p>
                       <p className="text-sm">{task.response_b}</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => toggleTaskStatus(task.id, task.is_active)}
-                  >
-                    {task.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => deleteTask(task.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => toggleTaskStatus(task.id, task.is_active)}
+                          aria-label={task.is_active ? t("admin.aiTasksManage.deactivateTask") : t("admin.aiTasksManage.activateTask")}
+                        >
+                          {task.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{task.is_active ? t("admin.aiTasksManage.deactivateTask") : t("admin.aiTasksManage.activateTask")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => deleteTask(task.id)}
+                          aria-label={t("admin.aiTasksManage.deleteTask")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("admin.aiTasksManage.deleteTask")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Created: {new Date(task.created_at).toLocaleString()}
+                {t("admin.aiTasksManage.created")}: {new Date(task.created_at).toLocaleString()}
               </p>
             </Card>
           ))}
 
           {filteredTasks.length === 0 && (
             <Card className="p-12 text-center">
-              <p className="text-muted-foreground">No tasks found</p>
+              <p className="text-muted-foreground">{t("admin.aiTasksManage.noTasksFound")}</p>
               <Button
                 className="mt-4"
                 onClick={() => navigate("/admin/tasks/generate")}
               >
-                Generate Your First Tasks
+                {t("admin.aiTasksManage.generateFirstTasks")}
               </Button>
             </Card>
           )}

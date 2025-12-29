@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminAnalytics, DateRange } from "@/hooks/useAdminAnalytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,6 +12,7 @@ import { InsightsSummaryCard } from "@/components/admin/InsightsSummaryCard";
 import { CountrySegmentationCard } from "@/components/admin/CountrySegmentationCard";
 import { TopReferrersCard } from "@/components/admin/TopReferrersCard";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 const StatCard = ({ 
   title, 
@@ -27,6 +28,7 @@ const StatCard = ({
   prefix?: string;
 }) => {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const percentChange = previousValue && previousValue > 0 
     ? ((value - previousValue) / previousValue) * 100 
     : 0;
@@ -100,11 +102,8 @@ const LoadingSkeleton = () => (
 export default function AdminAnalyticsDashboard() {
   const { t } = useTranslation();
   
-  // Initialize with last 7 days
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: format(subDays(new Date(), 6), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd"),
-  });
+  
+  // Force re-render when language changes
   const [selectedPreset, setSelectedPreset] = useState<string>("Last 7 Days vs Previous 7");
 
   const { data: analytics, isLoading, error } = useAdminAnalytics(dateRange);

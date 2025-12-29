@@ -14,6 +14,8 @@ import { Download, Search, Filter, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Deposit {
   id: string;
@@ -34,9 +36,21 @@ interface Deposit {
 }
 
 const Deposits = () => {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,10 +81,10 @@ const Deposits = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -105,10 +119,12 @@ const Deposits = () => {
       if (depositTypeFilter === "regular") {
         query = query.eq("type", "deposit");
       } else if (depositTypeFilter === "admin_adjustments") {
-        query = query.in("type", ["adjustment", "transfer"]).eq("wallet_type", "deposit");
+        // Query for transfer type (adjustment may not exist in enum, so query separately)
+        query = query.eq("type", "transfer").eq("wallet_type", "deposit");
       } else {
         // "all" - show both deposits and admin adjustments to deposit wallet
-        query = query.or(`type.eq.deposit,and(type.in.(adjustment,transfer),wallet_type.eq.deposit)`);
+        // Use OR to combine deposit with transfer (adjustment handled separately if needed)
+        query = query.or(`type.eq.deposit,and(type.eq.transfer,wallet_type.eq.deposit)`);
       }
 
       // Apply status filter if not "all"
@@ -122,8 +138,54 @@ const Deposits = () => {
 
       if (error) throw error;
 
+      // If showing "all" or "admin_adjustments", also try to fetch adjustment transactions
+      // (adjustment may not exist in enum, so query separately and merge)
+      let allTransactions = data || [];
+      
+      if (depositTypeFilter === "admin_adjustments" || depositTypeFilter === "all") {
+        // Note: Adjustment transactions are currently handled via transfer type
+        // If you have adjustment transactions in your database and the enum value exists,
+        // you can uncomment the code below to fetch them
+        // For now, we only show transfer transactions as admin adjustments to avoid 400 errors
+        
+        // Uncomment if adjustment enum value exists in your database:
+        /*
+        try {
+          const { data: adjustmentData, error: adjustmentError } = await supabase
+            .from("transactions")
+            .select(`
+              id,
+              user_id,
+              type,
+              amount,
+              status,
+              payment_gateway,
+              gateway_transaction_id,
+              created_at,
+              profiles:user_id (
+                username,
+                email,
+                registration_country_name
+              )
+            `)
+            .eq("type", "adjustment")
+            .eq("wallet_type", "deposit")
+            .order("created_at", { ascending: false });
+
+          if (!adjustmentError && adjustmentData) {
+            allTransactions = [...allTransactions, ...adjustmentData];
+            allTransactions.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+          }
+        } catch (err) {
+          // Silently ignore - adjustment type may not exist
+        }
+        */
+      }
+
       // Fetch upline data for all deposits
-      const depositsWithUplines = await fetchUplineData(data || []);
+      const depositsWithUplines = await fetchUplineData(allTransactions);
       setDeposits(depositsWithUplines);
 
       // Load separate stats for regular deposits
@@ -133,11 +195,23 @@ const Deposits = () => {
         .eq("type", "deposit");
 
       // Load stats for admin adjustments
-      const { data: adminAdjustments, error: adminError } = await supabase
+      // Query transfer transactions (adjustment queries may fail if enum value doesn't exist)
+      let adminAdjustments: any[] = [];
+      
+      // Get transfer transactions (this should always work)
+      const { data: transferData, error: transferError } = await supabase
         .from("transactions")
         .select("amount")
-        .in("type", ["adjustment", "transfer"])
+        .eq("type", "transfer")
         .eq("wallet_type", "deposit");
+
+      if (!transferError && transferData) {
+        adminAdjustments.push(...transferData);
+      }
+
+      // Note: Adjustment transactions are handled via transfer type in the current system
+      // If adjustment enum value exists in your database, you can uncomment the code below
+      // For now, we only count transfer transactions as admin adjustments to avoid 400 errors
 
       if (!regularError && regularDeposits) {
         const completedDeposits = regularDeposits.filter(t => t.status === "completed");
@@ -160,7 +234,7 @@ const Deposits = () => {
       }
     } catch (error: any) {
       console.error("Error loading deposits:", error);
-      toast.error("Failed to load deposits");
+      toast.error(t("admin.deposits.errorFailedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -255,14 +329,14 @@ const Deposits = () => {
 
   const exportToCSV = () => {
     const csv = [
-      ["Date", "Time", "Username", "Email", "Amount", "Upline", "Method", "Transaction ID", "Status"],
+      [t("admin.deposits.csv.date"), t("admin.deposits.csv.time"), t("admin.deposits.csv.username"), t("admin.deposits.csv.email"), t("admin.deposits.csv.amount"), t("admin.deposits.csv.upline"), t("admin.deposits.csv.method"), t("admin.deposits.csv.transactionId"), t("admin.deposits.csv.status")],
       ...filteredDeposits.map((d) => [
         new Date(d.created_at).toLocaleDateString(),
         new Date(d.created_at).toLocaleTimeString(),
         d.profiles?.username || "N/A",
         d.profiles?.email || "N/A",
         d.amount.toString(),
-        d.upline_username || "No Upline",
+        d.upline_username || t("admin.deposits.noUpline"),
         d.payment_gateway || "N/A",
         d.gateway_transaction_id || "N/A",
         d.status,
@@ -277,7 +351,7 @@ const Deposits = () => {
     a.href = url;
     a.download = `deposits_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
-    toast.success("Deposits exported to CSV");
+    toast.success(t("admin.deposits.exportedToCSV"));
   };
 
   const filteredDeposits = deposits.filter((deposit) => {
@@ -324,7 +398,7 @@ const Deposits = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading deposits..." />
+        <LoadingSpinner size="lg" text={t("admin.deposits.loading")} />
       </div>
     );
   }
@@ -334,21 +408,21 @@ const Deposits = () => {
       <div className="container mx-auto">
         <AdminBreadcrumb 
           items={[
-            { label: "Financial Management" },
-            { label: "Deposits" }
+            { label: t("admin.sidebar.categories.financialManagement") },
+            { label: t("admin.sidebar.items.deposits") }
           ]} 
         />
         
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Deposit Management</h1>
-          <p className="text-muted-foreground mt-1">View and manage all platform deposits</p>
+          <h1 className="text-3xl font-bold">{t("admin.deposits.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("admin.deposits.subtitle")}</p>
         </div>
 
         {/* Stats Summary Card */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Total Regular Deposits</CardDescription>
+              <CardDescription>{t("admin.deposits.stats.totalRegularDeposits")}</CardDescription>
               <CardTitle className="text-2xl">{stats.total}</CardTitle>
               <p className="text-sm font-semibold text-green-600 mt-1">
                 {formatCurrency(stats.totalAmount)}
@@ -357,7 +431,7 @@ const Deposits = () => {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Completed</CardDescription>
+              <CardDescription>{t("admin.deposits.stats.completed")}</CardDescription>
               <CardTitle className="text-2xl text-green-600">{stats.completed}</CardTitle>
               <p className="text-sm font-semibold text-green-600 mt-1">
                 {formatCurrency(stats.completedAmount)}
@@ -366,7 +440,7 @@ const Deposits = () => {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Pending</CardDescription>
+              <CardDescription>{t("admin.deposits.stats.pending")}</CardDescription>
               <CardTitle className="text-2xl text-yellow-600">{stats.pending}</CardTitle>
               <p className="text-sm font-semibold text-yellow-600 mt-1">
                 {formatCurrency(stats.pendingAmount)}
@@ -375,7 +449,7 @@ const Deposits = () => {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Failed</CardDescription>
+              <CardDescription>{t("admin.deposits.stats.failed")}</CardDescription>
               <CardTitle className="text-2xl text-red-600">{stats.failed}</CardTitle>
               <p className="text-sm font-semibold text-red-600 mt-1">
                 {formatCurrency(stats.failedAmount)}
@@ -384,13 +458,13 @@ const Deposits = () => {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Admin Adjustments</CardDescription>
+              <CardDescription>{t("admin.deposits.stats.adminAdjustments")}</CardDescription>
               <CardTitle className="text-2xl text-blue-600">{stats.adminAdjustments}</CardTitle>
               <p className="text-sm font-semibold text-blue-600 mt-1">
                 {formatCurrency(stats.adminAdjustmentsAmount)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                (Excluded from revenue)
+                {t("admin.deposits.stats.excludedFromRevenue")}
               </p>
             </CardHeader>
           </Card>
@@ -399,14 +473,14 @@ const Deposits = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {statusFilter === "all" ? "All Deposits" : 
-               statusFilter === "completed" ? "Completed Deposits" :
-               statusFilter === "pending" ? "Pending Deposits" :
-               "Failed Deposits"}
+              {statusFilter === "all" ? t("admin.deposits.allDeposits") : 
+               statusFilter === "completed" ? t("admin.deposits.completedDeposits") :
+               statusFilter === "pending" ? t("admin.deposits.pendingDeposits") :
+               t("admin.deposits.failedDeposits")}
             </CardTitle>
             <CardDescription>
-              {filteredDeposits.length} deposit{filteredDeposits.length !== 1 ? "s" : ""} found
-              {statusFilter !== "all" && ` (${statusFilter} only)`}
+              {t("admin.deposits.depositsFound", { count: filteredDeposits.length })}
+              {statusFilter !== "all" && ` (${t(`admin.deposits.status.${statusFilter}`)} ${t("admin.deposits.only")})`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -416,7 +490,7 @@ const Deposits = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by username, email, or transaction ID..."
+                    placeholder={t("admin.deposits.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -426,34 +500,34 @@ const Deposits = () => {
 
               <Select value={depositTypeFilter} onValueChange={setDepositTypeFilter}>
                 <SelectTrigger className="w-full md:w-[220px]">
-                  <SelectValue placeholder="Deposit Type" />
+                  <SelectValue placeholder={t("admin.deposits.depositType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="regular">💳 Regular Deposits</SelectItem>
-                  <SelectItem value="admin_adjustments">⚙️ Admin Adjustments</SelectItem>
-                  <SelectItem value="all">📊 All Transactions</SelectItem>
+                  <SelectItem value="regular">💳 {t("admin.deposits.regularDeposits")}</SelectItem>
+                  <SelectItem value="admin_adjustments">⚙️ {t("admin.deposits.adminAdjustments")}</SelectItem>
+                  <SelectItem value="all">📊 {t("admin.deposits.allTransactions")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t("admin.deposits.allStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="completed">✓ Completed Only</SelectItem>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">⏳ Pending Only</SelectItem>
-                  <SelectItem value="failed">✗ Failed Only</SelectItem>
+                  <SelectItem value="completed">✓ {t("admin.deposits.completedOnly")}</SelectItem>
+                  <SelectItem value="all">{t("admin.deposits.allStatus")}</SelectItem>
+                  <SelectItem value="pending">⏳ {t("admin.deposits.pendingOnly")}</SelectItem>
+                  <SelectItem value="failed">✗ {t("admin.deposits.failedOnly")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={methodFilter} onValueChange={setMethodFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Method" />
+                  <SelectValue placeholder={t("admin.deposits.method")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Methods</SelectItem>
+                  <SelectItem value="all">{t("admin.deposits.allMethods")}</SelectItem>
                   {uniqueMethods.map((method) => (
                     <SelectItem key={method} value={method!}>
                       {method}
@@ -465,23 +539,23 @@ const Deposits = () => {
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <Calendar className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Date Range" />
+                  <SelectValue placeholder={t("admin.deposits.dateRange")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📅 All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last7">Last 7 Days</SelectItem>
-                  <SelectItem value="last30">Last 30 Days</SelectItem>
-                  <SelectItem value="last60">Last 60 Days</SelectItem>
-                  <SelectItem value="last90">Last 90 Days</SelectItem>
-                  <SelectItem value="custom">🗓️ Custom Range</SelectItem>
+                  <SelectItem value="all">📅 {t("admin.deposits.allTime")}</SelectItem>
+                  <SelectItem value="today">{t("admin.deposits.today")}</SelectItem>
+                  <SelectItem value="yesterday">{t("admin.deposits.yesterday")}</SelectItem>
+                  <SelectItem value="last7">{t("admin.deposits.last7Days")}</SelectItem>
+                  <SelectItem value="last30">{t("admin.deposits.last30Days")}</SelectItem>
+                  <SelectItem value="last60">{t("admin.deposits.last60Days")}</SelectItem>
+                  <SelectItem value="last90">{t("admin.deposits.last90Days")}</SelectItem>
+                  <SelectItem value="custom">🗓️ {t("admin.deposits.customRange")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Button onClick={exportToCSV} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
-                Export CSV
+                {t("admin.deposits.exportCSV")}
               </Button>
             </div>
 
@@ -493,15 +567,15 @@ const Deposits = () => {
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    placeholder="Start Date"
+                    placeholder={t("admin.deposits.startDate")}
                     className="w-full sm:w-[160px]"
                   />
-                  <span className="text-muted-foreground">to</span>
+                  <span className="text-muted-foreground">{t("admin.deposits.to")}</span>
                   <Input
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    placeholder="End Date"
+                    placeholder={t("admin.deposits.endDate")}
                     className="w-full sm:w-[160px]"
                   />
                 </div>
@@ -513,7 +587,7 @@ const Deposits = () => {
                     setCustomEndDate("");
                   }}
                 >
-                  Clear Dates
+                  {t("admin.deposits.clearDates")}
                 </Button>
               </div>
             )}
@@ -523,34 +597,34 @@ const Deposits = () => {
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Regular Deposits</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.deposits.regularDeposits")}</p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(filteredDepositTotals.regularAmount)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {filteredDepositTotals.regularCount} transaction{filteredDepositTotals.regularCount !== 1 ? 's' : ''}
+                      {t("admin.deposits.transactionsCount", { count: filteredDepositTotals.regularCount })}
                     </p>
                   </div>
                   
                   {depositTypeFilter === 'all' && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Admin Adjustments</p>
+                      <p className="text-sm text-muted-foreground">{t("admin.deposits.adminAdjustments")}</p>
                       <p className="text-2xl font-bold text-blue-600">
                         {formatCurrency(filteredDepositTotals.adminAmount)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {filteredDepositTotals.adminCount} adjustment{filteredDepositTotals.adminCount !== 1 ? 's' : ''}
+                        {t("admin.deposits.adjustmentsCount", { count: filteredDepositTotals.adminCount })}
                       </p>
                     </div>
                   )}
                   
                   <div>
-                    <p className="text-sm text-muted-foreground">Total (Filtered View)</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.deposits.totalFilteredView")}</p>
                     <p className="text-2xl font-bold">
                       {formatCurrency(filteredDepositTotals.totalAmount)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {filteredDepositTotals.totalCount} item{filteredDepositTotals.totalCount !== 1 ? 's' : ''}
+                      {t("admin.deposits.itemsCount", { count: filteredDepositTotals.totalCount })}
                     </p>
                   </div>
                 </div>
@@ -562,22 +636,22 @@ const Deposits = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Upline</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t("admin.deposits.table.date")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.user")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.country")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.amount")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.upline")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.type")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.method")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.transactionId")}</TableHead>
+                    <TableHead>{t("admin.deposits.table.status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredDeposits.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center text-muted-foreground">
-                        No deposits found
+                        {t("admin.deposits.noDepositsFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -607,7 +681,7 @@ const Deposits = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {deposit.profiles?.registration_country_name || "N/A"}
+                            {deposit.profiles?.registration_country_name || t("admin.deposits.na")}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-semibold">
@@ -625,18 +699,18 @@ const Deposits = () => {
                             </Button>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
-                              No Upline
+                              {t("admin.deposits.noUpline")}
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={deposit.type === 'deposit' ? 'default' : 'secondary'}>
-                            {deposit.type === 'deposit' ? '💳 Regular' : '⚙️ Admin'}
+                            {deposit.type === 'deposit' ? `💳 ${t("admin.deposits.regular")}` : `⚙️ ${t("admin.deposits.admin")}`}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {deposit.payment_gateway || "Admin Panel"}
+                            {deposit.payment_gateway || t("admin.deposits.adminPanel")}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-sm">

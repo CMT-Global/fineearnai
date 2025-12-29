@@ -29,6 +29,7 @@ export interface UserFilters {
 }
 
 export const useUserManagement = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Fetch user list with direct queries (simplified, real-time)
@@ -256,7 +257,7 @@ export const useUserManagement = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Profile updated successfully');
+      toast.success(t('admin.toasts.profileUpdatedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update profile');
@@ -273,7 +274,7 @@ export const useUserManagement = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Email updated successfully');
+      toast.success(t('admin.toasts.emailUpdatedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update email');
@@ -302,7 +303,7 @@ export const useUserManagement = () => {
       console.log('✅ Wallet adjustment successful:', data);
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Wallet balance adjusted successfully');
+      toast.success(t('admin.toasts.walletBalanceAdjustedSuccessfully'));
     },
     onError: (error: any) => {
       console.error('❌ Wallet adjustment failed:', error);
@@ -325,7 +326,7 @@ export const useUserManagement = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Membership plan updated successfully');
+      toast.success(t('admin.toasts.membershipPlanUpdatedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update membership plan');
@@ -359,7 +360,7 @@ export const useUserManagement = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User banned successfully');
+      toast.success(t('admin.toasts.userBannedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to ban user');
@@ -375,7 +376,7 @@ export const useUserManagement = () => {
     },
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', userId] });
-      toast.success('Daily limits reset successfully');
+      toast.success(t('admin.toasts.dailyLimitsResetSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to reset daily limits');
@@ -395,7 +396,7 @@ export const useUserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-referrals'] });
       queryClient.invalidateQueries({ queryKey: ['referral-complete-data', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Upline changed successfully. Future commissions will go to the new upline.');
+      toast.success(t('admin.toasts.uplineChangedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to change upline');
@@ -413,7 +414,7 @@ export const useUserManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Bulk plan update completed');
+      toast.success(t('admin.toasts.bulkPlanUpdateCompleted'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Bulk operation failed');
@@ -430,7 +431,7 @@ export const useUserManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('Bulk suspend completed');
+      toast.success(t('admin.toasts.bulkSuspendCompleted'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Bulk operation failed');
@@ -484,7 +485,7 @@ export const useUserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['user-roles', variables.userId] });
-      toast.success('Role assigned successfully');
+      toast.success(t('admin.toasts.roleAssignedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to assign role');
@@ -504,7 +505,7 @@ export const useUserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['user-roles', variables.userId] });
-      toast.success('Role removed successfully');
+      toast.success(t('admin.toasts.roleRemovedSuccessfully'));
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to remove role');

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ export const SuspendUserDialog = ({
   username,
   currentStatus,
 }: SuspendUserDialogProps) => {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   
   const { suspendUser } = useUserManagement();
@@ -60,12 +62,12 @@ export const SuspendUserDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserX className="h-5 w-5" />
-            {isSuspended ? "Unsuspend User" : "Suspend User"}
+            {isSuspended ? t("admin.dialogs.suspendUser.unsuspendTitle") : t("admin.dialogs.suspendUser.title")}
           </DialogTitle>
           <DialogDescription>
             {isSuspended 
-              ? `Restore access for ${username}` 
-              : `Temporarily restrict ${username}'s access to the platform`
+              ? t("admin.dialogs.suspendUser.unsuspendDescription", { username })
+              : t("admin.dialogs.suspendUser.suspendDescription", { username })
             }
           </DialogDescription>
         </DialogHeader>
@@ -76,25 +78,25 @@ export const SuspendUserDialog = ({
             <AlertDescription>
               {isSuspended ? (
                 <>
-                  This will restore {username}'s account access. They will be able to:
+                  {t("admin.dialogs.suspendUser.restoreAccess", { username })}
                   <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                    <li>Log in to their account</li>
-                    <li>Complete tasks and earn</li>
-                    <li>Make deposits and withdrawals</li>
-                    <li>Access all platform features</li>
+                    <li>{t("admin.dialogs.suspendUser.restoreAccessItem1")}</li>
+                    <li>{t("admin.dialogs.suspendUser.restoreAccessItem2")}</li>
+                    <li>{t("admin.dialogs.suspendUser.restoreAccessItem3")}</li>
+                    <li>{t("admin.dialogs.suspendUser.restoreAccessItem4")}</li>
                   </ul>
                 </>
               ) : (
                 <>
-                  This will suspend {username}'s account. They will not be able to:
+                  {t("admin.dialogs.suspendUser.suspendAccess", { username })}
                   <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                    <li>Log in to their account</li>
-                    <li>Complete tasks or earn</li>
-                    <li>Make deposits or withdrawals</li>
-                    <li>Access any platform features</li>
+                    <li>{t("admin.dialogs.suspendUser.suspendAccessItem1")}</li>
+                    <li>{t("admin.dialogs.suspendUser.suspendAccessItem2")}</li>
+                    <li>{t("admin.dialogs.suspendUser.suspendAccessItem3")}</li>
+                    <li>{t("admin.dialogs.suspendUser.suspendAccessItem4")}</li>
                   </ul>
                   <p className="mt-2 text-sm font-medium">
-                    This action is reversible - you can unsuspend the user later.
+                    {t("admin.dialogs.suspendUser.reversible")}
                   </p>
                 </>
               )}
@@ -104,18 +106,18 @@ export const SuspendUserDialog = ({
           {!isSuspended && (
             <div className="space-y-2">
               <Label htmlFor="reason">
-                Reason (Optional)
+                {t("admin.dialogs.suspendUser.reasonLabel")}
               </Label>
               <Textarea
                 id="reason"
-                placeholder="Explain why this user is being suspended..."
+                placeholder={t("admin.dialogs.suspendUser.reasonPlaceholder")}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
                 maxLength={500}
               />
               <p className="text-xs text-muted-foreground">
-                {reason.length}/500 characters
+                {t("admin.dialogs.suspendUser.reasonCharacterCount", { count: reason.length })}
               </p>
             </div>
           )}
@@ -123,7 +125,7 @@ export const SuspendUserDialog = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={suspendUser.isPending}>
-            Cancel
+            {t("admin.dialogs.suspendUser.cancel")}
           </Button>
           <Button 
             variant={isSuspended ? "default" : "destructive"}
@@ -131,10 +133,10 @@ export const SuspendUserDialog = ({
             disabled={suspendUser.isPending}
           >
             {suspendUser.isPending 
-              ? "Processing..." 
+              ? t("admin.dialogs.suspendUser.processing")
               : isSuspended 
-                ? "Unsuspend User" 
-                : "Suspend User"
+                ? t("admin.dialogs.suspendUser.unsuspendButton")
+                : t("admin.dialogs.suspendUser.suspendButton")
             }
           </Button>
         </DialogFooter>

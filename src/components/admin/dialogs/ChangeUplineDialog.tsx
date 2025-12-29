@@ -27,6 +27,7 @@ import {
   Info
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ChangeUplineDialogProps {
   open: boolean;
@@ -63,6 +64,7 @@ export function ChangeUplineDialog({
   currentUpline,
   onSuccess,
 }: ChangeUplineDialogProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [validationState, setValidationState] = useState<ValidationState>({ status: 'idle' });
   const [isSubmitting, setIsSubmitting] = useState(false);

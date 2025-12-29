@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Info, RotateCcw, AlertCircle, CheckCircle2, ListChecks } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface HowItWorksSlideConfig {
   id: number;
@@ -88,36 +90,16 @@ const DEFAULT_HOW_IT_WORKS_CONTENT: HowItWorksContentConfig = {
 };
 
 export default function HowItWorksSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [platformName, setPlatformName] = useState<string>(DEFAULT_PLATFORM_NAME);
   const [config, setConfig] = useState<HowItWorksContentConfig>(DEFAULT_HOW_IT_WORKS_CONTENT);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["how-it-works-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("key, value")
-        .in("key", ["platform_name", "how_it_works_content"]);
-
-      if (error) throw error;
-
-      const map = new Map<string, any>();
-      data?.forEach((row: any) => {
-        map.set(row.key, row.value);
-      });
-
-      const platformName = (map.get("platform_name") as string) || DEFAULT_PLATFORM_NAME;
-      const howItWorks = (map.get("how_it_works_content") as HowItWorksContentConfig) || DEFAULT_HOW_IT_WORKS_CONTENT;
-
-      return {
-        platformName,
-        howItWorks,
-      };
-    },
-  });
+  // Force re-render when language changes
 
   useEffect(() => {
     if (data) {
@@ -155,14 +137,14 @@ export default function HowItWorksSettings() {
       queryClient.invalidateQueries({ queryKey: ["how-it-works-content"] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "How It Works page content has been updated successfully.",
+        title: t("admin.contentManagement.howItWorks.settingsSaved"),
+        description: t("admin.contentManagement.howItWorks.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving settings",
-        description: error.message || "Failed to save settings. Please try again.",
+        title: t("admin.contentManagement.howItWorks.errorSaving"),
+        description: error.message || t("admin.contentManagement.howItWorks.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -205,30 +187,29 @@ export default function HowItWorksSettings() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <ListChecks className="h-8 w-8 text-primary" />
-          How It Works Page Settings
+          {t("admin.contentManagement.howItWorks.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          Manage visibility and copy for each slide of the How It Works tour.
+          {t("admin.contentManagement.howItWorks.subtitle")}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Current platform name: <span className="font-semibold">{platformName}</span> (editable on Dashboard Content
-          page).
+          {t("admin.contentManagement.howItWorks.platformNameNote", { platformName })}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Page Visibility</CardTitle>
-          <CardDescription>Control whether users can access the How It Works page.</CardDescription>
+          <CardTitle>{t("admin.contentManagement.howItWorks.pageVisibility.title")}</CardTitle>
+          <CardDescription>{t("admin.contentManagement.howItWorks.pageVisibility.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="space-y-0.5">
               <Label htmlFor="howItWorksVisible" className="text-base font-semibold">
-                Show How It Works Page
+                {t("admin.contentManagement.howItWorks.pageVisibility.showLabel")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                When disabled, users who open the How It Works page will be redirected back to the dashboard.
+                {t("admin.contentManagement.howItWorks.pageVisibility.showDescription")}
               </p>
             </div>
             <Switch
@@ -244,13 +225,13 @@ export default function HowItWorksSettings() {
         <Card key={slide.id}>
           <CardHeader>
             <CardTitle>
-              Slide {slide.id}: {slide.title || "(Untitled)"}
+              {t("admin.contentManagement.howItWorks.slideTitle", { number: slide.id, title: slide.title || t("admin.contentManagement.howItWorks.untitled") })}
             </CardTitle>
-            <CardDescription>Edit the title, subtitle, and main description for this step.</CardDescription>
+            <CardDescription>{t("admin.contentManagement.howItWorks.slideDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor={`title-${slide.id}`}>Title</Label>
+              <Label htmlFor={`title-${slide.id}`}>{t("admin.contentManagement.howItWorks.titleLabel")}</Label>
               <Input
                 id={`title-${slide.id}`}
                 value={slide.title}
@@ -258,7 +239,7 @@ export default function HowItWorksSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`subtitle-${slide.id}`}>Subtitle</Label>
+              <Label htmlFor={`subtitle-${slide.id}`}>{t("admin.contentManagement.howItWorks.subtitleLabel")}</Label>
               <Input
                 id={`subtitle-${slide.id}`}
                 value={slide.subtitle}
@@ -266,7 +247,7 @@ export default function HowItWorksSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`description-${slide.id}`}>Description</Label>
+              <Label htmlFor={`description-${slide.id}`}>{t("admin.contentManagement.howItWorks.descriptionLabel")}</Label>
               <Textarea
                 id={`description-${slide.id}`}
                 value={slide.description}
@@ -274,7 +255,7 @@ export default function HowItWorksSettings() {
                 rows={4}
               />
               <p className="text-xs text-muted-foreground">
-                Tip: You can include the platform name manually (e.g. "{platformName}") in this text if you like.
+                {t("admin.contentManagement.howItWorks.platformNameTip", { platformName })}
               </p>
             </div>
           </CardContent>
@@ -284,23 +265,23 @@ export default function HowItWorksSettings() {
       <Card>
         <CardContent className="flex items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Changes are applied to the How It Works page immediately after saving.</p>
+            <p>{t("admin.contentManagement.howItWorks.changesApplied")}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Defaults
+              {t("admin.contentManagement.howItWorks.resetToDefaults")}
             </Button>
             <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {t("common.saveChanges")}
                 </>
               )}
             </Button>
@@ -312,7 +293,7 @@ export default function HowItWorksSettings() {
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>
-                Settings saved successfully! Users will see updated content on the How It Works page.
+                {t("admin.contentManagement.howItWorks.successMessage")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -322,7 +303,7 @@ export default function HowItWorksSettings() {
           <CardContent className="pt-0">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Failed to save settings. Please try again.</AlertDescription>
+              <AlertDescription>{t("admin.contentManagement.howItWorks.errorMessage")}</AlertDescription>
             </Alert>
           </CardContent>
         )}

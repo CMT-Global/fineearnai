@@ -24,7 +24,22 @@
     "change": "Change",
     "warning": "Warning",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "never": "Never",
+    "noExpiry": "No expiry",
+    "modified": "Modified",
+    "by": "by",
+    "completed": "Completed",
+    "pending": "Pending",
+    "failed": "Failed",
+    "refresh": "Refresh",
+    "update": "Update",
+    "add": "Add",
+    "saveChanges": "Save Changes",
+    "copied": "Copied!",
+    "pleaseWait": "Please Wait",
+    "processing": "Processing...",
+    "retrying": "Retrying..."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -61,7 +76,8 @@
     "livePreview": "Live Preview",
     "displayOnly": "Display Only",
     "displayOnlyDescription": "Currency conversion affects display only. All transactions are processed in USD. Exchange rates are updated every 24 hours.",
-    "update": "Update Currency"
+    "update": "Update Currency",
+    "updateFailed": "Failed to update currency. Please try again."
   },
   "settings": {
     "title": "Settings",
@@ -152,6 +168,52 @@
       "warning": "Warning",
       "warningDescription": "Deleting your account will permanently remove all your data, including earnings, transaction history, referrals, and task records. This action cannot be undone.",
       "deleteAccount": "Delete My Account"
+    },
+    "deleteAccountDialog": {
+      "title": "Delete Your Account",
+      "description": "This action is permanent and cannot be undone",
+      "willBeDeleted": "The following will be permanently deleted:",
+      "item1": "Your profile and account credentials",
+      "item2": "All earnings and wallet balances",
+      "item3": "Complete transaction history",
+      "item4": "Referral network and commissions",
+      "item5": "Task completion records",
+      "item6": "Any pending withdrawals or deposits",
+      "beforeProceeding": "Before proceeding:",
+      "beforeProceedingDescription": "Make sure you've withdrawn all available funds and there are no pending transactions on your account.",
+      "understandCheckbox": "I understand this action is permanent and cannot be undone",
+      "tooManyAttempts": "Too many verification attempts.",
+      "tryAgainIn": "Please try again in {{countdown}}",
+      "cancel": "Cancel",
+      "continueToVerification": "Continue to Verification",
+      "sendingCode": "Sending Code...",
+      "tryAgainInCountdown": "Try again in {{countdown}}",
+      "enterVerificationCode": "Enter Verification Code",
+      "verificationCodeDescription": "We've sent a 6-digit code to your email. Enter it below to confirm deletion.",
+      "verificationCode": "Verification Code",
+      "codeExpiresIn": "Code expires in 15 minutes",
+      "resendCode": "Resend Code",
+      "sending": "Sending...",
+      "tooManyRequests": "Too many requests. Try again in {{countdown}}",
+      "finalWarning": "Once you verify this code, your account will be immediately and permanently deleted. This cannot be undone.",
+      "back": "Back",
+      "deletingAccount": "Deleting Account...",
+      "deleteMyAccount": "Delete My Account",
+      "errors": {
+        "pleaseConfirm": "Please confirm you understand this action is irreversible",
+        "failedToSend": "Failed to send verification code",
+        "networkError": "Network error. Please try again.",
+        "tooManyRequestsError": "Too many requests",
+        "tooManyRequestsDescription": "Please wait 15 minutes before trying again",
+        "verificationCodeSent": "Verification code sent!",
+        "checkEmail": "Check your email for the 6-digit code",
+        "pleaseEnterCompleteCode": "Please enter the complete 6-digit code",
+        "verificationFailed": "Verification failed",
+        "accountDeletedSuccess": "Account deleted successfully",
+        "loggedOutShortly": "You will be logged out shortly...",
+        "failedToDelete": "Failed to delete account",
+        "pleaseTryAgain": "Please try again"
+      }
     },
     "otpVerification": {
       "title": "Verify Your Email",
@@ -804,6 +866,37 @@
         "commissionAudit": "Commission Audit"
       }
     },
+    "taskAnalytics": {
+      "title": "Task Analytics Dashboard",
+      "subtitle": "Comprehensive insights into task performance and user engagement",
+      "backToAdmin": "Back to Admin",
+      "totalActiveTasks": "Total Active Tasks",
+      "totalCompletions": "Total Completions",
+      "overallAccuracy": "Overall Accuracy",
+      "activeUsers": "Active Users",
+      "completionRatesByCategory": "Completion Rates by Category",
+      "completionRatesByCategoryDescription": "Task completions across different categories",
+      "difficultyDistribution": "Difficulty Distribution",
+      "difficultyDistributionDescription": "Task difficulty breakdown",
+      "accuracyRatesByCategory": "Accuracy Rates by Category",
+      "accuracyRatesByCategoryDescription": "User accuracy across categories",
+      "accuracyRatesByDifficulty": "Accuracy Rates by Difficulty",
+      "accuracyRatesByDifficultyDescription": "Success rates across difficulty levels",
+      "mostPopularTasks": "Most Popular Tasks",
+      "mostPopularTasksDescription": "Tasks with highest completion counts",
+      "topPerformingUsers": "Top Performing Users",
+      "topPerformingUsersDescription": "Users with most task completions",
+      "completions": "Completions",
+      "accuracy": "Accuracy %",
+      "completionsCount": "{{count}} completions",
+      "tasksCompleted": "{{count}} tasks completed",
+      "earned": "${{amount}} earned",
+      "accuracyPercentage": "{{percentage}}% accuracy",
+      "noTaskDataAvailable": "No task data available",
+      "noUserDataAvailable": "No user data available",
+      "loading": "Loading analytics...",
+      "errorFailedToLoad": "Failed to load analytics data"
+    },
     "scheduledEmails": {
       "title": "Scheduled Emails",
       "subtitle": "Manage and monitor scheduled email campaigns",
@@ -839,6 +932,34 @@
         "specificUsersPlural": "{{count}} specific users",
         "custom": "Custom"
       }
+    },
+    "transactions": {
+      "title": "Transaction Logs",
+      "subtitle": "Comprehensive audit trail of all platform transactions",
+      "backToAdmin": "Back to Admin",
+      "allTransactions": "All Transactions",
+      "total": "total",
+      "transactionsFound": "{{count}} transaction",
+      "transactionsFoundPlural": "{{count}} transactions",
+      "found": "found",
+      "searchPlaceholder": "Search by username, email, or description...",
+      "type": "Type",
+      "allTypes": "All Types",
+      "wallet": "Wallet",
+      "allWallets": "All Wallets",
+      "status": "Status",
+      "allStatus": "All Status",
+      "exportCSV": "Export CSV",
+      "date": "Date",
+      "user": "User",
+      "amount": "Amount",
+      "description": "Description",
+      "noTransactionsFound": "No transactions found",
+      "loadingTransactions": "Loading transactions...",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "transactions": "transactions"
     },
     "referralSystemManage": {
       "title": "Referral System Management",
@@ -908,7 +1029,1290 @@
       "confirmDeletePlan": "Are you sure you want to delete this membership plan?"
     },
     "paymentSettings": {
-      "confirmDeleteProcessor": "Are you sure you want to delete this payment processor?"
+      "confirmDeleteProcessor": "Are you sure you want to delete this payment processor?",
+      "loading": "Loading payment settings...",
+      "paymentProcessor": "Payment Processor"
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage and monitor all platform users",
+      "refresh": "Refresh",
+      "allUsers": "All Users",
+      "searchPlaceholder": "Search by username, email, or name...",
+      "filters": {
+        "plan": {
+          "label": "Filter by plan",
+          "all": "All Plans",
+          "free": "Free",
+          "basic": "Basic",
+          "premium": "Premium",
+          "vip": "VIP"
+        },
+        "status": {
+          "label": "Filter by status",
+          "all": "All Status",
+          "active": "Active",
+          "suspended": "Suspended",
+          "banned": "Banned"
+        },
+        "country": {
+          "label": "Filter by country",
+          "all": "All Countries"
+        },
+        "role": {
+          "label": "Filter by role",
+          "all": "All Roles",
+          "admin": "Admin",
+          "moderator": "Moderator",
+          "user": "User Only"
+        },
+        "emailVerification": {
+          "label": "Email Verification",
+          "all": "All Users",
+          "verified": "Verified Only",
+          "unverified": "Unverified Only"
+        }
+      },
+      "exportAll": "Export All",
+      "table": {
+        "username": "Username",
+        "email": "Email",
+        "plan": "Plan",
+        "status": "Status",
+        "roles": "Roles",
+        "country": "Country",
+        "earned": "Earned",
+        "joined": "Joined",
+        "actions": "Actions",
+        "emailVerified": "Email Verified",
+        "emailNotVerified": "Email Not Verified",
+        "noUsersFound": "No users found"
+      },
+      "errorTitle": "User Management Error",
+      "stats": {
+        "totalUsers": "Total Users",
+        "activeUsers": "Active Users",
+        "suspended": "Suspended",
+        "banned": "Banned",
+        "platformBalance": "Platform Balance",
+        "totalEarningsPaid": "Total Earnings Paid",
+        "activeReferrals": "Active Referrals",
+        "paidPlans": "Paid Plans",
+        "allRegisteredUsers": "All registered users",
+        "percentOfTotal": "{{percent}}% of total",
+        "temporarilySuspended": "Temporarily suspended",
+        "permanentlyBanned": "Permanently banned",
+        "totalLockedValue": "Total locked value",
+        "lifetimePayouts": "Lifetime payouts",
+        "totalReferralNetwork": "Total referral network",
+        "users": "{{count}} users"
+      }
+    },
+    "dialogs": {
+      "manualEmailVerification": {
+        "title": "{{action}} Email for {{username}}",
+        "verifyTitle": "Verify Email for {{username}}",
+        "unverifyTitle": "Unverify Email for {{username}}",
+        "verifyDescription": "This will manually verify the user's email without requiring them to enter an OTP code.",
+        "unverifyDescription": "This will mark the user's email as unverified. They will need to verify their email again.",
+        "reasonLabel": "Reason for {{action}}ication",
+        "reasonRequired": "*",
+        "reasonPlaceholder": "Enter the reason for {{action}}ing this email...",
+        "reasonHint": "This reason will be logged in the audit trail for compliance purposes.",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "verifyButton": "Verify Email",
+        "unverifyButton": "Unverify Email",
+        "reasonRequiredError": "Please provide a reason for this action",
+        "failedToVerify": "Failed to verify email",
+        "failedToUnverify": "Failed to unverify email",
+        "emailVerifiedSuccess": "Email verified successfully",
+        "emailUnverifiedSuccess": "Email unverified successfully"
+      },
+      "suspendUser": {
+        "title": "Suspend User",
+        "unsuspendTitle": "Unsuspend User",
+        "suspendDescription": "Temporarily restrict {{username}}'s access to the platform",
+        "unsuspendDescription": "Restore access for {{username}}",
+        "restoreAccess": "This will restore {{username}}'s account access. They will be able to:",
+        "restoreAccessItem1": "Log in to their account",
+        "restoreAccessItem2": "Complete tasks and earn",
+        "restoreAccessItem3": "Make deposits and withdrawals",
+        "restoreAccessItem4": "Access all platform features",
+        "suspendAccess": "This will suspend {{username}}'s account. They will not be able to:",
+        "suspendAccessItem1": "Log in to their account",
+        "suspendAccessItem2": "Complete tasks or earn",
+        "suspendAccessItem3": "Make deposits or withdrawals",
+        "suspendAccessItem4": "Access any platform features",
+        "reversible": "This action is reversible - you can unsuspend the user later.",
+        "reasonLabel": "Reason (Optional)",
+        "reasonPlaceholder": "Explain why this user is being suspended...",
+        "reasonCharacterCount": "{{count}}/500 characters",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "suspendButton": "Suspend User",
+        "unsuspendButton": "Unsuspend User"
+      },
+      "banUser": {
+        "title": "Ban User",
+        "unbanTitle": "Unban User",
+        "banDescription": "Permanently ban {{username}} from the platform",
+        "unbanDescription": "Restore access for {{username}}",
+        "reasonLabel": "Reason (Required)",
+        "reasonPlaceholder": "Explain why this user is being banned...",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "banButton": "Ban User",
+        "unbanButton": "Unban User"
+      },
+      "changePlan": {
+        "title": "Change Membership Plan",
+        "description": "Change {{username}}'s membership plan",
+        "currentPlan": "Current Plan",
+        "newPlan": "New Plan",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "changeButton": "Change Plan"
+      },
+      "changeUpline": {
+        "title": "Change Upline",
+        "description": "Change {{username}}'s upline (referrer)",
+        "currentUpline": "Current Upline",
+        "newUpline": "New Upline",
+        "uplinePlaceholder": "Enter new upline username...",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "changeButton": "Change Upline"
+      },
+      "manageRoles": {
+        "title": "Manage Roles",
+        "description": "Manage roles for {{username}}",
+        "currentRoles": "Current Roles",
+        "availableRoles": "Available Roles",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "saveButton": "Save Changes"
+      },
+      "walletAdjustment": {
+        "title": "Wallet Adjustment",
+        "description": "Adjust {{username}}'s wallet balance",
+        "currentBalance": "Current Balance",
+        "adjustmentType": "Adjustment Type",
+        "add": "Add",
+        "subtract": "Subtract",
+        "amount": "Amount",
+        "reason": "Reason (Required)",
+        "reasonPlaceholder": "Enter reason for this adjustment...",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "adjustButton": "Apply Adjustment"
+      },
+      "bulkSuspend": {
+        "title": "Bulk Suspend Users",
+        "description": "Suspend multiple users at once",
+        "selectedUsers": "Selected Users",
+        "reason": "Reason (Optional)",
+        "reasonPlaceholder": "Enter reason for suspension...",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "suspendButton": "Suspend Users"
+      },
+      "bulkUpdatePlan": {
+        "title": "Bulk Update Plan",
+        "description": "Update membership plan for multiple users",
+        "selectedUsers": "Selected Users",
+        "newPlan": "New Plan",
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "updateButton": "Update Plan"
+      }
+    },
+    "userInvites": {
+      "title": "User Invites",
+      "subtitle": "Send personalized invitations to potential users to join the platform",
+      "tabs": {
+        "compose": "Compose Invite",
+        "history": "History",
+        "bestPractices": "Best Practices"
+      },
+      "form": {
+        "recipientInfo": "Recipient Information",
+        "recipientInfoDescription": "Enter the details of the user you want to invite",
+        "emailAddress": "Email Address",
+        "emailPlaceholder": "user@example.com",
+        "inviteeName": "Invitee Name",
+        "inviteeNamePlaceholder": "[Invitee Name]",
+        "signupBonus": "Signup Bonus Message",
+        "signupBonusDefault": "Start earning immediately with your first tasks!",
+        "signupBonusHint": "Optional: Customize the signup bonus message displayed in the email",
+        "customMessage": "Custom Message (Optional)",
+        "customMessagePlaceholder": "Add a personal message to make your invitation more compelling...",
+        "customMessageHint": "This message will be added to the email template",
+        "emailTemplate": "Email Template",
+        "subject": "Subject"
+      },
+      "info": {
+        "templateDescription": "This email will be sent using the User Invite template. You can personalize it with recipient details and add a custom message.",
+        "templateConfiguration": "The email template is configured in Email Templates. Variables will be automatically replaced when sending."
+      },
+      "preview": {
+        "title": "Email Preview",
+        "personalMessage": "Personal Message"
+      },
+      "actions": {
+        "previewEmail": "Preview Email",
+        "sendInvite": "Send Invite",
+        "sending": "Sending..."
+      },
+      "success": {
+        "inviteSent": "User invite sent successfully!",
+        "invitationSentTo": "Invitation sent to {{email}}"
+      },
+      "errors": {
+        "failedToLoadTemplate": "Failed to load email template",
+        "fillRequiredFields": "Please fill in all required fields",
+        "invalidEmail": "Please enter a valid email address",
+        "mustBeLoggedIn": "You must be logged in",
+        "failedToSend": "Failed to send user invite",
+        "tryAgainLater": "Please try again later"
+      }
+    },
+    "deposits": {
+      "title": "Deposit Management",
+      "subtitle": "View and manage all platform deposits",
+      "loading": "Loading deposits...",
+      "errorFailedToLoad": "Failed to load deposits",
+      "exportedToCSV": "Deposits exported to CSV",
+      "noUpline": "No Upline",
+      "na": "N/A",
+      "regular": "Regular",
+      "admin": "Admin",
+      "adminPanel": "Admin Panel",
+      "stats": {
+        "totalRegularDeposits": "Total Regular Deposits",
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed",
+        "adminAdjustments": "Admin Adjustments",
+        "excludedFromRevenue": "(Excluded from revenue)"
+      },
+      "allDeposits": "All Deposits",
+      "completedDeposits": "Completed Deposits",
+      "pendingDeposits": "Pending Deposits",
+      "failedDeposits": "Failed Deposits",
+      "depositsFound": "{{count}} deposit found",
+      "depositsFound_plural": "{{count}} deposits found",
+      "only": "only",
+      "status": {
+        "all": "All",
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed"
+      },
+      "searchPlaceholder": "Search by username, email, or transaction ID...",
+      "depositType": "Deposit Type",
+      "regularDeposits": "Regular Deposits",
+      "adminAdjustments": "Admin Adjustments",
+      "allTransactions": "All Transactions",
+      "completedOnly": "Completed Only",
+      "allStatus": "All Status",
+      "pendingOnly": "Pending Only",
+      "failedOnly": "Failed Only",
+      "method": "Method",
+      "allMethods": "All Methods",
+      "dateRange": "Date Range",
+      "allTime": "All Time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last60Days": "Last 60 Days",
+      "last90Days": "Last 90 Days",
+      "customRange": "Custom Range",
+      "exportCSV": "Export CSV",
+      "startDate": "Start Date",
+      "to": "to",
+      "endDate": "End Date",
+      "clearDates": "Clear Dates",
+      "transactionsCount": "{{count}} transaction",
+      "transactionsCount_plural": "{{count}} transactions",
+      "adjustmentsCount": "{{count}} adjustment",
+      "adjustmentsCount_plural": "{{count}} adjustments",
+      "totalFilteredView": "Total (Filtered View)",
+      "itemsCount": "{{count}} item",
+      "itemsCount_plural": "{{count}} items",
+      "table": {
+        "date": "Date",
+        "user": "User",
+        "country": "Country",
+        "amount": "Amount",
+        "upline": "Upline",
+        "type": "Type",
+        "method": "Method",
+        "transactionId": "Transaction ID",
+        "status": "Status"
+      },
+      "noDepositsFound": "No deposits found",
+      "csv": {
+        "date": "Date",
+        "time": "Time",
+        "username": "Username",
+        "email": "Email",
+        "amount": "Amount",
+        "upline": "Upline",
+        "method": "Method",
+        "transactionId": "Transaction ID",
+        "status": "Status"
+      }
+    },
+    "withdrawals": {
+      "title": "Withdrawal Management",
+      "subtitle": "Process and manage user withdrawal requests",
+      "loading": "Loading withdrawals...",
+      "errorFailedToLoad": "Failed to load withdrawal requests",
+      "unknownUser": "Unknown User",
+      "stats": {
+        "pendingRequests": "Pending Requests",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "total": "total",
+        "successfullyProcessed": "Successfully processed",
+        "failedOrRejected": "Failed or rejected"
+      },
+      "tabs": {
+        "pending": "Pending",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "all": "All"
+      },
+      "noWithdrawalsFound": "No withdrawal requests found",
+      "membershipPlan": "Membership Plan",
+      "country": "Country",
+      "amount": "Amount",
+      "netAmount": "Net Amount (after fee)",
+      "fee": "Fee",
+      "paymentMethod": "Payment Method",
+      "raw": "Raw",
+      "cryptocurrency": "Cryptocurrency",
+      "network": "Network",
+      "notSpecifiedLegacy": "Not specified (Legacy)",
+      "payoutAddress": "Payout Address",
+      "requested": "Requested",
+      "processed": "Processed",
+      "rejectionReason": "Rejection Reason",
+      "adminNotes": "Admin Notes",
+      "status": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "failed": "Failed"
+      },
+      "processing": "Processing...",
+      "markAsPaidManually": "Mark As Paid Manually",
+      "clearErrorAndRetry": "Clear Error & Retry",
+      "approveAndPayViaAPI": "Approve & Pay Via API",
+      "reject": "Reject",
+      "rejectWithdrawal": "Reject Withdrawal",
+      "rejectWithdrawalDescription": "This will reject the withdrawal and refund the amount to the user's earnings wallet.",
+      "rejectionReasonRequired": "Rejection Reason *",
+      "rejectionReasonPlaceholder": "Enter detailed reason for rejection (minimum 10 characters)...",
+      "charactersMinimum": "characters minimum",
+      "rejecting": "Rejecting...",
+      "rejectAndRefund": "Reject & Refund",
+      "clearingError": "Clearing Error",
+      "clearingErrorDescription": "Clearing previous API error and retrying payment...",
+      "anotherWithdrawalProcessing": "Another withdrawal is being processed",
+      "copied": "Copied!",
+      "tokenIdCopied": "Token ID copied to clipboard",
+      "addressCopied": "Address copied to clipboard",
+      "currencyIdCopied": "USDT TRC20 currencyId copied to clipboard",
+      "tokenCopied": "{{name}} currencyId copied",
+      "cpayTokenHelper": "CPAY Token ID Helper",
+      "cpayTokenHelperDescription": "Get your correct USDT TRC20 Token ID from CPAY - choose your preferred method",
+      "getFromWalletAPI": "Get From Wallet API",
+      "useTokenFromLastDeposit": "Use Token From Last Deposit",
+      "checkWalletBalance": "Check Wallet Balance",
+      "fetching": "Fetching...",
+      "walletAPIDescription": "Fetches all tokens from your CPAY wallet",
+      "lastDepositDescription": "Extracts token ID from your most recent CPAY deposit (recommended if you've deposited)",
+      "checkBalanceDescription": "View your wallet balance and all token details with USDT TRC20 highlighted",
+      "cpayWalletBalance": "CPAY Wallet Balance & Tokens",
+      "cpayWalletBalanceDescription": "Complete overview of your CPAY wallet including all tokens and their details",
+      "totalBalance": "Total Balance",
+      "availableBalance": "Available Balance",
+      "holdBalance": "Hold Balance",
+      "pendingTransactions": "Pending transactions",
+      "usdtTrc20Found": "USDT TRC20 Token Found! 🎯",
+      "recommended": "Recommended",
+      "copyUsdtTrc20Id": "Copy USDT TRC20 ID",
+      "allTokens": "All Tokens",
+      "usdtTrc20NotFound": "USDT TRC20 not found",
+      "currencyId": "Currency ID",
+      "name": "Name",
+      "network": "Network",
+      "type": "Type",
+      "balance": "Balance",
+      "actions": "Actions",
+      "noTokensFound": "No Tokens Found",
+      "noTokensFoundDescription": "Your CPAY wallet returned 0 tokens. Make sure USDT TRC20 is enabled in your CPAY account.",
+      "tips": "💡 Tips",
+      "nextSteps": "📋 Next Steps:",
+      "nextStep1": "Copy the currencyId from the USDT TRC20 token above",
+      "nextStep2": "Update the secret CPAY_USDT_TOKEN_ID with this 24-character value",
+      "nextStep3": "Ensure you have sufficient TRX balance in your wallet for network fees",
+      "nextStep4": "Return to this page and process pending withdrawals",
+      "cpayTokenInformation": "CPAY Token Information",
+      "tokenFromLastDeposit": "Token extracted from your most recent CPAY deposit",
+      "tokensFromWallet": "Tokens retrieved from your CPAY wallet",
+      "fromLastDeposit": "📦 From Last Deposit",
+      "fromWalletAPI": "💼 From Wallet API",
+      "deposit": "Deposit:",
+      "usdtTrc20TokenFound": "✅ USDT TRC20 Token Found",
+      "tokenId": "currencyId (Token ID):",
+      "copyTokenId": "Copy Token ID",
+      "tokenNotFound": "Token Not Found",
+      "usdtTrc20NotFoundTitle": "USDT TRC20 Not Found",
+      "tokenNotFoundDescription": "Your CPAY wallet returned 0 tokens. Ensure USDT TRC20 is enabled for this wallet or try the \"Use Token From Last Deposit\" option.",
+      "couldNotFindUsdt": "Could not find USDT on TRC20 blockchain in your wallet tokens",
+      "nextStep1Short": "Copy the currencyId value above",
+      "nextStep2Short": "Update the secret CPAY_USDT_TOKEN_ID with this value",
+      "nextStep3Short": "Return to this page and click \"Clear Error & Retry\" on the pending withdrawal",
+      "allAvailableCurrencies": "All Available Currencies",
+      "depositDetails": "Deposit Details",
+      "walletId": "Wallet ID:",
+      "currency": "Currency:",
+      "blockchain": "Blockchain:",
+      "transactionHash": "Transaction Hash",
+      "apiPaymentFailed": "API Payment Failed",
+      "previousAPIAttemptFailed": "Previous API Attempt Failed",
+      "provider": "Provider:",
+      "error": "Error:",
+      "lastAttempt": "Last attempt:",
+      "nextStepsHint": "💡 Next steps:",
+      "nextStepsText": "Check {{provider}} credentials/balance, then click \"Clear Error & Retry\" or manually reject if needed.",
+      "unknown": "Unknown",
+      "success": "Success",
+      "withdrawalMarkedAsPaid": "Withdrawal marked as paid. Transaction hash: {{hash}}",
+      "failedToMarkAsPaid": "Failed to mark withdrawal as paid",
+      "withdrawalNotFound": "Withdrawal not found",
+      "clearErrorAndRetryConfirm": "Clear previous API error and retry payment?",
+      "apiPaymentFailedAgain": "⚠️ API Payment Failed Again",
+      "apiPaymentFailedDescription": "{{error}}. Withdrawal remains PENDING - please check {{provider}} configuration and balance.",
+      "failedToProcessPayment": "Failed to process payment",
+      "paymentSentSuccessfully": "✅ Payment Sent Successfully",
+      "paymentSentDescription": "Provider: {{provider}}. Transaction: {{hash}}...",
+      "paymentProcessedSuccessfully": "Payment processed successfully via API after clearing error",
+      "processViaAPIConfirm": "Process this withdrawal via payment API?",
+      "sendingPaymentRequest": "Sending payment request to API...",
+      "apiPaymentFailedTitle": "⚠️ API Payment Failed",
+      "apiPaymentFailedDescriptionRetry": "{{error}}. Withdrawal remains PENDING - you can retry after fixing the issue (e.g., topping up {{provider}} balance) or reject it manually.",
+      "rejectionReasonRequiredError": "Rejection reason is required",
+      "rejectionReasonMinLength": "Please provide a detailed reason (at least 10 characters)",
+      "withdrawalRejected": "Withdrawal rejected. Amount {{amount}} refunded to user's earnings wallet",
+      "failedToReject": "Failed to reject withdrawal",
+      "addNotesPrompt": "Add notes (optional):",
+      "markedAsPaidManuallyByAdmin": "Marked as paid manually by admin",
+      "fetchingTokenInfo": "Fetching Token Info",
+      "retrievingCPAYToken": "Retrieving CPAY token from {{source}}...",
+      "tokenIdFound": "✅ Token ID Found",
+      "tokenIdFoundDescription": "Source: {{source}}. currencyId: {{tokenId}}",
+      "failedToFetchTokenInfo": "Failed to fetch token info",
+      "cpayError": "CPAY Error",
+      "failedToFetchBalance": "Failed to fetch wallet balance from CPAY",
+      "walletBalanceRetrieved": "Wallet balance retrieved successfully",
+      "anUnexpectedErrorOccurred": "An unexpected error occurred"
+    },
+    "cpayCheckouts": {
+      "title": "CPAY Checkout Configuration",
+      "subtitle": "Manage pre-configured CPAY checkout pages for deposits",
+      "loading": "Loading CPAY checkouts...",
+      "backToAdmin": "Back to Admin",
+      "cardTitle": "CPAY Checkouts",
+      "cardDescription": "Add checkouts created in your CPAY dashboard",
+      "addCheckout": "Add Checkout",
+      "editTitle": "Edit CPAY Checkout",
+      "addTitle": "Add CPAY Checkout",
+      "dialogDescription": "Configure a pre-generated checkout from your CPAY dashboard",
+      "checkoutId": "Checkout ID",
+      "checkoutIdPlaceholder": "e.g., a55901c9-7cab-44a5-adf9-5a1562056256",
+      "checkoutIdHint": "From CPAY dashboard checkout URL",
+      "checkoutUrl": "Full Checkout URL",
+      "checkoutUrlPlaceholder": "https://checkouts.fineearn.com/checkout/{id}",
+      "checkoutUrlHint": "Use custom domain URL for better branding",
+      "currency": "Currency",
+      "minAmount": "Min Amount ($)",
+      "maxAmount": "Max Amount ($)",
+      "active": "Active",
+      "checkout": "Checkout",
+      "errorFailedToLoad": "Failed to load CPAY checkouts",
+      "errorFillRequiredFields": "Please fill in all required fields",
+      "errorInvalidUrl": "Invalid checkout URL format",
+      "successUpdated": "CPAY checkout updated successfully",
+      "successAdded": "CPAY checkout added successfully",
+      "errorFailedToSave": "Failed to save CPAY checkout",
+      "confirmDelete": "Are you sure you want to delete this CPAY checkout?",
+      "successDeleted": "CPAY checkout deleted",
+      "errorFailedToDelete": "Failed to delete CPAY checkout",
+      "successActivated": "CPAY checkout activated",
+      "successDeactivated": "CPAY checkout deactivated",
+      "errorFailedToUpdate": "Failed to update CPAY checkout",
+      "noCheckouts": "No CPAY checkouts configured",
+      "table": {
+        "checkoutId": "Checkout ID",
+        "currency": "Currency",
+        "limits": "Limits",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "cpayMonitoring": {
+      "title": "CPAY Transaction Monitoring",
+      "subtitle": "Monitor and track all CPAY payment gateway transactions",
+      "loading": "Loading CPAY monitoring...",
+      "backToAdmin": "Back to Admin",
+      "transactionHistory": "Transaction History",
+      "transactionHistoryDescription": "All CPAY payment gateway transactions",
+      "errorFailedToLoad": "Failed to load CPAY transactions",
+      "unknown": "Unknown",
+      "order": "Order",
+      "payout": "Payout",
+      "noTransactions": "No CPAY transactions found",
+      "stats": {
+        "totalDeposits": "Total Deposits",
+        "completedViaCPAY": "Completed via CPAY",
+        "totalWithdrawals": "Total Withdrawals",
+        "processedViaCPAY": "Processed via CPAY",
+        "pendingDeposits": "Pending Deposits",
+        "awaitingConfirmation": "Awaiting confirmation",
+        "pendingWithdrawals": "Pending Withdrawals",
+        "awaitingProcessing": "Awaiting processing"
+      },
+      "tabs": {
+        "all": "All",
+        "deposits": "Deposits",
+        "withdrawals": "Withdrawals"
+      },
+      "table": {
+        "date": "Date",
+        "user": "User",
+        "type": "Type",
+        "amount": "Amount",
+        "status": "Status",
+        "gatewayId": "Gateway ID",
+        "metadata": "Metadata"
+      }
+    },
+    "cpayReconciliation": {
+      "title": "CPAY Reconciliation",
+      "subtitle": "Detect and resolve payment issues",
+      "loading": "Loading reconciliation data...",
+      "exportReport": "Export Report",
+      "successRefreshed": "Reconciliation refreshed",
+      "errorFailedToRefresh": "Failed to refresh",
+      "errorNoIssuesToExport": "No issues to export",
+      "successExported": "Report exported",
+      "unknown": "Unknown",
+      "depositStuck": "Deposit stuck in pending for {{minutes}} minutes",
+      "withdrawalPending": "Withdrawal pending for {{hours}} hours",
+      "detectedIssues": "Detected Issues",
+      "allClear": "All Clear!",
+      "noIssuesDetected": "No reconciliation issues detected",
+      "investigate": "Investigate",
+      "stats": {
+        "totalIssues": "Total Issues",
+        "critical": "Critical",
+        "highPriority": "High Priority",
+        "status": "Status",
+        "healthy": "Healthy",
+        "review": "Review"
+      },
+      "table": {
+        "type": "Type",
+        "severity": "Severity",
+        "user": "User",
+        "amount": "Amount",
+        "description": "Description",
+        "date": "Date",
+        "action": "Action"
+      },
+      "csv": {
+        "type": "Type",
+        "severity": "Severity",
+        "transactionId": "Transaction ID",
+        "user": "User",
+        "amount": "Amount",
+        "description": "Description",
+        "date": "Date"
+      }
+    },
+    "commissionAudit": {
+      "title": "Commission Audit",
+      "subtitle": "Track and monitor all commission processing attempts",
+      "successRefreshed": "Commission audit logs refreshed",
+      "na": "N/A",
+      "noUpline": "No Upline",
+      "view": "View",
+      "errorDetails": "Error Details",
+      "errorReason": "Reason",
+      "errorTrackingId": "Tracking ID",
+      "errorPaymentId": "Payment ID",
+      "errorHasUpline": "Has Upline",
+      "errorDeposit": "Deposit",
+      "errorTime": "Time",
+      "noLogsFound": "No audit logs found",
+      "tryAdjustingFilters": "Try adjusting your filters",
+      "logsWillAppear": "Commission audit logs will appear here once deposits are processed",
+      "stats": {
+        "todaysCommissions": "Today's Commissions",
+        "processedLast24Hours": "Processed in last 24 hours",
+        "successRate": "Success Rate",
+        "successful": "successful",
+        "failedCommissions": "Failed Commissions",
+        "actionRequired": "Action Required",
+        "requiresInvestigation": "Requires investigation",
+        "totalAudited": "Total Audited",
+        "allTimeAttempts": "All-time commission attempts"
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Filter commission audit logs by status and search users",
+        "status": "Status",
+        "allStatuses": "All Statuses",
+        "successOnly": "Success Only",
+        "failedOnly": "Failed Only",
+        "searchUser": "Search User",
+        "searchPlaceholder": "Search by username or email..."
+      },
+      "table": {
+        "title": "Commission Audit Logs",
+        "logsFound": "{{count}} log",
+        "logsFound_plural": "{{count}} logs",
+        "failed": "Failed",
+        "status": "Status",
+        "userReferred": "User (Referred)",
+        "uplineReferrer": "Upline (Referrer)",
+        "depositAmount": "Deposit Amount",
+        "commission": "Commission",
+        "timestamp": "Timestamp",
+        "details": "Details"
+      },
+      "status": {
+        "success": "Success",
+        "failed": "Failed"
+      }
+    },
+    "partners": {
+      "title": "Partner Management",
+      "subtitle": "Monitor partner performance and voucher sales",
+      "allPartners": "All Partners",
+      "viewPerformance": "View partner performance and statistics",
+      "unknown": "Unknown",
+      "default": "Default",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noPartnersFound": "No partners found",
+      "stats": {
+        "activePartners": "Active Partners",
+        "vouchersSold": "Vouchers Sold",
+        "totalSalesValue": "Total Sales Value",
+        "pendingApplications": "Pending Applications"
+      },
+      "table": {
+        "partner": "Partner",
+        "email": "Email",
+        "rank": "Rank",
+        "commissionRate": "Commission Rate",
+        "dailySales": "Daily Sales",
+        "weeklySales": "Weekly Sales",
+        "totalSales": "Total Sales",
+        "status": "Status"
+      },
+      "ranks": {
+        "bronze": "BRONZE",
+        "silver": "SILVER",
+        "gold": "GOLD",
+        "platinum": "PLATINUM"
+      }
+    },
+    "partnerAnalytics": {
+      "title": "Partner Analytics Dashboard",
+      "subtitle": "Monitor partner performance and sales metrics across the platform",
+      "selectRange": "Select range",
+      "dateRanges": {
+        "last7Days": "Last 7 Days",
+        "last30Days": "Last 30 Days",
+        "last90Days": "Last 90 Days",
+        "lastYear": "Last Year"
+      },
+      "stats": {
+        "platformSales": "Platform Sales",
+        "totalVouchers": "{{count}} total vouchers",
+        "totalCommissions": "Total Commissions",
+        "paidToPartners": "Paid to partners",
+        "conversionRate": "Conversion Rate",
+        "vouchersRedeemed": "{{count}} vouchers redeemed",
+        "activePartners": "Active Partners",
+        "sellingThisPeriod": "Selling this period"
+      },
+      "salesTrend": {
+        "title": "Platform Sales Trend - {{range}}",
+        "description": "Daily sales and commission performance"
+      },
+      "charts": {
+        "totalSales": "Total Sales",
+        "commission": "Commission",
+        "vouchersSold": "Vouchers Sold",
+        "vouchersCount": "{{count}} vouchers",
+        "amountLabel": "Amount: {{amount}}"
+      },
+      "topSellingAmounts": {
+        "title": "Top Selling Voucher Amounts",
+        "description": "Most popular denominations across platform"
+      },
+      "voucherStatus": {
+        "title": "Voucher Status Distribution",
+        "description": "Platform-wide voucher status"
+      },
+      "status": {
+        "redeemed": "Redeemed",
+        "active": "Active",
+        "expired": "Expired"
+      },
+      "topPerformingPartners": {
+        "title": "Top Performing Partners",
+        "description": "Partners ranked by total sales"
+      },
+      "table": {
+        "rank": "Rank",
+        "partner": "Partner",
+        "vouchersSold": "Vouchers Sold",
+        "redeemed": "Redeemed",
+        "totalSales": "Total Sales",
+        "commission": "Commission",
+        "conversion": "Conversion"
+      },
+      "noData": "No analytics data available"
+    },
+    "partnerApplications": {
+      "title": "Partner Applications",
+      "subtitle": "Review and manage partner applications",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "stats": {
+        "pendingReview": "Pending Review",
+        "totalApplications": "Total Applications",
+        "approvalRate": "Approval Rate"
+      },
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "all": "All"
+      },
+      "filters": {
+        "title": "Filters & Sorting",
+        "country": "Country",
+        "allCountries": "All Countries",
+        "membershipPlan": "Membership Plan",
+        "allPlans": "All Plans",
+        "employmentStatus": "Employment Status",
+        "allStatus": "All Status",
+        "employed": "Employed",
+        "unemployed": "Unemployed",
+        "sortBy": "Sort By",
+        "sortByPlaceholder": "Sort by...",
+        "clearFilters": "Clear Filters",
+        "showingResults": "Showing {{showing}} of {{total}} applications"
+      },
+      "sort": {
+        "newestFirst": "Newest First",
+        "oldestFirst": "Oldest First",
+        "mostReferrals": "Most Referrals",
+        "leastReferrals": "Least Referrals",
+        "countryAZ": "Country (A-Z)",
+        "countryZA": "Country (Z-A)"
+      },
+      "applicantProfile": {
+        "title": "Applicant Profile",
+        "country": "Country",
+        "membershipPlan": "Membership Plan",
+        "employmentStatus": "Employment Status",
+        "totalReferrals": "Total Referrals",
+        "upgradedReferrals": "Upgraded Referrals",
+        "dailyCommitment": "Daily Commitment",
+        "hours": "{{hours}} hours"
+      },
+      "contactInfo": {
+        "title": "Contact Information",
+        "preferredContact": "Preferred Contact",
+        "notSpecified": "Not specified",
+        "applied": "Applied",
+        "whatsapp": "WhatsApp",
+        "telegram": "Telegram"
+      },
+      "networkExperience": {
+        "title": "Network & Experience",
+        "managesCommunity": "Manages Community",
+        "communitySize": "Community Size",
+        "members": "{{count}} members",
+        "hasPromotedPlatforms": "Has Promoted Platforms",
+        "monthlyOnboarding": "Monthly Onboarding",
+        "users": "{{count}} users",
+        "timeCommitment": "Time Commitment",
+        "hoursPerWeek": "{{hours}} hours/week",
+        "platformPromotionDetails": "Platform Promotion Details",
+        "networkDescription": "Network Description",
+        "communityLinks": "Community Links"
+      },
+      "supportCapabilities": {
+        "title": "Support & Capabilities",
+        "canProvideLocalSupport": "Can Provide Local Support",
+        "canOrganizeTraining": "Can Organize Training",
+        "supportMethod": "Support Method",
+        "localPaymentMethods": "Local Payment Methods"
+      },
+      "motivationAgreement": {
+        "title": "Motivation & Agreement",
+        "whyPartner": "Why they want to be a partner",
+        "agreedToGuidelines": "Agreed to Guidelines"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "rejectionReason": "Rejection Reason",
+      "noApplicationsFound": "No applications found",
+      "dialog": {
+        "approveTitle": "Approve Partner Application",
+        "rejectTitle": "Reject Partner Application",
+        "approveDescription": "Approve {{username}} as a partner",
+        "rejectDescription": "Reject {{username}}'s application",
+        "customCommissionRate": "Custom Commission Rate (Optional)",
+        "customCommissionHint": "Leave empty to use global default (10%)",
+        "rejectionReasonRequired": "Rejection Reason *",
+        "rejectionReasonPlaceholder": "Please provide a reason for rejection...",
+        "confirmApproval": "Confirm Approval",
+        "confirmRejection": "Confirm Rejection"
+      }
+    },
+    "partnerBonusMonitoring": {
+      "title": "Bonus System Monitoring",
+      "subtitle": "Real-time metrics and analytics for {{month}}",
+      "stats": {
+        "totalBonusesPaid": "Total Bonuses Paid",
+        "bonusesPaidThisMonth": "{{count}} bonuses paid this month",
+        "averagePerPartner": "Average Per Partner",
+        "acrossActivePartners": "Across {{count}} active partners",
+        "payoutSuccessRate": "Payout Success Rate",
+        "bonusesPaidOfTotal": "{{paid}} of {{total}} bonuses",
+        "emailDeliveryRate": "Email Delivery Rate",
+        "emailsSentOfTotal": "{{sent}} of {{total}} emails sent"
+      },
+      "statusBreakdown": {
+        "title": "Bonus Status Breakdown",
+        "description": "Current status of all bonuses this month"
+      },
+      "status": {
+        "paid": "Paid",
+        "calculated": "Calculated",
+        "pending": "Pending",
+        "failed": "Failed"
+      },
+      "weeklyTrend": {
+        "title": "Weekly Bonus Trend",
+        "description": "Last 12 weeks of bonus payments"
+      },
+      "charts": {
+        "totalBonuses": "Total Bonuses ($)",
+        "bonusCount": "Bonus Count"
+      },
+      "tierDistribution": {
+        "title": "Tier Distribution",
+        "description": "Bonuses by tier this month"
+      },
+      "topPartners": {
+        "title": "Top 10 Earning Partners",
+        "description": "Highest bonus earners this month"
+      },
+      "noData": "No bonus data available for this month yet.",
+      "emailStats": {
+        "title": "Email Notification Statistics",
+        "description": "Partner notification delivery metrics for this month",
+        "successfullySent": "Successfully Sent",
+        "failed": "Failed",
+        "totalAttempts": "Total Attempts",
+        "sent": "Sent"
+      }
+    },
+    "partnerBonusPayouts": {
+      "title": "Partner Bonus Payouts",
+      "subtitle": "Monitor and manage weekly bonus calculations and payouts",
+      "actions": {
+        "calculateBonuses": "Calculate Bonuses",
+        "processPayouts": "Process Payouts ({{count}})"
+      },
+      "stats": {
+        "pendingPayouts": "Pending Payouts",
+        "totalAmount": "${{amount}} total",
+        "bonusesPaid": "Bonuses Paid",
+        "thisMonth": "This month",
+        "totalPaid": "Total Paid",
+        "allTime": "All time",
+        "activePartners": "Active Partners",
+        "earningBonuses": "Earning bonuses",
+        "avgBonus": "Avg Bonus",
+        "perPayout": "Per payout"
+      },
+      "weeklyBonuses": {
+        "title": "Weekly Bonuses",
+        "description": "View and manage all partner bonus records"
+      },
+      "filters": {
+        "filterByStatus": "Filter by status",
+        "allStatuses": "All Statuses",
+        "filterByWeek": "Filter by week",
+        "allWeeks": "All Weeks"
+      },
+      "status": {
+        "pending": "Pending",
+        "ready": "Ready",
+        "paid": "Paid",
+        "failed": "Failed"
+      },
+      "table": {
+        "partner": "Partner",
+        "weekPeriod": "Week Period",
+        "totalSales": "Total Sales",
+        "tier": "Tier",
+        "bonusPercent": "Bonus %",
+        "bonusAmount": "Bonus Amount",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "loading": "Loading bonuses...",
+      "noRecords": {
+        "title": "No Bonus Records",
+        "noMatch": "No bonuses match your filters",
+        "getStarted": "Trigger a bonus calculation to get started"
+      },
+      "details": {
+        "title": "Bonus Details",
+        "description": "Complete information about this weekly bonus",
+        "partner": "Partner",
+        "weekPeriod": "Week Period",
+        "totalSales": "Total Sales",
+        "qualifiedTier": "Qualified Tier",
+        "bonusPercentage": "Bonus Percentage",
+        "bonusAmount": "Bonus Amount",
+        "status": "Status",
+        "paidAt": "Paid At",
+        "transactionId": "Transaction ID"
+      },
+      "toasts": {
+        "calculationComplete": "Calculation complete: {{count}} bonuses calculated",
+        "calculationFailed": "Failed to calculate bonuses: {{error}}",
+        "payoutComplete": "Payout complete: {{count}} bonuses paid",
+        "payoutFailed": "{{count}} bonuses failed. Check logs for details.",
+        "payoutProcessFailed": "Failed to process payouts: {{error}}"
+      }
+    },
+    "partnerBonusTiers": {
+      "title": "Partner Bonus Tiers",
+      "subtitle": "Configure weekly bonus tiers and percentages"
+    },
+    "partnerLeaderboard": {
+      "title": "Partner Leaderboard",
+      "subtitle": "Top performing partners by sales and bonuses"
+    },
+    "partnerLeaderboardSettings": {
+      "title": "Partner Leaderboard Settings",
+      "subtitle": "Control leaderboard visibility for partners"
+    },
+    "partnerProgramSettings": {
+      "title": "Partner Program Settings",
+      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard."
+    },
+    "voucherMonitoring": {
+      "title": "Voucher Monitoring",
+      "subtitle": "Track all voucher purchases and redemptions",
+      "searchPlaceholder": "Search by voucher code, partner, or redeemer...",
+      "filterByStatus": "Filter by status",
+      "allStatuses": "All Statuses",
+      "allVouchers": "All Vouchers",
+      "completeHistory": "Complete voucher transaction history",
+      "unknown": "Unknown",
+      "noVouchersFound": "No vouchers found",
+      "stats": {
+        "totalVouchers": "Total Vouchers",
+        "active": "Active",
+        "redeemed": "Redeemed",
+        "expired": "Expired",
+        "totalValue": "Total Value"
+      },
+      "status": {
+        "active": "Active",
+        "redeemed": "Redeemed",
+        "expired": "Expired"
+      },
+      "table": {
+        "voucherCode": "Voucher Code",
+        "amount": "Amount",
+        "partner": "Partner",
+        "redeemedBy": "Redeemed By",
+        "status": "Status",
+        "created": "Created",
+        "redeemed": "Redeemed"
+      }
+    },
+    "userDetail": {
+      "backToUsers": "Back to Users",
+      "errorLoadingUser": "Error Loading User",
+      "failedToLoadUserDetails": "Failed to load user details. Please try again.",
+      "tryAgain": "Try Again",
+      "userNotFound": "User not found",
+      "admin": "Admin",
+      "moderator": "Moderator",
+      "masterLogin": "Master Login",
+      "tabs": {
+        "overview": "Overview",
+        "financial": "Financial",
+        "tasks": "Tasks & Activity",
+        "referrals": "Referrals",
+        "transactions": "Transactions",
+        "activity": "Activity Logs"
+      },
+      "masterLoginUrlGenerated": "Master Login URL Generated",
+      "masterLoginUrlDescription": "Use this URL to log in as this user. The link expires in 15 minutes and can only be used once.",
+      "urlCopied": "URL copied to clipboard!",
+      "copyUrl": "Copy URL",
+      "openInNewTab": "Open in New Tab",
+      "securityNotice": "Security Notice",
+      "securityNoticeDescription": "This URL provides direct access to the user's account. Keep it secure and do not share it.",
+      "masterLoginUrlGeneratedSuccess": "Master login URL generated!",
+      "failedToGenerateMasterLogin": "Failed to generate master login",
+      "activityLogs": "Activity Logs",
+      "noActivityLogsFound": "No activity logs found",
+      "failedToLoadActivityLogs": "Failed to load activity logs"
+    },
+    "aiTasksGenerate": {
+      "title": "Generate AI Tasks",
+      "subtitle": "Use AI to automatically generate training tasks",
+      "category": "Category",
+      "selectCategory": "Select category",
+      "difficulty": "Difficulty",
+      "selectDifficulty": "Select difficulty",
+      "numberOfTasks": "Number of Tasks",
+      "generateBetween": "Generate between 1 and 25 tasks at once",
+      "generating": "Generating...",
+      "generateTasks": "Generate Tasks",
+      "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
+      "errorQuantityRange": "Quantity must be between 1 and 25",
+      "successGenerated": "Successfully generated {{count}} tasks!",
+      "errorFailedToGenerate": "Failed to generate tasks"
+    },
+    "aiTasksManage": {
+      "title": "AI Task Management",
+      "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "generateTasks": "Generate Tasks",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "difficulty": "Difficulty",
+      "allDifficulties": "All Difficulties",
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "status": "Status",
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "optionA": "Option A:",
+      "optionB": "Option B:",
+      "created": "Created",
+      "noTasksFound": "No tasks found",
+      "generateFirstTasks": "Generate Your First Tasks",
+      "errorFailedToLoad": "Failed to load tasks",
+      "taskDeactivated": "Task deactivated",
+      "taskActivated": "Task activated",
+      "errorFailedToUpdateStatus": "Failed to update task status",
+      "confirmDelete": "Are you sure you want to delete this task?",
+      "taskDeleted": "Task deleted",
+      "errorFailedToDelete": "Failed to delete task",
+      "deleteTask": "Delete Task",
+      "activateTask": "Activate Task",
+      "deactivateTask": "Deactivate Task"
+    },
+    "loginMessage": {
+      "title": "Login Message Configuration",
+      "subtitle": "Customize the welcome message displayed to users after they log in",
+      "howItWorks": "How it works",
+      "howItWorksDescription": "This message appears as a pop-up dialog immediately after users log in. You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session. Use the rich text editor toolbar to format your message with bold, italic, headings, lists, and links.",
+      "loading": "Loading configuration...",
+      "messageConfiguration": {
+        "title": "Message Configuration",
+        "description": "Configure the login message content and behavior",
+        "enableLoginMessage": "Enable Login Message",
+        "enableDescription": "Show message to users after they log in",
+        "title": "Title",
+        "titlePlaceholder": "Welcome to FineEarn!",
+        "titleHint": "A short, catchy title for the message (max 100 characters)",
+        "messageBody": "Message Body",
+        "bodyPlaceholder": "We're excited to have you here. Start earning today by completing AI training tasks!"
+      },
+      "behaviorOptions": {
+        "title": "Behavior Options",
+        "allowDismissal": "Allow Dismissal",
+        "allowDismissalDescription": "Let users close the message dialog",
+        "showOncePerSession": "Show Once Per Session",
+        "showOncePerSessionDescription": "Only display once per 24-hour period",
+        "displayPriority": "Display Priority",
+        "priorityHint": "Priority level (for future use with multiple messages)"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "preview": {
+        "livePreview": "Live Preview",
+        "hide": "Hide",
+        "show": "Show",
+        "preview": "Preview",
+        "description": "See how the message will appear to users",
+        "visual": "Visual",
+        "sourceCode": "Source Code",
+        "dismissible": "Dismissible",
+        "showOnceNote": "ℹ️ Will only show once per 24-hour period",
+        "priority": "Priority",
+        "htmlSourceCode": "HTML Source Code",
+        "htmlCopied": "HTML copied to clipboard!",
+        "disabled": "Login message is currently",
+        "disabledText": "disabled",
+        "enableToShow": "Enable it to show a preview."
+      },
+      "bestPractices": {
+        "title": "Best Practices",
+        "tip1": "Keep the title short and welcoming (under 50 chars is ideal)",
+        "tip2": "Use formatting sparingly for better readability",
+        "tip3": "Include emojis to make it more engaging",
+        "tip4": "Preview your changes before saving",
+        "tip5": "Test with \"Show Preview\" before saving",
+        "tip6": "Enable \"Show Once Per Session\" to avoid annoying users",
+        "tip7": "Make it dismissible unless it's critical information"
+      },
+      "actions": {
+        "saveChanges": "Save Changes"
+      },
+      "success": {
+        "updated": "Login message updated successfully!",
+        "reset": "Reset to default configuration"
+      },
+      "errors": {
+        "failedToSave": "Failed to save: {{message}}"
+      },
+      "validation": {
+        "titleRequired": "Title is required",
+        "titleMaxLength": "Title must be 100 characters or less",
+        "bodyRequired": "Message body is required",
+        "bodyMaxLength": "Message body must be 5000 characters or less"
+      },
+      "confirm": {
+        "reset": "Are you sure you want to reset to default settings? This cannot be undone."
+      }
+    },
+    "toasts": {
+      "enterValidAmount": "Please enter a valid amount greater than $0",
+      "maxVoucherAmount": "Maximum voucher amount is $10,000",
+      "enterRecipientUsername": "Please enter the recipient's username",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "waitVerifyUsername": "Please wait while we verify the username",
+      "usernameNotFound": "Username not found. Please check and try again.",
+      "unableToLoadProfile": "Unable to load your profile. Please refresh the page.",
+      "insufficientBalance": "Insufficient balance. You need {{amount}} more in your deposit wallet.",
+      "fillPaymentMethodFields": "Please fill in all payment method fields",
+      "voucherPurchaseSuccess": "Voucher purchased successfully!",
+      "voucherPurchaseFailed": "Failed to purchase voucher. Please try again.",
+      "failedToLoadCPAYCheckouts": "Failed to load CPAY checkouts",
+      "failedToLoadPayoutConfig": "Failed to load payout configuration",
+      "paymentProcessorDeleted": "Payment processor deleted",
+      "failedToDeletePaymentProcessor": "Failed to delete payment processor",
+      "failedToLoadEmailHistory": "Failed to load email history",
+      "failedToLoadBulkEmailJobs": "Failed to load bulk email jobs",
+      "deliveryStatusUpdated": "Delivery status updated",
+      "jobCancelledSuccessfully": "Job cancelled successfully",
+      "failedToCancelJob": "Failed to cancel job: {{error}}",
+      "noRemainingRecipients": "No remaining recipients to process",
+      "failedToRetryJob": "Failed to retry job: {{error}}",
+      "triggeringQueueProcessing": "Triggering queue processing...",
+      "queueProcessingTriggered": "Queue processing triggered manually",
+      "failedToTriggerQueue": "Failed to trigger queue: {{error}}",
+      "bonusTierCreatedSuccessfully": "Bonus tier created successfully",
+      "bonusTierUpdatedSuccessfully": "Bonus tier updated successfully",
+      "bonusTierDeletedSuccessfully": "Bonus tier deleted successfully",
+      "pleaseFillAllRequiredFields": "Please fill in all required fields",
+      "maxSalesMustBeGreaterThanMin": "Maximum sales must be greater than minimum sales",
+      "bonusPercentageMustBeValid": "Bonus percentage must be between 0 and 100",
+      "leaderboardSettingsUpdatedSuccessfully": "Leaderboard settings updated successfully",
+      "paymentFailedOrCancelled": "Payment failed or was cancelled.",
+      "useInlineEditingInOverviewTab": "Use inline editing in Overview tab",
+      "resetLimitsComingSoon": "Reset limits coming soon",
+      "noResponseFromServer": "No response from server. Please try again.",
+      "emailDeliveryFailed": "Email delivery failed",
+      "verificationCodeSentCheckEmail": "Verification code sent! Check your email (including spam/junk folder).",
+      "failedToSendVerificationCode": "Failed to send verification code. Please try again.",
+      "emailVerifiedSuccessfully": "Email verified successfully!",
+      "networkErrorWhileLoadingProfile": "Network error while loading profile. Some features may be limited.",
+      "profileNotFoundContactSupport": "Profile not found. Please contact support.",
+      "failedToLoadProfileRefreshPage": "Failed to load your profile. Please refresh the page.",
+      "profileUpdatedSuccessfully": "Profile updated successfully",
+      "emailUpdatedSuccessfully": "Email updated successfully",
+      "walletBalanceAdjustedSuccessfully": "Wallet balance adjusted successfully",
+      "membershipPlanUpdatedSuccessfully": "Membership plan updated successfully",
+      "userBannedSuccessfully": "User banned successfully",
+      "dailyLimitsResetSuccessfully": "Daily limits reset successfully",
+      "uplineChangedSuccessfully": "Upline changed successfully. Future commissions will go to the new upline.",
+      "bulkPlanUpdateCompleted": "Bulk plan update completed",
+      "bulkSuspendCompleted": "Bulk suspend completed",
+      "roleAssignedSuccessfully": "Role assigned successfully",
+      "roleRemovedSuccessfully": "Role removed successfully",
+      "authenticationRequired": "Authentication required. Please log in.",
+      "accessDeniedAdminRequired": "Access denied. Admin privileges required."
+    },
+    "contentManagement": {
+      "feeSavingsBanner": {
+        "title": "Fee Savings Banner Settings",
+        "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "Fee savings banner settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "configuration": {
+          "title": "Banner Configuration",
+          "description": "Control visibility and customize the content of the fee savings banner",
+          "showBanner": "Show Banner",
+          "showBannerDescription": "Toggle visibility of the fee savings banner on the wallet page and deposit dialog",
+          "saveBannerSettings": "Save Banner Settings",
+          "bannerTitle": "Banner Title",
+          "recommendedBadge": "Recommended Badge Text",
+          "subtitle": "Subtitle",
+          "firstPaymentOption": "First Payment Option",
+          "secondPaymentOption": "Second Payment Option",
+          "optionLabel": "Option Label",
+          "highlightText": "Highlight Text",
+          "benefitsText": "Benefits Text",
+          "footerText": "Footer Text"
+        },
+        "resetToDefaults": "Reset to Defaults",
+        "successMessage": "Settings saved successfully! Changes will be reflected on the wallet page and deposit dialog.",
+        "errorMessage": "Failed to save settings. Please try again."
+      }
     }
   },
   "howItWorks": {
@@ -1065,6 +2469,21 @@
         "pageLoad": "There was an error loading the partner application page. Please try again."
       }
     },
+    "toasts": {
+      "applicationSubmittedSuccessfully": "Application submitted successfully! We will review it within 24 hours.",
+      "voucherPurchasedSuccessfully": "Voucher purchased successfully! Code sent to recipient.",
+      "paymentMethodsUpdatedSuccessfully": "Payment methods updated successfully!",
+      "failedToUpdatePaymentMethods": "Failed to update payment methods",
+      "draftRestored": "Draft restored",
+      "draftRestoredDescription": "Your previous application progress has been restored.",
+      "pleaseCompleteAllRequiredFields": "Please complete all required fields",
+      "applicationSubmittedDescription": "We'll review your application and get back to you soon.",
+      "failedToSubmitApplication": "Failed to submit application",
+      "stepMarkedAsComplete": "Step marked as complete!",
+      "failedToUpdateStep": "Failed to update step",
+      "onboardingChecklistDismissed": "Onboarding checklist dismissed",
+      "failedToDismissChecklist": "Failed to dismiss checklist"
+    },
     "applicationStatus": {
       "title": "Partner Application Status",
       "subtitle": "View your partner application details and current status",
@@ -1202,18 +2621,448 @@
         "received": "Received"
       }
     },
-    "toasts": {
-      "enterValidAmount": "Please enter a valid amount greater than $0",
-      "maxVoucherAmount": "Maximum voucher amount is $10,000",
-      "enterRecipientUsername": "Please enter the recipient's username",
-      "usernameMinLength": "Username must be at least 3 characters",
-      "waitVerifyUsername": "Please wait while we verify the username",
-      "usernameNotFound": "Username not found. Please check and try again.",
-      "unableToLoadProfile": "Unable to load your profile. Please refresh the page.",
-      "insufficientBalance": "Insufficient balance. You need {{amount}} more in your deposit wallet.",
-      "fillPaymentMethodFields": "Please fill in all payment method fields",
-      "voucherPurchaseSuccess": "Voucher purchased successfully!",
-      "voucherPurchaseFailed": "Failed to purchase voucher. Please try again."
+    "bulkEmail": {
+      "title": "Bulk Email System",
+      "subtitle": "Send emails to users based on various criteria",
+      "backToAdmin": "Back to Admin",
+      "tabs": {
+        "compose": "Compose",
+        "history": "History",
+        "bestPractices": "Best Practices"
+      },
+      "compose": {
+        "title": "Compose Email",
+        "description": "Create and send bulk emails to your users",
+        "subject": "Subject *",
+        "subjectPlaceholder": "Email subject",
+        "body": "Email Body *",
+        "bodyPlaceholder": "Compose your email content. Use {{variable}} for personalization.",
+        "bodyHint": "💡 See the \"Available Variables\" section in the sidebar for all personalization options",
+        "previewEmail": "Preview Email",
+        "sendOptions": "Send Options",
+        "sendNow": "Send Now",
+        "schedule": "Schedule",
+        "sendImmediately": "Email will be sent immediately",
+        "date": "Date",
+        "time": "Time",
+        "scheduleEmail": "Schedule Email",
+        "sendEmail": "Send Email"
+      },
+      "recipients": {
+        "label": "Recipients *",
+        "calculating": "Calculating...",
+        "willSendTo": "📧 Will send to: <strong>{{count}}</strong> {{count, plural, one {user} other {users}}}",
+        "noRecipientsFound": "No recipients found with the current selection. Please adjust your filters."
+      },
+      "recipientTypes": {
+        "all": "All Users",
+        "byPlan": "By Plan",
+        "byCountry": "By Country",
+        "byUsername": "By Username",
+        "byEmail": "By Email",
+        "allDescription": "Email will be sent to all registered users",
+        "selectPlan": "Select membership plan",
+        "loadingPlans": "Loading plans...",
+        "noPlansFound": "No plans with users found",
+        "users": "{{count, plural, one {user} other {users}}}",
+        "selectCountry": "Select a country",
+        "loadingCountries": "Loading countries...",
+        "noCountriesFound": "No countries with users found",
+        "countriesSortedByCount": "💡 Countries are sorted by user count (highest first)",
+        "enterUsername": "Enter username",
+        "usernameHint": "💡 Enter a single username (e.g., john_doe)",
+        "enterEmail": "Enter email address",
+        "emailHint": "💡 Send to any email address (even if not registered on the platform)"
+      },
+      "usernameValidation": {
+        "failed": "Failed to validate username. Please try again.",
+        "notFound": "Username not found. Please check and try again.",
+        "accountStatus": "This user account is {{status}}.",
+        "unexpectedError": "An unexpected error occurred.",
+        "checking": "Checking username...",
+        "validUserFound": "Valid user found"
+      },
+      "validation": {
+        "subjectAndBodyRequired": "Please fill in subject and body",
+        "selectPlan": "Please select a membership plan",
+        "enterCountry": "Please enter a country",
+        "enterUsername": "Please enter a username",
+        "validUsernameRequired": "Please enter a valid username before sending",
+        "enterEmail": "Please enter an email address",
+        "validEmailRequired": "Please enter a valid email address",
+        "noRecipients": "No recipients found matching criteria",
+        "selectScheduleDateTime": "Please select schedule date and time"
+      },
+      "errors": {
+        "failedToCalculateRecipients": "Failed to calculate recipient count",
+        "failedToSend": "Failed to send email",
+        "duplicateCampaign": "Duplicate Email Campaign Detected",
+        "duplicateCampaignDescription": "A similar email campaign already exists (Status: {{status}}, {{recipients}} recipients). Created {{timeText}}. Please wait for it to complete or modify your email content."
+      },
+      "timeAgo": {
+        "minutes": "{{count}} minute{{count, plural, one {} other {s}}} ago",
+        "hours": "{{count}} hour{{count, plural, one {} other {s}}} ago"
+      },
+      "success": {
+        "emailScheduled": "Email scheduled for {{date}}",
+        "jobCreated": "✅ Bulk email job created! Processing {{recipients}} recipients in background.",
+        "jobCreatedDescription": "Estimated completion: {{estimatedTime}}. View progress in History tab.",
+        "emailSent": "Email sent successfully!"
+      },
+      "estimatedTime": {
+        "hours": "{{count}} hours",
+        "minutes": "{{count}} minutes"
+      },
+      "sidebar": {
+        "recipients": "Recipients",
+        "usersWillReceive": "users will receive this email",
+        "professionalTemplate": "Professional Template",
+        "professionalTemplateDescription": "All emails are automatically wrapped in a professional template with:",
+        "templateFeature1": "Branded gradient header",
+        "templateFeature2": "Responsive design",
+        "templateFeature3": "Professional footer",
+        "templateFeature4": "Optimized for inbox delivery",
+        "tips": "Tips",
+        "tip1": "Test with a small group first",
+        "tip2": "Schedule emails for optimal times",
+        "tip3": "Keep content clear and concise",
+        "tip4": "Use personalization variables"
+      },
+      "preview": {
+        "title": "Email Preview",
+        "description": "This is how your email will appear to recipients. Variables are shown with sample data.",
+        "subject": "Subject",
+        "note": "Note",
+        "variablesNote": "Variables like {{username}} and {{email}} will be replaced with actual recipient data when sent.",
+        "body": "Email Body",
+        "willSendTo": "This email will be sent to <strong>{{count}}</strong> {{count, plural, one {recipient} other {recipients}}}.",
+        "scheduledFor": "Scheduled for:",
+        "closePreview": "Close Preview",
+        "scheduleNow": "Schedule Now",
+        "sendNow": "Send Now"
+      },
+      "history": {
+        "emailLogs": "Email Logs",
+        "queue": "Queue",
+        "processing": "Processing",
+        "complete": "Complete",
+        "emailHistory": {
+          "title": "Email History",
+          "subtitle": "View and track all emails sent from the platform",
+          "searchPlaceholder": "Search by email or subject...",
+          "filterByStatus": "Filter by status",
+          "allStatus": "All Status",
+          "sent": "Sent",
+          "failed": "Failed",
+          "pending": "Pending",
+          "showing": "Showing {{current}} of {{total}} emails",
+          "noEmailsFound": "No emails found",
+          "loading": "Loading email history...",
+          "columns": {
+            "date": "Date",
+            "recipient": "Recipient",
+            "subject": "Subject",
+            "status": "Status",
+            "successRate": "Success Rate",
+            "resendId": "Resend ID",
+            "actions": "Actions"
+          },
+          "notSent": "Not sent",
+          "pagination": {
+            "page": "Page {{current}} of {{total}}",
+            "previous": "Previous",
+            "next": "Next"
+          },
+          "emailDetails": {
+            "title": "Email Details",
+            "subtitle": "Full email information and delivery status",
+            "recipient": "Recipient",
+            "subject": "Subject",
+            "status": "Status",
+            "sentAt": "Sent At",
+            "notSentYet": "Not sent yet",
+            "resendId": "Resend ID",
+            "deliveryStatus": "Delivery Status",
+            "lastEvent": "Last Event",
+            "checked": "Checked",
+            "errorMessage": "Error Message",
+            "emailBody": "Email Body"
+          }
+        },
+        "queueTab": {
+          "title": "Queued Jobs",
+          "subtitle": "Bulk email jobs waiting to be processed",
+          "processQueueNow": "Process Queue Now",
+          "loading": "Loading queued jobs...",
+          "noJobs": "No jobs in queue",
+          "totalRecipients": "Total Recipients",
+          "created": "Created",
+          "batchId": "Batch ID",
+          "cancel": "Cancel"
+        },
+        "processingTab": {
+          "title": "Processing Jobs",
+          "subtitle": "Bulk email jobs currently being sent",
+          "processQueueNow": "Process Queue Now",
+          "loading": "Loading processing jobs...",
+          "noJobs": "No jobs currently processing",
+          "batchId": "Batch ID",
+          "cancel": "Cancel",
+          "progress": "Progress",
+          "remaining": "remaining",
+          "successful": "Successful",
+          "failed": "Failed",
+          "successRate": "Success Rate",
+          "started": "Started",
+          "lastUpdate": "Last update"
+        },
+        "completeTab": {
+          "title": "Completed Jobs",
+          "subtitle": "Bulk email jobs that have finished processing",
+          "loading": "Loading completed jobs...",
+          "noJobs": "No completed jobs yet",
+          "total": "Total",
+          "successful": "Successful",
+          "failed": "Failed",
+          "successRate": "Success Rate",
+          "created": "Created",
+          "started": "Started",
+          "completed": "Completed",
+          "duration": "Duration",
+          "minutes": "minutes",
+          "error": "Error",
+          "retry": "Retry"
+        }
+      },
+      "bestPractices": {
+        "title": "Email Deliverability Best Practices",
+        "subtitle": "Ensure your emails reach recipients and avoid spam filters",
+        "domainVerification": {
+          "title": "Required: Domain Verification (SPF/DKIM)",
+          "description": "To prevent emails from going to spam, you <strong>must</strong> verify your domain with Resend and configure SPF/DKIM records.",
+          "step1": {
+            "title": "1. Add your domain in Resend",
+            "description": "Go to Resend Dashboard → Domains → Add Domain"
+          },
+          "step2": {
+            "title": "2. Add DNS records to your domain",
+            "description": "Add the SPF, DKIM, and DMARC records provided by Resend"
+          },
+          "step3": {
+            "title": "3. Wait for verification",
+            "description": "DNS propagation can take up to 48 hours"
+          },
+          "openResendDomains": "Open Resend Domains"
+        },
+        "currentConfiguration": {
+          "title": "Current Email Configuration",
+          "fromAddress": "From Address:",
+          "replyTo": "Reply-To:",
+          "provider": "Provider:",
+          "dynamic": "Dynamic (from platform config)",
+          "resend": "Resend",
+          "note": "Email settings are configured in Email Settings under Communications"
+        },
+        "spamPrevention": {
+          "title": "Spam Prevention Checklist",
+          "tip1": "Use a verified domain (not onboarding@resend.dev)",
+          "tip2": "Include unsubscribe links in marketing emails",
+          "tip3": "Maintain good text-to-image ratio in email body",
+          "tip4": "Avoid spam trigger words (FREE, URGENT, ACT NOW, etc.)",
+          "tip5": "Send from a consistent sender name and address",
+          "tip6": "Warm up new domains gradually (start with small batches)",
+          "tip7": "Monitor bounce rates and remove invalid addresses"
+        },
+        "contentGuidelines": {
+          "title": "Content Best Practices",
+          "tip1": "Write clear, relevant subject lines (avoid ALL CAPS)",
+          "tip2": "Personalize with recipient's name using variables",
+          "tip3": "Include your company name and address in footer",
+          "tip4": "Balance HTML with plain text alternative",
+          "tip5": "Test emails before sending to large groups",
+          "tip6": "Keep email size under 100KB for best deliverability"
+        },
+        "monitoring": {
+          "title": "Monitor Your Email Performance",
+          "description": "Use the History tab to track delivery status, monitor bounce rates, and identify issues. Check delivery status regularly using the Resend API integration."
+        }
+      }
+    },
+    "emailSettings": {
+      "title": "Email Settings",
+      "subtitle": "Configure email sending settings and verification reminders",
+      "breadcrumb": {
+        "communications": "Communications",
+        "emailSettings": "Email Settings"
+      },
+      "actions": {
+        "resetToDefaults": "Reset to Defaults",
+        "sendTestEmail": "Send Test Email",
+        "saveSettings": "Save Settings"
+      },
+      "senderInformation": {
+        "title": "Sender Information",
+        "description": "Configure who emails are sent from. The from_address must be verified in Resend.",
+        "fromAddress": "From Address *",
+        "fromName": "From Name *"
+      },
+      "replyToInformation": {
+        "title": "Reply-To Information",
+        "description": "Where user replies will be sent to.",
+        "replyToAddress": "Reply-To Address *",
+        "replyToName": "Reply-To Name *"
+      },
+      "platformInformation": {
+        "title": "Platform Information",
+        "description": "Basic platform details used in emails and templates.",
+        "platformName": "Platform Name *",
+        "platformUrl": "Platform URL *",
+        "supportEmail": "Support Email *",
+        "adminNotificationEmail": "Admin Notification Email *",
+        "footerText": "Email Footer Text"
+      },
+      "testEmailSent": "Test email sent successfully! Check your inbox.",
+      "toasts": {
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "Email settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "testEmailSent": "Test email sent",
+        "testEmailSentDescription": "Check your inbox for the test email.",
+        "errorSendingTest": "Error sending test email",
+        "validationError": "Validation error",
+        "validationErrorDescription": "Please fix the errors before saving.",
+        "settingsReset": "Settings reset",
+        "settingsResetDescription": "Email settings have been reset to defaults."
+      }
+    },
+    "emailTemplates": {
+      "title": "Email Template Management",
+      "subtitle": "Create and manage reusable email templates",
+      "backToAdmin": "Back to Admin",
+      "loading": "Loading templates...",
+      "cardTitle": "Email Templates",
+      "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
+      "addTemplate": "Add Template",
+      "edit": "Edit",
+      "create": "Create",
+      "emailTemplate": "Email Template",
+      "configureTemplate": "Configure template details and content",
+      "form": {
+        "templateName": "Template Name *",
+        "templateNamePlaceholder": "e.g., password_reset_notification",
+        "templateType": "Template Type *",
+        "selectTemplateType": "Select template type",
+        "emailSubject": "Email Subject *",
+        "emailSubjectPlaceholder": "e.g., Reset Your Password",
+        "subjectVariablesHint": "You can use variables like {{username}} in the subject",
+        "emailBody": "Email Body *",
+        "emailBodyPlaceholder": "Compose your email content here. Use {{variable}} for placeholders.",
+        "proTips": "Pro Tips:",
+        "proTip1": "Toggle \"Professional Template\" above for beautiful email styling",
+        "proTip2": "Use the ✨ button in toolbar to insert styled buttons",
+        "proTip3": "Click variables to copy, or use + button to insert directly",
+        "activeTemplate": "Active Template"
+      },
+      "availableVariables": "Available Variables",
+      "variablesHint": "Click to copy or use + to insert directly",
+      "noTemplatesFound": "No templates found",
+      "active": "Active",
+      "inactive": "Inactive",
+      "editTemplate": "Edit Template",
+      "preview": {
+        "title": "Template Preview",
+        "visualPreview": "Visual Preview",
+        "htmlCode": "HTML Code",
+        "emailSubject": "Email Subject",
+        "emailBody": "Email Body",
+        "sampleDataNote": "Preview shows sample data for all variables",
+        "variablesUsed": "Variables Used",
+        "rawHtmlCode": "Raw HTML Code",
+        "htmlCopied": "HTML code copied to clipboard!",
+        "copyHtmlCode": "Copy HTML Code"
+      },
+      "testEmail": {
+        "title": "Send Test Email",
+        "subjectPreview": "Subject Preview",
+        "availableVariables": "Available Variables",
+        "variablesNote": "These variables will be replaced with sample data in the test email.",
+        "testEmailAddress": "Test Email Address *",
+        "emailPlaceholder": "your.email@example.com",
+        "emailHint": "Enter the email address where you want to receive the test email.",
+        "sampleData": "Sample Data",
+        "sampleDataDescription": "The test email will use predefined sample data for all variables:",
+        "sampleUsername": "Username: TestUser",
+        "sampleEmail": "Email: {{email}}",
+        "yourEmail": "your email",
+        "sampleFullName": "Full Name: Test User",
+        "sampleLinks": "Links: Sample URLs with test tokens",
+        "samplePlanDetails": "Plan details: Premium Plan, $500.00 earnings",
+        "sending": "Sending...",
+        "sendTestEmail": "Send Test Email",
+        "invalidEmail": "Please enter a valid email address",
+        "success": "Test email sent to {{email}}!",
+        "successDescription": "Check your inbox to verify the email.",
+        "failed": "Failed to send test email",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "success": {
+        "templateUpdated": "Template updated successfully",
+        "templateCreated": "Template created successfully",
+        "templateDeleted": "Template deleted",
+        "templateActivated": "Template activated",
+        "templateDeactivated": "Template deactivated"
+      },
+      "errors": {
+        "failedToLoad": "Failed to load email templates",
+        "failedToSave": "Failed to save template",
+        "failedToDelete": "Failed to delete template",
+        "failedToUpdate": "Failed to update template"
+      },
+      "validation": {
+        "fillAllFields": "Please fill in all required fields",
+        "invalidJsonFormat": "Invalid JSON format for variables. Use format: [\"var1\", \"var2\"]"
+      },
+      "confirm": {
+        "delete": "Are you sure you want to delete this template?"
+      }
+    },
+    "emailTemplateGlobalSettings": {
+      "title": "Global Email Template",
+      "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "availableVariables": "Available Variables",
+      "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
+      "tabs": {
+        "editTemplate": "Edit Template",
+        "preview": "Preview"
+      },
+      "template": {
+        "title": "Email Template HTML",
+        "description": "Edit the HTML template. The {{content}} variable will be replaced with the actual email body.",
+        "htmlTemplate": "HTML Template",
+        "placeholder": "Enter HTML template...",
+        "hint": "This template wraps all emails. Make sure to include {{content}} where the email body should appear."
+      },
+      "preview": {
+        "title": "Email Preview",
+        "description": "Preview how the template looks with sample data"
+      },
+      "changesNote": "Changes are applied to all emails sent from the platform immediately after saving.",
+      "actions": {
+        "resetToDefaults": "Reset to Defaults",
+        "saveTemplate": "Save Template"
+      },
+      "success": {
+        "templateSaved": "Template saved successfully! All future emails will use this template."
+      },
+      "errors": {
+        "failedToSave": "Failed to save template. Please try again."
+      },
+      "toasts": {
+        "templateSaved": "Template saved",
+        "templateSavedDescription": "Global email template has been updated successfully.",
+        "errorSaving": "Error saving template",
+        "errorSavingDescription": "Failed to save template. Please try again."
+      }
     }
   },
   "components": {
@@ -1388,6 +3237,194 @@
       "rankDeleted": "Rank deleted successfully",
       "failedToDeleteRank": "Failed to delete rank",
       "invalidScheduleMissingDays": "Invalid schedule: Missing days detected. Please refresh the page."
+    },
+    "influencerInvites": {
+      "title": "Influencer Invites",
+      "subtitle": "Send personalized invitations to potential influencer partners",
+      "backToAdmin": "Back to Admin",
+      "templateNotFound": "Influencer invite template not found",
+      "templateNotFoundContact": "Influencer invite template not found. Please contact support.",
+      "failedToLoadTemplate": "Failed to load email template",
+      "fillEmailAndName": "Please fill in email and influencer name",
+      "invalidEmail": "Please enter a valid email address",
+      "inviteSentSuccess": "Influencer invite sent successfully to {{email}}!",
+      "failedToSend": "Failed to send invite",
+      "tabs": {
+        "compose": "Compose",
+        "history": "History",
+        "bestPractices": "Best Practices"
+      },
+      "sendInvite": "Send Influencer Invite",
+      "sendInviteDescription": "Invite potential partners to join your influencer program",
+      "influencerEmail": "Influencer Email *",
+      "emailPlaceholder": "influencer@example.com",
+      "influencerName": "Influencer Name *",
+      "namePlaceholder": "John Doe",
+      "commissionRate": "Commission Rate (%)",
+      "commissionRateHint": "Default: 15% - Adjust based on partnership tier",
+      "template": "Template",
+      "subject": "Subject",
+      "personalMessage": "Personal Message (Optional)",
+      "personalMessagePlaceholder": "Add a personal note to the invitation...",
+      "personalMessageHint": "This will appear at the top of the email as a highlighted message",
+      "personalMessageLabel": "Personal Message",
+      "templateVariables": "Template Variables",
+      "templateVariablesDescription": "The template automatically includes: influencer name, commission rate, referral link, and support contact",
+      "previewEmail": "Preview Email",
+      "sending": "Sending...",
+      "sendInviteButton": "Send Invite",
+      "templateInfo": "Template Info",
+      "templateName": "Template Name",
+      "subjectLine": "Subject Line",
+      "variables": "Variables",
+      "variablesCount": "{{count}} variables",
+      "bestPractices": "Best Practices",
+      "bestPractice1": "Personalize with influencer's name",
+      "bestPractice2": "Adjust commission rate based on tier",
+      "bestPractice3": "Add a personal touch with custom message",
+      "bestPractice4": "Preview before sending",
+      "bestPractice5": "Follow up within 48 hours",
+      "emailPreview": "Email Preview",
+      "emailPreviewDescription": "Review how the influencer invite will appear",
+      "to": "To",
+      "emailBody": "Email Body",
+      "closePreview": "Close Preview"
+    },
+    "ipstackSettings": {
+      "title": "IPStack Geolocation Settings",
+      "description": "Configure IPStack API key for user IP address and geolocation detection",
+      "breadcrumbSettings": "Settings",
+      "breadcrumbIPStack": "IPStack Configuration",
+      "info": "IPStack is used to detect user IP addresses and map them to countries during registration and login. Get your API key from",
+      "ipstackDashboard": "IPStack Dashboard",
+      "apiAccessKey": "API Access Key",
+      "apiKeyPlaceholder": "Enter your IPStack API access key",
+      "apiKeyHint": "Your IPStack API access key. This key is stored securely in the database.",
+      "settingsSaved": "Settings saved",
+      "settingsSavedDescription": "IPStack API key has been updated successfully.",
+      "errorSaving": "Error saving settings",
+      "validation": {
+        "apiKeyRequired": "API key is required",
+        "apiKeyTooLong": "API key too long"
+      },
+      "validationError": "Validation error",
+      "validationErrorDescription": "Please fix the errors before saving.",
+      "apiKeyRequired": "API key required",
+      "apiKeyRequiredDescription": "Please enter an API key before testing.",
+      "testSuccessMessage": "✅ API key is valid! Test IP (8.8.8.8) resolved to: {{countryName}} ({{countryCode}})",
+      "testSuccessful": "Test successful",
+      "testSuccessfulDescription": "IPStack API key is working correctly.",
+      "testFailedMessage": "❌ Test failed: {{error}}",
+      "testFailed": "Test failed",
+      "testing": "Testing...",
+      "testApiKey": "Test API Key",
+      "saveSettings": "Save Settings",
+      "howItWorks": "How It Works",
+      "howItWorks1": "IPStack detects user IP addresses during registration and login",
+      "howItWorks2": "IP addresses are mapped to countries and stored in user profiles",
+      "howItWorks3": "Location data is displayed in the admin panel for security monitoring",
+      "howItWorks4": "API calls are cached for 1 hour to reduce usage and improve performance"
+    },
+    "systemSecrets": {
+      "title": "System Secrets",
+      "subtitle": "Manage API keys and credentials for platform integrations",
+      "breadcrumbSecurity": "Security",
+      "breadcrumbSystemSecrets": "System Secrets",
+      "discardChanges": "Discard Changes",
+      "saveSecrets": "Save Secrets",
+      "securityWarning": "Security Warning",
+      "securityWarningDescription": "These keys provide access to sensitive services. Changes take effect immediately across all system components. If a key is left empty, the system will fall back to the environment variables configured in Supabase.",
+      "secretsSaved": "Secrets saved",
+      "secretsSavedDescription": "System credentials have been updated successfully.",
+      "errorSaving": "Error saving secrets",
+      "changesDiscarded": "Changes discarded",
+      "changesDiscardedDescription": "Settings have been reverted to the last saved state.",
+      "tabs": {
+        "ai": "AI (Gemini)",
+        "payment": "Payment (CPAY)",
+        "email": "Email (Resend)",
+        "geo": "Geo (IPStack)",
+        "currency": "Currency"
+      },
+      "gemini": {
+        "title": "Google Gemini API",
+        "description": "Used for automated AI task generation",
+        "apiKey": "API Key",
+        "apiKeyPlaceholder": "Enter Gemini API Key"
+      },
+      "cpay": {
+        "title": "CPAY Payment Processor",
+        "description": "Credentials for automated withdrawals and wallet management",
+        "walletId": "Wallet ID",
+        "walletIdPlaceholder": "Enter CPAY Wallet ID",
+        "usdtTokenId": "USDT Token ID",
+        "usdtTokenIdPlaceholder": "Enter USDT Token ID (24 chars)",
+        "publicKey": "API Public Key",
+        "publicKeyPlaceholder": "Enter CPAY Public Key",
+        "privateKey": "API Private Key",
+        "privateKeyPlaceholder": "Enter CPAY Private Key",
+        "passphrase": "Wallet Passphrase",
+        "passphrasePlaceholder": "Enter Wallet Passphrase"
+      },
+      "resend": {
+        "title": "Resend API",
+        "description": "Credentials for sending transactional and bulk emails",
+        "apiKey": "API Key",
+        "apiKeyPlaceholder": "re_..."
+      },
+      "ipstack": {
+        "title": "IPStack API",
+        "description": "Used for user IP detection and country mapping",
+        "accessKey": "Access Key",
+        "accessKeyPlaceholder": "Enter IPStack Access Key"
+      },
+      "openexchange": {
+        "title": "OpenExchangeRates API",
+        "description": "Used for real-time USD to local currency conversion",
+        "appId": "App ID",
+        "appIdPlaceholder": "Enter OpenExchangeRates App ID"
+      }
+    },
+    "dailyResetLogs": {
+      "title": "Daily Reset Logs",
+      "subtitle": "Monitor daily counter reset operations and performance",
+      "stats": {
+        "avgUsersReset": "Avg Users Reset",
+        "last30Resets": "Last 30 resets",
+        "avgExecution": "Avg Execution",
+        "averageTime": "Average time",
+        "maxExecution": "Max Execution",
+        "peakTime": "Peak time",
+        "minExecution": "Min Execution",
+        "bestTime": "Best time",
+        "totalResets": "Total Resets",
+        "last30Days": "Last 30 days"
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Filter reset logs by date range and trigger type",
+        "dateFrom": "Date From",
+        "dateTo": "Date To",
+        "triggeredBy": "Triggered By",
+        "allTriggers": "All triggers",
+        "cronJob": "CRON Job",
+        "manual": "Manual",
+        "clearFilters": "Clear Filters"
+      },
+      "logs": {
+        "title": "Reset Operations Log",
+        "description": "Detailed execution history of daily counter resets",
+        "errorLoading": "Error loading logs: {{error}}",
+        "resetDate": "Reset Date",
+        "usersReset": "Users Reset",
+        "executionTime": "Execution Time",
+        "triggeredBy": "Triggered By",
+        "utcTime": "UTC Time",
+        "eatTime": "EAT Time",
+        "requestId": "Request ID",
+        "noLogsFound": "No reset logs found",
+        "noLogsDescription": "Logs will appear here after daily reset operations run"
+      }
     },
     "settings": {
       "emailVerified": "Email verified successfully!"

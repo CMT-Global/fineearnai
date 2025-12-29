@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -24,15 +25,16 @@ export function ManualEmailVerificationDialog({
   currentStatus,
   onSuccess,
 }: ManualEmailVerificationDialogProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const action = currentStatus ? "unverify" : "verify";
-  const actionLabel = currentStatus ? "Unverify" : "Verify";
+  const actionLabel = currentStatus ? t("admin.dialogs.manualEmailVerification.unverifyButton") : t("admin.dialogs.manualEmailVerification.verifyButton");
 
   const handleSubmit = async () => {
     if (!reason.trim()) {
-      toast.error("Please provide a reason for this action");
+      toast.error(t("admin.dialogs.manualEmailVerification.reasonRequiredError"));
       return;
     }
 
@@ -50,16 +52,16 @@ export function ManualEmailVerificationDialog({
       if (error) throw error;
 
       if (data?.success) {
-        toast.success(data.message || `Email ${actionLabel.toLowerCase()}ed successfully`);
+        toast.success(data.message || (currentStatus ? t("admin.dialogs.manualEmailVerification.emailUnverifiedSuccess") : t("admin.dialogs.manualEmailVerification.emailVerifiedSuccess")));
         onSuccess();
         onOpenChange(false);
         setReason("");
       } else {
-        throw new Error(data?.error || `Failed to ${action} email`);
+        throw new Error(data?.error || (currentStatus ? t("admin.dialogs.manualEmailVerification.failedToUnverify") : t("admin.dialogs.manualEmailVerification.failedToVerify")));
       }
     } catch (error: any) {
       console.error(`Error ${action}ing email:`, error);
-      toast.error(error.message || `Failed to ${action} email`);
+      toast.error(error.message || (currentStatus ? t("admin.dialogs.manualEmailVerification.failedToUnverify") : t("admin.dialogs.manualEmailVerification.failedToVerify")));
     } finally {
       setIsLoading(false);
     }
@@ -75,30 +77,31 @@ export function ManualEmailVerificationDialog({
             ) : (
               <ShieldCheck className="h-5 w-5 text-success" />
             )}
-            {actionLabel} Email for {username}
+            {currentStatus ? t("admin.dialogs.manualEmailVerification.unverifyTitle", { username }) : t("admin.dialogs.manualEmailVerification.verifyTitle", { username })}
           </DialogTitle>
           <DialogDescription>
             {currentStatus
-              ? "This will mark the user's email as unverified. They will need to verify their email again."
-              : "This will manually verify the user's email without requiring them to enter an OTP code."}
+              ? t("admin.dialogs.manualEmailVerification.unverifyDescription")
+              : t("admin.dialogs.manualEmailVerification.verifyDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="reason">
-              Reason for {actionLabel.toLowerCase()}ication <span className="text-destructive">*</span>
+              {t("admin.dialogs.manualEmailVerification.reasonLabel", { action: actionLabel })}
+              <span className="text-destructive">{t("admin.dialogs.manualEmailVerification.reasonRequired")}</span>
             </Label>
             <Textarea
               id="reason"
-              placeholder={`Enter the reason for ${action}ing this email...`}
+              placeholder={t("admin.dialogs.manualEmailVerification.reasonPlaceholder", { action })}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              This reason will be logged in the audit trail for compliance purposes.
+              {t("admin.dialogs.manualEmailVerification.reasonHint")}
             </p>
           </div>
         </div>
@@ -112,14 +115,14 @@ export function ManualEmailVerificationDialog({
             }}
             disabled={isLoading}
           >
-            Cancel
+            {t("admin.dialogs.manualEmailVerification.cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !reason.trim()}
             variant={currentStatus ? "destructive" : "default"}
           >
-            {isLoading ? "Processing..." : `${actionLabel} Email`}
+            {isLoading ? t("admin.dialogs.manualEmailVerification.processing") : actionLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

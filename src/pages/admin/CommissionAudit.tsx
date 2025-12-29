@@ -17,8 +17,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 export default function CommissionAudit() {
+  const { t } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  useLanguageSync();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -76,7 +82,7 @@ export default function CommissionAudit() {
 
   const handleRefresh = () => {
     refetch();
-    toast.success("Commission audit logs refreshed");
+    toast.success(t("admin.commissionAudit.successRefreshed"));
   };
 
   return (
@@ -84,14 +90,14 @@ export default function CommissionAudit() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Commission Audit</h1>
+          <h1 className="text-3xl font-bold">{t("admin.commissionAudit.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Track and monitor all commission processing attempts
+            {t("admin.commissionAudit.subtitle")}
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+          {t("common.refresh")}
         </Button>
       </div>
 
@@ -100,13 +106,13 @@ export default function CommissionAudit() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Today's Commissions
+              {t("admin.commissionAudit.stats.todaysCommissions")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalToday}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Processed in last 24 hours
+              {t("admin.commissionAudit.stats.processedLast24Hours")}
             </p>
           </CardContent>
         </Card>
@@ -114,7 +120,7 @@ export default function CommissionAudit() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Success Rate
+              {t("admin.commissionAudit.stats.successRate")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -127,7 +133,7 @@ export default function CommissionAudit() {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.successCount} successful
+              {stats.successCount} {t("admin.commissionAudit.stats.successful")}
             </p>
           </CardContent>
         </Card>
@@ -135,7 +141,7 @@ export default function CommissionAudit() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Failed Commissions
+              {t("admin.commissionAudit.stats.failedCommissions")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -143,12 +149,12 @@ export default function CommissionAudit() {
               <div className="text-2xl font-bold">{stats.failedCount}</div>
               {stats.failedCount > 0 && (
                 <Badge variant="destructive" className="text-xs">
-                  Action Required
+                  {t("admin.commissionAudit.stats.actionRequired")}
                 </Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Requires investigation
+              {t("admin.commissionAudit.stats.requiresInvestigation")}
             </p>
           </CardContent>
         </Card>
@@ -156,13 +162,13 @@ export default function CommissionAudit() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Audited
+              {t("admin.commissionAudit.stats.totalAudited")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{auditLogs?.length || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              All-time commission attempts
+              {t("admin.commissionAudit.stats.allTimeAttempts")}
             </p>
           </CardContent>
         </Card>
@@ -171,35 +177,35 @@ export default function CommissionAudit() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t("admin.commissionAudit.filters.title")}</CardTitle>
           <CardDescription>
-            Filter commission audit logs by status and search users
+            {t("admin.commissionAudit.filters.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Status Filter */}
             <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">Status</label>
+              <label className="text-sm font-medium mb-2 block">{t("admin.commissionAudit.filters.status")}</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
+                  <SelectValue placeholder={t("admin.commissionAudit.filters.allStatuses")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="success">Success Only</SelectItem>
-                  <SelectItem value="failed">Failed Only</SelectItem>
+                  <SelectItem value="all">{t("admin.commissionAudit.filters.allStatuses")}</SelectItem>
+                  <SelectItem value="success">{t("admin.commissionAudit.filters.successOnly")}</SelectItem>
+                  <SelectItem value="failed">{t("admin.commissionAudit.filters.failedOnly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Search Filter */}
             <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">Search User</label>
+              <label className="text-sm font-medium mb-2 block">{t("admin.commissionAudit.filters.searchUser")}</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by username or email..."
+                  placeholder={t("admin.commissionAudit.filters.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -215,15 +221,15 @@ export default function CommissionAudit() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Commission Audit Logs</CardTitle>
+              <CardTitle>{t("admin.commissionAudit.table.title")}</CardTitle>
               <CardDescription>
-                {filteredLogs.length} log{filteredLogs.length !== 1 ? 's' : ''} found
+                {t("admin.commissionAudit.table.logsFound", { count: filteredLogs.length })}
               </CardDescription>
             </div>
             {stats.failedCount > 0 && (
               <Badge variant="destructive" className="gap-1">
                 <AlertCircle className="h-3 w-3" />
-                {stats.failedCount} Failed
+                {stats.failedCount} {t("admin.commissionAudit.table.failed")}
               </Badge>
             )}
           </div>
@@ -238,11 +244,11 @@ export default function CommissionAudit() {
           ) : filteredLogs.length === 0 ? (
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium">No audit logs found</p>
+              <p className="text-lg font-medium">{t("admin.commissionAudit.noLogsFound")}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {statusFilter !== 'all' || searchQuery 
-                  ? "Try adjusting your filters" 
-                  : "Commission audit logs will appear here once deposits are processed"}
+                  ? t("admin.commissionAudit.tryAdjustingFilters") 
+                  : t("admin.commissionAudit.logsWillAppear")}
               </p>
             </div>
           ) : (
@@ -250,13 +256,13 @@ export default function CommissionAudit() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>User (Referred)</TableHead>
-                    <TableHead>Upline (Referrer)</TableHead>
-                    <TableHead>Deposit Amount</TableHead>
-                    <TableHead>Commission</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.status")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.userReferred")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.uplineReferrer")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.depositAmount")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.commission")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.timestamp")}</TableHead>
+                    <TableHead>{t("admin.commissionAudit.table.details")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -267,12 +273,12 @@ export default function CommissionAudit() {
                         {log.status === 'success' ? (
                           <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
                             <CheckCircle2 className="h-3 w-3" />
-                            Success
+                            {t("admin.commissionAudit.status.success")}
                           </Badge>
                         ) : (
                           <Badge variant="destructive" className="gap-1">
                             <AlertCircle className="h-3 w-3" />
-                            Failed
+                            {t("admin.commissionAudit.status.failed")}
                           </Badge>
                         )}
                       </TableCell>
@@ -280,8 +286,8 @@ export default function CommissionAudit() {
                       {/* Referred User */}
                       <TableCell>
                         <div className="space-y-1">
-                          <p className="font-medium">{log.referred?.username || 'N/A'}</p>
-                          <p className="text-xs text-muted-foreground">{log.referred?.email || 'N/A'}</p>
+                          <p className="font-medium">{log.referred?.username || t("admin.commissionAudit.na")}</p>
+                          <p className="text-xs text-muted-foreground">{log.referred?.email || t("admin.commissionAudit.na")}</p>
                         </div>
                       </TableCell>
 
@@ -293,7 +299,7 @@ export default function CommissionAudit() {
                             <p className="text-xs text-muted-foreground">{log.referrer.email}</p>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">No Upline</span>
+                          <span className="text-muted-foreground text-sm">{t("admin.commissionAudit.noUpline")}</span>
                         )}
                       </TableCell>
 
@@ -327,20 +333,20 @@ export default function CommissionAudit() {
                           <Collapsible>
                             <CollapsibleTrigger asChild>
                               <Button variant="ghost" size="sm" className="gap-1">
-                                View
+                                {t("admin.commissionAudit.view")}
                                 <ChevronDown className="h-3 w-3" />
                               </Button>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="absolute z-10 mt-2 p-4 bg-card border rounded-lg shadow-lg max-w-md">
                               <div className="space-y-2">
-                                <p className="text-sm font-medium">Error Details:</p>
+                                <p className="text-sm font-medium">{t("admin.commissionAudit.errorDetails")}:</p>
                                 <div className="text-xs space-y-1 text-muted-foreground">
-                                  <p><strong>Reason:</strong> {log.error_details.reason}</p>
-                                  <p><strong>Tracking ID:</strong> {log.error_details.tracking_id}</p>
-                                  <p><strong>Payment ID:</strong> {log.error_details.payment_id}</p>
-                                  <p><strong>Has Upline:</strong> {log.error_details.has_upline ? 'Yes' : 'No'}</p>
-                                  <p><strong>Deposit:</strong> ${log.error_details.deposit_amount}</p>
-                                  <p><strong>Time:</strong> {format(new Date(log.error_details.timestamp), 'PPpp')}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorReason")}:</strong> {log.error_details.reason}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorTrackingId")}:</strong> {log.error_details.tracking_id}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorPaymentId")}:</strong> {log.error_details.payment_id}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorHasUpline")}:</strong> {log.error_details.has_upline ? t("common.yes") : t("common.no")}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorDeposit")}:</strong> ${log.error_details.deposit_amount}</p>
+                                  <p><strong>{t("admin.commissionAudit.errorTime")}:</strong> {format(new Date(log.error_details.timestamp), 'PPpp')}</p>
                                 </div>
                               </div>
                             </CollapsibleContent>

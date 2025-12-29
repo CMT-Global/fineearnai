@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { Trash2, Plus, Shield, Globe, Ban, Crown, Activity, Clock, AlertTriangle, MessageSquare, Eye, Save, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,30 +19,32 @@ import { useBranding } from "@/contexts/BrandingContext";
 
 export default function SecuritySettings() {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const queryClient = useQueryClient();
   const { platformName } = useBranding();
   
-  // Migration banner states
+  // Banner state variables
   const [bannerEnabled, setBannerEnabled] = useState(true);
   const [bannerDismissible, setBannerDismissible] = useState(true);
-  const [bannerTitle, setBannerTitle] = useState("⚠️ Important Update for Existing Users");
-  const [bannerSubtitle, setBannerSubtitle] = useState(`${platformName} has moved to a new upgraded platform!`);
-  const [bannerStep1, setBannerStep1] = useState("Sign up here using the same email you used on old platform.");
-  const [bannerStep2, setBannerStep2] = useState("Contact Support so we can transfer your previous data to your new account.");
-  const [bannerStep3, setBannerStep3] = useState("Our team will migrate your funds & data to new platform for best experience.");
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [bannerStep1, setBannerStep1] = useState("");
+  const [bannerStep2, setBannerStep2] = useState("");
+  const [bannerStep3, setBannerStep3] = useState("");
   const [bannerCutoffDate, setBannerCutoffDate] = useState("2025-11-01");
   const [bannerSupportLink, setBannerSupportLink] = useState("/settings");
   const [showPreview, setShowPreview] = useState(false);
   
-  // Security states
-  const [blockedCountries, setBlockedCountries] = useState<string[]>(['CN', 'RU']);
-  const [blockedIPs, setBlockedIPs] = useState<string[]>(['192.168.1.1']);
+  // Country and IP blocking state
+  const [enableCountryBlocking, setEnableCountryBlocking] = useState(false);
+  const [blockedCountries, setBlockedCountries] = useState<string[]>([]);
   const [newCountry, setNewCountry] = useState("");
+  const [enableIPBlocking, setEnableIPBlocking] = useState(false);
+  const [blockedIPs, setBlockedIPs] = useState<string[]>([]);
   const [newIP, setNewIP] = useState("");
-  const [enableCountryBlocking, setEnableCountryBlocking] = useState(true);
-  const [enableIPBlocking, setEnableIPBlocking] = useState(true);
   
-  // Fetch current migration banner config
+  // Fetch banner config
   const { data: bannerConfig, isLoading: isLoadingBanner } = useQuery({
     queryKey: ['migration-banner-config-admin'],
     queryFn: async () => {
@@ -49,29 +52,27 @@ export default function SecuritySettings() {
         .from("platform_config")
         .select("value")
         .eq("key", "migration_banner")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      
-      const config = data?.value as any;
-      
-      // Populate form with existing values
-      if (config) {
-        setBannerEnabled(config.enabled ?? true);
-        setBannerDismissible(config.dismissible ?? true);
-        setBannerTitle(config.message?.title ?? "");
-        setBannerSubtitle(config.message?.subtitle ?? "");
-        setBannerStep1(config.message?.steps?.[0] ?? "");
-        setBannerStep2(config.message?.steps?.[1] ?? "");
-        setBannerStep3(config.message?.steps?.[2] ?? "");
-        setBannerCutoffDate(config.cutoff_date ?? "2025-11-01");
-        setBannerSupportLink(config.support_link ?? "/settings");
-      }
-      
-      return config;
+      return data?.value || null;
     },
-    staleTime: 30000,
   });
+
+  // Initialize state from config when it loads
+  useEffect(() => {
+    if (bannerConfig) {
+      setBannerEnabled(bannerConfig.enabled ?? true);
+      setBannerDismissible(bannerConfig.dismissible ?? true);
+      setBannerTitle(bannerConfig.message?.title ?? "");
+      setBannerSubtitle(bannerConfig.message?.subtitle ?? "");
+      setBannerStep1(bannerConfig.message?.steps?.[0] ?? "");
+      setBannerStep2(bannerConfig.message?.steps?.[1] ?? "");
+      setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
+      setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
+      setBannerSupportLink(bannerConfig.support_link ?? "/settings");
+    }
+  }, [bannerConfig]);
   
   // Mutation to save banner config
   const saveBannerMutation = useMutation({
@@ -104,7 +105,7 @@ export default function SecuritySettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['migration-banner-config-admin'] });
       queryClient.invalidateQueries({ queryKey: ['migration-banner-config'] });
-      toast.success(t("toasts.admin.migrationBannerSaved"));
+      toast.success(t("admin.toasts.migrationBannerSaved"));
     },
     onError: (error: any) => {
       toast.error(`Failed to save banner settings: ${error.message}`);
@@ -113,11 +114,11 @@ export default function SecuritySettings() {
   
   const handleSaveBanner = () => {
     if (!bannerTitle.trim() || !bannerSubtitle.trim()) {
-      toast.error(t("toasts.admin.titleAndSubtitleRequired"));
+      toast.error(t("admin.toasts.titleAndSubtitleRequired"));
       return;
     }
     if (!bannerStep1.trim() || !bannerStep2.trim() || !bannerStep3.trim()) {
-      toast.error(t("toasts.admin.allThreeStepsRequired"));
+      toast.error(t("admin.toasts.allThreeStepsRequired"));
       return;
     }
     saveBannerMutation.mutate();
@@ -134,7 +135,7 @@ export default function SecuritySettings() {
       setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
       setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
       setBannerSupportLink(bannerConfig.support_link ?? "/settings");
-      toast.info(t("toasts.admin.bannerSettingsReset"));
+      toast.info(t("admin.toasts.bannerSettingsReset"));
     }
   };
 
@@ -142,23 +143,51 @@ export default function SecuritySettings() {
   const { data: bypassAuditLogs, isLoading: isLoadingAudit } = useQuery({
     queryKey: ['withdrawal-bypass-audit'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch all profile_update audit logs (we'll filter in JavaScript)
+      const { data: allAuditLogs, error: auditError } = await supabase
         .from('audit_logs')
         .select(`
           id,
           created_at,
           admin_id,
           target_user_id,
-          details,
-          profiles!audit_logs_target_user_id_fkey(username, email)
+          details
         `)
         .eq('action_type', 'profile_update')
-        .not('details->>withdrawal_bypass_changed', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200); // Fetch more to account for filtering
 
-      if (error) throw error;
-      return data;
+      if (auditError) throw auditError;
+      if (!allAuditLogs || allAuditLogs.length === 0) return [];
+
+      // Filter logs that have withdrawal_bypass_changed in details
+      const auditLogs = allAuditLogs.filter(log => {
+        if (!log.details) return false;
+        const detailsStr = JSON.stringify(log.details);
+        return detailsStr.includes('withdrawal_bypass_changed');
+      }).slice(0, 50); // Limit to 50 after filtering
+
+      if (auditLogs.length === 0) return [];
+
+      // Then fetch user profiles for the target_user_ids
+      const userIds = auditLogs
+        .map(log => log.target_user_id)
+        .filter((id): id is string => id !== null);
+
+      if (userIds.length === 0) return auditLogs;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      return auditLogs.map(log => ({
+        ...log,
+        profiles: profiles?.find(p => p.id === log.target_user_id) || null
+      }));
     },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -181,16 +210,16 @@ export default function SecuritySettings() {
 
   const handleAddCountry = () => {
     if (!newCountry.trim()) {
-      toast.error(t("toasts.admin.pleaseEnterCountryCode"));
+      toast.error(t("admin.toasts.pleaseEnterCountryCode"));
       return;
     }
     const countryCode = newCountry.trim().toUpperCase();
     if (countryCode.length !== 2) {
-      toast.error(t("toasts.admin.countryCodeMustBe2Chars"));
+      toast.error(t("admin.toasts.countryCodeMustBe2Chars"));
       return;
     }
     if (blockedCountries.includes(countryCode)) {
-      toast.error(t("toasts.admin.countryAlreadyBlocked"));
+      toast.error(t("admin.toasts.countryAlreadyBlocked"));
       return;
     }
     setBlockedCountries([...blockedCountries, countryCode]);
@@ -205,18 +234,18 @@ export default function SecuritySettings() {
 
   const handleAddIP = () => {
     if (!newIP.trim()) {
-      toast.error(t("toasts.admin.pleaseEnterIPAddress"));
+      toast.error(t("admin.toasts.pleaseEnterIPAddress"));
       return;
     }
     const ip = newIP.trim();
     // Basic IP validation
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
     if (!ipRegex.test(ip)) {
-      toast.error(t("toasts.admin.invalidIPAddressFormat"));
+      toast.error(t("admin.toasts.invalidIPAddressFormat"));
       return;
     }
     if (blockedIPs.includes(ip)) {
-      toast.error(t("toasts.admin.ipAddressAlreadyBlocked"));
+      toast.error(t("admin.toasts.ipAddressAlreadyBlocked"));
       return;
     }
     setBlockedIPs([...blockedIPs, ip]);
@@ -231,7 +260,7 @@ export default function SecuritySettings() {
 
   const handleSaveSettings = () => {
     // In a real implementation, this would save to database via edge function
-    toast.success(t("toasts.admin.securitySettingsSaved"));
+    toast.success(t("admin.toasts.securitySettingsSaved"));
   };
 
   return (
@@ -405,7 +434,7 @@ export default function SecuritySettings() {
                     className="flex-1"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {saveBannerMutation.isPending ? "Saving..." : "Save Banner Settings"}
+                    {saveBannerMutation.isPending ? t("common.saving") : t("admin.contentManagement.feeSavingsBanner.configuration.saveBannerSettings")}
                   </Button>
                   <Button
                     variant="outline"
@@ -580,7 +609,9 @@ export default function SecuritySettings() {
                       </TableHeader>
                       <TableBody>
                         {bypassAuditLogs.map((log: any) => {
-                          const bypassEnabled = log.details?.bypass_enabled;
+                          // Check if withdrawal_bypass_changed exists in details
+                          const bypassChanged = log.details?.withdrawal_bypass_changed;
+                          const bypassEnabled = log.details?.bypass_enabled ?? bypassChanged;
                           return (
                             <TableRow key={log.id}>
                               <TableCell className="text-sm">

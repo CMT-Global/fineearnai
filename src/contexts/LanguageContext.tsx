@@ -37,7 +37,7 @@ interface DetectedLanguageCache {
 }
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [userLanguage, setUserLanguage] = useState<SupportedLanguage>('en');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,17 +48,24 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    */
   const changeLanguage = useCallback((lang: SupportedLanguage) => {
     setUserLanguage(lang);
+    localStorage.setItem(STORAGE_KEY, lang);
+    setIsAutoDetected(false);
+    
     // Ensure i18n is initialized before changing language
     if (i18n.isInitialized) {
-      i18n.changeLanguage(lang).catch((err) => {
+      // Change language and ensure it completes - this will trigger re-renders in components using useTranslation()
+      i18n.changeLanguage(lang).then(() => {
+        // Language change completed - components should re-render automatically via useTranslation()
+        if (!import.meta.env.PROD) {
+          console.log(`✅ Language changed to ${lang}, i18n.language is now: ${i18n.language}`);
+        }
+      }).catch((err) => {
         console.error('Error changing i18n language:', err);
       });
     } else {
       // If i18n is not initialized yet, set it directly
       i18n.language = lang;
     }
-    localStorage.setItem(STORAGE_KEY, lang);
-    setIsAutoDetected(false);
   }, []);
 
   /**
@@ -180,6 +187,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Initialize on mount or user change
   useEffect(() => {
+    // Wait for auth to finish loading before initializing language
+    // This prevents race condition where we check localStorage before knowing if user exists
+    if (authLoading) {
+      return;
+    }
+
     const initializeLanguage = async () => {
       setIsLoading(true);
       setError(null);
@@ -210,19 +223,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           });
         }
 
-        // Priority 1: Check localStorage (user's manual selection)
-        const storedLang = localStorage.getItem(STORAGE_KEY);
-        if (storedLang && isSupportedLanguage(storedLang)) {
-          if (!import.meta.env.PROD) {
-            console.log(`📦 Using stored language from localStorage: ${storedLang}`);
-          }
-          changeLanguage(storedLang);
-          setIsAutoDetected(false);
-          setIsLoading(false);
-          return;
-        }
-
-        // Priority 2: Check user profile (if logged in)
+        // Priority 1: Check user profile (if logged in) - This should take precedence
+        // Always check profile first if user exists, even if it means waiting
         if (user?.id) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -235,10 +237,25 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               console.log(`👤 Using user preferred language from profile: ${profile.preferred_language}`);
             }
             changeLanguage(profile.preferred_language);
+            // Update localStorage to match profile
+            localStorage.setItem(STORAGE_KEY, profile.preferred_language);
             setIsAutoDetected(false);
             setIsLoading(false);
             return;
           }
+        }
+
+        // Priority 2: Check localStorage (user's manual selection) - Only if no profile preference
+        // Only check localStorage if we've confirmed there's no profile preference or user is not logged in
+        const storedLang = localStorage.getItem(STORAGE_KEY);
+        if (storedLang && isSupportedLanguage(storedLang)) {
+          if (!import.meta.env.PROD) {
+            console.log(`📦 Using stored language from localStorage: ${storedLang}`);
+          }
+          changeLanguage(storedLang);
+          setIsAutoDetected(false);
+          setIsLoading(false);
+          return;
         }
 
         // Priority 3: Auto-detect from IP
@@ -255,7 +272,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     initializeLanguage();
-  }, [user?.id, changeLanguage, detectLanguageFromIP]);
+  }, [authLoading, user?.id, changeLanguage, detectLanguageFromIP]);
 
   const value: LanguageContextType = {
     userLanguage,
