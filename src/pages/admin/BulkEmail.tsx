@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,9 +27,20 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useBranding } from "@/contexts/BrandingContext";
 
 const BulkEmail = () => {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   const { platformName } = useBranding();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -81,10 +94,10 @@ const BulkEmail = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -120,7 +133,7 @@ const BulkEmail = () => {
         if (error) {
           setUsernameValidationState({ 
             status: 'error', 
-            message: 'Failed to validate username. Please try again.' 
+            message: t("admin.bulkEmail.usernameValidation.failed")
           });
           return;
         }
@@ -128,7 +141,7 @@ const BulkEmail = () => {
         if (!data) {
           setUsernameValidationState({ 
             status: 'invalid', 
-            message: 'Username not found. Please check and try again.' 
+            message: t("admin.bulkEmail.usernameValidation.notFound")
           });
           return;
         }
@@ -136,7 +149,7 @@ const BulkEmail = () => {
         if (data.account_status !== 'active') {
           setUsernameValidationState({ 
             status: 'invalid', 
-            message: `This user account is ${data.account_status}.` 
+            message: t("admin.bulkEmail.usernameValidation.accountStatus", { status: data.account_status })
           });
           return;
         }
@@ -154,7 +167,7 @@ const BulkEmail = () => {
       } catch (err) {
         setUsernameValidationState({ 
           status: 'error', 
-          message: 'An unexpected error occurred.' 
+          message: t("admin.bulkEmail.usernameValidation.unexpectedError")
         });
       }
     };
@@ -233,14 +246,14 @@ const BulkEmail = () => {
       
       if (error) {
         console.error("Error calculating recipients:", error);
-        toast.error("Failed to calculate recipient count");
+        toast.error(t("admin.bulkEmail.errors.failedToCalculateRecipients"));
         setRecipientCount(0);
       } else {
         setRecipientCount(count || 0);
       }
     } catch (error: any) {
       console.error("Error calculating recipients:", error);
-      toast.error("Failed to calculate recipient count");
+      toast.error(t("admin.bulkEmail.errors.failedToCalculateRecipients"));
       setRecipientCount(0);
     } finally {
       setCalculatingCount(false);
@@ -293,27 +306,27 @@ const BulkEmail = () => {
   const handleSend = async () => {
     try {
       if (!formData.subject || !formData.body) {
-        toast.error("Please fill in subject and body");
+        toast.error(t("admin.bulkEmail.validation.subjectAndBodyRequired"));
         return;
       }
 
       if (formData.recipientType === "plan" && !formData.plan) {
-        toast.error("Please select a membership plan");
+        toast.error(t("admin.bulkEmail.validation.selectPlan"));
         return;
       }
 
       if (formData.recipientType === "country" && !formData.country) {
-        toast.error("Please enter a country");
+        toast.error(t("admin.bulkEmail.validation.enterCountry"));
         return;
       }
 
       if (formData.recipientType === "usernames") {
         if (!formData.usernames.trim()) {
-          toast.error("Please enter a username");
+          toast.error(t("admin.bulkEmail.validation.enterUsername"));
           return;
         }
         if (usernameValidationState.status !== 'valid') {
-          toast.error("Please enter a valid username before sending");
+          toast.error(t("admin.bulkEmail.validation.validUsernameRequired"));
           return;
         }
       }
@@ -321,23 +334,23 @@ const BulkEmail = () => {
       if (formData.recipientType === "email") {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
-          toast.error("Please enter an email address");
+          toast.error(t("admin.bulkEmail.validation.enterEmail"));
           return;
         }
         if (!emailRegex.test(formData.email.trim())) {
-          toast.error("Please enter a valid email address");
+          toast.error(t("admin.bulkEmail.validation.validEmailRequired"));
           return;
         }
       }
 
       if (recipientCount === 0) {
-        toast.error("No recipients found matching criteria");
+        toast.error(t("admin.bulkEmail.validation.noRecipients"));
         return;
       }
 
       if (formData.scheduleType === "scheduled") {
         if (!formData.scheduledDate || !formData.scheduledTime) {
-          toast.error("Please select schedule date and time");
+          toast.error(t("admin.bulkEmail.validation.selectScheduleDateTime"));
           return;
         }
       }
@@ -378,11 +391,15 @@ const BulkEmail = () => {
         setSending(false);
         const createdAgo = Math.round((Date.now() - new Date(existingJob.created_at).getTime()) / 1000 / 60);
         const timeText = createdAgo < 60 
-          ? `${createdAgo} minute${createdAgo !== 1 ? 's' : ''} ago`
-          : `${Math.round(createdAgo / 60)} hour${Math.round(createdAgo / 60) !== 1 ? 's' : ''} ago`;
+          ? t("admin.bulkEmail.timeAgo.minutes", { count: createdAgo })
+          : t("admin.bulkEmail.timeAgo.hours", { count: Math.round(createdAgo / 60) });
         
-        toast.error("Duplicate Email Campaign Detected", {
-          description: `A similar email campaign already exists (Status: ${existingJob.status}, ${existingJob.total_recipients} recipients). Created ${timeText}. Please wait for it to complete or modify your email content.`,
+        toast.error(t("admin.bulkEmail.errors.duplicateCampaign"), {
+          description: t("admin.bulkEmail.errors.duplicateCampaignDescription", {
+            status: existingJob.status,
+            recipients: existingJob.total_recipients,
+            timeText
+          }),
           duration: 8000,
         });
         return;
@@ -413,7 +430,7 @@ const BulkEmail = () => {
         if (error) throw error;
 
         toast.success(
-          `Email scheduled for ${new Date(scheduledFor).toLocaleString()}`
+          t("admin.bulkEmail.success.emailScheduled", { date: new Date(scheduledFor).toLocaleString() })
         );
       } else {
         // Send immediately (creates background job for database users)
@@ -435,13 +452,13 @@ const BulkEmail = () => {
         if (response?.job_id) {
           // Background job created for database users
           const estimatedTimeText = response.estimated_time_minutes > 60 
-            ? `${Math.round(response.estimated_time_minutes / 60)} hours`
-            : `${response.estimated_time_minutes} minutes`;
+            ? t("admin.bulkEmail.estimatedTime.hours", { count: Math.round(response.estimated_time_minutes / 60) })
+            : t("admin.bulkEmail.estimatedTime.minutes", { count: response.estimated_time_minutes });
 
           toast.success(
-            `✅ Bulk email job created! Processing ${response.total_recipients.toLocaleString()} recipients in background.`,
+            t("admin.bulkEmail.success.jobCreated", { recipients: response.total_recipients.toLocaleString() }),
             {
-              description: `Estimated completion: ${estimatedTimeText}. View progress in History tab.`,
+              description: t("admin.bulkEmail.success.jobCreatedDescription", { estimatedTime: estimatedTimeText }),
               duration: 5000,
             }
           );
@@ -453,7 +470,7 @@ const BulkEmail = () => {
           }, 2000);
         } else {
           // Immediate send (external email)
-          toast.success(`Email sent successfully!`);
+          toast.success(t("admin.bulkEmail.success.emailSent"));
         }
       }
 
@@ -472,7 +489,7 @@ const BulkEmail = () => {
       });
     } catch (error: any) {
       console.error("Error sending email:", error);
-      toast.error(error.message || "Failed to send email");
+      toast.error(error.message || t("admin.bulkEmail.errors.failedToSend"));
     } finally {
       setSending(false);
     }
@@ -498,7 +515,7 @@ const BulkEmail = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading..." />
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }
@@ -509,12 +526,12 @@ const BulkEmail = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.bulkEmail.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Bulk Email System</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.bulkEmail.title")}</h1>
           <p className="text-muted-foreground">
-            Send emails to users based on various criteria
+            {t("admin.bulkEmail.subtitle")}
           </p>
         </div>
 
@@ -523,15 +540,15 @@ const BulkEmail = () => {
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="compose">
               <Send className="h-4 w-4 mr-2" />
-              Compose
+              {t("admin.bulkEmail.tabs.compose")}
             </TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-2" />
-              History
+              {t("admin.bulkEmail.tabs.history")}
             </TabsTrigger>
             <TabsTrigger value="best-practices">
               <Info className="h-4 w-4 mr-2" />
-              Best Practices
+              {t("admin.bulkEmail.tabs.bestPractices")}
             </TabsTrigger>
           </TabsList>
 
@@ -542,27 +559,27 @@ const BulkEmail = () => {
               <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Compose Email</CardTitle>
+                <CardTitle>{t("admin.bulkEmail.compose.title")}</CardTitle>
                 <CardDescription>
-                  Create and send bulk emails to your users
+                  {t("admin.bulkEmail.compose.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Recipient Selection - MOVED TO TOP */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Recipients *</Label>
+                    <Label>{t("admin.bulkEmail.recipients.label")}</Label>
                     {calculatingCount ? (
                       <Badge variant="secondary" className="gap-2">
                         <LoadingSpinner size="sm" />
-                        <span>Calculating...</span>
+                        <span>{t("admin.bulkEmail.recipients.calculating")}</span>
                       </Badge>
                     ) : (
                       <Badge 
                         variant={recipientCount === 0 ? "destructive" : "default"}
                         className="gap-2 text-base px-3 py-1"
                       >
-                        📧 Will send to: <strong>{recipientCount.toLocaleString()}</strong> {recipientCount === 1 ? 'user' : 'users'}
+                        {t("admin.bulkEmail.recipients.willSendTo", { count: recipientCount })}
                       </Badge>
                     )}
                   </div>
@@ -571,7 +588,7 @@ const BulkEmail = () => {
                     <Alert variant="destructive" className="mb-4">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
-                        No recipients found with the current selection. Please adjust your filters.
+                        {t("admin.bulkEmail.recipients.noRecipientsFound")}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -583,16 +600,16 @@ const BulkEmail = () => {
                     }
                   >
                     <TabsList className="grid w-full grid-cols-5">
-                      <TabsTrigger value="all">All Users</TabsTrigger>
-                      <TabsTrigger value="plan">By Plan</TabsTrigger>
-                      <TabsTrigger value="country">By Country</TabsTrigger>
-                      <TabsTrigger value="usernames">By Username</TabsTrigger>
-                      <TabsTrigger value="email">By Email</TabsTrigger>
+                      <TabsTrigger value="all">{t("admin.bulkEmail.recipientTypes.all")}</TabsTrigger>
+                      <TabsTrigger value="plan">{t("admin.bulkEmail.recipientTypes.byPlan")}</TabsTrigger>
+                      <TabsTrigger value="country">{t("admin.bulkEmail.recipientTypes.byCountry")}</TabsTrigger>
+                      <TabsTrigger value="usernames">{t("admin.bulkEmail.recipientTypes.byUsername")}</TabsTrigger>
+                      <TabsTrigger value="email">{t("admin.bulkEmail.recipientTypes.byEmail")}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="all" className="mt-4">
                       <p className="text-sm text-muted-foreground">
-                        Email will be sent to all registered users
+                        {t("admin.bulkEmail.recipientTypes.allDescription")}
                       </p>
                     </TabsContent>
 
@@ -604,22 +621,22 @@ const BulkEmail = () => {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select membership plan" />
+                          <SelectValue placeholder={t("admin.bulkEmail.recipientTypes.selectPlan")} />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
                           {loadingPlans ? (
                             <div className="flex items-center justify-center py-4">
                               <LoadingSpinner size="sm" />
-                              <span className="ml-2 text-sm text-muted-foreground">Loading plans...</span>
+                              <span className="ml-2 text-sm text-muted-foreground">{t("admin.bulkEmail.recipientTypes.loadingPlans")}</span>
                             </div>
                           ) : membershipPlans.length === 0 ? (
                             <div className="py-4 text-center text-sm text-muted-foreground">
-                              No plans with users found
+                              {t("admin.bulkEmail.recipientTypes.noPlansFound")}
                             </div>
                           ) : (
                             membershipPlans.map(({ name, display_name, count }) => (
                               <SelectItem key={name} value={name}>
-                                {display_name} ({count.toLocaleString()} {count === 1 ? 'user' : 'users'})
+                                {display_name} ({count.toLocaleString()} {t("admin.bulkEmail.recipientTypes.users", { count })})
                               </SelectItem>
                             ))
                           )}
@@ -636,24 +653,24 @@ const BulkEmail = () => {
                         disabled={loadingCountries}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select a country"} />
+                          <SelectValue placeholder={loadingCountries ? t("admin.bulkEmail.recipientTypes.loadingCountries") : t("admin.bulkEmail.recipientTypes.selectCountry")} />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
                           {loadingCountries ? (
                             <div className="flex items-center justify-center py-4">
                               <LoadingSpinner size="sm" />
-                              <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
+                              <span className="ml-2 text-sm text-muted-foreground">{t("common.loading")}</span>
                             </div>
                           ) : countryStats.length === 0 ? (
                             <div className="py-4 text-center text-sm text-muted-foreground">
-                              No countries with users found
+                              {t("admin.bulkEmail.recipientTypes.noCountriesFound")}
                             </div>
                           ) : (
                             countryStats.map(({ code, count }) => {
                               const countryName = getCountryName(code) || code;
                               return (
                                 <SelectItem key={code} value={code}>
-                                  {countryName} ({count.toLocaleString()} {count === 1 ? 'user' : 'users'})
+                                  {countryName} ({count.toLocaleString()} {t("admin.bulkEmail.recipientTypes.users", { count })})
                                 </SelectItem>
                               );
                             })
@@ -661,7 +678,7 @@ const BulkEmail = () => {
                         </SelectContent>
                       </Select>
                       <p className="text-sm text-muted-foreground mt-2">
-                        💡 Countries are sorted by user count (highest first)
+                        {t("admin.bulkEmail.recipientTypes.countriesSortedByCount")}
                       </p>
                     </TabsContent>
 
@@ -672,7 +689,7 @@ const BulkEmail = () => {
                           onChange={(e) =>
                             setFormData({ ...formData, usernames: e.target.value })
                           }
-                          placeholder="Enter username"
+                          placeholder={t("admin.bulkEmail.recipientTypes.enterUsername")}
                           className="w-full"
                         />
                         
@@ -680,7 +697,7 @@ const BulkEmail = () => {
                         {usernameValidationState.status === 'checking' && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Checking username...</span>
+                            <span>{t("admin.bulkEmail.usernameValidation.checking")}</span>
                           </div>
                         )}
 
@@ -709,7 +726,7 @@ const BulkEmail = () => {
                                 <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
                                 <div className="flex-1 space-y-2">
                                   <div className="font-medium text-sm text-green-900 dark:text-green-100">
-                                    Valid user found
+                                    {t("admin.bulkEmail.usernameValidation.validUserFound")}
                                   </div>
                                   <div className="space-y-1.5 text-sm">
                                     <div className="flex items-center gap-2">
@@ -741,7 +758,7 @@ const BulkEmail = () => {
                         )}
 
                         <p className="text-sm text-muted-foreground">
-                          💡 Enter a single username (e.g., john_doe)
+                          {t("admin.bulkEmail.recipientTypes.usernameHint")}
                         </p>
                       </div>
                     </TabsContent>
@@ -753,10 +770,10 @@ const BulkEmail = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
-                        placeholder="Enter email address"
+                        placeholder={t("admin.bulkEmail.recipientTypes.enterEmail")}
                       />
                       <p className="text-sm text-muted-foreground mt-2">
-                        💡 Send to any email address (even if not registered on the platform)
+                        {t("admin.bulkEmail.recipientTypes.emailHint")}
                       </p>
                     </TabsContent>
                   </Tabs>
@@ -764,28 +781,28 @@ const BulkEmail = () => {
 
                 {/* Subject */}
                 <div>
-                  <Label htmlFor="subject">Subject *</Label>
+                  <Label htmlFor="subject">{t("admin.bulkEmail.compose.subject")}</Label>
                   <Input
                     id="subject"
                     value={formData.subject}
                     onChange={(e) =>
                       setFormData({ ...formData, subject: e.target.value })
                     }
-                    placeholder="Email subject"
+                    placeholder={t("admin.bulkEmail.compose.subjectPlaceholder")}
                   />
                 </div>
 
                 {/* Body */}
                 <div>
-                  <Label htmlFor="body">Email Body *</Label>
+                  <Label htmlFor="body">{t("admin.bulkEmail.compose.body")}</Label>
                   <RichTextEditor
                     value={formData.body}
                     onChange={(html) => setFormData({ ...formData, body: html })}
-                    placeholder="Compose your email content. Use {{variable}} for personalization."
+                    placeholder={t("admin.bulkEmail.compose.bodyPlaceholder")}
                     maxLength={20000}
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    💡 See the "Available Variables" section in the sidebar for all personalization options
+                    {t("admin.bulkEmail.compose.bodyHint")}
                   </p>
                 </div>
 
@@ -797,12 +814,12 @@ const BulkEmail = () => {
                   disabled={!formData.subject || !formData.body}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview Email
+                  {t("admin.bulkEmail.compose.previewEmail")}
                 </Button>
 
                 {/* Schedule Options */}
                 <div>
-                  <Label>Send Options</Label>
+                  <Label>{t("admin.bulkEmail.compose.sendOptions")}</Label>
                   <Tabs
                     value={formData.scheduleType}
                     onValueChange={(value) =>
@@ -810,20 +827,20 @@ const BulkEmail = () => {
                     }
                   >
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="immediate">Send Now</TabsTrigger>
-                      <TabsTrigger value="scheduled">Schedule</TabsTrigger>
+                      <TabsTrigger value="immediate">{t("admin.bulkEmail.compose.sendNow")}</TabsTrigger>
+                      <TabsTrigger value="scheduled">{t("admin.bulkEmail.compose.schedule")}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="immediate" className="mt-4">
                       <p className="text-sm text-muted-foreground">
-                        Email will be sent immediately
+                        {t("admin.bulkEmail.compose.sendImmediately")}
                       </p>
                     </TabsContent>
 
                     <TabsContent value="scheduled" className="mt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="date">Date</Label>
+                          <Label htmlFor="date">{t("admin.bulkEmail.compose.date")}</Label>
                           <Input
                             id="date"
                             type="date"
@@ -837,7 +854,7 @@ const BulkEmail = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="time">Time</Label>
+                          <Label htmlFor="time">{t("admin.bulkEmail.compose.time")}</Label>
                           <Input
                             id="time"
                             type="time"
@@ -863,16 +880,16 @@ const BulkEmail = () => {
                   size="lg"
                 >
                   {sending ? (
-                    <>Loading...</>
+                    <>{t("common.loading")}</>
                   ) : formData.scheduleType === "scheduled" ? (
                     <>
                       <Clock className="mr-2 h-5 w-5" />
-                      Schedule Email
+                      {t("admin.bulkEmail.compose.scheduleEmail")}
                     </>
                   ) : (
                     <>
                       <Send className="mr-2 h-5 w-5" />
-                      Send Email
+                      {t("admin.bulkEmail.compose.sendEmail")}
                     </>
                   )}
                 </Button>
@@ -885,7 +902,7 @@ const BulkEmail = () => {
             {/* Recipient Count */}
             <Card>
               <CardHeader>
-                <CardTitle>Recipients</CardTitle>
+                <CardTitle>{t("admin.bulkEmail.sidebar.recipients")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center">
@@ -893,7 +910,7 @@ const BulkEmail = () => {
                     {recipientCount}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    users will receive this email
+                    {t("admin.bulkEmail.sidebar.usersWillReceive")}
                   </p>
                 </div>
               </CardContent>
@@ -905,17 +922,17 @@ const BulkEmail = () => {
             {/* Professional Template */}
             <Card>
               <CardHeader>
-                <CardTitle>Professional Template</CardTitle>
+                <CardTitle>{t("admin.bulkEmail.sidebar.professionalTemplate")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  All emails are automatically wrapped in a professional template with:
+                  {t("admin.bulkEmail.sidebar.professionalTemplateDescription")}
                 </p>
                 <ul className="text-sm space-y-1 text-muted-foreground mt-3">
-                  <li>• Branded gradient header</li>
-                  <li>• Responsive design</li>
-                  <li>• Professional footer</li>
-                  <li>• Optimized for inbox delivery</li>
+                  <li>• {t("admin.bulkEmail.sidebar.templateFeature1")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.templateFeature2")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.templateFeature3")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.templateFeature4")}</li>
                 </ul>
               </CardContent>
             </Card>
@@ -923,14 +940,14 @@ const BulkEmail = () => {
             {/* Tips */}
             <Card>
               <CardHeader>
-                <CardTitle>Tips</CardTitle>
+                <CardTitle>{t("admin.bulkEmail.sidebar.tips")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-2 text-muted-foreground">
-                  <li>• Test with a small group first</li>
-                  <li>• Schedule emails for optimal times</li>
-                  <li>• Keep content clear and concise</li>
-                  <li>• Use personalization variables</li>
+                  <li>• {t("admin.bulkEmail.sidebar.tip1")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.tip2")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.tip3")}</li>
+                  <li>• {t("admin.bulkEmail.sidebar.tip4")}</li>
                 </ul>
               </CardContent>
             </Card>
@@ -941,16 +958,16 @@ const BulkEmail = () => {
         <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Email Preview</DialogTitle>
+              <DialogTitle>{t("admin.bulkEmail.preview.title")}</DialogTitle>
               <DialogDescription>
-                This is how your email will appear to recipients. Variables are shown with sample data.
+                {t("admin.bulkEmail.preview.description")}
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
               {/* Subject Preview */}
               <div>
-                <Label className="text-sm font-medium">Subject</Label>
+                <Label className="text-sm font-medium">{t("admin.bulkEmail.preview.subject")}</Label>
                 <div className="mt-1 p-3 bg-muted rounded-lg">
                   <p className="font-medium">{formData.subject}</p>
                 </div>
@@ -960,13 +977,13 @@ const BulkEmail = () => {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Note:</strong> Variables like {`{{username}}`} and {`{{email}}`} will be replaced with actual recipient data when sent.
+                  <strong>{t("admin.bulkEmail.preview.note")}:</strong> {t("admin.bulkEmail.preview.variablesNote")}
                 </AlertDescription>
               </Alert>
               
               {/* Body Preview */}
               <div>
-                <Label className="text-sm font-medium">Email Body</Label>
+                <Label className="text-sm font-medium">{t("admin.bulkEmail.preview.body")}</Label>
                 <div className="mt-1 border rounded-lg overflow-hidden" style={{ backgroundColor: '#f4f4f7' }}>
                   <div
                     className="prose prose-sm max-w-none"
@@ -979,9 +996,9 @@ const BulkEmail = () => {
               <Alert variant="default">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  This email will be sent to <strong>{recipientCount}</strong> recipient{recipientCount !== 1 ? 's' : ''}.
+                  {t("admin.bulkEmail.preview.willSendTo", { count: recipientCount })}
                   {formData.scheduleType === 'scheduled' && formData.scheduledDate && formData.scheduledTime && (
-                    <> Scheduled for: <strong>{new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString()}</strong></>
+                    <> {t("admin.bulkEmail.preview.scheduledFor")} <strong>{new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString()}</strong></>
                   )}
                 </AlertDescription>
               </Alert>
@@ -989,7 +1006,7 @@ const BulkEmail = () => {
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
-                Close Preview
+                {t("admin.bulkEmail.preview.closePreview")}
               </Button>
               <Button onClick={() => {
                 setPreviewDialogOpen(false);
@@ -998,12 +1015,12 @@ const BulkEmail = () => {
                 {formData.scheduleType === 'scheduled' ? (
                   <>
                     <Clock className="mr-2 h-4 w-4" />
-                    Schedule Now
+                    {t("admin.bulkEmail.preview.scheduleNow")}
                   </>
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    Send Now
+                    {t("admin.bulkEmail.preview.sendNow")}
                   </>
                 )}
               </Button>

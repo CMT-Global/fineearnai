@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,27 +45,17 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function EmailSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [testEmailSent, setTestEmailSent] = useState(false);
-
-  // Fetch email settings
-  const { data: configData, isLoading } = useQuery({
-    queryKey: ['email-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'email_settings')
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.value || DEFAULT_SETTINGS;
-    },
-  });
+  
+  // Force re-render when language changes
 
   // Update settings when data loads
   useEffect(() => {
@@ -90,13 +82,13 @@ export default function EmailSettings() {
       queryClient.invalidateQueries({ queryKey: ['email-settings'] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "Email settings have been updated successfully.",
+        title: t("admin.emailSettings.toasts.settingsSaved"),
+        description: t("admin.emailSettings.toasts.settingsSavedDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Error saving settings",
+        title: t("admin.emailSettings.toasts.errorSaving"),
         description: error.message,
         variant: "destructive",
       });
@@ -121,13 +113,13 @@ export default function EmailSettings() {
       setTestEmailSent(true);
       setTimeout(() => setTestEmailSent(false), 5000);
       toast({
-        title: "Test email sent",
-        description: "Check your inbox for the test email.",
+        title: t("admin.emailSettings.toasts.testEmailSent"),
+        description: t("admin.emailSettings.toasts.testEmailSentDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Error sending test email",
+        title: t("admin.emailSettings.toasts.errorSendingTest"),
         description: error.message,
         variant: "destructive",
       });
@@ -156,8 +148,8 @@ export default function EmailSettings() {
         });
         setErrors(newErrors);
         toast({
-          title: "Validation error",
-          description: "Please fix the errors before saving.",
+          title: t("admin.emailSettings.toasts.validationError"),
+          description: t("admin.emailSettings.toasts.validationErrorDescription"),
           variant: "destructive",
         });
       }
@@ -169,8 +161,8 @@ export default function EmailSettings() {
     setHasChanges(true);
     setErrors({});
     toast({
-      title: "Settings reset",
-      description: "Email settings have been reset to defaults.",
+      title: t("admin.emailSettings.toasts.settingsReset"),
+      description: t("admin.emailSettings.toasts.settingsResetDescription"),
     });
   };
 
@@ -190,16 +182,16 @@ export default function EmailSettings() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <AdminBreadcrumb
         items={[
-          { label: "Communications" },
-          { label: "Email Settings" },
+          { label: t("admin.emailSettings.breadcrumb.communications") },
+          { label: t("admin.emailSettings.breadcrumb.emailSettings") },
         ]}
       />
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Email Settings</h1>
+            <h1 className="text-3xl font-bold">{t("admin.emailSettings.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              Configure email sending settings and verification reminders
+              {t("admin.emailSettings.subtitle")}
             </p>
           </div>
 
@@ -210,7 +202,7 @@ export default function EmailSettings() {
               disabled={saveMutation.isPending}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Defaults
+              {t("admin.emailSettings.actions.resetToDefaults")}
             </Button>
             
             <Button
@@ -223,7 +215,7 @@ export default function EmailSettings() {
               ) : (
                 <Send className="h-4 w-4 mr-2" />
               )}
-              Send Test Email
+              {t("admin.emailSettings.actions.sendTestEmail")}
             </Button>
 
             <Button
@@ -235,7 +227,7 @@ export default function EmailSettings() {
               ) : (
                 <Mail className="h-4 w-4 mr-2" />
               )}
-              Save Settings
+              {t("admin.emailSettings.actions.saveSettings")}
             </Button>
           </div>
         </div>
@@ -244,7 +236,7 @@ export default function EmailSettings() {
           <Alert className="border-green-500 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              Test email sent successfully! Check your inbox.
+              {t("admin.emailSettings.testEmailSent")}
             </AlertDescription>
           </Alert>
         )}
@@ -252,15 +244,15 @@ export default function EmailSettings() {
         {/* Sender Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Sender Information</CardTitle>
+            <CardTitle>{t("admin.emailSettings.senderInformation.title")}</CardTitle>
             <CardDescription>
-              Configure who emails are sent from. The from_address must be verified in Resend.
+              {t("admin.emailSettings.senderInformation.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="from_address">From Address *</Label>
+                    <Label htmlFor="from_address">{t("admin.emailSettings.senderInformation.fromAddress")}</Label>
                     <Input
                       id="from_address"
                       type="email"
@@ -277,7 +269,7 @@ export default function EmailSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="from_name">From Name *</Label>
+                    <Label htmlFor="from_name">{t("admin.emailSettings.senderInformation.fromName")}</Label>
                     <Input
                       id="from_name"
                       value={settings.from_name}
@@ -298,15 +290,15 @@ export default function EmailSettings() {
         {/* Reply-To Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Reply-To Information</CardTitle>
+            <CardTitle>{t("admin.emailSettings.replyToInformation.title")}</CardTitle>
             <CardDescription>
-              Where user replies will be sent to.
+              {t("admin.emailSettings.replyToInformation.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reply_to_address">Reply-To Address *</Label>
+                    <Label htmlFor="reply_to_address">{t("admin.emailSettings.replyToInformation.replyToAddress")}</Label>
                     <Input
                       id="reply_to_address"
                       type="email"
@@ -323,7 +315,7 @@ export default function EmailSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="reply_to_name">Reply-To Name *</Label>
+                    <Label htmlFor="reply_to_name">{t("admin.emailSettings.replyToInformation.replyToName")}</Label>
                     <Input
                       id="reply_to_name"
                       value={settings.reply_to_name}
@@ -344,15 +336,15 @@ export default function EmailSettings() {
         {/* Platform Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Platform Information</CardTitle>
+            <CardTitle>{t("admin.emailSettings.platformInformation.title")}</CardTitle>
             <CardDescription>
-              Basic platform details used in emails and templates.
+              {t("admin.emailSettings.platformInformation.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="platform_name">Platform Name *</Label>
+                    <Label htmlFor="platform_name">{t("admin.emailSettings.platformInformation.platformName")}</Label>
                     <Input
                       id="platform_name"
                       value={settings.platform_name}
@@ -368,7 +360,7 @@ export default function EmailSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="platform_url">Platform URL *</Label>
+                    <Label htmlFor="platform_url">{t("admin.emailSettings.platformInformation.platformUrl")}</Label>
                     <Input
                       id="platform_url"
                       type="url"
@@ -387,7 +379,7 @@ export default function EmailSettings() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="support_email">Support Email *</Label>
+                    <Label htmlFor="support_email">{t("admin.emailSettings.platformInformation.supportEmail")}</Label>
                     <Input
                       id="support_email"
                       type="email"
@@ -404,7 +396,7 @@ export default function EmailSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="admin_notification_email">Admin Notification Email *</Label>
+                    <Label htmlFor="admin_notification_email">{t("admin.emailSettings.platformInformation.adminNotificationEmail")}</Label>
                     <Input
                       id="admin_notification_email"
                       type="email"
@@ -422,7 +414,7 @@ export default function EmailSettings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="footer_text">Email Footer Text</Label>
+                  <Label htmlFor="footer_text">{t("admin.emailSettings.platformInformation.footerText")}</Label>
                   <Textarea
                     id="footer_text"
                     value={settings.footer_text}

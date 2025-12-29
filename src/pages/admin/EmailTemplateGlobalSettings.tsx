@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -150,25 +152,16 @@ const DEFAULT_CONFIG: EmailTemplateGlobalConfig = {
 };
 
 export default function EmailTemplateGlobalSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [templateConfig, setTemplateConfig] = useState<EmailTemplateGlobalConfig>(DEFAULT_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<'template' | 'preview'>('template');
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["email-template-global"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("value")
-        .eq("key", "email_template_global")
-        .maybeSingle();
-
-      if (error) throw error;
-      return (data?.value as EmailTemplateGlobalConfig) || DEFAULT_CONFIG;
-    },
-  });
+  
+  // Force re-render when language changes
 
   useEffect(() => {
     if (data) {
@@ -198,14 +191,14 @@ export default function EmailTemplateGlobalSettings() {
       queryClient.invalidateQueries({ queryKey: ["email-template-global"] });
       setHasChanges(false);
       toast({
-        title: "Template saved",
-        description: "Global email template has been updated successfully.",
+        title: t("admin.emailTemplateGlobalSettings.toasts.templateSaved"),
+        description: t("admin.emailTemplateGlobalSettings.toasts.templateSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving template",
-        description: error.message || "Failed to save template. Please try again.",
+        title: t("admin.emailTemplateGlobalSettings.toasts.errorSaving"),
+        description: error.message || t("admin.emailTemplateGlobalSettings.toasts.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -268,25 +261,17 @@ export default function EmailTemplateGlobalSettings() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Mail className="h-8 w-8 text-primary" />
-          Global Email Template
+          {t("admin.emailTemplateGlobalSettings.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.
+          {t("admin.emailTemplateGlobalSettings.subtitle")}
         </p>
       </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Available Variables:</strong> Use <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{variable_name}}'}</code> format. 
-          Available: <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{platform_name}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{platform_url}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{support_url}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{privacy_url}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{current_year}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{logo_html}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{preheader}}'}</code>, 
-          <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{{content}}'}</code>
+          <strong>{t("admin.emailTemplateGlobalSettings.availableVariables")}:</strong> {t("admin.emailTemplateGlobalSettings.variablesDescription")}
         </AlertDescription>
       </Alert>
 
@@ -294,25 +279,25 @@ export default function EmailTemplateGlobalSettings() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="template" className="gap-2">
             <Code className="h-4 w-4" />
-            Edit Template
+            {t("admin.emailTemplateGlobalSettings.tabs.editTemplate")}
           </TabsTrigger>
           <TabsTrigger value="preview" className="gap-2">
             <Eye className="h-4 w-4" />
-            Preview
+            {t("admin.emailTemplateGlobalSettings.tabs.preview")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="template" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Email Template HTML</CardTitle>
+              <CardTitle>{t("admin.emailTemplateGlobalSettings.template.title")}</CardTitle>
               <CardDescription>
-                Edit the HTML template. The {'{{content}}'} variable will be replaced with the actual email body.
+                {t("admin.emailTemplateGlobalSettings.template.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="template">HTML Template</Label>
+                <Label htmlFor="template">{t("admin.emailTemplateGlobalSettings.template.htmlTemplate")}</Label>
                 <Textarea
                   id="template"
                   value={templateConfig.template}
@@ -322,10 +307,10 @@ export default function EmailTemplateGlobalSettings() {
                   }}
                   rows={30}
                   className="font-mono text-sm"
-                  placeholder="Enter HTML template..."
+                  placeholder={t("admin.emailTemplateGlobalSettings.template.placeholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  This template wraps all emails. Make sure to include {'{{content}}'} where the email body should appear.
+                  {t("admin.emailTemplateGlobalSettings.template.hint")}
                 </p>
               </div>
             </CardContent>
@@ -335,9 +320,9 @@ export default function EmailTemplateGlobalSettings() {
         <TabsContent value="preview" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Email Preview</CardTitle>
+              <CardTitle>{t("admin.emailTemplateGlobalSettings.preview.title")}</CardTitle>
               <CardDescription>
-                Preview how the template looks with sample data
+                {t("admin.emailTemplateGlobalSettings.preview.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -355,23 +340,23 @@ export default function EmailTemplateGlobalSettings() {
       <Card>
         <CardContent className="flex items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Changes are applied to all emails sent from the platform immediately after saving.</p>
+            <p>{t("admin.emailTemplateGlobalSettings.changesNote")}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Defaults
+              {t("admin.emailTemplateGlobalSettings.actions.resetToDefaults")}
             </Button>
             <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Save Template
+                  {t("admin.emailTemplateGlobalSettings.actions.saveTemplate")}
                 </>
               )}
             </Button>
@@ -383,7 +368,7 @@ export default function EmailTemplateGlobalSettings() {
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>
-                Template saved successfully! All future emails will use this template.
+                {t("admin.emailTemplateGlobalSettings.success.templateSaved")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -393,7 +378,7 @@ export default function EmailTemplateGlobalSettings() {
           <CardContent className="pt-0">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Failed to save template. Please try again.</AlertDescription>
+              <AlertDescription>{t("admin.emailTemplateGlobalSettings.errors.failedToSave")}</AlertDescription>
             </Alert>
           </CardContent>
         )}

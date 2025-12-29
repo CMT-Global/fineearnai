@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,8 +53,20 @@ interface WithdrawalRequest {
 }
 
 export default function Withdrawals() {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -90,8 +104,8 @@ export default function Withdrawals() {
     if (!roleData) {
       navigate("/dashboard");
       toast({
-        title: "Access Denied",
-        description: "Admin access required",
+        title: t("toasts.admin.accessDenied"),
+        description: t("errors.admin.accessDenied"),
         variant: "destructive",
       });
     }
@@ -102,31 +116,92 @@ export default function Withdrawals() {
     try {
       setLoading(true);
       
-      // Single optimized query with join - eliminates N+1 problem
-      // Using the foreign key relationship added in migration
-      const { data, error } = await supabase
+      // Fetch withdrawals and profiles separately to avoid relationship ambiguity
+      // This approach works around the PGRST201 error when multiple relationships exist
+      const { data: withdrawalsData, error: withdrawalsError } = await supabase
         .from("withdrawal_requests")
-        .select(`
-          *,
-          profiles (
-            username,
-            email,
-            membership_plan,
-            registration_country_name
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (withdrawalsError) {
+        console.error("Error fetching withdrawals:", withdrawalsError);
+        throw withdrawalsError;
+      }
 
-      // Type assertion since TypeScript types haven't regenerated yet
-      setWithdrawals((data as any) || []);
-    } catch (error) {
+      if (!withdrawalsData || withdrawalsData.length === 0) {
+        setWithdrawals([]);
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(withdrawalsData.map(w => w.user_id).filter(Boolean))];
+      
+      // If no valid user IDs, return withdrawals without profiles
+      if (userIds.length === 0) {
+        setWithdrawals(withdrawalsData.map(w => ({ ...w, profiles: undefined })) as any);
+        return;
+      }
+      
+      // Fetch profiles for all users in one query
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, email, membership_plan, registration_country_name")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+
+      // Create a map of user_id -> profile for quick lookup
+      const profilesMap = new Map(
+        (profilesData || []).map(profile => [
+          profile.id, 
+          {
+            username: profile.username,
+            email: profile.email,
+            membership_plan: profile.membership_plan,
+            registration_country_name: profile.registration_country_name
+          }
+        ])
+      );
+
+      // Merge withdrawals with profiles
+      const withdrawalsWithProfiles = withdrawalsData.map(withdrawal => ({
+        ...withdrawal,
+        profiles: profilesMap.get(withdrawal.user_id) || undefined
+      }));
+
+      setWithdrawals(withdrawalsWithProfiles as any);
+    } catch (error: any) {
       console.error("Error loading withdrawals:", error);
+      
+      // Extract error message from various error formats
+      let errorMessage = "Unknown error";
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.details) {
+        errorMessage = error.details;
+      } else if (error?.hint) {
+        errorMessage = error.hint;
+      }
+      
+      console.error("Error details:", {
+        message: errorMessage,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        error: error,
+        stack: error?.stack
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to load withdrawal requests",
+        title: t("common.error"),
+        description: `${t("admin.withdrawals.errorFailedToLoad")}: ${errorMessage}`,
         variant: "destructive",
+        duration: 10000, // Longer duration to read the error
       });
     } finally {
       setLoading(false);
@@ -136,14 +211,14 @@ export default function Withdrawals() {
   const handleMarkAsPaidManually = async (withdrawalId: string) => {
     if (processing) {
       toast({
-        title: "Please Wait",
-        description: "Another withdrawal is being processed",
+        title: t("common.pleaseWait"),
+        description: t("admin.withdrawals.anotherWithdrawalProcessing"),
         variant: "destructive",
       });
       return;
     }
 
-    const notes = prompt("Add notes (optional):");
+    const notes = prompt(t("admin.withdrawals.addNotesPrompt"));
     
     try {
       setProcessing(withdrawalId);
@@ -153,7 +228,7 @@ export default function Withdrawals() {
         body: {
           withdrawal_request_id: withdrawalId,
           action: "mark_paid_manually",
-          manual_payment_notes: notes || "Marked as paid manually by admin"
+          manual_payment_notes: notes || t("admin.withdrawals.markedAsPaidManuallyByAdmin")
         }
       });
       
@@ -161,13 +236,13 @@ export default function Withdrawals() {
 
       if (data?.success) {
         toast({
-          title: "Success",
-          description: `Withdrawal marked as paid. Transaction hash: ${data.transaction_hash || 'N/A'}`
+          title: t("admin.withdrawals.success"),
+          description: t("admin.withdrawals.withdrawalMarkedAsPaid", { hash: data.transaction_hash || 'N/A' })
         });
       } else {
         toast({
-          title: "Error",
-          description: data?.error || "Failed to mark withdrawal as paid",
+          title: t("admin.withdrawals.error"),
+          description: data?.error || t("admin.withdrawals.failedToMarkAsPaid"),
           variant: "destructive",
         });
       }
@@ -176,8 +251,8 @@ export default function Withdrawals() {
     } catch (error) {
       console.error("Error marking withdrawal as paid:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to mark withdrawal as paid",
+        title: t("admin.withdrawals.error"),
+        description: error instanceof Error ? error.message : t("admin.withdrawals.failedToMarkAsPaid"),
         variant: "destructive",
       });
     } finally {
@@ -190,22 +265,22 @@ export default function Withdrawals() {
     const withdrawal = withdrawals.find(w => w.id === withdrawalId);
     if (!withdrawal) {
       toast({
-        title: "Error",
-        description: "Withdrawal not found",
+        title: t("admin.withdrawals.error"),
+        description: t("admin.withdrawals.withdrawalNotFound"),
         variant: "destructive",
       });
       return;
     }
 
-    if (!confirm("Clear previous API error and retry payment?")) return;
+    if (!confirm(t("admin.withdrawals.clearErrorAndRetryConfirm"))) return;
     
     try {
       setProcessing(withdrawalId);
       setActionType('api');
 
       toast({
-        title: "Clearing Error",
-        description: "Clearing previous API error and retrying payment...",
+        title: t("admin.withdrawals.clearingError"),
+        description: t("admin.withdrawals.clearingErrorDescription"),
       });
 
       // Step 1: Clear the api_response error field
@@ -234,25 +309,31 @@ export default function Withdrawals() {
       // Check for API-specific failures
       if (data.api_failed) {
         toast({
-          title: "⚠️ API Payment Failed Again",
-          description: `${data.error_message || 'API call failed'}. Withdrawal remains PENDING - please check ${data.provider?.toUpperCase() || 'provider'} configuration and balance.`,
+          title: t("admin.withdrawals.apiPaymentFailedAgain"),
+          description: t("admin.withdrawals.apiPaymentFailedDescription", { 
+            error: data.error_message || 'API call failed',
+            provider: data.provider?.toUpperCase() || t("admin.withdrawals.unknown")
+          }),
           variant: "destructive",
           duration: 10000,
         });
       } 
       else if (!data.success) {
         toast({
-          title: "Error",
-          description: data.error || data.error_message || "Failed to process payment",
+          title: t("admin.withdrawals.error"),
+          description: data.error || data.error_message || t("admin.withdrawals.failedToProcessPayment"),
           variant: "destructive",
         });
       } 
       else {
         toast({
-          title: "✅ Payment Sent Successfully",
+          title: t("admin.withdrawals.paymentSentSuccessfully"),
           description: data.transaction_hash 
-            ? `Provider: ${data.provider?.toUpperCase() || 'Unknown'}. Transaction: ${data.transaction_hash.substring(0, 20)}...`
-            : "Payment processed successfully via API after clearing error",
+            ? t("admin.withdrawals.paymentSentDescription", { 
+                provider: data.provider?.toUpperCase() || t("admin.withdrawals.unknown"),
+                hash: data.transaction_hash.substring(0, 20)
+              })
+            : t("admin.withdrawals.paymentProcessedSuccessfully"),
           duration: 6000,
         });
       }
@@ -261,8 +342,8 @@ export default function Withdrawals() {
     } catch (error) {
       console.error("Error clearing error and retrying:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to clear error and retry",
+        title: t("admin.withdrawals.error"),
+        description: error instanceof Error ? error.message : t("admin.withdrawals.failedToProcessPayment"),
         variant: "destructive",
       });
     } finally {
@@ -274,22 +355,22 @@ export default function Withdrawals() {
   const handlePayViaAPI = async (withdrawalId: string) => {
     if (processing) {
       toast({
-        title: "Please Wait",
-        description: "Another withdrawal is being processed",
+        title: t("common.pleaseWait"),
+        description: t("admin.withdrawals.anotherWithdrawalProcessing"),
         variant: "destructive",
       });
       return;
     }
 
-    if (!confirm("Process this withdrawal via payment API?")) return;
+    if (!confirm(t("admin.withdrawals.processViaAPIConfirm"))) return;
     
     try {
       setProcessing(withdrawalId);
       setActionType('api');
 
       toast({
-        title: "Processing",
-        description: "Sending payment request to API...",
+        title: t("admin.withdrawals.processing"),
+        description: t("admin.withdrawals.sendingPaymentRequest"),
       });
       
       const { data, error } = await supabase.functions.invoke("process-withdrawal-payment", {
@@ -304,8 +385,11 @@ export default function Withdrawals() {
       // Check for API-specific failures (API called but failed - withdrawal stays pending)
       if (data.api_failed) {
         toast({
-          title: "⚠️ API Payment Failed",
-          description: `${data.error_message || 'API call failed'}. Withdrawal remains PENDING - you can retry after fixing the issue (e.g., topping up ${data.provider?.toUpperCase() || 'provider'} balance) or reject it manually.`,
+          title: t("admin.withdrawals.apiPaymentFailedTitle"),
+          description: t("admin.withdrawals.apiPaymentFailedDescription", { 
+            error: data.error_message || 'API call failed',
+            provider: data.provider?.toUpperCase() || t("admin.withdrawals.unknown")
+          }),
           variant: "destructive",
           duration: 10000, // Longer duration for important admin message
         });
@@ -313,18 +397,21 @@ export default function Withdrawals() {
       // Check for general errors (should not happen with new logic, but kept for safety)
       else if (!data.success) {
         toast({
-          title: "Error",
-          description: data.error || data.error_message || "Failed to process payment",
+          title: t("admin.withdrawals.error"),
+          description: data.error || data.error_message || t("admin.withdrawals.failedToProcessPayment"),
           variant: "destructive",
         });
       } 
       // Success - payment sent
       else {
         toast({
-          title: "✅ Payment Sent Successfully",
+          title: t("admin.withdrawals.paymentSentSuccessfully"),
           description: data.transaction_hash 
-            ? `Provider: ${data.provider?.toUpperCase() || 'Unknown'}. Transaction: ${data.transaction_hash.substring(0, 20)}...`
-            : "Payment processed successfully via API",
+            ? t("admin.withdrawals.paymentSentDescription", { 
+                provider: data.provider?.toUpperCase() || t("admin.withdrawals.unknown"),
+                hash: data.transaction_hash.substring(0, 20)
+              })
+            : t("admin.withdrawals.paymentProcessedSuccessfully"),
           duration: 6000,
         });
       }
@@ -333,8 +420,8 @@ export default function Withdrawals() {
     } catch (error) {
       console.error("Error processing API payment:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process payment",
+        title: t("admin.withdrawals.error"),
+        description: error instanceof Error ? error.message : t("admin.withdrawals.failedToProcessPayment"),
         variant: "destructive",
       });
     } finally {
@@ -348,8 +435,8 @@ export default function Withdrawals() {
     
     if (!rejectionReason.trim()) {
       toast({
-        title: "Error",
-        description: "Rejection reason is required",
+        title: t("admin.withdrawals.error"),
+        description: t("admin.withdrawals.rejectionReasonRequiredError"),
         variant: "destructive",
       });
       return;
@@ -357,8 +444,8 @@ export default function Withdrawals() {
 
     if (rejectionReason.length < 10) {
       toast({
-        title: "Error",
-        description: "Please provide a detailed reason (at least 10 characters)",
+        title: t("admin.withdrawals.error"),
+        description: t("admin.withdrawals.rejectionReasonMinLength"),
         variant: "destructive",
       });
       return;
@@ -380,13 +467,15 @@ export default function Withdrawals() {
 
       if (data?.success) {
         toast({
-          title: "Success",
-          description: `Withdrawal rejected. Amount ${data.refunded_amount ? formatCurrency(data.refunded_amount) : ''} refunded to user's earnings wallet`
+          title: t("admin.withdrawals.success"),
+          description: t("admin.withdrawals.withdrawalRejected", { 
+            amount: data.refunded_amount ? formatCurrency(data.refunded_amount) : '' 
+          })
         });
       } else {
         toast({
-          title: "Error",
-          description: data?.error || "Failed to reject withdrawal",
+          title: t("admin.withdrawals.error"),
+          description: data?.error || t("admin.withdrawals.failedToReject"),
           variant: "destructive",
         });
       }
@@ -395,8 +484,8 @@ export default function Withdrawals() {
     } catch (error) {
       console.error("Error rejecting withdrawal:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to reject withdrawal",
+        title: t("admin.withdrawals.error"),
+        description: error instanceof Error ? error.message : t("admin.withdrawals.failedToReject"),
         variant: "destructive",
       });
     } finally {
@@ -416,18 +505,18 @@ export default function Withdrawals() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copied",
-      description: "Address copied to clipboard",
+      title: t("common.copied"),
+      description: t("admin.withdrawals.addressCopied"),
     });
   };
 
   const handleFetchCPAYWalletInfo = async (mode: 'wallet' | 'deposit' = 'wallet') => {
     try {
       setFetchingWalletInfo(true);
-      const modeLabel = mode === 'deposit' ? 'last deposit' : 'wallet API';
+      const modeLabel = mode === 'deposit' ? t("admin.withdrawals.lastDepositDescription") : t("admin.withdrawals.walletAPIDescription");
       toast({
-        title: "Fetching Token Info",
-        description: `Retrieving CPAY token from ${modeLabel}...`,
+        title: t("admin.withdrawals.fetchingTokenInfo"),
+        description: t("admin.withdrawals.retrievingCPAYToken", { source: modeLabel }),
       });
 
       const { data, error } = await supabase.functions.invoke("get-cpay-wallet-info", {
@@ -443,23 +532,26 @@ export default function Withdrawals() {
         const tokenId = data.usdtTrc20Token?.currencyId || data.token?.currencyId;
         if (tokenId) {
           toast({
-            title: "✅ Token ID Found",
-            description: `Source: ${data.source || mode}. currencyId: ${tokenId}`,
+            title: t("admin.withdrawals.tokenIdFound"),
+            description: t("admin.withdrawals.tokenIdFoundDescription", { 
+              source: data.source || mode,
+              tokenId 
+            }),
             duration: 10000,
           });
         }
       } else {
         toast({
-          title: "Error",
-          description: data.error || "Failed to fetch token info",
+          title: t("admin.withdrawals.error"),
+          description: data.error || t("admin.withdrawals.failedToFetchTokenInfo"),
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error fetching CPAY token info:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch token info",
+        title: t("admin.withdrawals.error"),
+        description: error instanceof Error ? error.message : t("admin.withdrawals.failedToFetchTokenInfo"),
         variant: "destructive",
       });
     } finally {
@@ -479,8 +571,8 @@ export default function Withdrawals() {
       if (error) {
         console.error('[Withdrawals] Error fetching wallet balance:', error);
         toast({
-          title: "Error",
-          description: error.message || "Failed to fetch wallet balance",
+          title: t("admin.withdrawals.error"),
+          description: error.message || t("admin.withdrawals.failedToFetchBalance"),
           variant: "destructive",
         });
         return;
@@ -489,8 +581,8 @@ export default function Withdrawals() {
       if (!data?.success) {
         console.error('[Withdrawals] API returned error:', data);
         toast({
-          title: "CPAY Error",
-          description: data?.error || "Failed to fetch wallet balance from CPAY",
+          title: t("admin.withdrawals.cpayError"),
+          description: data?.error || t("admin.withdrawals.failedToFetchBalance"),
           variant: "destructive",
         });
         return;
@@ -501,14 +593,14 @@ export default function Withdrawals() {
       setShowBalanceDialog(true);
 
       toast({
-        title: "Success",
-        description: "Wallet balance retrieved successfully",
+        title: t("admin.withdrawals.success"),
+        description: t("admin.withdrawals.walletBalanceRetrieved"),
       });
     } catch (err: any) {
       console.error('[Withdrawals] Unexpected error:', err);
       toast({
-        title: "Error",
-        description: err.message || "An unexpected error occurred",
+        title: t("admin.withdrawals.error"),
+        description: err.message || t("admin.withdrawals.anUnexpectedErrorOccurred"),
         variant: "destructive",
       });
     } finally {
@@ -518,11 +610,11 @@ export default function Withdrawals() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-      pending: { label: "Pending", variant: "secondary" },
-      processing: { label: "Processing", variant: "default" },
-      completed: { label: "Completed", variant: "default" },
-      rejected: { label: "Rejected", variant: "destructive" },
-      failed: { label: "Failed", variant: "destructive" },
+      pending: { label: t("admin.withdrawals.status.pending"), variant: "secondary" },
+      processing: { label: t("admin.withdrawals.status.processing"), variant: "default" },
+      completed: { label: t("admin.withdrawals.status.completed"), variant: "default" },
+      rejected: { label: t("admin.withdrawals.status.rejected"), variant: "destructive" },
+      failed: { label: t("admin.withdrawals.status.failed"), variant: "destructive" },
     };
 
     const config = statusConfig[status] || { label: status, variant: "outline" };
@@ -548,7 +640,7 @@ export default function Withdrawals() {
   if (loading) {
     return (
       <div className="container mx-auto p-6">
-        <p>Loading withdrawals...</p>
+        <p>{t("admin.withdrawals.loading")}</p>
       </div>
     );
   }
@@ -556,44 +648,44 @@ export default function Withdrawals() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Withdrawal Management</h1>
-        <p className="text-muted-foreground">Process and manage user withdrawal requests</p>
+        <h1 className="text-3xl font-bold mb-2">{t("admin.withdrawals.title")}</h1>
+        <p className="text-muted-foreground">{t("admin.withdrawals.subtitle")}</p>
       </div>
 
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.pendingRequests")}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(stats.pendingAmount)} total
+              {formatCurrency(stats.pendingAmount)} {t("admin.withdrawals.stats.total")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.completed")}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completed}</div>
-            <p className="text-xs text-muted-foreground">Successfully processed</p>
+            <p className="text-xs text-muted-foreground">{t("admin.withdrawals.stats.successfullyProcessed")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.rejected")}</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.rejected}</div>
-            <p className="text-xs text-muted-foreground">Failed or rejected</p>
+            <p className="text-xs text-muted-foreground">{t("admin.withdrawals.stats.failedOrRejected")}</p>
           </CardContent>
         </Card>
       </div>
@@ -603,10 +695,10 @@ export default function Withdrawals() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-blue-600" />
-            CPAY Token ID Helper
+            {t("admin.withdrawals.cpayTokenHelper")}
           </CardTitle>
           <CardDescription>
-            Get your correct USDT TRC20 Token ID from CPAY - choose your preferred method
+            {t("admin.withdrawals.cpayTokenHelperDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -621,12 +713,12 @@ export default function Withdrawals() {
                 {fetchingWalletInfo ? (
                   <>
                     <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Fetching...
+                    {t("admin.withdrawals.fetching")}
                   </>
                 ) : (
                   <>
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Get From Wallet API
+                    {t("admin.withdrawals.getFromWalletAPI")}
                   </>
                 )}
               </Button>
@@ -640,12 +732,12 @@ export default function Withdrawals() {
                 {fetchingWalletInfo ? (
                   <>
                     <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Fetching...
+                    {t("admin.withdrawals.fetching")}
                   </>
                 ) : (
                   <>
                     <DollarSign className="mr-2 h-4 w-4" />
-                    Use Token From Last Deposit
+                    {t("admin.withdrawals.useTokenFromLastDeposit")}
                   </>
                 )}
               </Button>
@@ -659,21 +751,21 @@ export default function Withdrawals() {
                 {fetchingBalance ? (
                   <>
                     <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Fetching...
+                    {t("admin.withdrawals.fetching")}
                   </>
                 ) : (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Check Wallet Balance
+                    {t("admin.withdrawals.checkWalletBalance")}
                   </>
                 )}
               </Button>
             </div>
             
             <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Wallet API:</strong> Fetches all tokens from your CPAY wallet</p>
-              <p><strong>Last Deposit:</strong> Extracts token ID from your most recent CPAY deposit (recommended if you've deposited)</p>
-              <p><strong>Check Balance:</strong> View your wallet balance and all token details with USDT TRC20 highlighted</p>
+              <p><strong>Wallet API:</strong> {t("admin.withdrawals.walletAPIDescription")}</p>
+              <p><strong>Last Deposit:</strong> {t("admin.withdrawals.lastDepositDescription")}</p>
+              <p><strong>Check Balance:</strong> {t("admin.withdrawals.checkBalanceDescription")}</p>
             </div>
           </div>
         </CardContent>
@@ -681,10 +773,10 @@ export default function Withdrawals() {
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList>
-          <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="pending">{t("admin.withdrawals.tabs.pending")} ({stats.pending})</TabsTrigger>
+          <TabsTrigger value="completed">{t("admin.withdrawals.tabs.completed")}</TabsTrigger>
+          <TabsTrigger value="rejected">{t("admin.withdrawals.tabs.rejected")}</TabsTrigger>
+          <TabsTrigger value="all">{t("admin.withdrawals.tabs.all")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="mt-6">
@@ -692,7 +784,7 @@ export default function Withdrawals() {
             {filteredWithdrawals.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center text-muted-foreground">
-                  No withdrawal requests found
+                  {t("admin.withdrawals.noWithdrawalsFound")}
                 </CardContent>
               </Card>
             ) : (
@@ -702,7 +794,7 @@ export default function Withdrawals() {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg">
-                          {withdrawal.profiles?.username || "Unknown User"}
+                          {withdrawal.profiles?.username || t("admin.withdrawals.unknownUser")}
                         </CardTitle>
                         <CardDescription>{withdrawal.profiles?.email}</CardDescription>
                       </div>
@@ -712,41 +804,41 @@ export default function Withdrawals() {
                   <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <p className="text-sm text-muted-foreground">Membership Plan</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.membershipPlan")}</p>
                         <Badge variant="outline" className="mt-1">
                           {withdrawal.profiles?.membership_plan || 'free'}
                         </Badge>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Country</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.country")}</p>
                         <Badge variant="outline" className="mt-1">
-                          {withdrawal.profiles?.registration_country_name || 'N/A'}
+                          {withdrawal.profiles?.registration_country_name || t("admin.deposits.na")}
                         </Badge>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Amount</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.amount")}</p>
                         <p className="text-lg font-semibold">{formatCurrency(withdrawal.amount)}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Net Amount (after fee)</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.netAmount")}</p>
                         <p className="text-lg font-semibold text-green-600">
                           {formatCurrency(withdrawal.net_amount)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Fee: {formatCurrency(withdrawal.fee)}
+                          {t("admin.withdrawals.fee")}: {formatCurrency(withdrawal.fee)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Payment Method</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.paymentMethod")}</p>
                         <p className="font-medium">
                           {getPaymentMethodDisplayName(withdrawal.payment_method, true)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Raw: {withdrawal.payment_method}
+                          {t("admin.withdrawals.raw")}: {withdrawal.payment_method}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Cryptocurrency</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.cryptocurrency")}</p>
                         {withdrawal.metadata?.crypto_name ? (
                           <>
                             <div className="flex items-center gap-2 mt-1">
@@ -762,38 +854,38 @@ export default function Withdrawals() {
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Network: {withdrawal.metadata.crypto_id === 'usdc-solana' ? 'Solana' : 'BEP-20 (BSC)'}
+                              {t("admin.withdrawals.network")}: {withdrawal.metadata.crypto_id === 'usdc-solana' ? 'Solana' : 'BEP-20 (BSC)'}
                             </p>
                           </>
                         ) : (
                           <Badge variant="outline" className="mt-1 text-muted-foreground">
-                            Not specified (Legacy)
+                            {t("admin.withdrawals.notSpecifiedLegacy")}
                           </Badge>
                         )}
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Payout Address</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.payoutAddress")}</p>
                         <p className="font-mono text-sm">{withdrawal.payout_address}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Requested</p>
+                        <p className="text-sm text-muted-foreground">{t("admin.withdrawals.requested")}</p>
                         <p className="text-sm">{new Date(withdrawal.created_at).toLocaleString()}</p>
                       </div>
                       {withdrawal.processed_at && (
                         <div>
-                          <p className="text-sm text-muted-foreground">Processed</p>
+                          <p className="text-sm text-muted-foreground">{t("admin.withdrawals.processed")}</p>
                           <p className="text-sm">{new Date(withdrawal.processed_at).toLocaleString()}</p>
                         </div>
                       )}
                       {withdrawal.rejection_reason && (
                         <div className="md:col-span-2">
-                          <p className="text-sm text-muted-foreground">Rejection Reason</p>
+                          <p className="text-sm text-muted-foreground">{t("admin.withdrawals.rejectionReason")}</p>
                           <p className="text-sm text-red-600">{withdrawal.rejection_reason}</p>
                         </div>
                       )}
                       {withdrawal.admin_notes && (
                         <div className="md:col-span-2">
-                          <p className="text-sm text-muted-foreground">Admin Notes</p>
+                          <p className="text-sm text-muted-foreground">{t("admin.withdrawals.adminNotes")}</p>
                           <p className="text-sm">{withdrawal.admin_notes}</p>
                         </div>
                       )}
@@ -824,7 +916,7 @@ export default function Withdrawals() {
                     {withdrawal.status === "failed" && (withdrawal as any).api_response?.error && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>API Payment Failed</AlertTitle>
+                        <AlertTitle>{t("admin.withdrawals.apiPaymentFailed")}</AlertTitle>
                         <AlertDescription>
                           {(withdrawal as any).api_response.error}
                         </AlertDescription>
@@ -834,21 +926,21 @@ export default function Withdrawals() {
                     {withdrawal.status === "pending" && withdrawal.api_response?.error && (
                       <Alert variant="destructive" className="mt-4">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Previous API Attempt Failed</AlertTitle>
+                        <AlertTitle>{t("admin.withdrawals.previousAPIAttemptFailed")}</AlertTitle>
                         <AlertDescription className="space-y-2">
                           <div>
-                            <strong>Provider:</strong> {withdrawal.api_response.provider?.toUpperCase() || withdrawal.payment_provider?.toUpperCase() || 'Unknown'}
+                            <strong>{t("admin.withdrawals.provider")}</strong> {withdrawal.api_response.provider?.toUpperCase() || withdrawal.payment_provider?.toUpperCase() || t("admin.withdrawals.unknown")}
                           </div>
                           <div>
-                            <strong>Error:</strong> {withdrawal.api_response.error}
+                            <strong>{t("admin.withdrawals.error")}</strong> {withdrawal.api_response.error}
                           </div>
                           {withdrawal.api_response.failed_at && (
                             <div className="text-xs text-muted-foreground">
-                              Last attempt: {new Date(withdrawal.api_response.failed_at).toLocaleString()}
+                              {t("admin.withdrawals.lastAttempt")} {new Date(withdrawal.api_response.failed_at).toLocaleString()}
                             </div>
                           )}
                           <div className="text-xs mt-2 pt-2 border-t border-destructive/20">
-                            💡 <strong>Next steps:</strong> Check {withdrawal.api_response.provider?.toUpperCase() || 'provider'} credentials/balance, then click "Clear Error & Retry" or manually reject if needed.
+                            {t("admin.withdrawals.nextStepsHint")} <strong>{t("admin.withdrawals.nextStepsText", { provider: withdrawal.api_response.provider?.toUpperCase() || t("admin.withdrawals.unknown") })}</strong>
                           </div>
                         </AlertDescription>
                       </Alert>
@@ -865,12 +957,12 @@ export default function Withdrawals() {
                           {processing === withdrawal.id && actionType === 'manual' ? (
                             <>
                               <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              Processing...
+                              {t("admin.withdrawals.processing")}
                             </>
                           ) : (
                             <>
                               <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark As Paid Manually
+                              {t("admin.withdrawals.markAsPaidManually")}
                             </>
                           )}
                         </Button>
@@ -886,12 +978,12 @@ export default function Withdrawals() {
                             {processing === withdrawal.id && actionType === 'api' ? (
                               <>
                                 <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                Retrying...
+                                {t("common.retrying")}
                               </>
                             ) : (
                               <>
                                 <RefreshCw className="mr-2 h-4 w-4" />
-                                Clear Error & Retry
+                                {t("admin.withdrawals.clearErrorAndRetry")}
                               </>
                             )}
                           </Button>
@@ -904,12 +996,12 @@ export default function Withdrawals() {
                             {processing === withdrawal.id && actionType === 'api' ? (
                               <>
                                 <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                Processing...
+                                {t("admin.withdrawals.processing")}
                               </>
                             ) : (
                               <>
                                 <DollarSign className="mr-2 h-4 w-4" />
-                                Approve & Pay Via API
+                                {t("admin.withdrawals.approveAndPayViaAPI")}
                               </>
                             )}
                           </Button>
@@ -924,12 +1016,12 @@ export default function Withdrawals() {
                           {processing === withdrawal.id && actionType === 'reject' ? (
                             <>
                               <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              Processing...
+                              {t("admin.withdrawals.processing")}
                             </>
                           ) : (
                             <>
                               <XCircle className="mr-2 h-4 w-4" />
-                              Reject
+                              {t("admin.withdrawals.reject")}
                             </>
                           )}
                         </Button>
@@ -946,29 +1038,29 @@ export default function Withdrawals() {
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reject Withdrawal</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.withdrawals.rejectWithdrawal")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reject the withdrawal and refund the amount to the user's earnings wallet.
+              {t("admin.withdrawals.rejectWithdrawalDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="py-4">
-            <label className="text-sm font-medium">Rejection Reason *</label>
+            <label className="text-sm font-medium">{t("admin.withdrawals.rejectionReasonRequired")}</label>
             <Textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Enter detailed reason for rejection (minimum 10 characters)..."
+              placeholder={t("admin.withdrawals.rejectionReasonPlaceholder")}
               className="mt-2"
               rows={4}
               disabled={processing !== null}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {rejectionReason.length}/10 characters minimum
+              {rejectionReason.length}/10 {t("admin.withdrawals.charactersMinimum")}
             </p>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={processing !== null}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={processing !== null}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleReject}
               disabled={processing !== null || !rejectionReason.trim() || rejectionReason.length < 10}
@@ -976,10 +1068,10 @@ export default function Withdrawals() {
               {processing ? (
                 <>
                   <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Rejecting...
+                  {t("admin.withdrawals.rejecting")}
                 </>
               ) : (
-                "Reject & Refund"
+                t("admin.withdrawals.rejectAndRefund")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -992,10 +1084,10 @@ export default function Withdrawals() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-green-600" />
-              CPAY Wallet Balance & Tokens
+              {t("admin.withdrawals.cpayWalletBalance")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Complete overview of your CPAY wallet including all tokens and their details
+              {t("admin.withdrawals.cpayWalletBalanceDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -1005,7 +1097,7 @@ export default function Withdrawals() {
               <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{t("admin.withdrawals.totalBalance")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{walletBalance.wallet?.balance || '0.00'}</div>
@@ -1017,7 +1109,7 @@ export default function Withdrawals() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Available Balance</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{t("admin.withdrawals.availableBalance")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">
@@ -1031,14 +1123,14 @@ export default function Withdrawals() {
 
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Hold Balance</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{t("admin.withdrawals.holdBalance")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-yellow-600">
                       {walletBalance.wallet?.holdBalance || '0.00'}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Pending transactions
+                      {t("admin.withdrawals.pendingTransactions")}
                     </p>
                   </CardContent>
                 </Card>
@@ -1048,7 +1140,7 @@ export default function Withdrawals() {
               {walletBalance.usdtTrc20 && (
                 <Alert className="border-green-300 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-800">USDT TRC20 Token Found! 🎯</AlertTitle>
+                  <AlertTitle className="text-green-800">{t("admin.withdrawals.usdtTrc20Found")}</AlertTitle>
                   <AlertDescription className="mt-2">
                     <div className="space-y-3">
                       <div className="font-mono text-sm bg-muted p-3 rounded border border-green-200/20">
@@ -1065,8 +1157,8 @@ export default function Withdrawals() {
                             onClick={() => {
                               navigator.clipboard.writeText(walletBalance.usdtTrc20.currencyId);
                               toast({ 
-                                title: "Copied!", 
-                                description: "USDT TRC20 currencyId copied to clipboard" 
+                                title: t("common.copied"), 
+                                description: t("admin.withdrawals.currencyIdCopied")
                               });
                             }}
                           >
@@ -1076,16 +1168,16 @@ export default function Withdrawals() {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <strong>Name:</strong> {walletBalance.usdtTrc20.name}
+                          <strong>{t("admin.withdrawals.name")}:</strong> {walletBalance.usdtTrc20.name}
                         </div>
                         <div>
-                          <strong>Network:</strong> {walletBalance.usdtTrc20.nodeType}
+                          <strong>{t("admin.withdrawals.network")}:</strong> {walletBalance.usdtTrc20.nodeType}
                         </div>
                         <div>
-                          <strong>Type:</strong> {walletBalance.usdtTrc20.currencyType}
+                          <strong>{t("admin.withdrawals.type")}:</strong> {walletBalance.usdtTrc20.currencyType}
                         </div>
                         <div>
-                          <strong>Balance:</strong> {walletBalance.usdtTrc20.balance}
+                          <strong>{t("admin.withdrawals.balance")}:</strong> {walletBalance.usdtTrc20.balance}
                         </div>
                       </div>
                     </div>
@@ -1097,11 +1189,11 @@ export default function Withdrawals() {
               {walletBalance.tokens && walletBalance.tokens.length > 0 ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">All Tokens ({walletBalance.tokens.length})</h4>
+                    <h4 className="font-semibold">{t("admin.withdrawals.allTokens")} ({walletBalance.tokens.length})</h4>
                     {!walletBalance.usdtTrc20 && (
                       <Badge variant="destructive">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        USDT TRC20 not found
+                        {t("admin.withdrawals.usdtTrc20NotFound")}
                       </Badge>
                     )}
                   </div>
@@ -1111,12 +1203,12 @@ export default function Withdrawals() {
                       <table className="w-full text-sm">
                         <thead className="bg-muted">
                           <tr>
-                            <th className="px-4 py-3 text-left font-medium">Currency ID</th>
-                            <th className="px-4 py-3 text-left font-medium">Name</th>
-                            <th className="px-4 py-3 text-left font-medium">Network</th>
-                            <th className="px-4 py-3 text-left font-medium">Type</th>
-                            <th className="px-4 py-3 text-right font-medium">Balance</th>
-                            <th className="px-4 py-3 text-right font-medium">Actions</th>
+                            <th className="px-4 py-3 text-left font-medium">{t("admin.withdrawals.currencyId")}</th>
+                            <th className="px-4 py-3 text-left font-medium">{t("admin.withdrawals.name")}</th>
+                            <th className="px-4 py-3 text-left font-medium">{t("admin.withdrawals.network")}</th>
+                            <th className="px-4 py-3 text-left font-medium">{t("admin.withdrawals.type")}</th>
+                            <th className="px-4 py-3 text-right font-medium">{t("admin.withdrawals.balance")}</th>
+                            <th className="px-4 py-3 text-right font-medium">{t("admin.withdrawals.actions")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -1134,7 +1226,7 @@ export default function Withdrawals() {
                                 {token.name}
                                 {token.isUsdtTrc20 && (
                                   <Badge variant="default" className="ml-2 text-xs">
-                                    Recommended
+                                    {t("admin.withdrawals.recommended")}
                                   </Badge>
                                 )}
                               </td>
@@ -1154,8 +1246,8 @@ export default function Withdrawals() {
                                   onClick={() => {
                                     navigator.clipboard.writeText(token.currencyId);
                                     toast({ 
-                                      title: "Copied!", 
-                                      description: `${token.name} currencyId copied` 
+                                      title: t("common.copied"), 
+                                      description: t("admin.withdrawals.tokenCopied", { name: token.name })
                                     });
                                   }}
                                 >
@@ -1172,9 +1264,9 @@ export default function Withdrawals() {
               ) : (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No Tokens Found</AlertTitle>
+                  <AlertTitle>{t("admin.withdrawals.noTokensFound")}</AlertTitle>
                   <AlertDescription>
-                    Your CPAY wallet returned 0 tokens. Make sure USDT TRC20 is enabled in your CPAY account.
+                    {t("admin.withdrawals.noTokensFoundDescription")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -1184,7 +1276,7 @@ export default function Withdrawals() {
                 <div className="border rounded-lg p-4 bg-blue-50">
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-blue-600" />
-                    💡 Tips
+                    {t("admin.withdrawals.tips")}
                   </h4>
                   <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
                     {walletBalance.tips.map((tip: string, idx: number) => (
@@ -1196,31 +1288,31 @@ export default function Withdrawals() {
 
               {/* Next Steps */}
               <div className="border-t pt-4">
-                <h4 className="font-semibold mb-2">📋 Next Steps:</h4>
+                <h4 className="font-semibold mb-2">{t("admin.withdrawals.nextSteps")}</h4>
                 <ol className="text-sm space-y-2 list-decimal list-inside">
-                  <li>Copy the <code className="bg-muted px-1">currencyId</code> from the USDT TRC20 token above</li>
-                  <li>Update the secret <code className="bg-muted px-1">CPAY_USDT_TOKEN_ID</code> with this 24-character value</li>
-                  <li>Ensure you have sufficient TRX balance in your wallet for network fees</li>
-                  <li>Return to this page and process pending withdrawals</li>
+                  <li>{t("admin.withdrawals.nextStep1")}</li>
+                  <li>{t("admin.withdrawals.nextStep2")}</li>
+                  <li>{t("admin.withdrawals.nextStep3")}</li>
+                  <li>{t("admin.withdrawals.nextStep4")}</li>
                 </ol>
               </div>
             </div>
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Close</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.close")}</AlertDialogCancel>
             {walletBalance?.usdtTrc20 && (
               <AlertDialogAction
                 onClick={() => {
                   navigator.clipboard.writeText(walletBalance.usdtTrc20.currencyId);
                   toast({
-                    title: "Copied!",
-                    description: "USDT TRC20 currencyId copied to clipboard",
+                    title: t("common.copied"),
+                    description: t("admin.withdrawals.currencyIdCopied"),
                   });
                 }}
               >
                 <Copy className="mr-2 h-4 w-4" />
-                Copy USDT TRC20 ID
+                {t("admin.withdrawals.copyUsdtTrc20Id")}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>
@@ -1231,11 +1323,11 @@ export default function Withdrawals() {
       <AlertDialog open={showWalletInfoDialog} onOpenChange={setShowWalletInfoDialog}>
         <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>CPAY Token Information</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.withdrawals.cpayTokenInformation")}</AlertDialogTitle>
             <AlertDialogDescription>
               {walletInfo?.source === 'last_deposit' 
-                ? 'Token extracted from your most recent CPAY deposit'
-                : 'Tokens retrieved from your CPAY wallet'
+                ? t("admin.withdrawals.tokenFromLastDeposit")
+                : t("admin.withdrawals.tokensFromWallet")
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1245,11 +1337,11 @@ export default function Withdrawals() {
               {/* Source Badge */}
               <div className="flex items-center gap-2">
                 <Badge variant={walletInfo.source === 'last_deposit' ? 'default' : 'secondary'}>
-                  {walletInfo.source === 'last_deposit' ? '📦 From Last Deposit' : '💼 From Wallet API'}
+                  {walletInfo.source === 'last_deposit' ? t("admin.withdrawals.fromLastDeposit") : t("admin.withdrawals.fromWalletAPI")}
                 </Badge>
                 {walletInfo.depositDate && (
                   <span className="text-xs text-muted-foreground">
-                    Deposit: {new Date(walletInfo.depositDate).toLocaleString()}
+                    {t("admin.withdrawals.deposit")} {new Date(walletInfo.depositDate).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -1258,10 +1350,10 @@ export default function Withdrawals() {
               {(walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId) ? (
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle>✅ USDT TRC20 Token Found</AlertTitle>
+                  <AlertTitle>{t("admin.withdrawals.usdtTrc20TokenFound")}</AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
                     <div className="font-mono text-sm bg-muted p-3 rounded border border-border">
-                      <strong>currencyId (Token ID):</strong><br/>
+                      <strong>{t("admin.withdrawals.tokenId")}</strong><br/>
                       <code className="text-green-700 font-bold text-base">
                         {walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId}
                       </code>
@@ -1272,7 +1364,7 @@ export default function Withdrawals() {
                           const tokenId = walletInfo.usdtTrc20Token?.currencyId || walletInfo.token?.currencyId;
                           if (tokenId) {
                             navigator.clipboard.writeText(tokenId);
-                            toast({ title: "Copied!", description: "Token ID copied to clipboard" });
+                            toast({ title: t("common.copied"), description: t("admin.withdrawals.tokenIdCopied") });
                           }
                         }}
                         className="ml-2"
@@ -1281,20 +1373,20 @@ export default function Withdrawals() {
                       </Button>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div><strong>Name:</strong> {walletInfo.usdtTrc20Token?.name || walletInfo.token?.currency || walletInfo.token?.name}</div>
-                      <div><strong>Network:</strong> {walletInfo.usdtTrc20Token?.nodeType || walletInfo.usdtTrc20Token?.blockchain || walletInfo.token?.blockchain}</div>
-                      <div><strong>Type:</strong> {walletInfo.usdtTrc20Token?.currencyType || 'token'}</div>
+                      <div><strong>{t("admin.withdrawals.name")}:</strong> {walletInfo.usdtTrc20Token?.name || walletInfo.token?.currency || walletInfo.token?.name}</div>
+                      <div><strong>{t("admin.withdrawals.network")}:</strong> {walletInfo.usdtTrc20Token?.nodeType || walletInfo.usdtTrc20Token?.blockchain || walletInfo.token?.blockchain}</div>
+                      <div><strong>{t("admin.withdrawals.type")}:</strong> {walletInfo.usdtTrc20Token?.currencyType || 'token'}</div>
                     </div>
                   </AlertDescription>
                 </Alert>
               ) : (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{walletInfo.source === 'last_deposit' ? 'Token Not Found' : 'USDT TRC20 Not Found'}</AlertTitle>
+                  <AlertTitle>{walletInfo.source === 'last_deposit' ? t("admin.withdrawals.tokenNotFound") : t("admin.withdrawals.usdtTrc20NotFoundTitle")}</AlertTitle>
                   <AlertDescription>
                     {walletInfo.error || (walletInfo.totalTokens === 0
-                      ? 'Your CPAY wallet returned 0 tokens. Ensure USDT TRC20 is enabled for this wallet or try the "Use Token From Last Deposit" option.'
-                      : 'Could not find USDT on TRC20 blockchain in your wallet tokens')}
+                      ? t("admin.withdrawals.tokenNotFoundDescription")
+                      : t("admin.withdrawals.couldNotFindUsdt"))}
                     {walletInfo.suggestion && (
                       <div className="mt-2 text-xs">💡 {walletInfo.suggestion}</div>
                     )}
@@ -1304,11 +1396,11 @@ export default function Withdrawals() {
 
               {/* Instructions */}
               <div className="border-t pt-4">
-                <h4 className="font-semibold mb-2">📋 Next Steps:</h4>
+                <h4 className="font-semibold mb-2">{t("admin.withdrawals.nextSteps")}</h4>
                 <ol className="text-sm space-y-2 list-decimal list-inside">
-                  <li>Copy the <code className="bg-muted px-1">currencyId</code> value above</li>
-                  <li>Update the secret <code className="bg-muted px-1">CPAY_USDT_TOKEN_ID</code> with this value</li>
-                  <li>Return to this page and click "Clear Error & Retry" on the pending withdrawal</li>
+                  <li>{t("admin.withdrawals.nextStep1Short")}</li>
+                  <li>{t("admin.withdrawals.nextStep2Short")}</li>
+                  <li>{t("admin.withdrawals.nextStep3Short")}</li>
                 </ol>
               </div>
 
@@ -1316,16 +1408,16 @@ export default function Withdrawals() {
               {(walletInfo.allCurrencies || walletInfo.allTokens) && (walletInfo.allCurrencies?.length > 0 || walletInfo.allTokens?.length > 0) && (
                 <details className="border rounded p-3">
                   <summary className="cursor-pointer font-semibold text-sm">
-                    All Available Currencies ({walletInfo.allCurrencies?.length || walletInfo.allTokens?.length})
+                    {t("admin.withdrawals.allAvailableCurrencies")} ({walletInfo.allCurrencies?.length || walletInfo.allTokens?.length})
                   </summary>
                   <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
                     {(walletInfo.allCurrencies || walletInfo.allTokens)?.map((item: any, idx: number) => (
                       <div key={idx} className="text-xs bg-muted p-2 rounded font-mono">
                         <div><strong>currencyId:</strong> {item.currencyId}</div>
-                        <div><strong>Name:</strong> {item.name || item.currency}</div>
-                        <div><strong>Network:</strong> {item.nodeType || item.blockchain || 'N/A'}</div>
-                        {item.currencyType && <div><strong>Type:</strong> {item.currencyType}</div>}
-                        {item.isUsdtTrc20 && <Badge variant="default" className="mt-1">← Recommended for USDT TRC20</Badge>}
+                        <div><strong>{t("admin.withdrawals.name")}:</strong> {item.name || item.currency}</div>
+                        <div><strong>{t("admin.withdrawals.network")}:</strong> {item.nodeType || item.blockchain || 'N/A'}</div>
+                        {item.currencyType && <div><strong>{t("admin.withdrawals.type")}:</strong> {item.currencyType}</div>}
+                        {item.isUsdtTrc20 && <Badge variant="default" className="mt-1">← {t("admin.withdrawals.recommended")} for USDT TRC20</Badge>}
                       </div>
                     ))}
                   </div>
@@ -1336,12 +1428,12 @@ export default function Withdrawals() {
               {walletInfo.depositInfo && (
                 <details className="border rounded p-3">
                   <summary className="cursor-pointer font-semibold text-sm">
-                    Deposit Details
+                    {t("admin.withdrawals.depositDetails")}
                   </summary>
                   <div className="mt-3 text-xs space-y-1 bg-muted p-3 rounded">
-                    <div><strong>Wallet ID:</strong> {walletInfo.depositInfo.wallet}</div>
-                    <div><strong>Currency:</strong> {walletInfo.depositInfo.currency}</div>
-                    <div><strong>Blockchain:</strong> {walletInfo.depositInfo.blockchain}</div>
+                    <div><strong>{t("admin.withdrawals.walletId")}</strong> {walletInfo.depositInfo.wallet}</div>
+                    <div><strong>{t("admin.withdrawals.currency")}</strong> {walletInfo.depositInfo.currency}</div>
+                    <div><strong>{t("admin.withdrawals.blockchain")}</strong> {walletInfo.depositInfo.blockchain}</div>
                   </div>
                 </details>
               )}
@@ -1349,22 +1441,22 @@ export default function Withdrawals() {
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Close</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.close")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 const tokenId = walletInfo?.usdtTrc20Token?.currencyId || walletInfo?.token?.currencyId;
                 if (tokenId) {
                   navigator.clipboard.writeText(tokenId);
                   toast({
-                    title: "Copied!",
-                    description: "Token ID copied to clipboard",
+                    title: t("common.copied"),
+                    description: t("admin.withdrawals.tokenIdCopied"),
                   });
                 }
               }}
               disabled={!walletInfo?.usdtTrc20Token?.currencyId && !walletInfo?.token?.currencyId}
             >
               <Copy className="mr-2 h-4 w-4" />
-              Copy Token ID
+              {t("admin.withdrawals.copyTokenId")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

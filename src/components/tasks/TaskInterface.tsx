@@ -58,7 +58,7 @@ const TaskInterfaceComponent = ({
   };
 
   return (
-    <Card className="p-6 lg:p-8">
+    <Card className="p-6 lg:p-8 overflow-visible">
       {/* Task Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ const TaskInterfaceComponent = ({
       {/* Task Prompt */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">{t("tasks.interface.taskQuestion")}</h2>
-        <p className="text-lg leading-relaxed">{task.prompt}</p>
+        <p className="text-lg leading-relaxed break-words whitespace-normal overflow-visible">{task.prompt}</p>
       </div>
 
       {/* Feedback Display */}
@@ -137,7 +137,7 @@ const TaskInterfaceComponent = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div
-              className={`p-4 rounded border-2 ${
+              className={`p-4 rounded border-2 break-words ${
                 selectedResponse === "a"
                   ? feedback.correctAnswer === "a"
                     ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
@@ -146,21 +146,23 @@ const TaskInterfaceComponent = ({
               }`}
             >
               <p className="font-medium text-sm mb-1">{t("tasks.interface.optionA")}:</p>
-              <p className="text-sm">{task.response_a}</p>
-              {selectedResponse === "a" && (
-                <Badge className="mt-2" variant="secondary">
-                  {t("tasks.interface.yourAnswer")}
-                </Badge>
-              )}
-              {feedback.correctAnswer === "a" && (
-                <Badge className="mt-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
-                  {t("tasks.interface.correctAnswerBadge")}
-                </Badge>
-              )}
+              <p className="text-sm break-words whitespace-normal overflow-visible">{task.response_a}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedResponse === "a" && (
+                  <Badge variant="secondary">
+                    {t("tasks.interface.yourAnswer")}
+                  </Badge>
+                )}
+                {feedback.correctAnswer === "a" && (
+                  <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
+                    {t("tasks.interface.correctAnswerBadge")}
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div
-              className={`p-4 rounded border-2 ${
+              className={`p-4 rounded border-2 break-words ${
                 selectedResponse === "b"
                   ? feedback.correctAnswer === "b"
                     ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
@@ -169,17 +171,19 @@ const TaskInterfaceComponent = ({
               }`}
             >
               <p className="font-medium text-sm mb-1">{t("tasks.interface.optionB")}:</p>
-              <p className="text-sm">{task.response_b}</p>
-              {selectedResponse === "b" && (
-                <Badge className="mt-2" variant="secondary">
-                  {t("tasks.interface.yourAnswer")}
-                </Badge>
-              )}
-              {feedback.correctAnswer === "b" && (
-                <Badge className="mt-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
-                  {t("tasks.interface.correctAnswerBadge")}
-                </Badge>
-              )}
+              <p className="text-sm break-words whitespace-normal overflow-visible">{task.response_b}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedResponse === "b" && (
+                  <Badge variant="secondary">
+                    {t("tasks.interface.yourAnswer")}
+                  </Badge>
+                )}
+                {feedback.correctAnswer === "b" && (
+                  <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
+                    {t("tasks.interface.correctAnswerBadge")}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -199,21 +203,21 @@ const TaskInterfaceComponent = ({
               <div className="space-y-4">
                 {/* Option A */}
                 <div className="flex items-start space-x-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer transition-colors">
-                  <RadioGroupItem value="a" id="option-a" className="mt-1" />
-                  <Label htmlFor="option-a" className="cursor-pointer flex-1">
+                  <RadioGroupItem value="a" id="option-a" className="mt-1 flex-shrink-0" />
+                  <Label htmlFor="option-a" className="cursor-pointer flex-1 min-w-0">
                     <p className="font-medium text-primary mb-2">{t("tasks.interface.optionA")}</p>
-                    <p className="text-sm leading-relaxed">{task.response_a}</p>
+                    <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{task.response_a}</p>
                   </Label>
                 </div>
 
                 {/* Option B */}
                 <div className="flex items-start space-x-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer transition-colors">
-                  <RadioGroupItem value="b" id="option-b" className="mt-1" />
-                  <Label htmlFor="option-b" className="cursor-pointer flex-1">
+                  <RadioGroupItem value="b" id="option-b" className="mt-1 flex-shrink-0" />
+                  <Label htmlFor="option-b" className="cursor-pointer flex-1 min-w-0">
                     <p className="font-medium text-green-600 dark:text-green-400 mb-2">
                       {t("tasks.interface.optionB")}
                     </p>
-                    <p className="text-sm leading-relaxed">{task.response_b}</p>
+                    <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{task.response_b}</p>
                   </Label>
                 </div>
               </div>

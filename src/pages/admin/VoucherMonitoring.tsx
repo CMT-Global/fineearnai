@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { useVouchers } from "@/hooks/usePartnerManagement";
 import { Loader2, Ticket, Search, Info, CheckCircle2 } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Table,
   TableBody,
@@ -19,15 +21,27 @@ import {
 } from "@/components/ui/table";
 
 const VoucherMonitoring = () => {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: vouchers, isLoading } = useVouchers({ status: statusFilter });
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
-      active: { variant: "default", label: "Active" },
-      redeemed: { variant: "secondary", label: "Redeemed" },
-      expired: { variant: "destructive", label: "Expired" },
+      active: { variant: "default", label: t("admin.voucherMonitoring.status.active") },
+      redeemed: { variant: "secondary", label: t("admin.voucherMonitoring.status.redeemed") },
+      expired: { variant: "destructive", label: t("admin.voucherMonitoring.status.expired") },
     };
 
     const config = variants[status] || variants.active;
@@ -59,10 +73,10 @@ const VoucherMonitoring = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <Ticket className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Voucher Monitoring</h1>
+          <h1 className="text-3xl font-bold">{t("admin.voucherMonitoring.title")}</h1>
         </div>
         <p className="text-muted-foreground">
-          Track all voucher purchases and redemptions
+          {t("admin.voucherMonitoring.subtitle")}
         </p>
       </div>
 
@@ -110,7 +124,7 @@ const VoucherMonitoring = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Vouchers
+              {t("admin.voucherMonitoring.stats.totalVouchers")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,7 +135,7 @@ const VoucherMonitoring = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active
+              {t("admin.voucherMonitoring.stats.active")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -132,7 +146,7 @@ const VoucherMonitoring = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Redeemed
+              {t("admin.voucherMonitoring.stats.redeemed")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -143,7 +157,7 @@ const VoucherMonitoring = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Expired
+              {t("admin.voucherMonitoring.stats.expired")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -154,7 +168,7 @@ const VoucherMonitoring = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Value
+              {t("admin.voucherMonitoring.stats.totalValue")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -171,7 +185,7 @@ const VoucherMonitoring = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by voucher code, partner, or redeemer..."
+                  placeholder={t("admin.voucherMonitoring.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -180,13 +194,13 @@ const VoucherMonitoring = () => {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("admin.voucherMonitoring.filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="redeemed">Redeemed</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="all">{t("admin.voucherMonitoring.allStatuses")}</SelectItem>
+                <SelectItem value="active">{t("admin.voucherMonitoring.status.active")}</SelectItem>
+                <SelectItem value="redeemed">{t("admin.voucherMonitoring.status.redeemed")}</SelectItem>
+                <SelectItem value="expired">{t("admin.voucherMonitoring.status.expired")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,8 +210,8 @@ const VoucherMonitoring = () => {
       {/* Vouchers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Vouchers</CardTitle>
-          <CardDescription>Complete voucher transaction history</CardDescription>
+          <CardTitle>{t("admin.voucherMonitoring.allVouchers")}</CardTitle>
+          <CardDescription>{t("admin.voucherMonitoring.completeHistory")}</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -208,13 +222,13 @@ const VoucherMonitoring = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Voucher Code</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Partner</TableHead>
-                  <TableHead>Redeemed By</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Redeemed</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.voucherCode")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.amount")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.partner")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.redeemedBy")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.status")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.created")}</TableHead>
+                  <TableHead>{t("admin.voucherMonitoring.table.redeemed")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -227,11 +241,11 @@ const VoucherMonitoring = () => {
                       {formatCurrency(voucher.voucher_amount)}
                     </TableCell>
                     <TableCell>
-                      {voucher.partner?.username || 'Unknown'}
+                      {voucher.partner?.username || t("admin.voucherMonitoring.unknown")}
                     </TableCell>
                     <TableCell>
                       {voucher.status === 'redeemed' 
-                        ? voucher.redeemer?.username || 'Unknown'
+                        ? voucher.redeemer?.username || t("admin.voucherMonitoring.unknown")
                         : '—'
                       }
                     </TableCell>
@@ -252,7 +266,7 @@ const VoucherMonitoring = () => {
           ) : (
             <div className="py-12 text-center">
               <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No vouchers found</p>
+              <p className="text-muted-foreground">{t("admin.voucherMonitoring.noVouchersFound")}</p>
             </div>
           )}
         </CardContent>

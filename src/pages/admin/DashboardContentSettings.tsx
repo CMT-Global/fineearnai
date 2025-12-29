@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LayoutDashboard, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 interface DashboardContentConfig {
   earnersGuide: {
@@ -48,34 +50,16 @@ const DEFAULT_DASHBOARD_CONTENT: DashboardContentConfig = {
 };
 
 export default function DashboardContentSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [platformName, setPlatformName] = useState<string>(DEFAULT_PLATFORM_NAME);
   const [config, setConfig] = useState<DashboardContentConfig>(DEFAULT_DASHBOARD_CONTENT);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Fetch platform name + dashboard content in one query
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-content-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("key, value")
-        .in("key", ["platform_name", "dashboard_content"]);
-
-      if (error) throw error;
-
-      const map = new Map<string, any>();
-      data?.forEach((row: any) => {
-        map.set(row.key, row.value);
-      });
-
-      return {
-        platformName: (map.get("platform_name") as string) || DEFAULT_PLATFORM_NAME,
-        dashboardContent: (map.get("dashboard_content") as DashboardContentConfig) || DEFAULT_DASHBOARD_CONTENT,
-      };
-    },
-  });
+  // Force re-render when language changes
 
   useEffect(() => {
     if (data) {
@@ -113,14 +97,14 @@ export default function DashboardContentSettings() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-content"] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "Dashboard content settings have been updated successfully.",
+        title: t("admin.contentManagement.dashboardContent.settingsSaved"),
+        description: t("admin.contentManagement.dashboardContent.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving settings",
-        description: error.message || "Failed to save settings. Please try again.",
+        title: t("admin.contentManagement.dashboardContent.errorSaving"),
+        description: error.message || t("admin.contentManagement.dashboardContent.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -156,24 +140,24 @@ export default function DashboardContentSettings() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <LayoutDashboard className="h-8 w-8 text-primary" />
-          Dashboard Content Settings
+          {t("admin.contentManagement.dashboardContent.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          Manage platform name and key content sections shown on the user dashboard.
+          {t("admin.contentManagement.dashboardContent.subtitle")}
         </p>
       </div>
 
       {/* Platform Name */}
       <Card>
         <CardHeader>
-          <CardTitle>Platform Name</CardTitle>
+          <CardTitle>{t("admin.contentManagement.dashboardContent.platformName.title")}</CardTitle>
           <CardDescription>
-            This name is used across the app (including the Earners Guide banner) and in outgoing emails.
+            {t("admin.contentManagement.dashboardContent.platformName.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="platformName">Platform Name</Label>
+            <Label htmlFor="platformName">{t("admin.contentManagement.dashboardContent.platformName.label")}</Label>
             <Input
               id="platformName"
               value={platformName}
@@ -190,19 +174,19 @@ export default function DashboardContentSettings() {
       {/* Earners Guide Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Earners Guide Banner</CardTitle>
+          <CardTitle>{t("admin.contentManagement.dashboardContent.earnersGuide.title")}</CardTitle>
           <CardDescription>
-            Controls the blue Earners Guide banner on the dashboard.
+            {t("admin.contentManagement.dashboardContent.earnersGuide.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="space-y-0.5">
               <Label htmlFor="earnersGuideVisible" className="text-base font-semibold">
-                Show Earners Guide Banner
+                {t("admin.contentManagement.dashboardContent.earnersGuide.showLabel")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                When enabled, users will see the "{platformName} - Earners Guide" banner on the dashboard.
+                {t("admin.contentManagement.dashboardContent.earnersGuide.showDescription", { platformName })}
               </p>
             </div>
             <Switch
@@ -219,19 +203,19 @@ export default function DashboardContentSettings() {
       {/* Deposit & Withdrawal Guides Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Deposit & Withdrawal Guides</CardTitle>
+          <CardTitle>{t("admin.contentManagement.dashboardContent.guidesSection.title")}</CardTitle>
           <CardDescription>
-            Controls the guides card and its text on the dashboard.
+            {t("admin.contentManagement.dashboardContent.guidesSection.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="space-y-0.5">
               <Label htmlFor="guidesVisible" className="text-base font-semibold">
-                Show Guides Section
+                {t("admin.contentManagement.dashboardContent.guidesSection.showLabel")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                Toggle visibility of the Deposit & Withdrawal Quick Guides card.
+                {t("admin.contentManagement.dashboardContent.guidesSection.showDescription")}
               </p>
             </div>
             <Switch
@@ -244,7 +228,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidesTitle">Section Title</Label>
+            <Label htmlFor="guidesTitle">{t("admin.contentManagement.dashboardContent.guidesSection.titleLabel")}</Label>
             <Input
               id="guidesTitle"
               value={config.guidesSection.title}
@@ -255,7 +239,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidesDescription">Section Description</Label>
+            <Label htmlFor="guidesDescription">{t("admin.contentManagement.dashboardContent.guidesSection.descriptionLabel")}</Label>
             <Textarea
               id="guidesDescription"
               value={config.guidesSection.description}
@@ -271,19 +255,19 @@ export default function DashboardContentSettings() {
       {/* Social Links Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Social Links - Stay Connected</CardTitle>
+          <CardTitle>{t("admin.contentManagement.dashboardContent.socialSection.title")}</CardTitle>
           <CardDescription>
-            Control the Stay Connected social media section and update your social URLs.
+            {t("admin.contentManagement.dashboardContent.socialSection.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="space-y-0.5">
               <Label htmlFor="socialVisible" className="text-base font-semibold">
-                Show Social Links Section
+                {t("admin.contentManagement.dashboardContent.socialSection.showLabel")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                Toggle visibility of the "Stay Connected" social media card on the dashboard.
+                {t("admin.contentManagement.dashboardContent.socialSection.showDescription")}
               </p>
             </div>
             <Switch
@@ -296,7 +280,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="facebookUrl">Facebook URL</Label>
+            <Label htmlFor="facebookUrl">{t("admin.contentManagement.dashboardContent.socialSection.facebookUrl")}</Label>
             <Input
               id="facebookUrl"
               value={config.socialSection.facebookUrl}
@@ -308,7 +292,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instagramUrl">Instagram URL</Label>
+            <Label htmlFor="instagramUrl">{t("admin.contentManagement.dashboardContent.socialSection.instagramUrl")}</Label>
             <Input
               id="instagramUrl"
               value={config.socialSection.instagramUrl}
@@ -320,7 +304,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tiktokUrl">TikTok URL</Label>
+            <Label htmlFor="tiktokUrl">{t("admin.contentManagement.dashboardContent.socialSection.tiktokUrl")}</Label>
             <Input
               id="tiktokUrl"
               value={config.socialSection.tiktokUrl}
@@ -338,7 +322,7 @@ export default function DashboardContentSettings() {
         <CardContent className="flex items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>
-              Changes are applied to the user dashboard immediately after saving.
+              {t("admin.contentManagement.dashboardContent.changesApplied")}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -348,7 +332,7 @@ export default function DashboardContentSettings() {
               disabled={saveMutation.isPending}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Defaults
+              {t("admin.contentManagement.dashboardContent.resetToDefaults")}
             </Button>
             <Button
               onClick={handleSave}
@@ -357,12 +341,12 @@ export default function DashboardContentSettings() {
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {t("common.saveChanges")}
                 </>
               )}
             </Button>
@@ -374,7 +358,7 @@ export default function DashboardContentSettings() {
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>
-                Settings saved successfully! Users will see updated content on the dashboard.
+                {t("admin.contentManagement.dashboardContent.successMessage")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -385,7 +369,7 @@ export default function DashboardContentSettings() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Failed to save settings. Please try again.
+                {t("admin.contentManagement.dashboardContent.errorMessage")}
               </AlertDescription>
             </Alert>
           </CardContent>

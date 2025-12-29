@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,16 +13,15 @@ import { Loader2, Globe, CheckCircle2, AlertCircle, Key, TestTube } from "lucide
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 
-// Validation schema
-const ipstackSettingsSchema = z.object({
-  api_key: z.string().trim().min(1, "API key is required").max(200, "API key too long"),
-});
+// Validation schema - will be created dynamically with translations
 
 interface IPStackSettings {
   api_key: string;
 }
 
 export default function IPStackSettings() {
+  const { t } = useTranslation();
+  const { userLanguage } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<IPStackSettings>({ api_key: "" });
@@ -28,6 +29,11 @@ export default function IPStackSettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Create validation schema with translations
+  const ipstackSettingsSchema = z.object({
+    api_key: z.string().trim().min(1, t("admin.ipstackSettings.validation.apiKeyRequired")).max(200, t("admin.ipstackSettings.validation.apiKeyTooLong")),
+  });
 
   // Fetch IPStack settings
   const { data: configData, isLoading } = useQuery({
@@ -70,13 +76,13 @@ export default function IPStackSettings() {
       queryClient.invalidateQueries({ queryKey: ['ipstack-settings'] });
       setHasChanges(false);
       toast({
-        title: "Settings saved",
-        description: "IPStack API key has been updated successfully.",
+        title: t("admin.ipstackSettings.settingsSaved"),
+        description: t("admin.ipstackSettings.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving settings",
+        title: t("admin.ipstackSettings.errorSaving"),
         description: error.message,
         variant: "destructive",
       });
@@ -108,20 +114,20 @@ export default function IPStackSettings() {
     onSuccess: (data) => {
       setTestResult({
         success: true,
-        message: `✅ API key is valid! Test IP (8.8.8.8) resolved to: ${data.country_name} (${data.country_code})`,
+        message: t("admin.ipstackSettings.testSuccessMessage", { countryName: data.country_name, countryCode: data.country_code }),
       });
       toast({
-        title: "Test successful",
-        description: "IPStack API key is working correctly.",
+        title: t("admin.ipstackSettings.testSuccessful"),
+        description: t("admin.ipstackSettings.testSuccessfulDescription"),
       });
     },
     onError: (error: any) => {
       setTestResult({
         success: false,
-        message: `❌ Test failed: ${error.message}`,
+        message: t("admin.ipstackSettings.testFailedMessage", { error: error.message }),
       });
       toast({
-        title: "Test failed",
+        title: t("admin.ipstackSettings.testFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -151,8 +157,8 @@ export default function IPStackSettings() {
         });
         setErrors(newErrors);
         toast({
-          title: "Validation error",
-          description: "Please fix the errors before saving.",
+          title: t("admin.ipstackSettings.validationError"),
+          description: t("admin.ipstackSettings.validationErrorDescription"),
           variant: "destructive",
         });
       }
@@ -162,8 +168,8 @@ export default function IPStackSettings() {
   const handleTest = () => {
     if (!settings.api_key.trim()) {
       toast({
-        title: "API key required",
-        description: "Please enter an API key before testing.",
+        title: t("admin.ipstackSettings.apiKeyRequired"),
+        description: t("admin.ipstackSettings.apiKeyRequiredDescription"),
         variant: "destructive",
       });
       return;
@@ -190,8 +196,8 @@ export default function IPStackSettings() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <AdminBreadcrumb
         items={[
-          { label: "Settings" },
-          { label: "IPStack Configuration" },
+          { label: t("admin.ipstackSettings.breadcrumbSettings") },
+          { label: t("admin.ipstackSettings.breadcrumbIPStack") },
         ]}
       />
 
@@ -200,9 +206,9 @@ export default function IPStackSettings() {
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
             <div>
-              <CardTitle>IPStack Geolocation Settings</CardTitle>
+              <CardTitle>{t("admin.ipstackSettings.title")}</CardTitle>
               <CardDescription>
-                Configure IPStack API key for user IP address and geolocation detection
+                {t("admin.ipstackSettings.description")}
               </CardDescription>
             </div>
           </div>
@@ -211,15 +217,14 @@ export default function IPStackSettings() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              IPStack is used to detect user IP addresses and map them to countries during registration and login.
-              Get your API key from{" "}
+              {t("admin.ipstackSettings.info")}{" "}
               <a
                 href="https://ipstack.com/dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline font-medium"
               >
-                IPStack Dashboard
+                {t("admin.ipstackSettings.ipstackDashboard")}
               </a>
               .
             </AlertDescription>
@@ -229,12 +234,12 @@ export default function IPStackSettings() {
             <div className="space-y-2">
               <Label htmlFor="api_key" className="flex items-center gap-2">
                 <Key className="h-4 w-4" />
-                API Access Key
+                {t("admin.ipstackSettings.apiAccessKey")}
               </Label>
               <Input
                 id="api_key"
                 type="password"
-                placeholder="Enter your IPStack API access key"
+                placeholder={t("admin.ipstackSettings.apiKeyPlaceholder")}
                 value={settings.api_key}
                 onChange={(e) => handleInputChange('api_key', e.target.value)}
                 className={errors.api_key ? "border-destructive" : ""}
@@ -243,7 +248,7 @@ export default function IPStackSettings() {
                 <p className="text-sm text-destructive">{errors.api_key}</p>
               )}
               <p className="text-sm text-muted-foreground">
-                Your IPStack API access key. This key is stored securely in the database.
+                {t("admin.ipstackSettings.apiKeyHint")}
               </p>
             </div>
 
@@ -271,12 +276,12 @@ export default function IPStackSettings() {
                 {isTesting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Testing...
+                    {t("admin.ipstackSettings.testing")}
                   </>
                 ) : (
                   <>
                     <TestTube className="h-4 w-4 mr-2" />
-                    Test API Key
+                    {t("admin.ipstackSettings.testApiKey")}
                   </>
                 )}
               </Button>
@@ -287,10 +292,10 @@ export default function IPStackSettings() {
                 {saveMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    {t("common.saving")}
                   </>
                 ) : (
-                  "Save Settings"
+                  t("admin.ipstackSettings.saveSettings")
                 )}
               </Button>
             </div>
@@ -298,19 +303,19 @@ export default function IPStackSettings() {
 
           {/* Information Section */}
           <div className="border-t pt-6 space-y-4">
-            <h3 className="text-sm font-semibold">How It Works</h3>
+            <h3 className="text-sm font-semibold">{t("admin.ipstackSettings.howItWorks")}</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                • IPStack detects user IP addresses during registration and login
+                • {t("admin.ipstackSettings.howItWorks1")}
               </p>
               <p>
-                • IP addresses are mapped to countries and stored in user profiles
+                • {t("admin.ipstackSettings.howItWorks2")}
               </p>
               <p>
-                • Location data is displayed in the admin panel for security monitoring
+                • {t("admin.ipstackSettings.howItWorks3")}
               </p>
               <p>
-                • API calls are cached for 1 hour to reduce usage and improve performance
+                • {t("admin.ipstackSettings.howItWorks4")}
               </p>
             </div>
           </div>

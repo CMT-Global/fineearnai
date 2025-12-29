@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,34 +86,16 @@ const DEFAULT_PARTNER_PROGRAM_CONTENT: PartnerProgramContentConfig = {
 };
 
 export default function PartnerProgramSettings() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [programConfig, setProgramConfig] = useState<PartnerProgramConfig>(DEFAULT_PARTNER_PROGRAM_CONFIG);
   const [contentConfig, setContentConfig] = useState<PartnerProgramContentConfig>(DEFAULT_PARTNER_PROGRAM_CONTENT);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["partner-program-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("key, value")
-        .in("key", ["partner_program_config", "partner_program_content"]);
-
-      if (error) throw error;
-
-      const map = new Map<string, any>();
-      data?.forEach((row: any) => {
-        map.set(row.key, row.value);
-      });
-
-      const program = (map.get("partner_program_config") as PartnerProgramConfig) || DEFAULT_PARTNER_PROGRAM_CONFIG;
-      const content =
-        (map.get("partner_program_content") as PartnerProgramContentConfig) || DEFAULT_PARTNER_PROGRAM_CONTENT;
-
-      return { program, content };
-    },
-  });
+  // Force re-render when language changes
 
   useEffect(() => {
     if (data) {
@@ -215,10 +199,10 @@ export default function PartnerProgramSettings() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Users className="h-8 w-8 text-primary" />
-          Partner Program Settings
+          {t("admin.partnerProgramSettings.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          Enable or disable the partner program and edit the content shown in the Become a Partner wizard.
+          {t("admin.partnerProgramSettings.subtitle")}
         </p>
       </div>
 

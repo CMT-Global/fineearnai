@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,41 +43,16 @@ interface LoginMessageConfig {
 }
 
 const LoginMessage = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { platformName } = useBranding();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const DEFAULT_CONFIG: LoginMessageConfig = {
-    enabled: true,
-    title: `Welcome to ${platformName}!`,
-    body: "<p>We're excited to have you here. Start earning today by completing AI training tasks!</p>",
-    show_once_per_session: false,
-    dismissible: true,
-    priority: "medium",
-  };
-
-  const [config, setConfig] = useState<LoginMessageConfig>(DEFAULT_CONFIG);
-  const [showPreview, setShowPreview] = useState(false);
-  const [showSourceCode, setShowSourceCode] = useState(false);
-  const [characterCount, setCharacterCount] = useState(0);
-
-  // Fetch current login message config
-  const { data: currentConfig, isLoading } = useQuery({
-    queryKey: ["login-message-admin-config"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_config")
-        .select("value")
-        .eq("key", "login_message")
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.value as unknown as LoginMessageConfig | null;
-    },
-    staleTime: 0, // Always fetch fresh data in admin
-  });
+  
+  // Force re-render when language changes
 
   // Update local state when config loads
   useEffect(() => {
@@ -93,10 +70,10 @@ const LoginMessage = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   // Save mutation
   const saveMutation = useMutation({
@@ -114,33 +91,33 @@ const LoginMessage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["login-message-admin-config"] });
       queryClient.invalidateQueries({ queryKey: ["login-message-config"] });
-      toast.success("Login message updated successfully!");
+      toast.success(t("admin.loginMessage.success.updated"));
     },
     onError: (error: any) => {
       console.error("Error saving login message:", error);
-      toast.error(`Failed to save: ${error.message}`);
+      toast.error(t("admin.loginMessage.errors.failedToSave", { message: error.message }));
     },
   });
 
   const handleSave = () => {
     // Validation
     if (!config.title.trim()) {
-      toast.error("Title is required");
+      toast.error(t("admin.loginMessage.validation.titleRequired"));
       return;
     }
 
     if (config.title.length > 100) {
-      toast.error("Title must be 100 characters or less");
+      toast.error(t("admin.loginMessage.validation.titleMaxLength"));
       return;
     }
 
     if (!config.body.trim()) {
-      toast.error("Message body is required");
+      toast.error(t("admin.loginMessage.validation.bodyRequired"));
       return;
     }
 
     if (config.body.length > 5000) {
-      toast.error("Message body must be 5000 characters or less");
+      toast.error(t("admin.loginMessage.validation.bodyMaxLength"));
       return;
     }
 
@@ -156,10 +133,10 @@ const LoginMessage = () => {
   };
 
   const handleReset = () => {
-    if (confirm("Are you sure you want to reset to default settings? This cannot be undone.")) {
+    if (confirm(t("admin.loginMessage.confirm.reset"))) {
       setConfig(DEFAULT_CONFIG);
       setCharacterCount(DEFAULT_CONFIG.title.length);
-      toast.info("Reset to default configuration");
+      toast.info(t("admin.loginMessage.success.reset"));
     }
   };
 
@@ -173,7 +150,7 @@ const LoginMessage = () => {
   if (authLoading || adminLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading configuration..." />
+        <LoadingSpinner size="lg" text={t("admin.loginMessage.loading")} />
       </div>
     );
   }
@@ -188,10 +165,10 @@ const LoginMessage = () => {
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-2">
           <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-          <h1 className="text-2xl sm:text-3xl font-bold">Login Message Configuration</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.loginMessage.title")}</h1>
         </div>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Customize the welcome message displayed to users after they log in
+          {t("admin.loginMessage.subtitle")}
         </p>
       </div>
 
@@ -199,9 +176,7 @@ const LoginMessage = () => {
       <Alert className="mb-6">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-xs sm:text-sm">
-          <strong>How it works:</strong> This message appears as a pop-up dialog immediately after users log in.
-          You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session.
-          Use the rich text editor toolbar to format your message with bold, italic, headings, lists, and links.
+          <strong>{t("admin.loginMessage.howItWorks")}:</strong> {t("admin.loginMessage.howItWorksDescription")}
         </AlertDescription>
       </Alert>
 
@@ -212,10 +187,10 @@ const LoginMessage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <MessageSquare className="h-5 w-5" />
-                Message Configuration
+                {t("admin.loginMessage.messageConfiguration.title")}
               </CardTitle>
               <CardDescription className="text-sm">
-                Configure the login message content and behavior
+                {t("admin.loginMessage.messageConfiguration.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -223,10 +198,10 @@ const LoginMessage = () => {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5 flex-1 min-w-0">
                   <Label htmlFor="enabled" className="text-base font-medium">
-                    Enable Login Message
+                    {t("admin.loginMessage.messageConfiguration.enableLoginMessage")}
                   </Label>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Show message to users after they log in
+                    {t("admin.loginMessage.messageConfiguration.enableDescription")}
                   </p>
                 </div>
                 <Switch
@@ -245,7 +220,7 @@ const LoginMessage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="title" className="text-sm sm:text-base">
-                    Title <span className="text-destructive">*</span>
+                    {t("admin.loginMessage.messageConfiguration.title")} <span className="text-destructive">*</span>
                   </Label>
                   <span className="text-xs text-muted-foreground">
                     {characterCount}/100
@@ -253,7 +228,7 @@ const LoginMessage = () => {
                 </div>
                 <Input
                   id="title"
-                  placeholder="Welcome to FineEarn!"
+                  placeholder={t("admin.loginMessage.messageConfiguration.titlePlaceholder")}
                   value={config.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   maxLength={100}
@@ -263,19 +238,19 @@ const LoginMessage = () => {
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  A short, catchy title for the message (max 100 characters)
+                  {t("admin.loginMessage.messageConfiguration.titleHint")}
                 </p>
               </div>
 
               {/* Body Rich Text Editor */}
               <div className="space-y-2">
                 <Label htmlFor="body" className="text-sm sm:text-base">
-                  Message Body <span className="text-destructive">*</span>
+                  {t("admin.loginMessage.messageConfiguration.messageBody")} <span className="text-destructive">*</span>
                 </Label>
                 <RichTextEditor
                   value={config.body}
                   onChange={(html) => setConfig({ ...config, body: html })}
-                  placeholder="We're excited to have you here. Start earning today by completing AI training tasks!"
+                  placeholder={t("admin.loginMessage.messageConfiguration.bodyPlaceholder")}
                   maxLength={5000}
                   className="min-h-[300px]"
                 />
@@ -285,16 +260,16 @@ const LoginMessage = () => {
 
               {/* Behavior Options */}
               <div className="space-y-4">
-                <h3 className="font-medium text-sm sm:text-base">Behavior Options</h3>
+                <h3 className="font-medium text-sm sm:text-base">{t("admin.loginMessage.behaviorOptions.title")}</h3>
 
                 {/* Dismissible */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="dismissible" className="text-sm font-medium">
-                      Allow Dismissal
+                      {t("admin.loginMessage.behaviorOptions.allowDismissal")}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Let users close the message dialog
+                      {t("admin.loginMessage.behaviorOptions.allowDismissalDescription")}
                     </p>
                   </div>
                   <Switch
@@ -311,10 +286,10 @@ const LoginMessage = () => {
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="show_once" className="text-sm font-medium">
-                      Show Once Per Session
+                      {t("admin.loginMessage.behaviorOptions.showOncePerSession")}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Only display once per 24-hour period
+                      {t("admin.loginMessage.behaviorOptions.showOncePerSessionDescription")}
                     </p>
                   </div>
                   <Switch
@@ -329,7 +304,7 @@ const LoginMessage = () => {
 
                 {/* Priority */}
                 <div className="space-y-2">
-                  <Label htmlFor="priority" className="text-sm sm:text-base">Display Priority</Label>
+                  <Label htmlFor="priority" className="text-sm sm:text-base">{t("admin.loginMessage.behaviorOptions.displayPriority")}</Label>
                   <Select
                     value={config.priority}
                     onValueChange={(value: "low" | "medium" | "high") =>
@@ -340,13 +315,13 @@ const LoginMessage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="low">{t("admin.loginMessage.priority.low")}</SelectItem>
+                      <SelectItem value="medium">{t("admin.loginMessage.priority.medium")}</SelectItem>
+                      <SelectItem value="high">{t("admin.loginMessage.priority.high")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Priority level (for future use with multiple messages)
+                    {t("admin.loginMessage.behaviorOptions.priorityHint")}
                   </p>
                 </div>
               </div>
@@ -364,12 +339,12 @@ const LoginMessage = () => {
               {saveMutation.isPending ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
-                  Saving...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {t("admin.loginMessage.actions.saveChanges")}
                 </>
               )}
             </Button>
@@ -381,7 +356,7 @@ const LoginMessage = () => {
               className="h-12 touch-manipulation"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
+              {t("common.reset")}
             </Button>
           </div>
         </div>
@@ -397,7 +372,7 @@ const LoginMessage = () => {
                   ) : (
                     <EyeOff className="h-5 w-5" />
                   )}
-                  Live Preview
+                  {t("admin.loginMessage.preview.livePreview")}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
@@ -406,12 +381,12 @@ const LoginMessage = () => {
                     onClick={() => setShowPreview(!showPreview)}
                     className="h-9 touch-manipulation"
                   >
-                    {showPreview ? "Hide" : "Show"} Preview
+                    {showPreview ? t("admin.loginMessage.preview.hide") : t("admin.loginMessage.preview.show")} {t("admin.loginMessage.preview.preview")}
                   </Button>
                 </div>
               </div>
               <CardDescription className="text-sm">
-                See how the message will appear to users
+                {t("admin.loginMessage.preview.description")}
               </CardDescription>
             </CardHeader>
             {showPreview && (
@@ -419,26 +394,26 @@ const LoginMessage = () => {
                 {config.enabled ? (
                   <div className="space-y-4">
                     {/* View Toggle Buttons */}
-                    <div className="flex items-center gap-2 border-b pb-3">
-                      <Button
-                        variant={!showSourceCode ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setShowSourceCode(false)}
-                        className="h-8 text-xs touch-manipulation"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Visual
-                      </Button>
-                      <Button
-                        variant={showSourceCode ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setShowSourceCode(true)}
-                        className="h-8 text-xs touch-manipulation"
-                      >
-                        <Code className="h-3 w-3 mr-1" />
-                        Source Code
-                      </Button>
-                    </div>
+                      <div className="flex items-center gap-2 border-b pb-3">
+                        <Button
+                          variant={!showSourceCode ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setShowSourceCode(false)}
+                          className="h-8 text-xs touch-manipulation"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          {t("admin.loginMessage.preview.visual")}
+                        </Button>
+                        <Button
+                          variant={showSourceCode ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setShowSourceCode(true)}
+                          className="h-8 text-xs touch-manipulation"
+                        >
+                          <Code className="h-3 w-3 mr-1" />
+                          {t("admin.loginMessage.preview.sourceCode")}
+                        </Button>
+                      </div>
 
                     {/* Preview Content */}
                     {!showSourceCode ? (
@@ -451,7 +426,7 @@ const LoginMessage = () => {
                             </div>
                             {config.dismissible && (
                               <Badge variant="secondary" className="text-xs flex-shrink-0">
-                                Dismissible
+                                {t("admin.loginMessage.preview.dismissible")}
                               </Badge>
                             )}
                           </div>
@@ -462,14 +437,14 @@ const LoginMessage = () => {
                           />
                           {config.show_once_per_session && (
                             <p className="text-xs text-muted-foreground italic">
-                              ℹ️ Will only show once per 24-hour period
+                              ℹ️ {t("admin.loginMessage.preview.showOnceNote")}
                             </p>
                           )}
                           <Badge
                             variant="outline"
                             className="capitalize text-xs"
                           >
-                            Priority: {config.priority}
+                            {t("admin.loginMessage.preview.priority")}: {t(`admin.loginMessage.priority.${config.priority}`)}
                           </Badge>
                         </div>
                       </div>
@@ -477,17 +452,17 @@ const LoginMessage = () => {
                       <div className="border rounded-lg bg-muted/30 p-4 max-h-[400px] overflow-auto">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium text-muted-foreground">HTML Source Code</p>
+                            <p className="text-xs font-medium text-muted-foreground">{t("admin.loginMessage.preview.htmlSourceCode")}</p>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
                                 navigator.clipboard.writeText(config.body);
-                                toast.success("HTML copied to clipboard!");
+                                toast.success(t("admin.loginMessage.preview.htmlCopied"));
                               }}
                               className="h-7 text-xs"
                             >
-                              Copy
+                              {t("common.copy")}
                             </Button>
                           </div>
                           <pre className="text-xs bg-background p-3 rounded border overflow-x-auto">
@@ -501,8 +476,8 @@ const LoginMessage = () => {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
-                      Login message is currently <strong>disabled</strong>.
-                      Enable it to show a preview.
+                      {t("admin.loginMessage.preview.disabled")} <strong>{t("admin.loginMessage.preview.disabledText")}</strong>.
+                      {t("admin.loginMessage.preview.enableToShow")}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -513,17 +488,17 @@ const LoginMessage = () => {
           {/* Tips Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">💡 Best Practices</CardTitle>
+              <CardTitle className="text-base sm:text-lg">💡 {t("admin.loginMessage.bestPractices.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <ul className="space-y-2 list-disc list-inside">
-                <li>Keep the title short and welcoming (under 50 chars is ideal)</li>
-                <li>Use formatting sparingly for better readability</li>
-                <li>Include emojis to make it more engaging</li>
-                <li>Preview your changes before saving</li>
-                <li>Test with "Show Preview" before saving</li>
-                <li>Enable "Show Once Per Session" to avoid annoying users</li>
-                <li>Make it dismissible unless it's critical information</li>
+                <li>{t("admin.loginMessage.bestPractices.tip1")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip2")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip3")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip4")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip5")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip6")}</li>
+                <li>{t("admin.loginMessage.bestPractices.tip7")}</li>
               </ul>
             </CardContent>
           </Card>

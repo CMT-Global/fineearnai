@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, Target, Award, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -46,7 +48,9 @@ interface TaskStats {
 const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
 const TaskAnalytics = () => {
-  const { t } = useTranslation();
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -83,21 +87,49 @@ const TaskAnalytics = () => {
         .eq("is_active", true);
 
       // Get all completions with task details
-      const { data: completionsData } = await supabase
+      // Note: task_completions.user_id references auth.users, not profiles directly
+      // So we query task_completions with ai_tasks, then fetch usernames separately
+      const { data: completionsData, error: completionsError } = await supabase
         .from("task_completions")
         .select(`
           is_correct,
           earnings_amount,
           task_id,
           user_id,
-          ai_tasks!inner (
+          ai_tasks (
             category,
             difficulty
-          ),
-          profiles!inner (
-            username
           )
         `);
+
+      if (completionsError) {
+        console.error("Error loading task completions:", completionsError);
+        // Continue with empty data instead of failing
+      }
+
+      // Fetch usernames separately if we have completions
+      let completionsWithUsernames = completionsData || [];
+      if (completionsData && completionsData.length > 0) {
+        // Get unique user IDs
+        const userIds = [...new Set(completionsData.map((c: any) => c.user_id))];
+        
+        // Fetch profiles for these users
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", userIds);
+
+        // Create a map of user_id -> username
+        const usernameMap = new Map(
+          (profilesData || []).map((p: any) => [p.id, p.username])
+        );
+
+        // Add username to each completion
+        completionsWithUsernames = completionsData.map((c: any) => ({
+          ...c,
+          username: usernameMap.get(c.user_id) || `User ${c.user_id.slice(0, 8)}...`
+        }));
+      }
 
       const totalCompletions = completionsData?.length || 0;
       const correctCompletions =
@@ -179,12 +211,13 @@ const TaskAnalytics = () => {
       // Top performers
       const userStatsMap = new Map<
         string,
-        { username: string; total: number; correct: number; earned: number }
+        { userId: string; username: string; total: number; correct: number; earned: number }
       >();
-      completionsData?.forEach((c: any) => {
+      completionsWithUsernames.forEach((c: any) => {
         const userId = c.user_id;
-        const username = c.profiles?.username || "Unknown";
+        const username = c.username || "Unknown";
         const current = userStatsMap.get(userId) || {
+          userId,
           username,
           total: 0,
           correct: 0,
@@ -198,6 +231,7 @@ const TaskAnalytics = () => {
 
       const topPerformers = Array.from(userStatsMap.values())
         .map((stats) => ({
+          userId: stats.userId,
           username: stats.username,
           total_completed: stats.total,
           accuracy: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
@@ -226,7 +260,7 @@ const TaskAnalytics = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading analytics..." />
+        <LoadingSpinner size="lg" text={t("admin.taskAnalytics.loading")} />
       </div>
     );
   }
@@ -237,12 +271,12 @@ const TaskAnalytics = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.taskAnalytics.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Task Analytics Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.taskAnalytics.title")}</h1>
           <p className="text-muted-foreground">
-            Comprehensive insights into task performance and user engagement
+            {t("admin.taskAnalytics.subtitle")}
           </p>
         </div>
 
@@ -251,7 +285,7 @@ const TaskAnalytics = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Active Tasks
+                {t("admin.taskAnalytics.totalActiveTasks")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -265,7 +299,7 @@ const TaskAnalytics = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Completions
+                {t("admin.taskAnalytics.totalCompletions")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -279,7 +313,7 @@ const TaskAnalytics = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Overall Accuracy
+                {t("admin.taskAnalytics.overallAccuracy")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -295,7 +329,7 @@ const TaskAnalytics = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Active Users
+                {t("admin.taskAnalytics.activeUsers")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -312,8 +346,8 @@ const TaskAnalytics = () => {
           {/* Category Performance */}
           <Card>
             <CardHeader>
-              <CardTitle>Completion Rates by Category</CardTitle>
-              <CardDescription>Task completions across different categories</CardDescription>
+              <CardTitle>{t("admin.taskAnalytics.completionRatesByCategory")}</CardTitle>
+              <CardDescription>{t("admin.taskAnalytics.completionRatesByCategoryDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -323,7 +357,7 @@ const TaskAnalytics = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" fill="#B9F94D" name="Completions" />
+                  <Bar dataKey="completed" fill="#B9F94D" name={t("admin.taskAnalytics.completions")} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -332,8 +366,8 @@ const TaskAnalytics = () => {
           {/* Difficulty Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Difficulty Distribution</CardTitle>
-              <CardDescription>Task difficulty breakdown</CardDescription>
+              <CardTitle>{t("admin.taskAnalytics.difficultyDistribution")}</CardTitle>
+              <CardDescription>{t("admin.taskAnalytics.difficultyDistributionDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -361,8 +395,8 @@ const TaskAnalytics = () => {
           {/* Accuracy by Category */}
           <Card>
             <CardHeader>
-              <CardTitle>Accuracy Rates by Category</CardTitle>
-              <CardDescription>User accuracy across categories</CardDescription>
+              <CardTitle>{t("admin.taskAnalytics.accuracyRatesByCategory")}</CardTitle>
+              <CardDescription>{t("admin.taskAnalytics.accuracyRatesByCategoryDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -372,7 +406,7 @@ const TaskAnalytics = () => {
                   <YAxis />
                   <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                   <Legend />
-                  <Bar dataKey="accuracy" fill="#C9F158" name="Accuracy %" />
+                  <Bar dataKey="accuracy" fill="#C9F158" name={t("admin.taskAnalytics.accuracy")} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -381,8 +415,8 @@ const TaskAnalytics = () => {
           {/* Accuracy by Difficulty */}
           <Card>
             <CardHeader>
-              <CardTitle>Accuracy Rates by Difficulty</CardTitle>
-              <CardDescription>Success rates across difficulty levels</CardDescription>
+              <CardTitle>{t("admin.taskAnalytics.accuracyRatesByDifficulty")}</CardTitle>
+              <CardDescription>{t("admin.taskAnalytics.accuracyRatesByDifficultyDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -392,7 +426,7 @@ const TaskAnalytics = () => {
                   <YAxis />
                   <Tooltip contentStyle={{ backgroundColor: "#123630", border: "none", borderRadius: "8px", color: "#EAF4F2" }} />
                   <Legend />
-                  <Bar dataKey="accuracy" fill="#56CCF2" name="Accuracy %" />
+                  <Bar dataKey="accuracy" fill="#56CCF2" name={t("admin.taskAnalytics.accuracy")} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -402,8 +436,8 @@ const TaskAnalytics = () => {
         {/* Popular Tasks */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Most Popular Tasks</CardTitle>
-            <CardDescription>Tasks with highest completion counts</CardDescription>
+            <CardTitle>{t("admin.taskAnalytics.mostPopularTasks")}</CardTitle>
+            <CardDescription>{t("admin.taskAnalytics.mostPopularTasksDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -419,7 +453,7 @@ const TaskAnalytics = () => {
                         <Badge variant="secondary" className="mr-2">
                           {task.category}
                         </Badge>
-                        {task.completion_count} completions
+                        {t("admin.taskAnalytics.completionsCount", { count: task.completion_count })}
                       </div>
                     </div>
                   </div>
@@ -427,12 +461,12 @@ const TaskAnalytics = () => {
                     variant={task.accuracy >= 75 ? "default" : "secondary"}
                     className="text-base"
                   >
-                    {task.accuracy.toFixed(1)}% accuracy
+                    {t("admin.taskAnalytics.accuracyPercentage", { percentage: task.accuracy.toFixed(1) })}
                   </Badge>
                 </div>
               ))}
               {stats?.popularTasks.length === 0 && (
-                <p className="text-center text-muted-foreground">No task data available</p>
+                <p className="text-center text-muted-foreground">{t("admin.taskAnalytics.noTaskDataAvailable")}</p>
               )}
             </div>
           </CardContent>
@@ -441,13 +475,13 @@ const TaskAnalytics = () => {
         {/* Top Performers */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Performing Users</CardTitle>
-            <CardDescription>Users with most task completions</CardDescription>
+            <CardTitle>{t("admin.taskAnalytics.topPerformingUsers")}</CardTitle>
+            <CardDescription>{t("admin.taskAnalytics.topPerformingUsersDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {stats?.topPerformers.map((user, index) => (
-                <div key={user.username} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={user.userId || `user-${index}`} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
                     <Badge variant="outline" className="text-lg font-bold">
                       #{index + 1}
@@ -455,7 +489,7 @@ const TaskAnalytics = () => {
                     <div>
                       <div className="font-medium">{user.username}</div>
                       <div className="text-sm text-muted-foreground">
-                        {user.total_completed} tasks completed • ${user.total_earned.toFixed(2)} earned
+                        {t("admin.taskAnalytics.tasksCompleted", { count: user.total_completed })} • {t("admin.taskAnalytics.earned", { amount: user.total_earned.toFixed(2) })}
                       </div>
                     </div>
                   </div>
@@ -463,12 +497,12 @@ const TaskAnalytics = () => {
                     variant={user.accuracy >= 75 ? "default" : "secondary"}
                     className="text-base"
                   >
-                    {user.accuracy.toFixed(1)}% accuracy
+                    {t("admin.taskAnalytics.accuracyPercentage", { percentage: user.accuracy.toFixed(1) })}
                   </Badge>
                 </div>
               ))}
               {stats?.topPerformers.length === 0 && (
-                <p className="text-center text-muted-foreground">No user data available</p>
+                <p className="text-center text-muted-foreground">{t("admin.taskAnalytics.noUserDataAvailable")}</p>
               )}
             </div>
           </CardContent>

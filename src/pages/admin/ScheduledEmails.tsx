@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,52 +30,128 @@ interface ScheduledEmail {
 
 const ScheduledEmails = () => {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
+  
   const [scheduledEmails, setScheduledEmails] = useState<ScheduledEmail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<ScheduledEmail | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Load scheduled emails
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
-  }, [user, authLoading, navigate]);
+    const loadScheduledEmails = async () => {
+      if (!user || !isAdmin) return;
 
-  useEffect(() => {
-    if (!adminLoading && !isAdmin) {
-      toast.error(t("toasts.admin.accessDenied"));
-      navigate("/dashboard");
-    }
-  }, [isAdmin, adminLoading, navigate, t]);
+      try {
+        const { data, error } = await supabase
+          .from("scheduled_emails")
+          .select("*")
+          .order("scheduled_for", { ascending: false });
 
-  useEffect(() => {
-    if (isAdmin) {
+        if (error) throw error;
+
+        setScheduledEmails(data || []);
+      } catch (error: any) {
+        console.error("Error loading scheduled emails:", error);
+        toast.error(error.message || t("admin.scheduledEmails.loadingScheduledEmails"));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!authLoading && !adminLoading) {
+      if (!isAdmin) {
+        navigate("/dashboard");
+        return;
+      }
       loadScheduledEmails();
     }
-  }, [isAdmin]);
+  }, [user, authLoading, adminLoading, isAdmin, navigate, t]);
 
-  const loadScheduledEmails = async () => {
+  const getRecipientSummary = (filter: any): string => {
+    if (!filter) return t("admin.scheduledEmails.recipientSummary.all");
+    
+    if (filter.type === "all") return t("admin.scheduledEmails.recipientSummary.all");
+    if (filter.type === "plan") return t("admin.scheduledEmails.recipientSummary.plan", { plan: filter.plan });
+    if (filter.type === "country") return t("admin.scheduledEmails.recipientSummary.country", { country: filter.country });
+    if (filter.type === "usernames") {
+      const count = filter.usernames?.split(",").length || 0;
+      return count === 1 
+        ? t("admin.scheduledEmails.recipientSummary.specificUsers", { count })
+        : t("admin.scheduledEmails.recipientSummary.specificUsersPlural", { count });
+    }
+    
+    return t("admin.scheduledEmails.recipientSummary.custom");
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="outline">{t("admin.scheduledEmails.pending")}</Badge>;
+      case "sent":
+        return <Badge variant="default" className="bg-green-600">{t("admin.scheduledEmails.sent")}</Badge>;
+      case "failed":
+        return <Badge variant="destructive">{t("admin.scheduledEmails.failed")}</Badge>;
+      case "cancelled":
+        return <Badge variant="secondary">{t("admin.scheduledEmails.cancelled")}</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const handleProcessNow = async () => {
+    setProcessing(true);
     try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("scheduled_emails")
-        .select("*")
-        .order("scheduled_for", { ascending: true });
+      const { data, error } = await supabase.functions.invoke("process-scheduled-emails");
 
       if (error) throw error;
 
-      setScheduledEmails(data || []);
+      if (data?.success) {
+        toast.success(t("admin.scheduledEmails.processedSuccessfully", { count: data.processed || 0 }));
+        // Reload scheduled emails
+        const { data: refreshed, error: refreshError } = await supabase
+          .from("scheduled_emails")
+          .select("*")
+          .order("scheduled_for", { ascending: false });
+
+        if (!refreshError && refreshed) {
+          setScheduledEmails(refreshed);
+        }
+      } else {
+        throw new Error(data?.error || "Failed to process scheduled emails");
+      }
     } catch (error: any) {
-      console.error("Error loading scheduled emails:", error);
-      toast.error(t("toasts.admin.failedToLoadScheduledEmails"));
+      console.error("Error processing scheduled emails:", error);
+      toast.error(error.message || t("admin.scheduledEmails.processingFailed"));
     } finally {
-      setLoading(false);
+      setProcessing(false);
+    }
+  };
+
+  const handleCancel = async (email: ScheduledEmail) => {
+    try {
+      const { error } = await supabase
+        .from("scheduled_emails")
+        .update({ status: "cancelled" })
+        .eq("id", email.id);
+
+      if (error) throw error;
+
+      toast.success(t("admin.scheduledEmails.cancelledSuccessfully"));
+      
+      // Update local state
+      setScheduledEmails(prev => 
+        prev.map(e => e.id === email.id ? { ...e, status: "cancelled" } : e)
+      );
+    } catch (error: any) {
+      console.error("Error cancelling scheduled email:", error);
+      toast.error(error.message || t("admin.scheduledEmails.cancellationFailed"));
     }
   };
 
@@ -89,85 +166,16 @@ const ScheduledEmails = () => {
 
       if (error) throw error;
 
-      toast.success(t("toasts.admin.scheduledEmailDeleted"));
+      toast.success(t("admin.scheduledEmails.deletedSuccessfully"));
+      
+      // Update local state
+      setScheduledEmails(prev => prev.filter(e => e.id !== selectedEmail.id));
       setDeleteDialogOpen(false);
       setSelectedEmail(null);
-      loadScheduledEmails();
     } catch (error: any) {
       console.error("Error deleting scheduled email:", error);
-      toast.error(t("toasts.admin.failedToDeleteScheduledEmail"));
+      toast.error(error.message || t("admin.scheduledEmails.deletionFailed"));
     }
-  };
-
-  const handleCancel = async (email: ScheduledEmail) => {
-    try {
-      const { error } = await supabase
-        .from("scheduled_emails")
-        .update({ status: "cancelled" })
-        .eq("id", email.id);
-
-      if (error) throw error;
-
-      toast.success(t("toasts.admin.scheduledEmailCancelled"));
-      loadScheduledEmails();
-    } catch (error: any) {
-      console.error("Error cancelling scheduled email:", error);
-      toast.error(t("toasts.admin.failedToCancelScheduledEmail"));
-    }
-  };
-
-  const handleProcessNow = async () => {
-    try {
-      setProcessing(true);
-      
-      const { error } = await supabase.functions.invoke("process-scheduled-emails");
-
-      if (error) throw error;
-
-      toast.success(t("toasts.admin.scheduledEmailsProcessingTriggered"));
-      
-      // Reload after a delay to see updated statuses
-      setTimeout(() => {
-        loadScheduledEmails();
-      }, 2000);
-    } catch (error: any) {
-      console.error("Error processing scheduled emails:", error);
-      toast.error(t("toasts.admin.failedToProcessScheduledEmails"));
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      pending: "secondary",
-      processing: "default",
-      sent: "outline",
-      failed: "destructive",
-      cancelled: "secondary",
-    };
-
-    return (
-      <Badge variant={variants[status] || "secondary"}>
-        {status.toUpperCase()}
-      </Badge>
-    );
-  };
-
-  const getRecipientSummary = (filter: any) => {
-    if (!filter) return t("admin.scheduledEmails.recipientSummary.unknown");
-    
-    if (filter.type === "all") return t("admin.scheduledEmails.recipientSummary.allUsers");
-    if (filter.type === "plan") return t("admin.scheduledEmails.recipientSummary.plan", { plan: filter.plan });
-    if (filter.type === "country") return t("admin.scheduledEmails.recipientSummary.country", { country: filter.country });
-    if (filter.type === "usernames") {
-      const count = filter.usernames?.split(",").length || 0;
-      return count === 1 
-        ? t("admin.scheduledEmails.recipientSummary.specificUsers", { count })
-        : t("admin.scheduledEmails.recipientSummary.specificUsersPlural", { count });
-    }
-    
-    return t("admin.scheduledEmails.recipientSummary.custom");
   };
 
   if (authLoading || adminLoading || loading) {

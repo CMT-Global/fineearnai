@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { PartnerApplicationsErrorBoundary } from "@/components/admin/PartnerApplicationsErrorBoundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,57 +24,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { countries } from "@/lib/countries";
 
 const PartnerApplications = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const [activeTab, setActiveTab] = useState("pending");
   const { data: applications, isLoading } = usePartnerApplications(activeTab);
   const manageMutation = useManagePartnerApplication();
+  
+  const [filterCountry, setFilterCountry] = useState("all");
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [filterEmployment, setFilterEmployment] = useState("all");
+  const [sortBy, setSortBy] = useState("date_desc");
 
-  const [selectedApplication, setSelectedApplication] = useState<any>(null);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [customCommission, setCustomCommission] = useState("");
-
-  // Filtering and sorting state
-  const [filterCountry, setFilterCountry] = useState<string>("all");
-  const [filterPlan, setFilterPlan] = useState<string>("all");
-  const [filterEmployment, setFilterEmployment] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("date_desc");
-
-  const handleAction = (application: any, action: 'approve' | 'reject') => {
-    setSelectedApplication(application);
-    setActionType(action);
-    setRejectionReason("");
-    setCustomCommission("");
-  };
-
-  const handleConfirm = () => {
-    if (!selectedApplication || !actionType) return;
-
-    const payload: any = {
-      application_id: selectedApplication.id,
-      action: actionType,
-    };
-
-    if (actionType === 'reject' && rejectionReason) {
-      payload.rejection_reason = rejectionReason;
-    }
-
-    if (actionType === 'approve' && customCommission) {
-      payload.custom_commission_rate = parseFloat(customCommission) / 100;
-    }
-
-    manageMutation.mutate(payload, {
-      onSuccess: () => {
-        setSelectedApplication(null);
-        setActionType(null);
-      },
-    });
-  };
+  // Force re-render when language changes
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; icon: any; label: string }> = {
-      pending: { variant: "secondary", icon: Clock, label: "Pending" },
-      approved: { variant: "default", icon: CheckCircle, label: "Approved" },
-      rejected: { variant: "destructive", icon: XCircle, label: "Rejected" },
+      pending: { variant: "secondary", icon: Clock, label: t("admin.partnerApplications.status.pending") },
+      approved: { variant: "default", icon: CheckCircle, label: t("admin.partnerApplications.status.approved") },
+      rejected: { variant: "destructive", icon: XCircle, label: t("admin.partnerApplications.status.rejected") },
     };
 
     const config = variants[status] || variants.pending;
@@ -159,10 +129,10 @@ const PartnerApplications = () => {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Partner Applications</h1>
+            <h1 className="text-3xl font-bold">{t("admin.partnerApplications.title")}</h1>
           </div>
           <p className="text-muted-foreground">
-            Review and manage partner applications
+            {t("admin.partnerApplications.subtitle")}
           </p>
         </div>
 
@@ -171,7 +141,7 @@ const PartnerApplications = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Review
+                {t("admin.partnerApplications.stats.pendingReview")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -182,7 +152,7 @@ const PartnerApplications = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Applications
+                {t("admin.partnerApplications.stats.totalApplications")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -193,7 +163,7 @@ const PartnerApplications = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Approval Rate
+                {t("admin.partnerApplications.stats.approvalRate")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -209,16 +179,16 @@ const PartnerApplications = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="pending">
-              Pending
+              {t("admin.partnerApplications.tabs.pending")}
               {pendingCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
                   {pendingCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="approved">{t("admin.partnerApplications.tabs.approved")}</TabsTrigger>
+            <TabsTrigger value="rejected">{t("admin.partnerApplications.tabs.rejected")}</TabsTrigger>
+            <TabsTrigger value="all">{t("admin.partnerApplications.tabs.all")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
@@ -227,19 +197,19 @@ const PartnerApplications = () => {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Filter className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Filters & Sorting</CardTitle>
+                  <CardTitle className="text-lg">{t("admin.partnerApplications.filters.title")}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm">Country</Label>
+                    <Label className="text-sm">{t("admin.partnerApplications.filters.country")}</Label>
                     <Select value={filterCountry} onValueChange={setFilterCountry}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Countries" />
+                        <SelectValue placeholder={t("admin.partnerApplications.filters.allCountries")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Countries</SelectItem>
+                        <SelectItem value="all">{t("admin.partnerApplications.filters.allCountries")}</SelectItem>
                         {uniqueCountries.map((code) => (
                           <SelectItem key={code} value={code}>
                             {getCountryFlag(code)} {getCountryName(code)}
@@ -250,13 +220,13 @@ const PartnerApplications = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Membership Plan</Label>
+                    <Label className="text-sm">{t("admin.partnerApplications.filters.membershipPlan")}</Label>
                     <Select value={filterPlan} onValueChange={setFilterPlan}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Plans" />
+                        <SelectValue placeholder={t("admin.partnerApplications.filters.allPlans")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Plans</SelectItem>
+                        <SelectItem value="all">{t("admin.partnerApplications.filters.allPlans")}</SelectItem>
                         {uniquePlans.map((plan) => (
                           <SelectItem key={plan} value={plan}>
                             {plan.charAt(0).toUpperCase() + plan.slice(1)}
@@ -267,60 +237,60 @@ const PartnerApplications = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Employment Status</Label>
+                    <Label className="text-sm">{t("admin.partnerApplications.filters.employmentStatus")}</Label>
                     <Select value={filterEmployment} onValueChange={setFilterEmployment}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Status" />
+                        <SelectValue placeholder={t("admin.partnerApplications.filters.allStatus")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="employed">Employed</SelectItem>
-                        <SelectItem value="unemployed">Unemployed</SelectItem>
+                        <SelectItem value="all">{t("admin.partnerApplications.filters.allStatus")}</SelectItem>
+                        <SelectItem value="employed">{t("admin.partnerApplications.filters.employed")}</SelectItem>
+                        <SelectItem value="unemployed">{t("admin.partnerApplications.filters.unemployed")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Sort By</Label>
+                    <Label className="text-sm">{t("admin.partnerApplications.filters.sortBy")}</Label>
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sort by..." />
+                        <SelectValue placeholder={t("admin.partnerApplications.filters.sortByPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="date_desc">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            Newest First
+                            {t("admin.partnerApplications.sort.newestFirst")}
                           </div>
                         </SelectItem>
                         <SelectItem value="date_asc">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            Oldest First
+                            {t("admin.partnerApplications.sort.oldestFirst")}
                           </div>
                         </SelectItem>
                         <SelectItem value="referrals_desc">
                           <div className="flex items-center gap-2">
                             <TrendingUp className="h-4 w-4" />
-                            Most Referrals
+                            {t("admin.partnerApplications.sort.mostReferrals")}
                           </div>
                         </SelectItem>
                         <SelectItem value="referrals_asc">
                           <div className="flex items-center gap-2">
                             <TrendingUp className="h-4 w-4" />
-                            Least Referrals
+                            {t("admin.partnerApplications.sort.leastReferrals")}
                           </div>
                         </SelectItem>
                         <SelectItem value="country_asc">
                           <div className="flex items-center gap-2">
                             <Flag className="h-4 w-4" />
-                            Country (A-Z)
+                            {t("admin.partnerApplications.sort.countryAZ")}
                           </div>
                         </SelectItem>
                         <SelectItem value="country_desc">
                           <div className="flex items-center gap-2">
                             <Flag className="h-4 w-4" />
-                            Country (Z-A)
+                            {t("admin.partnerApplications.sort.countryZA")}
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -339,10 +309,13 @@ const PartnerApplications = () => {
                         setFilterEmployment("all");
                       }}
                     >
-                      Clear Filters
+                      {t("admin.partnerApplications.filters.clearFilters")}
                     </Button>
                     <span className="text-sm text-muted-foreground">
-                      Showing {filteredAndSortedApplications.length} of {applications?.length || 0} applications
+                      {t("admin.partnerApplications.filters.showingResults", { 
+                        showing: filteredAndSortedApplications.length, 
+                        total: applications?.length || 0 
+                      })}
                     </span>
                   </div>
                 )}
@@ -376,12 +349,12 @@ const PartnerApplications = () => {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <Users className="h-4 w-4 text-primary" />
-                            Applicant Profile
+                            {t("admin.partnerApplications.applicantProfile.title")}
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pl-6">
                             {app.applicant_country && (
                               <div>
-                                <span className="text-muted-foreground">Country:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.country")}:</span>
                                 <p className="font-medium flex items-center gap-2 mt-1">
                                   <span className="text-2xl">{getCountryFlag(app.applicant_country)}</span>
                                   {getCountryName(app.applicant_country)}
@@ -390,22 +363,22 @@ const PartnerApplications = () => {
                             )}
                             {app.current_membership_plan && (
                               <div>
-                                <span className="text-muted-foreground">Membership Plan:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.membershipPlan")}:</span>
                                 <Badge variant="outline" className="mt-1 capitalize">
                                   {app.current_membership_plan}
                                 </Badge>
                               </div>
                             )}
                             <div>
-                              <span className="text-muted-foreground">Employment Status:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.employmentStatus")}:</span>
                               <p className="font-medium">
                                 {app.is_currently_employed ? (
                                   <Badge variant="default" className="ml-2">
                                     <Briefcase className="h-3 w-3 mr-1" />
-                                    Employed
+                                    {t("admin.partnerApplications.filters.employed")}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="secondary" className="ml-2">Unemployed</Badge>
+                                  <Badge variant="secondary" className="ml-2">{t("admin.partnerApplications.filters.unemployed")}</Badge>
                                 )}
                               </p>
                             </div>
@@ -413,17 +386,17 @@ const PartnerApplications = () => {
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pl-6 pt-2">
                             <div>
-                              <span className="text-muted-foreground">Total Referrals:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.totalReferrals")}:</span>
                               <p className="font-bold text-lg text-primary">{app.total_referrals || 0}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Upgraded Referrals:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.upgradedReferrals")}:</span>
                               <p className="font-bold text-lg text-green-600">{app.upgraded_referrals || 0}</p>
                             </div>
                             {app.daily_time_commitment && (
                               <div>
-                                <span className="text-muted-foreground">Daily Commitment:</span>
-                                <Badge variant="outline" className="mt-1">{app.daily_time_commitment} hours</Badge>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.applicantProfile.dailyCommitment")}:</span>
+                                <Badge variant="outline" className="mt-1">{t("admin.partnerApplications.applicantProfile.hours", { hours: app.daily_time_commitment })}</Badge>
                               </div>
                             )}
                           </div>
@@ -433,28 +406,28 @@ const PartnerApplications = () => {
                         <div className="space-y-3 border-t pt-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
-                            Contact Information
+                            {t("admin.partnerApplications.contactInfo.title")}
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pl-6">
                             <div>
-                              <span className="text-muted-foreground">Preferred Contact:</span>
-                              <p className="font-medium capitalize">{app.preferred_contact_method || 'Not specified'}</p>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.contactInfo.preferredContact")}:</span>
+                              <p className="font-medium capitalize">{app.preferred_contact_method || t("admin.partnerApplications.contactInfo.notSpecified")}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Applied:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.contactInfo.applied")}:</span>
                               <p className="font-medium">
                                 {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
                               </p>
                             </div>
                             {app.whatsapp_number && (
                               <div>
-                                <span className="text-muted-foreground">WhatsApp:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.contactInfo.whatsapp")}:</span>
                                 <p className="font-medium">{app.whatsapp_number}</p>
                               </div>
                             )}
                             {app.telegram_username && (
                               <div>
-                                <span className="text-muted-foreground">Telegram:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.contactInfo.telegram")}:</span>
                                 <p className="font-medium">@{app.telegram_username}</p>
                               </div>
                             )}
@@ -465,67 +438,67 @@ const PartnerApplications = () => {
                         <div className="space-y-3 border-t pt-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <Globe className="h-4 w-4 text-primary" />
-                            Network & Experience
+                            {t("admin.partnerApplications.networkExperience.title")}
                           </div>
                           <div className="space-y-3 pl-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               <div>
-                                <span className="text-muted-foreground">Manages Community:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.managesCommunity")}:</span>
                                 <p className="font-medium">
                                   {app.manages_community ? (
-                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                    <Badge variant="default" className="ml-2">{t("common.yes")}</Badge>
                                   ) : (
-                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                    <Badge variant="secondary" className="ml-2">{t("common.no")}</Badge>
                                   )}
                                 </p>
                               </div>
                               {app.community_member_count && (
                                 <div>
-                                  <span className="text-muted-foreground">Community Size:</span>
-                                  <p className="font-medium">{app.community_member_count} members</p>
+                                  <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.communitySize")}:</span>
+                                  <p className="font-medium">{t("admin.partnerApplications.networkExperience.members", { count: app.community_member_count })}</p>
                                 </div>
                               )}
                               <div>
-                                <span className="text-muted-foreground">Has Promoted Platforms:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.hasPromotedPlatforms")}:</span>
                                 <p className="font-medium">
                                   {app.promoted_platforms ? (
-                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                    <Badge variant="default" className="ml-2">{t("common.yes")}</Badge>
                                   ) : (
-                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                    <Badge variant="secondary" className="ml-2">{t("common.no")}</Badge>
                                   )}
                                 </p>
                               </div>
                               {app.expected_monthly_onboarding && (
                                 <div>
-                                  <span className="text-muted-foreground">Monthly Onboarding:</span>
-                                  <p className="font-medium">{app.expected_monthly_onboarding} users</p>
+                                  <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.monthlyOnboarding")}:</span>
+                                  <p className="font-medium">{t("admin.partnerApplications.networkExperience.users", { count: app.expected_monthly_onboarding })}</p>
                                 </div>
                               )}
                               {app.weekly_time_commitment && (
                                 <div>
-                                  <span className="text-muted-foreground">Time Commitment:</span>
-                                  <p className="font-medium">{app.weekly_time_commitment} hours/week</p>
+                                  <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.timeCommitment")}:</span>
+                                  <p className="font-medium">{t("admin.partnerApplications.networkExperience.hoursPerWeek", { hours: app.weekly_time_commitment })}</p>
                                 </div>
                               )}
                             </div>
 
                             {app.platform_promotion_details && (
                               <div className="text-sm">
-                                <span className="text-muted-foreground">Platform Promotion Details:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.platformPromotionDetails")}:</span>
                                 <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.platform_promotion_details}</p>
                               </div>
                             )}
 
                             {app.network_description && (
                               <div className="text-sm">
-                                <span className="text-muted-foreground">Network Description:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.networkDescription")}:</span>
                                 <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.network_description}</p>
                               </div>
                             )}
 
                             {app.community_group_links && (
                               <div className="text-sm">
-                                <span className="text-muted-foreground">Community Links:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.networkExperience.communityLinks")}:</span>
                                 <p className="mt-1 p-3 bg-muted/50 rounded-lg break-all">{app.community_group_links}</p>
                               </div>
                             )}
@@ -536,33 +509,33 @@ const PartnerApplications = () => {
                         <div className="space-y-3 border-t pt-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <HeartHandshake className="h-4 w-4 text-primary" />
-                            Support & Capabilities
+                            {t("admin.partnerApplications.supportCapabilities.title")}
                           </div>
                           <div className="space-y-3 pl-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               <div>
-                                <span className="text-muted-foreground">Can Provide Local Support:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.supportCapabilities.canProvideLocalSupport")}:</span>
                                 <p className="font-medium">
                                   {app.can_provide_local_support ? (
-                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                    <Badge variant="default" className="ml-2">{t("common.yes")}</Badge>
                                   ) : (
-                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                    <Badge variant="secondary" className="ml-2">{t("common.no")}</Badge>
                                   )}
                                 </p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Can Organize Training:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.supportCapabilities.canOrganizeTraining")}:</span>
                                 <p className="font-medium">
                                   {app.organize_training_sessions ? (
-                                    <Badge variant="default" className="ml-2">Yes</Badge>
+                                    <Badge variant="default" className="ml-2">{t("common.yes")}</Badge>
                                   ) : (
-                                    <Badge variant="secondary" className="ml-2">No</Badge>
+                                    <Badge variant="secondary" className="ml-2">{t("common.no")}</Badge>
                                   )}
                                 </p>
                               </div>
                               {app.support_preference && (
                                 <div>
-                                  <span className="text-muted-foreground">Support Method:</span>
+                                  <span className="text-muted-foreground">{t("admin.partnerApplications.supportCapabilities.supportMethod")}:</span>
                                   <p className="font-medium capitalize">{app.support_preference}</p>
                                 </div>
                               )}
@@ -570,7 +543,7 @@ const PartnerApplications = () => {
 
                             {app.local_payment_methods && (
                               <div className="text-sm">
-                                <span className="text-muted-foreground">Local Payment Methods:</span>
+                                <span className="text-muted-foreground">{t("admin.partnerApplications.supportCapabilities.localPaymentMethods")}:</span>
                                 <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.local_payment_methods}</p>
                               </div>
                             )}
@@ -582,22 +555,22 @@ const PartnerApplications = () => {
                           <div className="space-y-3 border-t pt-4">
                             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                               <Shield className="h-4 w-4 text-primary" />
-                              Motivation & Agreement
+                              {t("admin.partnerApplications.motivationAgreement.title")}
                             </div>
                             <div className="text-sm pl-6">
-                              <span className="text-muted-foreground">Why they want to be a partner:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.motivationAgreement.whyPartner")}:</span>
                               <p className="mt-1 p-3 bg-muted/50 rounded-lg">{app.motivation_text}</p>
                             </div>
                             <div className="text-sm pl-6">
-                              <span className="text-muted-foreground">Agreed to Guidelines:</span>
+                              <span className="text-muted-foreground">{t("admin.partnerApplications.motivationAgreement.agreedToGuidelines")}:</span>
                               <p className="font-medium">
                                 {app.agrees_to_guidelines ? (
                                   <Badge variant="default" className="ml-2">
                                     <CheckCircle className="h-3 w-3 mr-1" />
-                                    Yes
+                                    {t("common.yes")}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="secondary" className="ml-2">No</Badge>
+                                  <Badge variant="secondary" className="ml-2">{t("common.no")}</Badge>
                                 )}
                               </p>
                             </div>
@@ -612,7 +585,7 @@ const PartnerApplications = () => {
                               disabled={manageMutation.isPending}
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
+                              {t("admin.partnerApplications.actions.approve")}
                             </Button>
                             <Button
                               onClick={() => handleAction(app, 'reject')}
@@ -621,14 +594,14 @@ const PartnerApplications = () => {
                               disabled={manageMutation.isPending}
                             >
                               <XCircle className="h-4 w-4 mr-2" />
-                              Reject
+                              {t("admin.partnerApplications.actions.reject")}
                             </Button>
                           </div>
                         )}
 
                         {app.status === 'rejected' && app.rejection_reason && (
                           <div className="text-sm bg-destructive/10 p-3 rounded-lg border border-destructive/20">
-                            <span className="text-muted-foreground">Rejection Reason:</span>
+                            <span className="text-muted-foreground">{t("admin.partnerApplications.rejectionReason")}:</span>
                             <p className="mt-1">{app.rejection_reason}</p>
                           </div>
                         )}
@@ -641,7 +614,7 @@ const PartnerApplications = () => {
               <Card>
                 <CardContent className="py-12 text-center">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No applications found</p>
+                  <p className="text-muted-foreground">{t("admin.partnerApplications.noApplicationsFound")}</p>
                 </CardContent>
               </Card>
             )}
@@ -654,19 +627,19 @@ const PartnerApplications = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'approve' ? 'Approve' : 'Reject'} Partner Application
+              {actionType === 'approve' ? t("admin.partnerApplications.dialog.approveTitle") : t("admin.partnerApplications.dialog.rejectTitle")}
             </DialogTitle>
             <DialogDescription>
               {actionType === 'approve'
-                ? `Approve ${selectedApplication?.profiles?.username} as a partner`
-                : `Reject ${selectedApplication?.profiles?.username}'s application`}
+                ? t("admin.partnerApplications.dialog.approveDescription", { username: selectedApplication?.profiles?.username })
+                : t("admin.partnerApplications.dialog.rejectDescription", { username: selectedApplication?.profiles?.username })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {actionType === 'approve' && (
               <div className="space-y-2">
-                <Label>Custom Commission Rate (Optional)</Label>
+                <Label>{t("admin.partnerApplications.dialog.customCommissionRate")}</Label>
                 <div className="flex gap-2">
                   <Input
                     type="number"
@@ -680,16 +653,16 @@ const PartnerApplications = () => {
                   <span className="flex items-center text-muted-foreground">%</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to use global default (10%)
+                  {t("admin.partnerApplications.dialog.customCommissionHint")}
                 </p>
               </div>
             )}
 
             {actionType === 'reject' && (
               <div className="space-y-2">
-                <Label>Rejection Reason *</Label>
+                <Label>{t("admin.partnerApplications.dialog.rejectionReasonRequired")}</Label>
                 <Textarea
-                  placeholder="Please provide a reason for rejection..."
+                  placeholder={t("admin.partnerApplications.dialog.rejectionReasonPlaceholder")}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={4}
@@ -700,7 +673,7 @@ const PartnerApplications = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedApplication(null)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleConfirm}
@@ -711,7 +684,7 @@ const PartnerApplications = () => {
               }
             >
               {manageMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirm {actionType === 'approve' ? 'Approval' : 'Rejection'}
+              {actionType === 'approve' ? t("admin.partnerApplications.dialog.confirmApproval") : t("admin.partnerApplications.dialog.confirmRejection")}
             </Button>
           </DialogFooter>
         </DialogContent>

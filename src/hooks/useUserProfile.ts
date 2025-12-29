@@ -2,8 +2,10 @@ import { useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
+import { useTranslation } from 'react-i18next';
 
 export function useUserProfile(user: User | null) {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [depositBalance, setDepositBalance] = useState<number>(0);
@@ -20,11 +22,11 @@ export function useUserProfile(user: User | null) {
 
       if (error) {
         if (error.message?.includes('Failed to fetch') || error.message?.includes('network')) {
-          toast.error("Network error while loading profile. Some features may be limited.");
+          toast.error(t("admin.toasts.networkErrorWhileLoadingProfile"));
         } else if (error.code === 'PGRST116') {
-          toast.error("Profile not found. Please contact support.");
+          toast.error(t("admin.toasts.profileNotFoundContactSupport"));
         } else {
-          toast.error("Failed to load your profile. Please refresh the page.");
+          toast.error(t("admin.toasts.failedToLoadProfileRefreshPage"));
         }
         throw error;
       }

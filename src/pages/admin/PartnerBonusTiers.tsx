@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,17 +26,14 @@ interface BonusTier {
 }
 
 export default function PartnerBonusTiers() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTier, setEditingTier] = useState<BonusTier | null>(null);
-  const [formData, setFormData] = useState({
-    tier_name: "",
-    min_weekly_sales: "",
-    max_weekly_sales: "",
-    bonus_percentage: "",
-    tier_order: "",
-    is_active: true,
-  });
+
+  // Force re-render when language changes
 
   // Fetch bonus tiers
   const { data: tiers, isLoading } = useQuery({
@@ -68,7 +67,7 @@ export default function PartnerBonusTiers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["partner-bonus-tiers"] });
-      toast.success("Bonus tier created successfully");
+      toast.success(t("admin.toasts.bonusTierCreatedSuccessfully"));
       setIsDialogOpen(false);
       resetForm();
     },
@@ -96,7 +95,7 @@ export default function PartnerBonusTiers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["partner-bonus-tiers"] });
-      toast.success("Bonus tier updated successfully");
+      toast.success(t("admin.toasts.bonusTierUpdatedSuccessfully"));
       setIsDialogOpen(false);
       resetForm();
     },
@@ -117,7 +116,7 @@ export default function PartnerBonusTiers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["partner-bonus-tiers"] });
-      toast.success("Bonus tier deleted successfully");
+      toast.success(t("admin.toasts.bonusTierDeletedSuccessfully"));
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete tier: ${error.message}`);
@@ -154,7 +153,7 @@ export default function PartnerBonusTiers() {
 
     // Validation
     if (!formData.tier_name || !formData.min_weekly_sales || !formData.max_weekly_sales || !formData.bonus_percentage || !formData.tier_order) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("admin.toasts.pleaseFillAllRequiredFields"));
       return;
     }
 
@@ -163,12 +162,12 @@ export default function PartnerBonusTiers() {
     const bonusPercentage = Number(formData.bonus_percentage);
 
     if (maxSales <= minSales) {
-      toast.error("Maximum sales must be greater than minimum sales");
+      toast.error(t("admin.toasts.maxSalesMustBeGreaterThanMin"));
       return;
     }
 
     if (bonusPercentage < 0 || bonusPercentage > 100) {
-      toast.error("Bonus percentage must be between 0 and 100");
+      toast.error(t("admin.toasts.bonusPercentageMustBeValid"));
       return;
     }
 
@@ -197,8 +196,8 @@ export default function PartnerBonusTiers() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-3xl font-bold">Partner Bonus Tiers</h1>
-        <p className="text-muted-foreground">Configure weekly bonus tiers and percentages</p>
+        <h1 className="text-3xl font-bold">{t("admin.partnerBonusTiers.title")}</h1>
+        <p className="text-muted-foreground">{t("admin.partnerBonusTiers.subtitle")}</p>
       </div>
 
       {/* Statistics Cards */}

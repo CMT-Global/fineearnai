@@ -14,6 +14,8 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
 import { ArrowLeft, Key, Activity, Crown, AlertCircle, RefreshCw, Copy, ExternalLink, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +41,8 @@ import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
 import { ManageRolesDialog } from "@/components/admin/dialogs/ManageRolesDialog";
 
 function UserDetailContent() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const { user, loading: authLoading } = useAuth();
@@ -162,9 +166,9 @@ function UserDetailContent() {
       // Store URL to display in dialog
       setMasterLoginUrl(loginUrl);
       
-      toast.success("Master login URL generated!");
+      toast.success(t("admin.userDetail.masterLoginUrlGeneratedSuccess"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to generate master login");
+      toast.error(error.message || t("admin.userDetail.failedToGenerateMasterLogin"));
     }
   };
 
@@ -190,15 +194,15 @@ function UserDetailContent() {
         <div className="max-w-7xl mx-auto">
           <Button variant="ghost" onClick={() => navigate("/admin/users")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Users
+            {t("admin.userDetail.backToUsers")}
           </Button>
           <Card className="mt-6">
             <CardContent className="p-6">
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading User</AlertTitle>
+                <AlertTitle>{t("admin.userDetail.errorLoadingUser")}</AlertTitle>
                 <AlertDescription className="space-y-3">
-                  <p>{detailError.message || 'Failed to load user details. Please try again.'}</p>
+                  <p>{detailError.message || t("admin.userDetail.failedToLoadUserDetails")}</p>
                   <Button 
                     onClick={() => refetch()} 
                     variant="outline" 
@@ -206,7 +210,7 @@ function UserDetailContent() {
                     className="mt-2"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Again
+                    {t("admin.userDetail.tryAgain")}
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -223,11 +227,11 @@ function UserDetailContent() {
         <div className="max-w-7xl mx-auto">
           <Button variant="ghost" onClick={() => navigate("/admin/users")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Users
+            {t("admin.userDetail.backToUsers")}
           </Button>
           <Card className="mt-6">
             <CardContent className="p-6">
-              <p className="text-muted-foreground">User not found</p>
+              <p className="text-muted-foreground">{t("admin.userDetail.userNotFound")}</p>
             </CardContent>
           </Card>
         </div>
@@ -245,7 +249,7 @@ function UserDetailContent() {
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate("/admin/users")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Users
+              {t("admin.userDetail.backToUsers")}
             </Button>
             <div>
               <h1 className="text-3xl font-bold">{profile.username}</h1>
@@ -266,11 +270,11 @@ function UserDetailContent() {
               {userRoles?.includes('admin') && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Crown className="h-3 w-3" />
-                  Admin
+                  {t("admin.userDetail.admin")}
                 </Badge>
               )}
               {userRoles?.includes('moderator') && (
-                <Badge variant="outline">Moderator</Badge>
+                <Badge variant="outline">{t("admin.userDetail.moderator")}</Badge>
               )}
             </div>
           </div>
@@ -280,7 +284,7 @@ function UserDetailContent() {
               onClick={handleGenerateMasterLogin}
             >
               <Key className="h-4 w-4 mr-2" />
-              Master Login
+              {t("admin.userDetail.masterLogin")}
             </Button>
           </div>
         </div>
@@ -288,22 +292,22 @@ function UserDetailContent() {
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="financial">Financial</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks & Activity</TabsTrigger>
-            <TabsTrigger value="referrals">Referrals</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="activity">Activity Logs</TabsTrigger>
+            <TabsTrigger value="overview">{t("admin.userDetail.tabs.overview")}</TabsTrigger>
+            <TabsTrigger value="financial">{t("admin.userDetail.tabs.financial")}</TabsTrigger>
+            <TabsTrigger value="tasks">{t("admin.userDetail.tabs.tasks")}</TabsTrigger>
+            <TabsTrigger value="referrals">{t("admin.userDetail.tabs.referrals")}</TabsTrigger>
+            <TabsTrigger value="transactions">{t("admin.userDetail.tabs.transactions")}</TabsTrigger>
+            <TabsTrigger value="activity">{t("admin.userDetail.tabs.activity")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
             <OverviewTab 
               userData={userDetail} 
-              onEditProfile={() => toast.info("Use inline editing in Overview tab")}
+              onEditProfile={() => toast.info(t("admin.toasts.useInlineEditingInOverviewTab"))}
               onChangePlan={() => setChangePlanDialogOpen(true)}
               onSuspend={() => setSuspendDialogOpen(true)}
               onBan={() => setBanDialogOpen(true)}
-              onResetLimits={() => toast.info("Reset limits coming soon")}
+              onResetLimits={() => toast.info(t("admin.toasts.resetLimitsComingSoon"))}
               onMasterLogin={handleGenerateMasterLogin}
               onManageRoles={() => setManageRolesDialogOpen(true)}
               onUserUpdated={handleUserUpdated}
@@ -402,9 +406,9 @@ function UserDetailContent() {
         <AlertDialog open={!!masterLoginUrl} onOpenChange={() => setMasterLoginUrl(null)}>
           <AlertDialogContent className="max-w-2xl">
             <AlertDialogHeader>
-              <AlertDialogTitle>Master Login URL Generated</AlertDialogTitle>
+              <AlertDialogTitle>{t("admin.userDetail.masterLoginUrlGenerated")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Use this URL to log in as this user. The link expires in 15 minutes and can only be used once.
+                {t("admin.userDetail.masterLoginUrlDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             
@@ -417,13 +421,13 @@ function UserDetailContent() {
                 <Button
                   onClick={() => {
                     navigator.clipboard.writeText(masterLoginUrl!);
-                    toast.success("URL copied to clipboard!");
+                    toast.success(t("admin.userDetail.urlCopied"));
                   }}
                   variant="outline"
                   className="flex-1"
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy URL
+                  {t("admin.userDetail.copyUrl")}
                 </Button>
                 
                 <Button
@@ -433,22 +437,22 @@ function UserDetailContent() {
                   className="flex-1"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Open in New Tab
+                  {t("admin.userDetail.openInNewTab")}
                 </Button>
               </div>
               
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Security Notice</AlertTitle>
+                <AlertTitle>{t("admin.userDetail.securityNotice")}</AlertTitle>
                 <AlertDescription>
-                  This URL provides direct access to the user's account. Keep it secure and do not share it.
+                  {t("admin.userDetail.securityNoticeDescription")}
                 </AlertDescription>
               </Alert>
             </div>
             
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setMasterLoginUrl(null)}>
-                Close
+                {t("common.close")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -460,6 +464,7 @@ function UserDetailContent() {
 
 // Activity Logs Tab Component
 function ActivityLogsTab({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [logs, setLogs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -481,7 +486,7 @@ function ActivityLogsTab({ userId }: { userId: string }) {
       setLogs(data || []);
     } catch (error) {
       console.error("Error loading activity logs:", error);
-      toast.error("Failed to load activity logs");
+      toast.error(t("admin.userDetail.failedToLoadActivityLogs"));
     } finally {
       setLoading(false);
     }
@@ -496,12 +501,12 @@ function ActivityLogsTab({ userId }: { userId: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Activity Logs
+          {t("admin.userDetail.activityLogs")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {logs.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No activity logs found</p>
+          <p className="text-muted-foreground text-center py-8">{t("admin.userDetail.noActivityLogsFound")}</p>
         ) : (
           <div className="space-y-4">
             {logs.map((log) => (

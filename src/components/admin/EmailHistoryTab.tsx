@@ -12,6 +12,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { RefreshCw, Search, CheckCircle2, XCircle, Clock, Eye, Mail, Send, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +66,7 @@ interface EmailHistoryTabProps {
 }
 
 export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
+  const { t } = useTranslation();
   const [emails, setEmails] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -187,7 +189,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       }
     } catch (error: any) {
       console.error("Error loading email history:", error);
-      toast.error("Failed to load email history");
+      toast.error(t("admin.toasts.failedToLoadEmailHistory"));
     } finally {
       setLoading(false);
     }
@@ -230,7 +232,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
     } catch (error: any) {
       console.error("Error loading bulk email jobs:", error);
-      toast.error("Failed to load bulk email jobs");
+      toast.error(t("admin.toasts.failedToLoadBulkEmailJobs"));
     } finally {
       setJobsLoading(false);
     }
@@ -249,7 +251,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
       if (error) throw error;
 
-      toast.success("Delivery status updated");
+      toast.success(t("admin.toasts.deliveryStatusUpdated"));
       loadEmails(); // Refresh the list
     } catch (error: any) {
       console.error("Error checking delivery status:", error);
@@ -271,11 +273,11 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
         .in('status', ['queued', 'processing']);
 
       if (error) throw error;
-      toast.success('Job cancelled successfully');
+      toast.success(t("admin.toasts.jobCancelledSuccessfully"));
       loadBulkEmailJobs();
     } catch (error: any) {
       console.error('Error cancelling job:', error);
-      toast.error('Failed to cancel job: ' + error.message);
+      toast.error(t("admin.toasts.failedToCancelJob", { error: error.message }));
     }
   };
 
@@ -297,7 +299,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       const remainingRecipients = jobData.total_recipients - sentIds.length;
 
       if (remainingRecipients <= 0) {
-        toast.info('No remaining recipients to process');
+        toast.info(t("admin.toasts.noRemainingRecipients"));
         return;
       }
 
@@ -335,21 +337,21 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       loadBulkEmailJobs();
     } catch (error: any) {
       console.error('Error retrying job:', error);
-      toast.error('Failed to retry job: ' + error.message);
+      toast.error(t("admin.toasts.failedToRetryJob", { error: error.message }));
     }
   };
 
   const handleManualTrigger = async () => {
     try {
-      toast.info('Triggering queue processing...');
+      toast.info(t("admin.toasts.triggeringQueueProcessing"));
       const { data, error } = await supabase.functions.invoke('process-bulk-email-queue');
       
       if (error) throw error;
-      toast.success('Queue processing triggered manually');
+      toast.success(t("admin.toasts.queueProcessingTriggered"));
       setTimeout(() => loadBulkEmailJobs(), 2000); // Reload after 2 seconds
     } catch (error: any) {
       console.error('Error triggering queue:', error);
-      toast.error('Failed to trigger queue: ' + error.message);
+      toast.error(t("admin.toasts.failedToTriggerQueue", { error: error.message }));
     }
   };
 
@@ -405,7 +407,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
   if (loading && emails.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" text="Loading email history..." />
+        <LoadingSpinner size="lg" text={t("admin.bulkEmail.history.emailHistory.loading")} />
       </div>
     );
   }
@@ -417,19 +419,19 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="email-logs">
             <Mail className="h-4 w-4 mr-2" />
-            Email Logs
+            {t("admin.bulkEmail.history.emailLogs")}
           </TabsTrigger>
           <TabsTrigger value="queue">
             <Clock className="h-4 w-4 mr-2" />
-            Queue ({queuedJobs.length})
+            {t("admin.bulkEmail.history.queue")} ({queuedJobs.length})
           </TabsTrigger>
           <TabsTrigger value="processing">
             <Send className="h-4 w-4 mr-2" />
-            Processing ({processingJobs.length})
+            {t("admin.bulkEmail.history.processing")} ({processingJobs.length})
           </TabsTrigger>
           <TabsTrigger value="complete">
             <CheckCircle2 className="h-4 w-4 mr-2" />
-            Complete ({completedJobs.length})
+            {t("admin.bulkEmail.history.complete")} ({completedJobs.length})
           </TabsTrigger>
         </TabsList>
 
@@ -438,9 +440,9 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
           {/* Filters */}
           <Card>
         <CardHeader>
-          <CardTitle>Email History</CardTitle>
+          <CardTitle>{t("admin.bulkEmail.history.emailHistory.title")}</CardTitle>
           <CardDescription>
-            View and track all emails sent from the platform
+            {t("admin.bulkEmail.history.emailHistory.subtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -448,7 +450,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email or subject..."
+                placeholder={t("admin.bulkEmail.history.emailHistory.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -465,13 +467,13 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("admin.bulkEmail.history.emailHistory.filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t("admin.bulkEmail.history.emailHistory.allStatus")}</SelectItem>
+                <SelectItem value="sent">{t("admin.bulkEmail.history.emailHistory.sent")}</SelectItem>
+                <SelectItem value="failed">{t("admin.bulkEmail.history.emailHistory.failed")}</SelectItem>
+                <SelectItem value="pending">{t("admin.bulkEmail.history.emailHistory.pending")}</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={loadEmails} variant="outline" size="icon">
@@ -483,7 +485,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
 
       {/* Results Summary */}
       <div className="text-sm text-muted-foreground">
-        Showing {emails.length} of {totalCount} emails
+        {t("admin.bulkEmail.history.emailHistory.showing", { current: emails.length, total: totalCount })}
       </div>
 
       {/* Email Table */}
@@ -493,20 +495,20 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Recipient</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Success Rate</TableHead>
-                  <TableHead>Resend ID</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.date")}</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.recipient")}</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.subject")}</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.status")}</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.successRate")}</TableHead>
+                  <TableHead>{t("admin.bulkEmail.history.emailHistory.columns.resendId")}</TableHead>
+                  <TableHead className="text-right">{t("admin.bulkEmail.history.emailHistory.columns.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {emails.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No emails found
+                      {t("admin.bulkEmail.history.emailHistory.noEmailsFound")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -520,7 +522,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                         <TableCell className="whitespace-nowrap">
                           {email.sent_at
                             ? format(new Date(email.sent_at), "MMM dd, yyyy HH:mm")
-                            : "Not sent"}
+                            : t("admin.bulkEmail.history.emailHistory.notSent")}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {email.recipient_email}
@@ -585,7 +587,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+            {t("admin.bulkEmail.history.emailHistory.pagination.page", { current: currentPage, total: totalPages })}
           </div>
           <div className="flex gap-2">
             <Button
@@ -594,7 +596,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              Previous
+              {t("admin.bulkEmail.history.emailHistory.pagination.previous")}
             </Button>
             <Button
               variant="outline"
@@ -602,7 +604,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
-              Next
+              {t("admin.bulkEmail.history.emailHistory.pagination.next")}
             </Button>
           </div>
         </div>
@@ -612,56 +614,56 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
           <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Email Details</DialogTitle>
+            <DialogTitle>{t("admin.bulkEmail.history.emailHistory.emailDetails.title")}</DialogTitle>
             <DialogDescription>
-              Full email information and delivery status
+              {t("admin.bulkEmail.history.emailHistory.emailDetails.subtitle")}
             </DialogDescription>
           </DialogHeader>
           {selectedEmail && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium mb-1">Recipient</h4>
+                <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.recipient")}</h4>
                 <p className="text-sm">{selectedEmail.recipient_email}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-1">Subject</h4>
+                <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.subject")}</h4>
                 <p className="text-sm">{selectedEmail.subject}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-1">Status</h4>
+                <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.status")}</h4>
                 {getStatusBadge(selectedEmail.status, selectedEmail.metadata)}
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-1">Sent At</h4>
+                <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.sentAt")}</h4>
                 <p className="text-sm">
                   {selectedEmail.sent_at
                     ? format(new Date(selectedEmail.sent_at), "PPpp")
-                    : "Not sent yet"}
+                    : t("admin.bulkEmail.history.emailHistory.emailDetails.notSentYet")}
                 </p>
               </div>
               {selectedEmail.metadata?.resend_id && (
                 <div>
-                  <h4 className="text-sm font-medium mb-1">Resend ID</h4>
+                  <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.resendId")}</h4>
                   <p className="text-sm font-mono">{selectedEmail.metadata.resend_id}</p>
                 </div>
               )}
               {selectedEmail.metadata?.delivery_status && (
                 <div>
-                  <h4 className="text-sm font-medium mb-1">Delivery Status</h4>
+                  <h4 className="text-sm font-medium mb-1">{t("admin.bulkEmail.history.emailHistory.emailDetails.deliveryStatus")}</h4>
                   <div className="text-sm space-y-1">
-                    <p><strong>Last Event:</strong> {selectedEmail.metadata.delivery_status.last_event}</p>
-                    <p><strong>Checked:</strong> {format(new Date(selectedEmail.metadata.delivery_status.checked_at), "PPpp")}</p>
+                    <p><strong>{t("admin.bulkEmail.history.emailHistory.emailDetails.lastEvent")}:</strong> {selectedEmail.metadata.delivery_status.last_event}</p>
+                    <p><strong>{t("admin.bulkEmail.history.emailHistory.emailDetails.checked")}:</strong> {format(new Date(selectedEmail.metadata.delivery_status.checked_at), "PPpp")}</p>
                   </div>
                 </div>
               )}
               {selectedEmail.error_message && (
                 <div>
-                  <h4 className="text-sm font-medium mb-1 text-destructive">Error Message</h4>
+                  <h4 className="text-sm font-medium mb-1 text-destructive">{t("admin.bulkEmail.history.emailHistory.emailDetails.errorMessage")}</h4>
                   <p className="text-sm text-destructive">{selectedEmail.error_message}</p>
                 </div>
               )}
               <div>
-                <h4 className="text-sm font-medium mb-2">Email Body</h4>
+                <h4 className="text-sm font-medium mb-2">{t("admin.bulkEmail.history.emailHistory.emailDetails.emailBody")}</h4>
                 <div 
                   className="border rounded-md p-4 bg-muted/50 max-h-[400px] overflow-y-auto"
                   dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
@@ -684,26 +686,26 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                 className="gap-2"
               >
                 <Play className="h-4 w-4" />
-                Process Queue Now
+                {t("admin.bulkEmail.history.queue.processQueueNow")}
               </Button>
             </div>
           )}
           <Card>
             <CardHeader>
-              <CardTitle>Queued Jobs</CardTitle>
+              <CardTitle>{t("admin.bulkEmail.history.queueTab.title")}</CardTitle>
               <CardDescription>
-                Bulk email jobs waiting to be processed
+                {t("admin.bulkEmail.history.queueTab.subtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {jobsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <LoadingSpinner size="lg" text="Loading queued jobs..." />
+                  <LoadingSpinner size="lg" text={t("admin.bulkEmail.history.queueTab.loading")} />
                 </div>
               ) : queuedJobs.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No jobs in queue</p>
+                  <p>{t("admin.bulkEmail.history.queueTab.noJobs")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -718,15 +720,15 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
-                                <span className="text-muted-foreground">Total Recipients:</span>
+                                <span className="text-muted-foreground">{t("admin.bulkEmail.history.queueTab.totalRecipients")}:</span>
                                 <span className="font-semibold ml-2">{job.total_recipients.toLocaleString()}</span>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Created:</span>
+                                <span className="text-muted-foreground">{t("admin.bulkEmail.history.queueTab.created")}:</span>
                                 <span className="ml-2">{format(new Date(job.created_at), "MMM dd, HH:mm")}</span>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Batch ID:</span>
+                                <span className="text-muted-foreground">{t("admin.bulkEmail.history.queueTab.batchId")}:</span>
                                 <span className="font-mono text-xs ml-2">{job.batch_id}</span>
                               </div>
                             </div>
@@ -738,7 +740,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                             className="text-red-500 hover:text-red-600 hover:bg-red-50"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Cancel
+                            {t("admin.bulkEmail.history.queueTab.cancel")}
                           </Button>
                         </div>
                       </CardContent>
@@ -761,26 +763,26 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                 className="gap-2"
               >
                 <Play className="h-4 w-4" />
-                Process Queue Now
+                {t("admin.bulkEmail.history.processingTab.processQueueNow")}
               </Button>
             </div>
           )}
           <Card>
             <CardHeader>
-              <CardTitle>Processing Jobs</CardTitle>
+              <CardTitle>{t("admin.bulkEmail.history.processingTab.title")}</CardTitle>
               <CardDescription>
-                Bulk email jobs currently being sent
+                {t("admin.bulkEmail.history.processingTab.subtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {jobsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <LoadingSpinner size="lg" text="Loading processing jobs..." />
+                  <LoadingSpinner size="lg" text={t("admin.bulkEmail.history.processingTab.loading")} />
                 </div>
               ) : processingJobs.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No jobs currently processing</p>
+                  <p>{t("admin.bulkEmail.history.processingTab.noJobs")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -802,7 +804,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                   <h4 className="font-semibold">{job.subject}</h4>
                                   {getJobStatusBadge(job.status)}
                                 </div>
-                                <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
+                                <p className="text-sm text-muted-foreground">{t("admin.bulkEmail.history.processingTab.batchId")}: {job.batch_id}</p>
                               </div>
                               <Button
                                 variant="ghost"
@@ -811,20 +813,20 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
                               >
                                 <XCircle className="h-4 w-4 mr-1" />
-                                Cancel
+                                {t("admin.bulkEmail.history.processingTab.cancel")}
                               </Button>
                             </div>
 
                             {/* Progress Bar */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Progress</span>
+                                <span className="text-muted-foreground">{t("admin.bulkEmail.history.processingTab.progress")}</span>
                                 <span className="font-semibold">{progress.toFixed(1)}%</span>
                               </div>
                               <Progress value={progress} className="h-2" />
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{job.processed_count.toLocaleString()} / {job.total_recipients.toLocaleString()}</span>
-                                <span>{(job.total_recipients - job.processed_count).toLocaleString()} remaining</span>
+                                <span>{(job.total_recipients - job.processed_count).toLocaleString()} {t("admin.bulkEmail.history.processingTab.remaining")}</span>
                               </div>
                             </div>
 
@@ -832,25 +834,25 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                             <div className="grid grid-cols-3 gap-4 pt-2 border-t">
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-green-600">{job.successful_count.toLocaleString()}</div>
-                                <div className="text-xs text-muted-foreground">Successful</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.processingTab.successful")}</div>
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-red-600">{job.failed_count.toLocaleString()}</div>
-                                <div className="text-xs text-muted-foreground">Failed</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.processingTab.failed")}</div>
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">{successRate.toFixed(1)}%</div>
-                                <div className="text-xs text-muted-foreground">Success Rate</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.processingTab.successRate")}</div>
                               </div>
                             </div>
 
                             {/* Timing Info */}
                             <div className="text-xs text-muted-foreground space-y-1">
                               {job.started_at && (
-                                <div>Started: {format(new Date(job.started_at), "MMM dd, HH:mm:ss")}</div>
+                                <div>{t("admin.bulkEmail.history.processingTab.started")}: {format(new Date(job.started_at), "MMM dd, HH:mm:ss")}</div>
                               )}
                               {job.last_processed_at && (
-                                <div>Last update: {format(new Date(job.last_processed_at), "MMM dd, HH:mm:ss")}</div>
+                                <div>{t("admin.bulkEmail.history.processingTab.lastUpdate")}: {format(new Date(job.last_processed_at), "MMM dd, HH:mm:ss")}</div>
                               )}
                             </div>
                           </div>
@@ -868,20 +870,20 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
         <TabsContent value="complete" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Completed Jobs</CardTitle>
+              <CardTitle>{t("admin.bulkEmail.history.completeTab.title")}</CardTitle>
               <CardDescription>
-                Bulk email jobs that have finished processing
+                {t("admin.bulkEmail.history.completeTab.subtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {jobsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <LoadingSpinner size="lg" text="Loading completed jobs..." />
+                  <LoadingSpinner size="lg" text={t("admin.bulkEmail.history.completeTab.loading")} />
                 </div>
               ) : completedJobs.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No completed jobs yet</p>
+                  <p>{t("admin.bulkEmail.history.completeTab.noJobs")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -901,7 +903,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                   <h4 className="font-semibold">{job.subject}</h4>
                                   {getJobStatusBadge(job.status)}
                                 </div>
-                                <p className="text-sm text-muted-foreground">Batch ID: {job.batch_id}</p>
+                                <p className="text-sm text-muted-foreground">{t("admin.bulkEmail.history.completeTab.batchId")}: {job.batch_id}</p>
                               </div>
                               {job.status === 'failed' && (
                                 <Button
@@ -911,7 +913,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                                   className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                                 >
                                   <RefreshCw className="h-4 w-4 mr-1" />
-                                  Retry
+                                  {t("admin.bulkEmail.history.completeTab.retry")}
                                 </Button>
                               )}
                             </div>
@@ -920,34 +922,34 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                             <div className="grid grid-cols-4 gap-4 pt-2 border-t">
                               <div className="text-center">
                                 <div className="text-xl font-bold">{job.total_recipients.toLocaleString()}</div>
-                                <div className="text-xs text-muted-foreground">Total</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.completeTab.total")}</div>
                               </div>
                               <div className="text-center">
                                 <div className="text-xl font-bold text-green-600">{job.successful_count.toLocaleString()}</div>
-                                <div className="text-xs text-muted-foreground">Successful</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.completeTab.successful")}</div>
                               </div>
                               <div className="text-center">
                                 <div className="text-xl font-bold text-red-600">{job.failed_count.toLocaleString()}</div>
-                                <div className="text-xs text-muted-foreground">Failed</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.completeTab.failed")}</div>
                               </div>
                               <div className="text-center">
                                 <div className="text-xl font-bold text-blue-600">{successRate.toFixed(1)}%</div>
-                                <div className="text-xs text-muted-foreground">Success Rate</div>
+                                <div className="text-xs text-muted-foreground">{t("admin.bulkEmail.history.completeTab.successRate")}</div>
                               </div>
                             </div>
 
                             {/* Timing Info */}
                             <div className="text-xs text-muted-foreground space-y-1">
-                              <div>Created: {format(new Date(job.created_at), "MMM dd, HH:mm")}</div>
+                              <div>{t("admin.bulkEmail.history.completeTab.created")}: {format(new Date(job.created_at), "MMM dd, HH:mm")}</div>
                               {job.started_at && (
-                                <div>Started: {format(new Date(job.started_at), "MMM dd, HH:mm")}</div>
+                                <div>{t("admin.bulkEmail.history.completeTab.started")}: {format(new Date(job.started_at), "MMM dd, HH:mm")}</div>
                               )}
                               {job.completed_at && (
-                                <div>Completed: {format(new Date(job.completed_at), "MMM dd, HH:mm")}</div>
+                                <div>{t("admin.bulkEmail.history.completeTab.completed")}: {format(new Date(job.completed_at), "MMM dd, HH:mm")}</div>
                               )}
                               {job.started_at && job.completed_at && (
                                 <div>
-                                  Duration: {Math.round((new Date(job.completed_at).getTime() - new Date(job.started_at).getTime()) / 1000 / 60)} minutes
+                                  {t("admin.bulkEmail.history.completeTab.duration")}: {Math.round((new Date(job.completed_at).getTime() - new Date(job.started_at).getTime()) / 1000 / 60)} {t("admin.bulkEmail.history.completeTab.minutes")}
                                 </div>
                               )}
                             </div>
@@ -955,7 +957,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
                             {/* Error Message */}
                             {job.error_message && (
                               <div className="pt-2 border-t">
-                                <p className="text-sm text-destructive font-semibold">Error:</p>
+                                <p className="text-sm text-destructive font-semibold">{t("admin.bulkEmail.history.completeTab.error")}:</p>
                                 <p className="text-xs text-destructive mt-1">{job.error_message}</p>
                               </div>
                             )}

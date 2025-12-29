@@ -21,8 +21,12 @@ import {
 import { ArrowLeft, Download, Search, Filter, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { getDateLocale } from "@/lib/date-locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { format } from "date-fns";
 
 interface Transaction {
   id: string;
@@ -50,6 +54,9 @@ const getPageNumber = (index: number, currentPage: number, totalPages: number): 
 
 const Transactions = () => {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render
+  const { userLanguage } = useLanguage();
+  const dateLocale = getDateLocale(userLanguage);
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -178,7 +185,7 @@ const Transactions = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading transactions..." />
+        <LoadingSpinner size="lg" text={t("admin.transactions.loadingTransactions")} />
       </div>
     );
   }
@@ -189,27 +196,29 @@ const Transactions = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.transactions.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Transaction Logs</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.transactions.title")}</h1>
           <p className="text-muted-foreground">
-            Comprehensive audit trail of all platform transactions
+            {t("admin.transactions.subtitle")}
           </p>
         </div>
 
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle>All Transactions</CardTitle>
+              <CardTitle>{t("admin.transactions.allTransactions")}</CardTitle>
               {totalCount > 0 && (
                 <Badge variant="secondary">
-                  {totalCount} total
+                  {totalCount} {t("admin.transactions.total")}
                 </Badge>
               )}
             </div>
             <CardDescription>
-              {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""} found
+              {filteredTransactions.length} {filteredTransactions.length === 1 
+                ? t("admin.transactions.transactionsFound", { count: filteredTransactions.length })
+                : t("admin.transactions.transactionsFoundPlural", { count: filteredTransactions.length })} {t("admin.transactions.found")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -219,7 +228,7 @@ const Transactions = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by username, email, or description..."
+                    placeholder={t("admin.transactions.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -230,10 +239,10 @@ const Transactions = () => {
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Type" />
+                  <SelectValue placeholder={t("admin.transactions.type")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">{t("admin.transactions.allTypes")}</SelectItem>
                   {transactionTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {getTransactionTypeLabel(type)}
@@ -244,10 +253,10 @@ const Transactions = () => {
 
               <Select value={walletFilter} onValueChange={setWalletFilter}>
                 <SelectTrigger className="w-full md:w-[160px]">
-                  <SelectValue placeholder="Wallet" />
+                  <SelectValue placeholder={t("admin.transactions.wallet")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Wallets</SelectItem>
+                  <SelectItem value="all">{t("admin.transactions.allWallets")}</SelectItem>
                   <SelectItem value="deposit">Deposit</SelectItem>
                   <SelectItem value="earnings">Earnings</SelectItem>
                 </SelectContent>
@@ -255,19 +264,19 @@ const Transactions = () => {
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[160px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t("admin.transactions.status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="all">{t("admin.transactions.allStatus")}</SelectItem>
+                  <SelectItem value="completed">{t("common.completed")}</SelectItem>
+                  <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                  <SelectItem value="failed">{t("common.failed")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Button onClick={exportToCSV} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
-                Export CSV
+                {t("admin.transactions.exportCSV")}
               </Button>
             </div>
 
@@ -276,28 +285,27 @@ const Transactions = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Wallet</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead>{t("admin.transactions.date")}</TableHead>
+                    <TableHead>{t("admin.transactions.user")}</TableHead>
+                    <TableHead>{t("admin.transactions.type")}</TableHead>
+                    <TableHead>{t("admin.transactions.amount")}</TableHead>
+                    <TableHead>{t("admin.transactions.wallet")}</TableHead>
+                    <TableHead>{t("admin.transactions.status")}</TableHead>
+                    <TableHead>{t("admin.transactions.description")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTransactions.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No transactions found
+                        {t("admin.transactions.noTransactionsFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredTransactions.map((txn) => (
                       <TableRow key={txn.id}>
                         <TableCell className="whitespace-nowrap">
-                          {new Date(txn.created_at).toLocaleDateString()}{" "}
-                          {new Date(txn.created_at).toLocaleTimeString()}
+                          {format(new Date(txn.created_at), "PPp", { locale: dateLocale })}
                         </TableCell>
                         <TableCell>
                           <div>
@@ -362,7 +370,7 @@ const Transactions = () => {
             {!loading && totalPages > 1 && (
               <div className="flex items-center justify-between px-2 mt-4 pt-4 border-t">
                 <div className="text-sm text-muted-foreground">
-                  Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalCount)} of {totalCount} transactions
+                  {t("admin.transactions.showing")} {((page - 1) * limit) + 1} {t("admin.transactions.to")} {Math.min(page * limit, totalCount)} {t("admin.transactions.of")} {totalCount} {t("admin.transactions.transactions")}
                 </div>
                 
                 <Pagination>

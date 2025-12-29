@@ -18,6 +18,7 @@ import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export function CurrencySelector() {
   const [open, setOpen] = useState(false);
@@ -37,7 +38,7 @@ export function CurrencySelector() {
       setOpen(false);
     } catch (error) {
       console.error("Failed to update currency:", error);
-      toast.error("Failed to update currency. Please try again.");
+      toast.error(t("currency.updateFailed"));
     } finally {
       setIsUpdating(false);
     }

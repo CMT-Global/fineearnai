@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,59 +11,14 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function PartnerBonusMonitoring() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const currentMonth = new Date();
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  // Fetch bonus metrics
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ["bonus-monitoring-metrics", format(monthStart, 'yyyy-MM-dd')],
-    queryFn: async () => {
-      // Get this month's bonuses
-      const { data: bonuses, error } = await supabase
-        .from("partner_weekly_bonuses")
-        .select(`
-          *,
-          partner_bonus_tiers(tier_name)
-        `)
-        .gte('week_start_date', format(monthStart, 'yyyy-MM-dd'))
-        .lte('week_end_date', format(monthEnd, 'yyyy-MM-dd'));
-
-      if (error) throw error;
-
-      // Calculate metrics
-      const paidBonuses = bonuses.filter(b => b.status === 'paid');
-      const totalPaid = paidBonuses.reduce((sum, b) => sum + Number(b.bonus_amount), 0);
-      const uniquePartners = new Set(bonuses.map(b => b.partner_id)).size;
-      const avgBonus = uniquePartners > 0 ? totalPaid / uniquePartners : 0;
-      
-      const totalBonuses = bonuses.length;
-      const successRate = totalBonuses > 0 ? (paidBonuses.length / totalBonuses) * 100 : 0;
-
-      // Tier distribution
-      const tierCounts = bonuses.reduce((acc: any, b) => {
-        const tier = b.partner_bonus_tiers?.tier_name || 'No Tier';
-        acc[tier] = (acc[tier] || 0) + 1;
-        return acc;
-      }, {});
-
-      return {
-        totalPaid,
-        avgBonus,
-        uniquePartners,
-        totalBonuses,
-        paidCount: paidBonuses.length,
-        calculatedCount: bonuses.filter(b => b.status === 'calculated').length,
-        pendingCount: bonuses.filter(b => b.status === 'pending').length,
-        failedCount: bonuses.filter(b => b.status === 'failed').length,
-        successRate,
-        tierDistribution: Object.entries(tierCounts).map(([name, value]) => ({
-          name,
-          value
-        })),
-      };
-    },
-  });
+  // Force re-render when language changes
 
   // Fetch top partners
   const { data: topPartners, isLoading: partnersLoading } = useQuery({
@@ -206,9 +164,9 @@ export default function PartnerBonusMonitoring() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Bonus System Monitoring</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("admin.partnerBonusMonitoring.title")}</h1>
           <p className="text-muted-foreground">
-            Real-time metrics and analytics for {format(currentMonth, 'MMMM yyyy')}
+            {t("admin.partnerBonusMonitoring.subtitle", { month: format(currentMonth, 'MMMM yyyy') })}
           </p>
         </div>
       </div>
@@ -217,52 +175,52 @@ export default function PartnerBonusMonitoring() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bonuses Paid</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.partnerBonusMonitoring.stats.totalBonusesPaid")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${metrics?.totalPaid.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics?.paidCount} bonuses paid this month
+              {t("admin.partnerBonusMonitoring.stats.bonusesPaidThisMonth", { count: metrics?.paidCount })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Per Partner</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.partnerBonusMonitoring.stats.averagePerPartner")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${metrics?.avgBonus.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Across {metrics?.uniquePartners} active partners
+              {t("admin.partnerBonusMonitoring.stats.acrossActivePartners", { count: metrics?.uniquePartners })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payout Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.partnerBonusMonitoring.stats.payoutSuccessRate")}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.successRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              {metrics?.paidCount} of {metrics?.totalBonuses} bonuses
+              {t("admin.partnerBonusMonitoring.stats.bonusesPaidOfTotal", { paid: metrics?.paidCount, total: metrics?.totalBonuses })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Email Delivery Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.partnerBonusMonitoring.stats.emailDeliveryRate")}</CardTitle>
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{emailStats?.deliveryRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              {emailStats?.sent} of {emailStats?.total} emails sent
+              {t("admin.partnerBonusMonitoring.stats.emailsSentOfTotal", { sent: emailStats?.sent, total: emailStats?.total })}
             </p>
           </CardContent>
         </Card>
@@ -271,26 +229,26 @@ export default function PartnerBonusMonitoring() {
       {/* Status Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Bonus Status Breakdown</CardTitle>
-          <CardDescription>Current status of all bonuses this month</CardDescription>
+          <CardTitle>{t("admin.partnerBonusMonitoring.statusBreakdown.title")}</CardTitle>
+          <CardDescription>{t("admin.partnerBonusMonitoring.statusBreakdown.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
               <div className="text-2xl font-bold text-green-700 dark:text-green-300">{metrics?.paidCount}</div>
-              <div className="text-sm text-green-600 dark:text-green-400">Paid</div>
+              <div className="text-sm text-green-600 dark:text-green-400">{t("admin.partnerBonusMonitoring.status.paid")}</div>
             </div>
             <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
               <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{metrics?.calculatedCount}</div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">Calculated</div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">{t("admin.partnerBonusMonitoring.status.calculated")}</div>
             </div>
             <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
               <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{metrics?.pendingCount}</div>
-              <div className="text-sm text-yellow-600 dark:text-yellow-400">Pending</div>
+              <div className="text-sm text-yellow-600 dark:text-yellow-400">{t("admin.partnerBonusMonitoring.status.pending")}</div>
             </div>
             <div className="text-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
               <div className="text-2xl font-bold text-red-700 dark:text-red-300">{metrics?.failedCount}</div>
-              <div className="text-sm text-red-600 dark:text-red-400">Failed</div>
+              <div className="text-sm text-red-600 dark:text-red-400">{t("admin.partnerBonusMonitoring.status.failed")}</div>
             </div>
           </div>
         </CardContent>
@@ -301,8 +259,8 @@ export default function PartnerBonusMonitoring() {
         {/* Weekly Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Bonus Trend</CardTitle>
-            <CardDescription>Last 12 weeks of bonus payments</CardDescription>
+            <CardTitle>{t("admin.partnerBonusMonitoring.weeklyTrend.title")}</CardTitle>
+            <CardDescription>{t("admin.partnerBonusMonitoring.weeklyTrend.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -312,8 +270,8 @@ export default function PartnerBonusMonitoring() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total Bonuses ($)" />
-                <Line type="monotone" dataKey="count" stroke="#82ca9d" name="Bonus Count" />
+                <Line type="monotone" dataKey="total" stroke="#8884d8" name={t("admin.partnerBonusMonitoring.charts.totalBonuses")} />
+                <Line type="monotone" dataKey="count" stroke="#82ca9d" name={t("admin.partnerBonusMonitoring.charts.bonusCount")} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -322,8 +280,8 @@ export default function PartnerBonusMonitoring() {
         {/* Tier Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Tier Distribution</CardTitle>
-            <CardDescription>Bonuses by tier this month</CardDescription>
+            <CardTitle>{t("admin.partnerBonusMonitoring.tierDistribution.title")}</CardTitle>
+            <CardDescription>{t("admin.partnerBonusMonitoring.tierDistribution.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -354,9 +312,9 @@ export default function PartnerBonusMonitoring() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
-            Top 10 Earning Partners
+            {t("admin.partnerBonusMonitoring.topPartners.title")}
           </CardTitle>
-          <CardDescription>Highest bonus earners this month</CardDescription>
+          <CardDescription>{t("admin.partnerBonusMonitoring.topPartners.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           {topPartners && topPartners.length > 0 ? (
@@ -395,7 +353,7 @@ export default function PartnerBonusMonitoring() {
             </div>
           ) : (
             <Alert>
-              <AlertDescription>No bonus data available for this month yet.</AlertDescription>
+              <AlertDescription>{t("admin.partnerBonusMonitoring.noData")}</AlertDescription>
             </Alert>
           )}
         </CardContent>
@@ -406,23 +364,23 @@ export default function PartnerBonusMonitoring() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Email Notification Statistics
+            {t("admin.partnerBonusMonitoring.emailStats.title")}
           </CardTitle>
-          <CardDescription>Partner notification delivery metrics for this month</CardDescription>
+          <CardDescription>{t("admin.partnerBonusMonitoring.emailStats.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="text-center p-4 border rounded-lg">
               <div className="text-3xl font-bold text-green-600 dark:text-green-400">{emailStats?.sent}</div>
-              <div className="text-sm text-muted-foreground mt-1">Successfully Sent</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("admin.partnerBonusMonitoring.emailStats.successfullySent")}</div>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <div className="text-3xl font-bold text-red-600 dark:text-red-400">{emailStats?.failed}</div>
-              <div className="text-sm text-muted-foreground mt-1">Failed</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("admin.partnerBonusMonitoring.emailStats.failed")}</div>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <div className="text-3xl font-bold">{emailStats?.total}</div>
-              <div className="text-sm text-muted-foreground mt-1">Total Attempts</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("admin.partnerBonusMonitoring.emailStats.totalAttempts")}</div>
             </div>
           </div>
           <div className="mt-4">
@@ -433,8 +391,8 @@ export default function PartnerBonusMonitoring() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="sent" fill="#10b981" name="Sent" />
-                <Bar dataKey="failed" fill="#ef4444" name="Failed" />
+                <Bar dataKey="sent" fill="#10b981" name={t("admin.partnerBonusMonitoring.emailStats.sent")} />
+                <Bar dataKey="failed" fill="#ef4444" name={t("admin.partnerBonusMonitoring.emailStats.failed")} />
               </BarChart>
             </ResponsiveContainer>
           </div>

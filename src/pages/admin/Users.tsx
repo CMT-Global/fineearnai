@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +21,13 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { sanitizeSearchTerm } from "@/lib/admin-validation";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 function UsersContent() {
+  const { t } = useTranslation();
+  // Use useLanguageSync hook to ensure proper language synchronization
+  const { languageKey } = useLanguageSync();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
@@ -133,12 +138,12 @@ function UsersContent() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <AdminBreadcrumb items={[{ label: "User Management" }]} />
+        <AdminBreadcrumb items={[{ label: t("admin.users.title") }]} />
         
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground mt-1">Manage and monitor all platform users</p>
+            <h1 className="text-3xl font-bold">{t("admin.users.title")}</h1>
+            <p className="text-muted-foreground mt-1">{t("admin.users.subtitle")}</p>
           </div>
           <Button 
             variant="outline" 
@@ -146,12 +151,12 @@ function UsersContent() {
             onClick={() => window.location.reload()}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t("admin.users.refresh")}
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <UserManagementStats stats={stats} isLoading={statsLoading} />
+        <UserManagementStats key={languageKey} stats={stats} isLoading={statsLoading} />
 
         {/* Bulk Actions Bar */}
         <BulkActionsBar
@@ -164,7 +169,7 @@ function UsersContent() {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Users</CardTitle>
+            <CardTitle>{t("admin.users.allUsers")}</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Search Input - Full Width */}
@@ -172,7 +177,7 @@ function UsersContent() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search by username, email, or name..."
+                  placeholder={t("admin.users.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -190,14 +195,14 @@ function UsersContent() {
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by plan" />
+                  <SelectValue placeholder={t("admin.users.filters.plan.label")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
+                  <SelectItem value="all">{t("admin.users.filters.plan.all")}</SelectItem>
+                  <SelectItem value="free">{t("admin.users.filters.plan.free")}</SelectItem>
+                  <SelectItem value="basic">{t("admin.users.filters.plan.basic")}</SelectItem>
+                  <SelectItem value="premium">{t("admin.users.filters.plan.premium")}</SelectItem>
+                  <SelectItem value="vip">{t("admin.users.filters.plan.vip")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(value) => {
@@ -205,13 +210,13 @@ function UsersContent() {
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={t("admin.users.filters.status.label")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="banned">Banned</SelectItem>
+                  <SelectItem value="all">{t("admin.users.filters.status.all")}</SelectItem>
+                  <SelectItem value="active">{t("admin.users.filters.status.active")}</SelectItem>
+                  <SelectItem value="suspended">{t("admin.users.filters.status.suspended")}</SelectItem>
+                  <SelectItem value="banned">{t("admin.users.filters.status.banned")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={countryFilter} onValueChange={(value) => {
@@ -219,10 +224,10 @@ function UsersContent() {
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by country" />
+                  <SelectValue placeholder={t("admin.users.filters.country.label")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
+                  <SelectItem value="all">{t("admin.users.filters.country.all")}</SelectItem>
                   {countries
                     ?.filter(c => c.registration_country && c.registration_country_name)
                     ?.map((c) => (
@@ -238,13 +243,13 @@ function UsersContent() {
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by role" />
+                  <SelectValue placeholder={t("admin.users.filters.role.label")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="moderator">Moderator</SelectItem>
-                  <SelectItem value="user">User Only</SelectItem>
+                  <SelectItem value="all">{t("admin.users.filters.role.all")}</SelectItem>
+                  <SelectItem value="admin">{t("admin.users.filters.role.admin")}</SelectItem>
+                  <SelectItem value="moderator">{t("admin.users.filters.role.moderator")}</SelectItem>
+                  <SelectItem value="user">{t("admin.users.filters.role.user")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={emailVerifiedFilter} onValueChange={(value) => {
@@ -252,12 +257,12 @@ function UsersContent() {
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Email Verification" />
+                  <SelectValue placeholder={t("admin.users.filters.emailVerification.label")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
-                  <SelectItem value="verified">Verified Only</SelectItem>
-                  <SelectItem value="unverified">Unverified Only</SelectItem>
+                  <SelectItem value="all">{t("admin.users.filters.emailVerification.all")}</SelectItem>
+                  <SelectItem value="verified">{t("admin.users.filters.emailVerification.verified")}</SelectItem>
+                  <SelectItem value="unverified">{t("admin.users.filters.emailVerification.unverified")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -267,7 +272,7 @@ function UsersContent() {
                 disabled={users.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export All
+                {t("admin.users.exportAll")}
               </Button>
             </div>
 
@@ -292,11 +297,11 @@ function UsersContent() {
                             onClick={() => handleSort('username')}
                             className="h-8 px-2"
                           >
-                            Username
+                            {t("admin.users.table.username")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead>Email</TableHead>
+                        <TableHead>{t("admin.users.table.email")}</TableHead>
                         <TableHead>
                           <Button 
                             variant="ghost" 
@@ -304,13 +309,13 @@ function UsersContent() {
                             onClick={() => handleSort('membership_plan')}
                             className="h-8 px-2"
                           >
-                            Plan
+                            {t("admin.users.table.plan")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Roles</TableHead>
-                        <TableHead>Country</TableHead>
+                        <TableHead>{t("admin.users.table.status")}</TableHead>
+                        <TableHead>{t("admin.users.table.roles")}</TableHead>
+                        <TableHead>{t("admin.users.table.country")}</TableHead>
                         <TableHead>
                           <Button 
                             variant="ghost" 
@@ -318,7 +323,7 @@ function UsersContent() {
                             onClick={() => handleSort('total_earned')}
                             className="h-8 px-2"
                           >
-                            Earned
+                            {t("admin.users.table.earned")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
@@ -329,11 +334,11 @@ function UsersContent() {
                             onClick={() => handleSort('created_at')}
                             className="h-8 px-2"
                           >
-                            Joined
+                            {t("admin.users.table.joined")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-right">{t("admin.users.table.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -358,12 +363,12 @@ function UsersContent() {
                             <div className="flex items-center gap-2">
                               <span className="text-sm">{user.email}</span>
                               {user.email_verified === true && (
-                                <div title="Email Verified">
+                                <div title={t("admin.users.table.emailVerified")}>
                                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                                 </div>
                               )}
                               {user.email_verified === false && (
-                                <div title="Email Not Verified">
+                                <div title={t("admin.users.table.emailNotVerified")}>
                                   <XCircle className="h-4 w-4 text-red-600" />
                                 </div>
                               )}
@@ -390,17 +395,17 @@ function UsersContent() {
                               {user.roles?.includes('admin') && (
                                 <Badge variant="secondary" className="flex items-center gap-1">
                                   <Crown className="h-3 w-3" />
-                                  Admin
+                                  {t("admin.users.filters.role.admin")}
                                 </Badge>
                               )}
                               {user.roles?.includes('moderator') && (
                                 <Badge variant="outline" className="flex items-center gap-1">
                                   <Shield className="h-3 w-3" />
-                                  Mod
+                                  {t("admin.users.filters.role.moderator")}
                                 </Badge>
                               )}
                               {(!user.roles || (user.roles.length === 1 && user.roles[0] === 'user')) && (
-                                <Badge variant="outline">User</Badge>
+                                <Badge variant="outline">{t("admin.users.filters.role.user")}</Badge>
                               )}
                             </div>
                           </TableCell>
@@ -423,7 +428,7 @@ function UsersContent() {
                       {users.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                            No users found
+                            {t("admin.users.table.noUsersFound")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -490,8 +495,9 @@ function UsersContent() {
 }
 
 export default function Users() {
+  const { t } = useTranslation();
   return (
-    <AdminErrorBoundary fallbackTitle="User Management Error">
+    <AdminErrorBoundary fallbackTitle={t("admin.users.errorTitle")}>
       <UsersContent />
     </AdminErrorBoundary>
   );

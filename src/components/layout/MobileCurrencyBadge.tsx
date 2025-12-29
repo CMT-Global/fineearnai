@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { useTranslation } from "react-i18next";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ export function MobileCurrencyBadge() {
       setOpen(false);
     } catch (error) {
       console.error("Failed to update currency:", error);
-      toast.error("Failed to update currency. Please try again.");
+      toast.error(t("currency.updateFailed"));
     } finally {
       setIsUpdating(false);
     }

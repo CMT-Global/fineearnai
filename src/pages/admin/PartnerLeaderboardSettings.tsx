@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,22 +12,13 @@ import { toast } from "sonner";
 import { Loader2, Trophy } from "lucide-react";
 
 const PartnerLeaderboardSettings = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const queryClient = useQueryClient();
   const [isEnabled, setIsEnabled] = useState(false);
 
-  const { data: config, isLoading } = useQuery({
-    queryKey: ['partner-leaderboard-config'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platform_config')
-        .select('*')
-        .eq('key', 'partner_leaderboard_enabled')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-  });
+  // Force re-render when language changes
 
   useEffect(() => {
     if (config) {
@@ -56,7 +49,7 @@ const PartnerLeaderboardSettings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-leaderboard-config'] });
-      toast.success("Leaderboard settings updated successfully");
+      toast.success(t("admin.toasts.leaderboardSettingsUpdatedSuccessfully"));
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update settings");
@@ -73,10 +66,10 @@ const PartnerLeaderboardSettings = () => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Trophy className="h-8 w-8" />
-          Partner Leaderboard Settings
+          {t("admin.partnerLeaderboardSettings.title")}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Control leaderboard visibility for partners
+          {t("admin.partnerLeaderboardSettings.subtitle")}
         </p>
       </div>
 

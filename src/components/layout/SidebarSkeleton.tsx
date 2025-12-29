@@ -6,7 +6,7 @@ export const SidebarSkeleton = () => {
   return (
     <>
       {/* Desktop Sidebar Skeleton */}
-      <aside className="hidden lg:flex w-64 bg-[hsl(var(--sidebar-bg))] flex-col border-r border-[hsl(var(--sidebar-border))]">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] flex-col z-40">
         {/* Logo skeleton */}
         <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
           <div className="flex items-center gap-2">

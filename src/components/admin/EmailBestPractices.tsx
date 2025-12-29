@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,15 +6,17 @@ import { CheckCircle2, AlertTriangle, Info, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function EmailBestPractices() {
+  const { t } = useTranslation();
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Info className="h-5 w-5" />
-          Email Deliverability Best Practices
+          {t("admin.bulkEmail.bestPractices.title")}
         </CardTitle>
         <CardDescription>
-          Ensure your emails reach recipients and avoid spam filters
+          {t("admin.bulkEmail.bestPractices.subtitle")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -21,33 +24,31 @@ export function EmailBestPractices() {
         <div>
           <h4 className="font-semibold mb-3 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-orange-500" />
-            Required: Domain Verification (SPF/DKIM)
+            {t("admin.bulkEmail.bestPractices.domainVerification.title")}
           </h4>
           <Alert>
             <AlertDescription>
-              <p className="mb-3">
-                To prevent emails from going to spam, you <strong>must</strong> verify your domain with Resend and configure SPF/DKIM records.
-              </p>
+              <p className="mb-3" dangerouslySetInnerHTML={{ __html: t("admin.bulkEmail.bestPractices.domainVerification.description") }} />
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">1. Add your domain in Resend</p>
-                    <p className="text-sm text-muted-foreground">Go to Resend Dashboard → Domains → Add Domain</p>
+                    <p className="font-medium">{t("admin.bulkEmail.bestPractices.domainVerification.step1.title")}</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.domainVerification.step1.description")}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">2. Add DNS records to your domain</p>
-                    <p className="text-sm text-muted-foreground">Add the SPF, DKIM, and DMARC records provided by Resend</p>
+                    <p className="font-medium">{t("admin.bulkEmail.bestPractices.domainVerification.step2.title")}</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.domainVerification.step2.description")}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">3. Wait for verification</p>
-                    <p className="text-sm text-muted-foreground">DNS propagation can take up to 48 hours</p>
+                    <p className="font-medium">{t("admin.bulkEmail.bestPractices.domainVerification.step3.title")}</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.domainVerification.step3.description")}</p>
                   </div>
                 </div>
               </div>
@@ -58,7 +59,7 @@ export function EmailBestPractices() {
                 onClick={() => window.open("https://resend.com/domains", "_blank")}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Open Resend Domains
+                {t("admin.bulkEmail.bestPractices.domainVerification.openResendDomains")}
               </Button>
             </AlertDescription>
           </Alert>
@@ -66,81 +67,80 @@ export function EmailBestPractices() {
 
         {/* Current Email Settings */}
         <div>
-          <h4 className="font-semibold mb-3">Current Email Configuration</h4>
+          <h4 className="font-semibold mb-3">{t("admin.bulkEmail.bestPractices.currentConfiguration.title")}</h4>
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">From Address:</span>
-              <Badge variant="secondary">Dynamic (from platform config)</Badge>
+              <span className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.currentConfiguration.fromAddress")}</span>
+              <Badge variant="secondary">{t("admin.bulkEmail.bestPractices.currentConfiguration.dynamic")}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Reply-To:</span>
-              <Badge variant="secondary">Dynamic (from platform config)</Badge>
+              <span className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.currentConfiguration.replyTo")}</span>
+              <Badge variant="secondary">{t("admin.bulkEmail.bestPractices.currentConfiguration.dynamic")}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Provider:</span>
-              <Badge variant="secondary">Resend</Badge>
+              <span className="text-sm text-muted-foreground">{t("admin.bulkEmail.bestPractices.currentConfiguration.provider")}</span>
+              <Badge variant="secondary">{t("admin.bulkEmail.bestPractices.currentConfiguration.resend")}</Badge>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Email settings are configured in Email Settings under Communications
+            {t("admin.bulkEmail.bestPractices.currentConfiguration.note")}
           </p>
         </div>
 
         {/* Spam Prevention Tips */}
         <div>
-          <h4 className="font-semibold mb-3">Spam Prevention Checklist</h4>
+          <h4 className="font-semibold mb-3">{t("admin.bulkEmail.bestPractices.spamPrevention.title")}</h4>
           <div className="space-y-2">
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Use a verified domain (not onboarding@resend.dev)</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip1")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Include unsubscribe links in marketing emails</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip2")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Maintain good text-to-image ratio in email body</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip3")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Avoid spam trigger words (FREE, URGENT, ACT NOW, etc.)</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip4")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Send from a consistent sender name and address</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip5")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Warm up new domains gradually (start with small batches)</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip6")}</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Monitor bounce rates and remove invalid addresses</span>
+              <span>{t("admin.bulkEmail.bestPractices.spamPrevention.tip7")}</span>
             </div>
           </div>
         </div>
 
         {/* Email Content Guidelines */}
         <div>
-          <h4 className="font-semibold mb-3">Content Best Practices</h4>
+          <h4 className="font-semibold mb-3">{t("admin.bulkEmail.bestPractices.contentGuidelines.title")}</h4>
           <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-            <li>Write clear, relevant subject lines (avoid ALL CAPS)</li>
-            <li>Personalize with recipient's name using variables</li>
-            <li>Include your company name and address in footer</li>
-            <li>Balance HTML with plain text alternative</li>
-            <li>Test emails before sending to large groups</li>
-            <li>Keep email size under 100KB for best deliverability</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip1")}</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip2")}</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip3")}</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip4")}</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip5")}</li>
+            <li>{t("admin.bulkEmail.bestPractices.contentGuidelines.tip6")}</li>
           </ul>
         </div>
 
         {/* Monitoring */}
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>Monitor Your Email Performance</AlertTitle>
+          <AlertTitle>{t("admin.bulkEmail.bestPractices.monitoring.title")}</AlertTitle>
           <AlertDescription>
-            Use the History tab to track delivery status, monitor bounce rates, and identify issues.
-            Check delivery status regularly using the Resend API integration.
+            {t("admin.bulkEmail.bestPractices.monitoring.description")}
           </AlertDescription>
         </Alert>
       </CardContent>

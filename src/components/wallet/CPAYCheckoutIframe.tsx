@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, XCircle, InfoIcon, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "react-i18next";
 
 interface CPAYCheckoutIframeProps {
   open: boolean;
@@ -28,6 +29,7 @@ export const CPAYCheckoutIframe = ({
   currency,
   onSuccess,
 }: CPAYCheckoutIframeProps) => {
+  const { t } = useTranslation();
   const [transactionStatus, setTransactionStatus] = useState<"pending" | "completed" | "failed">("pending");
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
@@ -118,7 +120,7 @@ export const CPAYCheckoutIframe = ({
           setTransactionStatus("failed");
           setLoading(false);
           clearInterval(pollInterval);
-          toast.error("Payment failed or was cancelled.");
+          toast.error(t("admin.toasts.paymentFailedOrCancelled"));
         }
       } catch (err) {
         console.error("[CPAY-IFRAME] Polling error:", err);
@@ -154,6 +156,9 @@ export const CPAYCheckoutIframe = ({
               </span>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Complete your deposit payment using the secure payment form below
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">

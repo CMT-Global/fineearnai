@@ -203,6 +203,9 @@ export const LoginMessageDialog = ({
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-pulse flex-shrink-0" />
               <span className="truncate">{config.title}</span>
             </DialogTitle>
+            <DialogDescription id="login-message-description" className="sr-only">
+              {config.title}
+            </DialogDescription>
           </DialogHeader>
         </div>
 

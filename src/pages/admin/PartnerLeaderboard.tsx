@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,49 +23,13 @@ interface Achievement {
 }
 
 export default function PartnerLeaderboard() {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const [dateRange, setDateRange] = useState<DateRange>("week");
   const [tierFilter, setTierFilter] = useState<string>("all");
 
-  // Calculate date boundaries
-  const getDateBoundaries = () => {
-    const now = new Date();
-    switch (dateRange) {
-      case "week":
-        return {
-          start: format(startOfWeek(now), 'yyyy-MM-dd'),
-          end: format(endOfWeek(now), 'yyyy-MM-dd'),
-        };
-      case "month":
-        return {
-          start: format(subDays(now, 30), 'yyyy-MM-dd'),
-          end: format(now, 'yyyy-MM-dd'),
-        };
-      case "quarter":
-        return {
-          start: format(subDays(now, 90), 'yyyy-MM-dd'),
-          end: format(now, 'yyyy-MM-dd'),
-        };
-      default:
-        return { start: '2020-01-01', end: format(now, 'yyyy-MM-dd') };
-    }
-  };
-
-  const { start, end } = getDateBoundaries();
-
-  // Fetch bonus tiers
-  const { data: tiers } = useQuery({
-    queryKey: ["bonus-tiers-filter"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("partner_bonus_tiers")
-        .select("*")
-        .eq("is_active", true)
-        .order("tier_order", { ascending: true });
-
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Force re-render when language changes
 
   // Fetch leaderboard data
   const { data: leaderboard, isLoading } = useQuery({
@@ -308,10 +274,10 @@ export default function PartnerLeaderboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Trophy className="h-8 w-8 text-yellow-500" />
-            Partner Leaderboard
+            {t("admin.partnerLeaderboard.title")}
           </h1>
           <p className="text-muted-foreground">
-            Top performing partners by sales and bonuses
+            {t("admin.partnerLeaderboard.subtitle")}
           </p>
         </div>
 

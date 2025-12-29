@@ -36,7 +36,7 @@ export const PageLayout = ({
       )}
       
       {/* Main Content - Shows loading state OR actual content */}
-      <main className="flex-1 overflow-auto lg:mt-0 mt-16 pb-24 lg:pb-0">
+      <main className="flex-1 overflow-auto lg:mt-0 lg:ml-80 mt-16 pb-24 lg:pb-0">
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <LoadingSpinner size="lg" text={loadingText} />

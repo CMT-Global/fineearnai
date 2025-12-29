@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 const TASK_CATEGORIES = [
   "Sentiment Analysis",
@@ -28,17 +30,30 @@ const TASK_CATEGORIES = [
 const DIFFICULTY_LEVELS = ["easy", "medium", "hard"];
 
 const AITasksGenerate = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [quantity, setQuantity] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
 
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <p>{t("common.loading")}</p>
       </div>
     );
   }
@@ -50,12 +65,12 @@ const AITasksGenerate = () => {
 
   const handleGenerate = async () => {
     if (!category || !difficulty) {
-      toast.error("Please select category and difficulty");
+      toast.error(t("admin.aiTasksGenerate.errorSelectCategoryAndDifficulty"));
       return;
     }
 
     if (quantity < 1 || quantity > 25) {
-      toast.error("Quantity must be between 1 and 25");
+      toast.error(t("admin.aiTasksGenerate.errorQuantityRange"));
       return;
     }
 
@@ -68,11 +83,11 @@ const AITasksGenerate = () => {
 
       if (error) throw error;
 
-      toast.success(`Successfully generated ${data.tasksCreated} tasks!`);
+      toast.success(t("admin.aiTasksGenerate.successGenerated", { count: data.tasksCreated }));
       navigate("/admin/tasks/manage");
     } catch (error: any) {
       console.error("Error generating tasks:", error);
-      toast.error(error.message || "Failed to generate tasks");
+      toast.error(error.message || t("admin.aiTasksGenerate.errorFailedToGenerate"));
     } finally {
       setIsGenerating(false);
     }
@@ -83,25 +98,25 @@ const AITasksGenerate = () => {
       <div className="max-w-4xl mx-auto">
         <AdminBreadcrumb 
           items={[
-            { label: "Task Management" },
-            { label: "Generate AI Tasks" }
+            { label: t("admin.sidebar.categories.taskManagement") },
+            { label: t("admin.sidebar.items.generateAITasks") }
           ]} 
         />
         
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Generate AI Tasks</h1>
+          <h1 className="text-3xl font-bold">{t("admin.aiTasksGenerate.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Use AI to automatically generate training tasks
+            {t("admin.aiTasksGenerate.subtitle")}
           </p>
         </div>
 
         <Card className="p-6">
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">{t("admin.aiTasksGenerate.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={t("admin.aiTasksGenerate.selectCategory")} />
                 </SelectTrigger>
                 <SelectContent>
                   {TASK_CATEGORIES.map((cat) => (
@@ -114,10 +129,10 @@ const AITasksGenerate = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty</Label>
+              <Label htmlFor="difficulty">{t("admin.aiTasksGenerate.difficulty")}</Label>
               <Select value={difficulty} onValueChange={setDifficulty}>
                 <SelectTrigger id="difficulty">
-                  <SelectValue placeholder="Select difficulty" />
+                  <SelectValue placeholder={t("admin.aiTasksGenerate.selectDifficulty")} />
                 </SelectTrigger>
                 <SelectContent>
                   {DIFFICULTY_LEVELS.map((level) => (
@@ -130,7 +145,7 @@ const AITasksGenerate = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Number of Tasks</Label>
+              <Label htmlFor="quantity">{t("admin.aiTasksGenerate.numberOfTasks")}</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -140,7 +155,7 @@ const AITasksGenerate = () => {
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
               <p className="text-sm text-muted-foreground">
-                Generate between 1 and 25 tasks at once
+                {t("admin.aiTasksGenerate.generateBetween")}
               </p>
             </div>
 
@@ -151,7 +166,7 @@ const AITasksGenerate = () => {
               size="lg"
             >
               <Sparkles className="h-5 w-5 mr-2" />
-              {isGenerating ? "Generating..." : "Generate Tasks"}
+              {isGenerating ? t("admin.aiTasksGenerate.generating") : t("admin.aiTasksGenerate.generateTasks")}
             </Button>
           </div>
         </Card>

@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,30 +124,14 @@ const TEMPLATE_TYPES = [
 import { ALL_AVAILABLE_VARIABLES, getCategoryIcon } from "@/lib/email-variables";
 
 const EmailTemplates = () => {
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
-  const [testEmailDialog, setTestEmailDialog] = useState(false);
-  const [testEmailAddress, setTestEmailAddress] = useState("");
-  const [testingTemplateId, setTestingTemplateId] = useState<string | null>(null);
-  const [testingTemplate, setTestingTemplate] = useState<EmailTemplate | null>(null);
-  const [sendingTest, setSendingTest] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    subject: "",
-    body: "",
-    template_type: "",
-    variables: "",
-    is_active: true,
-    use_wrapper_in_editor: false, // Phase 3: Track wrapper toggle state
-  });
+  
+  // Force re-render when language changes
   
   // Ref to hold the insertVariable function from RichTextEditor
   const insertVariableRef = useRef<((variableName: string) => void) | null>(null);
@@ -244,10 +230,10 @@ const EmailTemplates = () => {
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("toasts.admin.accessDenied"));
       navigate("/dashboard");
     }
-  }, [isAdmin, adminLoading, navigate]);
+  }, [isAdmin, adminLoading, navigate, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -269,7 +255,7 @@ const EmailTemplates = () => {
       setTemplates((data || []).map(t => ({ ...t, variables: t.variables as string[] })));
     } catch (error: any) {
       console.error("Error loading templates:", error);
-      toast.error("Failed to load email templates");
+      toast.error(t("admin.emailTemplates.errors.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -278,7 +264,7 @@ const EmailTemplates = () => {
   const handleSave = async () => {
     try {
       if (!formData.name || !formData.subject || !formData.body || !formData.template_type) {
-        toast.error("Please fill in all required fields");
+        toast.error(t("admin.emailTemplates.validation.fillAllFields"));
         return;
       }
 
@@ -286,7 +272,7 @@ const EmailTemplates = () => {
       try {
         variables = JSON.parse(formData.variables);
       } catch {
-        toast.error("Invalid JSON format for variables. Use format: [\"var1\", \"var2\"]");
+        toast.error(t("admin.emailTemplates.validation.invalidJsonFormat"));
         return;
       }
 
@@ -308,14 +294,14 @@ const EmailTemplates = () => {
           .eq("id", editingTemplate.id);
 
         if (error) throw error;
-        toast.success("Template updated successfully");
+        toast.success(t("admin.emailTemplates.success.templateUpdated"));
       } else {
         const { error } = await supabase
           .from("email_templates")
           .insert([templateData]);
 
         if (error) throw error;
-        toast.success("Template created successfully");
+        toast.success(t("admin.emailTemplates.success.templateCreated"));
       }
 
       setDialogOpen(false);
@@ -324,12 +310,12 @@ const EmailTemplates = () => {
       loadTemplates();
     } catch (error: any) {
       console.error("Error saving template:", error);
-      toast.error(error.message || "Failed to save template");
+      toast.error(error.message || t("admin.emailTemplates.errors.failedToSave"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this template?")) {
+    if (!confirm(t("admin.emailTemplates.confirm.delete"))) {
       return;
     }
 
@@ -341,11 +327,11 @@ const EmailTemplates = () => {
 
       if (error) throw error;
 
-      toast.success("Template deleted");
+      toast.success(t("admin.emailTemplates.success.templateDeleted"));
       loadTemplates();
     } catch (error: any) {
       console.error("Error deleting template:", error);
-      toast.error("Failed to delete template");
+      toast.error(t("admin.emailTemplates.errors.failedToDelete"));
     }
   };
 
@@ -358,11 +344,11 @@ const EmailTemplates = () => {
 
       if (error) throw error;
 
-      toast.success(`Template ${!template.is_active ? "activated" : "deactivated"}`);
+      toast.success(t(`admin.emailTemplates.success.template${!template.is_active ? "Activated" : "Deactivated"}`));
       loadTemplates();
     } catch (error: any) {
       console.error("Error toggling template:", error);
-      toast.error("Failed to update template");
+      toast.error(t("admin.emailTemplates.errors.failedToUpdate"));
     }
   };
 
@@ -431,7 +417,7 @@ const EmailTemplates = () => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(testEmailAddress)) {
-      toast.error("Please enter a valid email address");
+      toast.error(t("admin.emailTemplates.testEmail.invalidEmail"));
       return;
     }
 
@@ -453,8 +439,8 @@ const EmailTemplates = () => {
         return;
       }
 
-      toast.success(`Test email sent to ${testEmailAddress}!`, {
-        description: "Check your inbox to verify the email.",
+      toast.success(t("admin.emailTemplates.testEmail.success", { email: testEmailAddress }), {
+        description: t("admin.emailTemplates.testEmail.successDescription"),
       });
       
       setTestEmailDialog(false);
@@ -463,8 +449,8 @@ const EmailTemplates = () => {
       setTestingTemplate(null);
     } catch (error: any) {
       console.error("Error sending test email:", error);
-      toast.error("Failed to send test email", {
-        description: error.message || "An unexpected error occurred",
+      toast.error(t("admin.emailTemplates.testEmail.failed"), {
+        description: error.message || t("admin.emailTemplates.testEmail.unexpectedError"),
       });
     } finally {
       setSendingTest(false);
@@ -474,7 +460,7 @@ const EmailTemplates = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading templates..." />
+        <LoadingSpinner size="lg" text={t("admin.emailTemplates.loading")} />
       </div>
     );
   }
@@ -485,12 +471,12 @@ const EmailTemplates = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Admin
+            {t("admin.emailTemplates.backToAdmin")}
           </Button>
 
-          <h1 className="text-3xl font-bold mb-2">Email Template Management</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("admin.emailTemplates.title")}</h1>
           <p className="text-muted-foreground">
-            Create and manage reusable email templates
+            {t("admin.emailTemplates.subtitle")}
           </p>
         </div>
 
@@ -498,16 +484,16 @@ const EmailTemplates = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Email Templates</CardTitle>
+                <CardTitle>{t("admin.emailTemplates.cardTitle")}</CardTitle>
                 <CardDescription>
-                  {templates.length} template{templates.length !== 1 ? "s" : ""} available
+                  {t("admin.emailTemplates.templatesAvailable", { count: templates.length })}
                 </CardDescription>
               </div>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={openAddDialog}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Template
+                    {t("admin.emailTemplates.addTemplate")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-[95vw] w-full max-h-[92vh] p-0 flex flex-col">
@@ -516,10 +502,10 @@ const EmailTemplates = () => {
                     <div className="flex-1 flex flex-col overflow-hidden border-r">
                       <DialogHeader>
                         <DialogTitle>
-                          {editingTemplate ? "Edit" : "Create"} Email Template
+                          {editingTemplate ? t("admin.emailTemplates.edit") : t("admin.emailTemplates.create")} {t("admin.emailTemplates.emailTemplate")}
                         </DialogTitle>
                         <DialogDescription>
-                          Configure template details and content
+                          {t("admin.emailTemplates.configureTemplate")}
                         </DialogDescription>
                       </DialogHeader>
 
@@ -527,20 +513,20 @@ const EmailTemplates = () => {
                         <div className="space-y-4 mt-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="name">Template Name *</Label>
+                            <Label htmlFor="name">{t("admin.emailTemplates.form.templateName")}</Label>
                             <Input
                               id="name"
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              placeholder="e.g., password_reset_notification"
+                              placeholder={t("admin.emailTemplates.form.templateNamePlaceholder")}
                             />
                           </div>
 
                           <div>
-                            <Label htmlFor="type">Template Type *</Label>
+                            <Label htmlFor="type">{t("admin.emailTemplates.form.templateType")}</Label>
                             <Select value={formData.template_type} onValueChange={handleTemplateTypeChange}>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select template type" />
+                                <SelectValue placeholder={t("admin.emailTemplates.form.selectTemplateType")} />
                               </SelectTrigger>
                               <SelectContent>
                                 {TEMPLATE_TYPES.map((type) => (
@@ -564,26 +550,26 @@ const EmailTemplates = () => {
                         )}
 
                         <div>
-                          <Label htmlFor="subject">Email Subject *</Label>
+                          <Label htmlFor="subject">{t("admin.emailTemplates.form.emailSubject")}</Label>
                           <Input
                             id="subject"
                             value={formData.subject}
                             onChange={(e) =>
                               setFormData({ ...formData, subject: e.target.value })
                             }
-                            placeholder="e.g., Reset Your Password"
+                            placeholder={t("admin.emailTemplates.form.emailSubjectPlaceholder")}
                           />
                           <p className="text-xs text-muted-foreground mt-1">
-                            You can use variables like {`{{username}}`} in the subject
+                            {t("admin.emailTemplates.form.subjectVariablesHint")}
                           </p>
                         </div>
 
                         <div>
-                          <Label htmlFor="body">Email Body *</Label>
+                          <Label htmlFor="body">{t("admin.emailTemplates.form.emailBody")}</Label>
                           <RichTextEditor
                             value={formData.body}
                             onChange={(html) => setFormData({ ...formData, body: html })}
-                            placeholder="Compose your email content here. Use {{variable}} for placeholders."
+                            placeholder={t("admin.emailTemplates.form.emailBodyPlaceholder")}
                             maxLength={10000}
                             enableProfessionalTemplate={true}
                             templateTitle={undefined}
@@ -594,11 +580,11 @@ const EmailTemplates = () => {
                           <Alert className="mt-3">
                             <Sparkles className="h-4 w-4" />
                             <AlertDescription>
-                              <strong>Pro Tips:</strong>
+                              <strong>{t("admin.emailTemplates.form.proTips")}:</strong>
                               <ul className="list-disc list-inside text-xs mt-2 space-y-1">
-                                <li>Toggle "Professional Template" above for beautiful email styling</li>
-                                <li>Use the ✨ button in toolbar to insert styled buttons</li>
-                                <li>Click variables to copy, or use + button to insert directly</li>
+                                <li>{t("admin.emailTemplates.form.proTip1")}</li>
+                                <li>{t("admin.emailTemplates.form.proTip2")}</li>
+                                <li>{t("admin.emailTemplates.form.proTip3")}</li>
                               </ul>
                             </AlertDescription>
                           </Alert>
@@ -612,17 +598,17 @@ const EmailTemplates = () => {
                               setFormData({ ...formData, is_active: checked })
                             }
                           />
-                          <Label htmlFor="is_active">Active Template</Label>
+                          <Label htmlFor="is_active">{t("admin.emailTemplates.form.activeTemplate")}</Label>
                         </div>
                         </div>
                       </div>
 
                       <DialogFooter className="flex-shrink-0 border-t px-6 py-4 bg-background">
                         <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                          Cancel
+                          {t("common.cancel")}
                         </Button>
                         <Button onClick={handleSave}>
-                          {editingTemplate ? "Update" : "Create"} Template
+                          {editingTemplate ? t("admin.emailTemplates.update") : t("admin.emailTemplates.create")} {t("admin.emailTemplates.template")}
                         </Button>
                       </DialogFooter>
                     </div>
@@ -632,10 +618,10 @@ const EmailTemplates = () => {
                       <div className="flex-shrink-0 bg-muted/30 p-4 pb-3 border-b">
                         <h3 className="font-semibold text-sm flex items-center gap-2">
                           <Sparkles className="h-4 w-4" />
-                          Available Variables
+                          {t("admin.emailTemplates.availableVariables")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Click to copy or use + to insert directly
+                          {t("admin.emailTemplates.variablesHint")}
                         </p>
                       </div>
                       
@@ -709,7 +695,7 @@ const EmailTemplates = () => {
                   {templates.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No templates found
+                        {t("admin.emailTemplates.noTemplatesFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -743,7 +729,7 @@ const EmailTemplates = () => {
                               onCheckedChange={() => handleToggleActive(template)}
                             />
                             <Badge variant={template.is_active ? "default" : "secondary"}>
-                              {template.is_active ? "Active" : "Inactive"}
+                              {template.is_active ? t("admin.emailTemplates.active") : t("admin.emailTemplates.inactive")}
                             </Badge>
                           </div>
                         </TableCell>
@@ -800,7 +786,7 @@ const EmailTemplates = () => {
                 <div>
                   <DialogTitle className="flex items-center gap-2">
                     <Eye className="h-5 w-5" />
-                    Template Preview
+                    {t("admin.emailTemplates.preview.title")}
                   </DialogTitle>
                   <DialogDescription>
                     {previewTemplate?.name} - {previewTemplate?.subject}
@@ -832,14 +818,14 @@ const EmailTemplates = () => {
 
             <Tabs defaultValue="preview" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="preview">Visual Preview</TabsTrigger>
-                <TabsTrigger value="code">HTML Code</TabsTrigger>
+                <TabsTrigger value="preview">{t("admin.emailTemplates.preview.visualPreview")}</TabsTrigger>
+                <TabsTrigger value="code">{t("admin.emailTemplates.preview.htmlCode")}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="preview" className="space-y-4">
                 {/* Subject Preview */}
                 <div>
-                  <Label className="text-sm font-semibold">Email Subject</Label>
+                  <Label className="text-sm font-semibold">{t("admin.emailTemplates.preview.emailSubject")}</Label>
                   <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border rounded-lg">
                     <p className="font-medium text-sm">
                       {previewTemplate ? populateSampleData(previewTemplate.subject) : ''}
@@ -849,7 +835,7 @@ const EmailTemplates = () => {
 
                 {/* Email Body Preview */}
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Email Body</Label>
+                  <Label className="text-sm font-semibold mb-2 block">{t("admin.emailTemplates.preview.emailBody")}</Label>
                   <div className="relative">
                     {/* Preview Container with Device Frame */}
                     <div 
@@ -888,7 +874,7 @@ const EmailTemplates = () => {
                     {/* Preview Info Badge */}
                     <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                       <Info className="h-3 w-3" />
-                      <span>Preview shows sample data for all variables</span>
+                      <span>{t("admin.emailTemplates.preview.sampleDataNote")}</span>
                     </div>
                   </div>
                 </div>
@@ -896,7 +882,7 @@ const EmailTemplates = () => {
                 {/* Variables Used */}
                 {previewTemplate?.variables && previewTemplate.variables.length > 0 && (
                   <div>
-                    <Label className="text-sm font-semibold">Variables Used</Label>
+                    <Label className="text-sm font-semibold">{t("admin.emailTemplates.preview.variablesUsed")}</Label>
                     <div className="mt-2 flex gap-2 flex-wrap p-3 bg-muted/50 rounded-lg border">
                       {previewTemplate.variables.map((variable) => (
                         <Badge key={variable} variant="secondary" className="font-mono text-xs">
@@ -910,7 +896,7 @@ const EmailTemplates = () => {
               
               <TabsContent value="code" className="space-y-4">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Raw HTML Code</Label>
+                  <Label className="text-sm font-semibold mb-2 block">{t("admin.emailTemplates.preview.rawHtmlCode")}</Label>
                   <Textarea
                     value={previewTemplate?.body || ''}
                     readOnly
@@ -922,23 +908,23 @@ const EmailTemplates = () => {
                     className="mt-2"
                     onClick={() => {
                       navigator.clipboard.writeText(previewTemplate?.body || '');
-                      toast.success('HTML code copied to clipboard!');
+                      toast.success(t("admin.emailTemplates.preview.htmlCopied"));
                     }}
                   >
-                    Copy HTML Code
+                    {t("admin.emailTemplates.preview.copyHtmlCode")}
                   </Button>
                 </div>
               </TabsContent>
             </Tabs>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPreviewOpen(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>{t("common.close")}</Button>
               <Button onClick={() => {
                 setPreviewOpen(false);
                 if (previewTemplate) openEditDialog(previewTemplate);
               }}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Template
+                {t("admin.emailTemplates.editTemplate")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -948,7 +934,7 @@ const EmailTemplates = () => {
         <Dialog open={testEmailDialog} onOpenChange={setTestEmailDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Send Test Email - {testingTemplate?.name}</DialogTitle>
+              <DialogTitle>{t("admin.emailTemplates.testEmail.title")} - {testingTemplate?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {testingTemplate && (
@@ -963,7 +949,7 @@ const EmailTemplates = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Subject Preview</Label>
+                    <Label className="text-sm font-medium">{t("admin.emailTemplates.testEmail.subjectPreview")}</Label>
                     <p className="text-sm text-muted-foreground border rounded-md p-3 bg-muted/50">
                       {testingTemplate.subject}
                     </p>
@@ -973,7 +959,7 @@ const EmailTemplates = () => {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <div className="ml-2">
-                        <p className="text-sm font-medium">Available Variables:</p>
+                        <p className="text-sm font-medium">{t("admin.emailTemplates.testEmail.availableVariables")}:</p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {testingTemplate.variables.map((variable) => (
                             <Badge key={variable} variant="secondary">
@@ -982,40 +968,40 @@ const EmailTemplates = () => {
                           ))}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                          These variables will be replaced with sample data in the test email.
+                          {t("admin.emailTemplates.testEmail.variablesNote")}
                         </p>
                       </div>
                     </Alert>
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="test-email">Test Email Address *</Label>
+                    <Label htmlFor="test-email">{t("admin.emailTemplates.testEmail.testEmailAddress")}</Label>
                     <Input
                       id="test-email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder={t("admin.emailTemplates.testEmail.emailPlaceholder")}
                       value={testEmailAddress}
                       onChange={(e) => setTestEmailAddress(e.target.value)}
                       disabled={sendingTest}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter the email address where you want to receive the test email.
+                      {t("admin.emailTemplates.testEmail.emailHint")}
                     </p>
                   </div>
 
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <div className="ml-2">
-                      <p className="text-sm font-medium">Sample Data</p>
+                      <p className="text-sm font-medium">{t("admin.emailTemplates.testEmail.sampleData")}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        The test email will use predefined sample data for all variables:
+                        {t("admin.emailTemplates.testEmail.sampleDataDescription")}
                       </p>
                       <ul className="text-xs text-muted-foreground mt-2 space-y-1 list-disc list-inside">
-                        <li>Username: TestUser</li>
-                        <li>Email: {testEmailAddress || "your email"}</li>
-                        <li>Full Name: Test User</li>
-                        <li>Links: Sample URLs with test tokens</li>
-                        <li>Plan details: Premium Plan, $500.00 earnings</li>
+                        <li>{t("admin.emailTemplates.testEmail.sampleUsername")}</li>
+                        <li>{t("admin.emailTemplates.testEmail.sampleEmail", { email: testEmailAddress || t("admin.emailTemplates.testEmail.yourEmail") })}</li>
+                        <li>{t("admin.emailTemplates.testEmail.sampleFullName")}</li>
+                        <li>{t("admin.emailTemplates.testEmail.sampleLinks")}</li>
+                        <li>{t("admin.emailTemplates.testEmail.samplePlanDetails")}</li>
                       </ul>
                     </div>
                   </Alert>
@@ -1033,7 +1019,7 @@ const EmailTemplates = () => {
                   }}
                   disabled={sendingTest}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={handleSendTest}
@@ -1042,12 +1028,12 @@ const EmailTemplates = () => {
                   {sendingTest ? (
                     <>
                       <span className="animate-spin mr-2">⏳</span>
-                      Sending...
+                      {t("admin.emailTemplates.testEmail.sending")}
                     </>
                   ) : (
                     <>
                       <Mail className="h-4 w-4 mr-2" />
-                      Send Test Email
+                      {t("admin.emailTemplates.testEmail.sendTestEmail")}
                     </>
                   )}
                 </Button>

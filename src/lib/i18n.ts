@@ -49,14 +49,20 @@ i18n
     detection: {
       // Disable automatic detection - LanguageContext will handle it
       order: [],
-      lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage'],
+      // Don't read from localStorage during init - LanguageContext will set it
+      lookupLocalStorage: false,
+      caches: [],
     },
     
     // Interpolation options
     interpolation: {
       escapeValue: false, // React already escapes values
     },
+    
+    // Ensure plurals work correctly
+    returnObjects: false,
+    returnEmptyString: false,
+    returnNull: false,
     
     // React options
     react: {

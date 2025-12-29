@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, QrCode } from "lucide-react";
 
@@ -52,6 +52,9 @@ export const ReferralQRCode = ({ referralUrl, username }: ReferralQRCodeProps) =
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Referral QR Code</DialogTitle>
+            <DialogDescription>
+              Share this QR code for easy referral sign-ups
+            </DialogDescription>
           </DialogHeader>
           
           <div className="flex flex-col items-center gap-4 py-4">

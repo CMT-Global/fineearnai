@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +43,8 @@ const DEFAULT_SECRETS: SystemSecrets = {
 };
 
 export default function SystemSecretsPage() {
+  const { t } = useTranslation();
+  const { userLanguage } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [secrets, setSecrets] = useState<SystemSecrets>(DEFAULT_SECRETS);
@@ -104,13 +108,13 @@ export default function SystemSecretsPage() {
       queryClient.invalidateQueries({ queryKey: ['system-secrets'] });
       setHasChanges(false);
       toast({
-        title: "Secrets saved",
-        description: "System credentials have been updated successfully.",
+        title: t("admin.systemSecrets.secretsSaved"),
+        description: t("admin.systemSecrets.secretsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error saving secrets",
+        title: t("admin.systemSecrets.errorSaving"),
         description: error.message,
         variant: "destructive",
       });
@@ -145,8 +149,8 @@ export default function SystemSecretsPage() {
     }
     setHasChanges(false);
     toast({
-      title: "Changes discarded",
-      description: "Settings have been reverted to the last saved state.",
+      title: t("admin.systemSecrets.changesDiscarded"),
+      description: t("admin.systemSecrets.changesDiscardedDescription"),
     });
   };
 
@@ -162,16 +166,16 @@ export default function SystemSecretsPage() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <AdminBreadcrumb
         items={[
-          { label: "Security" },
-          { label: "System Secrets" },
+          { label: t("admin.systemSecrets.breadcrumbSecurity") },
+          { label: t("admin.systemSecrets.breadcrumbSystemSecrets") },
         ]}
       />
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">System Secrets</h1>
+          <h1 className="text-3xl font-bold">{t("admin.systemSecrets.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage API keys and credentials for platform integrations
+            {t("admin.systemSecrets.subtitle")}
           </p>
         </div>
 
@@ -182,7 +186,7 @@ export default function SystemSecretsPage() {
             disabled={!hasChanges || saveMutation.isPending}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Discard Changes
+            {t("admin.systemSecrets.discardChanges")}
           </Button>
 
           <Button
@@ -194,16 +198,16 @@ export default function SystemSecretsPage() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Secrets
+            {t("admin.systemSecrets.saveSecrets")}
           </Button>
         </div>
       </div>
 
       <Alert>
         <Shield className="h-4 w-4" />
-        <AlertTitle>Security Warning</AlertTitle>
+        <AlertTitle>{t("admin.systemSecrets.securityWarning")}</AlertTitle>
         <AlertDescription>
-          These keys provide access to sensitive services. Changes take effect immediately across all system components. If a key is left empty, the system will fall back to the environment variables configured in Supabase.
+          {t("admin.systemSecrets.securityWarningDescription")}
         </AlertDescription>
       </Alert>
 
@@ -211,23 +215,23 @@ export default function SystemSecretsPage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="ai" className="gap-2">
             <Brain className="h-4 w-4" />
-            AI (Gemini)
+            {t("admin.systemSecrets.tabs.ai")}
           </TabsTrigger>
           <TabsTrigger value="payment" className="gap-2">
             <DollarSign className="h-4 w-4" />
-            Payment (CPAY)
+            {t("admin.systemSecrets.tabs.payment")}
           </TabsTrigger>
           <TabsTrigger value="email" className="gap-2">
             <Mail className="h-4 w-4" />
-            Email (Resend)
+            {t("admin.systemSecrets.tabs.email")}
           </TabsTrigger>
           <TabsTrigger value="geo" className="gap-2">
             <Globe className="h-4 w-4" />
-            Geo (IPStack)
+            {t("admin.systemSecrets.tabs.geo")}
           </TabsTrigger>
           <TabsTrigger value="currency" className="gap-2">
             <DollarSign className="h-4 w-4" />
-            Currency
+            {t("admin.systemSecrets.tabs.currency")}
           </TabsTrigger>
         </TabsList>
 
@@ -235,18 +239,18 @@ export default function SystemSecretsPage() {
         <TabsContent value="ai" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Google Gemini API</CardTitle>
-              <CardDescription>Used for automated AI task generation</CardDescription>
+              <CardTitle>{t("admin.systemSecrets.gemini.title")}</CardTitle>
+              <CardDescription>{t("admin.systemSecrets.gemini.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="gemini_api_key">API Key</Label>
+                <Label htmlFor="gemini_api_key">{t("admin.systemSecrets.gemini.apiKey")}</Label>
                 <Input
                   id="gemini_api_key"
                   type="password"
                   value={secrets.gemini_config.apiKey}
                   onChange={(e) => handleChange('gemini_config', 'apiKey', e.target.value)}
-                  placeholder="Enter Gemini API Key"
+                  placeholder={t("admin.systemSecrets.gemini.apiKeyPlaceholder")}
                 />
               </div>
             </CardContent>
@@ -257,59 +261,59 @@ export default function SystemSecretsPage() {
         <TabsContent value="payment" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>CPAY Payment Processor</CardTitle>
-              <CardDescription>Credentials for automated withdrawals and wallet management</CardDescription>
+              <CardTitle>{t("admin.systemSecrets.cpay.title")}</CardTitle>
+              <CardDescription>{t("admin.systemSecrets.cpay.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cpay_wallet_id">Wallet ID</Label>
+                  <Label htmlFor="cpay_wallet_id">{t("admin.systemSecrets.cpay.walletId")}</Label>
                   <Input
                     id="cpay_wallet_id"
                     value={secrets.cpay_config.walletId}
                     onChange={(e) => handleChange('cpay_config', 'walletId', e.target.value)}
-                    placeholder="Enter CPAY Wallet ID"
+                    placeholder={t("admin.systemSecrets.cpay.walletIdPlaceholder")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cpay_usdt_token_id">USDT Token ID</Label>
+                  <Label htmlFor="cpay_usdt_token_id">{t("admin.systemSecrets.cpay.usdtTokenId")}</Label>
                   <Input
                     id="cpay_usdt_token_id"
                     value={secrets.cpay_config.usdtTokenId}
                     onChange={(e) => handleChange('cpay_config', 'usdtTokenId', e.target.value)}
-                    placeholder="Enter USDT Token ID (24 chars)"
+                    placeholder={t("admin.systemSecrets.cpay.usdtTokenIdPlaceholder")}
                   />
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cpay_public_key">API Public Key</Label>
+                  <Label htmlFor="cpay_public_key">{t("admin.systemSecrets.cpay.publicKey")}</Label>
                   <Input
                     id="cpay_public_key"
                     value={secrets.cpay_config.publicKey}
                     onChange={(e) => handleChange('cpay_config', 'publicKey', e.target.value)}
-                    placeholder="Enter CPAY Public Key"
+                    placeholder={t("admin.systemSecrets.cpay.publicKeyPlaceholder")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cpay_private_key">API Private Key</Label>
+                  <Label htmlFor="cpay_private_key">{t("admin.systemSecrets.cpay.privateKey")}</Label>
                   <Input
                     id="cpay_private_key"
                     type="password"
                     value={secrets.cpay_config.privateKey}
                     onChange={(e) => handleChange('cpay_config', 'privateKey', e.target.value)}
-                    placeholder="Enter CPAY Private Key"
+                    placeholder={t("admin.systemSecrets.cpay.privateKeyPlaceholder")}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cpay_passphrase">Wallet Passphrase</Label>
+                <Label htmlFor="cpay_passphrase">{t("admin.systemSecrets.cpay.passphrase")}</Label>
                 <Input
                   id="cpay_passphrase"
                   type="password"
                   value={secrets.cpay_config.passphrase}
                   onChange={(e) => handleChange('cpay_config', 'passphrase', e.target.value)}
-                  placeholder="Enter Wallet Passphrase"
+                  placeholder={t("admin.systemSecrets.cpay.passphrasePlaceholder")}
                 />
               </div>
             </CardContent>
@@ -320,18 +324,18 @@ export default function SystemSecretsPage() {
         <TabsContent value="email" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Resend API</CardTitle>
-              <CardDescription>Credentials for sending transactional and bulk emails</CardDescription>
+              <CardTitle>{t("admin.systemSecrets.resend.title")}</CardTitle>
+              <CardDescription>{t("admin.systemSecrets.resend.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="resend_api_key">API Key</Label>
+                <Label htmlFor="resend_api_key">{t("admin.systemSecrets.resend.apiKey")}</Label>
                 <Input
                   id="resend_api_key"
                   type="password"
                   value={secrets.resend_config.apiKey}
                   onChange={(e) => handleChange('resend_config', 'apiKey', e.target.value)}
-                  placeholder="re_..."
+                  placeholder={t("admin.systemSecrets.resend.apiKeyPlaceholder")}
                 />
               </div>
             </CardContent>
@@ -342,18 +346,18 @@ export default function SystemSecretsPage() {
         <TabsContent value="geo" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>IPStack API</CardTitle>
-              <CardDescription>Used for user IP detection and country mapping</CardDescription>
+              <CardTitle>{t("admin.systemSecrets.ipstack.title")}</CardTitle>
+              <CardDescription>{t("admin.systemSecrets.ipstack.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="ipstack_api_key">Access Key</Label>
+                <Label htmlFor="ipstack_api_key">{t("admin.systemSecrets.ipstack.accessKey")}</Label>
                 <Input
                   id="ipstack_api_key"
                   type="password"
                   value={secrets.ipstack_api_key}
                   onChange={(e) => handleChange('ipstack_api_key', null, e.target.value)}
-                  placeholder="Enter IPStack Access Key"
+                  placeholder={t("admin.systemSecrets.ipstack.accessKeyPlaceholder")}
                 />
               </div>
             </CardContent>
@@ -364,18 +368,18 @@ export default function SystemSecretsPage() {
         <TabsContent value="currency" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>OpenExchangeRates API</CardTitle>
-              <CardDescription>Used for real-time USD to local currency conversion</CardDescription>
+              <CardTitle>{t("admin.systemSecrets.openexchange.title")}</CardTitle>
+              <CardDescription>{t("admin.systemSecrets.openexchange.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="openexchange_app_id">App ID</Label>
+                <Label htmlFor="openexchange_app_id">{t("admin.systemSecrets.openexchange.appId")}</Label>
                 <Input
                   id="openexchange_app_id"
                   type="password"
                   value={secrets.openexchange_config.appId}
                   onChange={(e) => handleChange('openexchange_config', 'appId', e.target.value)}
-                  placeholder="Enter OpenExchangeRates App ID"
+                  placeholder={t("admin.systemSecrets.openexchange.appIdPlaceholder")}
                 />
               </div>
             </CardContent>

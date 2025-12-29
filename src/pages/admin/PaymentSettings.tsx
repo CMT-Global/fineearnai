@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,9 +49,21 @@ interface PayoutScheduleDay {
 
 const PaymentSettings = () => {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
+  
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
+  
+  // Force re-render when language changes
+  useEffect(() => {
+    // Ensure i18n language is synced with userLanguage from context
+    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
+      i18nInstance.changeLanguage(userLanguage).catch((err) => {
+        console.error('Error changing i18n language:', err);
+      });
+    }
+  }, [userLanguage, isLanguageLoading, i18nInstance]);
   const [processors, setProcessors] = useState<PaymentProcessor[]>([]);
   const [cpayCheckouts, setCpayCheckouts] = useState<CPAYCheckout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +123,7 @@ const PaymentSettings = () => {
       setCpayCheckouts(data || []);
     } catch (error: any) {
       console.error("Error loading CPAY checkouts:", error);
-      toast.error("Failed to load CPAY checkouts");
+      toast.error(t("admin.toasts.failedToLoadCPAYCheckouts"));
     }
   };
 
@@ -145,7 +158,7 @@ const PaymentSettings = () => {
       }
     } catch (error: any) {
       console.error("Error loading payout config:", error);
-      toast.error("Failed to load payout configuration");
+      toast.error(t("admin.toasts.failedToLoadPayoutConfig"));
     }
   };
   
@@ -332,11 +345,11 @@ const PaymentSettings = () => {
 
       if (error) throw error;
 
-      toast.success("Payment processor deleted");
+      toast.success(t("admin.toasts.paymentProcessorDeleted"));
       loadProcessors();
     } catch (error: any) {
       console.error("Error deleting processor:", error);
-      toast.error("Failed to delete payment processor");
+      toast.error(t("admin.toasts.failedToDeletePaymentProcessor"));
     }
   };
 
@@ -496,7 +509,7 @@ const PaymentSettings = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading payment settings..." />
+        <LoadingSpinner size="lg" text={t("admin.paymentSettings.loading")} />
       </div>
     );
   }
@@ -643,7 +656,7 @@ const PaymentSettings = () => {
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
-                      {editingProcessor ? "Edit" : "Add"} Payment Processor
+                      {editingProcessor ? t("common.edit") : t("common.add")} {t("admin.paymentSettings.paymentProcessor")}
                     </DialogTitle>
                     <DialogDescription>
                       Configure payment gateway settings

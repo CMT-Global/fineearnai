@@ -5,6 +5,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface AdminRouteProps {
  * any unauthorized access attempts for security auditing.
  */
 export const AdminRoute = ({ children }: AdminRouteProps) => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
   useEffect(() => {
     // First check: Authentication
     if (!authLoading && !user) {
-      toast.error("Authentication required. Please log in.");
+      toast.error(t("admin.toasts.authenticationRequired"));
       navigate("/login");
       return;
     }
@@ -39,7 +41,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
       // Log unauthorized access attempt
       logUnauthorizedAccess(user.id, window.location.pathname);
       
-      toast.error("Access denied. Admin privileges required.");
+      toast.error(t("admin.toasts.accessDeniedAdminRequired"));
       navigate("/dashboard");
       return;
     }
