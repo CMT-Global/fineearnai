@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,20 +27,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useBranding } from "@/contexts/BrandingContext";
 
 const BulkEmail = () => {
-  const { t, i18n: i18nInstance } = useTranslation();
-  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const { platformName } = useBranding();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
-  
-  // Force re-render when language changes
-  useEffect(() => {
-    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
-      i18nInstance.changeLanguage(userLanguage).catch((err) => {
-        console.error('Error changing i18n language:', err);
-      });
-    }
-  }, [userLanguage, isLanguageLoading, i18nInstance]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -579,7 +570,7 @@ const BulkEmail = () => {
                         variant={recipientCount === 0 ? "destructive" : "default"}
                         className="gap-2 text-base px-3 py-1"
                       >
-                        {t("admin.bulkEmail.recipients.willSendTo", { count: recipientCount })}
+                        <span>📧 {t("admin.bulkEmail.recipients.willSendTo")}: <strong>{recipientCount}</strong> {recipientCount === 1 ? t("admin.bulkEmail.recipients.user") : t("admin.bulkEmail.recipients.users")}</span>
                       </Badge>
                     )}
                   </div>
@@ -996,7 +987,11 @@ const BulkEmail = () => {
               <Alert variant="default">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  {t("admin.bulkEmail.preview.willSendTo", { count: recipientCount })}
+                  <Trans
+                    i18nKey="admin.bulkEmail.preview.willSendTo"
+                    values={{ count: recipientCount }}
+                    components={{ strong: <strong /> }}
+                  />
                   {formData.scheduleType === 'scheduled' && formData.scheduledDate && formData.scheduledTime && (
                     <> {t("admin.bulkEmail.preview.scheduledFor")} <strong>{new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleString()}</strong></>
                   )}

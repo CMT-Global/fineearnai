@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Send, RotateCcw, AlertCircle, CheckCircle2, Settings } from "lucide-react";
+import { Mail, Send, RotateCcw, AlertCircle, CheckCircle2, Settings, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 import { EmailVerificationRemindersSettings } from "@/components/admin/EmailVerificationRemindersSettings";
@@ -55,12 +56,25 @@ export default function EmailSettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [testEmailSent, setTestEmailSent] = useState(false);
   
-  // Force re-render when language changes
+  // Fetch email settings
+  const { data: configData, isLoading } = useQuery({
+    queryKey: ['email-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'email_settings')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.value as typeof DEFAULT_SETTINGS | null;
+    },
+  });
 
   // Update settings when data loads
   useEffect(() => {
     if (configData && typeof configData === 'object') {
-      setSettings({ ...DEFAULT_SETTINGS, ...configData as any });
+      setSettings({ ...DEFAULT_SETTINGS, ...configData });
     }
   }, [configData]);
 
@@ -77,7 +91,7 @@ export default function EmailSettings() {
         }, { onConflict: 'key' });
 
       if (error) throw error;
-    },
+    },  
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email-settings'] });
       setHasChanges(false);
@@ -172,8 +186,8 @@ export default function EmailSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

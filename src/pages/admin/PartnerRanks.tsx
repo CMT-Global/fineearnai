@@ -43,8 +43,16 @@ const PartnerRanks = () => {
   useLanguageSync(); // Sync language and force re-render when language changes
   
   const queryClient = useQueryClient();
-  
-  // Force re-render when language changes
+
+  const [editDialog, setEditDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [selectedRank, setSelectedRank] = useState<PartnerRank | null>(null);
+  const [formData, setFormData] = useState({
+    rank_name: "",
+    daily_sales_target: 0,
+    commission_rate: 0.10,
+    rank_order: 1,
+  });
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['partner-ranks'],

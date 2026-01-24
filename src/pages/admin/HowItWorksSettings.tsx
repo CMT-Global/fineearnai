@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Info, RotateCcw, AlertCircle, CheckCircle2, ListChecks } from "lucide-react";
+import { Info, RotateCcw, AlertCircle, CheckCircle2, ListChecks, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
@@ -99,8 +100,30 @@ export default function HowItWorksSettings() {
   const [config, setConfig] = useState<HowItWorksContentConfig>(DEFAULT_HOW_IT_WORKS_CONTENT);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Force re-render when language changes
+  // Fetch platform config data
+  const { data, isLoading } = useQuery({
+    queryKey: ["how-it-works-settings"],
+    queryFn: async () => {
+      const { data: configData, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["platform_name", "how_it_works_content"]);
 
+      if (error) throw error;
+
+      const configMap: Record<string, any> = {};
+      configData?.forEach((row: any) => {
+        configMap[row.key] = row.value;
+      });
+
+      return {
+        platformName: (configMap.platform_name as string) || DEFAULT_PLATFORM_NAME,
+        howItWorks: (configMap.how_it_works_content as HowItWorksContentConfig) || DEFAULT_HOW_IT_WORKS_CONTENT,
+      };
+    },
+  });
+
+  // Update state when data loads
   useEffect(() => {
     if (data) {
       setPlatformName(data.platformName || DEFAULT_PLATFORM_NAME);
@@ -174,10 +197,8 @@ export default function HowItWorksSettings() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

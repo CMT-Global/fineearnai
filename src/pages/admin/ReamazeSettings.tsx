@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, Save, RotateCcw, AlertCircle, Info } from "lucide-react";
+import { MessageSquare, Save, RotateCcw, AlertCircle, Info, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
@@ -33,12 +34,25 @@ export default function ReamazeSettings() {
   const [config, setConfig] = useState<ReamazeConfig>(DEFAULT_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Force re-render when language changes
+  // Fetch reamaze settings
+  const { data: configData, isLoading } = useQuery({
+    queryKey: ['reamaze-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'reamaze_config')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.value as ReamazeConfig | null;
+    },
+  });
 
   // Update state when data loads
   useEffect(() => {
-    if (configData) {
-      setConfig(configData);
+    if (configData && typeof configData === 'object') {
+      setConfig({ ...DEFAULT_CONFIG, ...configData });
     }
   }, [configData]);
 
@@ -103,8 +117,8 @@ export default function ReamazeSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

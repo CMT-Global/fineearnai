@@ -61,16 +61,17 @@ export default function SecuritySettings() {
 
   // Initialize state from config when it loads
   useEffect(() => {
-    if (bannerConfig) {
-      setBannerEnabled(bannerConfig.enabled ?? true);
-      setBannerDismissible(bannerConfig.dismissible ?? true);
-      setBannerTitle(bannerConfig.message?.title ?? "");
-      setBannerSubtitle(bannerConfig.message?.subtitle ?? "");
-      setBannerStep1(bannerConfig.message?.steps?.[0] ?? "");
-      setBannerStep2(bannerConfig.message?.steps?.[1] ?? "");
-      setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
-      setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
-      setBannerSupportLink(bannerConfig.support_link ?? "/settings");
+    if (bannerConfig && typeof bannerConfig === 'object' && !Array.isArray(bannerConfig)) {
+      const config = bannerConfig as any;
+      setBannerEnabled(config.enabled ?? true);
+      setBannerDismissible(config.dismissible ?? true);
+      setBannerTitle(config.message?.title ?? "");
+      setBannerSubtitle(config.message?.subtitle ?? "");
+      setBannerStep1(config.message?.steps?.[0] ?? "");
+      setBannerStep2(config.message?.steps?.[1] ?? "");
+      setBannerStep3(config.message?.steps?.[2] ?? "");
+      setBannerCutoffDate(config.cutoff_date ?? "2025-11-01");
+      setBannerSupportLink(config.support_link ?? "/settings");
     }
   }, [bannerConfig]);
   
@@ -125,16 +126,17 @@ export default function SecuritySettings() {
   };
   
   const handleResetBanner = () => {
-    if (bannerConfig) {
-      setBannerEnabled(bannerConfig.enabled ?? true);
-      setBannerDismissible(bannerConfig.dismissible ?? true);
-      setBannerTitle(bannerConfig.message?.title ?? "");
-      setBannerSubtitle(bannerConfig.message?.subtitle ?? "");
-      setBannerStep1(bannerConfig.message?.steps?.[0] ?? "");
-      setBannerStep2(bannerConfig.message?.steps?.[1] ?? "");
-      setBannerStep3(bannerConfig.message?.steps?.[2] ?? "");
-      setBannerCutoffDate(bannerConfig.cutoff_date ?? "2025-11-01");
-      setBannerSupportLink(bannerConfig.support_link ?? "/settings");
+    if (bannerConfig && typeof bannerConfig === 'object' && !Array.isArray(bannerConfig)) {
+      const config = bannerConfig as any;
+      setBannerEnabled(config.enabled ?? true);
+      setBannerDismissible(config.dismissible ?? true);
+      setBannerTitle(config.message?.title ?? "");
+      setBannerSubtitle(config.message?.subtitle ?? "");
+      setBannerStep1(config.message?.steps?.[0] ?? "");
+      setBannerStep2(config.message?.steps?.[1] ?? "");
+      setBannerStep3(config.message?.steps?.[2] ?? "");
+      setBannerCutoffDate(config.cutoff_date ?? "2025-11-01");
+      setBannerSupportLink(config.support_link ?? "/settings");
       toast.info(t("admin.toasts.bannerSettingsReset"));
     }
   };
@@ -224,12 +226,12 @@ export default function SecuritySettings() {
     }
     setBlockedCountries([...blockedCountries, countryCode]);
     setNewCountry("");
-    toast.success(`Country ${countryCode} blocked`);
+    toast.success(t("admin.securitySettings.countryBlocking.countryBlocked", { code: countryCode }));
   };
 
   const handleRemoveCountry = (country: string) => {
     setBlockedCountries(blockedCountries.filter(c => c !== country));
-    toast.success(`Country ${country} unblocked`);
+    toast.success(t("admin.securitySettings.countryBlocking.countryUnblocked", { code: country }));
   };
 
   const handleAddIP = () => {
@@ -250,12 +252,12 @@ export default function SecuritySettings() {
     }
     setBlockedIPs([...blockedIPs, ip]);
     setNewIP("");
-    toast.success(`IP ${ip} blocked`);
+    toast.success(t("admin.securitySettings.ipBlocking.ipBlocked", { ip }));
   };
 
   const handleRemoveIP = (ip: string) => {
     setBlockedIPs(blockedIPs.filter(i => i !== ip));
-    toast.success(`IP ${ip} unblocked`);
+    toast.success(t("admin.securitySettings.ipBlocking.ipUnblocked", { ip }));
   };
 
   const handleSaveSettings = () => {
@@ -267,9 +269,9 @@ export default function SecuritySettings() {
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Security Settings</h1>
+          <h1 className="text-3xl font-bold">{t("admin.securitySettings.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage security policies for user registration and login based on IP and location data
+            {t("admin.securitySettings.subtitle")}
           </p>
         </div>
 
@@ -281,9 +283,9 @@ export default function SecuritySettings() {
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-blue-500" />
                   <div>
-                    <CardTitle>Platform Migration Banner</CardTitle>
+                    <CardTitle>{t("admin.securitySettings.migrationBanner.title")}</CardTitle>
                     <CardDescription>
-                      Manage the migration notification banner displayed on the login page
+                      {t("admin.securitySettings.migrationBanner.description")}
                     </CardDescription>
                   </div>
                 </div>
@@ -300,9 +302,9 @@ export default function SecuritySettings() {
                 {/* Dismissible Toggle */}
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <Label className="text-base">Allow Users to Dismiss</Label>
+                    <Label className="text-base">{t("admin.securitySettings.migrationBanner.allowDismiss")}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Users can close the banner and it won't show again
+                      {t("admin.securitySettings.migrationBanner.allowDismissDescription")}
                     </p>
                   </div>
                   <Switch
@@ -315,14 +317,14 @@ export default function SecuritySettings() {
                 {/* Message Editor */}
                 <div className="space-y-4">
                   <Separator />
-                  <h3 className="font-semibold text-sm">Banner Content</h3>
+                  <h3 className="font-semibold text-sm">{t("admin.securitySettings.migrationBanner.bannerContent")}</h3>
                   
                   {/* Title */}
                   <div className="space-y-2">
-                    <Label htmlFor="banner-title">Title *</Label>
+                    <Label htmlFor="banner-title">{t("admin.securitySettings.migrationBanner.titleLabel")}</Label>
                     <Input
                       id="banner-title"
-                      placeholder="e.g., ⚠️ Important Update for Existing Users"
+                      placeholder={t("admin.securitySettings.migrationBanner.titlePlaceholder")}
                       value={bannerTitle}
                       onChange={(e) => setBannerTitle(e.target.value)}
                       disabled={!bannerEnabled || isLoadingBanner}
@@ -333,10 +335,10 @@ export default function SecuritySettings() {
 
                   {/* Subtitle */}
                   <div className="space-y-2">
-                    <Label htmlFor="banner-subtitle">Subtitle *</Label>
+                    <Label htmlFor="banner-subtitle">{t("admin.securitySettings.migrationBanner.subtitleLabel")}</Label>
                     <Input
                       id="banner-subtitle"
-                      placeholder="e.g., FineEarn has moved to a new upgraded platform!"
+                      placeholder={t("admin.securitySettings.migrationBanner.subtitlePlaceholder")}
                       value={bannerSubtitle}
                       onChange={(e) => setBannerSubtitle(e.target.value)}
                       disabled={!bannerEnabled || isLoadingBanner}
@@ -347,13 +349,13 @@ export default function SecuritySettings() {
 
                   {/* Steps */}
                   <div className="space-y-3">
-                    <Label>Action Steps (3 required) *</Label>
+                    <Label>{t("admin.securitySettings.migrationBanner.actionSteps")}</Label>
                     
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <span className="text-lg flex-shrink-0 mt-1">1️⃣</span>
                         <Textarea
-                          placeholder="First step..."
+                          placeholder={t("admin.securitySettings.migrationBanner.step1Placeholder")}
                           value={bannerStep1}
                           onChange={(e) => setBannerStep1(e.target.value)}
                           disabled={!bannerEnabled || isLoadingBanner}
@@ -368,7 +370,7 @@ export default function SecuritySettings() {
                       <div className="flex items-start gap-2">
                         <span className="text-lg flex-shrink-0 mt-1">2️⃣</span>
                         <Textarea
-                          placeholder="Second step..."
+                          placeholder={t("admin.securitySettings.migrationBanner.step2Placeholder")}
                           value={bannerStep2}
                           onChange={(e) => setBannerStep2(e.target.value)}
                           disabled={!bannerEnabled || isLoadingBanner}
@@ -383,7 +385,7 @@ export default function SecuritySettings() {
                       <div className="flex items-start gap-2">
                         <span className="text-lg flex-shrink-0 mt-1">3️⃣</span>
                         <Textarea
-                          placeholder="Third step..."
+                          placeholder={t("admin.securitySettings.migrationBanner.step3Placeholder")}
                           value={bannerStep3}
                           onChange={(e) => setBannerStep3(e.target.value)}
                           disabled={!bannerEnabled || isLoadingBanner}
@@ -397,7 +399,7 @@ export default function SecuritySettings() {
 
                   {/* Cutoff Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="banner-cutoff">Cutoff Date</Label>
+                    <Label htmlFor="banner-cutoff">{t("admin.securitySettings.migrationBanner.cutoffDate")}</Label>
                     <Input
                       id="banner-cutoff"
                       type="date"
@@ -406,22 +408,22 @@ export default function SecuritySettings() {
                       disabled={!bannerEnabled || isLoadingBanner}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Users who joined before this date will see the banner
+                      {t("admin.securitySettings.migrationBanner.cutoffDateDescription")}
                     </p>
                   </div>
 
                   {/* Support Link */}
                   <div className="space-y-2">
-                    <Label htmlFor="banner-link">Support Link</Label>
+                    <Label htmlFor="banner-link">{t("admin.securitySettings.migrationBanner.supportLink")}</Label>
                     <Input
                       id="banner-link"
-                      placeholder="e.g., /settings or https://support.fineearn.com"
+                      placeholder={t("admin.securitySettings.migrationBanner.supportLinkPlaceholder")}
                       value={bannerSupportLink}
                       onChange={(e) => setBannerSupportLink(e.target.value)}
                       disabled={!bannerEnabled || isLoadingBanner}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Link shown as "Contact Support" in the banner
+                      {t("admin.securitySettings.migrationBanner.supportLinkDescription")}
                     </p>
                   </div>
                 </div>
@@ -434,7 +436,7 @@ export default function SecuritySettings() {
                     className="flex-1"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {saveBannerMutation.isPending ? t("common.saving") : t("admin.contentManagement.feeSavingsBanner.configuration.saveBannerSettings")}
+                    {saveBannerMutation.isPending ? t("common.saving") : t("admin.securitySettings.migrationBanner.saveBannerSettings")}
                   </Button>
                   <Button
                     variant="outline"
@@ -442,7 +444,7 @@ export default function SecuritySettings() {
                     disabled={isLoadingBanner || saveBannerMutation.isPending}
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
-                    Reset
+                    {t("admin.securitySettings.migrationBanner.reset")}
                   </Button>
                   <Button
                     variant="secondary"
@@ -450,7 +452,7 @@ export default function SecuritySettings() {
                     disabled={!bannerEnabled || isLoadingBanner}
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    {showPreview ? "Hide" : "Show"} Preview
+                    {showPreview ? t("admin.securitySettings.migrationBanner.hidePreview") : t("admin.securitySettings.migrationBanner.showPreview")}
                   </Button>
                 </div>
 
@@ -458,7 +460,7 @@ export default function SecuritySettings() {
                 {showPreview && bannerEnabled && (
                   <div className="space-y-2 pt-4">
                     <Separator />
-                    <Label className="text-base">Live Preview</Label>
+                    <Label className="text-base">{t("admin.securitySettings.migrationBanner.livePreview")}</Label>
                     <div className="rounded-lg border-2 border-dashed p-4">
                       <Alert className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-2 border-amber-500/50">
                         <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -496,7 +498,7 @@ export default function SecuritySettings() {
                         </div>
                       </Alert>
                       <p className="text-xs text-muted-foreground mt-2 text-center">
-                        This is how the banner will appear on the login page
+                        {t("admin.securitySettings.migrationBanner.previewDescription")}
                       </p>
                     </div>
                   </div>
@@ -504,14 +506,14 @@ export default function SecuritySettings() {
               </div>
 
               {/* Information Alert */}
-              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
-                <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <AlertTitle>Banner Information</AlertTitle>
-                <AlertDescription className="text-sm space-y-1">
-                  <p>• Banner appears ONLY on the login page (before users sign in)</p>
-                  <p>• Once dismissed, users won't see it again (stored in localStorage)</p>
-                  <p>• Changes take effect immediately after saving</p>
-                  <p>• Toggle off to disable banner site-wide without losing content</p>
+              <Alert className="bg-slate-800/50 dark:bg-slate-900/50 border-slate-700 dark:border-slate-700">
+                <Shield className="h-4 w-4 text-blue-400 dark:text-blue-400" />
+                <AlertTitle className="text-slate-100 dark:text-slate-100">{t("admin.securitySettings.migrationBanner.bannerInformation")}</AlertTitle>
+                <AlertDescription className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                  <p>• {t("admin.securitySettings.migrationBanner.info1")}</p>
+                  <p>• {t("admin.securitySettings.migrationBanner.info2")}</p>
+                  <p>• {t("admin.securitySettings.migrationBanner.info3")}</p>
+                  <p>• {t("admin.securitySettings.migrationBanner.info4")}</p>
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -523,9 +525,9 @@ export default function SecuritySettings() {
               <div className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-amber-500" />
                 <div>
-                  <CardTitle>Withdrawal Bypass Monitoring</CardTitle>
+                  <CardTitle>{t("admin.securitySettings.withdrawalBypass.title")}</CardTitle>
                   <CardDescription>
-                    Monitor users with daily withdrawal bypass enabled and track all bypass-related changes
+                    {t("admin.securitySettings.withdrawalBypass.description")}
                   </CardDescription>
                 </div>
               </div>
@@ -536,24 +538,24 @@ export default function SecuritySettings() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Activity className="h-4 w-4" />
-                    Active Bypass Users ({bypassUsers?.length || 0})
+                    {t("admin.securitySettings.withdrawalBypass.activeUsers")} ({bypassUsers?.length || 0})
                   </h3>
                   <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
-                    Real-time
+                    {t("admin.securitySettings.withdrawalBypass.realtime")}
                   </Badge>
                 </div>
                 
                 {isLoadingUsers ? (
-                  <div className="text-sm text-muted-foreground">Loading...</div>
+                  <div className="text-sm text-muted-foreground">{t("admin.securitySettings.withdrawalBypass.loading")}</div>
                 ) : bypassUsers && bypassUsers.length > 0 ? (
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Username</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.username")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.email")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.plan")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.status")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -567,7 +569,7 @@ export default function SecuritySettings() {
                             <TableCell>
                               <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
                                 <Crown className="h-3 w-3 mr-1" />
-                                VIP Access
+                                {t("admin.securitySettings.withdrawalBypass.vipAccess")}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -576,9 +578,9 @@ export default function SecuritySettings() {
                     </Table>
                   </div>
                 ) : (
-                  <Alert>
-                    <AlertDescription>
-                      No users currently have withdrawal bypass enabled.
+                  <Alert className="bg-slate-800/50 dark:bg-slate-900/50 border-slate-700 dark:border-slate-700">
+                    <AlertDescription className="text-slate-300 dark:text-slate-300">
+                      {t("admin.securitySettings.withdrawalBypass.noUsers")}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -589,22 +591,22 @@ export default function SecuritySettings() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Recent Bypass Changes (Last 50)
+                    {t("admin.securitySettings.withdrawalBypass.recentChanges")}
                   </h3>
-                  <Badge variant="outline">Updated: {new Date().toLocaleTimeString()}</Badge>
+                  <Badge variant="outline">{t("admin.securitySettings.withdrawalBypass.updated")}: {new Date().toLocaleTimeString()}</Badge>
                 </div>
 
                 {isLoadingAudit ? (
-                  <div className="text-sm text-muted-foreground">Loading audit logs...</div>
+                  <div className="text-sm text-muted-foreground">{t("admin.securitySettings.withdrawalBypass.loadingAudit")}</div>
                 ) : bypassAuditLogs && bypassAuditLogs.length > 0 ? (
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Timestamp</TableHead>
-                          <TableHead>Username</TableHead>
-                          <TableHead>Action</TableHead>
-                          <TableHead>Admin ID</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.timestamp")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.username")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.action")}</TableHead>
+                          <TableHead>{t("admin.securitySettings.withdrawalBypass.adminId")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -623,10 +625,10 @@ export default function SecuritySettings() {
                               <TableCell>
                                 {bypassEnabled ? (
                                   <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
-                                    Enabled
+                                    {t("admin.securitySettings.withdrawalBypass.enabled")}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="secondary">Disabled</Badge>
+                                  <Badge variant="secondary">{t("admin.securitySettings.withdrawalBypass.disabled")}</Badge>
                                 )}
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground">
@@ -639,23 +641,23 @@ export default function SecuritySettings() {
                     </Table>
                   </div>
                 ) : (
-                  <Alert>
-                    <AlertDescription>
-                      No bypass-related changes recorded yet.
+                  <Alert className="bg-slate-800/50 dark:bg-slate-900/50 border-slate-700 dark:border-slate-700">
+                    <AlertDescription className="text-slate-300 dark:text-slate-300">
+                      {t("admin.securitySettings.withdrawalBypass.noChanges")}
                     </AlertDescription>
                   </Alert>
                 )}
               </div>
 
               {/* Security Information */}
-              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
-                <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <AlertTitle>Security Notes</AlertTitle>
-                <AlertDescription className="text-sm space-y-1">
-                  <p>• All bypass changes are logged with admin ID, timestamp, and user details</p>
-                  <p>• Withdrawal attempts using bypass are marked in withdrawal_attempt_logs</p>
-                  <p>• Bypass does NOT override plan limits (min/max withdrawal amounts still apply)</p>
-                  <p>• Monitor this section regularly for unauthorized bypass usage</p>
+              <Alert className="bg-slate-800/50 dark:bg-slate-900/50 border-slate-700 dark:border-slate-700">
+                <Shield className="h-4 w-4 text-blue-400 dark:text-blue-400" />
+                <AlertTitle className="text-slate-100 dark:text-slate-100">{t("admin.securitySettings.withdrawalBypass.securityNotes")}</AlertTitle>
+                <AlertDescription className="text-sm space-y-1 text-slate-300 dark:text-slate-300">
+                  <p>• {t("admin.securitySettings.withdrawalBypass.note1")}</p>
+                  <p>• {t("admin.securitySettings.withdrawalBypass.note2")}</p>
+                  <p>• {t("admin.securitySettings.withdrawalBypass.note3")}</p>
+                  <p>• {t("admin.securitySettings.withdrawalBypass.note4")}</p>
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -668,9 +670,9 @@ export default function SecuritySettings() {
                 <div className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
                   <div>
-                    <CardTitle>Country Blocking</CardTitle>
+                    <CardTitle>{t("admin.securitySettings.countryBlocking.title")}</CardTitle>
                     <CardDescription>
-                      Block registrations and logins from specific countries
+                      {t("admin.securitySettings.countryBlocking.description")}
                     </CardDescription>
                   </div>
                 </div>
@@ -683,10 +685,10 @@ export default function SecuritySettings() {
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <Label htmlFor="country-code">Country Code (ISO 3166-1 alpha-2)</Label>
+                  <Label htmlFor="country-code">{t("admin.securitySettings.countryBlocking.countryCodeLabel")}</Label>
                   <Input
                     id="country-code"
-                    placeholder="e.g., US, GB, CN"
+                    placeholder={t("admin.securitySettings.countryBlocking.countryCodePlaceholder")}
                     value={newCountry}
                     onChange={(e) => setNewCountry(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddCountry()}
@@ -700,15 +702,15 @@ export default function SecuritySettings() {
                   className="mt-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Block
+                  {t("admin.securitySettings.countryBlocking.block")}
                 </Button>
               </div>
 
               <div>
-                <Label>Blocked Countries ({blockedCountries.length})</Label>
+                <Label>{t("admin.securitySettings.countryBlocking.blockedCountries")} ({blockedCountries.length})</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {blockedCountries.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No countries blocked</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.securitySettings.countryBlocking.noCountries")}</p>
                   ) : (
                     blockedCountries.map((country) => (
                       <Badge key={country} variant="destructive" className="flex items-center gap-2">
@@ -736,9 +738,9 @@ export default function SecuritySettings() {
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
                   <div>
-                    <CardTitle>IP Address Blocking</CardTitle>
+                    <CardTitle>{t("admin.securitySettings.ipBlocking.title")}</CardTitle>
                     <CardDescription>
-                      Block specific IP addresses from accessing the platform
+                      {t("admin.securitySettings.ipBlocking.description")}
                     </CardDescription>
                   </div>
                 </div>
@@ -751,10 +753,10 @@ export default function SecuritySettings() {
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <Label htmlFor="ip-address">IP Address</Label>
+                  <Label htmlFor="ip-address">{t("admin.securitySettings.ipBlocking.ipAddressLabel")}</Label>
                   <Input
                     id="ip-address"
-                    placeholder="e.g., 192.168.1.1"
+                    placeholder={t("admin.securitySettings.ipBlocking.ipAddressPlaceholder")}
                     value={newIP}
                     onChange={(e) => setNewIP(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddIP()}
@@ -767,15 +769,15 @@ export default function SecuritySettings() {
                   className="mt-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Block
+                  {t("admin.securitySettings.ipBlocking.block")}
                 </Button>
               </div>
 
               <div>
-                <Label>Blocked IP Addresses ({blockedIPs.length})</Label>
+                <Label>{t("admin.securitySettings.ipBlocking.blockedIPs")} ({blockedIPs.length})</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {blockedIPs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No IP addresses blocked</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.securitySettings.ipBlocking.noIPs")}</p>
                   ) : (
                     blockedIPs.map((ip) => (
                       <Badge key={ip} variant="destructive" className="flex items-center gap-2">
@@ -798,9 +800,9 @@ export default function SecuritySettings() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button variant="outline">Reset to Defaults</Button>
+            <Button variant="outline">{t("admin.securitySettings.actions.resetToDefaults")}</Button>
             <Button onClick={handleSaveSettings}>
-              Save Security Settings
+              {t("admin.securitySettings.actions.saveSettings")}
             </Button>
           </div>
         </div>

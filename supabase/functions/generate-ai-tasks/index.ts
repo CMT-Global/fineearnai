@@ -738,15 +738,17 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
     let retryCount = 0;
     const SIMILARITY_THRESHOLD = 0.90; // 90% similarity threshold
     // Prepare initial tasks for insertion
-    let tasksToInsert = tasks.map((task)=>({
-        prompt: task.prompt,
-        response_a: task.response_a,
-        response_b: task.response_b,
-        correct_response: task.correct_response,
-        category,
-        difficulty,
-        is_active: true
-      }));
+    let tasksToInsert = tasks.map(task => ({
+      prompt: task.prompt,
+      response_a: task.response_a,
+      response_b: task.response_b,
+      correct_response: task.correct_response,
+      category,
+      difficulty,
+      is_active: true,
+      created_by: user.id,
+    }));
+
     // Main generation loop with retry logic
     while(remainingToGenerate > 0 && retryCount <= maxRetries){
       // Extract all prompts to check for duplicates
@@ -907,6 +909,7 @@ Make sure your NEW prompts are:
               category,
               difficulty,
               is_active: true,
+              created_by: user.id,
             }));
           } else {
             console.error('Retry AI did not return valid tasks');

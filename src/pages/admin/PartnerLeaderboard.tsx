@@ -4,7 +4,7 @@ import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Trophy, Medal, Award, TrendingUp, Flame, Target, Crown, Star, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,7 +29,22 @@ export default function PartnerLeaderboard() {
   const [dateRange, setDateRange] = useState<DateRange>("week");
   const [tierFilter, setTierFilter] = useState<string>("all");
 
-  // Force re-render when language changes
+  const now = new Date();
+  let start: string;
+  let end: string;
+  if (dateRange === "week") {
+    start = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    end = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  } else if (dateRange === "month") {
+    start = format(subDays(now, 30), "yyyy-MM-dd");
+    end = format(now, "yyyy-MM-dd");
+  } else if (dateRange === "quarter") {
+    start = format(subDays(now, 90), "yyyy-MM-dd");
+    end = format(now, "yyyy-MM-dd");
+  } else {
+    start = format(subDays(now, 365 * 10), "yyyy-MM-dd");
+    end = format(now, "yyyy-MM-dd");
+  }
 
   // Fetch leaderboard data
   const { data: leaderboard, isLoading } = useQuery({
@@ -211,6 +226,18 @@ export default function PartnerLeaderboard() {
     },
   });
 
+  const { data: tiers } = useQuery({
+    queryKey: ["partner-bonus-tiers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("partner_bonus_tiers")
+        .select("id, tier_name, tier_order")
+        .order("tier_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -239,30 +266,8 @@ export default function PartnerLeaderboard() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-64" />
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
-        <div className="space-y-4">
-          {[...Array(10)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="flex-1">
-                    <Skeleton className="h-6 w-48 mb-2" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <Skeleton className="h-8 w-24" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

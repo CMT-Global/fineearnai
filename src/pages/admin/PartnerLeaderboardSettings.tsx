@@ -18,7 +18,21 @@ const PartnerLeaderboardSettings = () => {
   const queryClient = useQueryClient();
   const [isEnabled, setIsEnabled] = useState(false);
 
-  // Force re-render when language changes
+  const { data: config, isLoading } = useQuery({
+    queryKey: ["partner-leaderboard-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .eq("key", "partner_leaderboard_enabled")
+        .single();
+      if (error) {
+        if (error.code === "PGRST116") return null;
+        throw error;
+      }
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (config) {

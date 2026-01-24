@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Globe, CheckCircle2, AlertCircle, Key, TestTube } from "lucide-react";
+import { Globe, CheckCircle2, AlertCircle, Key, TestTube } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 
@@ -186,8 +187,8 @@ export default function IPStackSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

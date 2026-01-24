@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, RotateCcw, AlertCircle, CheckCircle2, Eye, Code } from "lucide-react";
+import { Mail, RotateCcw, AlertCircle, CheckCircle2, Eye, Code, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -161,8 +162,22 @@ export default function EmailTemplateGlobalSettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<'template' | 'preview'>('template');
   
-  // Force re-render when language changes
+  // Fetch email template config
+  const { data, isLoading } = useQuery({
+    queryKey: ["email-template-global"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "email_template_global")
+        .maybeSingle();
 
+      if (error) throw error;
+      return data?.value as EmailTemplateGlobalConfig | null;
+    },
+  });
+
+  // Update state when data loads
   useEffect(() => {
     if (data) {
       setTemplateConfig({
@@ -248,10 +263,8 @@ export default function EmailTemplateGlobalSettings() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

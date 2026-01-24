@@ -280,8 +280,8 @@ const ReferralSystemManage = () => {
 
   if (authLoading || adminLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

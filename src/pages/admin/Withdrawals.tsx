@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Clock, DollarSign, Copy, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 
 interface WithdrawalRequest {
   id: string;
@@ -639,25 +641,33 @@ export default function Withdrawals() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <p>{t("admin.withdrawals.loading")}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("admin.withdrawals.loading")} />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">{t("admin.withdrawals.title")}</h1>
-        <p className="text-muted-foreground">{t("admin.withdrawals.subtitle")}</p>
-      </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="container mx-auto">
+        <AdminBreadcrumb 
+          items={[
+            { label: t("admin.sidebar.categories.financialManagement") },
+            { label: t("admin.sidebar.items.withdrawals") }
+          ]} 
+        />
+        
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">{t("admin.withdrawals.title")}</h1>
+          <p className="text-muted-foreground">{t("admin.withdrawals.subtitle")}</p>
+        </div>
 
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.pendingRequests")}</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pending}</div>
@@ -670,7 +680,7 @@ export default function Withdrawals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.completed")}</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completed}</div>
@@ -681,7 +691,7 @@ export default function Withdrawals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{t("admin.withdrawals.stats.rejected")}</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
+            <XCircle className="h-4 w-4 text-red-600 dark:text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.rejected}</div>
@@ -691,10 +701,10 @@ export default function Withdrawals() {
       </div>
 
       {/* CPAY Configuration Diagnostic Section */}
-      <Card className="mb-6 border-blue-200 bg-blue-50/50">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <AlertCircle className="h-5 w-5 text-primary" />
             {t("admin.withdrawals.cpayTokenHelper")}
           </CardTitle>
           <CardDescription>
@@ -708,7 +718,6 @@ export default function Withdrawals() {
                 onClick={() => handleFetchCPAYWalletInfo('wallet')}
                 disabled={fetchingWalletInfo}
                 variant="outline"
-                className="border-blue-300 hover:bg-blue-100"
               >
                 {fetchingWalletInfo ? (
                   <>
@@ -726,8 +735,7 @@ export default function Withdrawals() {
               <Button
                 onClick={() => handleFetchCPAYWalletInfo('deposit')}
                 disabled={fetchingWalletInfo}
-                variant="outline"
-                className="border-green-300 hover:bg-green-100"
+                variant="default"
               >
                 {fetchingWalletInfo ? (
                   <>
@@ -746,7 +754,6 @@ export default function Withdrawals() {
                 onClick={handleFetchCPAYWalletBalance}
                 disabled={fetchingBalance}
                 variant="outline"
-                className="border-purple-300 hover:bg-purple-100"
               >
                 {fetchingBalance ? (
                   <>
@@ -1461,6 +1468,7 @@ export default function Withdrawals() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

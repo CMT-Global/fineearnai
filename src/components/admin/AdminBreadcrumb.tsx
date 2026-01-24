@@ -1,5 +1,6 @@
 import { ChevronRight, LayoutDashboard } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface BreadcrumbItem {
   label: string;
@@ -17,11 +18,12 @@ interface AdminBreadcrumbProps {
  * Automatically adds "Admin" as the first item and links to /admin
  */
 export const AdminBreadcrumb = ({ items = [] }: AdminBreadcrumbProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
 
   // Always include Admin as the root
   const breadcrumbItems: BreadcrumbItem[] = [
-    { label: "Admin", path: "/admin" },
+    { label: t("admin.sidebar.admin"), path: "/admin" },
     ...items,
   ];
 

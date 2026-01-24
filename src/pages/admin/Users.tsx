@@ -23,6 +23,19 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { sanitizeSearchTerm } from "@/lib/admin-validation";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
+import { getCountryName } from "@/lib/countries";
+
+// Helper function to get country flag emoji from country code
+const getCountryFlag = (countryCode: string | null | undefined): string => {
+  if (!countryCode || countryCode.length !== 2) return "";
+  const code = countryCode.toUpperCase();
+  // Convert country code to flag emoji using regional indicator symbols
+  const flag = code
+    .split("")
+    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+  return flag;
+};
 
 function UsersContent() {
   const { t } = useTranslation();
@@ -280,7 +293,7 @@ function UsersContent() {
               <LoadingSpinner />
             ) : (
               <>
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -290,49 +303,50 @@ function UsersContent() {
                             onCheckedChange={toggleSelectAll}
                           />
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="text-left">
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleSort('username')}
-                            className="h-8 px-2"
+                            className="h-8 -ml-4 -mr-4 px-4"
                           >
                             {t("admin.users.table.username")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead>{t("admin.users.table.email")}</TableHead>
-                        <TableHead>
+                        <TableHead className="text-left">{t("admin.users.table.email")}</TableHead>
+                        <TableHead className="text-left">{t("admin.users.table.emailVerified")}</TableHead>
+                        <TableHead className="text-left">
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleSort('membership_plan')}
-                            className="h-8 px-2"
+                            className="h-8 -ml-4 -mr-4 px-4"
                           >
                             {t("admin.users.table.plan")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead>{t("admin.users.table.status")}</TableHead>
-                        <TableHead>{t("admin.users.table.roles")}</TableHead>
-                        <TableHead>{t("admin.users.table.country")}</TableHead>
-                        <TableHead>
+                        <TableHead className="text-left">{t("admin.users.table.status")}</TableHead>
+                        <TableHead className="text-left">{t("admin.users.table.roles")}</TableHead>
+                        <TableHead className="text-left">{t("admin.users.table.country")}</TableHead>
+                        <TableHead className="text-left">
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleSort('total_earned')}
-                            className="h-8 px-2"
+                            className="h-8 -ml-4 -mr-4 px-4"
                           >
                             {t("admin.users.table.earned")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
                           </Button>
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="text-left">
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleSort('created_at')}
-                            className="h-8 px-2"
+                            className="h-8 -ml-4 -mr-4 px-4"
                           >
                             {t("admin.users.table.joined")}
                             <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -350,7 +364,7 @@ function UsersContent() {
                               onCheckedChange={() => toggleSelectUser(user.id)}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-left whitespace-nowrap">
                             <Button
                               variant="link"
                               className="h-auto p-0 font-medium text-base text-foreground hover:text-primary"
@@ -359,25 +373,27 @@ function UsersContent() {
                               {user.username}
                             </Button>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">{user.email}</span>
-                              {user.email_verified === true && (
-                                <div title={t("admin.users.table.emailVerified")}>
-                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                </div>
-                              )}
-                              {user.email_verified === false && (
-                                <div title={t("admin.users.table.emailNotVerified")}>
-                                  <XCircle className="h-4 w-4 text-red-600" />
-                                </div>
-                              )}
-                            </div>
+                          <TableCell className="text-left whitespace-nowrap">
+                            <span className="text-sm">{user.email}</span>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.membership_plan}</Badge>
+                          <TableCell className="text-left whitespace-nowrap">
+                            <Badge
+                              variant={
+                                user.email_verified === true
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className="inline-flex"
+                            >
+                              {user.email_verified === true
+                                ? t("admin.users.table.verified")
+                                : t("admin.users.table.notVerified")}
+                            </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-left whitespace-nowrap">
+                            <Badge variant="outline" className="inline-flex">{user.membership_plan}</Badge>
+                          </TableCell>
+                          <TableCell className="text-left whitespace-nowrap">
                             <Badge
                               variant={
                                 user.account_status === "active"
@@ -386,32 +402,44 @@ function UsersContent() {
                                   ? "secondary"
                                   : "destructive"
                               }
+                              className="inline-flex"
                             >
                               {user.account_status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
+                          <TableCell className="text-left whitespace-nowrap">
+                            <div className="flex gap-1 items-center">
                               {user.roles?.includes('admin') && (
-                                <Badge variant="secondary" className="flex items-center gap-1">
+                                <Badge variant="secondary" className="flex items-center gap-1 inline-flex whitespace-nowrap">
                                   <Crown className="h-3 w-3" />
                                   {t("admin.users.filters.role.admin")}
                                 </Badge>
                               )}
                               {user.roles?.includes('moderator') && (
-                                <Badge variant="outline" className="flex items-center gap-1">
+                                <Badge variant="outline" className="flex items-center gap-1 inline-flex whitespace-nowrap">
                                   <Shield className="h-3 w-3" />
                                   {t("admin.users.filters.role.moderator")}
                                 </Badge>
                               )}
                               {(!user.roles || (user.roles.length === 1 && user.roles[0] === 'user')) && (
-                                <Badge variant="outline">{t("admin.users.filters.role.user")}</Badge>
+                                <Badge variant="outline" className="inline-flex whitespace-nowrap">{t("admin.users.filters.role.user")}</Badge>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>{user.country || "-"}</TableCell>
-                          <TableCell>${(user.total_earned || 0).toFixed(2)}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-left whitespace-nowrap">
+                            {user.country ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg" title={getCountryName(user.country) || user.country}>
+                                  {getCountryFlag(user.country)}
+                                </span>
+                                <span>{getCountryName(user.country) || user.country}</span>
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-left whitespace-nowrap">${(user.total_earned || 0).toFixed(2)}</TableCell>
+                          <TableCell className="text-left whitespace-nowrap">
                             {new Date(user.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">
@@ -427,7 +455,7 @@ function UsersContent() {
                       ))}
                       {users.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                             {t("admin.users.table.noUsersFound")}
                           </TableCell>
                         </TableRow>

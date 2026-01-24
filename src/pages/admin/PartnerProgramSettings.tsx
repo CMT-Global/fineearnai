@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, RotateCcw, AlertCircle, CheckCircle2, Users } from "lucide-react";
+import { Sparkles, RotateCcw, AlertCircle, CheckCircle2, Users, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PartnerWizardSlideConfig {
@@ -95,8 +96,30 @@ export default function PartnerProgramSettings() {
   const [contentConfig, setContentConfig] = useState<PartnerProgramContentConfig>(DEFAULT_PARTNER_PROGRAM_CONTENT);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Force re-render when language changes
+  // Fetch partner program config data
+  const { data, isLoading } = useQuery({
+    queryKey: ["partner-program-settings"],
+    queryFn: async () => {
+      const { data: configData, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["partner_program_config", "partner_program_content"]);
 
+      if (error) throw error;
+
+      const configMap: Record<string, any> = {};
+      configData?.forEach((row: any) => {
+        configMap[row.key] = row.value;
+      });
+
+      return {
+        program: (configMap.partner_program_config as PartnerProgramConfig) || DEFAULT_PARTNER_PROGRAM_CONFIG,
+        content: (configMap.partner_program_content as PartnerProgramContentConfig) || DEFAULT_PARTNER_PROGRAM_CONTENT,
+      };
+    },
+  });
+
+  // Update state when data loads
   useEffect(() => {
     if (data) {
       const mergedSlides = DEFAULT_PARTNER_PROGRAM_CONTENT.wizard.slides.map((defaultSlide) => {
@@ -186,10 +209,8 @@ export default function PartnerProgramSettings() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

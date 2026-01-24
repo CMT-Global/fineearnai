@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const DailyResetLogs = () => {
-  const { t } = useTranslation();
-  const { userLanguage } = useLanguage();
+  const { t, ready } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [triggeredBy, setTriggeredBy] = useState<string>('');
@@ -37,6 +37,18 @@ const DailyResetLogs = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <style>{`
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: brightness(0) invert(1);
+          cursor: pointer;
+          opacity: 1;
+        }
+        input[type="date"]::-moz-calendar-picker-indicator {
+          filter: brightness(0) invert(1);
+          cursor: pointer;
+          opacity: 1;
+        }
+      `}</style>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

@@ -36,6 +36,12 @@ const PartnerApplications = () => {
   const [filterEmployment, setFilterEmployment] = useState("all");
   const [sortBy, setSortBy] = useState("date_desc");
 
+  // Dialog state
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
+  const [customCommission, setCustomCommission] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+
   // Force re-render when language changes
 
   const getStatusBadge = (status: string) => {
@@ -63,6 +69,40 @@ const PartnerApplications = () => {
   const getCountryFlag = (code: string) => {
     if (!code || code.length !== 2) return "🌍";
     return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+  };
+
+  // Handler functions
+  const handleAction = (app: any, action: 'approve' | 'reject') => {
+    setSelectedApplication(app);
+    setActionType(action);
+    setCustomCommission("");
+    setRejectionReason("");
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedApplication) return;
+
+    try {
+      const payload: any = {
+        application_id: selectedApplication.id,
+        action: actionType,
+      };
+
+      if (actionType === 'approve' && customCommission) {
+        payload.custom_commission_rate = parseFloat(customCommission);
+      }
+
+      if (actionType === 'reject') {
+        payload.rejection_reason = rejectionReason;
+      }
+
+      await manageMutation.mutateAsync(payload);
+      setSelectedApplication(null);
+      setCustomCommission("");
+      setRejectionReason("");
+    } catch (error) {
+      console.error('Error managing application:', error);
+    }
   };
 
   // Filtered and sorted applications

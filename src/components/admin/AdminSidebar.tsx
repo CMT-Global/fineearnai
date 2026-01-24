@@ -25,7 +25,7 @@ import {
   Activity,
   Globe,
 } from "lucide-react";
-import { useState, useEffect, useMemo, memo, useCallback } from "react";
+import { useState, useEffect, useMemo, memo, useCallback, useRef } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +64,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     const stored = localStorage.getItem("adminExpandedCategories");
     return stored ? JSON.parse(stored) : ["overview"];
   });
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
 
   // Fetch failed commission count for badge
   const { data: failedCommissionCount } = useQuery({
@@ -200,6 +201,26 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     localStorage.setItem("adminExpandedCategories", JSON.stringify(expandedCategories));
   }, [expandedCategories]);
 
+  // Save scroll position periodically (AdminLayout handles restoration)
+  useEffect(() => {
+    const saveScroll = () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > 0) {
+        scrollPositionsRef.current.set(location.pathname, currentScroll);
+      }
+    };
+    
+    // Save on scroll
+    window.addEventListener('scroll', saveScroll, { passive: true });
+    
+    // Save on mount
+    saveScroll();
+    
+    return () => {
+      window.removeEventListener('scroll', saveScroll);
+    };
+  }, [location.pathname]);
+
   // Memoize current path to prevent unnecessary re-renders
   const currentPath = location.pathname;
   
@@ -234,9 +255,16 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
   };
 
   const handleNavigation = useCallback((path: string) => {
+    // Save current scroll position before navigation (AdminLayout will handle restoration)
+    const currentScroll = window.scrollY;
+    if (currentScroll > 0) {
+      scrollPositionsRef.current.set(location.pathname, currentScroll);
+    }
+    
+    // Navigate - AdminLayout will handle scroll preservation
     navigate(path);
     setOpen(false);
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const handleExitAdminMode = useCallback(() => {
     exitAdminMode();

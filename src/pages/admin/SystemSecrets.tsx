@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, Save, RotateCcw, AlertCircle, Info, Key, Globe, Mail, DollarSign, Brain } from "lucide-react";
+import { Shield, Save, RotateCcw, AlertCircle, Info, Key, Globe, Mail, DollarSign, Brain, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -44,7 +44,6 @@ const DEFAULT_SECRETS: SystemSecrets = {
 
 export default function SystemSecretsPage() {
   const { t } = useTranslation();
-  const { userLanguage } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [secrets, setSecrets] = useState<SystemSecrets>(DEFAULT_SECRETS);
@@ -156,8 +155,8 @@ export default function SystemSecretsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }
@@ -166,7 +165,7 @@ export default function SystemSecretsPage() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <AdminBreadcrumb
         items={[
-          { label: t("admin.systemSecrets.breadcrumbSecurity") },
+          { label: t("admin.systemSecrets.breadcrumbSecurity"), path: "/admin/security" },
           { label: t("admin.systemSecrets.breadcrumbSystemSecrets") },
         ]}
       />

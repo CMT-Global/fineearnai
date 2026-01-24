@@ -43,6 +43,11 @@ i18n
     resources,
     fallbackLng: 'en',
     supportedLngs: ['en', 'es', 'fr', 'de', 'it'],
+    nonExplicitSupportedLngs: true,
+    load: 'languageOnly',
+    cleanCode: true,
+    defaultNS: 'translation',
+    ns: ['translation'],
     
     // Detection options - DISABLED because LanguageContext handles language detection
     // This prevents conflicts between i18next's detector and our custom LanguageContext

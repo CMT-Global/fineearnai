@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +49,8 @@ interface PayoutScheduleDay {
 }
 
 const PaymentSettings = () => {
-  const { t } = useTranslation();
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   useLanguageSync(); // Sync language and force re-render when language changes
   
   const { user, loading: authLoading } = useAuth();

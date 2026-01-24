@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { Loader2, Ticket, Search, Info, CheckCircle2 } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import {
   Table,
   TableBody,
@@ -21,21 +21,11 @@ import {
 } from "@/components/ui/table";
 
 const VoucherMonitoring = () => {
-  const { t, i18n: i18nInstance } = useTranslation();
-  const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
+  const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: vouchers, isLoading } = useVouchers({ status: statusFilter });
-  
-  // Force re-render when language changes
-  useEffect(() => {
-    // Ensure i18n language is synced with userLanguage from context
-    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
-      i18nInstance.changeLanguage(userLanguage).catch((err) => {
-        console.error('Error changing i18n language:', err);
-      });
-    }
-  }, [userLanguage, isLanguageLoading, i18nInstance]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
@@ -85,35 +75,24 @@ const VoucherMonitoring = () => {
         <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-900 dark:text-blue-100">
-            System Transition: Auto-Redemption Active
+            {t("admin.voucherMonitoring.alerts.systemTransition.title")}
           </AlertTitle>
           <AlertDescription className="text-blue-800 dark:text-blue-200">
-            <p className="mb-2">
-              <strong>New vouchers are now automatically redeemed.</strong> When a partner sends a voucher, 
-              the recipient is instantly credited without needing to manually redeem a code.
-            </p>
-            <p className="mb-2">
-              The <strong className="text-blue-900 dark:text-blue-100">{stats.active} active voucher(s)</strong> shown 
-              below are legacy vouchers created before this update and still awaiting manual redemption.
-            </p>
-            <p className="text-sm">
-              💡 <strong>Next Step:</strong> Once the active count reaches 0 (all legacy vouchers redeemed or expired), 
-              the system can proceed to Phase 3 cleanup to remove legacy code.
-            </p>
+            <p className="mb-2" dangerouslySetInnerHTML={{ __html: t("admin.voucherMonitoring.alerts.systemTransition.newVouchers") }} />
+            <p className="mb-2" dangerouslySetInnerHTML={{ __html: t("admin.voucherMonitoring.alerts.systemTransition.legacyVouchers", { count: stats.active }) }} />
+            <p className="text-sm" dangerouslySetInnerHTML={{ __html: t("admin.voucherMonitoring.alerts.systemTransition.nextStep") }} />
           </AlertDescription>
         </Alert>
       ) : (
         <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950/20">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertTitle className="text-blue-900 dark:text-blue-100">
-            Ready for Phase 3 Cleanup
+            {t("admin.voucherMonitoring.alerts.readyForCleanup.title")}
           </AlertTitle>
           <AlertDescription className="text-green-800 dark:text-green-200">
-            <p className="mb-2">
-              ✅ <strong>No active legacy vouchers remaining.</strong> All vouchers are now using the auto-redemption system.
-            </p>
+            <p className="mb-2" dangerouslySetInnerHTML={{ __html: t("admin.voucherMonitoring.alerts.readyForCleanup.noActive") }} />
             <p className="text-sm">
-              The system is ready for Phase 3 cleanup to remove legacy voucher redemption code and simplify the codebase.
+              {t("admin.voucherMonitoring.alerts.readyForCleanup.description")}
             </p>
           </AlertDescription>
         </Alert>
