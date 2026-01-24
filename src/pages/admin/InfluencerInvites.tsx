@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +30,8 @@ interface EmailTemplate {
 }
 
 const InfluencerInvites = () => {
-  const { t } = useTranslation();
-  const { userLanguage } = useLanguage();
+  const { t, ready } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
@@ -170,7 +170,7 @@ const InfluencerInvites = () => {
     return content;
   };
 
-  if (authLoading || adminLoading || loading) {
+  if (authLoading || adminLoading || loading || !ready) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text={t("common.loading")} />

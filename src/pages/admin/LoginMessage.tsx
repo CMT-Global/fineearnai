@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBranding } from "@/contexts/BrandingContext";
+import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 
 interface LoginMessageConfig {
   enabled: boolean;
@@ -41,6 +42,15 @@ interface LoginMessageConfig {
   dismissible: boolean;
   priority: "low" | "medium" | "high";
 }
+
+const DEFAULT_CONFIG: LoginMessageConfig = {
+  enabled: false,
+  title: "",
+  body: "",
+  show_once_per_session: true,
+  dismissible: true,
+  priority: "medium",
+};
 
 const LoginMessage = () => {
   const { t } = useTranslation();
@@ -52,13 +62,33 @@ const LoginMessage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Force re-render when language changes
+  // State management
+  const [config, setConfig] = useState<LoginMessageConfig>(DEFAULT_CONFIG);
+  const [characterCount, setCharacterCount] = useState(0);
+  const [showPreview, setShowPreview] = useState(true);
+  const [showSourceCode, setShowSourceCode] = useState(false);
+
+  // Fetch login message config
+  const { data: currentConfig, isLoading } = useQuery({
+    queryKey: ["login-message-admin-config"],
+    queryFn: async (): Promise<LoginMessageConfig | null> => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "login_message")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data?.value) return null;
+      return data.value as unknown as LoginMessageConfig;
+    },
+  });
 
   // Update local state when config loads
   useEffect(() => {
-    if (currentConfig) {
-      setConfig(currentConfig);
-      setCharacterCount(currentConfig.title.length);
+    if (currentConfig && typeof currentConfig === 'object') {
+      setConfig({ ...DEFAULT_CONFIG, ...currentConfig });
+      setCharacterCount(currentConfig.title?.length || 0);
     }
   }, [currentConfig]);
 
@@ -149,7 +179,7 @@ const LoginMessage = () => {
 
   if (authLoading || adminLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" text={t("admin.loginMessage.loading")} />
       </div>
     );
@@ -161,6 +191,13 @@ const LoginMessage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
+      <AdminBreadcrumb
+        items={[
+          { label: t("admin.loginMessage.breadcrumb.communications") },
+          { label: t("admin.loginMessage.breadcrumb.loginMessage") },
+        ]}
+      />
+
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-2">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ interface ReminderConfig {
 }
 
 export function EmailVerificationRemindersSettings() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,8 +60,8 @@ export function EmailVerificationRemindersSettings() {
       // Only show error toast for actual errors, not missing records
       if (error.code !== 'PGRST116') {
       toast({
-        title: "Error",
-        description: "Failed to load reminder settings",
+        title: t("admin.emailSettings.verificationReminders.toasts.errorLoading"),
+        description: t("admin.emailSettings.verificationReminders.toasts.errorLoadingDescription"),
         variant: "destructive",
       });
       }
@@ -83,14 +85,14 @@ export function EmailVerificationRemindersSettings() {
       if (error) throw error;
 
       toast({
-        title: "✅ Settings Saved",
-        description: "Email verification reminder settings updated successfully",
+        title: t("admin.emailSettings.verificationReminders.toasts.settingsSaved"),
+        description: t("admin.emailSettings.verificationReminders.toasts.settingsSavedDescription"),
       });
     } catch (error: any) {
       console.error("Error saving reminder config:", error);
       toast({
-        title: "Error",
-        description: "Failed to save reminder settings",
+        title: t("admin.emailSettings.verificationReminders.toasts.errorSaving"),
+        description: t("admin.emailSettings.verificationReminders.toasts.errorSavingDescription"),
         variant: "destructive",
       });
     } finally {
@@ -108,14 +110,17 @@ export function EmailVerificationRemindersSettings() {
       if (error) throw error;
 
       toast({
-        title: "✅ Reminders Sent",
-        description: `Successfully sent ${data.sent} reminder emails to ${data.processed} unverified users`,
+        title: t("admin.emailSettings.verificationReminders.toasts.remindersSent"),
+        description: t("admin.emailSettings.verificationReminders.toasts.remindersSentDescription", {
+          sent: data.sent,
+          processed: data.processed,
+        }),
       });
     } catch (error: any) {
       console.error("Error sending test reminders:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send test reminders",
+        title: t("admin.emailSettings.verificationReminders.toasts.errorSending"),
+        description: error.message || t("admin.emailSettings.verificationReminders.toasts.errorSendingDescription"),
         variant: "destructive",
       });
     } finally {
@@ -140,10 +145,10 @@ export function EmailVerificationRemindersSettings() {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Email Verification Reminders
+              {t("admin.emailSettings.verificationReminders.title")}
             </CardTitle>
             <CardDescription>
-              Configure automated reminders for users who haven't verified their email addresses
+              {t("admin.emailSettings.verificationReminders.description")}
             </CardDescription>
           </div>
           <Button
@@ -155,12 +160,12 @@ export function EmailVerificationRemindersSettings() {
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
+                {t("admin.emailSettings.verificationReminders.sending")}
               </>
             ) : (
               <>
                 <Mail className="h-4 w-4 mr-2" />
-                Send Test Reminders Now
+                {t("admin.emailSettings.verificationReminders.sendTestReminders")}
               </>
             )}
           </Button>
@@ -170,17 +175,16 @@ export function EmailVerificationRemindersSettings() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            These settings control the automated email verification reminder system. 
-            Reminders are sent via the scheduled edge function that runs daily.
+            {t("admin.emailSettings.verificationReminders.alertDescription")}
           </AlertDescription>
         </Alert>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Enable Reminders</Label>
+              <Label>{t("admin.emailSettings.verificationReminders.enableReminders")}</Label>
               <p className="text-sm text-muted-foreground">
-                Automatically send verification reminders to unverified users
+                {t("admin.emailSettings.verificationReminders.enableRemindersDescription")}
               </p>
             </div>
             <Switch
@@ -197,7 +201,7 @@ export function EmailVerificationRemindersSettings() {
                 <div className="space-y-2">
                   <Label htmlFor="first_reminder">
                     <Clock className="h-4 w-4 inline mr-2" />
-                    First Reminder (days after signup)
+                    {t("admin.emailSettings.verificationReminders.firstReminder")}
                   </Label>
                   <Input
                     id="first_reminder"
@@ -215,7 +219,7 @@ export function EmailVerificationRemindersSettings() {
 
                 <div className="space-y-2">
                   <Label htmlFor="second_reminder">
-                    Second Reminder (days after signup)
+                    {t("admin.emailSettings.verificationReminders.secondReminder")}
                   </Label>
                   <Input
                     id="second_reminder"
@@ -233,7 +237,7 @@ export function EmailVerificationRemindersSettings() {
 
                 <div className="space-y-2">
                   <Label htmlFor="third_reminder">
-                    Third Reminder (days after signup)
+                    {t("admin.emailSettings.verificationReminders.thirdReminder")}
                   </Label>
                   <Input
                     id="third_reminder"
@@ -251,7 +255,7 @@ export function EmailVerificationRemindersSettings() {
 
                 <div className="space-y-2">
                   <Label htmlFor="reminder_frequency">
-                    Reminder Frequency (days between reminders)
+                    {t("admin.emailSettings.verificationReminders.reminderFrequency")}
                   </Label>
                   <Input
                     id="reminder_frequency"
@@ -269,7 +273,7 @@ export function EmailVerificationRemindersSettings() {
 
                 <div className="space-y-2">
                   <Label htmlFor="max_reminders">
-                    Maximum Reminders per User
+                    {t("admin.emailSettings.verificationReminders.maxReminders")}
                   </Label>
                   <Input
                     id="max_reminders"
@@ -289,12 +293,14 @@ export function EmailVerificationRemindersSettings() {
 
               <Alert>
                 <AlertDescription className="text-xs">
-                  <strong>How it works:</strong> First reminder sent after{" "}
-                  {config.first_reminder_days} days. Second reminder at{" "}
-                  {config.second_reminder_days} days. Third at{" "}
-                  {config.third_reminder_days} days. After that, reminders every{" "}
-                  {config.reminder_frequency_days} days until max{" "}
-                  {config.max_reminders} reminders reached.
+                  <strong>{t("admin.emailSettings.verificationReminders.howItWorks")}</strong>{" "}
+                  {t("admin.emailSettings.verificationReminders.howItWorksDescription", {
+                    first: config.first_reminder_days,
+                    second: config.second_reminder_days,
+                    third: config.third_reminder_days,
+                    frequency: config.reminder_frequency_days,
+                    max: config.max_reminders,
+                  })}
                 </AlertDescription>
               </Alert>
             </>
@@ -303,16 +309,16 @@ export function EmailVerificationRemindersSettings() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={fetchConfig} disabled={isSaving}>
-            Reset
+            {t("admin.emailSettings.verificationReminders.reset")}
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {t("admin.emailSettings.verificationReminders.saving")}
               </>
             ) : (
-              "Save Settings"
+              t("admin.emailSettings.verificationReminders.saveSettings")
             )}
           </Button>
         </div>

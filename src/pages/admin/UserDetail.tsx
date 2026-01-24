@@ -39,6 +39,7 @@ import { ChangePlanDialog } from "@/components/admin/dialogs/ChangePlanDialog";
 import { SuspendUserDialog } from "@/components/admin/dialogs/SuspendUserDialog";
 import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
 import { ManageRolesDialog } from "@/components/admin/dialogs/ManageRolesDialog";
+import { EditProfileDialog } from "@/components/admin/dialogs/EditProfileDialog";
 
 function UserDetailContent() {
   const { t } = useTranslation();
@@ -56,6 +57,7 @@ function UserDetailContent() {
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [manageRolesDialogOpen, setManageRolesDialogOpen] = useState(false);
+  const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
 
   // User roles state
   const [userRoles, setUserRoles] = useState<string[]>(['user']);
@@ -184,7 +186,11 @@ function UserDetailContent() {
   }
 
   if (authLoading || adminLoading || loadingDetail) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   // Show error UI if fetch failed
@@ -246,38 +252,10 @@ function UserDetailContent() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/admin/users")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("admin.userDetail.backToUsers")}
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">{profile.username}</h1>
-              <p className="text-sm text-muted-foreground">{profile.email}</p>
-            </div>
-            <div className="flex gap-2">
-              <Badge
-                variant={
-                  profile.account_status === "active"
-                    ? "default"
-                    : profile.account_status === "suspended"
-                    ? "secondary"
-                    : "destructive"
-                }
-              >
-                {profile.account_status}
-              </Badge>
-              {userRoles?.includes('admin') && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Crown className="h-3 w-3" />
-                  {t("admin.userDetail.admin")}
-                </Badge>
-              )}
-              {userRoles?.includes('moderator') && (
-                <Badge variant="outline">{t("admin.userDetail.moderator")}</Badge>
-              )}
-            </div>
-          </div>
+          <Button variant="ghost" onClick={() => navigate("/admin/users")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t("admin.userDetail.backToUsers")}
+          </Button>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -303,7 +281,7 @@ function UserDetailContent() {
           <TabsContent value="overview">
             <OverviewTab 
               userData={userDetail} 
-              onEditProfile={() => toast.info(t("admin.toasts.useInlineEditingInOverviewTab"))}
+              onEditProfile={() => setEditProfileDialogOpen(true)}
               onChangePlan={() => setChangePlanDialogOpen(true)}
               onSuspend={() => setSuspendDialogOpen(true)}
               onBan={() => setBanDialogOpen(true)}
@@ -344,6 +322,19 @@ function UserDetailContent() {
         {/* Dialogs */}
         {userDetail && (
           <>
+            <EditProfileDialog
+              open={editProfileDialogOpen}
+              onOpenChange={setEditProfileDialogOpen}
+              userId={userId!}
+              username={profile.username}
+              currentProfile={{
+                full_name: profile.full_name,
+                phone: profile.phone,
+                country: profile.country,
+              }}
+              onSuccess={handleUserUpdated}
+            />
+
             <WalletAdjustmentDialog
               open={walletDialogOpen}
               onOpenChange={setWalletDialogOpen}

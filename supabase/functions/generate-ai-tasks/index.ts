@@ -466,6 +466,7 @@ CRITICAL REQUIREMENTS FOR ALL LEVELS:
       category,
       difficulty,
       is_active: true,
+      created_by: user.id,
     }));
 
     // Main generation loop with retry logic
@@ -666,6 +667,7 @@ Make sure your NEW prompts are:
               category,
               difficulty,
               is_active: true,
+              created_by: user.id,
             }));
           } else {
             console.error('Retry AI did not return valid tasks');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +32,14 @@ export default function PartnerBonusTiers() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTier, setEditingTier] = useState<BonusTier | null>(null);
+  const [formData, setFormData] = useState({
+    tier_name: "",
+    min_weekly_sales: "",
+    max_weekly_sales: "",
+    bonus_percentage: "",
+    tier_order: "",
+    is_active: true,
+  });
 
   // Force re-render when language changes
 
@@ -437,7 +445,7 @@ export default function PartnerBonusTiers() {
                 <Award className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Bonus Tiers</h3>
                 <p className="text-muted-foreground mb-4">Get started by creating your first bonus tier</p>
-                <Button onClick={() => setIsDialogOpen(true)}>
+                <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Tier
                 </Button>

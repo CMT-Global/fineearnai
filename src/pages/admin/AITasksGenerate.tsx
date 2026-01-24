@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 const TASK_CATEGORIES = [
   "Sentiment Analysis",
@@ -39,21 +40,11 @@ const AITasksGenerate = () => {
   const [difficulty, setDifficulty] = useState("");
   const [quantity, setQuantity] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  // Force re-render when language changes
-  useEffect(() => {
-    // Ensure i18n language is synced with userLanguage from context
-    if (i18nInstance.language !== userLanguage && !isLanguageLoading) {
-      i18nInstance.changeLanguage(userLanguage).catch((err) => {
-        console.error('Error changing i18n language:', err);
-      });
-    }
-  }, [userLanguage, isLanguageLoading, i18nInstance]);
 
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>{t("common.loading")}</p>
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

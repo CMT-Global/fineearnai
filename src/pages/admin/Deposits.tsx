@@ -593,12 +593,12 @@ const Deposits = () => {
             )}
 
             {/* Filtered Totals Summary */}
-            <Card className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800">
+            <Card className="mb-6 bg-gradient-to-r from-green-950/30 to-emerald-950/30 border-green-800/50 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800">
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">{t("admin.deposits.regularDeposits")}</p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-500">
                       {formatCurrency(filteredDepositTotals.regularAmount)}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -609,7 +609,7 @@ const Deposits = () => {
                   {depositTypeFilter === 'all' && (
                     <div>
                       <p className="text-sm text-muted-foreground">{t("admin.deposits.adminAdjustments")}</p>
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-500">
                         {formatCurrency(filteredDepositTotals.adminAmount)}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -620,7 +620,7 @@ const Deposits = () => {
                   
                   <div>
                     <p className="text-sm text-muted-foreground">{t("admin.deposits.totalFilteredView")}</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold text-foreground">
                       {formatCurrency(filteredDepositTotals.totalAmount)}
                     </p>
                     <p className="text-xs text-muted-foreground">

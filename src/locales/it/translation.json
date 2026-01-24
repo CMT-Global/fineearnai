@@ -928,6 +928,66 @@
         "custom": "Custom"
       }
     },
+    "systemSecrets": {
+      "title": "Segreti di Sistema",
+      "subtitle": "Gestisci chiavi API e credenziali per le integrazioni della piattaforma",
+      "breadcrumbSecurity": "Sicurezza",
+      "breadcrumbSystemSecrets": "Segreti di Sistema",
+      "discardChanges": "Annulla Modifiche",
+      "saveSecrets": "Salva Segreti",
+      "securityWarning": "Avviso di Sicurezza",
+      "securityWarningDescription": "Queste chiavi forniscono l'accesso a servizi sensibili. Le modifiche hanno effetto immediato su tutti i componenti del sistema. Se una chiave viene lasciata vuota, il sistema utilizzerà le variabili d'ambiente configurate in Supabase.",
+      "tabs": {
+        "ai": "IA",
+        "payment": "Pagamento",
+        "email": "Email",
+        "geo": "Geo",
+        "currency": "Valuta"
+      },
+      "gemini": {
+        "title": "API Google Gemini",
+        "description": "Configura la chiave API per i servizi IA di Google Gemini",
+        "apiKey": "Chiave API",
+        "apiKeyPlaceholder": "Inserisci la tua chiave API Gemini"
+      },
+      "cpay": {
+        "title": "Gateway di Pagamento CPAY",
+        "description": "Configura le credenziali per l'elaborazione dei pagamenti CPAY",
+        "walletId": "ID Portafoglio",
+        "walletIdPlaceholder": "Inserisci ID portafoglio",
+        "usdtTokenId": "ID Token USDT",
+        "usdtTokenIdPlaceholder": "Inserisci ID token USDT",
+        "publicKey": "Chiave Pubblica",
+        "publicKeyPlaceholder": "Inserisci chiave pubblica",
+        "privateKey": "Chiave Privata",
+        "privateKeyPlaceholder": "Inserisci chiave privata",
+        "passphrase": "Passphrase",
+        "passphrasePlaceholder": "Inserisci passphrase"
+      },
+      "resend": {
+        "title": "Servizio Email Resend",
+        "description": "Configura la chiave API per il servizio di consegna email Resend",
+        "apiKey": "Chiave API",
+        "apiKeyPlaceholder": "Inserisci la tua chiave API Resend"
+      },
+      "ipstack": {
+        "title": "Geolocalizzazione IPStack",
+        "description": "Configura la chiave API per i servizi di geolocalizzazione IPStack",
+        "accessKey": "Chiave di Accesso",
+        "accessKeyPlaceholder": "Inserisci la tua chiave di accesso IPStack"
+      },
+      "openexchange": {
+        "title": "OpenExchangeRates",
+        "description": "Configura l'ID app per il servizio di conversione valuta OpenExchangeRates",
+        "appId": "ID App",
+        "appIdPlaceholder": "Inserisci il tuo ID app OpenExchangeRates"
+      },
+      "secretsSaved": "Segreti Salvati",
+      "secretsSavedDescription": "Tutti i segreti sono stati salvati con successo",
+      "errorSaving": "Errore nel Salvataggio dei Segreti",
+      "changesDiscarded": "Modifiche Annullate",
+      "changesDiscardedDescription": "Tutte le modifiche non salvate sono state annullate"
+    },
     "transactions": {
       "title": "Transaction Logs",
       "subtitle": "Comprehensive audit trail of all platform transactions",
@@ -1080,6 +1140,8 @@
         "actions": "Actions",
         "emailVerified": "Email Verified",
         "emailNotVerified": "Email Not Verified",
+        "verified": "Verificato",
+        "notVerified": "Non Verificato",
         "noUsersFound": "No users found"
       },
       "errorTitle": "User Management Error",
@@ -2043,6 +2105,19 @@
       "completeHistory": "Complete voucher transaction history",
       "unknown": "Unknown",
       "noVouchersFound": "No vouchers found",
+      "alerts": {
+        "systemTransition": {
+          "title": "Transizione del Sistema: Auto-Riscatto Attivo",
+          "newVouchers": "<strong>I nuovi voucher vengono ora riscattati automaticamente.</strong> Quando un partner invia un voucher, il destinatario viene accreditato istantaneamente senza dover riscattare manualmente un codice.",
+          "legacyVouchers": "I <strong>{{count}} voucher attivo/i</strong> mostrati di seguito sono voucher legacy creati prima di questo aggiornamento e ancora in attesa di riscatto manuale.",
+          "nextStep": "💡 <strong>Prossimo Passo:</strong> Una volta che il conteggio attivo raggiunge 0 (tutti i voucher legacy riscattati o scaduti), il sistema può procedere alla pulizia della Fase 3 per rimuovere il codice legacy."
+        },
+        "readyForCleanup": {
+          "title": "Pronto per la Pulizia della Fase 3",
+          "noActive": "✅ <strong>Nessun voucher legacy attivo rimanente.</strong> Tutti i voucher utilizzano ora il sistema di auto-riscatto.",
+          "description": "Il sistema è pronto per la pulizia della Fase 3 per rimuovere il codice di riscatto voucher legacy e semplificare la codebase."
+        }
+      },
       "stats": {
         "totalVouchers": "Total Vouchers",
         "active": "Active",
@@ -2145,6 +2220,10 @@
     "loginMessage": {
       "title": "Login Message Configuration",
       "subtitle": "Customize the welcome message displayed to users after they log in",
+      "breadcrumb": {
+        "communications": "Comunicazioni",
+        "loginMessage": "Messaggio di accesso"
+      },
       "howItWorks": "How it works",
       "howItWorksDescription": "This message appears as a pop-up dialog immediately after users log in. You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session. Use the rich text editor toolbar to format your message with bold, italic, headings, lists, and links.",
       "loading": "Loading configuration...",
@@ -2305,6 +2384,515 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the wallet page and deposit dialog.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "dashboardContent": {
+        "title": "Dashboard Content Settings",
+        "subtitle": "Configure the content and visibility of sections displayed on the user dashboard",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "Dashboard content settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "platformName": {
+          "title": "Platform Name",
+          "description": "The platform name used throughout the application and in email communications",
+          "label": "Platform Name"
+        },
+        "earnersGuide": {
+          "title": "Earners Guide Section",
+          "description": "Control the visibility of the earners guide section on the dashboard",
+          "showLabel": "Show Earners Guide",
+          "showDescription": "Display the earners guide section on the dashboard for {{platformName}} users"
+        },
+        "guidesSection": {
+          "title": "Deposit & Withdrawal Guides Section",
+          "description": "Configure the deposit and withdrawal guides section displayed on the dashboard",
+          "showLabel": "Show Guides Section",
+          "showDescription": "Display the deposit and withdrawal guides section on the dashboard",
+          "titleLabel": "Section Title",
+          "descriptionLabel": "Section Description"
+        },
+        "socialSection": {
+          "title": "Social Media Links Section",
+          "description": "Configure social media links displayed on the dashboard",
+          "showLabel": "Show Social Links",
+          "showDescription": "Display social media links section on the dashboard",
+          "facebookUrl": "Facebook URL",
+          "instagramUrl": "Instagram URL",
+          "tiktokUrl": "TikTok URL"
+        },
+        "changesApplied": "Changes will be applied to the dashboard after saving",
+        "resetToDefaults": "Reset to Defaults",
+        "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
+        "errorMessage": "Failed to save settings. Please try again."
+      },
+      "howItWorks": {
+        "title": "How It Works Content Settings",
+        "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "How It Works content settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "pageVisibility": {
+          "title": "Page Visibility",
+          "description": "Control whether the How It Works page is shown to new users",
+          "showLabel": "Show How It Works Page",
+          "showDescription": "Display the How It Works onboarding page to new users when they first log in"
+        },
+        "slideTitle": "Slide {{number}}: {{title}}",
+        "slideDescription": "Configure the content for this slide",
+        "untitled": "Untitled",
+        "titleLabel": "Title",
+        "subtitleLabel": "Subtitle",
+        "descriptionLabel": "Description",
+        "platformNameTip": "Tip: Use {{platformName}} in the description to automatically replace with the configured platform name (currently: {{platformName}})",
+        "changesApplied": "Changes will be applied to the How It Works page after saving",
+        "resetToDefaults": "Reset to Defaults",
+        "successMessage": "Settings saved successfully! Changes will be reflected on the How It Works page.",
+        "errorMessage": "Failed to save settings. Please try again."
+      },
+      "seoSettings": {
+        "title": "SEO & Social Sharing Settings",
+        "subtitle": "Configure SEO metadata and social media sharing settings for your platform",
+        "discardChanges": "Discard Changes",
+        "saveSettings": "Save Settings",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "SEO and branding settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "tabs": {
+          "branding": "Branding",
+          "seo": "SEO",
+          "social": "Social Sharing"
+        },
+        "branding": {
+          "title": "Platform Branding",
+          "description": "Configure your platform's name, logo, and URL used across the site and in SEO metadata",
+          "platformName": "Platform Name",
+          "platformNameHint": "This name will be used throughout the platform and in SEO metadata",
+          "platformLogo": "Platform Logo URL",
+          "platformLogoHint": "Path to your logo image (e.g., /logo_without_bg_text.png)",
+          "platformUrl": "Platform URL"
+        },
+        "seo": {
+          "title": "SEO Configuration",
+          "description": "Configure basic SEO metadata for search engines",
+          "pageTitle": "Page Title",
+          "pageTitleHint": "The title that appears in browser tabs and search results (recommended: 50-60 characters)",
+          "metaDescription": "Meta Description",
+          "metaDescriptionHint": "Brief description shown in search results (recommended: 150-160 characters)",
+          "keywords": "Keywords",
+          "keywordsHint": "Comma-separated keywords for SEO (e.g., earn online, AI tasks, ProfitChips)",
+          "canonicalUrl": "Canonical URL",
+          "robotsMeta": "Robots Meta Tag",
+          "faviconUrl": "Favicon URL",
+          "faviconUrlHint": "Path to your favicon image (e.g., /logo_without_bg_text.png)",
+          "tipTitle": "SEO Best Practices",
+          "tipDescription": "Keep titles under 60 characters, descriptions under 160 characters, and use relevant keywords naturally. Update these settings regularly to reflect your platform's current focus."
+        },
+        "social": {
+          "openGraph": {
+            "title": "Open Graph (Facebook)",
+            "description": "Configure how your platform appears when shared on Facebook and other Open Graph-compatible platforms",
+            "ogTitle": "OG Title",
+            "ogDescription": "OG Description",
+            "ogImage": "OG Image URL",
+            "ogUrl": "OG URL"
+          },
+          "twitter": {
+            "title": "Twitter Cards",
+            "description": "Configure how your platform appears when shared on Twitter/X",
+            "twitterTitle": "Twitter Title",
+            "twitterDescription": "Twitter Description",
+            "twitterImage": "Twitter Image URL",
+            "cardType": "Card Type"
+          }
+        }
+      },
+      "reamazeSettings": {
+        "breadcrumb": {
+          "communications": "Comunicazioni",
+          "liveChatSettings": "Impostazioni Chat Live"
+        },
+        "title": "Impostazioni Chat Live Reamaze",
+        "subtitle": "Configura il widget di chat live Reamaze per il supporto clienti",
+        "discardChanges": "Annulla Modifiche",
+        "saveSettings": "Salva Impostazioni",
+        "important": "Importante",
+        "importantDescription": "Il codice di incorporamento verrà iniettato in tutte le pagine quando la chat live è abilitata. Assicurati che il codice sia corretto e formattato correttamente.",
+        "enableLiveChat": {
+          "title": "Abilita Chat Live",
+          "description": "Attiva o disattiva il widget di chat live Reamaze su tutta la piattaforma"
+        },
+        "embedCode": {
+          "title": "Codice di Incorporamento",
+          "description": "Incolla qui il tuo codice di incorporamento Reamaze. Questo codice verrà iniettato in tutte le pagine quando la chat live è abilitata.",
+          "label": "Codice di Incorporamento Reamaze",
+          "howToGetCode": "Come ottenere il tuo codice di incorporamento Reamaze:",
+          "step1": "Accedi al tuo account Reamaze",
+          "step2": "Vai a Impostazioni > Integrazioni",
+          "step3": "Trova la sezione Codice di Incorporamento",
+          "step4": "Copia il codice di incorporamento completo (inclusi tutti i tag script)",
+          "step5": "Incollalo nell'area di testo sopra"
+        },
+        "settingsSaved": "Impostazioni salvate",
+        "settingsSavedDescription": "Le impostazioni della chat live Reamaze sono state aggiornate con successo.",
+        "errorSaving": "Errore nel salvataggio delle impostazioni",
+        "errorSavingDescription": "Impossibile salvare le impostazioni. Riprova.",
+        "changesDiscarded": "Modifiche annullate",
+        "changesDiscardedDescription": "Tutte le modifiche non salvate sono state annullate."
+      }
+    },
+    "emailSettings": {
+      "title": "Impostazioni Email",
+      "subtitle": "Configura le impostazioni di invio email e i promemoria di verifica",
+      "breadcrumb": {
+        "communications": "Comunicazioni",
+        "emailSettings": "Impostazioni Email"
+      },
+      "actions": {
+        "resetToDefaults": "Ripristina Predefiniti",
+        "sendTestEmail": "Invia Email di Test",
+        "saveSettings": "Salva Impostazioni"
+      },
+      "senderInformation": {
+        "title": "Informazioni Mittente",
+        "description": "Configura chi invia le email. L'indirizzo del mittente deve essere verificato in Resend.",
+        "fromAddress": "Indirizzo Mittente *",
+        "fromName": "Nome Mittente *"
+      },
+      "replyToInformation": {
+        "title": "Informazioni Risposta",
+        "description": "Dove verranno inviate le risposte degli utenti.",
+        "replyToAddress": "Indirizzo di Risposta *",
+        "replyToName": "Nome di Risposta *"
+      },
+      "platformInformation": {
+        "title": "Informazioni Piattaforma",
+        "description": "Dettagli di base della piattaforma utilizzati nelle email e nei modelli.",
+        "platformName": "Nome Piattaforma *",
+        "platformUrl": "URL Piattaforma *",
+        "supportEmail": "Email di Supporto *",
+        "adminNotificationEmail": "Email Notifiche Admin *",
+        "footerText": "Testo Piè di Pagina Email"
+      },
+      "testEmailSent": "Email di test inviata con successo! Controlla la tua casella di posta.",
+      "verificationReminders": {
+        "title": "Promemoria Verifica Email",
+        "description": "Configura promemoria automatizzati per gli utenti che non hanno verificato i propri indirizzi email",
+        "sendTestReminders": "Invia Promemoria di Test Ora",
+        "sending": "Invio in corso...",
+        "alertDescription": "Queste impostazioni controllano il sistema automatizzato di promemoria per la verifica email. I promemoria vengono inviati tramite la funzione programmata che viene eseguita quotidianamente.",
+        "enableReminders": "Abilita Promemoria",
+        "enableRemindersDescription": "Invia automaticamente promemoria di verifica agli utenti non verificati",
+        "firstReminder": "Primo Promemoria (giorni dopo la registrazione)",
+        "secondReminder": "Secondo Promemoria (giorni dopo la registrazione)",
+        "thirdReminder": "Terzo Promemoria (giorni dopo la registrazione)",
+        "reminderFrequency": "Frequenza Promemoria (giorni tra i promemoria)",
+        "maxReminders": "Numero Massimo di Promemoria per Utente",
+        "howItWorks": "Come funziona:",
+        "howItWorksDescription": "Primo promemoria inviato dopo {{first}} giorni. Secondo promemoria a {{second}} giorni. Terzo a {{third}} giorni. Dopo di che, promemoria ogni {{frequency}} giorni fino a raggiungere un massimo di {{max}} promemoria.",
+        "reset": "Reimposta",
+        "saveSettings": "Salva Impostazioni",
+        "saving": "Salvataggio in corso...",
+        "toasts": {
+          "settingsSaved": "Impostazioni Salvate",
+          "settingsSavedDescription": "Impostazioni dei promemoria di verifica email aggiornate con successo",
+          "errorSaving": "Errore",
+          "errorSavingDescription": "Errore nel salvataggio delle impostazioni dei promemoria",
+          "remindersSent": "Promemoria Inviati",
+          "remindersSentDescription": "{{sent}} email di promemoria inviate con successo a {{processed}} utenti non verificati",
+          "errorSending": "Errore",
+          "errorSendingDescription": "Errore nell'invio dei promemoria di test",
+          "errorLoading": "Errore",
+          "errorLoadingDescription": "Errore nel caricamento delle impostazioni dei promemoria"
+        }
+      },
+      "toasts": {
+        "settingsSaved": "Impostazioni salvate",
+        "settingsSavedDescription": "Le impostazioni email sono state aggiornate con successo.",
+        "errorSaving": "Errore nel salvataggio delle impostazioni",
+        "testEmailSent": "Email di test inviata",
+        "testEmailSentDescription": "Controlla la tua casella di posta per l'email di test.",
+        "errorSendingTest": "Errore nell'invio dell'email di test",
+        "validationError": "Errore di validazione",
+        "validationErrorDescription": "Per favore correggi gli errori prima di salvare.",
+        "settingsReset": "Impostazioni reimpostate",
+        "settingsResetDescription": "Le impostazioni email sono state reimpostate ai valori predefiniti."
+      }
+    },
+    "emailTemplates": {
+      "title": "Email Template Management",
+      "subtitle": "Create and manage reusable email templates",
+      "backToAdmin": "Back to Admin",
+      "loading": "Loading templates...",
+      "cardTitle": "Email Templates",
+      "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
+      "addTemplate": "Add Template",
+      "edit": "Edit",
+      "create": "Create",
+      "update": "Aggiorna",
+      "template": "Modello",
+      "emailTemplate": "Email Template",
+      "configureTemplate": "Configure template details and content",
+      "form": {
+        "templateName": "Template Name *",
+        "templateNamePlaceholder": "e.g., password_reset_notification",
+        "templateType": "Template Type *",
+        "selectTemplateType": "Select template type",
+        "emailSubject": "Email Subject *",
+        "emailSubjectPlaceholder": "e.g., Reset Your Password",
+        "subjectVariablesHint": "You can use variables like {{username}} in the subject",
+        "emailBody": "Email Body *",
+        "emailBodyPlaceholder": "Compose your email content here. Use {{variable}} for placeholders.",
+        "proTips": "Pro Tips:",
+        "proTip1": "Toggle \"Professional Template\" above for beautiful email styling",
+        "proTip2": "Use the ✨ button in toolbar to insert styled buttons",
+        "proTip3": "Click variables to copy, or use + button to insert directly",
+        "activeTemplate": "Active Template"
+      },
+      "availableVariables": "Available Variables",
+      "variablesHint": "Click to copy or use + to insert directly",
+      "clickToCopy": "Clicca per copiare",
+      "insertIntoEditor": "Inserisci nell'editor",
+      "previewTemplate": "Anteprima modello",
+      "sendTestEmail": "Invia email di test",
+      "editTemplateTooltip": "Modifica modello",
+      "deleteTemplateTooltip": "Elimina modello",
+      "noTemplatesFound": "No templates found",
+      "tableHeaders": {
+        "name": "Nome",
+        "subject": "Oggetto",
+        "type": "Tipo",
+        "variables": "Variabili",
+        "status": "Stato",
+        "actions": "Azioni"
+      },
+      "active": "Active",
+      "inactive": "Inactive",
+      "editTemplate": "Edit Template",
+      "preview": {
+        "title": "Template Preview",
+        "visualPreview": "Visual Preview",
+        "htmlCode": "HTML Code",
+        "emailSubject": "Email Subject",
+        "emailBody": "Email Body",
+        "sampleDataNote": "Preview shows sample data for all variables",
+        "variablesUsed": "Variables Used",
+        "rawHtmlCode": "Raw HTML Code",
+        "htmlCopied": "HTML code copied to clipboard!",
+        "copyHtmlCode": "Copy HTML Code"
+      },
+      "testEmail": {
+        "title": "Send Test Email",
+        "subjectPreview": "Subject Preview",
+        "availableVariables": "Available Variables",
+        "variablesNote": "These variables will be replaced with sample data in the test email.",
+        "testEmailAddress": "Test Email Address *",
+        "emailPlaceholder": "your.email@example.com",
+        "emailHint": "Enter the email address where you want to receive the test email.",
+        "sampleData": "Sample Data",
+        "sampleDataDescription": "The test email will use predefined sample data for all variables:",
+        "sampleUsername": "Username: TestUser",
+        "sampleEmail": "Email: {{email}}",
+        "yourEmail": "your email",
+        "sampleFullName": "Full Name: Test User",
+        "sampleLinks": "Links: Sample URLs with test tokens",
+        "samplePlanDetails": "Plan details: Premium Plan, $500.00 earnings",
+        "sending": "Sending...",
+        "sendTestEmail": "Send Test Email",
+        "invalidEmail": "Please enter a valid email address",
+        "success": "Test email sent to {{email}}!",
+        "successDescription": "Check your inbox to verify the email.",
+        "failed": "Failed to send test email",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "success": {
+        "templateUpdated": "Template updated successfully",
+        "templateCreated": "Template created successfully",
+        "templateDeleted": "Template deleted",
+        "templateActivated": "Template activated",
+        "templateDeactivated": "Template deactivated"
+      },
+      "errors": {
+        "failedToLoad": "Failed to load email templates",
+        "failedToSave": "Failed to save template",
+        "failedToDelete": "Failed to delete template",
+        "failedToUpdate": "Failed to update template"
+      },
+      "validation": {
+        "fillAllFields": "Please fill in all required fields",
+        "invalidJsonFormat": "Invalid JSON format for variables. Use format: [\"var1\", \"var2\"]"
+      },
+      "confirm": {
+        "delete": "Are you sure you want to delete this template?"
+      }
+    },
+    "emailTemplateGlobalSettings": {
+      "title": "Global Email Template",
+      "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "availableVariables": "Available Variables",
+      "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
+      "tabs": {
+        "editTemplate": "Edit Template",
+        "preview": "Preview"
+      },
+      "template": {
+        "title": "Email Template HTML",
+        "description": "Edit the HTML template. The {{content}} variable will be replaced with the actual email body.",
+        "htmlTemplate": "HTML Template",
+        "placeholder": "Enter HTML template...",
+        "hint": "This template wraps all emails. Make sure to include {{content}} where the email body should appear."
+      },
+      "preview": {
+        "title": "Email Preview",
+        "description": "Preview how the template looks with sample data"
+      },
+      "changesNote": "Changes are applied to all emails sent from the platform immediately after saving.",
+      "actions": {
+        "resetToDefaults": "Reset to Defaults",
+        "saveTemplate": "Save Template"
+      },
+      "success": {
+        "templateSaved": "Template saved successfully! All future emails will use this template."
+      },
+      "errors": {
+        "failedToSave": "Failed to save template. Please try again."
+      },
+      "toasts": {
+        "templateSaved": "Template saved",
+        "templateSavedDescription": "Global email template has been updated successfully.",
+        "errorSaving": "Error saving template",
+        "errorSavingDescription": "Failed to save template. Please try again."
+      }
+    },
+    "dailyResetLogs": {
+      "title": "Registri di Reset Giornaliero",
+      "subtitle": "Monitora le operazioni e le prestazioni di reset dei contatori giornalieri",
+      "stats": {
+        "avgUsersReset": "Media Utenti Resettati",
+        "last30Resets": "Ultimi 30 reset",
+        "avgExecution": "Tempo Medio di Esecuzione",
+        "averageTime": "Tempo medio",
+        "maxExecution": "Tempo Massimo di Esecuzione",
+        "peakTime": "Tempo di picco",
+        "minExecution": "Tempo Minimo di Esecuzione",
+        "bestTime": "Tempo migliore",
+        "totalResets": "Total Reset",
+        "last30Days": "Ultimi 30 giorni"
+      },
+      "filters": {
+        "title": "Filtri",
+        "description": "Filtra i registri di reset per intervallo di date e tipo di attivatore",
+        "dateFrom": "Data Da",
+        "dateTo": "Data A",
+        "triggeredBy": "Attivato Da",
+        "allTriggers": "Tutti gli attivatori",
+        "cronJob": "Lavoro CRON",
+        "manual": "Manuale",
+        "clearFilters": "Cancella Filtri"
+      },
+      "logs": {
+        "title": "Registro Operazioni di Reset",
+        "description": "Cronologia dettagliata di esecuzione dei reset dei contatori giornalieri",
+        "errorLoading": "Errore nel caricamento dei registri: {{error}}",
+        "resetDate": "Data di Reset",
+        "usersReset": "Utenti Resettati",
+        "executionTime": "Tempo di Esecuzione",
+        "triggeredBy": "Attivato Da",
+        "utcTime": "Ora UTC",
+        "eatTime": "Ora EAT",
+        "requestId": "ID Richiesta",
+        "noLogsFound": "Nessun registro di reset trovato",
+        "noLogsDescription": "I registri appariranno qui dopo l'esecuzione delle operazioni di reset giornaliero"
+      }
+    },
+    "securitySettings": {
+      "title": "Impostazioni di Sicurezza",
+      "subtitle": "Gestisci le politiche di sicurezza per la registrazione e l'accesso degli utenti basate su IP e dati di localizzazione",
+      "migrationBanner": {
+        "title": "Banner di Migrazione della Piattaforma",
+        "description": "Gestisci il banner di notifica di migrazione visualizzato nella pagina di accesso",
+        "allowDismiss": "Consenti agli Utenti di Chiudere",
+        "allowDismissDescription": "Gli utenti possono chiudere il banner e non verrà più visualizzato",
+        "bannerContent": "Contenuto del Banner",
+        "titleLabel": "Titolo *",
+        "titlePlaceholder": "es., ⚠️ Aggiornamento Importante per gli Utenti Esistenti",
+        "subtitleLabel": "Sottotitolo *",
+        "subtitlePlaceholder": "es., FineEarn si è trasferito su una nuova piattaforma migliorata!",
+        "actionSteps": "Passaggi di Azione (3 richiesti) *",
+        "step1Placeholder": "Primo passaggio...",
+        "step2Placeholder": "Secondo passaggio...",
+        "step3Placeholder": "Terzo passaggio...",
+        "cutoffDate": "Data di Scadenza",
+        "cutoffDateDescription": "Gli utenti che si sono iscritti prima di questa data vedranno il banner",
+        "supportLink": "Link di Supporto",
+        "supportLinkPlaceholder": "es., /settings o https://support.fineearn.com",
+        "supportLinkDescription": "Link mostrato come \"Contatta il Supporto\" nel banner",
+        "saveBannerSettings": "Salva Impostazioni Banner",
+        "reset": "Reimposta",
+        "showPreview": "Mostra Anteprima",
+        "hidePreview": "Nascondi Anteprima",
+        "livePreview": "Anteprima in Diretta",
+        "previewDescription": "Ecco come apparirà il banner nella pagina di accesso",
+        "bannerInformation": "Informazioni sul Banner",
+        "info1": "Il banner appare SOLO nella pagina di accesso (prima che gli utenti accedano)",
+        "info2": "Una volta chiuso, gli utenti non lo vedranno più (memorizzato in localStorage)",
+        "info3": "Le modifiche hanno effetto immediatamente dopo il salvataggio",
+        "info4": "Disattiva per disabilitare il banner in tutto il sito senza perdere contenuti"
+      },
+      "withdrawalBypass": {
+        "title": "Monitoraggio Bypass Prelievo",
+        "description": "Monitora gli utenti con bypass prelievo giornaliero abilitato e traccia tutti i cambiamenti relativi al bypass",
+        "activeUsers": "Utenti Attivi con Bypass",
+        "realtime": "Tempo Reale",
+        "loading": "Caricamento...",
+        "username": "Nome Utente",
+        "email": "Email",
+        "plan": "Piano",
+        "status": "Stato",
+        "vipAccess": "Accesso VIP",
+        "noUsers": "Attualmente nessun utente ha il bypass prelievo abilitato.",
+        "recentChanges": "Modifiche Recenti Bypass (Ultimi 50)",
+        "updated": "Aggiornato",
+        "loadingAudit": "Caricamento log di audit...",
+        "timestamp": "Timestamp",
+        "action": "Azione",
+        "adminId": "ID Amministratore",
+        "enabled": "Abilitato",
+        "disabled": "Disabilitato",
+        "noChanges": "Nessuna modifica relativa al bypass ancora registrata.",
+        "securityNotes": "Note di Sicurezza",
+        "note1": "Tutte le modifiche al bypass sono registrate con ID amministratore, timestamp e dettagli utente",
+        "note2": "I tentativi di prelievo che usano il bypass sono contrassegnati in withdrawal_attempt_logs",
+        "note3": "Il bypass NON sovrascrive i limiti del piano (si applicano ancora gli importi min/max di prelievo)",
+        "note4": "Monitora questa sezione regolarmente per rilevare l'uso non autorizzato del bypass"
+      },
+      "countryBlocking": {
+        "title": "Blocco Paese",
+        "description": "Blocca registrazioni e accessi da paesi specifici",
+        "countryCodeLabel": "Codice Paese (ISO 3166-1 alpha-2)",
+        "countryCodePlaceholder": "es., US, GB, CN",
+        "block": "Blocca",
+        "blockedCountries": "Paesi Bloccati",
+        "noCountries": "Nessun paese bloccato",
+        "countryBlocked": "Paese {{code}} bloccato",
+        "countryUnblocked": "Paese {{code}} sbloccato"
+      },
+      "ipBlocking": {
+        "title": "Blocco Indirizzi IP",
+        "description": "Blocca indirizzi IP specifici dall'accesso alla piattaforma",
+        "ipAddressLabel": "Indirizzo IP",
+        "ipAddressPlaceholder": "es., 192.168.1.1",
+        "block": "Blocca",
+        "blockedIPs": "Indirizzi IP Bloccati",
+        "noIPs": "Nessun indirizzo IP bloccato",
+        "ipBlocked": "IP {{ip}} bloccato",
+        "ipUnblocked": "IP {{ip}} sbloccato"
+      },
+      "actions": {
+        "resetToDefaults": "Reimposta ai Valori Predefiniti",
+        "saveSettings": "Salva Impostazioni di Sicurezza"
       }
     }
   },
@@ -2866,182 +3454,6 @@
         }
       }
     },
-    "emailSettings": {
-      "title": "Email Settings",
-      "subtitle": "Configure email sending settings and verification reminders",
-      "breadcrumb": {
-        "communications": "Communications",
-        "emailSettings": "Email Settings"
-      },
-      "actions": {
-        "resetToDefaults": "Reset to Defaults",
-        "sendTestEmail": "Send Test Email",
-        "saveSettings": "Save Settings"
-      },
-      "senderInformation": {
-        "title": "Sender Information",
-        "description": "Configure who emails are sent from. The from_address must be verified in Resend.",
-        "fromAddress": "From Address *",
-        "fromName": "From Name *"
-      },
-      "replyToInformation": {
-        "title": "Reply-To Information",
-        "description": "Where user replies will be sent to.",
-        "replyToAddress": "Reply-To Address *",
-        "replyToName": "Reply-To Name *"
-      },
-      "platformInformation": {
-        "title": "Platform Information",
-        "description": "Basic platform details used in emails and templates.",
-        "platformName": "Platform Name *",
-        "platformUrl": "Platform URL *",
-        "supportEmail": "Support Email *",
-        "adminNotificationEmail": "Admin Notification Email *",
-        "footerText": "Email Footer Text"
-      },
-      "testEmailSent": "Test email sent successfully! Check your inbox.",
-      "toasts": {
-        "settingsSaved": "Settings saved",
-        "settingsSavedDescription": "Email settings have been updated successfully.",
-        "errorSaving": "Error saving settings",
-        "testEmailSent": "Test email sent",
-        "testEmailSentDescription": "Check your inbox for the test email.",
-        "errorSendingTest": "Error sending test email",
-        "validationError": "Validation error",
-        "validationErrorDescription": "Please fix the errors before saving.",
-        "settingsReset": "Settings reset",
-        "settingsResetDescription": "Email settings have been reset to defaults."
-      }
-    },
-    "emailTemplates": {
-      "title": "Email Template Management",
-      "subtitle": "Create and manage reusable email templates",
-      "backToAdmin": "Back to Admin",
-      "loading": "Loading templates...",
-      "cardTitle": "Email Templates",
-      "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
-      "addTemplate": "Add Template",
-      "edit": "Edit",
-      "create": "Create",
-      "emailTemplate": "Email Template",
-      "configureTemplate": "Configure template details and content",
-      "form": {
-        "templateName": "Template Name *",
-        "templateNamePlaceholder": "e.g., password_reset_notification",
-        "templateType": "Template Type *",
-        "selectTemplateType": "Select template type",
-        "emailSubject": "Email Subject *",
-        "emailSubjectPlaceholder": "e.g., Reset Your Password",
-        "subjectVariablesHint": "You can use variables like {{username}} in the subject",
-        "emailBody": "Email Body *",
-        "emailBodyPlaceholder": "Compose your email content here. Use {{variable}} for placeholders.",
-        "proTips": "Pro Tips:",
-        "proTip1": "Toggle \"Professional Template\" above for beautiful email styling",
-        "proTip2": "Use the ✨ button in toolbar to insert styled buttons",
-        "proTip3": "Click variables to copy, or use + button to insert directly",
-        "activeTemplate": "Active Template"
-      },
-      "availableVariables": "Available Variables",
-      "variablesHint": "Click to copy or use + to insert directly",
-      "noTemplatesFound": "No templates found",
-      "active": "Active",
-      "inactive": "Inactive",
-      "editTemplate": "Edit Template",
-      "preview": {
-        "title": "Template Preview",
-        "visualPreview": "Visual Preview",
-        "htmlCode": "HTML Code",
-        "emailSubject": "Email Subject",
-        "emailBody": "Email Body",
-        "sampleDataNote": "Preview shows sample data for all variables",
-        "variablesUsed": "Variables Used",
-        "rawHtmlCode": "Raw HTML Code",
-        "htmlCopied": "HTML code copied to clipboard!",
-        "copyHtmlCode": "Copy HTML Code"
-      },
-      "testEmail": {
-        "title": "Send Test Email",
-        "subjectPreview": "Subject Preview",
-        "availableVariables": "Available Variables",
-        "variablesNote": "These variables will be replaced with sample data in the test email.",
-        "testEmailAddress": "Test Email Address *",
-        "emailPlaceholder": "your.email@example.com",
-        "emailHint": "Enter the email address where you want to receive the test email.",
-        "sampleData": "Sample Data",
-        "sampleDataDescription": "The test email will use predefined sample data for all variables:",
-        "sampleUsername": "Username: TestUser",
-        "sampleEmail": "Email: {{email}}",
-        "yourEmail": "your email",
-        "sampleFullName": "Full Name: Test User",
-        "sampleLinks": "Links: Sample URLs with test tokens",
-        "samplePlanDetails": "Plan details: Premium Plan, $500.00 earnings",
-        "sending": "Sending...",
-        "sendTestEmail": "Send Test Email",
-        "invalidEmail": "Please enter a valid email address",
-        "success": "Test email sent to {{email}}!",
-        "successDescription": "Check your inbox to verify the email.",
-        "failed": "Failed to send test email",
-        "unexpectedError": "An unexpected error occurred"
-      },
-      "success": {
-        "templateUpdated": "Template updated successfully",
-        "templateCreated": "Template created successfully",
-        "templateDeleted": "Template deleted",
-        "templateActivated": "Template activated",
-        "templateDeactivated": "Template deactivated"
-      },
-      "errors": {
-        "failedToLoad": "Failed to load email templates",
-        "failedToSave": "Failed to save template",
-        "failedToDelete": "Failed to delete template",
-        "failedToUpdate": "Failed to update template"
-      },
-      "validation": {
-        "fillAllFields": "Please fill in all required fields",
-        "invalidJsonFormat": "Invalid JSON format for variables. Use format: [\"var1\", \"var2\"]"
-      },
-      "confirm": {
-        "delete": "Are you sure you want to delete this template?"
-      }
-    },
-    "emailTemplateGlobalSettings": {
-      "title": "Global Email Template",
-      "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
-      "availableVariables": "Available Variables",
-      "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
-      "tabs": {
-        "editTemplate": "Edit Template",
-        "preview": "Preview"
-      },
-      "template": {
-        "title": "Email Template HTML",
-        "description": "Edit the HTML template. The {{content}} variable will be replaced with the actual email body.",
-        "htmlTemplate": "HTML Template",
-        "placeholder": "Enter HTML template...",
-        "hint": "This template wraps all emails. Make sure to include {{content}} where the email body should appear."
-      },
-      "preview": {
-        "title": "Email Preview",
-        "description": "Preview how the template looks with sample data"
-      },
-      "changesNote": "Changes are applied to all emails sent from the platform immediately after saving.",
-      "actions": {
-        "resetToDefaults": "Reset to Defaults",
-        "saveTemplate": "Save Template"
-      },
-      "success": {
-        "templateSaved": "Template saved successfully! All future emails will use this template."
-      },
-      "errors": {
-        "failedToSave": "Failed to save template. Please try again."
-      },
-      "toasts": {
-        "templateSaved": "Template saved",
-        "templateSavedDescription": "Global email template has been updated successfully.",
-        "errorSaving": "Error saving template",
-        "errorSavingDescription": "Failed to save template. Please try again."
-      }
-    },
     "toasts": {
       "applicationSubmittedSuccessfully": "Application submitted successfully! We will review it within 24 hours.",
       "voucherPurchasedSuccessfully": "Voucher purchased successfully! Code sent to recipient.",
@@ -3317,107 +3729,6 @@
       "howItWorks2": "IP addresses are mapped to countries and stored in user profiles",
       "howItWorks3": "Location data is displayed in the admin panel for security monitoring",
       "howItWorks4": "API calls are cached for 1 hour to reduce usage and improve performance"
-    },
-    "systemSecrets": {
-      "title": "System Secrets",
-      "subtitle": "Manage API keys and credentials for platform integrations",
-      "breadcrumbSecurity": "Security",
-      "breadcrumbSystemSecrets": "System Secrets",
-      "discardChanges": "Discard Changes",
-      "saveSecrets": "Save Secrets",
-      "securityWarning": "Security Warning",
-      "securityWarningDescription": "These keys provide access to sensitive services. Changes take effect immediately across all system components. If a key is left empty, the system will fall back to the environment variables configured in Supabase.",
-      "secretsSaved": "Secrets saved",
-      "secretsSavedDescription": "System credentials have been updated successfully.",
-      "errorSaving": "Error saving secrets",
-      "changesDiscarded": "Changes discarded",
-      "changesDiscardedDescription": "Settings have been reverted to the last saved state.",
-      "tabs": {
-        "ai": "AI (Gemini)",
-        "payment": "Payment (CPAY)",
-        "email": "Email (Resend)",
-        "geo": "Geo (IPStack)",
-        "currency": "Currency"
-      },
-      "gemini": {
-        "title": "Google Gemini API",
-        "description": "Used for automated AI task generation",
-        "apiKey": "API Key",
-        "apiKeyPlaceholder": "Enter Gemini API Key"
-      },
-      "cpay": {
-        "title": "CPAY Payment Processor",
-        "description": "Credentials for automated withdrawals and wallet management",
-        "walletId": "Wallet ID",
-        "walletIdPlaceholder": "Enter CPAY Wallet ID",
-        "usdtTokenId": "USDT Token ID",
-        "usdtTokenIdPlaceholder": "Enter USDT Token ID (24 chars)",
-        "publicKey": "API Public Key",
-        "publicKeyPlaceholder": "Enter CPAY Public Key",
-        "privateKey": "API Private Key",
-        "privateKeyPlaceholder": "Enter CPAY Private Key",
-        "passphrase": "Wallet Passphrase",
-        "passphrasePlaceholder": "Enter Wallet Passphrase"
-      },
-      "resend": {
-        "title": "Resend API",
-        "description": "Credentials for sending transactional and bulk emails",
-        "apiKey": "API Key",
-        "apiKeyPlaceholder": "re_..."
-      },
-      "ipstack": {
-        "title": "IPStack API",
-        "description": "Used for user IP detection and country mapping",
-        "accessKey": "Access Key",
-        "accessKeyPlaceholder": "Enter IPStack Access Key"
-      },
-      "openexchange": {
-        "title": "OpenExchangeRates API",
-        "description": "Used for real-time USD to local currency conversion",
-        "appId": "App ID",
-        "appIdPlaceholder": "Enter OpenExchangeRates App ID"
-      }
-    },
-    "dailyResetLogs": {
-      "title": "Daily Reset Logs",
-      "subtitle": "Monitor daily counter reset operations and performance",
-      "stats": {
-        "avgUsersReset": "Avg Users Reset",
-        "last30Resets": "Last 30 resets",
-        "avgExecution": "Avg Execution",
-        "averageTime": "Average time",
-        "maxExecution": "Max Execution",
-        "peakTime": "Peak time",
-        "minExecution": "Min Execution",
-        "bestTime": "Best time",
-        "totalResets": "Total Resets",
-        "last30Days": "Last 30 days"
-      },
-      "filters": {
-        "title": "Filters",
-        "description": "Filter reset logs by date range and trigger type",
-        "dateFrom": "Date From",
-        "dateTo": "Date To",
-        "triggeredBy": "Triggered By",
-        "allTriggers": "All triggers",
-        "cronJob": "CRON Job",
-        "manual": "Manual",
-        "clearFilters": "Clear Filters"
-      },
-      "logs": {
-        "title": "Reset Operations Log",
-        "description": "Detailed execution history of daily counter resets",
-        "errorLoading": "Error loading logs: {{error}}",
-        "resetDate": "Reset Date",
-        "usersReset": "Users Reset",
-        "executionTime": "Execution Time",
-        "triggeredBy": "Triggered By",
-        "utcTime": "UTC Time",
-        "eatTime": "EAT Time",
-        "requestId": "Request ID",
-        "noLogsFound": "No reset logs found",
-        "noLogsDescription": "Logs will appear here after daily reset operations run"
-      }
     },
     "settings": {
       "emailVerified": "Email verified successfully!"

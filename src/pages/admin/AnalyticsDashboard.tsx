@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminAnalytics, DateRange } from "@/hooks/useAdminAnalytics";
+import { useChunkedAnalytics } from "@/hooks/useChunkedAnalytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, ArrowDownCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Users, DollarSign, UserPlus, ArrowDownCircle, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { DateRangeSelector } from "@/components/admin/DateRangeSelector";
@@ -101,12 +103,41 @@ const LoadingSkeleton = () => (
 
 export default function AdminAnalyticsDashboard() {
   const { t } = useTranslation();
+  useLanguageSync(); // Sync language and force re-render when language changes
   
+  // Initialize date range with default (last 7 days)
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return { startDate, endDate };
+  });
   
-  // Force re-render when language changes
   const [selectedPreset, setSelectedPreset] = useState<string>("Last 7 Days vs Previous 7");
 
+  // Fetch core aggregated analytics (no pagination needed)
   const { data: analytics, isLoading, error } = useAdminAnalytics(dateRange);
+  
+  // Fetch chunked data (countries and referrers) - loads first chunk initially
+  const {
+    countryStats: chunkedCountryStats,
+    referrers: chunkedReferrers,
+    isLoadingCountries,
+    isLoadingMoreCountries,
+    isLoadingReferrers,
+    isLoadingMoreReferrers,
+    hasMoreCountries,
+    hasMoreReferrers,
+    loadMoreCountries,
+    loadMoreReferrers,
+    resetOffsets,
+    countryTotalCount,
+    referrerTotalCount,
+  } = useChunkedAnalytics(dateRange);
+
+  // Reset chunk offsets when date range changes
+  useEffect(() => {
+    resetOffsets();
+  }, [dateRange.startDate, dateRange.endDate, resetOffsets]);
 
   const handlePresetSelect = (preset: ComparisonPreset) => {
     setDateRange({
@@ -351,8 +382,54 @@ export default function AdminAnalyticsDashboard() {
               </div>
               
               <div className="grid gap-4 md:grid-cols-2">
-                <CountrySegmentationCard data={analytics.countryStats} dateRange={dateRange} />
-                <TopReferrersCard data={analytics.topReferrers} dateRange={dateRange} />
+                <div className="space-y-2">
+                  <CountrySegmentationCard 
+                    data={chunkedCountryStats} 
+                    dateRange={dateRange}
+                    isLoading={isLoadingCountries}
+                  />
+                  {hasMoreCountries && (
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreCountries}
+                      disabled={isLoadingMoreCountries}
+                      className="w-full"
+                    >
+                      {isLoadingMoreCountries ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        `Load More Countries (${chunkedCountryStats.length} of ${countryTotalCount})`
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <TopReferrersCard 
+                    data={chunkedReferrers} 
+                    dateRange={dateRange}
+                    isLoading={isLoadingReferrers}
+                  />
+                  {hasMoreReferrers && (
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreReferrers}
+                      disabled={isLoadingMoreReferrers}
+                      className="w-full"
+                    >
+                      {isLoadingMoreReferrers ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        `Load More Referrers (${chunkedReferrers.length} of ${referrerTotalCount})`
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </>

@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface AITask {
   id: string;
@@ -29,6 +31,7 @@ const AITasksManage = () => {
   const { t } = useTranslation();
   useLanguageSync(); // Sync language and force re-render
   const { isAdmin, loading: adminLoading } = useAdmin();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<AITask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,20 +45,63 @@ const AITasksManage = () => {
     }
   }, [isAdmin, adminLoading, navigate]);
 
-  useEffect(() => {
-    if (isAdmin) {
-      loadTasks();
+  const loadTasks = useCallback(async () => {
+    if (!user) {
+      console.log("No user available, skipping task load");
+      setLoading(false);
+      return;
     }
-  }, [isAdmin]);
 
-  const loadTasks = async () => {
     try {
-      const { data, error } = await supabase
+      console.log("Loading tasks for user:", user.id);
+      console.log("User email:", user.email);
+      
+      // First, let's check if we can query the table at all (without filter)
+      const testQuery = await supabase
+        .from("ai_tasks")
+        .select("id, created_by, created_at")
+        .limit(5);
+      
+      console.log("Test query (first 5 tasks):", testQuery.data);
+      console.log("Test query error:", testQuery.error);
+      
+      // Now query with the filter
+      const query = supabase
         .from("ai_tasks")
         .select("*")
+        .eq("created_by", user.id)
         .order("created_at", { ascending: false });
+      
+      const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Query error details:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log("Loaded tasks:", data?.length || 0);
+      if (data && data.length > 0) {
+        console.log("Sample task:", {
+          id: data[0].id,
+          created_by: data[0].created_by,
+          user_id: user.id,
+          match: data[0].created_by === user.id
+        });
+      } else {
+        console.log("No tasks found. Checking if any tasks exist without created_by filter...");
+        const allTasksQuery = await supabase
+          .from("ai_tasks")
+          .select("id, created_by, created_at, category")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        console.log("Recent tasks (any user):", allTasksQuery.data);
+      }
+      
       setTasks(data || []);
     } catch (error) {
       console.error("Error loading tasks:", error);
@@ -63,7 +109,13 @@ const AITasksManage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, t]);
+
+  useEffect(() => {
+    if (isAdmin && user && !authLoading) {
+      loadTasks();
+    }
+  }, [isAdmin, user, authLoading, loadTasks]);
 
   const toggleTaskStatus = async (taskId: string, currentStatus: boolean) => {
     try {
@@ -111,10 +163,10 @@ const AITasksManage = () => {
 
   const categories = Array.from(new Set(tasks.map(t => t.category)));
 
-  if (adminLoading || loading) {
+  if (adminLoading || loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>{t("common.loading")}</p>
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }
@@ -138,10 +190,23 @@ const AITasksManage = () => {
               {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
             </p>
           </div>
-          <Button onClick={() => navigate("/admin/tasks/generate")}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("admin.aiTasksManage.generateTasks")}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setLoading(true);
+                loadTasks();
+              }}
+              disabled={loading || !user}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button onClick={() => navigate("/admin/tasks/generate")}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t("admin.aiTasksManage.generateTasks")}
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -210,13 +275,45 @@ const AITasksManage = () => {
                   </div>
                   <p className="text-lg font-semibold mb-3">{task.prompt}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className={`p-3 rounded-lg border ${task.correct_response === 'a' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-muted'}`}>
-                      <p className="text-sm font-medium mb-1">{t("admin.aiTasksManage.optionA")}</p>
-                      <p className="text-sm">{task.response_a}</p>
+                    <div className={`p-4 rounded-lg border-2 ${
+                      task.correct_response === 'a' 
+                        ? 'bg-green-200 dark:bg-green-800 border-green-500 dark:border-green-500' 
+                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'
+                    }`}>
+                      <p className={`text-sm font-semibold mb-2 ${
+                        task.correct_response === 'a' 
+                          ? 'text-green-950 dark:text-green-50' 
+                          : 'text-gray-900 dark:text-gray-50'
+                      }`}>
+                        {t("admin.aiTasksManage.optionA")}
+                      </p>
+                      <p className={`text-base font-medium ${
+                        task.correct_response === 'a' 
+                          ? 'text-green-950 dark:text-green-50' 
+                          : 'text-gray-900 dark:text-gray-50'
+                      }`}>
+                        {task.response_a}
+                      </p>
                     </div>
-                    <div className={`p-3 rounded-lg border ${task.correct_response === 'b' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-muted'}`}>
-                      <p className="text-sm font-medium mb-1">{t("admin.aiTasksManage.optionB")}</p>
-                      <p className="text-sm">{task.response_b}</p>
+                    <div className={`p-4 rounded-lg border-2 ${
+                      task.correct_response === 'b' 
+                        ? 'bg-green-200 dark:bg-green-800 border-green-500 dark:border-green-500' 
+                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'
+                    }`}>
+                      <p className={`text-sm font-semibold mb-2 ${
+                        task.correct_response === 'b' 
+                          ? 'text-green-950 dark:text-green-50' 
+                          : 'text-gray-900 dark:text-gray-50'
+                      }`}>
+                        {t("admin.aiTasksManage.optionB")}
+                      </p>
+                      <p className={`text-base font-medium ${
+                        task.correct_response === 'b' 
+                          ? 'text-green-950 dark:text-green-50' 
+                          : 'text-gray-900 dark:text-gray-50'
+                      }`}>
+                        {task.response_b}
+                      </p>
                     </div>
                   </div>
                 </div>

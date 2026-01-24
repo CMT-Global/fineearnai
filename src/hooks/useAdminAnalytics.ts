@@ -56,6 +56,7 @@ export interface CountryStats {
   user_count: number;
   total_deposits: number;
   percentage: number;
+  total_count?: number; // Total count for pagination
 }
 
 export interface TopReferrer {
@@ -67,6 +68,7 @@ export interface TopReferrer {
   total_commission: number;
   total_referral_deposits: number;
   rank: number;
+  total_count?: number; // Total count for pagination
 }
 
 export interface AdminAnalyticsData {
@@ -93,31 +95,62 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
       const endDate = dateRange?.endDate || new Date().toISOString().split('T')[0];
       const startDate = dateRange?.startDate || new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
-      // Pass parameters as object - PostgREST uses named parameters, order shouldn't matter
-      const params = {
+      // Validate date range
+      if (new Date(startDate) > new Date(endDate)) {
+        throw new Error("Start date must be before or equal to end date");
+      }
+
+      // Limit date range to prevent excessive data fetching (max 365 days)
+      const maxDays = 365;
+      const daysDiff = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > maxDays) {
+        throw new Error(`Date range cannot exceed ${maxDays} days. Please select a shorter range.`);
+      }
+      
+      // Base parameters for date range
+      const baseParams = {
         p_start_date: startDate,
         p_end_date: endDate
       };
 
-      // Fetch all analytics data in parallel
-      const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes, withdrawalsRes, countryStatsRes, topReferrersRes] = await Promise.all([
-        supabase.rpc("get_user_growth_stats", params),
-        supabase.rpc("get_deposit_stats", params),
-        supabase.rpc("get_referral_stats_overview", params),
-        supabase.rpc("get_plan_upgrade_stats", params),
-        supabase.rpc("get_withdrawal_stats", params),
-        supabase.rpc("get_country_stats", params),
-        supabase.rpc("get_top_referrers", params),
+      // Fetch all analytics data in parallel with timeout
+      // Core stats only - chunked data (countries/referrers) is handled by useChunkedAnalytics
+      const fetchPromise = Promise.all([
+        supabase.rpc("get_user_growth_stats", baseParams),
+        supabase.rpc("get_deposit_stats", baseParams),
+        supabase.rpc("get_referral_stats_overview", baseParams),
+        supabase.rpc("get_plan_upgrade_stats", baseParams),
+        supabase.rpc("get_withdrawal_stats", baseParams),
       ]);
 
-      // Check for errors
-      if (userGrowthRes.error) throw userGrowthRes.error;
-      if (depositsRes.error) throw depositsRes.error;
-      if (referralsRes.error) throw referralsRes.error;
-      if (planUpgradesRes.error) throw planUpgradesRes.error;
-      if (withdrawalsRes.error) throw withdrawalsRes.error;
-      if (countryStatsRes.error) throw countryStatsRes.error;
-      if (topReferrersRes.error) throw topReferrersRes.error;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Request timeout after 30 seconds")), 30000)
+      );
+
+      const [userGrowthRes, depositsRes, referralsRes, planUpgradesRes, withdrawalsRes] = 
+        await Promise.race([fetchPromise, timeoutPromise]) as any[];
+
+      // Check for errors with detailed messages
+      if (userGrowthRes.error) {
+        console.error("Error fetching user growth stats:", userGrowthRes.error);
+        throw new Error(`Failed to fetch user growth stats: ${userGrowthRes.error.message}`);
+      }
+      if (depositsRes.error) {
+        console.error("Error fetching deposit stats:", depositsRes.error);
+        throw new Error(`Failed to fetch deposit stats: ${depositsRes.error.message}`);
+      }
+      if (referralsRes.error) {
+        console.error("Error fetching referral stats:", referralsRes.error);
+        throw new Error(`Failed to fetch referral stats: ${referralsRes.error.message}`);
+      }
+      if (planUpgradesRes.error) {
+        console.error("Error fetching plan upgrade stats:", planUpgradesRes.error);
+        throw new Error(`Failed to fetch plan upgrade stats: ${planUpgradesRes.error.message}`);
+      }
+      if (withdrawalsRes.error) {
+        console.error("Error fetching withdrawal stats:", withdrawalsRes.error);
+        throw new Error(`Failed to fetch withdrawal stats: ${withdrawalsRes.error.message}`);
+      }
 
       // Parse and structure the data
       const userGrowth: UserGrowthStats | null = userGrowthRes.data?.[0]
@@ -173,8 +206,10 @@ export const useAdminAnalytics = (dateRange?: DateRange) => {
           }
         : null;
 
-      const countryStats: CountryStats[] = (countryStatsRes.data as any[]) || [];
-      const topReferrers: TopReferrer[] = (topReferrersRes.data as any[]) || [];
+      // Country stats and referrers are now handled by useChunkedAnalytics hook
+      // Return empty arrays here - they will be populated by the chunked hook
+      const countryStats: CountryStats[] = [];
+      const topReferrers: TopReferrer[] = [];
 
       const analyticsData: AdminAnalyticsData = {
         userGrowth,

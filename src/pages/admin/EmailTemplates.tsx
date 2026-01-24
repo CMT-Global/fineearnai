@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,6 +136,29 @@ const EmailTemplates = () => {
   // Ref to hold the insertVariable function from RichTextEditor
   const insertVariableRef = useRef<((variableName: string) => void) | null>(null);
   
+  // State declarations
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    subject: "",
+    body: "",
+    template_type: "",
+    variables: "[]",
+    is_active: true,
+    use_wrapper_in_editor: false,
+  });
+  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [testingTemplateId, setTestingTemplateId] = useState<string | null>(null);
+  const [testingTemplate, setTestingTemplate] = useState<EmailTemplate | null>(null);
+  const [testEmailDialog, setTestEmailDialog] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+  
   // Helper function to populate sample data in preview
   const populateSampleData = (content: string): string => {
     const sampleData: Record<string, string> = {
@@ -200,7 +223,9 @@ const EmailTemplates = () => {
     return TEMPLATE_TYPES.find(t => t.value === type);
   };
   
-  const selectedTemplateInfo = getTemplateInfo(formData.template_type);
+  const selectedTemplateInfo = useMemo(() => {
+    return getTemplateInfo(formData.template_type);
+  }, [formData.template_type]);
 
   // Copy variable to clipboard
   const copyVariableToClipboard = (variableName: string) => {
@@ -641,7 +666,7 @@ const EmailTemplates = () => {
                                         size="sm"
                                         className="flex-1 justify-start text-left h-auto py-2 px-3 hover:bg-accent"
                                         onClick={() => copyVariableToClipboard(variable.name)}
-                                        title="Click to copy"
+                                        title={t("admin.emailTemplates.clickToCopy")}
                                       >
                                         <div className="flex-1">
                                           <div className="flex items-center gap-2">
@@ -660,7 +685,7 @@ const EmailTemplates = () => {
                                         size="icon"
                                         className="h-8 w-8 flex-shrink-0"
                                         onClick={() => insertVariableIntoEditor(variable.name)}
-                                        title="Insert into editor"
+                                        title={t("admin.emailTemplates.insertIntoEditor")}
                                       >
                                         <Plus className="h-3.5 w-3.5" />
                                       </Button>
@@ -683,12 +708,12 @@ const EmailTemplates = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Variables</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.emailTemplates.tableHeaders.name")}</TableHead>
+                    <TableHead>{t("admin.emailTemplates.tableHeaders.subject")}</TableHead>
+                    <TableHead>{t("admin.emailTemplates.tableHeaders.type")}</TableHead>
+                    <TableHead>{t("admin.emailTemplates.tableHeaders.variables")}</TableHead>
+                    <TableHead>{t("admin.emailTemplates.tableHeaders.status")}</TableHead>
+                    <TableHead className="text-right">{t("admin.emailTemplates.tableHeaders.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -739,7 +764,7 @@ const EmailTemplates = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => openPreview(template)}
-                        title="Preview Template"
+                        title={t("admin.emailTemplates.previewTemplate")}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -747,7 +772,7 @@ const EmailTemplates = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => openTestEmailDialog(template)}
-                        title="Send Test Email"
+                        title={t("admin.emailTemplates.sendTestEmail")}
                       >
                         <Mail className="h-4 w-4" />
                       </Button>
@@ -755,7 +780,7 @@ const EmailTemplates = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => openEditDialog(template)}
-                        title="Edit Template"
+                        title={t("admin.emailTemplates.editTemplateTooltip")}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -763,7 +788,7 @@ const EmailTemplates = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(template.id)}
-                              title="Delete Template"
+                              title={t("admin.emailTemplates.deleteTemplateTooltip")}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -942,9 +967,9 @@ const EmailTemplates = () => {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{testingTemplate.template_type}</Badge>
                     {testingTemplate.is_active ? (
-                      <Badge variant="default">Active</Badge>
+                      <Badge variant="default">{t("admin.emailTemplates.active")}</Badge>
                     ) : (
-                      <Badge variant="secondary">Inactive</Badge>
+                      <Badge variant="secondary">{t("admin.emailTemplates.inactive")}</Badge>
                     )}
                   </div>
 

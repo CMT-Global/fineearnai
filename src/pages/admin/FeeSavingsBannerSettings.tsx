@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Zap, RotateCcw, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
@@ -58,7 +59,20 @@ export default function FeeSavingsBannerSettings() {
   const [config, setConfig] = useState<FeeSavingsBannerConfig>(DEFAULT_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Force re-render when language changes
+  // Fetch fee savings banner config
+  const { data: configData, isLoading } = useQuery({
+    queryKey: ['fee-savings-banner-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('platform_config')
+        .select('value')
+        .eq('key', 'fee_savings_banner')
+        .maybeSingle();
+
+      if (error) throw error;
+      return (data?.value as unknown) as FeeSavingsBannerConfig | null;
+    },
+  });
 
   // Update config when data loads
   useEffect(() => {
@@ -75,7 +89,7 @@ export default function FeeSavingsBannerSettings() {
         .from('platform_config')
         .upsert({
           key: 'fee_savings_banner',
-          value: newConfig,
+          value: newConfig as any,
           description: 'Configuration for the fee savings banner shown on wallet page and deposit dialog',
           updated_at: new Date().toISOString(),
         }, { onConflict: 'key' });
@@ -115,10 +129,8 @@ export default function FeeSavingsBannerSettings() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

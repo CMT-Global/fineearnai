@@ -16,6 +16,19 @@ import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getDateLocale } from "@/lib/date-locale";
 import { ManualEmailVerificationDialog } from "../dialogs/ManualEmailVerificationDialog";
+import { getCountryName } from "@/lib/countries";
+
+// Helper function to get country flag emoji from country code
+const getCountryFlag = (countryCode: string | null | undefined): string => {
+  if (!countryCode || countryCode.length !== 2) return "🌍";
+  const code = countryCode.toUpperCase();
+  // Convert country code to flag emoji using regional indicator symbols
+  const flag = code
+    .split("")
+    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+  return flag;
+};
 
 interface OverviewTabProps {
   userData: any;
@@ -412,91 +425,181 @@ export const OverviewTab = ({
     <div className="space-y-6">
       {/* Profile Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle>Profile Information</CardTitle>
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-primary" />
+              <CardTitle className="text-xl">Profile Information</CardTitle>
+            </div>
             <Button variant="outline" size="sm" onClick={onEditProfile}>
               Edit Profile
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Username</p>
-              <p className="font-medium">{profile.username}</p>
+        <CardContent className="space-y-6">
+          {/* Email & Verification Section - Prominent */}
+          <div className="bg-muted/50 rounded-lg p-4 border">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block">
+                  Email & Verification
+                </Label>
+                <p className="font-semibold text-base">{profile.email}</p>
+              </div>
+              <Button
+                size="sm"
+                variant={profile.email_verified ? "outline" : "default"}
+                onClick={() => setShowEmailVerificationDialog(true)}
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                {profile.email_verified ? "Unverify Email" : "Verify Email"}
+              </Button>
             </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-muted-foreground mb-2">Email & Verification</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-medium">{profile.email}</p>
-                {profile.email_verified === true ? (
-                  <Badge variant="default" className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Verified
-                  </Badge>
-                ) : profile.email_verified === false ? (
-                  <Badge variant="destructive" className="flex items-center gap-1">
-                    <XCircle className="h-3 w-3" />
-                    Not Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    Unknown
-                  </Badge>
-                )}
-                {profile.email_verified_at && (
-                  <span className="text-xs text-muted-foreground">
-                    on {format(new Date(profile.email_verified_at), "PPp", { locale: dateLocale })}
-                  </span>
-                )}
-                <Button
-                  size="sm"
-                  variant={profile.email_verified ? "outline" : "default"}
-                  onClick={() => setShowEmailVerificationDialog(true)}
-                  className="ml-auto"
-                >
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  {profile.email_verified ? "Unverify Email" : "Verify Email"}
-                </Button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {profile.email_verified === true ? (
+                <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Verified
+                </Badge>
+              ) : profile.email_verified === false ? (
+                <Badge variant="destructive" className="flex items-center gap-1.5 px-3 py-1">
+                  <XCircle className="h-3.5 w-3.5" />
+                  Not Verified
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Unknown
+                </Badge>
+              )}
+              {profile.email_verified_at && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Verified on {format(new Date(profile.email_verified_at), "PPp", { locale: dateLocale })}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Main Information Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Username */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Username
+              </Label>
+              <div className="flex items-center gap-2 min-h-[28px]">
+                <UserCheck className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <p className="font-semibold text-base">{profile.username}</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Full Name</p>
-              <p className="font-medium">{profile.full_name || "-"}</p>
+
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Full Name
+              </Label>
+              <div className="min-h-[28px] flex items-center">
+                <p className="font-medium text-base">
+                  {profile.full_name ? profile.full_name : <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
-              <p className="font-medium">{profile.phone || "-"}</p>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Phone
+              </Label>
+              <div className="min-h-[28px] flex items-center">
+                <p className="font-medium text-base">
+                  {profile.phone ? profile.phone : <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Country</p>
-              <p className="font-medium">{profile.country || "-"}</p>
+
+            {/* Country */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Country
+              </Label>
+              <div className="flex items-center gap-2 min-h-[28px]">
+                {profile.country ? (
+                  <>
+                    <span className="text-2xl flex-shrink-0" title={getCountryName(profile.country) || profile.country}>
+                      {getCountryFlag(profile.country)}
+                    </span>
+                    <p className="font-medium text-base">
+                      {getCountryName(profile.country) || profile.country} ({profile.country})
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground italic">Not set</span>
+                  </>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <Badge
-                variant={
-                  profile.account_status === "active"
-                    ? "default"
-                    : profile.account_status === "suspended"
-                    ? "secondary"
-                    : "destructive"
-                }
-              >
-                {profile.account_status}
-              </Badge>
+
+            {/* Account Status */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Account Status
+              </Label>
+              <div className="min-h-[28px] flex items-center">
+                <Badge
+                  variant={
+                    profile.account_status === "active"
+                      ? "default"
+                      : profile.account_status === "suspended"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 h-7"
+                >
+                  <Activity className="h-3.5 w-3.5" />
+                  {profile.account_status}
+                </Badge>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Referral Code</p>
-              <p className="font-mono font-medium">{profile.referral_code}</p>
+
+            {/* Admin Status */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Admin Access
+              </Label>
+              <div className="min-h-[28px] flex items-center">
+                <Badge 
+                  variant={userData.is_admin ? "default" : "outline"}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 h-7"
+                >
+                  {userData.is_admin ? (
+                    <>
+                      <Crown className="h-3.5 w-3.5" />
+                      Yes
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-3.5 w-3.5" />
+                      No
+                    </>
+                  )}
+                </Badge>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Admin</p>
-              <Badge variant={userData.is_admin ? "default" : "outline"}>
-                {userData.is_admin ? "Yes" : "No"}
-              </Badge>
+
+            {/* Referral Code */}
+            <div className="space-y-2 md:col-span-2 lg:col-span-1">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                Referral Code
+              </Label>
+              <div className="flex items-center gap-2 min-h-[28px]">
+                <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Badge variant="outline" className="font-mono font-semibold text-base px-3 py-1.5 h-7 inline-flex items-center">
+                  {profile.referral_code}
+                </Badge>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -917,8 +1020,8 @@ export const OverviewTab = ({
                 <li>Rate limiting (10 requests per hour)</li>
               </ul>
 
-              <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-                <strong>⚠️ Security:</strong> All bypass usage is logged in audit trail for compliance and monitoring.
+              <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-900 dark:text-yellow-200">
+                <strong className="font-semibold">⚠️ Security:</strong> All bypass usage is logged in audit trail for compliance and monitoring.
               </div>
             </AlertDescription>
           </Alert>

@@ -18,7 +18,7 @@ import {
   TrendingUp,
   UserPlus,
   Zap,
-  AlertCircle,
+  AlertCircle,  
   Clock,
   Settings,
   Rocket,
@@ -194,16 +194,6 @@ const Dashboard = () => {
 
       {profile && (
         <>
-          {/* Email Verification Banner - Show if email not verified */}
-          {profile.email_verified === false && (
-            <div className="mx-4 lg:mx-8 mt-4 mb-4">
-              <EmailVerificationBanner 
-                onVerifyClick={() => setShowEmailVerification(true)}
-              />
-            </div>
-          )}
-
-
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -339,6 +329,15 @@ const Dashboard = () => {
               </div>
             </Button>
           </div>
+          )}
+
+          {/* Email Verification Banner - Show if email not verified */}
+          {profile.email_verified === false && (
+            <div className="mx-4 lg:mx-8 mt-6">
+              <EmailVerificationBanner 
+                onVerifyClick={() => setShowEmailVerification(true)}
+              />
+            </div>
           )}
 
           {/* Stats Cards */}

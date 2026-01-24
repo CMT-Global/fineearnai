@@ -130,6 +130,71 @@ export default function PartnerBonusMonitoring() {
     },
   });
 
+  // Fetch bonus metrics (aggregates, status breakdown, tier distribution)
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
+    queryKey: ["bonus-metrics", format(monthStart, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const { data: bonuses, error } = await supabase
+        .from("partner_weekly_bonuses")
+        .select("partner_id, bonus_amount, status, qualified_tier_id")
+        .gte("week_start_date", format(monthStart, "yyyy-MM-dd"))
+        .lte("week_end_date", format(monthEnd, "yyyy-MM-dd"));
+
+      if (error) throw error;
+
+      const paid = bonuses.filter((b) => b.status === "paid");
+      const paidCount = paid.length;
+      const calculatedCount = bonuses.filter((b) => b.status === "calculated").length;
+      const pendingCount = bonuses.filter((b) => b.status === "pending").length;
+      const failedCount = bonuses.filter((b) => b.status === "failed").length;
+      const totalBonuses = bonuses.length;
+
+      const totalPaid = paid.reduce((sum, b) => sum + Number(b.bonus_amount ?? 0), 0);
+      const uniquePartnerIds = new Set(paid.map((b) => b.partner_id));
+      const uniquePartners = uniquePartnerIds.size;
+      const avgBonus = uniquePartners > 0 ? totalPaid / uniquePartners : 0;
+      const successRate = totalBonuses > 0 ? (paidCount / totalBonuses) * 100 : 0;
+
+      const tierIds = [...new Set(bonuses.map((b) => b.qualified_tier_id).filter(Boolean))] as string[];
+      let tierMap: Record<string, string> = {};
+      if (tierIds.length > 0) {
+        const { data: tiers } = await supabase
+          .from("partner_bonus_tiers")
+          .select("id, tier_name")
+          .in("id", tierIds);
+        tierMap = (tiers ?? []).reduce(
+          (acc, t) => {
+            acc[t.id] = t.tier_name;
+            return acc;
+          },
+          {} as Record<string, string>,
+        );
+      }
+
+      const tierCounts: Record<string, number> = {};
+      for (const b of bonuses) {
+        const key = b.qualified_tier_id
+          ? tierMap[b.qualified_tier_id] ?? b.qualified_tier_id
+          : "No tier";
+        tierCounts[key] = (tierCounts[key] ?? 0) + 1;
+      }
+      const tierDistribution = Object.entries(tierCounts).map(([name, value]) => ({ name, value }));
+
+      return {
+        totalPaid,
+        paidCount,
+        calculatedCount,
+        pendingCount,
+        failedCount,
+        totalBonuses,
+        uniquePartners,
+        avgBonus,
+        successRate,
+        tierDistribution,
+      };
+    },
+  });
+
   const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
   if (metricsLoading || partnersLoading || trendLoading || emailLoading) {
@@ -296,7 +361,7 @@ export default function PartnerBonusMonitoring() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {metrics?.tierDistribution.map((entry: any, index: number) => (
+                  {metrics?.tierDistribution?.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

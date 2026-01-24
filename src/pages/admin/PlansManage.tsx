@@ -56,6 +56,30 @@ const PlansManage = () => {
   
   // Force re-render when language changes
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<MembershipPlan[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<MembershipPlan | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    display_name: "",
+    account_type: "",
+    price: 0,
+    billing_period_days: 30,
+    daily_task_limit: 10,
+    task_skip_limit_per_day: 3,
+    earning_per_task: 0,
+    task_commission_rate: 0,
+    deposit_commission_rate: 0,
+    max_active_referrals: 0,
+    min_withdrawal: 10,
+    min_daily_withdrawal: 10,
+    max_daily_withdrawal: 1000,
+    free_plan_expiry_days: null as number | null,
+    referral_eligible: true,
+    is_active: true,
+    features: "[]",
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -292,7 +316,7 @@ const PlansManage = () => {
   if (authLoading || adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading plans..." />
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

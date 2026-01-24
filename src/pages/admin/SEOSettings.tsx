@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Globe, Share2, Save, Undo, Info } from "lucide-react";
+import { Globe, Share2, Save, Undo, Info, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
@@ -69,8 +70,28 @@ export default function SEOSettings() {
   const [branding, setBranding] = useState<BrandingConfig>(DEFAULT_BRANDING);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Force re-render when language changes
+  // Fetch SEO and branding config
+  const { data, isLoading } = useQuery({
+    queryKey: ["seo-branding-config"],
+    queryFn: async () => {
+      const { data: configData, error } = await supabase
+        .from("platform_config")
+        .select("key, value")
+        .in("key", ["seo_config", "platform_branding"]);
 
+      if (error) throw error;
+
+      const seoRow = configData?.find((r) => r.key === "seo_config");
+      const brandingRow = configData?.find((r) => r.key === "platform_branding");
+
+      return {
+        seo: (seoRow?.value as unknown as SEOConfig) || DEFAULT_SEO,
+        branding: (brandingRow?.value as unknown as BrandingConfig) || DEFAULT_BRANDING,
+      };
+    },
+  });
+
+  // Update state when data loads
   useEffect(() => {
     if (data) {
       setConfig(data.seo);
@@ -84,7 +105,7 @@ export default function SEOSettings() {
         .from("platform_config")
         .upsert({
           key: "seo_config",
-          value: seo,
+          value: seo as any,
           description: "Website SEO and Social Sharing configurations",
           updated_at: new Date().toISOString(),
         }, { onConflict: "key" });
@@ -95,7 +116,7 @@ export default function SEOSettings() {
         .from("platform_config")
         .upsert({
           key: "platform_branding",
-          value: branding,
+          value: branding as any,
           description: "Platform branding settings (Name, Logo, URL)",
           updated_at: new Date().toISOString(),
         }, { onConflict: "key" });
@@ -141,8 +162,8 @@ export default function SEOSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" text={t("common.loading")} />
       </div>
     );
   }

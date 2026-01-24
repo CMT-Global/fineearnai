@@ -47,6 +47,7 @@ export function useLanguageSync() {
     
     // Normalize language codes (handle 'en-US' -> 'en')
     const currentLang = i18n.language?.split('-')[0] || 'en';
+    const rawI18nLang = i18n.language || 'en';
     const targetLang = userLanguage || 'en';
     
     // Suppressed: Only log in development if needed for debugging
@@ -61,7 +62,7 @@ export function useLanguageSync() {
     // }
     
     // Ensure i18n language is synced with userLanguage from context
-    if (currentLang !== targetLang) {
+    if (currentLang !== targetLang || rawI18nLang !== targetLang) {
       i18n.changeLanguage(targetLang).then(() => {
         // Verify translations are loaded
         const hasResource = i18n.hasResourceBundle(targetLang, 'translation');
