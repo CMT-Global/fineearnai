@@ -38,6 +38,7 @@ interface TaskStats {
     accuracy: number;
   }>;
   topPerformers: Array<{
+    userId: string;
     username: string;
     total_completed: number;
     accuracy: number;

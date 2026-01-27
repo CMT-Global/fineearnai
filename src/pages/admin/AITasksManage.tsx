@@ -25,6 +25,7 @@ interface AITask {
   difficulty: string;
   is_active: boolean;
   created_at: string;
+  created_by: string | null;
 }
 
 const AITasksManage = () => {

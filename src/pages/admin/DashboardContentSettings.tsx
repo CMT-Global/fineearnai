@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +95,7 @@ export default function DashboardContentSettings() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { platformName: string; config: DashboardContentConfig }) => {
-      const updates = [
+      const updates: { key: string; value: Json; description: string; updated_at: string }[] = [
         {
           key: "platform_name",
           value: payload.platformName,
@@ -103,7 +104,7 @@ export default function DashboardContentSettings() {
         },
         {
           key: "dashboard_content",
-          value: payload.config,
+          value: payload.config as unknown as Json,
           description: "Dashboard content and visibility settings (earners guide, guides, social links)",
           updated_at: new Date().toISOString(),
         },

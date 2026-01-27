@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -173,7 +174,7 @@ export default function EmailTemplateGlobalSettings() {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.value as EmailTemplateGlobalConfig | null;
+      return data?.value as unknown as EmailTemplateGlobalConfig | null;
     },
   });
 
@@ -195,7 +196,7 @@ export default function EmailTemplateGlobalSettings() {
         .from("platform_config")
         .upsert({
           key: "email_template_global",
-          value: config,
+          value: config as unknown as Json,
           description: "Global HTML email template used to wrap all platform emails. Editable from admin panel.",
           updated_at: new Date().toISOString(),
         }, { onConflict: "key" });

@@ -35,7 +35,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const DepositResult = lazy(() => import("./pages/DepositResult"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // Lazy-loaded admin routes
 const Admin = lazy(() => import("./pages/Admin"));

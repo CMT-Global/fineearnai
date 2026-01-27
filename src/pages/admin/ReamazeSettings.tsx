@@ -45,7 +45,7 @@ export default function ReamazeSettings() {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.value as ReamazeConfig | null;
+      return data?.value as unknown as ReamazeConfig | null;
     },
   });
 

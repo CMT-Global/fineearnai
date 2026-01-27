@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,7 +147,7 @@ export default function HowItWorksSettings() {
       const { error } = await supabase.from("platform_config").upsert(
         {
           key: "how_it_works_content",
-          value: newConfig,
+          value: newConfig as unknown as Json,
           description: "How It Works page content (visibility and per-slide copy)",
           updated_at: new Date().toISOString(),
         },

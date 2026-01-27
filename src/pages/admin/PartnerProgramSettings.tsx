@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,16 +145,16 @@ export default function PartnerProgramSettings() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { program: PartnerProgramConfig; content: PartnerProgramContentConfig }) => {
-      const updates = [
+      const updates: { key: string; value: Json; description: string; updated_at: string }[] = [
         {
           key: "partner_program_config",
-          value: payload.program,
+          value: payload.program as unknown as Json,
           description: "Partner program global settings (enable/disable)",
           updated_at: new Date().toISOString(),
         },
         {
           key: "partner_program_content",
-          value: payload.content,
+          value: payload.content as unknown as Json,
           description: "Content configuration for Become a Partner wizard (high-level copy)",
           updated_at: new Date().toISOString(),
         },

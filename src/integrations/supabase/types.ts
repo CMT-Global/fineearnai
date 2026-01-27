@@ -61,6 +61,7 @@ export type Database = {
           category: string
           correct_response: string
           created_at: string
+          created_by: string | null
           difficulty: Database["public"]["Enums"]["task_difficulty"]
           id: string
           is_active: boolean
@@ -73,6 +74,7 @@ export type Database = {
           category: string
           correct_response: string
           created_at?: string
+          created_by?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           id?: string
           is_active?: boolean
@@ -85,6 +87,7 @@ export type Database = {
           category?: string
           correct_response?: string
           created_at?: string
+          created_by?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           id?: string
           is_active?: boolean
