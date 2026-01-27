@@ -1,148 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 180 74% 6%;
-    --foreground: 168 31% 94%;
+    --background: 160 30% 6%;
+    --foreground: 120 20% 95%;
 
-    --card: 171 50% 11%;
-    --card-foreground: 168 31% 94%;
+    --card: 160 35% 10%;
+    --card-foreground: 120 20% 95%;
 
-    --popover: 170 49% 12%;
-    --popover-foreground: 168 31% 94%;
+    --popover: 160 35% 10%;
+    --popover-foreground: 120 20% 95%;
 
-    --primary: 76 85% 65%;
-    --primary-foreground: 180 74% 6%;
+    --primary: 145 60% 45%;
+    --primary-foreground: 160 30% 6%;
 
-    --secondary: 165 38% 18%;
-    --secondary-foreground: 168 31% 94%;
+    --secondary: 160 25% 15%;
+    --secondary-foreground: 120 20% 90%;
 
-    --muted: 162 28% 29%;
-    --muted-foreground: 164 16% 67%;
+    --muted: 160 20% 18%;
+    --muted-foreground: 120 10% 60%;
 
-    --accent: 163 33% 23%;
-    --accent-foreground: 168 31% 94%;
+    --accent: 145 70% 50%;
+    --accent-foreground: 160 30% 6%;
 
-    --destructive: 0 79% 63%;
-    --destructive-foreground: 168 31% 94%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 162 28% 29%;
-    --input: 162 28% 29%;
-    --ring: 76 85% 65%;
+    --border: 160 25% 20%;
+    --input: 160 25% 20%;
+    --ring: 145 60% 45%;
 
     --radius: 0.75rem;
-    
-    /* Sidebar colors */
-    --sidebar-bg: 170 49% 12%;
-    --sidebar-fg: 168 31% 94%;
-    --sidebar-accent: 163 33% 23%;
-    --sidebar-border: 162 28% 29%;
-    
-    /* Wallet accent colors */
-    --wallet-deposit: 76 85% 65%;
-    --wallet-earnings: 76 85% 65%;
-    --wallet-tasks: 195 86% 64%;
-    --wallet-referrals: 45 86% 62%;
-    
-    /* Status colors */
-    --success: 76 85% 65%;
-    --warning: 45 86% 62%;
-    --info: 195 86% 64%;
 
-    /* Chart colors */
-    --chart-1: 76 94% 64%;
-    --chart-2: 76 85% 65%;
-    --chart-3: 195 86% 64%;
-    --chart-4: 45 86% 62%;
-    --chart-5: 0 79% 63%;
+    /* Custom tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(145 60% 45%) 0%, hsl(160 50% 35%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(160 30% 6%) 0%, hsl(160 35% 10%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(160 35% 12%) 0%, hsl(160 30% 8%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(145 60% 45% / 0.15) 0%, transparent 70%);
+    
+    --shadow-glow: 0 0 60px hsl(145 60% 45% / 0.2);
+    --shadow-card: 0 8px 32px hsl(160 30% 4% / 0.5);
+    --shadow-button: 0 4px 24px hsl(145 60% 45% / 0.3);
 
-    /* Map colors */
-    --map-active: 76 85% 65%;
-    --map-inactive: 168 36% 16%;
-    --map-bg: 171 68% 7%;
-
-    /* Extended text colors */
-    --text-tertiary: 165 13% 50%;
-    --text-disabled: 167 17% 37%;
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(76 85% 65%) 0%, hsl(75 86% 72%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(76 85% 65%) 0%, hsl(158 64% 52%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(180 74% 6%) 0%, hsl(171 50% 11%) 100%);
-    
-    /* Shadows */
-    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-elevated: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-    
-    /* Transitions */
-    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --sidebar-background: 160 35% 10%;
+    --sidebar-foreground: 120 20% 95%;
+    --sidebar-primary: 145 60% 45%;
+    --sidebar-primary-foreground: 160 30% 6%;
+    --sidebar-accent: 160 25% 15%;
+    --sidebar-accent-foreground: 120 20% 90%;
+    --sidebar-border: 160 25% 20%;
+    --sidebar-ring: 145 60% 45%;
   }
 
   .dark {
-    --background: 180 74% 6%;
-    --foreground: 168 31% 94%;
-
-    --card: 171 50% 11%;
-    --card-foreground: 168 31% 94%;
-
-    --popover: 170 49% 12%;
-    --popover-foreground: 168 31% 94%;
-
-    --primary: 76 85% 65%;
-    --primary-foreground: 180 74% 6%;
-
-    --secondary: 165 38% 18%;
-    --secondary-foreground: 168 31% 94%;
-
-    --muted: 162 28% 29%;
-    --muted-foreground: 164 16% 67%;
-
-    --accent: 163 33% 23%;
-    --accent-foreground: 168 31% 94%;
-
-    --destructive: 0 79% 63%;
-    --destructive-foreground: 168 31% 94%;
-
-    --border: 162 28% 29%;
-    --input: 162 28% 29%;
-    --ring: 76 85% 65%;
-    
-    --sidebar-bg: 170 49% 12%;
-    --sidebar-fg: 168 31% 94%;
-    --sidebar-accent: 163 33% 23%;
-    --sidebar-border: 162 28% 29%;
-
-    /* Chart colors in dark mode */
-    --chart-1: 76 94% 64%;
-    --chart-2: 76 85% 65%;
-    --chart-3: 195 86% 64%;
-    --chart-4: 45 86% 62%;
-    --chart-5: 0 79% 63%;
-
-    /* Map colors */
-    --map-active: 76 85% 65%;
-    --map-inactive: 168 36% 16%;
-    --map-bg: 171 68% 7%;
-
-    /* Extended text colors */
-    --text-tertiary: 165 13% 50%;
-    --text-disabled: 167 17% 37%;
+    --background: 160 30% 6%;
+    --foreground: 120 20% 95%;
+    --card: 160 35% 10%;
+    --card-foreground: 120 20% 95%;
+    --popover: 160 35% 10%;
+    --popover-foreground: 120 20% 95%;
+    --primary: 145 60% 45%;
+    --primary-foreground: 160 30% 6%;
+    --secondary: 160 25% 15%;
+    --secondary-foreground: 120 20% 90%;
+    --muted: 160 20% 18%;
+    --muted-foreground: 120 10% 60%;
+    --accent: 145 70% 50%;
+    --accent-foreground: 160 30% 6%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 160 25% 20%;
+    --input: 160 25% 20%;
+    --ring: 145 60% 45%;
   }
 }
 
@@ -152,95 +85,140 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
-  
-  /* Smooth transitions for mode switching */
-  .mode-transition {
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+
+  html {
+    scroll-behavior: smooth;
   }
-  
-  .mode-transition-enter {
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-border/50 rounded-2xl;
+    box-shadow: var(--shadow-card);
+  }
+
+  .glow-effect {
+    position: relative;
+  }
+
+  .glow-effect::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: var(--gradient-primary);
+    border-radius: inherit;
     opacity: 0;
-    transform: translateY(10px);
+    transition: opacity 0.3s ease;
+    z-index: -1;
+    filter: blur(20px);
   }
-  
-  .mode-transition-enter-active {
-    opacity: 1;
-    transform: translateY(0);
+
+  .glow-effect:hover::before {
+    opacity: 0.5;
   }
-  
-  /* Touch optimization for mobile */
-  .touch-manipulation {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
-  /* iOS safe area support */
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .pb-safe {
-      padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+
+  .hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: var(--gradient-glow);
+    filter: blur(100px);
+    pointer-events: none;
+  }
+
+  .stat-card {
+    @apply glass-card p-6 text-center transition-all duration-300;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .feature-card {
+    @apply glass-card p-8 transition-all duration-300;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-8px);
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .section-padding {
+    @apply py-20 md:py-32 px-4 md:px-8;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
-  
-  /* Hide Reamaze widget on admin pages */
-  body[data-admin-mode="true"] #reamaze-widget,
-  body[data-admin-mode="true"] .reamaze-frame {
-    display: none !important;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-  
-  /* Reposition Reamaze widget on mobile to avoid bottom nav collision */
-  @media (max-width: 1023px) {
-    #reamaze-widget,
-    .reamaze-frame,
-    ._hj-widget-container {
-      bottom: 80px !important;
-      right: 16px !important;
-      z-index: 50 !important;
-      transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
     }
-    
-    /* Make Reamaze button smaller on mobile */
-    #reamaze-widget button,
-    .reamaze-frame button {
-      width: 56px !important;
-      height: 56px !important;
-    }
-    
-    /* Active state feedback */
-    #reamaze-widget button:active,
-    .reamaze-frame button:active {
-      transform: scale(0.95) !important;
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
-  
-  /* Safe area support for devices with notches/home indicators */
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    @media (max-width: 1023px) {
-      #reamaze-widget,
-      .reamaze-frame,
-      ._hj-widget-container {
-        bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-      }
-    }
-  }
-  
-  /* Desktop positioning remains default */
-  @media (min-width: 1024px) {
-    #reamaze-widget,
-    .reamaze-frame {
-      bottom: 20px !important;
-      right: 20px !important;
-    }
-  }
-  
-  /* Transaction table mobile responsiveness */
-  /* Mobile responsiveness handled by component-based approach */
-  @media (max-width: 767px) {
-    /* Ensure smooth scrolling on mobile */
-    .overflow-x-auto {
-      -webkit-overflow-scrolling: touch;
-    }
-  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 }
