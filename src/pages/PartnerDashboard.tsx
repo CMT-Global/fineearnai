@@ -156,32 +156,32 @@ const PartnerDashboard = () => {
     
     // Phase 4: Enhanced validation with specific error messages
     if (!amount || amount <= 0 || isNaN(amount)) {
-      toast.error(t("partner.toasts.enterValidAmount"));
+      toast.error(t("toasts.partner.enterValidAmount"));
       return;
     }
 
     if (amount > 10000) {
-      toast.error(t("partner.toasts.maxVoucherAmount"));
+      toast.error(t("toasts.partner.maxVoucherAmount"));
       return;
     }
 
     if (!recipientUsername.trim()) {
-      toast.error(t("partner.toasts.enterRecipientUsername"));
+      toast.error(t("toasts.partner.enterRecipientUsername"));
       return;
     }
 
     if (recipientUsername.trim().length < 3) {
-      toast.error(t("partner.toasts.usernameMinLength"));
+      toast.error(t("toasts.partner.usernameMinLength"));
       return;
     }
 
     if (isChecking) {
-      toast.error(t("partner.toasts.waitVerifyUsername"));
+      toast.error(t("toasts.partner.waitVerifyUsername"));
       return;
     }
 
     if (!isUsernameValid) {
-      toast.error(usernameError || t("partner.toasts.usernameNotFound"));
+      toast.error(usernameError || t("toasts.partner.usernameNotFound"));
       return;
     }
 
@@ -193,16 +193,15 @@ const PartnerDashboard = () => {
 
     // Phase 4: Enhanced balance validation
     if (!profile) {
-      toast.error(t("partner.toasts.unableToLoadProfile"));
+      toast.error(t("toasts.partner.unableToLoadProfile"));
       return;
     }
 
     if (profile.deposit_wallet_balance < costAmount) {
       const shortfall = costAmount - profile.deposit_wallet_balance;
-      toast.error(
-        `Insufficient balance. You need ${formatCurrency(shortfall)} more in your deposit wallet.`,
-        { duration: 5000 }
-      );
+      toast.error(t("toasts.partner.insufficientBalance", { amount: formatCurrency(shortfall) }), {
+        duration: 5000,
+      });
       return;
     }
 
@@ -237,7 +236,7 @@ const PartnerDashboard = () => {
 
   const addPaymentMethod = () => {
     if (!newPaymentMethod.type || !newPaymentMethod.details) {
-      toast.error(t("partner.toasts.fillPaymentMethodFields"));
+      toast.error(t("toasts.partner.fillPaymentMethodFields"));
       return;
     }
 
@@ -645,7 +644,7 @@ const PartnerDashboard = () => {
                     )}
                     {!isChecking && recipientUsername.trim().length < 3 && (
                       <div className="text-muted-foreground text-xs">
-                        {t("partner.toasts.usernameMinLength")}
+                        {t("toasts.partner.usernameMinLength")}
                       </div>
                     )}
                   </div>

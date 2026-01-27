@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranding } from "@/contexts/BrandingContext";
 
@@ -38,6 +39,7 @@ const DEFAULT_SEO: SEOConfig = {
 };
 
 export const DynamicSEO = () => {
+  const { t } = useTranslation();
   const { platformName, platformLogoUrl, platformUrl } = useBranding();
   
   const { data: seoConfig } = useQuery({
@@ -62,17 +64,17 @@ export const DynamicSEO = () => {
 
   const config = seoConfig || {
     ...DEFAULT_SEO,
-    title: `${platformName} – Earn Online by Completing AI Tasks`,
-    description: `${platformName} lets users earn money online by completing AI-powered tasks and online training. Simple, flexible, and global.`,
-    keywords: `earn online, AI tasks, online jobs, ${platformName}, make money online`,
-    canonicalUrl: platformUrl,
-    ogTitle: `${platformName} – Earn Online Completing AI Tasks`,
-    ogDescription: `Start earning online with ${platformName} by completing AI-powered tasks and training. No experience required.`,
-    ogImage: platformLogoUrl,
-    ogUrl: platformUrl,
-    twitterTitle: `${platformName} – Earn Online Completing AI Tasks`,
-    twitterDescription: `Start earning online with ${platformName} by completing AI-powered tasks and training. No experience required.`,
-    twitterImage: platformLogoUrl,
+    title: t("seo.defaultTitle", { platform: platformName }),
+    description: t("seo.defaultDescription", { platform: platformName }),
+    keywords: t("seo.defaultKeywords", { platform: platformName }),
+    canonicalUrl: platformUrl || DEFAULT_SEO.canonicalUrl,
+    ogTitle: t("seo.defaultOgTitle", { platform: platformName }),
+    ogDescription: t("seo.defaultOgDescription", { platform: platformName }),
+    ogImage: platformLogoUrl || DEFAULT_SEO.ogImage,
+    ogUrl: platformUrl || DEFAULT_SEO.ogUrl,
+    twitterTitle: t("seo.defaultTwitterTitle", { platform: platformName }),
+    twitterDescription: t("seo.defaultTwitterDescription", { platform: platformName }),
+    twitterImage: platformLogoUrl || DEFAULT_SEO.twitterImage,
   };
 
   return (

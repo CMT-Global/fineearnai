@@ -66,7 +66,7 @@ const PartnerLeaderboardSettings = () => {
       toast.success(t("admin.toasts.leaderboardSettingsUpdatedSuccessfully"));
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update settings");
+      toast.error(t("admin.toasts.failedToUpdateLeaderboardSettings", { message: error?.message ?? "" }));
     },
   });
 

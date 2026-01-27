@@ -80,7 +80,7 @@ export default function PartnerBonusTiers() {
       resetForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create tier: ${error.message}`);
+      toast.error(t("admin.toasts.failedToCreateTier", { message: error?.message ?? "" }));
     },
   });
 
@@ -108,7 +108,7 @@ export default function PartnerBonusTiers() {
       resetForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update tier: ${error.message}`);
+      toast.error(t("admin.toasts.failedToUpdateTier", { message: error?.message ?? "" }));
     },
   });
 
@@ -127,7 +127,7 @@ export default function PartnerBonusTiers() {
       toast.success(t("admin.toasts.bonusTierDeletedSuccessfully"));
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete tier: ${error.message}`);
+      toast.error(t("admin.toasts.failedToDeleteTier", { message: error?.message ?? "" }));
     },
   });
 

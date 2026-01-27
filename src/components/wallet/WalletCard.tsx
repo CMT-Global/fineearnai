@@ -209,7 +209,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     // Auto-fill saved address when crypto changes
     if (savedAddress) {
       setAccountDetails(savedAddress);
-      toast.success(`Auto-filled saved ${selectedCrypto.displayName} address`, { duration: 2000 });
+      toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: selectedCrypto.displayName }), { duration: 2000 });
     } else {
       // Clear if no saved address for this crypto
       setAccountDetails('');
@@ -298,7 +298,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
     } catch (error) {
       console.error("Error loading payment processors:", error);
-      toast.error(t("wallet.toasts.failedToLoadPaymentMethods"));
+      toast.error(t("toasts.wallet.failedToLoadPaymentMethods"));
     } finally {
       setLoadingProcessors(false);
     }
@@ -373,18 +373,18 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     setWithdrawAmountError(null);
     
     // Show success feedback
-    toast.success(`Maximum amount set: ${userCurrency} ${roundedAmount}`);
+    toast.success(t("toasts.wallet.maximumAmountSet", { currency: userCurrency, amount: roundedAmount }));
   };
 
   const handleDeposit = async () => {
     if (!depositAmount) {
-      toast.error(t("wallet.toasts.pleaseEnterAmount"));
+      toast.error(t("toasts.wallet.pleaseEnterAmount"));
       return;
     }
 
     const amountLocal = parseFloat(depositAmount);
     if (isNaN(amountLocal) || amountLocal <= 0) {
-      toast.error(t("wallet.toasts.pleaseEnterValidAmount"));
+      toast.error(t("toasts.wallet.pleaseEnterValidAmount"));
       return;
     }
 
@@ -404,19 +404,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     const MAX_DEPOSIT = 10000;
     
     if (amountUSD < MIN_DEPOSIT || amountUSD > MAX_DEPOSIT) {
-      toast.error(`Deposit amount must be between $${MIN_DEPOSIT} and $${MAX_DEPOSIT} USD`);
+      toast.error(t("toasts.wallet.depositAmountBetween", { min: MIN_DEPOSIT, max: MAX_DEPOSIT }));
       return;
     }
 
     // ✅ Use the actual deposit processor (CPAY) directly
     if (!actualDepositProcessor) {
-      toast.error(t("wallet.toasts.paymentProcessorNotAvailable"));
+      toast.error(t("toasts.wallet.paymentProcessorNotAvailable"));
       return;
     }
 
     // ✅ Validate against processor limits using USD amount
     if (amountUSD < actualDepositProcessor.min_amount || amountUSD > actualDepositProcessor.max_amount) {
-      toast.error(`Amount must be between $${actualDepositProcessor.min_amount} and $${actualDepositProcessor.max_amount} USD`);
+      toast.error(t("toasts.wallet.amountBetween", { min: actualDepositProcessor.min_amount, max: actualDepositProcessor.max_amount }));
       return;
     }
 
@@ -444,7 +444,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           setCpayCurrency(data.currency || 'USDT');
           setDepositDialogOpen(false); // Close deposit dialog
           setShowCpayIframe(true); // Show iframe - user selects coin in CPAY popup
-          toast.success(t("wallet.toasts.openingPaymentProcessor"));
+          toast.success(t("toasts.wallet.openingPaymentProcessor"));
         } else {
           throw new Error("No checkout URL received");
         }
@@ -460,14 +460,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
         if (error) throw error;
 
-        toast.success(t("wallet.toasts.depositSuccessful"));
+        toast.success(t("toasts.wallet.depositSuccessful"));
         setDepositAmount("");
         setDepositDialogOpen(false);
         onBalanceUpdate();
       }
     } catch (error: any) {
       console.error("Deposit error:", error);
-      toast.error(error.message || "Failed to process deposit");
+      toast.error(error.message || t("toasts.wallet.failedToProcessDeposit"));
     } finally {
       setDepositLoading(false);
     }
@@ -475,19 +475,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || !accountDetails) {
-      toast.error(t("wallet.toasts.fillAllFields"));
+      toast.error(t("toasts.wallet.fillAllFields"));
       return;
     }
     
     // Validate crypto selection
     if (!selectedCrypto || !['usdc-solana', 'usdt-bep20'].includes(selectedCrypto.id)) {
-      toast.error(t("wallet.toasts.selectValidWithdrawalMethod"));
+      toast.error(t("toasts.wallet.selectValidWithdrawalMethod"));
       return;
     }
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error(t("wallet.toasts.pleaseEnterValidAmount"));
+      toast.error(t("toasts.wallet.pleaseEnterValidAmount"));
       return;
     }
 
@@ -504,13 +504,13 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
     // Validate against earnings balance (in USD)
     if (amountUSD > earningsBalance) {
-      toast.error(t("wallet.toasts.insufficientBalance"));
+      toast.error(t("toasts.wallet.insufficientBalance"));
       return;
     }
     
     // PHASE 5.d: Check email verification (admins bypass this check)
     if (!isAdmin && profile && !profile.email_verified) {
-      toast.error(t("wallet.toasts.emailVerificationRequired"));
+      toast.error(t("toasts.wallet.emailVerificationRequired"));
       setWithdrawDialogOpen(false);
       return;
     }
@@ -527,7 +527,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error(t("wallet.toasts.mustBeLoggedIn"));
+        toast.error(t("toasts.wallet.mustBeLoggedIn"));
         return;
       }
 
@@ -544,7 +544,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       }
 
       if (pendingWithdrawals) {
-        toast.error(t("wallet.toasts.pendingWithdrawalExists"));
+        toast.error(t("toasts.wallet.pendingWithdrawalExists"));
         return;
       }
 
@@ -556,7 +556,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         .single();
 
       if (profileError || !profile) {
-        toast.error(t("wallet.toasts.failedToLoadProfile"));
+        toast.error(t("toasts.wallet.failedToLoadProfile"));
         return;
       }
 
@@ -568,7 +568,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         .single();
 
       if (planError || !plan) {
-        toast.error(t("wallet.toasts.failedToLoadMembershipPlan"));
+        toast.error(t("toasts.wallet.failedToLoadMembershipPlan"));
         return;
       }
 
@@ -585,7 +585,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         ? plan.min_withdrawal 
         : parseFloat(plan.min_withdrawal as string);
       if (amountUSD < minWithdrawal) {
-        toast.error(`Minimum withdrawal is $${minWithdrawal.toFixed(2)} USD`);
+        toast.error(t("toasts.wallet.minimumWithdrawal", { amount: minWithdrawal.toFixed(2) }));
         return;
       }
 
@@ -595,7 +595,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
           ? plan.min_daily_withdrawal
           : parseFloat(plan.min_daily_withdrawal as string);
         if (minDailyWithdrawal > 0 && amountUSD < minDailyWithdrawal) {
-          toast.error(`Minimum daily withdrawal is $${minDailyWithdrawal.toFixed(2)} USD`);
+          toast.error(t("toasts.wallet.minimumDailyWithdrawal", { amount: minDailyWithdrawal.toFixed(2) }));
           return;
         }
       }
@@ -626,7 +626,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         : parseFloat(plan.max_daily_withdrawal as string);
       if (totalWithdrawnToday + amountUSD > maxDailyWithdrawal) {
         const remainingLimit = maxDailyWithdrawal - totalWithdrawnToday;
-        toast.error(`Daily withdrawal limit exceeded. You can withdraw up to $${remainingLimit.toFixed(2)} USD more today.`);
+        toast.error(t("toasts.wallet.dailyLimitExceeded", { amount: remainingLimit.toFixed(2) }));
         return;
       }
 
@@ -643,8 +643,9 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       // PHASE 3: Validate crypto address format
       if (accountDetails && !validateCryptoAddress(selectedCrypto.id, accountDetails)) {
-        toast.error(`Invalid ${selectedCrypto.displayName} address format. Please check and try again.`);
-        setCryptoAddressError(`Invalid ${selectedCrypto.displayName} address format`);
+        const msg = t("toasts.wallet.invalidAddressFormat", { crypto: selectedCrypto.displayName });
+        toast.error(msg);
+        setCryptoAddressError(msg);
         return;
       }
 
@@ -658,7 +659,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       
     } catch (error: any) {
       console.error("Withdrawal validation error:", error);
-      toast.error(error.message || "Failed to validate withdrawal");
+      toast.error(error.message || t("toasts.wallet.failedToValidateWithdrawal"));
     } finally {
       setWithdrawLoading(false);
     }
@@ -673,7 +674,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     try {
       // ✅ PHASE 2: Defensive validation for cryptoId
       if (!pendingWithdrawalData.cryptoId) {
-        toast.error(t("wallet.toasts.cryptocurrencySelectionRequired"));
+        toast.error(t("toasts.wallet.cryptocurrencySelectionRequired"));
         console.error('❌ Missing cryptoId:', pendingWithdrawalData);
         setWithdrawLoading(false);
         return;
@@ -682,7 +683,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       // Validate cryptoId format
       const validCryptoIds = ['usdc-solana', 'usdt-bep20'];
       if (!validCryptoIds.includes(pendingWithdrawalData.cryptoId)) {
-        toast.error(t("wallet.toasts.invalidCryptocurrency"));
+        toast.error(t("toasts.wallet.invalidCryptocurrency"));
         console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected one of:', validCryptoIds);
         setWithdrawLoading(false);
         return;
@@ -694,7 +695,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       // ✅ Use the actual crypto processor directly (no virtual methods)
       if (!actualCryptoProcessor) {
-        toast.error(t("wallet.toasts.withdrawalProcessorNotAvailable"));
+        toast.error(t("toasts.wallet.withdrawalProcessorNotAvailable"));
         return;
       }
       
@@ -726,7 +727,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
 
       if (error) throw error;
 
-      toast.success(data.message || "Withdrawal request submitted!");
+      toast.success(data.message || t("toasts.wallet.withdrawalRequestSubmitted"));
       setWithdrawAmount("");
       setAccountDetails("");
       setWithdrawDialogOpen(false);
@@ -735,7 +736,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       onBalanceUpdate();
     } catch (error: any) {
       console.error("Withdrawal error:", error);
-      toast.error(error.message || "Failed to process withdrawal");
+      toast.error(error.message || t("toasts.wallet.failedToProcessWithdrawal"));
     } finally {
       setWithdrawLoading(false);
     }
@@ -1051,10 +1052,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                             if (profile) {
                               if (crypto.id === 'usdc-solana' && profile.usdc_solana_address) {
                                 setAccountDetails(profile.usdc_solana_address);
-                                toast.success(`Auto-filled saved ${crypto.displayName} address`);
+                                toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: crypto.displayName }));
                               } else if (crypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
                                 setAccountDetails(profile.usdt_bep20_address);
-                                toast.success(`Auto-filled saved ${crypto.displayName} address`);
+                                toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: crypto.displayName }));
                               }
                             }
                           }

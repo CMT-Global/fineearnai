@@ -134,7 +134,7 @@ const InfluencerInvites = () => {
       });
     } catch (error: any) {
       console.error("Error sending invite:", error);
-      toast.error(error.message || t("admin.influencerInvites.failedToSend"));
+      toast.error(t("admin.influencerInvites.failedToSend", { message: error?.message ?? "" }));
     } finally {
       setSending(false);
     }

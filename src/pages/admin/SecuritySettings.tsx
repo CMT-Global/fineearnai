@@ -109,7 +109,7 @@ export default function SecuritySettings() {
       toast.success(t("admin.toasts.migrationBannerSaved"));
     },
     onError: (error: any) => {
-      toast.error(`Failed to save banner settings: ${error.message}`);
+      toast.error(t("admin.toasts.failedToSaveBannerSettings", { message: error?.message ?? "" }));
     },
   });
   

@@ -128,7 +128,7 @@ const TaskDetail = () => {
       loadNextTask();
     } catch (error: any) {
       console.error("Error skipping task:", error);
-      toast.error(error.message || "Failed to skip task");
+      toast.error(error.message || t("tasks.toasts.failedToSkipTask"));
     }
   };
 
@@ -155,7 +155,7 @@ const TaskDetail = () => {
       setFeedback(data);
 
       if (data.isCorrect) {
-        toast.success(`Correct! You earned ${formatAmount(data.earnedAmount)}`);
+        toast.success(t("tasks.toasts.correctEarned", { amount: formatAmount(data.earnedAmount) }));
       } else {
         toast.error(t("tasks.toasts.incorrectAnswer"));
       }
@@ -169,7 +169,7 @@ const TaskDetail = () => {
 
     } catch (error: any) {
       console.error("Error submitting answer:", error);
-      toast.error(error.message || "Failed to submit answer");
+      toast.error(error.message || t("tasks.toasts.failedToSubmitAnswer"));
       setIsSubmitting(false);
     }
   };

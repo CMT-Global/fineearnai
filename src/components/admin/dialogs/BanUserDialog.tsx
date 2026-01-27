@@ -16,6 +16,7 @@ import { validateBan, sanitizeUserInput } from "@/lib/admin-validation";
 import { ShieldX, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface BanUserDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export const BanUserDialog = ({
   username,
   email,
 }: BanUserDialogProps) => {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   
@@ -46,7 +48,7 @@ export const BanUserDialog = ({
 
     if (!validation.success) {
       const firstError = validation.error.errors[0];
-      toast.error(firstError?.message || "Validation failed");
+      toast.error(firstError?.message || t("admin.toasts.validationFailed"));
       return;
     }
 

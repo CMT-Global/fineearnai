@@ -231,16 +231,17 @@ const EmailTemplates = () => {
   const copyVariableToClipboard = (variableName: string) => {
     const formattedVariable = `{{${variableName}}}`;
     navigator.clipboard.writeText(formattedVariable);
-    toast.success(`Copied ${formattedVariable} to clipboard!`);
+    toast.success(t("admin.emailTemplates.toasts.copiedToClipboard", { variable: formattedVariable }));
   };
 
   // Insert variable directly into editor
   const insertVariableIntoEditor = useCallback((variableName: string) => {
     if (insertVariableRef.current) {
       insertVariableRef.current(variableName);
-      toast.success(`{{${variableName}}} added to editor`);
+      const formattedVariable = `{{${variableName}}}`;
+      toast.success(t("admin.emailTemplates.toasts.addedToEditor", { variable: formattedVariable }));
     }
-  }, [toast]);
+  }, [t]);
 
   // Handle editor ready callback
   const handleEditorReady = useCallback((insertFn: (variableName: string) => void) => {

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Copy, Check, Search, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { ALL_AVAILABLE_VARIABLES, MOST_USED_VARIABLES, getCategoryIcon } from "@/lib/email-variables";
 
 interface EmailVariableReferenceProps {
@@ -13,6 +14,7 @@ interface EmailVariableReferenceProps {
 }
 
 export const EmailVariableReference = ({ onInsert }: EmailVariableReferenceProps) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedVariable, setCopiedVariable] = useState<string | null>(null);
 
@@ -33,14 +35,14 @@ export const EmailVariableReference = ({ onInsert }: EmailVariableReferenceProps
     const variableText = `{{${variableName}}}`;
     navigator.clipboard.writeText(variableText);
     setCopiedVariable(variableName);
-    toast.success(`Copied ${variableText} to clipboard`);
+    toast.success(t("admin.emailTemplates.toasts.copiedToClipboard", { variable: variableText }));
     setTimeout(() => setCopiedVariable(null), 2000);
   };
 
   const handleInsert = (variableName: string) => {
     if (onInsert) {
       onInsert(variableName);
-      toast.success(`Inserted {{${variableName}}}`);
+      toast.success(t("admin.emailTemplates.toasts.addedToEditor", { variable: `{{${variableName}}}` }));
     } else {
       handleCopy(variableName);
     }

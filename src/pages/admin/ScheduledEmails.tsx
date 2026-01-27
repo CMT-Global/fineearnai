@@ -59,7 +59,7 @@ const ScheduledEmails = () => {
         setScheduledEmails(data || []);
       } catch (error: any) {
         console.error("Error loading scheduled emails:", error);
-        toast.error(error.message || t("admin.scheduledEmails.loadingScheduledEmails"));
+        toast.error(t("admin.scheduledEmails.loadFailed", { message: error?.message ?? "" }));
       } finally {
         setLoading(false);
       }
@@ -128,7 +128,7 @@ const ScheduledEmails = () => {
       }
     } catch (error: any) {
       console.error("Error processing scheduled emails:", error);
-      toast.error(error.message || t("admin.scheduledEmails.processingFailed"));
+      toast.error(t("admin.scheduledEmails.processingFailed", { message: error?.message ?? "" }));
     } finally {
       setProcessing(false);
     }
@@ -151,7 +151,7 @@ const ScheduledEmails = () => {
       );
     } catch (error: any) {
       console.error("Error cancelling scheduled email:", error);
-      toast.error(error.message || t("admin.scheduledEmails.cancellationFailed"));
+      toast.error(t("admin.scheduledEmails.cancellationFailed", { message: error?.message ?? "" }));
     }
   };
 
@@ -174,7 +174,7 @@ const ScheduledEmails = () => {
       setSelectedEmail(null);
     } catch (error: any) {
       console.error("Error deleting scheduled email:", error);
-      toast.error(error.message || t("admin.scheduledEmails.deletionFailed"));
+      toast.error(t("admin.scheduledEmails.deletionFailed", { message: error?.message ?? "" }));
     }
   };
 

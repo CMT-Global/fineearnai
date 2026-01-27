@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -43,6 +44,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
   decimals, // Optional - will auto-detect if not provided
   showTooltip = true,
 }) => {
+  const { t } = useTranslation();
   const { convertAmount, userCurrency, isLoading, error } = useCurrencyConversion();
 
   // Show loading skeleton during initialization
@@ -100,7 +102,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-xs">Currency conversion unavailable</p>
+            <p className="text-xs">{t("currency.conversionUnavailable")}</p>
             <p className="text-xs text-muted-foreground">{error}</p>
           </TooltipContent>
         </Tooltip>
@@ -121,7 +123,7 @@ export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({
           <span className={className}>{formattedAmount}</span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Original: {formattedUSD}</p>
+          <p className="text-xs">{t("currency.originalAmount", { amount: formattedUSD })}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
