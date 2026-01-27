@@ -25,7 +25,7 @@ import {
   Activity,
   Globe,
 } from "lucide-react";
-import { useState, useEffect, useMemo, memo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, memo, useCallback, useRef, type RefObject } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
@@ -65,6 +65,8 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     return stored ? JSON.parse(stored) : ["overview"];
   });
   const scrollPositionsRef = useRef<Map<string, number>>(new Map());
+  const navScrollRef = useRef<HTMLNavElement>(null);
+  const savedSidebarScrollRef = useRef<number | null>(null);
 
   // Fetch failed commission count for badge
   const { data: failedCommissionCount } = useQuery({
@@ -255,16 +257,27 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
   };
 
   const handleNavigation = useCallback((path: string) => {
-    // Save current scroll position before navigation (AdminLayout will handle restoration)
+    // Save sidebar nav scroll so it doesn't jump upward when we navigate
+    if (navScrollRef.current) {
+      savedSidebarScrollRef.current = navScrollRef.current.scrollTop;
+    }
+    // Save current main content scroll (AdminLayout will handle restoration)
     const currentScroll = window.scrollY;
     if (currentScroll > 0) {
       scrollPositionsRef.current.set(location.pathname, currentScroll);
     }
-    
-    // Navigate - AdminLayout will handle scroll preservation
-    navigate(path);
+    // Prevent main content from scrolling to top; preserve sidebar scroll via effect below
+    navigate(path, { preventScrollReset: true });
     setOpen(false);
   }, [navigate, location.pathname]);
+
+  // Restore sidebar nav scroll after navigation so it doesn't move upward
+  useEffect(() => {
+    if (savedSidebarScrollRef.current != null && navScrollRef.current) {
+      navScrollRef.current.scrollTop = savedSidebarScrollRef.current;
+      savedSidebarScrollRef.current = null;
+    }
+  }, [location.pathname]);
 
   const handleExitAdminMode = useCallback(() => {
     exitAdminMode();
@@ -282,7 +295,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     onSignOut();
   }, [onSignOut]);
 
-  const NavContent = () => (
+  const NavContent = ({ navRef }: { navRef: RefObject<HTMLNavElement | null> }) => (
     <div className="flex flex-col h-full">
       {/* Admin Header */}
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
@@ -303,7 +316,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       </div>
 
       {/* Navigation Categories */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+      <nav ref={navRef} className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navCategories.map((category) => {
           const isExpanded = expandedCategories.includes(category.label);
           const categoryActive = isCategoryActive(category);
@@ -413,7 +426,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
           </SheetTrigger>
           <SheetContent side="left" className="w-80 p-0">
             <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-              <NavContent />
+              <NavContent navRef={navScrollRef} />
             </div>
           </SheetContent>
         </Sheet>
@@ -421,7 +434,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
 
       {/* Desktop Admin Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
-        <NavContent />
+        <NavContent navRef={navScrollRef} />
       </aside>
     </>
   );

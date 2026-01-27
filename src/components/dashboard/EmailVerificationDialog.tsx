@@ -61,7 +61,7 @@ export const EmailVerificationDialog = ({
       // Check for invocation errors (network, timeout, etc.)
       if (response.error) {
         console.error('[EMAIL-VERIFY] Function invocation error:', response.error);
-        const errorMsg = response.error.message || "Network error. Please check your connection and try again.";
+        const errorMsg = response.error.message || t("admin.toasts.networkErrorCheckConnection");
         setError(errorMsg);
         toast.error(errorMsg);
         return;
@@ -90,7 +90,7 @@ export const EmailVerificationDialog = ({
 
       // Check for other application-level errors
       if (response.data.success === false || response.data.error) {
-        const errorMsg = response.data.error || response.data.message || "Failed to send verification code";
+        const errorMsg = response.data.error || response.data.message || t("admin.toasts.failedToSendVerificationCode");
         console.error('[EMAIL-VERIFY] Application error:', errorMsg);
         console.error('[EMAIL-VERIFY] Full error details:', response.data);
         setError(errorMsg);
@@ -111,7 +111,7 @@ export const EmailVerificationDialog = ({
       }
     } catch (err: any) {
       console.error("[EMAIL-VERIFY] Unexpected error:", err);
-      const errorMessage = err.message || "Failed to send verification code";
+      const errorMessage = err.message || t("admin.toasts.failedToSendVerificationCode");
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -160,7 +160,7 @@ export const EmailVerificationDialog = ({
       setError(null);
     } catch (err: any) {
       console.error("Error verifying OTP:", err);
-      const errorMessage = err.message || "Failed to verify code";
+      const errorMessage = err.message || t("admin.toasts.failedToVerifyCode");
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

@@ -400,7 +400,7 @@ export const useUserManagement = () => {
       toast.success(t('admin.toasts.uplineChangedSuccessfully'));
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to change upline');
+      toast.error(error.message || t('admin.toasts.failedToChangeUpline'));
     }
   });
 

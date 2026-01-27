@@ -83,7 +83,19 @@
     "displayOnly": "Display Only",
     "displayOnlyDescription": "Currency conversion affects display only. All transactions are processed in USD. Exchange rates are updated every 24 hours.",
     "update": "Update Currency",
-    "updateFailed": "Failed to update currency. Please try again."
+    "updateFailed": "Failed to update currency. Please try again.",
+    "updatedTo": "Currency updated to {{currencyCode}}",
+    "conversionUnavailable": "Currency conversion unavailable",
+    "originalAmount": "Original: {{amount}}"
+  },
+  "seo": {
+    "defaultTitle": "{{platform}} – Earn Online by Completing AI Tasks",
+    "defaultDescription": "{{platform}} lets users earn money online by completing AI-powered tasks and online training. Simple, flexible, and global.",
+    "defaultKeywords": "earn online, AI tasks, online jobs, {{platform}}, make money online",
+    "defaultOgTitle": "{{platform}} – Earn Online Completing AI Tasks",
+    "defaultOgDescription": "Start earning online with {{platform}} by completing AI-powered tasks and training. No experience required.",
+    "defaultTwitterTitle": "{{platform}} – Earn Online Completing AI Tasks",
+    "defaultTwitterDescription": "Start earning online with {{platform}} by completing AI-powered tasks and training. No experience required."
   },
   "settings": {
     "title": "Settings",
@@ -748,6 +760,33 @@
     "failedToChangePassword": "Failed to change password. Please try again."
   },
   "admin": {
+    "richTextEditor": {
+      "placeholder": "Start typing...",
+      "useProfessionalWrapper": "Use professional email wrapper",
+      "tooltips": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "heading1": "Heading 1",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "bulletList": "Bullet List",
+        "orderedList": "Numbered List",
+        "alignLeft": "Align Left",
+        "alignCenter": "Align Center",
+        "alignRight": "Align Right",
+        "addLink": "Add Link",
+        "removeLink": "Remove Link",
+        "clearFormatting": "Clear Formatting",
+        "insertStyledButton": "Insert Styled Button"
+      },
+      "tipTitle": "Tip:",
+      "tipBody": "Variables like {{variable}} will be replaced with actual data when emails are sent. Use the sidebar to insert available variables.",
+      "formatHintDesktop": "Use the toolbar above to format your message",
+      "formatHintMobile": "Format with toolbar",
+      "enterUrl": "Enter URL:"
+    },
     "dashboard": "Admin Dashboard",
     "subtitle": "Platform overview and management",
     "loadingPanel": "Loading admin panel...",
@@ -926,7 +965,14 @@
         "specificUsers": "{{count}} specific user",
         "specificUsersPlural": "{{count}} specific users",
         "custom": "Custom"
-      }
+      },
+      "processedSuccessfully": "{{count}} correo(s) programado(s) procesado(s) correctamente",
+      "cancelledSuccessfully": "Correo programado cancelado correctamente",
+      "deletedSuccessfully": "Correo programado eliminado correctamente",
+      "loadFailed": "Error al cargar correos programados: {{message}}",
+      "processingFailed": "Error al procesar correos programados: {{message}}",
+      "cancellationFailed": "Error al cancelar correo programado: {{message}}",
+      "deletionFailed": "Error al eliminar correo programado: {{message}}"
     },
     "systemSecrets": {
       "title": "Secretos del Sistema",
@@ -2317,6 +2363,8 @@
       "failedToLoadEmailHistory": "Failed to load email history",
       "failedToLoadBulkEmailJobs": "Failed to load bulk email jobs",
       "deliveryStatusUpdated": "Delivery status updated",
+      "failedToCheckDeliveryStatus": "Failed to check delivery status",
+      "jobQueuedForRetry": "Job queued for retry ({{count}} recipients remaining)",
       "jobCancelledSuccessfully": "Job cancelled successfully",
       "failedToCancelJob": "Failed to cancel job: {{error}}",
       "noRemainingRecipients": "No remaining recipients to process",
@@ -2331,13 +2379,20 @@
       "maxSalesMustBeGreaterThanMin": "Maximum sales must be greater than minimum sales",
       "bonusPercentageMustBeValid": "Bonus percentage must be between 0 and 100",
       "leaderboardSettingsUpdatedSuccessfully": "Leaderboard settings updated successfully",
+      "failedToSaveBannerSettings": "Error al guardar la configuración del banner: {{message}}",
+      "failedToUpdateLeaderboardSettings": "Error al actualizar la configuración: {{message}}",
+      "failedToCreateTier": "Error al crear nivel: {{message}}",
+      "failedToUpdateTier": "Error al actualizar nivel: {{message}}",
+      "failedToDeleteTier": "Error al eliminar nivel: {{message}}",
       "paymentFailedOrCancelled": "Payment failed or was cancelled.",
       "useInlineEditingInOverviewTab": "Use inline editing in Overview tab",
       "resetLimitsComingSoon": "Reset limits coming soon",
       "noResponseFromServer": "No response from server. Please try again.",
+      "networkErrorCheckConnection": "Network error. Please check your connection and try again.",
       "emailDeliveryFailed": "Email delivery failed",
       "verificationCodeSentCheckEmail": "Verification code sent! Check your email (including spam/junk folder).",
       "failedToSendVerificationCode": "Failed to send verification code. Please try again.",
+      "failedToVerifyCode": "Failed to verify code",
       "emailVerifiedSuccessfully": "Email verified successfully!",
       "networkErrorWhileLoadingProfile": "Network error while loading profile. Some features may be limited.",
       "profileNotFoundContactSupport": "Profile not found. Please contact support.",
@@ -2350,6 +2405,8 @@
       "userBannedSuccessfully": "User banned successfully",
       "dailyLimitsResetSuccessfully": "Daily limits reset successfully",
       "uplineChangedSuccessfully": "Upline changed successfully. Future commissions will go to the new upline.",
+      "failedToChangeUpline": "Failed to change upline. Please try again.",
+      "validationFailed": "Validation failed",
       "bulkPlanUpdateCompleted": "Bulk plan update completed",
       "bulkSuspendCompleted": "Bulk suspend completed",
       "roleAssignedSuccessfully": "Role assigned successfully",
@@ -2655,6 +2712,10 @@
       "variablesHint": "Click to copy or use + to insert directly",
       "clickToCopy": "Haz clic para copiar",
       "insertIntoEditor": "Insertar en editor",
+      "toasts": {
+        "copiedToClipboard": "¡{{variable}} copiado al portapapeles!",
+        "addedToEditor": "{{variable}} añadido al editor"
+      },
       "previewTemplate": "Vista previa de plantilla",
       "sendTestEmail": "Enviar correo de prueba",
       "editTemplateTooltip": "Editar plantilla",
@@ -3569,7 +3630,19 @@
       "failedToLoadMembershipPlan": "Failed to load membership plan details",
       "cryptocurrencySelectionRequired": "Cryptocurrency selection is required",
       "invalidCryptocurrency": "Invalid cryptocurrency selected. Please try again.",
-      "withdrawalProcessorNotAvailable": "Withdrawal processor not available. Please try again later."
+      "withdrawalProcessorNotAvailable": "Withdrawal processor not available. Please try again later.",
+      "autoFilledSavedAddress": "Auto-filled saved {{crypto}} address",
+      "maximumAmountSet": "Maximum amount set: {{currency}} {{amount}}",
+      "depositAmountBetween": "Deposit amount must be between ${{min}} and ${{max}} USD",
+      "amountBetween": "Amount must be between ${{min}} and ${{max}} USD",
+      "failedToProcessDeposit": "Failed to process deposit",
+      "minimumWithdrawal": "Minimum withdrawal is ${{amount}} USD",
+      "minimumDailyWithdrawal": "Minimum daily withdrawal is ${{amount}} USD",
+      "dailyLimitExceeded": "Daily withdrawal limit exceeded. You can withdraw up to ${{amount}} USD more today.",
+      "invalidAddressFormat": "Invalid {{crypto}} address format. Please check and try again.",
+      "failedToValidateWithdrawal": "Failed to validate withdrawal",
+      "withdrawalRequestSubmitted": "Withdrawal request submitted!",
+      "failedToProcessWithdrawal": "Failed to process withdrawal"
     },
     "admin": {
       "accessDenied": "Access denied. Admin privileges required.",
@@ -3655,7 +3728,7 @@
       "fillEmailAndName": "Please fill in email and influencer name",
       "invalidEmail": "Please enter a valid email address",
       "inviteSentSuccess": "Influencer invite sent successfully to {{email}}!",
-      "failedToSend": "Failed to send invite",
+      "failedToSend": "Error al enviar invitación: {{message}}",
       "tabs": {
         "compose": "Compose",
         "history": "History",

@@ -26,6 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -92,7 +93,7 @@ const ToolbarButton = ({ onClick, isActive, disabled, icon, tooltip }: ToolbarBu
 export const RichTextEditor = ({
   value,
   onChange,
-  placeholder = "Start typing...",
+  placeholder: placeholderProp,
   maxLength = 5000,
   className,
   disabled = false,
@@ -102,6 +103,8 @@ export const RichTextEditor = ({
   onWrapperStateChange, // Phase 3: Callback for state changes
   onEditorReady,
 }: RichTextEditorProps) => {
+  const { t } = useTranslation();
+  const placeholder = placeholderProp ?? t("admin.richTextEditor.placeholder");
   const [useProfessionalTemplate, setUseProfessionalTemplate] = useState(initialWrapperState); // Phase 3: Initialize with passed value
 
   // Fetch platform name dynamically
@@ -183,7 +186,7 @@ export const RichTextEditor = ({
     if (!editor) return;
 
     const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter URL:', previousUrl);
+    const url = window.prompt(t("admin.richTextEditor.enterUrl"), previousUrl);
 
     // Cancelled
     if (url === null) return;
@@ -196,7 +199,7 @@ export const RichTextEditor = ({
 
     // Update link
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor]);
+  }, [editor, t]);
 
   const removeLink = useCallback(() => {
     if (!editor) return;
@@ -289,7 +292,7 @@ export const RichTextEditor = ({
             <div className="flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
               <Label htmlFor="professional-template" className="text-xs font-normal cursor-pointer text-muted-foreground">
-                Use professional email wrapper
+                {t("admin.richTextEditor.useProfessionalWrapper")}
               </Label>
             </div>
             <Switch
@@ -313,28 +316,28 @@ export const RichTextEditor = ({
                 isActive={editor.isActive('bold')}
                 disabled={disabled}
                 icon={<Bold className="h-4 w-4" />}
-                tooltip="Bold (Ctrl+B)"
+                tooltip={t("admin.richTextEditor.tooltips.bold")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 isActive={editor.isActive('italic')}
                 disabled={disabled}
                 icon={<Italic className="h-4 w-4" />}
-                tooltip="Italic (Ctrl+I)"
+                tooltip={t("admin.richTextEditor.tooltips.italic")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
                 isActive={editor.isActive('underline')}
                 disabled={disabled}
                 icon={<UnderlineIcon className="h-4 w-4" />}
-                tooltip="Underline (Ctrl+U)"
+                tooltip={t("admin.richTextEditor.tooltips.underline")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleStrike().run()}
                 isActive={editor.isActive('strike')}
                 disabled={disabled}
                 icon={<Strikethrough className="h-4 w-4" />}
-                tooltip="Strikethrough"
+                tooltip={t("admin.richTextEditor.tooltips.strikethrough")}
               />
             </div>
 
@@ -347,21 +350,21 @@ export const RichTextEditor = ({
                 isActive={editor.isActive('heading', { level: 1 })}
                 disabled={disabled}
                 icon={<Heading1 className="h-4 w-4" />}
-                tooltip="Heading 1"
+                tooltip={t("admin.richTextEditor.tooltips.heading1")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                 isActive={editor.isActive('heading', { level: 2 })}
                 disabled={disabled}
                 icon={<Heading2 className="h-4 w-4" />}
-                tooltip="Heading 2"
+                tooltip={t("admin.richTextEditor.tooltips.heading2")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                 isActive={editor.isActive('heading', { level: 3 })}
                 disabled={disabled}
                 icon={<Heading3 className="h-4 w-4" />}
-                tooltip="Heading 3"
+                tooltip={t("admin.richTextEditor.tooltips.heading3")}
               />
             </div>
 
@@ -374,14 +377,14 @@ export const RichTextEditor = ({
                 isActive={editor.isActive('bulletList')}
                 disabled={disabled}
                 icon={<List className="h-4 w-4" />}
-                tooltip="Bullet List"
+                tooltip={t("admin.richTextEditor.tooltips.bulletList")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 isActive={editor.isActive('orderedList')}
                 disabled={disabled}
                 icon={<ListOrdered className="h-4 w-4" />}
-                tooltip="Numbered List"
+                tooltip={t("admin.richTextEditor.tooltips.orderedList")}
               />
             </div>
 
@@ -394,21 +397,21 @@ export const RichTextEditor = ({
                 isActive={editor.isActive({ textAlign: 'left' })}
                 disabled={disabled}
                 icon={<AlignLeft className="h-4 w-4" />}
-                tooltip="Align Left"
+                tooltip={t("admin.richTextEditor.tooltips.alignLeft")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().setTextAlign('center').run()}
                 isActive={editor.isActive({ textAlign: 'center' })}
                 disabled={disabled}
                 icon={<AlignCenter className="h-4 w-4" />}
-                tooltip="Align Center"
+                tooltip={t("admin.richTextEditor.tooltips.alignCenter")}
               />
               <ToolbarButton
                 onClick={() => editor.chain().focus().setTextAlign('right').run()}
                 isActive={editor.isActive({ textAlign: 'right' })}
                 disabled={disabled}
                 icon={<AlignRight className="h-4 w-4" />}
-                tooltip="Align Right"
+                tooltip={t("admin.richTextEditor.tooltips.alignRight")}
               />
             </div>
 
@@ -421,13 +424,13 @@ export const RichTextEditor = ({
                 isActive={editor.isActive('link')}
                 disabled={disabled}
                 icon={<Link2 className="h-4 w-4" />}
-                tooltip="Add Link"
+                tooltip={t("admin.richTextEditor.tooltips.addLink")}
               />
               <ToolbarButton
                 onClick={removeLink}
                 disabled={disabled || !editor.isActive('link')}
                 icon={<Unlink className="h-4 w-4" />}
-                tooltip="Remove Link"
+                tooltip={t("admin.richTextEditor.tooltips.removeLink")}
               />
             </div>
 
@@ -439,13 +442,13 @@ export const RichTextEditor = ({
                 onClick={clearFormatting}
                 disabled={disabled}
                 icon={<RemoveFormatting className="h-4 w-4" />}
-                tooltip="Clear Formatting"
+                tooltip={t("admin.richTextEditor.tooltips.clearFormatting")}
               />
               <ToolbarButton
                 onClick={handleInsertButton}
                 disabled={disabled}
                 icon={<Sparkles className="h-4 w-4" />}
-                tooltip="Insert Styled Button"
+                tooltip={t("admin.richTextEditor.tooltips.insertStyledButton")}
               />
             </div>
           </div>
@@ -522,11 +525,8 @@ export const RichTextEditor = ({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs text-amber-900 dark:text-amber-100 leading-relaxed">
-              <span className="font-semibold">Tip:</span> Variables like{" "}
-              <code className="px-1.5 py-0.5 rounded-md text-xs font-mono bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
-                {`{{username}}`}
-              </code>{" "}
-              will be replaced with actual data when emails are sent. Use the sidebar to insert available variables.
+              <span className="font-semibold">{t("admin.richTextEditor.tipTitle")}</span>{" "}
+              {t("admin.richTextEditor.tipBody", { variable: "{{username}}" })}
             </p>
           </div>
         </div>
@@ -535,10 +535,10 @@ export const RichTextEditor = ({
       {/* Character Counter - Mobile Optimized */}
       <div className="border-t p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 bg-muted/20">
         <p className="text-xs text-muted-foreground hidden sm:block">
-          Use the toolbar above to format your message
+          {t("admin.richTextEditor.formatHintDesktop")}
         </p>
         <p className="text-xs text-muted-foreground sm:hidden">
-          Format with toolbar
+          {t("admin.richTextEditor.formatHintMobile")}
         </p>
         <p
           className={cn(

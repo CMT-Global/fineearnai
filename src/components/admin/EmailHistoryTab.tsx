@@ -255,7 +255,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
       loadEmails(); // Refresh the list
     } catch (error: any) {
       console.error("Error checking delivery status:", error);
-      toast.error(error.message || "Failed to check delivery status");
+      toast.error(error.message || t("admin.toasts.failedToCheckDeliveryStatus"));
     } finally {
       setCheckingStatus(null);
     }
@@ -333,7 +333,7 @@ export function EmailHistoryTab({ emailType }: EmailHistoryTabProps) {
         .eq('id', jobId);
 
       if (error) throw error;
-      toast.success(`Job queued for retry (${remainingRecipients} recipients remaining)`);
+      toast.success(t("admin.toasts.jobQueuedForRetry", { count: remainingRecipients }));
       loadBulkEmailJobs();
     } catch (error: any) {
       console.error('Error retrying job:', error);

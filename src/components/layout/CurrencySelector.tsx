@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 export function CurrencySelector() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { userCurrency, isLoading, updateUserCurrency, convertAmount, formatAmount } = useCurrencyConversion();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -34,7 +35,7 @@ export function CurrencySelector() {
     setIsUpdating(true);
     try {
       await updateUserCurrency(currencyCode);
-      toast.success(`Currency updated to ${currencyCode}`);
+      toast.success(t("currency.updatedTo", { currencyCode }));
       setOpen(false);
     } catch (error) {
       console.error("Failed to update currency:", error);

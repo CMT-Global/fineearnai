@@ -174,16 +174,16 @@ export function ChangeUplineDialog({
       if (error) throw error;
 
       if (!data.success) {
-        throw new Error(data.message || 'Failed to change upline');
+        throw new Error(data.message || t("admin.toasts.failedToChangeUpline"));
       }
 
-      toast.success('Upline changed successfully. Future commissions will go to the new upline.');
+      toast.success(t("admin.toasts.uplineChangedSuccessfully"));
       onSuccess();
       onOpenChange(false);
 
     } catch (err: any) {
       console.error('Error changing upline:', err);
-      toast.error(err.message || 'Failed to change upline. Please try again.');
+      toast.error(err.message || t("admin.toasts.failedToChangeUpline"));
     } finally {
       setIsSubmitting(false);
     }

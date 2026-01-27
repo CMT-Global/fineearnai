@@ -16,6 +16,7 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { validateWalletAdjustment, sanitizeUserInput } from "@/lib/admin-validation";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface WalletAdjustmentDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export const WalletAdjustmentDialog = ({
   username,
   currentBalance,
 }: WalletAdjustmentDialogProps) => {
+  const { t } = useTranslation();
   const [walletType, setWalletType] = useState<"deposit" | "earnings">("deposit");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -53,7 +55,7 @@ export const WalletAdjustmentDialog = ({
 
     if (!validation.success) {
       const firstError = validation.error.errors[0];
-      toast.error(firstError?.message || "Validation failed");
+      toast.error(firstError?.message || t("admin.toasts.validationFailed"));
       return;
     }
 
