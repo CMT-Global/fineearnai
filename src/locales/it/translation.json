@@ -3217,7 +3217,9 @@
       "recipients": {
         "label": "Recipients *",
         "calculating": "Calculating...",
-        "willSendTo": "📧 Will send to: <strong>{{count}}</strong> {{count, plural, one {user} other {users}}}",
+        "willSendToPrefix": "Will send to",
+        "willSendToBadge_one": "📧 Will send to: {{count}} user",
+        "willSendToBadge_other": "📧 Will send to: {{count}} users",
         "noRecipientsFound": "No recipients found with the current selection. Please adjust your filters."
       },
       "recipientTypes": {

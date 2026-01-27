@@ -745,6 +745,7 @@
     "subtitle": "Platform overview and management",
     "loadingPanel": "Loading admin panel...",
     "accessDenied": "Access denied. Admin privileges required.",
+    "backToAdmin": "Back to Admin",
     "failedToLoadStats": "Failed to load statistics",
     "totalUsers": "Total Users",
     "activeToday": "active today",
@@ -2535,6 +2536,112 @@
       "emailBody": "Email Body",
       "closePreview": "Close Preview"
     },
+    "emailTemplates": {
+      "title": "Email Template Management",
+      "subtitle": "Create and manage reusable email templates",
+      "backToAdmin": "Back to Admin",
+      "loading": "Loading templates...",
+      "cardTitle": "Email Templates",
+      "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
+      "addTemplate": "Add Template",
+      "edit": "Edit",
+      "create": "Create",
+      "update": "Update",
+      "template": "Template",
+      "emailTemplate": "Email Template",
+      "configureTemplate": "Configure template details and content",
+      "form": {
+        "templateName": "Template Name *",
+        "templateNamePlaceholder": "e.g., password_reset_notification",
+        "templateType": "Template Type *",
+        "selectTemplateType": "Select template type",
+        "emailSubject": "Email Subject *",
+        "emailSubjectPlaceholder": "e.g., Reset Your Password",
+        "subjectVariablesHint": "You can use variables like {{username}} in the subject",
+        "emailBody": "Email Body *",
+        "emailBodyPlaceholder": "Compose your email content here. Use {{variable}} for placeholders.",
+        "proTips": "Pro Tips:",
+        "proTip1": "Toggle \"Professional Template\" above for beautiful email styling",
+        "proTip2": "Use the ✨ button in toolbar to insert styled buttons",
+        "proTip3": "Click variables to copy, or use + button to insert directly",
+        "activeTemplate": "Active Template"
+      },
+      "availableVariables": "Available Variables",
+      "variablesHint": "Click to copy or use + to insert directly",
+      "noTemplatesFound": "No templates found",
+      "tableHeaders": {
+        "name": "Name",
+        "subject": "Subject",
+        "type": "Type",
+        "variables": "Variables",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "clickToCopy": "Click to copy",
+      "insertIntoEditor": "Insert into editor",
+      "previewTemplate": "Preview template",
+      "editTemplateTooltip": "Edit template",
+      "deleteTemplateTooltip": "Delete template",
+      "active": "Active",
+      "inactive": "Inactive",
+      "editTemplate": "Edit Template",
+      "preview": {
+        "title": "Template Preview",
+        "visualPreview": "Visual Preview",
+        "htmlCode": "HTML Code",
+        "emailSubject": "Email Subject",
+        "emailBody": "Email Body",
+        "sampleDataNote": "Preview shows sample data for all variables",
+        "variablesUsed": "Variables Used",
+        "rawHtmlCode": "Raw HTML Code",
+        "htmlCopied": "HTML code copied to clipboard!",
+        "copyHtmlCode": "Copy HTML Code"
+      },
+      "testEmail": {
+        "title": "Send Test Email",
+        "subjectPreview": "Subject Preview",
+        "availableVariables": "Available Variables",
+        "variablesNote": "These variables will be replaced with sample data in the test email.",
+        "testEmailAddress": "Test Email Address *",
+        "emailPlaceholder": "your.email@example.com",
+        "emailHint": "Enter the email address where you want to receive the test email.",
+        "sampleData": "Sample Data",
+        "sampleDataDescription": "The test email will use predefined sample data for all variables:",
+        "sampleUsername": "Username: TestUser",
+        "sampleEmail": "Email: {{email}}",
+        "yourEmail": "your email",
+        "sampleFullName": "Full Name: Test User",
+        "sampleLinks": "Links: Sample URLs with test tokens",
+        "samplePlanDetails": "Plan details: Premium Plan, $500.00 earnings",
+        "sending": "Sending...",
+        "sendTestEmail": "Send Test Email",
+        "invalidEmail": "Please enter a valid email address",
+        "success": "Test email sent to {{email}}!",
+        "successDescription": "Check your inbox to verify the email.",
+        "failed": "Failed to send test email",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "success": {
+        "templateUpdated": "Template updated successfully",
+        "templateCreated": "Template created successfully",
+        "templateDeleted": "Template deleted",
+        "templateActivated": "Template activated",
+        "templateDeactivated": "Template deactivated"
+      },
+      "errors": {
+        "failedToLoad": "Failed to load email templates",
+        "failedToSave": "Failed to save template",
+        "failedToDelete": "Failed to delete template",
+        "failedToUpdate": "Failed to update template"
+      },
+      "validation": {
+        "fillAllFields": "Please fill in all required fields",
+        "invalidJsonFormat": "Invalid JSON format for variables. Use format: [\"var1\", \"var2\"]"
+      },
+      "confirm": {
+        "delete": "Are you sure you want to delete this template?"
+      }
+    },
     "ipstackSettings": {
       "title": "IPStack Geolocation Settings",
       "description": "Configure IPStack API key for user IP address and geolocation detection",
@@ -2628,6 +2735,275 @@
         "description": "Used for real-time USD to local currency conversion",
         "appId": "App ID",
         "appIdPlaceholder": "Enter OpenExchangeRates App ID"
+      }
+    },
+    "bulkEmail": {
+      "title": "Bulk Email System",
+      "subtitle": "Send emails to users based on various criteria",
+      "backToAdmin": "Back to Admin",
+      "tabs": {
+        "compose": "Compose",
+        "history": "History",
+        "bestPractices": "Best Practices"
+      },
+      "compose": {
+        "title": "Compose Email",
+        "description": "Create and send bulk emails to your users",
+        "subject": "Subject *",
+        "subjectPlaceholder": "Email subject",
+        "body": "Email Body *",
+        "bodyPlaceholder": "Compose your email content. Use {{variable}} for personalization.",
+        "bodyHint": "💡 See the \"Available Variables\" section in the sidebar for all personalization options",
+        "previewEmail": "Preview Email",
+        "sendOptions": "Send Options",
+        "sendNow": "Send Now",
+        "schedule": "Schedule",
+        "sendImmediately": "Email will be sent immediately",
+        "date": "Date",
+        "time": "Time",
+        "scheduleEmail": "Schedule Email",
+        "sendEmail": "Send Email"
+      },
+      "recipients": {
+        "label": "Recipients *",
+        "calculating": "Calculating...",
+        "willSendToPrefix": "Will send to",
+        "willSendToBadge_one": "📧 Will send to: {{count}} user",
+        "willSendToBadge_other": "📧 Will send to: {{count}} users",
+        "noRecipientsFound": "No recipients found with the current selection. Please adjust your filters."
+      },
+      "recipientTypes": {
+        "all": "All Users",
+        "byPlan": "By Plan",
+        "byCountry": "By Country",
+        "byUsername": "By Username",
+        "byEmail": "By Email",
+        "allDescription": "Email will be sent to all registered users",
+        "selectPlan": "Select membership plan",
+        "loadingPlans": "Loading plans...",
+        "noPlansFound": "No plans with users found",
+        "users": "{{count, plural, one {user} other {users}}}",
+        "selectCountry": "Select a country",
+        "loadingCountries": "Loading countries...",
+        "noCountriesFound": "No countries with users found",
+        "countriesSortedByCount": "💡 Countries are sorted by user count (highest first)",
+        "enterUsername": "Enter username",
+        "usernameHint": "💡 Enter a single username (e.g., john_doe)",
+        "enterEmail": "Enter email address",
+        "emailHint": "💡 Send to any email address (even if not registered on the platform)"
+      },
+      "usernameValidation": {
+        "failed": "Failed to validate username. Please try again.",
+        "notFound": "Username not found. Please check and try again.",
+        "accountStatus": "This user account is {{status}}.",
+        "unexpectedError": "An unexpected error occurred.",
+        "checking": "Checking username...",
+        "validUserFound": "Valid user found"
+      },
+      "validation": {
+        "subjectAndBodyRequired": "Please fill in subject and body",
+        "selectPlan": "Please select a membership plan",
+        "enterCountry": "Please enter a country",
+        "enterUsername": "Please enter a username",
+        "validUsernameRequired": "Please enter a valid username before sending",
+        "enterEmail": "Please enter an email address",
+        "validEmailRequired": "Please enter a valid email address",
+        "noRecipients": "No recipients found matching criteria",
+        "selectScheduleDateTime": "Please select schedule date and time"
+      },
+      "errors": {
+        "failedToCalculateRecipients": "Failed to calculate recipient count",
+        "failedToSend": "Failed to send email",
+        "duplicateCampaign": "Duplicate Email Campaign Detected",
+        "duplicateCampaignDescription": "A similar email campaign already exists (Status: {{status}}, {{recipients}} recipients). Created {{timeText}}. Please wait for it to complete or modify your email content."
+      },
+      "timeAgo": {
+        "minutes": "{{count}} minute{{count, plural, one {} other {s}}} ago",
+        "hours": "{{count}} hour{{count, plural, one {} other {s}}} ago"
+      },
+      "success": {
+        "emailScheduled": "Email scheduled for {{date}}",
+        "jobCreated": "✅ Bulk email job created! Processing {{recipients}} recipients in background.",
+        "jobCreatedDescription": "Estimated completion: {{estimatedTime}}. View progress in History tab.",
+        "emailSent": "Email sent successfully!"
+      },
+      "estimatedTime": {
+        "hours": "{{count}} hours",
+        "minutes": "{{count}} minutes"
+      },
+      "sidebar": {
+        "recipients": "Recipients",
+        "usersWillReceive": "users will receive this email",
+        "professionalTemplate": "Professional Template",
+        "professionalTemplateDescription": "All emails are automatically wrapped in a professional template with:",
+        "templateFeature1": "Branded gradient header",
+        "templateFeature2": "Responsive design",
+        "templateFeature3": "Professional footer",
+        "templateFeature4": "Optimized for inbox delivery",
+        "tips": "Tips",
+        "tip1": "Test with a small group first",
+        "tip2": "Schedule emails for optimal times",
+        "tip3": "Keep content clear and concise",
+        "tip4": "Use personalization variables"
+      },
+      "preview": {
+        "title": "Email Preview",
+        "description": "This is how your email will appear to recipients. Variables are shown with sample data.",
+        "subject": "Subject",
+        "note": "Note",
+        "variablesNote": "Variables like {{username}} and {{email}} will be replaced with actual recipient data when sent.",
+        "body": "Email Body",
+        "willSendTo": "This email will be sent to <strong>{{count}}</strong> {{count, plural, one {recipient} other {recipients}}}.",
+        "scheduledFor": "Scheduled for:",
+        "closePreview": "Close Preview",
+        "scheduleNow": "Schedule Now",
+        "sendNow": "Send Now"
+      },
+      "history": {
+        "emailLogs": "Email Logs",
+        "queue": "Queue",
+        "processing": "Processing",
+        "complete": "Complete",
+        "emailHistory": {
+          "title": "Email History",
+          "subtitle": "View and track all emails sent from the platform",
+          "searchPlaceholder": "Search by email or subject...",
+          "filterByStatus": "Filter by status",
+          "allStatus": "All Status",
+          "sent": "Sent",
+          "failed": "Failed",
+          "pending": "Pending",
+          "showing": "Showing {{current}} of {{total}} emails",
+          "noEmailsFound": "No emails found",
+          "loading": "Loading email history...",
+          "columns": {
+            "date": "Date",
+            "recipient": "Recipient",
+            "subject": "Subject",
+            "status": "Status",
+            "successRate": "Success Rate",
+            "resendId": "Resend ID",
+            "actions": "Actions"
+          },
+          "notSent": "Not sent",
+          "pagination": {
+            "page": "Page {{current}} of {{total}}",
+            "previous": "Previous",
+            "next": "Next"
+          },
+          "emailDetails": {
+            "title": "Email Details",
+            "subtitle": "Full email information and delivery status",
+            "recipient": "Recipient",
+            "subject": "Subject",
+            "status": "Status",
+            "sentAt": "Sent At",
+            "notSentYet": "Not sent yet",
+            "resendId": "Resend ID",
+            "deliveryStatus": "Delivery Status",
+            "lastEvent": "Last Event",
+            "checked": "Checked",
+            "errorMessage": "Error Message",
+            "emailBody": "Email Body"
+          }
+        },
+        "queueTab": {
+          "title": "Queued Jobs",
+          "subtitle": "Bulk email jobs waiting to be processed",
+          "processQueueNow": "Process Queue Now",
+          "loading": "Loading queued jobs...",
+          "noJobs": "No jobs in queue",
+          "totalRecipients": "Total Recipients",
+          "created": "Created",
+          "batchId": "Batch ID",
+          "cancel": "Cancel"
+        },
+        "processingTab": {
+          "title": "Processing Jobs",
+          "subtitle": "Bulk email jobs currently being sent",
+          "processQueueNow": "Process Queue Now",
+          "loading": "Loading processing jobs...",
+          "noJobs": "No jobs currently processing",
+          "batchId": "Batch ID",
+          "cancel": "Cancel",
+          "progress": "Progress",
+          "remaining": "remaining",
+          "successful": "Successful",
+          "failed": "Failed",
+          "successRate": "Success Rate",
+          "started": "Started",
+          "lastUpdate": "Last update"
+        },
+        "completeTab": {
+          "title": "Completed Jobs",
+          "subtitle": "Bulk email jobs that have finished processing",
+          "loading": "Loading completed jobs...",
+          "noJobs": "No completed jobs yet",
+          "total": "Total",
+          "successful": "Successful",
+          "failed": "Failed",
+          "successRate": "Success Rate",
+          "created": "Created",
+          "started": "Started",
+          "completed": "Completed",
+          "duration": "Duration",
+          "minutes": "minutes",
+          "error": "Error",
+          "retry": "Retry"
+        }
+      },
+      "bestPractices": {
+        "title": "Email Deliverability Best Practices",
+        "subtitle": "Ensure your emails reach recipients and avoid spam filters",
+        "domainVerification": {
+          "title": "Required: Domain Verification (SPF/DKIM)",
+          "description": "To prevent emails from going to spam, you <strong>must</strong> verify your domain with Resend and configure SPF/DKIM records.",
+          "step1": {
+            "title": "1. Add your domain in Resend",
+            "description": "Go to Resend Dashboard → Domains → Add Domain"
+          },
+          "step2": {
+            "title": "2. Add DNS records to your domain",
+            "description": "Add the SPF, DKIM, and DMARC records provided by Resend"
+          },
+          "step3": {
+            "title": "3. Wait for verification",
+            "description": "DNS propagation can take up to 48 hours"
+          },
+          "openResendDomains": "Open Resend Domains"
+        },
+        "currentConfiguration": {
+          "title": "Current Email Configuration",
+          "fromAddress": "From Address:",
+          "replyTo": "Reply-To:",
+          "provider": "Provider:",
+          "dynamic": "Dynamic (from platform config)",
+          "resend": "Resend",
+          "note": "Email settings are configured in Email Settings under Communications"
+        },
+        "spamPrevention": {
+          "title": "Spam Prevention Checklist",
+          "tip1": "Use a verified domain (not onboarding@resend.dev)",
+          "tip2": "Include unsubscribe links in marketing emails",
+          "tip3": "Maintain good text-to-image ratio in email body",
+          "tip4": "Avoid spam trigger words (FREE, URGENT, ACT NOW, etc.)",
+          "tip5": "Send from a consistent sender name and address",
+          "tip6": "Warm up new domains gradually (start with small batches)",
+          "tip7": "Monitor bounce rates and remove invalid addresses"
+        },
+        "contentGuidelines": {
+          "title": "Content Best Practices",
+          "tip1": "Write clear, relevant subject lines (avoid ALL CAPS)",
+          "tip2": "Personalize with recipient's name using variables",
+          "tip3": "Include your company name and address in footer",
+          "tip4": "Balance HTML with plain text alternative",
+          "tip5": "Test emails before sending to large groups",
+          "tip6": "Keep email size under 100KB for best deliverability"
+        },
+        "monitoring": {
+          "title": "Monitor Your Email Performance",
+          "description": "Use the History tab to track delivery status, monitor bounce rates, and identify issues. Check delivery status regularly using the Resend API integration."
+        }
       }
     }
   },
@@ -2937,273 +3313,6 @@
         "received": "Received"
       }
     },
-    "bulkEmail": {
-      "title": "Bulk Email System",
-      "subtitle": "Send emails to users based on various criteria",
-      "backToAdmin": "Back to Admin",
-      "tabs": {
-        "compose": "Compose",
-        "history": "History",
-        "bestPractices": "Best Practices"
-      },
-      "compose": {
-        "title": "Compose Email",
-        "description": "Create and send bulk emails to your users",
-        "subject": "Subject *",
-        "subjectPlaceholder": "Email subject",
-        "body": "Email Body *",
-        "bodyPlaceholder": "Compose your email content. Use {{variable}} for personalization.",
-        "bodyHint": "💡 See the \"Available Variables\" section in the sidebar for all personalization options",
-        "previewEmail": "Preview Email",
-        "sendOptions": "Send Options",
-        "sendNow": "Send Now",
-        "schedule": "Schedule",
-        "sendImmediately": "Email will be sent immediately",
-        "date": "Date",
-        "time": "Time",
-        "scheduleEmail": "Schedule Email",
-        "sendEmail": "Send Email"
-      },
-      "recipients": {
-        "label": "Recipients *",
-        "calculating": "Calculating...",
-        "willSendTo": "📧 Will send to: <strong>{{count}}</strong> {{count, plural, one {user} other {users}}}",
-        "noRecipientsFound": "No recipients found with the current selection. Please adjust your filters."
-      },
-      "recipientTypes": {
-        "all": "All Users",
-        "byPlan": "By Plan",
-        "byCountry": "By Country",
-        "byUsername": "By Username",
-        "byEmail": "By Email",
-        "allDescription": "Email will be sent to all registered users",
-        "selectPlan": "Select membership plan",
-        "loadingPlans": "Loading plans...",
-        "noPlansFound": "No plans with users found",
-        "users": "{{count, plural, one {user} other {users}}}",
-        "selectCountry": "Select a country",
-        "loadingCountries": "Loading countries...",
-        "noCountriesFound": "No countries with users found",
-        "countriesSortedByCount": "💡 Countries are sorted by user count (highest first)",
-        "enterUsername": "Enter username",
-        "usernameHint": "💡 Enter a single username (e.g., john_doe)",
-        "enterEmail": "Enter email address",
-        "emailHint": "💡 Send to any email address (even if not registered on the platform)"
-      },
-      "usernameValidation": {
-        "failed": "Failed to validate username. Please try again.",
-        "notFound": "Username not found. Please check and try again.",
-        "accountStatus": "This user account is {{status}}.",
-        "unexpectedError": "An unexpected error occurred.",
-        "checking": "Checking username...",
-        "validUserFound": "Valid user found"
-      },
-      "validation": {
-        "subjectAndBodyRequired": "Please fill in subject and body",
-        "selectPlan": "Please select a membership plan",
-        "enterCountry": "Please enter a country",
-        "enterUsername": "Please enter a username",
-        "validUsernameRequired": "Please enter a valid username before sending",
-        "enterEmail": "Please enter an email address",
-        "validEmailRequired": "Please enter a valid email address",
-        "noRecipients": "No recipients found matching criteria",
-        "selectScheduleDateTime": "Please select schedule date and time"
-      },
-      "errors": {
-        "failedToCalculateRecipients": "Failed to calculate recipient count",
-        "failedToSend": "Failed to send email",
-        "duplicateCampaign": "Duplicate Email Campaign Detected",
-        "duplicateCampaignDescription": "A similar email campaign already exists (Status: {{status}}, {{recipients}} recipients). Created {{timeText}}. Please wait for it to complete or modify your email content."
-      },
-      "timeAgo": {
-        "minutes": "{{count}} minute{{count, plural, one {} other {s}}} ago",
-        "hours": "{{count}} hour{{count, plural, one {} other {s}}} ago"
-      },
-      "success": {
-        "emailScheduled": "Email scheduled for {{date}}",
-        "jobCreated": "✅ Bulk email job created! Processing {{recipients}} recipients in background.",
-        "jobCreatedDescription": "Estimated completion: {{estimatedTime}}. View progress in History tab.",
-        "emailSent": "Email sent successfully!"
-      },
-      "estimatedTime": {
-        "hours": "{{count}} hours",
-        "minutes": "{{count}} minutes"
-      },
-      "sidebar": {
-        "recipients": "Recipients",
-        "usersWillReceive": "users will receive this email",
-        "professionalTemplate": "Professional Template",
-        "professionalTemplateDescription": "All emails are automatically wrapped in a professional template with:",
-        "templateFeature1": "Branded gradient header",
-        "templateFeature2": "Responsive design",
-        "templateFeature3": "Professional footer",
-        "templateFeature4": "Optimized for inbox delivery",
-        "tips": "Tips",
-        "tip1": "Test with a small group first",
-        "tip2": "Schedule emails for optimal times",
-        "tip3": "Keep content clear and concise",
-        "tip4": "Use personalization variables"
-      },
-      "preview": {
-        "title": "Email Preview",
-        "description": "This is how your email will appear to recipients. Variables are shown with sample data.",
-        "subject": "Subject",
-        "note": "Note",
-        "variablesNote": "Variables like {{username}} and {{email}} will be replaced with actual recipient data when sent.",
-        "body": "Email Body",
-        "willSendTo": "This email will be sent to <strong>{{count}}</strong> {{count, plural, one {recipient} other {recipients}}}.",
-        "scheduledFor": "Scheduled for:",
-        "closePreview": "Close Preview",
-        "scheduleNow": "Schedule Now",
-        "sendNow": "Send Now"
-      },
-      "history": {
-        "emailLogs": "Email Logs",
-        "queue": "Queue",
-        "processing": "Processing",
-        "complete": "Complete",
-        "emailHistory": {
-          "title": "Email History",
-          "subtitle": "View and track all emails sent from the platform",
-          "searchPlaceholder": "Search by email or subject...",
-          "filterByStatus": "Filter by status",
-          "allStatus": "All Status",
-          "sent": "Sent",
-          "failed": "Failed",
-          "pending": "Pending",
-          "showing": "Showing {{current}} of {{total}} emails",
-          "noEmailsFound": "No emails found",
-          "loading": "Loading email history...",
-          "columns": {
-            "date": "Date",
-            "recipient": "Recipient",
-            "subject": "Subject",
-            "status": "Status",
-            "successRate": "Success Rate",
-            "resendId": "Resend ID",
-            "actions": "Actions"
-          },
-          "notSent": "Not sent",
-          "pagination": {
-            "page": "Page {{current}} of {{total}}",
-            "previous": "Previous",
-            "next": "Next"
-          },
-          "emailDetails": {
-            "title": "Email Details",
-            "subtitle": "Full email information and delivery status",
-            "recipient": "Recipient",
-            "subject": "Subject",
-            "status": "Status",
-            "sentAt": "Sent At",
-            "notSentYet": "Not sent yet",
-            "resendId": "Resend ID",
-            "deliveryStatus": "Delivery Status",
-            "lastEvent": "Last Event",
-            "checked": "Checked",
-            "errorMessage": "Error Message",
-            "emailBody": "Email Body"
-          }
-        },
-        "queueTab": {
-          "title": "Queued Jobs",
-          "subtitle": "Bulk email jobs waiting to be processed",
-          "processQueueNow": "Process Queue Now",
-          "loading": "Loading queued jobs...",
-          "noJobs": "No jobs in queue",
-          "totalRecipients": "Total Recipients",
-          "created": "Created",
-          "batchId": "Batch ID",
-          "cancel": "Cancel"
-        },
-        "processingTab": {
-          "title": "Processing Jobs",
-          "subtitle": "Bulk email jobs currently being sent",
-          "processQueueNow": "Process Queue Now",
-          "loading": "Loading processing jobs...",
-          "noJobs": "No jobs currently processing",
-          "batchId": "Batch ID",
-          "cancel": "Cancel",
-          "progress": "Progress",
-          "remaining": "remaining",
-          "successful": "Successful",
-          "failed": "Failed",
-          "successRate": "Success Rate",
-          "started": "Started",
-          "lastUpdate": "Last update"
-        },
-        "completeTab": {
-          "title": "Completed Jobs",
-          "subtitle": "Bulk email jobs that have finished processing",
-          "loading": "Loading completed jobs...",
-          "noJobs": "No completed jobs yet",
-          "total": "Total",
-          "successful": "Successful",
-          "failed": "Failed",
-          "successRate": "Success Rate",
-          "created": "Created",
-          "started": "Started",
-          "completed": "Completed",
-          "duration": "Duration",
-          "minutes": "minutes",
-          "error": "Error",
-          "retry": "Retry"
-        }
-      },
-      "bestPractices": {
-        "title": "Email Deliverability Best Practices",
-        "subtitle": "Ensure your emails reach recipients and avoid spam filters",
-        "domainVerification": {
-          "title": "Required: Domain Verification (SPF/DKIM)",
-          "description": "To prevent emails from going to spam, you <strong>must</strong> verify your domain with Resend and configure SPF/DKIM records.",
-          "step1": {
-            "title": "1. Add your domain in Resend",
-            "description": "Go to Resend Dashboard → Domains → Add Domain"
-          },
-          "step2": {
-            "title": "2. Add DNS records to your domain",
-            "description": "Add the SPF, DKIM, and DMARC records provided by Resend"
-          },
-          "step3": {
-            "title": "3. Wait for verification",
-            "description": "DNS propagation can take up to 48 hours"
-          },
-          "openResendDomains": "Open Resend Domains"
-        },
-        "currentConfiguration": {
-          "title": "Current Email Configuration",
-          "fromAddress": "From Address:",
-          "replyTo": "Reply-To:",
-          "provider": "Provider:",
-          "dynamic": "Dynamic (from platform config)",
-          "resend": "Resend",
-          "note": "Email settings are configured in Email Settings under Communications"
-        },
-        "spamPrevention": {
-          "title": "Spam Prevention Checklist",
-          "tip1": "Use a verified domain (not onboarding@resend.dev)",
-          "tip2": "Include unsubscribe links in marketing emails",
-          "tip3": "Maintain good text-to-image ratio in email body",
-          "tip4": "Avoid spam trigger words (FREE, URGENT, ACT NOW, etc.)",
-          "tip5": "Send from a consistent sender name and address",
-          "tip6": "Warm up new domains gradually (start with small batches)",
-          "tip7": "Monitor bounce rates and remove invalid addresses"
-        },
-        "contentGuidelines": {
-          "title": "Content Best Practices",
-          "tip1": "Write clear, relevant subject lines (avoid ALL CAPS)",
-          "tip2": "Personalize with recipient's name using variables",
-          "tip3": "Include your company name and address in footer",
-          "tip4": "Balance HTML with plain text alternative",
-          "tip5": "Test emails before sending to large groups",
-          "tip6": "Keep email size under 100KB for best deliverability"
-        },
-        "monitoring": {
-          "title": "Monitor Your Email Performance",
-          "description": "Use the History tab to track delivery status, monitor bounce rates, and identify issues. Check delivery status regularly using the Resend API integration."
-        }
-      }
-    },
     "emailSettings": {
       "title": "Email Settings",
       "subtitle": "Configure email sending settings and verification reminders",
@@ -3282,6 +3391,21 @@
       "availableVariables": "Available Variables",
       "variablesHint": "Click to copy or use + to insert directly",
       "noTemplatesFound": "No templates found",
+      "tableHeaders": {
+        "name": "Name",
+        "subject": "Subject",
+        "type": "Type",
+        "variables": "Variables",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "update": "Update",
+      "template": "Template",
+      "clickToCopy": "Click to copy",
+      "insertIntoEditor": "Insert into editor",
+      "previewTemplate": "Preview template",
+      "editTemplateTooltip": "Edit template",
+      "deleteTemplateTooltip": "Delete template",
       "active": "Active",
       "inactive": "Inactive",
       "editTemplate": "Edit Template",

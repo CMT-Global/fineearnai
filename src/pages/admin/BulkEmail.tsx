@@ -570,7 +570,7 @@ const BulkEmail = () => {
                         variant={recipientCount === 0 ? "destructive" : "default"}
                         className="gap-2 text-base px-3 py-1"
                       >
-                        <span>📧 {t("admin.bulkEmail.recipients.willSendTo")}: <strong>{recipientCount}</strong> {recipientCount === 1 ? t("admin.bulkEmail.recipients.user") : t("admin.bulkEmail.recipients.users")}</span>
+                        {t("admin.bulkEmail.recipients.willSendToBadge", { count: recipientCount })}
                       </Badge>
                     )}
                   </div>
