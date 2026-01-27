@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 // Eager-loaded critical routes
+import LandingIndex from "./pages/LandingIndex";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -199,7 +200,7 @@ const RoutesWrapper = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<LandingIndex />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
