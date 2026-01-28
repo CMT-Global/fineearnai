@@ -24,11 +24,10 @@ export const AdminModeProvider = ({ children }: { children: ReactNode }) => {
   }, [isAdminMode]);
 
   const enterAdminMode = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setIsAdminMode(true);
-      setTimeout(() => setIsTransitioning(false), 300);
-    }, 150);
+    // Enter immediately - no blocking transition. Avoids extra loading screen
+    // when navigating user→admin (AdminRoute already handles its own loading).
+    setIsAdminMode(true);
+    setIsTransitioning(false);
   };
 
   const exitAdminMode = () => {

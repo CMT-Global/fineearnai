@@ -123,15 +123,14 @@ const RoutesWrapper = () => {
     }
   }, [isAdminRoute, isAdminMode, enterAdminMode, exitAdminMode]);
   
-  // Show loading state during transition
-  if (isTransitioning) {
+  // Show loading only when EXITING admin (returning to main app). When entering
+  // admin we don't block—AdminRoute handles its own loading and we avoid multiple loaders.
+  if (isTransitioning && !isAdminRoute) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">
-            {isAdminMode ? t("app.enteringAdminMode") : t("app.returningToMainApp")}
-          </p>
+          <p className="text-muted-foreground">{t("app.returningToMainApp")}</p>
         </div>
       </div>
     );
@@ -220,457 +219,61 @@ const RoutesWrapper = () => {
           <Route path="/partner/analytics" element={<PartnerAnalytics />} />
         <Route path="/deposit-result" element={<DepositResult />} />
       
-      {/* Admin Routes - Protected with AdminRoute guard and wrapped in AdminLayout */}
+      {/* Admin routes: single layout, nested children. Layout stays mounted on sidebar nav. */}
       <Route
         path="/admin"
         element={
           <AdminRoute>
-            <AdminLayout>
-              <Admin />
-            </AdminLayout>
+            <AdminLayout />
           </AdminRoute>
         }
-      />
-      <Route
-        path="/admin/tasks/generate"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <AITasksGenerate />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/tasks/manage"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <AITasksManage />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/withdrawals"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <Withdrawals />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/users"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <Users />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/users/:userId"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <UserDetail />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/deposits"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <Deposits />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/transactions"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <AdminTransactions />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/payments"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PaymentSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/content/dashboard"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <DashboardContentSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/content/how-it-works"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <HowItWorksSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/content/email-template"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <EmailTemplateGlobalSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/content/partner-program"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerProgramSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/fee-savings-banner"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <FeeSavingsBannerSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/monitoring/cpay"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <CPAYMonitoring />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/monitoring/cpay-reconciliation"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <CPAYReconciliation />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/cpay-checkouts"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <CPAYCheckouts />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/seo"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <SEOSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/plans/manage"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PlansManage />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/referrals/manage"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <ReferralSystemManage />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics/dashboard"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <AdminAnalyticsDashboard />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics/tasks"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <TaskAnalytics />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/email"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <BulkEmail />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/influencer-invites"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <InfluencerInvites />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/user-invites"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <UserInvites />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/templates"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <EmailTemplates />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/email-settings"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <EmailSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/reamaze-settings"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <ReamazeSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/scheduled"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <ScheduledEmails />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/communications/login-message"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <LoginMessage />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/security-settings"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <SecuritySettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/security/secrets"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <SystemSecrets />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/ipstack"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <IPStackSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/monitoring/daily-reset-logs"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <DailyResetLogs />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/monitoring/commission-audit"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <CommissionAudit />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partners/applications"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerApplications />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partners"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <Partners />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-ranks"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerRanks />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-leaderboard"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerLeaderboardSettings />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-bonus-tiers"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerBonusTiers />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-bonus-payouts"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerBonusPayouts />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-bonus-monitoring"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerBonusMonitoring />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-leaderboard-stats"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <PartnerLeaderboard />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partner-analytics"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <AdminPartnerAnalytics />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/partners/vouchers"
-        element={
-          <AdminRoute>
-            <AdminLayout>
-              <VoucherMonitoring />
-            </AdminLayout>
-          </AdminRoute>
-        }
-      />
+      >
+        <Route index element={<Admin />} />
+        <Route path="tasks/generate" element={<AITasksGenerate />} />
+        <Route path="tasks/manage" element={<AITasksManage />} />
+        <Route path="withdrawals" element={<Withdrawals />} />
+        <Route path="users" element={<Users />} />
+        <Route path="users/:userId" element={<UserDetail />} />
+        <Route path="deposits" element={<Deposits />} />
+        <Route path="transactions" element={<AdminTransactions />} />
+        <Route path="settings/payments" element={<PaymentSettings />} />
+        <Route path="content/dashboard" element={<DashboardContentSettings />} />
+        <Route path="content/how-it-works" element={<HowItWorksSettings />} />
+        <Route path="content/email-template" element={<EmailTemplateGlobalSettings />} />
+        <Route path="content/partner-program" element={<PartnerProgramSettings />} />
+        <Route path="settings/fee-savings-banner" element={<FeeSavingsBannerSettings />} />
+        <Route path="monitoring/cpay" element={<CPAYMonitoring />} />
+        <Route path="monitoring/cpay-reconciliation" element={<CPAYReconciliation />} />
+        <Route path="settings/cpay-checkouts" element={<CPAYCheckouts />} />
+        <Route path="settings/seo" element={<SEOSettings />} />
+        <Route path="plans/manage" element={<PlansManage />} />
+        <Route path="referrals/manage" element={<ReferralSystemManage />} />
+        <Route path="analytics/dashboard" element={<AdminAnalyticsDashboard />} />
+        <Route path="analytics/tasks" element={<TaskAnalytics />} />
+        <Route path="communications/email" element={<BulkEmail />} />
+        <Route path="communications/influencer-invites" element={<InfluencerInvites />} />
+        <Route path="communications/user-invites" element={<UserInvites />} />
+        <Route path="communications/templates" element={<EmailTemplates />} />
+        <Route path="communications/email-settings" element={<EmailSettings />} />
+        <Route path="communications/reamaze-settings" element={<ReamazeSettings />} />
+        <Route path="communications/scheduled" element={<ScheduledEmails />} />
+        <Route path="communications/login-message" element={<LoginMessage />} />
+        <Route path="security-settings" element={<SecuritySettings />} />
+        <Route path="security/secrets" element={<SystemSecrets />} />
+        <Route path="settings/ipstack" element={<IPStackSettings />} />
+        <Route path="monitoring/daily-reset-logs" element={<DailyResetLogs />} />
+        <Route path="monitoring/commission-audit" element={<CommissionAudit />} />
+        <Route path="partners/applications" element={<PartnerApplications />} />
+        <Route path="partners" element={<Partners />} />
+        <Route path="partner-ranks" element={<PartnerRanks />} />
+        <Route path="partner-leaderboard" element={<PartnerLeaderboardSettings />} />
+        <Route path="partner-bonus-tiers" element={<PartnerBonusTiers />} />
+        <Route path="partner-bonus-payouts" element={<PartnerBonusPayouts />} />
+        <Route path="partner-bonus-monitoring" element={<PartnerBonusMonitoring />} />
+        <Route path="partner-leaderboard-stats" element={<PartnerLeaderboard />} />
+        <Route path="partner-analytics" element={<AdminPartnerAnalytics />} />
+        <Route path="partners/vouchers" element={<VoucherMonitoring />} />
+      </Route>
       
       <Route path="/how-it-works" element={
         <ProtectedRoute>
