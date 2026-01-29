@@ -108,6 +108,15 @@ Deno.serve(async (req)=>{
         status: 404
       });
     }
+    if (profile.profile_completed !== true) {
+      return new Response(JSON.stringify({
+        error: 'profile_incomplete',
+        message: 'Complete your profile setup to access tasks.'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403
+      });
+    }
     // Fetch membership plan separately (no FK relationship exists)
     const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', profile.membership_plan).eq('is_active', true).maybeSingle();
     const profileTime = Date.now() - profileStartTime;

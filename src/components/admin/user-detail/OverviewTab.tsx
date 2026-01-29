@@ -481,6 +481,62 @@ export const OverviewTab = ({
             </div>
           </div>
 
+          {/* Profile wizard & verification */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-4 border-t">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Profile completed</Label>
+              <div className="flex items-center gap-2">
+                {profile.profile_completed === true ? (
+                  <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Yes</Badge>
+                ) : (
+                  <Badge variant="secondary" className="gap-1"><XCircle className="h-3 w-3" /> No</Badge>
+                )}
+                {profile.profile_completed_at && (
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(profile.profile_completed_at), "PP", { locale: dateLocale })}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Payout configured</Label>
+              <Badge variant={profile.payout_configured ? "default" : "secondary"} className="gap-1">
+                {profile.payout_configured ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                {profile.payout_configured ? "Yes" : "No"}
+              </Badge>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Phone verified</Label>
+              <Badge variant={profile.phone_verified ? "default" : "secondary"} className="gap-1">
+                {profile.phone_verified ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                {profile.phone_verified ? "Yes" : "No"}
+              </Badge>
+              {profile.phone_verified_at && (
+                <span className="text-xs text-muted-foreground block">
+                  {format(new Date(profile.phone_verified_at), "PP", { locale: dateLocale })}
+                </span>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Wizard fields</Label>
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                {(profile.first_name || profile.last_name) && (
+                  <p>{[profile.first_name, profile.last_name].filter(Boolean).join(" ")}</p>
+                )}
+                {profile.timezone && <p>TZ: {profile.timezone}</p>}
+                {profile.preferred_language && <p>Lang: {profile.preferred_language}</p>}
+                {profile.earning_goal && <p>Goal: {profile.earning_goal}</p>}
+                {profile.motivation && <p>Motivation: {profile.motivation}</p>}
+                {profile.how_did_you_hear && <p>Source: {profile.how_did_you_hear}</p>}
+                {profile.usdt_bep20_address && (
+                  <p className="font-mono truncate" title={profile.usdt_bep20_address}>
+                    BEP20: {profile.usdt_bep20_address.slice(0, 10)}…{profile.usdt_bep20_address.slice(-8)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Main Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Username */}

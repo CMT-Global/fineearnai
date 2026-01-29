@@ -127,7 +127,7 @@ const Signup = () => {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/profile-wizard`,
           data: {
             username: data.username,
             full_name: data.fullName,
@@ -193,8 +193,8 @@ const Signup = () => {
         });
       }
 
-      // PHASE 6A: Redirect to dashboard where verification banner will show
-      setTimeout(() => navigate("/dashboard"), 2000);
+      // Redirect to profile wizard (or dashboard when complete)
+      setTimeout(() => navigate("/profile-wizard"), 2000);
     } catch (error: any) {
       console.error("Signup error:", error);
       

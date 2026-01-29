@@ -71,6 +71,15 @@ const corsHeaders = {
         status: 500
       });
     }
+    if (profile.profile_completed !== true) {
+      return new Response(JSON.stringify({
+        error: 'profile_incomplete',
+        message: 'Complete your profile setup to access tasks.'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403
+      });
+    }
     // Fetch the membership plan - always fresh from database
     const { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', profile.membership_plan).single();
     if (planError || !plan) {

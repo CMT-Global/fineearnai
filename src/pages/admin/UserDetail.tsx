@@ -331,6 +331,14 @@ function UserDetailContent() {
                 full_name: profile.full_name,
                 phone: profile.phone,
                 country: profile.country,
+                first_name: (profile as any).first_name,
+                last_name: (profile as any).last_name,
+                timezone: (profile as any).timezone,
+                preferred_language: (profile as any).preferred_language,
+                earning_goal: (profile as any).earning_goal,
+                motivation: (profile as any).motivation,
+                how_did_you_hear: (profile as any).how_did_you_hear,
+                usdt_bep20_address: profile.usdt_bep20_address,
               }}
               onSuccess={handleUserUpdated}
             />

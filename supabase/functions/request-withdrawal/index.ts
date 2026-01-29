@@ -98,6 +98,15 @@ Deno.serve(async (req)=>{
         }
       });
     }
+    if (!isAdmin && profile.profile_completed !== true) {
+      return new Response(JSON.stringify({
+        error: 'profile_incomplete',
+        message: 'Complete your profile setup before requesting withdrawals.'
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     // PHASE 5.d: Check email verification status (admins bypass this check)
     if (!isAdmin && !profile.email_verified) {
       console.log('Withdrawal blocked: Email not verified', {

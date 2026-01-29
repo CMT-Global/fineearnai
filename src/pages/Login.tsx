@@ -96,6 +96,8 @@ const Login = () => {
       // Get the session to extract user ID
       const { data: { session } } = await supabase.auth.getSession();
       
+      let isProfileCompleted = false;
+
       // Track login location (non-blocking)
       if (session?.user) {
         // ✅ NEW: Set login message trigger flag for Dashboard
@@ -107,7 +109,16 @@ const Login = () => {
           body: { userId: session.user.id }
         }).catch(err => console.error("Failed to track login:", err));
         
-        // Prefetch profile data immediately after login
+        // Check profile completion status to determine toast and navigation
+        const { data: completionData } = await (supabase
+          .from('profiles')
+          .select('profile_completed, profile_completed_at, payout_configured, phone_verified')
+          .eq('id', session.user.id)
+          .single() as any);
+        
+        isProfileCompleted = completionData?.profile_completed ?? false;
+
+        // Prefetch profile for wizard/dashboard
         queryClient.prefetchQuery({
           queryKey: ['profile', session.user.id],
           queryFn: async () => {
@@ -116,34 +127,39 @@ const Login = () => {
               .select('*')
               .eq('id', session.user.id)
               .single();
-            
             if (error) throw error;
-            
-            // Cache in localStorage for instant future loads
             try {
-              const cacheData = {
-                userId: session.user.id,
-                data,
-                timestamp: Date.now(),
-                version: '1.0'
-              };
+              const cacheData = { userId: session.user.id, data, timestamp: Date.now(), version: '1.0' };
               localStorage.setItem(`ProfitChips_profile_cache_${session.user.id}`, JSON.stringify(cacheData));
             } catch (err) {
               console.error('Error caching profile:', err);
             }
-            
             return data;
           },
           staleTime: 5 * 60 * 1000,
         });
+
+        if (completionData) {
+          queryClient.setQueryData(['profile-completion', session.user.id], {
+            id: session.user.id,
+            ...completionData
+          });
+        }
       }
 
-      toast({
-        title: t("login.welcomeBack"),
-        description: t("login.redirecting"),
-      });
-
-      navigate("/dashboard");
+      if (isProfileCompleted) {
+        toast({
+          title: t("login.welcomeBack"),
+          description: t("login.redirecting"),
+        });
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: t("login.welcomeBack"),
+          description: t("profileWizard.profileIncomplete"),
+        });
+        navigate("/profile-wizard");
+      }
     } catch (error: any) {
       toast({
         title: t("login.error"),

@@ -67,6 +67,17 @@ export const depositSchema = z.object({
   }),
 });
 
+/** BEP20 (Ethereum-style) address: 0x + 40 hex chars, length 42. */
+export const bep20AddressSchema = z
+  .string()
+  .trim()
+  .regex(/^0x[a-fA-F0-9]{40}$/, { message: "Invalid BEP20 address. Must be 0x followed by 40 hex characters." })
+  .length(42, { message: "BEP20 address must be 42 characters (0x + 40 hex)." });
+
+export function isValidBep20Address(value: string): boolean {
+  return bep20AddressSchema.safeParse(value).success;
+}
+
 // Utility function to safely parse and validate data
 export const safeValidate = <T>(
   schema: z.ZodSchema<T>,

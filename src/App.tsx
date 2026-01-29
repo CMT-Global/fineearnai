@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
+import { ProfileCompletionGuard } from "@/components/shared/ProfileCompletionGuard";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -35,6 +36,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const DepositResult = lazy(() => import("./pages/DepositResult"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const ProfileWizard = lazy(() => import("./pages/ProfileWizard"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // Lazy-loaded admin routes
@@ -202,22 +204,95 @@ const RoutesWrapper = () => {
         <Route path="/" element={<LandingIndex />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/plans" element={
+        <Route path="/profile-wizard" element={
           <ProtectedRoute>
-            <MembershipPlans />
+            <ProfileWizard />
           </ProtectedRoute>
         } />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/tasks/:userTaskId" element={<TaskDetail />} />
-        <Route path="/referrals" element={<Referrals />} />
-          <Route path="/become-partner" element={<BecomePartner />} />
-          <Route path="/partner/application-status" element={<PartnerApplicationStatus />} />
-          <Route path="/partner/dashboard" element={<PartnerDashboard />} />
-          <Route path="/partner/analytics" element={<PartnerAnalytics />} />
-        <Route path="/deposit-result" element={<DepositResult />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <Dashboard />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/wallet" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <Wallet />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/transactions" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <Transactions />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/plans" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <MembershipPlans />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/tasks" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <Tasks />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/tasks/:userTaskId" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <TaskDetail />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/referrals" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <Referrals />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/become-partner" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <BecomePartner />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/partner/application-status" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <PartnerApplicationStatus />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/partner/dashboard" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <PartnerDashboard />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/partner/analytics" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <PartnerAnalytics />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/deposit-result" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <DepositResult />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
       
       {/* Admin routes: single layout, nested children. Layout stays mounted on sidebar nav. */}
       <Route

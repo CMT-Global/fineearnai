@@ -243,27 +243,35 @@ Deno.serve(async (req)=>{
           if (!profileData) {
             throw new Error('Profile data is required');
           }
-          const { error: updateError } = await supabaseClient.from('profiles').update({
-            full_name: profileData.full_name,
-            phone: profileData.phone,
-            country: profileData.country
-          }).eq('id', userId);
+          const allowlist = [
+            'full_name', 'phone', 'country',
+            'first_name', 'last_name', 'timezone', 'preferred_language',
+            'earning_goal', 'motivation', 'how_did_you_hear', 'phone_country_code',
+            'usdt_bep20_address'
+          ];
+          const updates: Record<string, any> = {};
+          for (const k of allowlist) {
+            if (profileData[k] !== undefined) {
+              updates[k] = profileData[k] === '' ? null : profileData[k];
+            }
+          }
+          if (Object.keys(updates).length === 0) {
+            throw new Error('No valid profile fields to update');
+          }
+          if (updates.usdt_bep20_address != null) {
+            console.log('Admin updating payout address; audit log will record change.', { userId, adminId: user.id });
+          }
+          const { error: updateError } = await supabaseClient.from('profiles').update(updates).eq('id', userId);
           if (updateError) {
             throw new Error(`Failed to update profile: ${updateError.message}`);
           }
-          // Log to audit
           await supabaseClient.from('audit_logs').insert({
             admin_id: user.id,
             action_type: 'update_user_profile',
             target_user_id: userId,
-            details: {
-              updated_fields: profileData
-            }
+            details: { updated_fields: updates }
           });
-          result = {
-            success: true,
-            message: 'Profile updated successfully'
-          };
+          result = { success: true, message: 'Profile updated successfully' };
           console.log(`Updated profile for user ${userId}`);
           break;
         }
