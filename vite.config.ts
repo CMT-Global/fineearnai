@@ -9,11 +9,17 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      "fine-earn-app-3h89h.ondigitalocean.app",
-      "demo.piniscripts.com",
+      "profitchips.com",
+      "www.profitchips.com",
     ],
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  preview: {
+    allowedHosts: [
+      "profitchips.com",
+      "www.profitchips.com",
+    ],
+  },
+  plugins: [react(), mode === "production" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
