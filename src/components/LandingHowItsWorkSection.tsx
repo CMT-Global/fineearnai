@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, LayoutDashboard, Gift, Rocket, ArrowRight } from "lucide-react";
+import { UserPlus, LayoutDashboard, UserCheck, Zap, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OnboardingWizard from "./LandingOnboardingWizard";
 
@@ -18,19 +18,19 @@ const steps = [
   },
   {
     number: "03",
-    title: "Try Free for 3 Days",
-    description: "Use the full platform free for 3 days. Complete tasks, see your earnings, and experience how it works.",
-    icon: Gift,
+    title: "Complete Your Profile",
+    description: "Add your details, set your preferences, and customize your dashboard to match how you want to work.",
+    icon: UserCheck,
   },
   {
     number: "04",
-    title: "Upgrade & Keep Earning",
-    description: "Love it? Choose one of our affordable 1-year subscription plans to unlock unlimited earning all year round.",
-    icon: Rocket,
+    title: "Activate & Start Earning",
+    description: "Unlock your account to access all tasks. Flexible options available — grow at your own pace anytime.",
+    icon: Zap,
   },
 ];
 
-export default function LandingHowItsWorkSection() {
+const HowItWorksSection = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
 
   return (
@@ -45,7 +45,7 @@ export default function LandingHowItsWorkSection() {
             How to <span className="text-gradient">Start Earning</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get started in minutes. Try free for 3 days, then choose a plan that works for you.
+            Get started in minutes. Set up your profile and activate your account to begin earning.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export default function LandingHowItsWorkSection() {
 
         <div className="text-center mt-12">
           <Button variant="hero" size="lg" onClick={() => setWizardOpen(true)}>
-            Register As an Earner
+            <span className="font-bold">Register As an Earner</span>
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
           <OnboardingWizard open={wizardOpen} onOpenChange={setWizardOpen} />
@@ -90,4 +90,6 @@ export default function LandingHowItsWorkSection() {
       </div>
     </section>
   );
-}
+};
+
+export default HowItWorksSection;

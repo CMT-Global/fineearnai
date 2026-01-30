@@ -33,7 +33,7 @@ export default function LandingCTASection() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button variant="hero" size="xl" onClick={() => setWizardOpen(true)}>
-              Register As an Earner
+              <span className="font-bold">Register As an Earner</span>
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             <Button variant="hero-outline" size="lg">

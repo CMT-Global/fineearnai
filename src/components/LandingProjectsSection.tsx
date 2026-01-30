@@ -8,7 +8,6 @@ import {
   Briefcase,
   ArrowRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const projects = [
   {
@@ -61,7 +60,7 @@ const projects = [
   },
 ];
 
-export default function LandingProjectsSection() {
+const ProjectsSection = () => {
   return (
     <section id="projects" className="section-padding relative">
       <div className="container-custom">
@@ -129,13 +128,9 @@ export default function LandingProjectsSection() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            View All Task Categories
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
       </div>
     </section>
   );
-}
+};
+
+export default ProjectsSection;

@@ -1,27 +1,22 @@
 import { useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import OnboardingWizard from "./LandingOnboardingWizard";
 import heroBg from "@/assets/hero-bg.jpeg";
+import OnboardingWizard from "./LandingOnboardingWizard";
 
-export default function LandingHeroSection() {
+const HeroSection = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
-        aria-hidden
-      />
-      {/* Dark overlay for legibility */}
-      <div className="absolute inset-0 bg-background/70" aria-hidden />
       {/* Background Effects */}
       <div className="absolute inset-0 bg-hero-pattern opacity-50" />
       <div 
-        className="absolute inset-0 opacity-30 bg-gradient-to-br from-primary/10 via-background to-accent/10"
-        aria-hidden
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       />
       <div className="hero-glow top-1/4 left-1/4 animate-pulse-slow" />
       <div className="hero-glow bottom-1/4 right-1/4 animate-pulse-slow delay-500" />
@@ -36,14 +31,14 @@ export default function LandingHeroSection() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-8 animate-fade-up">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-foreground font-medium">Join Thousands of AI Trainers Worldwide</span>
+            <span className="text-sm text-foreground font-medium">Open Worldwide - Work from Anywhere, Anytime!</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 animate-fade-up delay-100">
-            <span className="text-foreground">Get Paid to</span>
+            <span className="text-foreground">Get Paid To</span>
             <br />
-            <span className="text-gradient">Train AI</span>
+            <span className="text-gradient">Analyse Reviews</span>
           </h1>
 
           {/* Subheadline */}
@@ -55,11 +50,11 @@ export default function LandingHeroSection() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up delay-300">
             <Button variant="hero" size="xl" onClick={() => setWizardOpen(true)}>
-              Register As an Earner
+              <span className="font-bold">Register As an Earner</span>
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button variant="hero-outline" size="xl" asChild>
-              <Link to="/login">Login</Link>
+            <Button variant="hero-outline" size="xl">
+              Login
             </Button>
           </div>
 
@@ -72,4 +67,6 @@ export default function LandingHeroSection() {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
-}
+};
+
+export default HeroSection;

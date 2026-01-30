@@ -1,5 +1,6 @@
 import { CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const highlights = [
   "Simple review analysis tasks",
@@ -14,6 +15,7 @@ interface LandingGetStartedStepProps {
 }
 
 export default function LandingGetStartedStep({ onComplete }: LandingGetStartedStepProps) {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -65,7 +67,15 @@ export default function LandingGetStartedStep({ onComplete }: LandingGetStartedS
       </div>
 
       <div className="text-center pt-2">
-        <Button variant="hero" size="xl" onClick={onComplete} className="w-full sm:w-auto">
+        <Button 
+          variant="hero" 
+          size="xl" 
+          onClick={() => {
+            onComplete();
+            navigate("/signup");
+          }} 
+          className="w-full sm:w-auto"
+        >
           Create My Earner Account
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>

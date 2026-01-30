@@ -1,40 +1,40 @@
 import { Helmet } from "react-helmet-async";
-import LandingNavbar from "@/components/LandingNavbar";
-import LandingHeroSection from "@/components/LandingHeroSection";
-import LandingProjectsSection from "@/components/LandingProjectsSection";
-import LandingHowItsWorkSection from "@/components/LandingHowItsWorkSection";
-import LandingBenefitsSection from "@/components/LandingBenefitsSection";
-import LandingFAQSection from "@/components/LandingFAQSection";
-import LandingCTASection from "@/components/LandingCTASection";
-import LandingFooter from "@/components/LandingFooter";
+import Navbar from "@/components/LandingNavbar";
+import HeroSection from "@/components/LandingHeroSection";
+import ProjectsSection from "@/components/LandingProjectsSection";
+import HowItWorksSection from "@/components/LandingHowItsWorkSection";
+import BenefitsSection from "@/components/LandingBenefitsSection";
+import FAQSection from "@/components/LandingFAQSection";
+import CTASection from "@/components/LandingCTASection";
+import Footer from "@/components/LandingFooter";
 
-const LandingIndex = () => {
+const Index = () => {
   return (
     <>
       <Helmet>
-        <title>ProfitChips - Get Paid to Train AI | Earn Online by Improving AI</title>
+        <title>ProfitChips - Get Paid To Analyse Reviews | Earn Online by Analysing Reviews</title>
         <meta 
           name="description" 
-          content="Join 1M+ people worldwide earning money by training AI. Flexible remote work, competitive pay, and no technical experience required. Start earning today with ProfitChips." 
+          content="Join 1M+ people worldwide earning money by analysing reviews. Flexible remote work, competitive pay, and no technical experience required. Start earning today with ProfitChips." 
         />
         <meta name="keywords" content="earn money online, AI training, remote work, side income, data labeling, AI jobs" />
         <link rel="canonical" href="https://profitchips.com" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
-        <LandingNavbar />
+        <Navbar />
         <main>
-          <LandingHeroSection />
-          <LandingProjectsSection />
-          <LandingHowItsWorkSection />
-          <LandingBenefitsSection />
-          <LandingFAQSection />
-          <LandingCTASection />
+          <HeroSection />
+          <ProjectsSection />
+          <HowItWorksSection />
+          <BenefitsSection />
+          <FAQSection />
+          <CTASection />
         </main>
-        <LandingFooter />
+        <Footer />
       </div>
     </>
   );
 };
 
-export default LandingIndex;
+export default Index;
