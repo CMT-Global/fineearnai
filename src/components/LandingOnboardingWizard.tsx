@@ -102,7 +102,7 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
           </div>
 
           {/* Step Indicators */}
-          <div className="flex justify-between mt-3 overflow-x-auto">
+          <div className="hidden sm:flex justify-between mt-3 overflow-x-auto">
             {STEPS.map((step, index) => (
               <div
                 key={index}

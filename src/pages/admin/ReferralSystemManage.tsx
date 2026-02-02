@@ -371,7 +371,7 @@ const ReferralSystemManage = () => {
           <CardContent>
             <Button
               variant="outline"
-              onClick={() => navigate("/admin/plans")}
+              onClick={() => navigate("/admin/plans/manage")}
               className="w-full"
             >
               {t("admin.referralSystemManage.managePlans")}

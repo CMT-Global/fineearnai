@@ -200,11 +200,13 @@ const LoginMessage = () => {
 
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-          <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.loginMessage.title")}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("admin.loginMessage.title")}</h1>
+          </div>
         </div>
-        <p className="text-sm sm:text-base text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground break-words">
           {t("admin.loginMessage.subtitle")}
         </p>
       </div>
@@ -402,27 +404,27 @@ const LoginMessage = () => {
         <div className="space-y-6 order-1 lg:order-2">
           <Card className="lg:sticky lg:top-8">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   {showPreview ? (
                     <Eye className="h-5 w-5" />
                   ) : (
                     <EyeOff className="h-5 w-5" />
                   )}
-                  {t("admin.loginMessage.preview.livePreview")}
+                  <span className="break-words">{t("admin.loginMessage.preview.livePreview")}</span>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowPreview(!showPreview)}
-                    className="h-9 touch-manipulation"
+                    className="h-9 touch-manipulation flex-1 sm:flex-none"
                   >
                     {showPreview ? t("admin.loginMessage.preview.hide") : t("admin.loginMessage.preview.show")} {t("admin.loginMessage.preview.preview")}
                   </Button>
                 </div>
               </div>
-              <CardDescription className="text-sm">
+              <CardDescription className="text-sm break-words">
                 {t("admin.loginMessage.preview.description")}
               </CardDescription>
             </CardHeader>

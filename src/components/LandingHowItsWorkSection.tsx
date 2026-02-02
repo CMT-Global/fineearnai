@@ -81,7 +81,7 @@ const HowItWorksSection = () => {
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="hero" size="lg" onClick={() => setWizardOpen(true)}>
+          <Button variant="hero" size="lg" className="w-full sm:w-auto" onClick={() => setWizardOpen(true)}>
             <span className="font-bold">Register As an Earner</span>
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
