@@ -956,6 +956,173 @@ const Settings = () => {
               </CardContent>
             </Card>
 
+            {/* Onboarding Preferences */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Onboarding Preferences
+                </CardTitle>
+                <CardDescription>
+                  View and update your earning goals and task preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Weekly Earning Goal</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          {profile?.weekly_goal || "Not set"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandList>
+                            <CommandGroup>
+                              {["Small extra income", "Side income goal", "Serious monthly target", "Not sure yet"].map((goal) => (
+                                <CommandItem
+                                  key={goal}
+                                  onSelect={async () => {
+                                    const { error } = await supabase.from("profiles").update({ weekly_goal: goal }).eq("id", user?.id);
+                                    if (!error) {
+                                      queryClient.invalidateQueries({ queryKey: ["profile"] });
+                                      toast.success("Weekly goal updated");
+                                    }
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", profile?.weekly_goal === goal ? "opacity-100" : "opacity-0")} />
+                                  {goal}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Weekly Time Commitment</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          {profile?.weekly_time_commitment || "Not set"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandList>
+                            <CommandGroup>
+                              {["1–3 hours/week", "4–7 hours/week", "8–14 hours/week", "15+ hours/week"].map((time) => (
+                                <CommandItem
+                                  key={time}
+                                  onSelect={async () => {
+                                    const { error } = await supabase.from("profiles").update({ weekly_time_commitment: time }).eq("id", user?.id);
+                                    if (!error) {
+                                      queryClient.invalidateQueries({ queryKey: ["profile"] });
+                                      toast.success("Time commitment updated");
+                                    }
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", profile?.weekly_time_commitment === time ? "opacity-100" : "opacity-0")} />
+                                  {time}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Weekly Routine</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          {profile?.weekly_routine || "Not set"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandList>
+                            <CommandGroup>
+                              {["Mornings", "Afternoons", "Evenings", "Weekends", "Flexible"].map((routine) => (
+                                <CommandItem
+                                  key={routine}
+                                  onSelect={async () => {
+                                    const { error } = await supabase.from("profiles").update({ weekly_routine: routine }).eq("id", user?.id);
+                                    if (!error) {
+                                      queryClient.invalidateQueries({ queryKey: ["profile"] });
+                                      toast.success("Weekly routine updated");
+                                    }
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", profile?.weekly_routine === routine ? "opacity-100" : "opacity-0")} />
+                                  {routine}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Label>Preferred Review Categories</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      "Hospitality — Hotel Review Sentiment",
+                      "E-Commerce — Product Review Analysis",
+                      "Food & Dining — Restaurant Feedback Sentiment",
+                      "Social Platforms — Social Media Comment Analysis",
+                      "Mobile Apps — App Store Review Sentiment",
+                      "Professional Services — Service Provider Reviews",
+                      "I’m open to any category"
+                    ].map((category) => (
+                      <div key={category} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`cat-${category}`}
+                          checked={profile?.preferred_review_categories?.includes(category)}
+                          onCheckedChange={async (checked) => {
+                            let newCategories = [...(profile?.preferred_review_categories || [])];
+                            if (checked) {
+                              if (category === "I’m open to any category") {
+                                newCategories = [category];
+                              } else {
+                                newCategories = newCategories.filter(c => c !== "I’m open to any category");
+                                newCategories.push(category);
+                              }
+                            } else {
+                              newCategories = newCategories.filter(c => c !== category);
+                            }
+                            
+                            const { error } = await supabase.from("profiles").update({ preferred_review_categories: newCategories }).eq("id", user?.id);
+                            if (!error) {
+                              queryClient.invalidateQueries({ queryKey: ["profile"] });
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor={`cat-${category}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {category}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Cryptocurrency Addresses */}
             <Card>
               <CardHeader>
