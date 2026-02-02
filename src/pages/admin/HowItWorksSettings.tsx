@@ -205,32 +205,32 @@ export default function HowItWorksSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <ListChecks className="h-8 w-8 text-primary" />
-          {t("admin.contentManagement.howItWorks.title")}
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 break-words">
+          <ListChecks className="h-8 w-8 text-primary shrink-0" />
+          <span className="break-words">{t("admin.contentManagement.howItWorks.title")}</span>
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 break-words">
           {t("admin.contentManagement.howItWorks.subtitle")}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-1 break-words">
           {t("admin.contentManagement.howItWorks.platformNameNote", { platformName })}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.howItWorks.pageVisibility.title")}</CardTitle>
-          <CardDescription>{t("admin.contentManagement.howItWorks.pageVisibility.description")}</CardDescription>
+          <CardTitle className="break-words">{t("admin.contentManagement.howItWorks.pageVisibility.title")}</CardTitle>
+          <CardDescription className="break-words">{t("admin.contentManagement.howItWorks.pageVisibility.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="howItWorksVisible" className="text-base font-semibold">
+              <Label htmlFor="howItWorksVisible" className="text-base font-semibold break-words">
                 {t("admin.contentManagement.howItWorks.pageVisibility.showLabel")}
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 {t("admin.contentManagement.howItWorks.pageVisibility.showDescription")}
               </p>
             </div>
@@ -246,10 +246,10 @@ export default function HowItWorksSettings() {
       {config.slides.map((slide) => (
         <Card key={slide.id}>
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="break-words">
               {t("admin.contentManagement.howItWorks.slideTitle", { number: slide.id, title: slide.title || t("admin.contentManagement.howItWorks.untitled") })}
             </CardTitle>
-            <CardDescription>{t("admin.contentManagement.howItWorks.slideDescription")}</CardDescription>
+            <CardDescription className="break-words">{t("admin.contentManagement.howItWorks.slideDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -285,16 +285,16 @@ export default function HowItWorksSettings() {
       ))}
 
       <Card>
-        <CardContent className="flex items-center justify-between gap-4 py-4">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t("admin.contentManagement.howItWorks.changesApplied")}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending} className="flex-1 sm:flex-none">
               <RotateCcw className="h-4 w-4 mr-2" />
               {t("admin.contentManagement.howItWorks.resetToDefaults")}
             </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
+            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

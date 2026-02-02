@@ -193,7 +193,7 @@ export default function EmailSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-full overflow-x-hidden">
       <AdminBreadcrumb
         items={[
           { label: t("admin.emailSettings.breadcrumb.communications") },
@@ -201,19 +201,20 @@ export default function EmailSettings() {
         ]}
       />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{t("admin.emailSettings.title")}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.emailSettings.title")}</h1>
             <p className="text-muted-foreground mt-1">
               {t("admin.emailSettings.subtitle")}
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               onClick={handleReset}
               disabled={saveMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               {t("admin.emailSettings.actions.resetToDefaults")}
@@ -223,6 +224,7 @@ export default function EmailSettings() {
               variant="outline"
               onClick={handleSendTest}
               disabled={testEmailMutation.isPending || !settings.from_address}
+              className="flex-1 sm:flex-none"
             >
               {testEmailMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -235,6 +237,7 @@ export default function EmailSettings() {
             <Button
               onClick={handleSave}
               disabled={!hasChanges || saveMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

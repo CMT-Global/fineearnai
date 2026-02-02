@@ -173,17 +173,18 @@ export default function PartnerBonusPayouts() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 sm:p-6 max-w-full overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{t("admin.partnerBonusPayouts.title")}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.partnerBonusPayouts.title")}</h1>
             <p className="text-muted-foreground">{t("admin.partnerBonusPayouts.subtitle")}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               onClick={() => triggerCalculationMutation.mutate()}
               disabled={triggerCalculationMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <PlayCircle className="mr-2 h-4 w-4" />
               {t("admin.partnerBonusPayouts.actions.calculateBonuses")}
@@ -191,6 +192,7 @@ export default function PartnerBonusPayouts() {
             <Button
               onClick={() => triggerPayoutMutation.mutate()}
               disabled={triggerPayoutMutation.isPending || stats.totalPending === 0}
+              className="flex-1 sm:flex-none"
             >
               <DollarSign className="mr-2 h-4 w-4" />
               {t("admin.partnerBonusPayouts.actions.processPayouts", { count: stats.totalPending })}
@@ -199,7 +201,7 @@ export default function PartnerBonusPayouts() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t("admin.partnerBonusPayouts.stats.pendingPayouts")}</CardTitle>
@@ -261,14 +263,14 @@ export default function PartnerBonusPayouts() {
         {/* Filters and Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <CardTitle>{t("admin.partnerBonusPayouts.weeklyBonuses.title")}</CardTitle>
                 <CardDescription>{t("admin.partnerBonusPayouts.weeklyBonuses.description")}</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue placeholder={t("admin.partnerBonusPayouts.filters.filterByStatus")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -281,7 +283,7 @@ export default function PartnerBonusPayouts() {
                 </Select>
 
                 <Select value={weekFilter} onValueChange={setWeekFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder={t("admin.partnerBonusPayouts.filters.filterByWeek")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -302,7 +304,8 @@ export default function PartnerBonusPayouts() {
                 <div className="text-muted-foreground">{t("admin.partnerBonusPayouts.loading")}</div>
               </div>
             ) : bonuses && bonuses.length > 0 ? (
-              <Table>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("admin.partnerBonusPayouts.table.partner")}</TableHead>
@@ -354,6 +357,7 @@ export default function PartnerBonusPayouts() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />

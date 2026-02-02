@@ -217,13 +217,13 @@ export default function PartnerProgramSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Users className="h-8 w-8 text-primary" />
-          {t("admin.partnerProgramSettings.title")}
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 break-words">
+          <Users className="h-8 w-8 text-primary shrink-0" />
+          <span className="break-words">{t("admin.partnerProgramSettings.title")}</span>
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 break-words">
           {t("admin.partnerProgramSettings.subtitle")}
         </p>
       </div>
@@ -231,16 +231,16 @@ export default function PartnerProgramSettings() {
       {/* Global Partner Program Toggle */}
       <Card>
         <CardHeader>
-          <CardTitle>Partner Program Availability</CardTitle>
-          <CardDescription>Control whether the Partner program appears in the user sidebar and routes.</CardDescription>
+          <CardTitle className="break-words">Partner Program Availability</CardTitle>
+          <CardDescription className="break-words">Control whether the Partner program appears in the user sidebar and routes.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="partnerProgramEnabled" className="text-base font-semibold">
+              <Label htmlFor="partnerProgramEnabled" className="text-base font-semibold break-words">
                 Enable Partner Program
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 When disabled, the Become a Partner option is hidden from the user menu and users cannot access the
                 partner onboarding pages.
               </p>
@@ -257,18 +257,18 @@ export default function PartnerProgramSettings() {
       {/* Wizard Content */}
       <Card>
         <CardHeader>
-          <CardTitle>Wizard Visibility</CardTitle>
-          <CardDescription>
+          <CardTitle className="break-words">Wizard Visibility</CardTitle>
+          <CardDescription className="break-words">
             Control whether the introductory wizard is shown before the application form on the Become a Partner page.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="wizardEnabled" className="text-base font-semibold">
+              <Label htmlFor="wizardEnabled" className="text-base font-semibold break-words">
                 Show Intro Wizard
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 If disabled, users will go directly to the application form without seeing the intro wizard.
               </p>
             </div>
@@ -291,14 +291,14 @@ export default function PartnerProgramSettings() {
       {contentConfig.wizard.slides.map((slide) => (
         <Card key={slide.id}>
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="break-words">
               Slide {slide.id}: {slide.title || "(Untitled)"}
             </CardTitle>
-            <CardDescription>Edit the main copy for this step of the Become a Partner wizard.</CardDescription>
+            <CardDescription className="break-words">Edit the main copy for this step of the Become a Partner wizard.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor={`title-${slide.id}`}>Title</Label>
+              <Label htmlFor={`title-${slide.id}`} className="break-words">Title</Label>
               <Input
                 id={`title-${slide.id}`}
                 value={slide.title}
@@ -306,7 +306,7 @@ export default function PartnerProgramSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`headline-${slide.id}`}>Headline</Label>
+              <Label htmlFor={`headline-${slide.id}`} className="break-words">Headline</Label>
               <Input
                 id={`headline-${slide.id}`}
                 value={slide.headline}
@@ -314,7 +314,7 @@ export default function PartnerProgramSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`body-${slide.id}`}>Body</Label>
+              <Label htmlFor={`body-${slide.id}`} className="break-words">Body</Label>
               <Textarea
                 id={`body-${slide.id}`}
                 value={slide.body}
@@ -327,16 +327,16 @@ export default function PartnerProgramSettings() {
       ))}
 
       <Card>
-        <CardContent className="flex items-center justify-between gap-4 py-4">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Changes are applied to the user Partner flow immediately after saving.</p>
+            <p className="break-words">Changes are applied to the user Partner flow immediately after saving.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending} className="flex-1 sm:flex-none">
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Defaults
             </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
+            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

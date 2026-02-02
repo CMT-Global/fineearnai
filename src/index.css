@@ -54,6 +54,14 @@
     --sidebar-accent-foreground: 120 20% 90%;
     --sidebar-border: 160 25% 20%;
     --sidebar-ring: 145 60% 45%;
+
+    /* Wallet and App Specific Tokens */
+    --wallet-deposit: 145 60% 45%;
+    --wallet-tasks: 263 70% 50%;
+    --wallet-earnings: 47 95% 55%;
+    --wallet-referrals: 217 91% 60%;
+    --sidebar-fg: 120 20% 95%;
+    --sidebar-bg: 160 35% 10%;
   }
 
   .dark {
@@ -76,6 +84,14 @@
     --border: 160 25% 20%;
     --input: 160 25% 20%;
     --ring: 145 60% 45%;
+
+    /* Wallet and App Specific Tokens */
+    --wallet-deposit: 145 60% 45%;
+    --wallet-tasks: 263 70% 50%;
+    --wallet-earnings: 47 95% 55%;
+    --wallet-referrals: 217 91% 60%;
+    --sidebar-fg: 120 20% 95%;
+    --sidebar-bg: 160 35% 10%;
   }
 }
 
@@ -91,6 +107,7 @@
 
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
 }
 
@@ -221,4 +238,19 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+}
+
+/* Reamaze Chat Widget Mobile Adjustment 
+   Lifts the chat bubble on mobile to avoid overlapping with the bottom navigation bar
+*/
+@media (max-width: 1024px) {
+  #reamaze-widget,
+  .reamaze-trigger-icon,
+  iframe[name^="reamaze-"],
+  #reamaze-container,
+  #reamaze-widget-container,
+  div[class^="reamaze-"],
+  .reamaze-content {
+    bottom: 100px !important;
+  }
 }

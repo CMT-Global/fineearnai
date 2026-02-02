@@ -100,11 +100,19 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
       </div>
 
       <Tabs value={filter} onValueChange={setFilter} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="task_commission">Task Commission</TabsTrigger>
-          <TabsTrigger value="deposit_commission">Deposit Commission</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-1 scrollbar-none">
+          <TabsList className="inline-flex w-full min-w-[400px] sm:min-w-0 sm:grid sm:grid-cols-3">
+            <TabsTrigger value="all" className="whitespace-nowrap">
+              {t("wallet.all")}
+            </TabsTrigger>
+            <TabsTrigger value="task_commission" className="whitespace-nowrap">
+              {t("membershipPlans.taskCommission")}
+            </TabsTrigger>
+            <TabsTrigger value="deposit_commission" className="whitespace-nowrap">
+              {t("membershipPlans.depositCommission")}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value={filter} className="mt-4">
           {filteredEarnings.length === 0 ? (

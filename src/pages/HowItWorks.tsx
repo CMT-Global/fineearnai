@@ -571,20 +571,20 @@ const HowItWorks = () => {
             </div>
             
             {/* Title & Subtitle */}
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">{currentStepData.title}</h2>
-            <p className="text-white/90 text-center text-base md:text-lg">{currentStepData.subtitle}</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 break-words">{currentStepData.title}</h2>
+            <p className="text-white/90 text-center text-base md:text-lg break-words">{currentStepData.subtitle}</p>
           </div>
 
           {/* Content Section */}
           <CardContent className="p-8 md:p-10 space-y-6 bg-card">
             <div className="mb-6">
               <Progress value={progressPercentage} className="h-2" />
-              <p className="text-center text-sm text-muted-foreground mt-2">
+              <p className="text-center text-sm text-muted-foreground mt-2 break-words">
                 {t("howItWorks.stepOfTotal", { current: currentStep, total: totalSteps })}
               </p>
             </div>
             
-            <div className="min-h-[300px] sm:min-h-[400px]">
+            <div className="min-h-[300px] sm:min-h-[400px] break-words">
               {currentStepData.content}
             </div>
 

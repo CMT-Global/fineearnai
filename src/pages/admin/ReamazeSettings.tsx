@@ -124,7 +124,7 @@ export default function ReamazeSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-full overflow-x-hidden">
       <AdminBreadcrumb
         items={[
           { label: t("admin.contentManagement.reamazeSettings.breadcrumb.communications") },
@@ -132,19 +132,20 @@ export default function ReamazeSettings() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t("admin.contentManagement.reamazeSettings.title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.contentManagement.reamazeSettings.title")}</h1>
           <p className="text-muted-foreground mt-1">
             {t("admin.contentManagement.reamazeSettings.subtitle")}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={handleReset}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             {t("admin.contentManagement.reamazeSettings.discardChanges")}
@@ -153,6 +154,7 @@ export default function ReamazeSettings() {
           <Button
             onClick={handleSave}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
