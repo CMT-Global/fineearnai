@@ -158,13 +158,13 @@ export default function DashboardContentSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <LayoutDashboard className="h-8 w-8 text-primary" />
-          {t("admin.contentManagement.dashboardContent.title")}
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 break-words">
+          <LayoutDashboard className="h-8 w-8 text-primary shrink-0" />
+          <span className="break-words">{t("admin.contentManagement.dashboardContent.title")}</span>
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 break-words">
           {t("admin.contentManagement.dashboardContent.subtitle")}
         </p>
       </div>
@@ -172,14 +172,14 @@ export default function DashboardContentSettings() {
       {/* Platform Name */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.dashboardContent.platformName.title")}</CardTitle>
-          <CardDescription>
+          <CardTitle className="break-words">{t("admin.contentManagement.dashboardContent.platformName.title")}</CardTitle>
+          <CardDescription className="break-words">
             {t("admin.contentManagement.dashboardContent.platformName.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="platformName">{t("admin.contentManagement.dashboardContent.platformName.label")}</Label>
+            <Label htmlFor="platformName" className="break-words">{t("admin.contentManagement.dashboardContent.platformName.label")}</Label>
             <Input
               id="platformName"
               value={platformName}
@@ -196,18 +196,18 @@ export default function DashboardContentSettings() {
       {/* Earners Guide Section */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.dashboardContent.earnersGuide.title")}</CardTitle>
-          <CardDescription>
+          <CardTitle className="break-words">{t("admin.contentManagement.dashboardContent.earnersGuide.title")}</CardTitle>
+          <CardDescription className="break-words">
             {t("admin.contentManagement.dashboardContent.earnersGuide.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="earnersGuideVisible" className="text-base font-semibold">
+              <Label htmlFor="earnersGuideVisible" className="text-base font-semibold break-words">
                 {t("admin.contentManagement.dashboardContent.earnersGuide.showLabel")}
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 {t("admin.contentManagement.dashboardContent.earnersGuide.showDescription", { platformName })}
               </p>
             </div>
@@ -225,18 +225,18 @@ export default function DashboardContentSettings() {
       {/* Deposit & Withdrawal Guides Section */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.dashboardContent.guidesSection.title")}</CardTitle>
-          <CardDescription>
+          <CardTitle className="break-words">{t("admin.contentManagement.dashboardContent.guidesSection.title")}</CardTitle>
+          <CardDescription className="break-words">
             {t("admin.contentManagement.dashboardContent.guidesSection.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="guidesVisible" className="text-base font-semibold">
+              <Label htmlFor="guidesVisible" className="text-base font-semibold break-words">
                 {t("admin.contentManagement.dashboardContent.guidesSection.showLabel")}
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 {t("admin.contentManagement.dashboardContent.guidesSection.showDescription")}
               </p>
             </div>
@@ -250,7 +250,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidesTitle">{t("admin.contentManagement.dashboardContent.guidesSection.titleLabel")}</Label>
+            <Label htmlFor="guidesTitle" className="break-words">{t("admin.contentManagement.dashboardContent.guidesSection.titleLabel")}</Label>
             <Input
               id="guidesTitle"
               value={config.guidesSection.title}
@@ -261,7 +261,7 @@ export default function DashboardContentSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidesDescription">{t("admin.contentManagement.dashboardContent.guidesSection.descriptionLabel")}</Label>
+            <Label htmlFor="guidesDescription" className="break-words">{t("admin.contentManagement.dashboardContent.guidesSection.descriptionLabel")}</Label>
             <Textarea
               id="guidesDescription"
               value={config.guidesSection.description}
@@ -277,18 +277,18 @@ export default function DashboardContentSettings() {
       {/* Social Links Section */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.dashboardContent.socialSection.title")}</CardTitle>
-          <CardDescription>
+          <CardTitle className="break-words">{t("admin.contentManagement.dashboardContent.socialSection.title")}</CardTitle>
+          <CardDescription className="break-words">
             {t("admin.contentManagement.dashboardContent.socialSection.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
             <div className="space-y-0.5">
-              <Label htmlFor="socialVisible" className="text-base font-semibold">
+              <Label htmlFor="socialVisible" className="text-base font-semibold break-words">
                 {t("admin.contentManagement.dashboardContent.socialSection.showLabel")}
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 {t("admin.contentManagement.dashboardContent.socialSection.showDescription")}
               </p>
             </div>
@@ -341,17 +341,18 @@ export default function DashboardContentSettings() {
 
       {/* Actions & Status */}
       <Card>
-        <CardContent className="flex items-center justify-between gap-4 py-4">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>
               {t("admin.contentManagement.dashboardContent.changesApplied")}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
               onClick={handleReset}
               disabled={saveMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               {t("admin.contentManagement.dashboardContent.resetToDefaults")}
@@ -359,6 +360,7 @@ export default function DashboardContentSettings() {
             <Button
               onClick={handleSave}
               disabled={!hasChanges || saveMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               {saveMutation.isPending ? (
                 <>

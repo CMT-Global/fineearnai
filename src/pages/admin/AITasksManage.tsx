@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { cn } from "@/lib/utils";
 
 interface AITask {
   id: string;
@@ -30,7 +31,7 @@ interface AITask {
 
 const AITasksManage = () => {
   const { t } = useTranslation();
-  useLanguageSync(); // Sync language and force re-render
+  const { languageKey } = useLanguageSync(); // Use languageKey to ensure re-render on language change
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,18 +56,7 @@ const AITasksManage = () => {
 
     try {
       console.log("Loading tasks for user:", user.id);
-      console.log("User email:", user.email);
       
-      // First, let's check if we can query the table at all (without filter)
-      const testQuery = await supabase
-        .from("ai_tasks")
-        .select("id, created_by, created_at")
-        .limit(5);
-      
-      console.log("Test query (first 5 tasks):", testQuery.data);
-      console.log("Test query error:", testQuery.error);
-      
-      // Now query with the filter
       const query = supabase
         .from("ai_tasks")
         .select("*")
@@ -76,31 +66,8 @@ const AITasksManage = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Query error details:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error("Query error details:", error);
         throw error;
-      }
-      
-      console.log("Loaded tasks:", data?.length || 0);
-      if (data && data.length > 0) {
-        console.log("Sample task:", {
-          id: data[0].id,
-          created_by: data[0].created_by,
-          user_id: user.id,
-          match: data[0].created_by === user.id
-        });
-      } else {
-        console.log("No tasks found. Checking if any tasks exist without created_by filter...");
-        const allTasksQuery = await supabase
-          .from("ai_tasks")
-          .select("id, created_by, created_at, category")
-          .order("created_at", { ascending: false })
-          .limit(10);
-        console.log("Recent tasks (any user):", allTasksQuery.data);
       }
       
       setTasks(data || []);
@@ -154,15 +121,21 @@ const AITasksManage = () => {
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    if (categoryFilter !== "all" && task.category !== categoryFilter) return false;
-    if (difficultyFilter !== "all" && task.difficulty !== difficultyFilter) return false;
-    if (statusFilter === "active" && !task.is_active) return false;
-    if (statusFilter === "inactive" && task.is_active) return false;
-    return true;
-  });
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (categoryFilter !== "all" && task.category !== categoryFilter) return false;
+      if (difficultyFilter !== "all" && task.difficulty !== difficultyFilter) return false;
+      if (statusFilter === "active" && !task.is_active) return false;
+      if (statusFilter === "inactive" && task.is_active) return false;
+      return true;
+    });
+  }, [tasks, categoryFilter, difficultyFilter, statusFilter]);
 
-  const categories = Array.from(new Set(tasks.map(t => t.category)));
+  const categories = useMemo(() => {
+    return Array.from(new Set(tasks.map(t => t.category)))
+      .filter(Boolean)
+      .sort();
+  }, [tasks]);
 
   if (adminLoading || loading || authLoading) {
     return (
@@ -175,8 +148,8 @@ const AITasksManage = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto">
+    <div key={languageKey} className="p-6">
+      <div className="container-custom">
         <AdminBreadcrumb 
           items={[
             { label: t("admin.sidebar.categories.taskManagement") },
@@ -184,7 +157,7 @@ const AITasksManage = () => {
           ]} 
         />
         
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold">{t("admin.aiTasksManage.title")}</h1>
             <p className="text-muted-foreground mt-1">
@@ -200,8 +173,8 @@ const AITasksManage = () => {
               }}
               disabled={loading || !user}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+              {t("common.refresh")}
             </Button>
             <Button onClick={() => navigate("/admin/tasks/generate")}>
               <Plus className="h-4 w-4 mr-2" />
@@ -217,7 +190,7 @@ const AITasksManage = () => {
               <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.category")}</label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t("admin.aiTasksManage.allCategories")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin.aiTasksManage.allCategories")}</SelectItem>
@@ -234,7 +207,7 @@ const AITasksManage = () => {
               <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.difficulty")}</label>
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t("admin.aiTasksManage.allDifficulties")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin.aiTasksManage.allDifficulties")}</SelectItem>
@@ -249,7 +222,7 @@ const AITasksManage = () => {
               <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.status")}</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t("admin.aiTasksManage.allStatus")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin.aiTasksManage.allStatus")}</SelectItem>
@@ -265,9 +238,9 @@ const AITasksManage = () => {
         <div className="space-y-4">
           {filteredTasks.map((task) => (
             <Card key={task.id} className="p-6">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Badge variant="secondary">{task.category}</Badge>
                     <Badge variant="outline">{task.difficulty}</Badge>
                     <Badge variant={task.is_active ? "default" : "secondary"}>
@@ -276,49 +249,55 @@ const AITasksManage = () => {
                   </div>
                   <p className="text-lg font-semibold mb-3">{task.prompt}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className={`p-4 rounded-lg border-2 ${
+                    <div className={cn(
+                      "p-4 rounded-lg border-2",
                       task.correct_response === 'a' 
-                        ? 'bg-green-200 dark:bg-green-800 border-green-500 dark:border-green-500' 
-                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'
-                    }`}>
-                      <p className={`text-sm font-semibold mb-2 ${
+                        ? 'bg-green-200 dark:bg-green-800/30 border-green-500 dark:border-green-500/50' 
+                        : 'bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700'
+                    )}>
+                      <p className={cn(
+                        "text-sm font-semibold mb-2",
                         task.correct_response === 'a' 
                           ? 'text-green-950 dark:text-green-50' 
                           : 'text-gray-900 dark:text-gray-50'
-                      }`}>
+                      )}>
                         {t("admin.aiTasksManage.optionA")}
                       </p>
-                      <p className={`text-base font-medium ${
+                      <p className={cn(
+                        "text-base font-medium",
                         task.correct_response === 'a' 
                           ? 'text-green-950 dark:text-green-50' 
                           : 'text-gray-900 dark:text-gray-50'
-                      }`}>
+                      )}>
                         {task.response_a}
                       </p>
                     </div>
-                    <div className={`p-4 rounded-lg border-2 ${
+                    <div className={cn(
+                      "p-4 rounded-lg border-2",
                       task.correct_response === 'b' 
-                        ? 'bg-green-200 dark:bg-green-800 border-green-500 dark:border-green-500' 
-                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'
-                    }`}>
-                      <p className={`text-sm font-semibold mb-2 ${
+                        ? 'bg-green-200 dark:bg-green-800/30 border-green-500 dark:border-green-500/50' 
+                        : 'bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700'
+                    )}>
+                      <p className={cn(
+                        "text-sm font-semibold mb-2",
                         task.correct_response === 'b' 
                           ? 'text-green-950 dark:text-green-50' 
                           : 'text-gray-900 dark:text-gray-50'
-                      }`}>
+                      )}>
                         {t("admin.aiTasksManage.optionB")}
                       </p>
-                      <p className={`text-base font-medium ${
+                      <p className={cn(
+                        "text-base font-medium",
                         task.correct_response === 'b' 
                           ? 'text-green-950 dark:text-green-50' 
                           : 'text-gray-900 dark:text-gray-50'
-                      }`}>
+                      )}>
                         {task.response_b}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-2">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

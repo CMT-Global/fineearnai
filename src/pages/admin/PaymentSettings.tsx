@@ -519,116 +519,118 @@ const PaymentSettings = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Payment Settings</h1>
-            <p className="text-muted-foreground">Configure payment processors for deposits and withdrawals</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Payment Settings</h1>
+              <p className="text-muted-foreground">Configure payment processors for deposits and withdrawals</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={fetchCpayBalance} 
+                variant="outline" 
+                className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                disabled={fetchingBalance}
+              >
+                {fetchingBalance ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Fetch CPAY Balance
+              </Button>
+              <Button onClick={() => navigate("/admin/settings/cpay-checkouts")} variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Manage CPAY Checkouts
+              </Button>
+              <Button onClick={() => navigate("/admin")} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Admin
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={fetchCpayBalance} 
-              variant="outline" 
-              className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-              disabled={fetchingBalance}
-            >
-              {fetchingBalance ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Fetch CPAY Balance
-            </Button>
-            <Button onClick={() => navigate("/admin/settings/cpay-checkouts")} variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage CPAY Checkouts
-            </Button>
-            <Button onClick={() => navigate("/admin")} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Admin
-            </Button>
-          </div>
-        </div>
 
         {/* CPAY Wallet Info Section */}
         {walletInfo && (
-          <Card className="mb-6 border-blue-200 bg-blue-50/30">
+          <Card className="mb-6 border-primary/20 bg-primary/5">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-blue-700">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-primary">
                   <Wallet className="h-5 w-5" />
                   <CardTitle className="text-lg">CPAY Wallet Status</CardTitle>
                 </div>
-                <Badge variant="outline" className="bg-card border-blue-200/20 text-blue-400">
+                <Badge variant="outline" className="bg-card border-primary/20 text-primary">
                   {walletInfo.totalTokenCount} Tokens Found
                 </Badge>
               </div>
-              <CardDescription className="text-blue-600/80">
+              <CardDescription>
                 Current balances and Currency IDs for your configured CPAY wallet
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
-                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Total Balance (USD)</p>
-                  <p className="text-2xl font-bold text-blue-900">${parseFloat(walletInfo.wallet.balanceUSD).toLocaleString()}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-card p-4 rounded-lg border border-border/50 shadow-sm">
+                  <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Total Balance (USD)</p>
+                  <p className="text-2xl font-bold">${parseFloat(walletInfo.wallet.balanceUSD).toLocaleString()}</p>
                 </div>
-                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
-                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Available Balance</p>
-                  <p className="text-2xl font-bold text-green-600">${parseFloat(walletInfo.wallet.availableBalanceUSD).toLocaleString()}</p>
+                <div className="bg-card p-4 rounded-lg border border-border/50 shadow-sm">
+                  <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Available Balance</p>
+                  <p className="text-2xl font-bold text-primary">${parseFloat(walletInfo.wallet.availableBalanceUSD).toLocaleString()}</p>
                 </div>
-                <div className="bg-card p-4 rounded-lg border border-blue-100/20 shadow-sm">
-                  <p className="text-xs text-blue-600 font-medium mb-1 uppercase tracking-wider">Hold Balance</p>
+                <div className="bg-card p-4 rounded-lg border border-border/50 shadow-sm sm:col-span-2 lg:col-span-1">
+                  <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Hold Balance</p>
                   <p className="text-2xl font-bold text-orange-500">${parseFloat(walletInfo.wallet.holdBalance).toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="bg-card rounded-lg border border-blue-100/20 overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-blue-50/50">
-                    <TableRow>
-                      <TableHead className="text-blue-700">Token / Network</TableHead>
-                      <TableHead className="text-blue-700">Balance</TableHead>
-                      <TableHead className="text-blue-700">Currency ID (Required for Secrets)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {walletInfo.tokens.map((token: any) => (
-                      <TableRow key={token.currencyId}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-blue-900">{token.name}</span>
-                            <span className="text-[10px] text-blue-500 uppercase font-medium">{token.blockchain} ({token.nodeType})</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono font-medium">
-                          {token.balance}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono border border-slate-200">
-                              {token.currencyId}
-                            </code>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 hover:bg-blue-50 text-blue-600"
-                              onClick={() => copyToClipboard(token.currencyId, token.currencyId)}
-                            >
-                              {copiedId === token.currencyId ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                        </TableCell>
+              <div className="bg-card rounded-lg border border-border/50 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead>Token / Network</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead>Currency ID (Required for Secrets)</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {walletInfo.tokens.map((token: any) => (
+                        <TableRow key={token.currencyId}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-foreground">{token.name}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase font-medium">{token.blockchain} ({token.nodeType})</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono font-medium">
+                            {token.balance}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <code className="bg-muted px-2 py-1 rounded text-xs font-mono border border-border">
+                                {token.currencyId}
+                              </code>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 hover:bg-primary/10 text-primary"
+                                onClick={() => copyToClipboard(token.currencyId, token.currencyId)}
+                              >
+                                {copiedId === token.currencyId ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
-              <Alert className="bg-card border-blue-200/20 text-blue-400">
-                <Info className="h-4 w-4 text-blue-600" />
-                <AlertTitle className="text-blue-800 font-bold">Important Instructions</AlertTitle>
-                <AlertDescription className="text-blue-700 space-y-2">
-                  <ul className="list-disc pl-4 mt-2 space-y-1 text-xs">
+              <Alert className="bg-card border-primary/20">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertTitle className="text-primary font-bold">Important Instructions</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <ul className="list-disc pl-4 mt-2 space-y-1 text-xs text-muted-foreground">
                     <li>Copy the <strong>Currency ID</strong> for your withdrawal token (USDT-BSC or USDC-Solana).</li>
                     <li>Paste it into the <strong>USDT Token ID</strong> field in the <strong>Security &gt; System Secrets</strong> page.</li>
                     <li>Ensure you have enough native coins (BNB for BSC, SOL for Solana) in your wallet to cover network fees.</li>
@@ -812,16 +814,16 @@ const PaymentSettings = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Fee</TableHead>
-                    <TableHead>Limits</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="min-w-[150px]">Name</TableHead>
+                    <TableHead className="min-w-[100px]">Type</TableHead>
+                    <TableHead className="min-w-[120px]">Fee</TableHead>
+                    <TableHead className="min-w-[150px]">Limits</TableHead>
+                    <TableHead className="min-w-[150px]">Status</TableHead>
+                    <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -902,26 +904,26 @@ const PaymentSettings = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* UTC Clock Display */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Current UTC Time</p>
-                  <p className="text-xs text-blue-700">
+                  <p className="text-sm font-medium text-primary">Current UTC Time</p>
+                  <p className="text-xs text-muted-foreground">
                     Withdrawal validation uses UTC timezone
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-900 font-mono">
+                  <p className="text-2xl font-bold text-foreground font-mono">
                     {currentUtcTime} UTC
                   </p>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-muted-foreground">
                     {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentUtcDay]}
                   </p>
                 </div>
               </div>
               
               {/* Visual indicator if withdrawals are currently allowed */}
-              <div className="mt-3 pt-3 border-t border-blue-200">
+              <div className="mt-3 pt-3 border-t border-primary/10">
                 {isWithdrawalAllowed ? (
                   <div className="flex items-center gap-2 text-green-700">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -938,8 +940,8 @@ const PaymentSettings = () => {
             
             {/* Day Selection with Time Windows */}
             <div>
-              <Label className="text-base mb-3 block">Payout Schedule with Time Windows (UTC)</Label>
-              <div className="space-y-3">
+              <Label className="text-base mb-4 block">Payout Schedule with Time Windows (UTC)</Label>
+              <div className="grid grid-cols-1 gap-3">
                 {[
                   { index: 0, name: 'Sunday' },
                   { index: 1, name: 'Monday' },
@@ -951,8 +953,6 @@ const PaymentSettings = () => {
                 ].map(day => {
                   let schedule = payoutSchedule.find(s => s.day === day.index);
                   if (!schedule) {
-                    console.warn(`Missing schedule for day ${day.index}, using default`);
-                    // Provide default instead of returning null
                     schedule = { 
                       day: day.index, 
                       enabled: false, 
@@ -965,56 +965,64 @@ const PaymentSettings = () => {
                     <div
                       key={day.index}
                       className={`
-                        p-4 rounded-lg border-2 transition-all
+                        p-4 rounded-lg border transition-all
                         ${schedule.enabled
-                          ? 'border-[hsl(var(--wallet-deposit))] bg-[hsl(var(--wallet-deposit))]/5'
-                          : 'border-gray-200'
+                          ? 'border-primary/50 bg-primary/5 shadow-sm'
+                          : 'border-border bg-card/50'
                         }
                       `}
                     >
-                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         {/* Day Toggle */}
-                        <div className="flex items-center gap-3 min-w-[120px]">
+                        <div className="flex items-center gap-3">
                           <Switch
                             checked={schedule.enabled}
                             onCheckedChange={() => togglePayoutDay(day.index)}
                           />
-                          <span className="font-medium">{day.name}</span>
+                          <span className="font-semibold text-foreground">{day.name}</span>
                         </div>
                         
                         {/* Time Inputs (only shown when enabled) */}
                         {schedule.enabled && (
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <Label htmlFor={`start-${day.index}`} className="text-xs">Start Time</Label>
+                          <div className="flex flex-wrap items-end gap-3 sm:gap-4 p-3 bg-card rounded-md border border-border/50">
+                            <div className="space-y-1.5">
+                              <Label htmlFor={`start-${day.index}`} className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Start Time</Label>
                               <Input
                                 id={`start-${day.index}`}
                                 type="time"
                                 value={schedule.start_time}
                                 onChange={(e) => updateDayTime(day.index, 'start_time', e.target.value)}
-                                className="w-32"
+                                className="w-[120px] h-9"
                               />
                             </div>
-                            <span className="text-muted-foreground mt-5">to</span>
-                            <div>
-                              <Label htmlFor={`end-${day.index}`} className="text-xs">End Time</Label>
+                            <div className="flex items-center h-9 text-muted-foreground font-medium text-sm pt-5">
+                              to
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label htmlFor={`end-${day.index}`} className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">End Time</Label>
                               <Input
                                 id={`end-${day.index}`}
                                 type="time"
                                 value={schedule.end_time}
                                 onChange={(e) => updateDayTime(day.index, 'end_time', e.target.value)}
-                                className="w-32"
+                                className="w-[120px] h-9"
                               />
                             </div>
-                            <span className="text-xs text-muted-foreground mt-5">UTC</span>
+                            <div className="flex items-center h-9 text-xs text-muted-foreground font-bold pt-5">
+                              UTC
+                            </div>
                           </div>
+                        )}
+                        {!schedule.enabled && (
+                          <span className="text-sm text-muted-foreground italic">Withdrawals disabled for this day</span>
                         )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                <Info className="h-3 w-3" />
                 Enable days and set time windows when users can request withdrawals. All times are in UTC.
               </p>
             </div>

@@ -298,22 +298,22 @@ export default function PartnerBonusMonitoring() {
           <CardDescription>{t("admin.partnerBonusMonitoring.statusBreakdown.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-              <div className="text-2xl font-bold text-green-700 dark:text-green-300">{metrics?.paidCount}</div>
-              <div className="text-sm text-green-600 dark:text-green-400">{t("admin.partnerBonusMonitoring.status.paid")}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-300">{metrics?.paidCount}</div>
+              <div className="text-xs sm:text-sm text-green-600 dark:text-green-400 break-words">{t("admin.partnerBonusMonitoring.status.paid")}</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{metrics?.calculatedCount}</div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">{t("admin.partnerBonusMonitoring.status.calculated")}</div>
+            <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-300">{metrics?.calculatedCount}</div>
+              <div className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-words">{t("admin.partnerBonusMonitoring.status.calculated")}</div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{metrics?.pendingCount}</div>
-              <div className="text-sm text-yellow-600 dark:text-yellow-400">{t("admin.partnerBonusMonitoring.status.pending")}</div>
+            <div className="text-center p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-yellow-700 dark:text-yellow-300">{metrics?.pendingCount}</div>
+              <div className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400 break-words">{t("admin.partnerBonusMonitoring.status.pending")}</div>
             </div>
-            <div className="text-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
-              <div className="text-2xl font-bold text-red-700 dark:text-red-300">{metrics?.failedCount}</div>
-              <div className="text-sm text-red-600 dark:text-red-400">{t("admin.partnerBonusMonitoring.status.failed")}</div>
+            <div className="text-center p-3 sm:p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-red-700 dark:text-red-300">{metrics?.failedCount}</div>
+              <div className="text-xs sm:text-sm text-red-600 dark:text-red-400 break-words">{t("admin.partnerBonusMonitoring.status.failed")}</div>
             </div>
           </div>
         </CardContent>

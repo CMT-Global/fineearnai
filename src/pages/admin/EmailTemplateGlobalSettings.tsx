@@ -352,16 +352,16 @@ export default function EmailTemplateGlobalSettings() {
       </Tabs>
 
       <Card>
-        <CardContent className="flex items-center justify-between gap-4 py-4">
-          <div className="space-y-1 text-sm text-muted-foreground">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+          <div className="space-y-1 text-sm text-muted-foreground text-center sm:text-left">
             <p>{t("admin.emailTemplateGlobalSettings.changesNote")}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending} className="w-full sm:w-auto">
               <RotateCcw className="h-4 w-4 mr-2" />
               {t("admin.emailTemplateGlobalSettings.actions.resetToDefaults")}
             </Button>
-            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
+            <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending} className="w-full sm:w-auto">
               {saveMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

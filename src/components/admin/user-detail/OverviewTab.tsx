@@ -499,11 +499,15 @@ export const OverviewTab = ({
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Payout configured</Label>
-              <Badge variant={profile.payout_configured ? "default" : "secondary"} className="gap-1">
-                {profile.payout_configured ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                {profile.payout_configured ? "Yes" : "No"}
-              </Badge>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Onboarding Version</Label>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{profile.onboarding_version || "1.0"}</Badge>
+                {profile.onboarding_completed_at && (
+                  <span className="text-xs text-muted-foreground">
+                    Done: {format(new Date(profile.onboarding_completed_at), "PP", { locale: dateLocale })}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Phone verified</Label>
@@ -518,21 +522,41 @@ export const OverviewTab = ({
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Wizard fields</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">Legacy Fields</Label>
               <div className="text-xs text-muted-foreground space-y-0.5">
-                {(profile.first_name || profile.last_name) && (
-                  <p>{[profile.first_name, profile.last_name].filter(Boolean).join(" ")}</p>
-                )}
-                {profile.timezone && <p>TZ: {profile.timezone}</p>}
-                {profile.preferred_language && <p>Lang: {profile.preferred_language}</p>}
-                {profile.earning_goal && <p>Goal: {profile.earning_goal}</p>}
                 {profile.motivation && <p>Motivation: {profile.motivation}</p>}
                 {profile.how_did_you_hear && <p>Source: {profile.how_did_you_hear}</p>}
-                {profile.usdt_bep20_address && (
-                  <p className="font-mono truncate" title={profile.usdt_bep20_address}>
-                    BEP20: {profile.usdt_bep20_address.slice(0, 10)}…{profile.usdt_bep20_address.slice(-8)}
-                  </p>
-                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Onboarding Responses Section */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Onboarding Responses (V2)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-muted/30 p-4 rounded-lg">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Weekly Goal</Label>
+                <p className="text-sm font-medium">{profile.weekly_goal || "Not set"}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Time Commitment</Label>
+                <p className="text-sm font-medium">{profile.weekly_time_commitment || "Not set"}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Weekly Routine</Label>
+                <p className="text-sm font-medium">{profile.weekly_routine || "Not set"}</p>
+              </div>
+              <div className="md:col-span-2 lg:col-span-3 space-y-1 border-t pt-3">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Preferred Categories</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {profile.preferred_review_categories && profile.preferred_review_categories.length > 0 ? (
+                    profile.preferred_review_categories.map((cat: string) => (
+                      <Badge key={cat} variant="secondary" className="text-[10px]">{cat}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground italic">None selected</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

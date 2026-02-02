@@ -328,34 +328,36 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
       {/* Only secondary navigation items + Partner navigation (always visible) in mobile menu */}
       <nav className="flex-1 p-4 space-y-1">
-        {/* Partner Navigation - Always visible, changes based on status */}
-        {isPartner ? (
-          <button
-            onClick={() => handleNavigation("/partner/dashboard")}
-            onMouseEnter={() => handlePrefetch("/partner/dashboard")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20 ${
-              isActive("/partner/dashboard")
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-            }`}
-          >
-            <Sparkles className={`h-5 w-5 text-[hsl(var(--wallet-deposit))]`} />
-            <span className="font-semibold">Partner Hub</span>
-            <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
-          </button>
-        ) : (
-          <button
-            onClick={() => handleNavigation("/become-partner")}
-            onMouseEnter={() => handlePrefetch("/become-partner")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
-              isActive("/become-partner")
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-            }`}
-          >
-            <Sparkles className={`h-5 w-5 ${isActive("/become-partner") ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-            <span>Become a Partner</span>
-          </button>
+        {/* Partner Navigation - Respects global enable/disable toggle */}
+        {isPartnerProgramEnabled && (
+          isPartner ? (
+            <button
+              onClick={() => handleNavigation("/partner/dashboard")}
+              onMouseEnter={() => handlePrefetch("/partner/dashboard")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20 ${
+                isActive("/partner/dashboard")
+                  ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                  : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+              }`}
+            >
+              <Sparkles className={`h-5 w-5 text-[hsl(var(--wallet-deposit))]`} />
+              <span className="font-semibold">{t("components.sidebar.partnerHub")}</span>
+              <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+            </button>
+          ) : (
+            <button
+              onClick={() => handleNavigation("/become-partner")}
+              onMouseEnter={() => handlePrefetch("/become-partner")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                isActive("/become-partner")
+                  ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                  : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+              }`}
+            >
+              <Sparkles className={`h-5 w-5 ${isActive("/become-partner") ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
+              <span>{t("components.sidebar.becomePartner")}</span>
+            </button>
+          )
         )}
         {secondaryNavItems.map((item) => (
           <button

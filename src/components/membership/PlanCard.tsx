@@ -182,13 +182,13 @@ export function PlanCard({
         )}
 
         {isCurrentPlan && (
-          <Badge className="absolute top-4 right-4 text-xs">
+          <Badge className="absolute top-14 sm:top-4 right-4 text-xs z-10">
             Current Plan
           </Badge>
         )}
 
         <div className="p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-stretch lg:items-start">
             {/* Left Section - Price & Title - Stack on Mobile */}
             <div className="flex-shrink-0 w-full lg:w-1/4">
               <CardTitle className="text-xl sm:text-2xl mb-2">
@@ -390,26 +390,26 @@ export function PlanCard({
                     className="h-auto p-0 text-xs text-destructive-foreground underline touch-manipulation min-h-[32px] active:opacity-70 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => navigate("/wallet")}
                   >
-                      Go to Wallet
-                    </Button>
+                    Go to Wallet
+                  </Button>
                   </AlertDescription>
                 </Alert>
               )}
 
               <Button
                 className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation active:scale-95 [-webkit-tap-highlight-color:transparent] ${
-                  isDowngrade 
-                    ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none active:scale-100' 
+                  isDowngrade || isCurrentPlan
+                    ? 'opacity-60 cursor-not-allowed hover:scale-100' 
                     : 'hover:scale-105 hover:shadow-xl active:shadow-lg'
                 }`}
-                onClick={() => !isDowngrade && onUpgradeClick(plan)}
+                onClick={() => !isDowngrade && !isCurrentPlan && onUpgradeClick(plan)}
                 disabled={
                   !hasProfile ||
                   isCurrentPlan || 
                   upgrading || 
                   isDowngrade
                 }
-                variant={isDowngrade ? "secondary" : "default"}
+                variant={isCurrentPlan || isDowngrade ? "secondary" : "default"}
               >
                 {upgrading ? (
                   <>
@@ -655,18 +655,18 @@ export function PlanCard({
 
         <Button
           className={`w-full min-h-[44px] h-12 sm:h-10 text-base sm:text-sm transition-all duration-300 touch-manipulation active:scale-95 [-webkit-tap-highlight-color:transparent] ${
-            isDowngrade 
-              ? 'opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none active:scale-100' 
+            isDowngrade || isCurrentPlan
+              ? 'opacity-60 cursor-not-allowed hover:scale-100' 
               : 'hover:scale-105 hover:shadow-xl active:shadow-lg'
           }`}
-          onClick={() => !isDowngrade && onUpgradeClick(plan)}
+          onClick={() => !isDowngrade && !isCurrentPlan && onUpgradeClick(plan)}
           disabled={
             !hasProfile ||
             isCurrentPlan || 
             upgrading || 
             isDowngrade
           }
-          variant={isDowngrade ? "secondary" : "default"}
+          variant={isCurrentPlan || isDowngrade ? "secondary" : "default"}
         >
           {upgrading ? (
             <>

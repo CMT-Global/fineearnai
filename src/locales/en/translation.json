@@ -2449,6 +2449,32 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "howItWorks": {
+        "title": "How It Works Content Settings",
+        "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "How It Works content settings have been updated successfully.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "pageVisibility": {
+          "title": "Page Visibility",
+          "description": "Control whether the How It Works page is shown to new users",
+          "showLabel": "Show How It Works Page",
+          "showDescription": "Display the How It Works onboarding page to new users when they first log in"
+        },
+        "slideTitle": "Slide {{number}}: {{title}}",
+        "slideDescription": "Configure the content for this slide",
+        "untitled": "Untitled",
+        "titleLabel": "Title",
+        "subtitleLabel": "Subtitle",
+        "descriptionLabel": "Description",
+        "platformNameTip": "Tip: Use {{platformName}} in the description to automatically replace with the configured platform name (currently: {{platformName}})",
+        "changesApplied": "Changes will be applied to the How It Works page after saving",
+        "resetToDefaults": "Reset to Defaults",
+        "successMessage": "Settings saved successfully! Changes will be reflected on the How It Works page.",
+        "errorMessage": "Failed to save settings. Please try again."
       }
     },
     "dailyResetLogs": {

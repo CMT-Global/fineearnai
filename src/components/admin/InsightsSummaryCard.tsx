@@ -77,19 +77,19 @@ export const InsightsSummaryCard = ({ analytics, dateRange }: InsightsSummaryCar
     subtext?: string;
     color?: "default" | "success" | "warning";
   }) => (
-    <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
-      <div className={`p-2 rounded-md ${
+    <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border bg-muted/30 min-w-0">
+      <div className={`p-1.5 sm:p-2 rounded-md shrink-0 ${
         color === "success" ? "bg-green-500/10 text-green-600" :
         color === "warning" ? "bg-amber-500/10 text-amber-600" :
         "bg-primary/10 text-primary"
       }`}>
-        <Icon className="h-4 w-4" />
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold truncate">{value}</p>
+        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground break-words line-clamp-2">{label}</p>
+        <p className="text-xs sm:text-sm font-bold truncate">{value}</p>
         {subtext && (
-          <p className="text-xs text-muted-foreground mt-0.5">{subtext}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">{subtext}</p>
         )}
       </div>
     </div>

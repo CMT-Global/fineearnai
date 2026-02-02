@@ -51,6 +51,13 @@ Deno.serve(async (req) => {
       earning_goal,
       motivation,
       how_did_you_hear,
+      weekly_goal,
+      weekly_time_commitment,
+      preferred_review_categories,
+      weekly_routine,
+      recommended_plan_id,
+      selected_plan_id,
+      onboarding_version,
     } = body;
 
     const updates: Record<string, unknown> = {};
@@ -65,6 +72,15 @@ Deno.serve(async (req) => {
     if (how_did_you_hear !== undefined) updates.how_did_you_hear = how_did_you_hear && String(how_did_you_hear).trim() || null;
     if (phone_country_code !== undefined) updates.phone_country_code = phone_country_code && String(phone_country_code).trim() || null;
 
+    // New onboarding fields
+    if (weekly_goal !== undefined) updates.weekly_goal = weekly_goal;
+    if (weekly_time_commitment !== undefined) updates.weekly_time_commitment = weekly_time_commitment;
+    if (preferred_review_categories !== undefined) updates.preferred_review_categories = preferred_review_categories;
+    if (weekly_routine !== undefined) updates.weekly_routine = weekly_routine;
+    if (recommended_plan_id !== undefined) updates.recommended_plan_id = recommended_plan_id;
+    if (selected_plan_id !== undefined) updates.selected_plan_id = selected_plan_id;
+    if (onboarding_version !== undefined) updates.onboarding_version = onboarding_version;
+
     if (phone_number !== undefined || phone_country_code !== undefined) {
       const cc = (updates.phone_country_code as string) ?? body.phone_country_code;
       const num = phone_number != null ? String(phone_number).trim() : '';
@@ -73,29 +89,9 @@ Deno.serve(async (req) => {
     }
 
     if (complete === true) {
-      const fn = (updates.first_name as string) ?? '';
-      const ln = (updates.last_name as string) ?? '';
-      if (!fn.trim() || !ln.trim()) {
-        return new Response(
-          JSON.stringify({ error: 'validation_error', message: 'First name and last name are required to complete the wizard.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (!(updates.country as string)?.trim()) {
-        return new Response(
-          JSON.stringify({ error: 'validation_error', message: 'Country is required to complete the wizard.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (!(updates.timezone as string)?.trim()) {
-        return new Response(
-          JSON.stringify({ error: 'validation_error', message: 'Timezone is required to complete the wizard.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
       updates.profile_completed = true;
       updates.profile_completed_at = new Date().toISOString();
+      updates.onboarding_completed_at = new Date().toISOString();
     }
 
     if (skip_payout !== true && usdt_bep20_address != null && String(usdt_bep20_address).trim()) {
@@ -130,8 +126,15 @@ Deno.serve(async (req) => {
       .eq('id', user.id);
 
     if (updateError) {
+      console.error('Update failed:', updateError);
       return new Response(
-        JSON.stringify({ error: 'update_failed', message: updateError.message }),
+        JSON.stringify({ 
+          error: 'update_failed', 
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -79,7 +79,7 @@ const BecomePartner = () => {
   const isWizardEnabled = partnerProgramContent?.wizard?.isEnabled ?? true;
 
   // Compute ready state - only true when user exists, partner config is loaded AND query has settled successfully
-  const ready = !!user && partnerStatusSuccess && !isLoadingPartnerConfig && isPartnerProgramEnabled;
+  const ready = !!user && partnerStatusSuccess && !isLoadingPartnerConfig;
 
   // Phase 3: Generate correlation ID on mount with useRef guard to prevent duplicates in Strict Mode
   useEffect(() => {

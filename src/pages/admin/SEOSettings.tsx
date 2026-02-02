@@ -169,23 +169,23 @@ export default function SEOSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Globe className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             {t("admin.contentManagement.seoSettings.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
             {t("admin.contentManagement.seoSettings.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={handleReset} disabled={!hasChanges || saveMutation.isPending}>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={handleReset} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
             <Undo className="h-4 w-4 mr-2" />
             {t("admin.contentManagement.seoSettings.discardChanges")}
           </Button>
-          <Button onClick={() => saveMutation.mutate({ seo: config, branding })} disabled={!hasChanges || saveMutation.isPending}>
+          <Button onClick={() => saveMutation.mutate({ seo: config, branding })} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
@@ -197,16 +197,16 @@ export default function SEOSettings() {
       </div>
 
       <Tabs defaultValue="branding" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="branding" className="gap-2">
+        <TabsList className="flex flex-wrap h-auto p-1 bg-muted">
+          <TabsTrigger value="branding" className="gap-2 flex-1">
             <Globe className="h-4 w-4" />
             {t("admin.contentManagement.seoSettings.tabs.branding")}
           </TabsTrigger>
-          <TabsTrigger value="seo" className="gap-2">
+          <TabsTrigger value="seo" className="gap-2 flex-1">
             <Globe className="h-4 w-4" />
             {t("admin.contentManagement.seoSettings.tabs.seo")}
           </TabsTrigger>
-          <TabsTrigger value="social" className="gap-2">
+          <TabsTrigger value="social" className="gap-2 flex-1">
             <Share2 className="h-4 w-4" />
             {t("admin.contentManagement.seoSettings.tabs.social")}
           </TabsTrigger>
@@ -306,7 +306,7 @@ export default function SEOSettings() {
                 <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.keywordsHint")}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="canonicalUrl">{t("admin.contentManagement.seoSettings.seo.canonicalUrl")}</Label>
                   <Input

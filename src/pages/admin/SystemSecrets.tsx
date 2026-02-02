@@ -162,7 +162,7 @@ export default function SystemSecretsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-full overflow-x-hidden">
       <AdminBreadcrumb
         items={[
           { label: t("admin.systemSecrets.breadcrumbSecurity"), path: "/admin/security" },
@@ -170,19 +170,20 @@ export default function SystemSecretsPage() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t("admin.systemSecrets.title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.systemSecrets.title")}</h1>
           <p className="text-muted-foreground mt-1">
             {t("admin.systemSecrets.subtitle")}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             onClick={handleReset}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             {t("admin.systemSecrets.discardChanges")}
@@ -191,6 +192,7 @@ export default function SystemSecretsPage() {
           <Button
             onClick={handleSave}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -211,24 +213,24 @@ export default function SystemSecretsPage() {
       </Alert>
 
       <Tabs defaultValue="ai" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="ai" className="gap-2">
+        <TabsList className="flex flex-wrap h-auto p-1 bg-muted">
+          <TabsTrigger value="ai" className="gap-2 flex-1 min-w-[120px]">
             <Brain className="h-4 w-4" />
             {t("admin.systemSecrets.tabs.ai")}
           </TabsTrigger>
-          <TabsTrigger value="payment" className="gap-2">
+          <TabsTrigger value="payment" className="gap-2 flex-1 min-w-[120px]">
             <DollarSign className="h-4 w-4" />
             {t("admin.systemSecrets.tabs.payment")}
           </TabsTrigger>
-          <TabsTrigger value="email" className="gap-2">
+          <TabsTrigger value="email" className="gap-2 flex-1 min-w-[120px]">
             <Mail className="h-4 w-4" />
             {t("admin.systemSecrets.tabs.email")}
           </TabsTrigger>
-          <TabsTrigger value="geo" className="gap-2">
+          <TabsTrigger value="geo" className="gap-2 flex-1 min-w-[120px]">
             <Globe className="h-4 w-4" />
             {t("admin.systemSecrets.tabs.geo")}
           </TabsTrigger>
-          <TabsTrigger value="currency" className="gap-2">
+          <TabsTrigger value="currency" className="gap-2 flex-1 min-w-[120px]">
             <DollarSign className="h-4 w-4" />
             {t("admin.systemSecrets.tabs.currency")}
           </TabsTrigger>

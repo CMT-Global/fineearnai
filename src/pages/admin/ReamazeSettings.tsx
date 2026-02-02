@@ -124,7 +124,7 @@ export default function ReamazeSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
       <AdminBreadcrumb
         items={[
           { label: t("admin.contentManagement.reamazeSettings.breadcrumb.communications") },
@@ -132,58 +132,61 @@ export default function ReamazeSettings() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("admin.contentManagement.reamazeSettings.title")}</h1>
-          <p className="text-muted-foreground mt-1">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("admin.contentManagement.reamazeSettings.title")}</h1>
+          <p className="text-muted-foreground mt-1 break-words">
             {t("admin.contentManagement.reamazeSettings.subtitle")}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <Button
             variant="outline"
             onClick={handleReset}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            {t("admin.contentManagement.reamazeSettings.discardChanges")}
+            <span className="truncate">{t("admin.contentManagement.reamazeSettings.discardChanges")}</span>
           </Button>
 
           <Button
             onClick={handleSave}
             disabled={!hasChanges || saveMutation.isPending}
+            className="flex-1 sm:flex-none"
           >
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {t("admin.contentManagement.reamazeSettings.saveSettings")}
+            <span className="truncate">{t("admin.contentManagement.reamazeSettings.saveSettings")}</span>
           </Button>
         </div>
       </div>
 
-      <Alert>
+      <Alert className="overflow-hidden">
         <Info className="h-4 w-4" />
         <AlertTitle>{t("admin.contentManagement.reamazeSettings.important")}</AlertTitle>
-        <AlertDescription>
+        <AlertDescription className="break-words">
           {t("admin.contentManagement.reamazeSettings.importantDescription")}
         </AlertDescription>
       </Alert>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t("admin.contentManagement.reamazeSettings.enableLiveChat.title")}</CardTitle>
-              <CardDescription>
+          <div className="flex flex-row items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="break-words">{t("admin.contentManagement.reamazeSettings.enableLiveChat.title")}</CardTitle>
+              <CardDescription className="break-words">
                 {t("admin.contentManagement.reamazeSettings.enableLiveChat.description")}
               </CardDescription>
             </div>
             <Switch
               checked={config.isEnabled}
               onCheckedChange={handleToggle}
+              className="mt-1"
             />
           </div>
         </CardHeader>
