@@ -383,7 +383,7 @@ export default function EmailSettings() {
                       type="url"
                       value={settings.platform_url}
                       onChange={(e) => handleInputChange('platform_url', e.target.value)}
-                      placeholder="https://fineearn.com"
+                      placeholder="https://profitchips.com"
                     />
                     {errors.platform_url && (
                       <p className="text-sm text-destructive flex items-center gap-1">

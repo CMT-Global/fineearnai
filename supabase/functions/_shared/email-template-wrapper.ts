@@ -153,7 +153,7 @@ export async function wrapInProfessionalTemplate(
           <tr>
             <td style="background-color: #f8f9fa; padding: 30px 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
               <p style="margin: 0 0 10px 0; font-size: 14px; color: #495057; line-height: 1.6; font-weight: 500;">
-                <strong style="color: #212529;">${platformName}</strong> - Earn by Training AI
+                <strong style="color: #212529;">${platformName}</strong> - Earn by Analyzing Reviews & Training AI
               </p>
               <p style="margin: 0 0 15px 0; font-size: 13px; color: #6c757d; line-height: 1.5;">
                 This email was sent from ${platformName}. If you have any questions, please contact our support team.
