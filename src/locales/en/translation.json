@@ -557,6 +557,7 @@
     "share": "Share",
     "shareLinkDescription": "Share this link with friends to earn commission from their completed tasks!",
     "toasts": {
+      "referralCodeCopied": "Referral code copied!",
       "referralLinkCopied": "Referral link copied!",
       "failedToCopyLink": "Failed to copy link",
       "failedToLoadCommissionHistory": "Failed to load commission history"

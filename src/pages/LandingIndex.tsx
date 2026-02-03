@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/LandingNavbar";
 import HeroSection from "@/components/LandingHeroSection";
@@ -7,8 +8,22 @@ import BenefitsSection from "@/components/LandingBenefitsSection";
 import FAQSection from "@/components/LandingFAQSection";
 import CTASection from "@/components/LandingCTASection";
 import Footer from "@/components/LandingFooter";
+import OnboardingWizard from "@/components/LandingOnboardingWizard";
 
 const Index = () => {
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Hide Chat Support (Reamaze) when registration wizard is open so it's not visible-but-unclickable on mobile,
+  // and to avoid accidental closes on desktop when clicking the widget
+  useEffect(() => {
+    if (wizardOpen) {
+      document.body.setAttribute("data-landing-wizard-open", "true");
+    } else {
+      document.body.removeAttribute("data-landing-wizard-open");
+    }
+    return () => document.body.removeAttribute("data-landing-wizard-open");
+  }, [wizardOpen]);
+
   return (
     <>
       <Helmet>
@@ -24,15 +39,16 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main>
-          <HeroSection />
+          <HeroSection onRegisterAsEarnerClick={() => setWizardOpen(true)} />
           <ProjectsSection />
           <HowItWorksSection />
           <BenefitsSection />
           <FAQSection />
-          <CTASection />
+          <CTASection onRegisterAsEarnerClick={() => setWizardOpen(true)} />
         </main>
         <Footer />
       </div>
+      <OnboardingWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </>
   );
 };
