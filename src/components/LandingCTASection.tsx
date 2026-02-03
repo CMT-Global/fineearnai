@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import OnboardingWizard from "./LandingOnboardingWizard";
 
-export default function LandingCTASection() {
-  const [wizardOpen, setWizardOpen] = useState(false);
+interface LandingCTASectionProps {
+  onRegisterAsEarnerClick?: () => void;
+}
+
+export default function LandingCTASection({ onRegisterAsEarnerClick }: LandingCTASectionProps) {
   return (
     <section className="section-padding relative overflow-hidden">
       {/* Background */}
@@ -32,7 +33,7 @@ export default function LandingCTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="xl" className="w-full sm:w-auto" onClick={() => setWizardOpen(true)}>
+            <Button variant="hero" size="xl" className="w-full sm:w-auto" onClick={() => onRegisterAsEarnerClick?.()}>
               <span className="font-bold">Register As an Earner</span>
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
@@ -40,8 +41,6 @@ export default function LandingCTASection() {
               Learn More
             </Button>
           </div>
-
-          <OnboardingWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
           {/* Stats Row */}
           <div className="mt-12 pt-8 border-t border-border/30 flex justify-center">

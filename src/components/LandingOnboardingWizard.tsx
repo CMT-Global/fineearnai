@@ -66,9 +66,23 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
   const CurrentStepComponent = STEPS[currentStep].component;
   const isLastStep = currentStep === STEPS.length - 1;
 
+  // Prevent closing when user clicks Chat Support (Reamaze) or Telegram button so registration flow isn't closed unexpectedly
+  const handleInteractOutside = (event: Event) => {
+    const target = event.target as HTMLElement;
+    if (
+      target.closest("#reamaze-widget, #reamaze-container, #reamaze-widget-container, .reamaze-trigger-icon, [class^=\"reamaze-\"], #telegram-button, #telegram-panel")
+    ) {
+      event.preventDefault();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-background border-border" hideCloseButton>
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-background border-border"
+        hideCloseButton
+        onInteractOutside={handleInteractOutside}
+      >
         <DialogTitle className="sr-only">Onboarding Wizard - {STEPS[currentStep].title}</DialogTitle>
         
         {/* Header with Progress */}

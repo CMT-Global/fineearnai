@@ -254,3 +254,18 @@
     bottom: 100px !important;
   }
 }
+
+/* Hide Chat Support (Reamaze) when Register as an Earner wizard is open:
+   - Mobile: avoids visible-but-unclickable button (dialog overlay blocks it)
+   - Desktop: avoids accidental close when clicking the widget
+*/
+body[data-landing-wizard-open="true"] #reamaze-widget,
+body[data-landing-wizard-open="true"] .reamaze-trigger-icon,
+body[data-landing-wizard-open="true"] #reamaze-container,
+body[data-landing-wizard-open="true"] #reamaze-widget-container,
+body[data-landing-wizard-open="true"] div[class^="reamaze-"],
+body[data-landing-wizard-open="true"] .reamaze-content {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}

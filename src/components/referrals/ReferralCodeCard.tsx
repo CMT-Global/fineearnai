@@ -14,15 +14,27 @@ interface ReferralCodeCardProps {
 
 export const ReferralCodeCard = ({ referralCode, username, platformName = "ProfitChips" }: ReferralCodeCardProps) => {
   const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const referralUrl = `${window.location.origin}/signup?ref=${referralCode}`;
 
-  const handleCopy = async () => {
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setCopiedCode(true);
+      toast.success(t("referrals.toasts.referralCodeCopied"));
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch (error) {
+      toast.error(t("referrals.toasts.failedToCopyLink"));
+    }
+  };
+
+  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(referralUrl);
-      setCopied(true);
+      setCopiedLink(true);
       toast.success(t("referrals.toasts.referralLinkCopied"));
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopiedLink(false), 2000);
     } catch (error) {
       toast.error(t("referrals.toasts.failedToCopyLink"));
     }
@@ -40,7 +52,7 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
         // User cancelled share
       }
     } else {
-      handleCopy();
+      handleCopyLink();
     }
   };
 
@@ -60,10 +72,10 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
             <Button
               variant="outline"
               size="icon"
-              onClick={handleCopy}
+              onClick={handleCopyCode}
               className="flex-shrink-0"
             >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
         </div>
@@ -79,17 +91,17 @@ export const ReferralCodeCard = ({ referralCode, username, platformName = "Profi
             <Button
               variant="outline"
               size="icon"
-              onClick={handleCopy}
+              onClick={handleCopyLink}
               className="flex-shrink-0"
             >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
         </div>
 
         <div className="flex gap-2">
           <Button
-            onClick={handleCopy}
+            onClick={handleCopyLink}
             className="flex-1 bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90"
           >
             <Copy className="h-4 w-4 mr-2" />
