@@ -194,14 +194,14 @@ const EmailTemplates = () => {
       old_plan: "Basic Plan",
       
       // Platform variables
-      platform_url: "https://fineearn.com",
+      platform_url: "https://profitchips.com",
       
       // Auth variables
-      reset_link: "https://fineearn.com/reset-password?token=sample",
-      confirmation_link: "https://fineearn.com/confirm-email?token=sample",
-      magic_link: "https://fineearn.com/magic-link?token=sample",
+      reset_link: "https://profitchips.com/reset-password?token=sample",
+      confirmation_link: "https://profitchips.com/confirm-email?token=sample",
+      magic_link: "https://profitchips.com/magic-link?token=sample",
       token_hash: "abc123def456",
-      redirect_to: "https://fineearn.com/dashboard",
+      redirect_to: "https://profitchips.com/dashboard",
       old_email: "old.email@example.com",
       new_email: "new.email@example.com",
       

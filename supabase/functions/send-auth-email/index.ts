@@ -30,12 +30,14 @@ const corsHeaders = {
   return `${baseUrl}/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 }
 /**
- * Replace template variables with actual data
+ * Replace template variables with actual data - improved with more robust regex and case-insensitivity
  */ function populateTemplate(templateBody, variables) {
   let populatedBody = templateBody;
   for (const [key, value] of Object.entries(variables)){
-    const regex = new RegExp(`{{${key}}}`, "g");
-    populatedBody = populatedBody.replace(regex, value || "");
+    // Handle both snake_case and camelCase by being slightly more flexible, 
+    // and handle spaces around variable names
+    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
+    populatedBody = populatedBody.replace(regex, String(value ?? ''));
   }
   return populatedBody;
 }
@@ -96,7 +98,7 @@ function generateFallbackEmail(
           <p>You recently requested to reset your password. Click the button below to reset it:</p>
           <div style="margin: 30px 0;">
             <a href="${authLink}" 
-               style="display: inline-block; padding: 12px 24px; background: #0066ff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               style="display: inline-block; padding: 12px 24px; background: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Reset Password
             </a>
           </div>
@@ -117,10 +119,10 @@ function generateFallbackEmail(
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #333;">Welcome to ${platformName}!</h1>
           <p>Hi ${username},</p>
-          <p>Thanks for signing up! Please confirm your email address by clicking the button below:</p>
+          <p>Thanks for joining the platform where you earn by analyzing reviews and training AI! Please confirm your email address by clicking the button below:</p>
           <div style="margin: 30px 0;">
             <a href="${authLink}" 
-               style="display: inline-block; padding: 12px 24px; background: #0066ff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               style="display: inline-block; padding: 12px 24px; background: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Confirm Email
             </a>
           </div>
@@ -140,7 +142,7 @@ function generateFallbackEmail(
           <p>You requested to change your email address. Click the button below to confirm:</p>
           <div style="margin: 30px 0;">
             <a href="${authLink}" 
-               style="display: inline-block; padding: 12px 24px; background: #0066ff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               style="display: inline-block; padding: 12px 24px; background: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Confirm Email Change
             </a>
           </div>
@@ -159,7 +161,7 @@ function generateFallbackEmail(
           <p>Click the button below to login to your account:</p>
           <div style="margin: 30px 0;">
             <a href="${authLink}" 
-               style="display: inline-block; padding: 12px 24px; background: #0066ff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               style="display: inline-block; padding: 12px 24px; background: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Login Now
             </a>
           </div>
@@ -214,37 +216,7 @@ serve(async (req)=>{
     console.log(`🔍 [Auth Email Hook] Template type: ${templateType}`);
     // Fetch custom template
     const template = await fetchTemplate(supabase, templateType);
-    let subject;
-    let htmlBody;
-    let templateId;
-    if (template) {
-      console.log(`✅ [Auth Email Hook] Using custom template: ${template.name}`);
-      // Populate template variables
-      const variables = {
-        username: username,
-        email: user.email,
-        reset_link: email_action_type === "recovery" ? authLink : null,
-        confirmation_link: email_action_type !== "recovery" ? authLink : null,
-        auth_link: authLink,
-        token: token,
-        site_url: site_url
-      };
-      subject = template.subject;
-      htmlBody = populateTemplate(template.body, variables);
-      templateId = template.id;
-    } else {
-      console.warn(`⚠️ [Auth Email Hook] No custom template found, using fallback`);
-      // Use fallback template
-      const fallback = generateFallbackEmail(
-        email_action_type, 
-        username, 
-        authLink, 
-        token,
-        emailSettings.platform_name || 'ProfitChips'
-      );
-      subject = fallback.subject;
-      htmlBody = fallback.body;
-    }
+    
     // ============================================
     // FETCH DYNAMIC EMAIL SETTINGS (PHASE 4)
     // ============================================
@@ -282,7 +254,7 @@ serve(async (req)=>{
     let templateId = null;
 
     if (template) {
-      console.log(`📝 [Auth Email Hook] Using custom template: ${template.name}`);
+      console.log(`✅ [Auth Email Hook] Using custom template: ${template.name}`);
       
       // Variables for template substitution
       const variables = {
@@ -291,6 +263,7 @@ serve(async (req)=>{
         platform_name: platformName,
         platform_url: platformUrl,
         reset_link: email_action_type === "recovery" ? authLink : null,
+        password_reset_link: email_action_type === "recovery" ? authLink : null, // Add alternative name
         confirmation_link: email_action_type !== "recovery" ? authLink : null,
         auth_link: authLink,
         token: token,

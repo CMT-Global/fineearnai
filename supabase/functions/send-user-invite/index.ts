@@ -19,7 +19,7 @@ const handler = async (req)=>{
           Authorization: req.headers.get("Authorization")
         }
       }
-    );
+    });
 
     const secrets = await getSystemSecrets(supabase);
     const resend = new Resend(secrets.resendApiKey);

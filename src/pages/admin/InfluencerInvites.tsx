@@ -149,7 +149,7 @@ const InfluencerInvites = () => {
     const variables = {
       influencer_name: formData.influencerName || '[Influencer Name]',
       commission_rate: formData.commissionRate || '15',
-      referral_link: 'https://fineearn.com/signup?ref=influencer',
+      referral_link: 'https://profitchips.com/signup?ref=influencer',
       support_email: 'support@profitchips.com',
     };
 

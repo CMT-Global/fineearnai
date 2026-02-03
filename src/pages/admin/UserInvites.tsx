@@ -150,7 +150,7 @@ export default function UserInvites() {
     const variables = {
       invitee_name: formData.inviteeName || '[Invitee Name]',
       signup_bonus: formData.signupBonus || 'Start earning immediately with your first tasks!',
-      referral_link: 'https://fineearn.com/signup?ref=user',
+      referral_link: 'https://profitchips.com/signup?ref=user',
       support_email: 'support@profitchips.com',
     };
 

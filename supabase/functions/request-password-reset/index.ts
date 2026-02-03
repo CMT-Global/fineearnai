@@ -117,22 +117,24 @@ serve(async (req)=>{
     }
     console.log(`✅ [${requestId}] Token stored in database: ${tokenRecord.id}`);
 
-    // Fetch platform URL from email settings
-    const { data: emailConfig } = await supabase
+    // Fetch branding and email settings for correct URLs and names
+    const { data: configRows } = await supabase
       .from('platform_config')
-      .select('value')
-      .eq('key', 'email_settings')
-      .maybeSingle();
+      .select('key, value')
+      .in('key', ['platform_branding', 'email_settings']);
+
+    const branding = configRows?.find(r => r.key === 'platform_branding')?.value || {};
+    const emailSettings = configRows?.find(r => r.key === 'email_settings')?.value || {};
     
-    const emailSettings = emailConfig?.value || {
-      platform_url: 'https://profitchips.com',
-    };
-    const platformUrl = emailSettings.platform_url || req.headers.get('origin') || 'https://profitchips.com';
+    const platformName = branding.name || emailSettings.platform_name || 'ProfitChips';
+    const platformUrl = branding.url || emailSettings.platform_url || req.headers.get('origin') || 'https://profitchips.com';
 
-    // Generate reset link
-    const resetLink = `${platformUrl}/reset-password?token=${token}`;
+    // Generate reset link - ensure absolute URL
+    const resetLink = platformUrl.startsWith('http') 
+      ? `${platformUrl}/reset-password?token=${token}`
+      : `https://${platformUrl}/reset-password?token=${token}`;
 
-    // Send email using new template email sender
+    // Send email using template email sender
     console.log(`📧 [${requestId}] Sending password reset email to: ${email}`);
 
     // Use direct HTTP call to edge function with service role key
@@ -149,7 +151,10 @@ serve(async (req)=>{
         variables: {
           username: username,
           reset_link: resetLink,
+          password_reset_link: resetLink, // Add alternative name
           email: email,
+          platform_name: platformName,
+          platform_url: platformUrl,
         },
       }),
     });
