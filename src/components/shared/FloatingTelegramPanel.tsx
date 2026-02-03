@@ -131,20 +131,20 @@ export const FloatingTelegramPanel = ({ isOpen, onClose }: FloatingTelegramPanel
           "fixed z-50 animate-in slide-in-from-right-4 fade-in duration-300",
           // Desktop: positioned next to button
           "lg:right-24 lg:top-1/2 lg:-translate-y-1/2",
-          // Mobile: centered with constraints
-          "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:-translate-y-1/2 max-lg:mx-auto max-lg:max-w-sm"
+          // Mobile: from top with max-height so header/close stay visible; safe area for notch
+          "max-lg:left-4 max-lg:right-4 max-lg:top-[max(1rem,env(safe-area-inset-top))] max-lg:bottom-[max(1rem,env(safe-area-inset-bottom))] max-lg:mx-auto max-lg:max-w-sm max-lg:flex max-lg:flex-col"
         )}
       >
-        <Card className="border-2 border-border shadow-2xl overflow-hidden bg-background">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3 p-4 border-b border-border bg-gradient-to-r from-[#0088cc]/10 to-[#0066aa]/10">
-            <div className="flex items-center gap-2">
+        <Card className="border-2 border-border shadow-2xl overflow-hidden bg-background flex flex-col max-lg:min-h-0 max-lg:flex-1">
+          {/* Header - always visible on mobile (sticky) */}
+          <div className="flex items-center justify-between gap-3 p-4 border-b border-border bg-gradient-to-r from-[#0088cc]/10 to-[#0066aa]/10 flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
               <img 
                 src={telegramIcon} 
                 alt="" 
-                className="w-6 h-6 object-contain"
+                className="w-6 h-6 object-contain flex-shrink-0"
               />
-              <h3 className="font-bold text-base text-foreground">
+              <h3 className="font-bold text-base text-foreground truncate">
                 Join Our Communities
               </h3>
             </div>
@@ -152,15 +152,15 @@ export const FloatingTelegramPanel = ({ isOpen, onClose }: FloatingTelegramPanel
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 hover:bg-accent"
+              className="h-10 w-10 min-w-10 min-h-10 flex-shrink-0 touch-manipulation hover:bg-accent"
               aria-label="Close communities panel"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Communities List */}
-          <CardContent className="p-0">
+          {/* Communities List - scrollable on mobile */}
+          <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto max-lg:overflow-y-auto">
             {activeCommunities.map((community, index) => (
               <button
                 key={community.name}
@@ -203,7 +203,7 @@ export const FloatingTelegramPanel = ({ isOpen, onClose }: FloatingTelegramPanel
           </CardContent>
 
           {/* Footer */}
-          <div className="px-4 py-3 bg-muted/50 border-t border-border">
+          <div className="px-4 py-3 bg-muted/50 border-t border-border flex-shrink-0">
             <p className="text-xs text-muted-foreground text-center">
               💡 More regions coming soon
             </p>
