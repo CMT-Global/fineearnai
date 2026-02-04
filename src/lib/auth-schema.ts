@@ -26,12 +26,30 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const PHONE_NATIONAL_MIN = 8;
+const PHONE_NATIONAL_MAX = 18;
+
 export const updateProfileSchema = z.object({
   fullName: z
     .string()
     .min(2, "Full name must be at least 2 characters")
-    .max(100, "Full name must be less than 100 characters"),
-  phone: z.string().max(20, "Phone number must be less than 20 characters").optional(),
+    .max(30, "Full name must be at most 30 characters")
+    .regex(
+      /^[\p{L}\s\-'.]+$/u,
+      "Full name can only contain letters, spaces, hyphens, and apostrophes (no special characters like @, #, $)"
+    ),
+  phone: z
+    .string()
+    .max(25, "Phone number must be less than 25 characters")
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || !val.trim()) return true;
+        const digits = val.replace(/\D/g, "");
+        return digits.length >= PHONE_NATIONAL_MIN && digits.length <= PHONE_NATIONAL_MAX + 4;
+      },
+      { message: `Phone number must be between ${PHONE_NATIONAL_MIN} and ${PHONE_NATIONAL_MAX} digits (excluding country code).` }
+    ),
   country: z
     .string()
     .length(2, "Country must be a valid 2-letter country code")

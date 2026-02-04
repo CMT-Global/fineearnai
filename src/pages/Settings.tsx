@@ -31,6 +31,7 @@ import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { PhoneInputWithCountry } from "@/components/settings/PhoneInputWithCountry";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPPORTED_LANGUAGES, getLanguageName, getLanguageFlag, SupportedLanguage } from "@/lib/country-language-map";
 import { useTranslation } from "react-i18next";
@@ -640,7 +641,14 @@ const Settings = () => {
                         <FormItem>
                           <FormLabel>{t("settings.editProfile.phone")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder={t("settings.editProfile.phonePlaceholder")} />
+                            <PhoneInputWithCountry
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              countryHint={profile?.country}
+                              placeholder={t("settings.editProfile.phonePlaceholder")}
+                              searchPlaceholder={t("common.search") + "..."}
+                              emptyText={t("common.error")}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
