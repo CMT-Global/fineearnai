@@ -404,6 +404,7 @@
     }
   },
   "wallet": {
+    "all": "Alle",
     "title": "Wallet",
     "subtitle": "Manage your deposits, earnings, and transactions",
     "loadingWallet": "Loading wallet...",

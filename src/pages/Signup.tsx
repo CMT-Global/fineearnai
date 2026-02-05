@@ -33,17 +33,37 @@ const Signup = () => {
   const referralCodeFromUrl = searchParams.get("ref");
   const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
 
-  // Store referral code in localStorage when page loads with ref parameter
+  // Store referral code in localStorage and record click when page loads with ref parameter
   useEffect(() => {
     if (referralCodeFromUrl) {
       const upperCode = referralCodeFromUrl.toUpperCase();
       console.log('[REFERRAL] 🔗 Detected referral code from URL:', upperCode);
-      
+
       // Validate format
       if (validateReferralCode(upperCode)) {
         localStorage.setItem("pending_referral_code", upperCode);
         console.log('[REFERRAL] ✅ Valid referral code stored in localStorage');
-        
+
+        // Record referral click for Content Rewards attribution (fire-and-forget)
+        const utmSource = searchParams.get("utm_source") ?? undefined;
+        const utmCampaign = searchParams.get("utm_campaign") ?? undefined;
+        const utmContent = searchParams.get("utm_content") ?? undefined;
+        const utmMedium = searchParams.get("utm_medium") ?? undefined;
+        const utmTerm = searchParams.get("utm_term") ?? undefined;
+        const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : undefined;
+        supabase
+          .rpc("record_referral_click", {
+            p_referral_code: upperCode,
+            p_utm_source: utmSource || null,
+            p_utm_campaign: utmCampaign || null,
+            p_utm_content: utmContent || null,
+            p_utm_medium: utmMedium || null,
+            p_utm_term: utmTerm || null,
+            p_user_agent: userAgent || null,
+          })
+          .then(() => {})
+          .catch(() => {});
+
         // Fetch and display referrer info
         fetchReferrerInfo(upperCode);
       } else {
@@ -55,7 +75,7 @@ const Signup = () => {
         });
       }
     }
-  }, [referralCodeFromUrl]);
+  }, [referralCodeFromUrl, searchParams]);
 
   const fetchReferrerInfo = async (code: string) => {
     try {

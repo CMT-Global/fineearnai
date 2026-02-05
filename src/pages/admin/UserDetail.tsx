@@ -5,6 +5,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunctionWithRetry } from "@/lib/session-refresh";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,32 +69,34 @@ function UserDetailContent() {
   // Fetch user detail using the new hook
   const { data: userDetail, isLoading: loadingDetail, error: detailError, refetch } = useUserDetail(userId || '');
 
-  // Fetch user roles when component mounts or userId changes
+  // Fetch user roles when component mounts or userId changes (use same session/retry as user detail)
   React.useEffect(() => {
     const fetchUserRoles = async () => {
       if (!userId) return;
-      
       try {
-        const { data, error } = await supabase.functions.invoke('admin-manage-user', {
-          body: { 
-            action: 'get_user_roles',
-            userId 
-          }
+        const data = await callEdgeFunctionWithRetry('admin-manage-user', {
+          body: { action: 'get_user_roles', userId },
         });
-
-        if (error) throw error;
         setUserRoles(data?.roles || ['user']);
       } catch (err) {
         console.error('Error fetching user roles:', err);
-        setUserRoles(['user']); // Fallback to user role
+        setUserRoles(['user']);
       }
     };
-
     fetchUserRoles();
   }, [userId]);
 
   // PHASE 5: Enhanced query invalidation with comprehensive cache management
-  const handleUserUpdated = async () => {
+  // Optional optimisticProfile: apply immediately so UI updates at click (e.g. Content Rewards enable/disable)
+  const handleUserUpdated = async (optimisticProfile?: Record<string, unknown>) => {
+    if (optimisticProfile && userId) {
+      queryClient.setQueryData(['admin-user-detail', userId], (old: any) =>
+        old?.profile
+          ? { ...old, profile: { ...old.profile, ...optimisticProfile } }
+          : old
+      );
+    }
+
     console.log('🔄 PHASE 5: handleUserUpdated triggered:', {
       timestamp: new Date().toISOString(),
       userId,
@@ -387,10 +390,9 @@ function UserDetailContent() {
               currentRoles={userRoles}
               onSuccess={async () => {
                 await handleUserUpdated();
-                // Refetch roles after update
                 try {
-                  const { data } = await supabase.functions.invoke('admin-manage-user', {
-                    body: { action: 'get_user_roles', userId: userId! }
+                  const data = await callEdgeFunctionWithRetry('admin-manage-user', {
+                    body: { action: 'get_user_roles', userId: userId! },
                   });
                   setUserRoles(data?.roles || ['user']);
                 } catch (err) {

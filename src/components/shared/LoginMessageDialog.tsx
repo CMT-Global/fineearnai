@@ -223,10 +223,9 @@ export const LoginMessageDialog = ({
           />
           
           <ScrollArea className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh]">
-            <div 
+            <div
               ref={scrollViewportRef}
               onScroll={handleScroll}
-              id="login-message-description"
               className="p-3 sm:p-4 md:p-6"
             >
               <div 

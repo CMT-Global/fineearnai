@@ -24,6 +24,7 @@ import {
   Sparkles,
   Activity,
   Globe,
+  Video,
 } from "lucide-react";
 import { useState, useEffect, useMemo, memo, useCallback, useRef, type RefObject } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
@@ -147,6 +148,14 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       icon: TrendingUp,
       items: [
         { label: t("admin.sidebar.items.referralSystem"), path: "/admin/referrals/manage" },
+      ],
+    },
+    {
+      label: "Content Rewards",
+      icon: Video,
+      items: [
+        { label: "Settings", path: "/admin/content-rewards/settings" },
+        { label: "Creators", path: "/admin/content-rewards/creators" },
       ],
     },
       {

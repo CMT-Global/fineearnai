@@ -15,7 +15,8 @@ import {
   Menu,
   Shield,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  Video
 } from "lucide-react";
 import { useState, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,7 +56,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       const { data, error } = await supabase
         .from("platform_config")
         .select("key, value")
-        .in("key", ["how_it_works_content", "partner_program_config"]);
+        .in("key", ["how_it_works_content", "partner_program_config", "content_rewards_config"]);
 
       if (error) throw error;
 
@@ -67,6 +68,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       return {
         howItWorks: map.get("how_it_works_content") || {},
         partnerProgram: map.get("partner_program_config") || {},
+        contentRewards: map.get("content_rewards_config") || {},
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -74,6 +76,13 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   const isHowItWorksVisible = sidebarConfig?.howItWorks?.isVisible ?? true;
   const isPartnerProgramEnabled = sidebarConfig?.partnerProgram?.isEnabled ?? true;
+  const isContentRewardsEnabled = sidebarConfig?.contentRewards?.enabled ?? false;
+  const isContentRewardsCreator =
+    profile?.content_rewards_enabled === true &&
+    (profile?.content_rewards_status === "approved" || !profile?.content_rewards_status);
+  // When toggle is ON: show link to everyone (creators see "Creator Dashboard", others see "Content Rewards").
+  // When toggle is OFF: still show link for approved creators (including admin-as-creator) so they can reach the dashboard.
+  const showContentRewardsInNav = isContentRewardsEnabled || isContentRewardsCreator;
 
   // Primary navigation items (shown in bottom nav on mobile + sidebar) - memoized
   const basePrimaryNavItems = useMemo(() => [
@@ -89,11 +98,20 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
     : { icon: Sparkles, label: t("components.sidebar.becomePartner"), path: "/become-partner", isPartner: false },
   [isPartner, t]);
 
+  const contentRewardsNavItem = useMemo(
+    () =>
+      isContentRewardsCreator
+        ? { icon: Video, label: "Creator Dashboard", path: "/content-rewards/dashboard" }
+        : { icon: Video, label: "Content Rewards", path: "/content-rewards" },
+    [isContentRewardsCreator]
+  );
+
   const primaryNavItems = useMemo(() => [
     ...basePrimaryNavItems,
     ...(isPartnerProgramEnabled ? [partnerNavItem] : []),
+    ...(showContentRewardsInNav ? [contentRewardsNavItem] : []),
     { icon: Crown, label: t("navigation.plans"), path: "/plans" },
-  ], [basePrimaryNavItems, isPartnerProgramEnabled, partnerNavItem, t]);
+  ], [basePrimaryNavItems, isPartnerProgramEnabled, partnerNavItem, showContentRewardsInNav, contentRewardsNavItem, t]);
 
   // Secondary navigation items (shown only in hamburger menu on mobile + sidebar) - memoized
   const secondaryNavItems = useMemo(() => [
@@ -281,6 +299,20 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
         ))}
       </nav>
 
+      {/* Creator / Influencer Dashboard Button - Visible for approved creators */}
+      {isContentRewardsEnabled && isContentRewardsCreator && (
+        <div className="px-4 pb-4">
+          <Button
+            onClick={() => handleNavigation("/content-rewards/dashboard")}
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:opacity-90 transition-opacity font-bold py-6"
+          >
+            <Video className="h-5 w-5 mr-2" />
+            Creator Dashboard
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+      )}
+
       {/* Switch to Admin Button - Highly Visible */}
       {isAdmin && (
         <div className="px-4 pb-4">
@@ -377,6 +409,23 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
           </button>
         ))}
       </nav>
+
+      {/* Creator / Influencer Dashboard Button - Visible for approved creators (mobile menu) */}
+      {isContentRewardsEnabled && isContentRewardsCreator && (
+        <div className="px-4 pb-4">
+          <Button
+            onClick={() => {
+              handleNavigation("/content-rewards/dashboard");
+              setOpen(false);
+            }}
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:opacity-90 transition-opacity font-bold py-6"
+          >
+            <Video className="h-5 w-5 mr-2" />
+            Creator Dashboard
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+      )}
 
       {/* Switch to Admin Button - Highly Visible */}
       {isAdmin && (

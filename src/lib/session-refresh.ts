@@ -49,6 +49,9 @@ export async function ensureValidSession() {
   }
 }
 
+/** Edge functions that require admin; we force a fresh session before calling to avoid 403 from expired JWT */
+const ADMIN_FUNCTIONS = new Set(['admin-manage-user', 'admin-bulk-operations', 'admin-verify-email', 'process-withdrawal-payment']);
+
 /**
  * Wraps an edge function call with session validation and retry logic
  */
@@ -58,7 +61,13 @@ export async function callEdgeFunctionWithRetry<T>(
 ): Promise<T> {
   try {
     // Ensure valid session before first attempt
-    await ensureValidSession();
+    let session = await ensureValidSession();
+
+    // For admin/secure functions, force a session refresh so the token is as fresh as possible (avoids gateway 403)
+    if (ADMIN_FUNCTIONS.has(functionName)) {
+      const { data: { session: fresh }, error: refreshErr } = await supabase.auth.refreshSession();
+      if (!refreshErr && fresh) session = fresh;
+    }
 
     console.log(`🚀 [EdgeFunction] Calling ${functionName}`, params);
     const { data, error } = await supabase.functions.invoke(functionName, params);
@@ -66,21 +75,20 @@ export async function callEdgeFunctionWithRetry<T>(
     if (error) {
       console.error(`❌ [EdgeFunction] ${functionName} error:`, error);
       
-      // If we get 403, try refreshing session and retry once
-      if (error.message?.includes('403') || error.message?.includes('Unauthorized')) {
-        console.log(`🔄 [EdgeFunction] Got 403, refreshing session and retrying ${functionName}...`);
+      // On 401/403, try refreshing session and retry once (stale or expired token)
+      const isAuthError = error.message?.includes('403') || error.message?.includes('401') || error.message?.includes('Unauthorized');
+      if (isAuthError) {
+        console.log(`🔄 [EdgeFunction] Got auth error, refreshing session and retrying ${functionName}...`);
         
-        // Force refresh session
-        const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+        const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
         
-        if (refreshError || !session) {
-          console.error("❌ [Session] Failed to refresh on 403:", refreshError);
+        if (refreshError || !newSession) {
+          console.error("❌ [Session] Failed to refresh on auth error:", refreshError);
           throw new Error("Session expired. Please log in again.");
         }
 
         console.log("✅ [Session] Refreshed, retrying edge function...");
         
-        // Retry the call with fresh session
         const { data: retryData, error: retryError } = await supabase.functions.invoke(functionName, params);
         
         if (retryError) {

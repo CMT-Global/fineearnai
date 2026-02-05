@@ -6,11 +6,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock, Crown, XCircle, Clock, Sparkles, ShieldCheck } from "lucide-react";
+import { UserCheck, Calendar, Activity, Award, TrendingUp, Users, Globe, Flag, Network, AlertTriangle, UserPlus, Link2, Shield, AlertCircle, CheckCircle2, Lock, Crown, XCircle, Clock, Sparkles, ShieldCheck, Video } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,7 +40,7 @@ interface OverviewTabProps {
   onResetLimits: () => void;
   onMasterLogin: () => void;
   onManageRoles: () => void;
-  onUserUpdated: () => void;
+  onUserUpdated?: (optimisticProfile?: Record<string, unknown>) => void;
 }
 
 export const OverviewTab = ({
@@ -962,6 +963,109 @@ export const OverviewTab = ({
                 {profile.auto_renew ? "Enabled" : "Disabled"}
               </Badge>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Content Rewards Access */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-primary" />
+              Content Rewards Access
+            </CardTitle>
+            {profile.content_rewards_enabled ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const { data, error } = await supabase.rpc("admin_disable_content_rewards", {
+                    p_user_id: profile.id,
+                  });
+                  if (error) {
+                    sonnerToast.error(error.message || "Failed to disable Content Rewards access");
+                  } else {
+                    sonnerToast.success("Content Rewards access disabled");
+                    onUserUpdated?.({ content_rewards_enabled: false, content_rewards_status: "pending", content_rewards_onboarded_at: null });
+                  }
+                }}
+              >
+                Disable Access
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={async () => {
+                  const { data, error } = await supabase.rpc("admin_enable_content_rewards", {
+                    p_user_id: profile.id,
+                  });
+                  if (error) {
+                    sonnerToast.error(error.message || "Failed to enable Content Rewards access");
+                    return;
+                  }
+                  const result = data as { success?: boolean; message?: string } | null;
+                  if (result?.success === false) {
+                    sonnerToast.error(result?.message || "Failed to enable Content Rewards access");
+                    return;
+                  }
+                  sonnerToast.success(`Content Rewards enabled for ${profile.username || profile.email || "this user"}`);
+                  const now = new Date().toISOString();
+                  onUserUpdated?.({ content_rewards_enabled: true, content_rewards_status: "approved", content_rewards_onboarded_at: now });
+                }}
+              >
+                Enable Access
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Status</p>
+              <div className="flex items-center gap-2">
+                {profile.content_rewards_enabled ? (
+                  profile.content_rewards_status === "approved" ? (
+                    <Badge className="bg-green-500">Approved</Badge>
+                  ) : profile.content_rewards_status === "suspended" ? (
+                    <Badge variant="destructive">Suspended</Badge>
+                  ) : (
+                    <Badge variant="outline">Pending</Badge>
+                  )
+                ) : (
+                  <Badge variant="secondary">Disabled</Badge>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Onboarded</p>
+              <p className="font-medium">
+                {profile.content_rewards_onboarded_at
+                  ? format(new Date(profile.content_rewards_onboarded_at), "PPP", { locale: dateLocale })
+                  : "Not onboarded"}
+              </p>
+            </div>
+            {profile.content_rewards_enabled && (
+              <>
+                <div>
+                  <p className="text-sm text-muted-foreground">Referral Code</p>
+                  <p className="font-mono font-medium">{profile.referral_code}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Quick Actions</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/content-rewards/creators/${profile.id}`)}
+                    >
+                      View Creator Dashboard
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

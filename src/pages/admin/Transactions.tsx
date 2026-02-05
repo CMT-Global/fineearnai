@@ -66,6 +66,7 @@ const Transactions = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [walletFilter, setWalletFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -88,12 +89,12 @@ const Transactions = () => {
     if (isAdmin) {
       loadTransactions();
     }
-  }, [isAdmin, page]);
+  }, [isAdmin, page, sourceFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [typeFilter, statusFilter, walletFilter, searchQuery]);
+  }, [typeFilter, statusFilter, walletFilter, sourceFilter, searchQuery]);
 
   const loadTransactions = async () => {
     try {
@@ -102,7 +103,7 @@ const Transactions = () => {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("transactions")
         .select(`
           id,
@@ -114,11 +115,19 @@ const Transactions = () => {
           new_balance,
           description,
           created_at,
+          metadata,
           profiles:user_id (
             username,
             email
           )
-        `, { count: 'exact' })
+        `, { count: 'exact' });
+
+      // Apply source filter if selected
+      if (sourceFilter === "content_rewards") {
+        query = query.eq("metadata->>source", "content_rewards");
+      }
+
+      const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -259,6 +268,16 @@ const Transactions = () => {
                   <SelectItem value="all">{t("admin.transactions.allWallets")}</SelectItem>
                   <SelectItem value="deposit">Deposit</SelectItem>
                   <SelectItem value="earnings">Earnings</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="content_rewards">Content Rewards</SelectItem>
                 </SelectContent>
               </Select>
 

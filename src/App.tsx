@@ -89,6 +89,12 @@ const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationSt
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
+const ContentRewardsSettings = lazy(() => import("@/pages/admin/ContentRewardsSettings"));
+const ContentRewardsCreators = lazy(() => import("@/pages/admin/ContentRewardsCreators"));
+const ContentRewardsCreatorDetail = lazy(() => import("@/pages/admin/ContentRewardsCreatorDetail"));
+const ContentRewardsLanding = lazy(() => import("@/pages/ContentRewardsLanding"));
+const ContentRewardsApply = lazy(() => import("@/pages/ContentRewardsApply"));
+const ContentRewardsDashboard = lazy(() => import("@/pages/ContentRewardsDashboard"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 import { DynamicSEO } from "@/components/shared/DynamicSEO";
@@ -293,6 +299,19 @@ const RoutesWrapper = () => {
             </ProfileCompletionGuard>
           </ProtectedRoute>
         } />
+        <Route path="/content-rewards" element={<ContentRewardsLanding />} />
+        <Route path="/content-rewards/apply" element={
+          <ProtectedRoute>
+            <ContentRewardsApply />
+          </ProtectedRoute>
+        } />
+        <Route path="/content-rewards/dashboard" element={
+          <ProtectedRoute>
+            <ProfileCompletionGuard>
+              <ContentRewardsDashboard />
+            </ProfileCompletionGuard>
+          </ProtectedRoute>
+        } />
       
       {/* Admin routes: single layout, nested children. Layout stays mounted on sidebar nav. */}
       <Route
@@ -323,6 +342,9 @@ const RoutesWrapper = () => {
         <Route path="settings/seo" element={<SEOSettings />} />
         <Route path="plans/manage" element={<PlansManage />} />
         <Route path="referrals/manage" element={<ReferralSystemManage />} />
+        <Route path="content-rewards/settings" element={<ContentRewardsSettings />} />
+        <Route path="content-rewards/creators" element={<ContentRewardsCreators />} />
+        <Route path="content-rewards/creators/:userId" element={<ContentRewardsCreatorDetail />} />
         <Route path="analytics/dashboard" element={<AdminAnalyticsDashboard />} />
         <Route path="analytics/tasks" element={<TaskAnalytics />} />
         <Route path="communications/email" element={<BulkEmail />} />

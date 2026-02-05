@@ -733,10 +733,12 @@ Deno.serve(async (req)=>{
     });
   } catch (error) {
     console.error('Error in admin-manage-user:', error);
+    const msg = error?.message ?? 'Unknown error';
+    const status = msg === 'Unauthorized' ? 401 : msg === 'Admin access required' ? 403 : 400;
     return new Response(JSON.stringify({
-      error: error.message
+      error: msg
     }), {
-      status: error.message === 'Unauthorized' || error.message === 'Admin access required' ? 403 : 400,
+      status,
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json'
