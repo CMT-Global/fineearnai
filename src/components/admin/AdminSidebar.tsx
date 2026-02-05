@@ -25,7 +25,7 @@ import {
   Activity,
   Globe,
 } from "lucide-react";
-import { useState, useEffect, useMemo, memo, useCallback, useRef, type RefObject } from "react";
+import { useState, useEffect, useMemo, memo, useCallback, useRef } from "react";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
 import { useQuery } from "@tanstack/react-query";
@@ -52,6 +52,10 @@ interface NavItem {
   exact?: boolean;
 }
 
+/** Persists admin sidebar nav scroll across navigations (e.g. Overview → Withdrawals). */
+const ADMIN_SIDEBAR_SCROLL_KEY = "admin-sidebar-nav-scroll-top";
+let persistedAdminSidebarScroll = 0;
+
 export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -65,8 +69,12 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     return stored ? JSON.parse(stored) : ["overview"];
   });
   const scrollPositionsRef = useRef<Map<string, number>>(new Map());
-  const navScrollRef = useRef<HTMLNavElement>(null);
-  const savedSidebarScrollRef = useRef<number | null>(null);
+  const navScrollRef = useRef<HTMLElement | null>(null);
+  const scrollCapturedRef = useRef(0);
+  /** Captured on mousedown so we save scroll before click/focus can change it. */
+  const scrollAtMouseDownRef = useRef(0);
+  /** Scroll to restore after next pathname change (from the click that triggered it). */
+  const pendingScrollRestoreRef = useRef<number | null>(null);
 
   // Fetch failed commission count for badge
   const { data: failedCommissionCount } = useQuery({
@@ -250,33 +258,78 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     return category.items.some((item) => isActive(item.path, item.exact));
   };
 
+  const restoreSidebarScroll = useCallback((scrollTop: number) => {
+    const nav = navScrollRef.current;
+    if (!nav || scrollTop < 0) return;
+    const apply = () => {
+      const maxScroll = nav.scrollHeight - nav.clientHeight;
+      if (maxScroll <= 0) return;
+      nav.scrollTop = Math.min(scrollTop, maxScroll);
+    };
+    apply();
+    requestAnimationFrame(apply);
+    [0, 50, 100, 200, 400].forEach((ms) => setTimeout(apply, ms));
+  }, []);
+
   const toggleCategory = (label: string) => {
+    const scrollAtClick = scrollAtMouseDownRef.current;
     setExpandedCategories((prev) =>
       prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
     );
+    restoreSidebarScroll(scrollAtClick);
   };
 
-  const handleNavigation = useCallback((path: string) => {
-    // Save sidebar nav scroll so it doesn't jump upward when we navigate
+  const captureScroll = useCallback(() => {
     if (navScrollRef.current) {
-      savedSidebarScrollRef.current = navScrollRef.current.scrollTop;
+      const top = navScrollRef.current.scrollTop;
+      scrollCapturedRef.current = top;
+      persistedAdminSidebarScroll = top;
     }
+  }, []);
+
+  const captureScrollOnMouseDown = useCallback(() => {
+    const top = navScrollRef.current?.scrollTop ?? 0;
+    scrollAtMouseDownRef.current = top;
+    scrollCapturedRef.current = top;
+    persistedAdminSidebarScroll = top;
+  }, []);
+
+  const handleNavigation = useCallback((path: string) => {
+    const toSave = scrollAtMouseDownRef.current ?? scrollCapturedRef.current ?? navScrollRef.current?.scrollTop ?? 0;
+    pendingScrollRestoreRef.current = toSave;
+    persistedAdminSidebarScroll = toSave;
+    try {
+      sessionStorage.setItem(ADMIN_SIDEBAR_SCROLL_KEY, String(toSave));
+    } catch (_) {}
     // Save current main content scroll (AdminLayout will handle restoration)
     const currentScroll = window.scrollY;
     if (currentScroll > 0) {
       scrollPositionsRef.current.set(location.pathname, currentScroll);
     }
-    // Prevent main content from scrolling to top; preserve sidebar scroll via effect below
     navigate(path, { preventScrollReset: true });
     setOpen(false);
   }, [navigate, location.pathname]);
 
-  // Restore sidebar nav scroll after navigation so it doesn't move upward
+  const setNavRef = useCallback((el: HTMLElement | null) => {
+    navScrollRef.current = el;
+  }, []);
+
+  // After pathname change, restore sidebar scroll to where the user was (undo any browser/focus scroll)
   useEffect(() => {
-    if (savedSidebarScrollRef.current != null && navScrollRef.current) {
-      navScrollRef.current.scrollTop = savedSidebarScrollRef.current;
-      savedSidebarScrollRef.current = null;
-    }
+    const scrollToRestore = pendingScrollRestoreRef.current;
+    if (scrollToRestore === null) return;
+    pendingScrollRestoreRef.current = null;
+    const nav = navScrollRef.current;
+    if (!nav) return;
+    const apply = () => {
+      const maxScroll = nav.scrollHeight - nav.clientHeight;
+      if (maxScroll <= 0) return;
+      const target = Math.min(scrollToRestore, maxScroll);
+      nav.scrollTop = target;
+    };
+    apply();
+    requestAnimationFrame(apply);
+    [0, 50, 100, 150, 250, 400, 600].forEach((ms) => setTimeout(apply, ms));
   }, [location.pathname]);
 
   const handleExitAdminMode = useCallback(() => {
@@ -295,7 +348,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     onSignOut();
   }, [onSignOut]);
 
-  const NavContent = ({ navRef }: { navRef: RefObject<HTMLNavElement | null> }) => (
+  const NavContent = ({ navRef, onScrollCapture, onNavMouseDown }: { navRef: (el: HTMLElement | null) => void; onScrollCapture: () => void; onNavMouseDown: () => void }) => (
     <div className="flex flex-col h-full">
       {/* Admin Header */}
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
@@ -316,7 +369,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       </div>
 
       {/* Navigation Categories */}
-      <nav ref={navRef} className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+      <nav ref={navRef} onScroll={onScrollCapture} onMouseDown={onNavMouseDown} className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navCategories.map((category) => {
           const isExpanded = expandedCategories.includes(category.label);
           const categoryActive = isCategoryActive(category);
@@ -426,7 +479,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
           </SheetTrigger>
           <SheetContent side="left" className="w-80 p-0">
             <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-              <NavContent navRef={navScrollRef} />
+              <NavContent navRef={setNavRef} onScrollCapture={captureScroll} onNavMouseDown={captureScrollOnMouseDown} />
             </div>
           </SheetContent>
         </Sheet>
@@ -434,7 +487,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
 
       {/* Desktop Admin Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
-        <NavContent navRef={navScrollRef} />
+        <NavContent navRef={setNavRef} onScrollCapture={captureScroll} onNavMouseDown={captureScrollOnMouseDown} />
       </aside>
     </>
   );

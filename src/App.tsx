@@ -91,6 +91,7 @@ const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
+import { ReamazeMobileCloseButton } from "@/components/shared/ReamazeMobileCloseButton";
 import { DynamicSEO } from "@/components/shared/DynamicSEO";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -389,6 +390,7 @@ const App = () => (
                 <LanguageProvider>
                   <DynamicSEO />
                   <ReamazeInitializer />
+                  <ReamazeMobileCloseButton />
                   <RoutesWrapper />
                 </LanguageProvider>
               </CurrencyProvider>

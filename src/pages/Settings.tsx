@@ -1164,8 +1164,9 @@ const Settings = () => {
                   {cryptoAddressErrors.usdc ? (
                     <p className="text-sm text-destructive">{cryptoAddressErrors.usdc}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {getCryptoById('usdc-solana')?.description} • Example: {getCryptoById('usdc-solana')?.addressExample}
+                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
+                      {getCryptoById('usdc-solana')?.description} • Example:{" "}
+                      <span className="break-all">{getCryptoById('usdc-solana')?.addressExample}</span>
                     </p>
                   )}
                 </div>
@@ -1190,8 +1191,9 @@ const Settings = () => {
                   {cryptoAddressErrors.usdt ? (
                     <p className="text-sm text-destructive">{cryptoAddressErrors.usdt}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {getCryptoById('usdt-bep20')?.description} • Example: {getCryptoById('usdt-bep20')?.addressExample}
+                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
+                      {getCryptoById('usdt-bep20')?.description} • Example:{" "}
+                      <span className="break-all">{getCryptoById('usdt-bep20')?.addressExample}</span>
                     </p>
                   )}
                 </div>
