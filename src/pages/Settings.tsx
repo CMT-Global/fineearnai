@@ -647,7 +647,7 @@ const Settings = () => {
                               countryHint={profile?.country}
                               placeholder={t("settings.editProfile.phonePlaceholder")}
                               searchPlaceholder={t("common.search") + "..."}
-                              emptyText={t("common.error")}
+                              emptyText={t("common.noCountryFound")}
                             />
                           </FormControl>
                           <FormMessage />
@@ -683,7 +683,7 @@ const Settings = () => {
                               <Command>
                                 <CommandInput placeholder={t("common.search") + "..."} />
                                 <CommandList>
-                                  <CommandEmpty>{t("common.error")}</CommandEmpty>
+                                  <CommandEmpty>{t("common.noCountryFound")}</CommandEmpty>
                                   <CommandGroup>
                                     {countries.map((country) => (
                                       <CommandItem

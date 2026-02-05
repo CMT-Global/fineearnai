@@ -2,6 +2,7 @@
   "common": {
     "loading": "Laden...",
     "error": "Fehler",
+    "noCountryFound": "Kein Land gefunden.",
     "success": "Erfolg",
     "cancel": "Abbrechen",
     "save": "Speichern",
