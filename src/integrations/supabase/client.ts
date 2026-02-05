@@ -20,16 +20,14 @@ import type { Database } from './types';
 
 // Use env vars with fallbacks so app works when .env isn't loaded (e.g. dev server cwd / OneDrive)
 const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL ||
-  'https://vrbtmbaqhhxwesqbcywm.supabase.co';
+  import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYnRtYmFxaGh4d2VzcWJjeXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MTE0NTcsImV4cCI6MjA4MDQ4NzQ1N30.wpCSeH2Xz8fVvjIYMV558rL_IHRbmYHBg64NQpwbJ7Y';
-
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY 
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error(
-    'Missing Supabase environment variables. Please check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.'
+    'Missing Supabase environment variable. Please check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.'
   );
+
 }
 
 /**
