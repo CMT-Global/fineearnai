@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  COUNTRY_DIAL_LIST,
+  validatePhoneNational,
+} from "@/lib/country-dial-codes";
 
 export const signupSchema = z.object({
   username: z
@@ -26,9 +30,6 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const PHONE_NATIONAL_MIN = 8;
-const PHONE_NATIONAL_MAX = 18;
-
 export const updateProfileSchema = z.object({
   fullName: z
     .string()
@@ -41,21 +42,36 @@ export const updateProfileSchema = z.object({
   phone: z
     .string()
     .max(25, "Phone number must be less than 25 characters")
-    .optional()
-    .refine(
-      (val) => {
-        if (!val || !val.trim()) return true;
-        const digits = val.replace(/\D/g, "");
-        return digits.length >= PHONE_NATIONAL_MIN && digits.length <= PHONE_NATIONAL_MAX + 4;
-      },
-      { message: `Phone number must be between ${PHONE_NATIONAL_MIN} and ${PHONE_NATIONAL_MAX} digits (excluding country code).` }
-    ),
+    .optional(),
   country: z
     .string()
     .length(2, "Country must be a valid 2-letter country code")
     .toUpperCase()
     .optional()
     .or(z.literal("")),
+}).superRefine((data, ctx) => {
+  const phone = data.phone;
+  if (!phone || !phone.trim()) return;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 0) return;
+
+  const countryCode = data.country?.trim().toUpperCase();
+  let nationalDigits = digits;
+  if (countryCode) {
+    const country = COUNTRY_DIAL_LIST.find((c) => c.code === countryCode);
+    if (country && digits.startsWith(country.dial)) {
+      nationalDigits = digits.slice(country.dial.length).replace(/^0+/, "") || "";
+    }
+  }
+
+  const message = validatePhoneNational(nationalDigits);
+  if (message) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `${message} (excluding country code)`,
+      path: ["phone"],
+    });
+  }
 });
 
 export const changePasswordSchema = z.object({

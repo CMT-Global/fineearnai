@@ -2,6 +2,7 @@
   "common": {
     "loading": "Loading...",
     "error": "Error",
+    "noCountryFound": "No country found.",
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",

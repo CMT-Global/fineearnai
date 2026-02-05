@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,27 +53,46 @@ export function PhoneInputWithCountry({
   const [countryOpen, setCountryOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryDial>(DEFAULT_COUNTRY);
   const [nationalNumber, setNationalNumber] = useState("");
+  const lastEmittedRef = useRef<string>("");
+  const prevCountryHintRef = useRef<string | null | undefined>(countryHint);
 
-  // Initialize from persisted value (existing profile)
+  // Sync from props only when value is "external" (initial load, reset, or parent set after submit),
+  // not on every keystroke, to avoid overwriting user input and causing cursor jump.
   useEffect(() => {
-    const parsed = parsePhoneForDisplay(value || undefined, countryHint);
-    if (parsed) {
-      setSelectedCountry(parsed.country);
-      setNationalNumber(parsed.nationalNumber);
-    } else if (!value || !value.trim()) {
+    const val = value ?? "";
+    const trimmed = val.trim();
+
+    if (!trimmed) {
       const byHint = countryHint
         ? COUNTRY_DIAL_LIST.find((c) => c.code === countryHint)
         : undefined;
       setSelectedCountry(byHint ?? DEFAULT_COUNTRY);
       setNationalNumber("");
+      lastEmittedRef.current = "";
+      prevCountryHintRef.current = countryHint;
+      return;
+    }
+
+    const countryHintChanged = prevCountryHintRef.current !== countryHint;
+    prevCountryHintRef.current = countryHint;
+
+    const isExternal =
+      val !== lastEmittedRef.current || countryHintChanged;
+
+    if (!isExternal) return;
+
+    const parsed = parsePhoneForDisplay(val || undefined, countryHint);
+    if (parsed) {
+      setSelectedCountry(parsed.country);
+      setNationalNumber(parsed.nationalNumber);
     } else {
-      // Legacy: value is national-only (no E.164 prefix); use country hint
       const byHint = countryHint
         ? COUNTRY_DIAL_LIST.find((c) => c.code === countryHint)
         : undefined;
       setSelectedCountry(byHint ?? DEFAULT_COUNTRY);
-      setNationalNumber(value.replace(/\D/g, ""));
+      setNationalNumber(val.replace(/\D/g, ""));
     }
+    lastEmittedRef.current = val;
   }, [value, countryHint]);
 
   const buildE164 = (country: CountryDial, national: string) => {
@@ -86,6 +105,7 @@ export function PhoneInputWithCountry({
     setSelectedCountry(country);
     setCountryOpen(false);
     const e164 = buildE164(country, nationalNumber);
+    lastEmittedRef.current = e164;
     onChange(e164);
   };
 
@@ -94,6 +114,7 @@ export function PhoneInputWithCountry({
     const digits = raw.replace(/\D/g, "");
     setNationalNumber(digits);
     const e164 = buildE164(selectedCountry, digits);
+    lastEmittedRef.current = e164;
     onChange(e164);
   };
 
