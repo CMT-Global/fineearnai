@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface TaskStats {
@@ -259,11 +259,7 @@ const TaskAnalytics = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.taskAnalytics.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.analytics.dashboard.loading")} />;
   }
 
   return (

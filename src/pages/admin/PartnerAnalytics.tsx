@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePartnerAnalytics } from "@/hooks/usePartnerAnalytics";
 import { formatCurrency } from "@/lib/wallet-utils";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Loader2, TrendingUp, DollarSign, Target, Award, Users, BarChart3, ArrowLeft } from "lucide-react";
 import {
   LineChart,
@@ -54,11 +55,7 @@ const AdminPartnerAnalytics = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("Loading Partner Analytics")} />;
   }
 
   return (

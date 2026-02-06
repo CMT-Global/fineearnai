@@ -2,6 +2,7 @@
   "common": {
     "loading": "Loading...",
     "error": "Error",
+    "noCountryFound": "No country found.",
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",
@@ -94,6 +95,7 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Manage your account settings and preferences",
+    "loading": "Loading settings...",
     "language": {
       "title": "Language Preferences",
       "description": "Choose your preferred display language",
@@ -822,6 +824,7 @@
     "dashboard": "Admin Dashboard",
     "subtitle": "Platform overview and management",
     "loadingPanel": "Loading admin panel...",
+    "loadingDashboard": "Loading Dashboard...",
     "accessDenied": "Access denied. Admin privileges required.",
     "backToAdmin": "Back to Admin",
     "failedToLoadStats": "Failed to load statistics",
@@ -1109,6 +1112,7 @@
     "users": {
       "title": "User Management",
       "subtitle": "Manage and monitor all platform users",
+      "loading": "Loading users...",
       "refresh": "Refresh",
       "allUsers": "All Users",
       "searchPlaceholder": "Search by username, email, or name...",
@@ -2454,6 +2458,7 @@
       "howItWorks": {
         "title": "How It Works Content Settings",
         "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "loading": "Loading How It Works settings...",
         "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "How It Works content settings have been updated successfully.",

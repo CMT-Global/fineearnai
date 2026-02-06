@@ -9,7 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { DollarSign, Users, CheckCircle2, XCircle, Clock, Eye, PlayCircle, Calendar } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -300,9 +302,7 @@ export default function PartnerBonusPayouts() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">{t("admin.partnerBonusPayouts.loading")}</div>
-              </div>
+              <PageLoading text={t("Loading Bonus Payouts")} />
             ) : bonuses && bonuses.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>

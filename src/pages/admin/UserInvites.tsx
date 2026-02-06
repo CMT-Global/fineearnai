@@ -19,6 +19,7 @@ import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 
 interface EmailTemplate {
   id: string;
@@ -172,11 +173,7 @@ export default function UserInvites() {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   if (!template) {

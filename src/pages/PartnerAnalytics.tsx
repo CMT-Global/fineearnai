@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,9 +42,9 @@ const PartnerAnalytics = () => {
 
   if (checkingPartner) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <>
         <PartnerAnalyticsSkeleton />
-      </PageLayout>
+      </>
     );
   }
 
@@ -67,7 +66,7 @@ const PartnerAnalytics = () => {
     <PartnerErrorBoundary
       fallbackMessage={t("partner.analytics.errors.loadFailed")}
     >
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <>
         <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -298,7 +297,7 @@ const PartnerAnalytics = () => {
           </Card>
         )}
       </div>
-    </PageLayout>
+    </>
     </PartnerErrorBoundary>
   );
 };

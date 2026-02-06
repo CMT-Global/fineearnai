@@ -17,7 +17,7 @@ import {
   ArrowRight,
   HelpCircle
 } from "lucide-react";
-import { useState, useMemo, memo, useCallback } from "react";
+import { useState, useMemo, memo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
@@ -30,6 +30,10 @@ import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { MobileUserBadge } from "@/components/layout/MobileUserBadge";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useTranslation } from "react-i18next";
+
+/** Persists across Sidebar remounts when navigating between pages (Dashboard → Settings etc.) */
+const SIDEBAR_SCROLL_KEY = "sidebar-nav-scroll-top";
+let persistedSidebarScroll = 0;
 
 interface SidebarProps {
   profile: any;
@@ -115,10 +119,46 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
   
   const isAdminRoute = useMemo(() => currentPath.startsWith('/admin'), [currentPath]);
 
+  const navScrollRef = useRef<HTMLElement | null>(null);
+  const scrollCapturedRef = useRef(0);
+
+  const captureScroll = useCallback(() => {
+    if (navScrollRef.current) {
+      const top = navScrollRef.current.scrollTop;
+      scrollCapturedRef.current = top;
+      persistedSidebarScroll = top;
+    }
+  }, []);
+
   const handleNavigation = useCallback((path: string) => {
+    const toSave = scrollCapturedRef.current || navScrollRef.current?.scrollTop || 0;
+    persistedSidebarScroll = toSave;
+    try {
+      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(toSave));
+    } catch (_) {}
     navigate(path);
     setOpen(false);
   }, [navigate]);
+
+  const setNavRef = useCallback((el: HTMLElement | null) => {
+    navScrollRef.current = el;
+    if (!el) return;
+    const fromStorage = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+    const scroll = fromStorage !== null ? Number(fromStorage) : persistedSidebarScroll;
+    if (scroll <= 0) return;
+    const apply = () => {
+      el.scrollTop = scroll;
+    };
+    apply();
+    requestAnimationFrame(apply);
+    setTimeout(apply, 0);
+    setTimeout(apply, 50);
+    setTimeout(apply, 150);
+    setTimeout(apply, 300);
+    setTimeout(apply, 500);
+    // Do NOT clear here: Settings (and others) show SidebarSkeleton until profile
+    // loads, so the real Sidebar mounts late. We only overwrite on next navigation.
+  }, []);
 
   const handleSwitchToAdmin = useCallback(() => {
     enterAdminMode();
@@ -258,7 +298,12 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       {/* Currency Selector - Top Position */}
       <CurrencySelector />
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+      <nav
+        ref={setNavRef}
+        className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0"
+        onPointerDownCapture={captureScroll}
+        onMouseDownCapture={captureScroll}
+      >
         {navItems.map((item: any) => (
           <button
             key={item.path}

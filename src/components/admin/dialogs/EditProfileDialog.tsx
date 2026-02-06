@@ -14,6 +14,7 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserCheck, Globe, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getCountryName } from "@/lib/countries";
+import { PhoneInputWithCountry } from "@/components/settings/PhoneInputWithCountry";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SUPPORTED_LANGUAGES, LANGUAGE_NAMES } from "@/lib/country-language-map";
 
@@ -162,12 +163,14 @@ export const EditProfileDialog = ({
               <Phone className="h-4 w-4 text-muted-foreground" />
               Phone
             </Label>
-            <Input
+            <PhoneInputWithCountry
               id="phone"
-              type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={setPhone}
+              countryHint={country}
               placeholder="Enter phone number"
+              searchPlaceholder="Search by country or code..."
+              emptyText="No country found."
             />
           </div>
 

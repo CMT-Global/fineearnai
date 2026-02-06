@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
@@ -16,7 +16,7 @@ export const LoadingSpinner = ({ size = "md", className, text }: LoadingSpinnerP
 
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3", className)}>
-      <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
+      <RefreshCw className={cn("animate-spin text-primary", sizeClasses[size])} />
       {text && <p className="text-sm text-muted-foreground">{text}</p>}
     </div>
   );

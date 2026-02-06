@@ -3,7 +3,8 @@ import { AdminSidebar } from "./AdminSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation, Outlet } from "react-router-dom";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
+import { useTranslation } from "react-i18next";
 
 interface AdminLayoutProps {
   children?: ReactNode;
@@ -17,6 +18,7 @@ interface AdminLayoutProps {
  * Supports optional children for backward compatibility.
  */
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -122,23 +124,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   // Only full-page load when we have no user (AdminRoute ensures we have user when mounting).
   // When user exists, show layout immediately; profile loads in background and sidebar handles null.
   if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading admin panel...</p>
-        </div>
-      </div>
-    );
+    return <PageLoading text={t("app.loadingPage")} />;
   }
 
   const mainContent = useOutlet ? (
     <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <LoadingSpinner size="lg" text="Loading..." />
-        </div>
-      }
+      fallback={<PageLoading text={t("app.loadingPage")} />}
     >
       <Outlet />
     </Suspense>

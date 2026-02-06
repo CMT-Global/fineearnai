@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { PageLoading } from "@/components/shared/PageLoading";
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Plus, Edit, Trash2, Award, TrendingUp } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface PartnerRank {
   id: string;
@@ -203,9 +205,7 @@ const PartnerRanks = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
+            <PageLoading text={t("Loading Partner Ranks")} />
           ) : ranks && ranks.length > 0 ? (
             <Table>
               <TableHeader>

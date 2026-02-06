@@ -20,6 +20,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Users, DollarSign, AlertCircle } from "l
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { ACCOUNT_TYPES, FIELD_CONSTRAINTS, validateMembershipPlan } from "@/lib/membership-plan-validation";
 
 interface MembershipPlan {
@@ -314,11 +315,7 @@ const PlansManage = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   return (

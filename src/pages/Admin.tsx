@@ -11,9 +11,9 @@ import {
   Crown,
   TrendingUp,
   AlertCircle,
-  Shield,
-  RefreshCw
+  Shield
 } from "lucide-react";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Last7DaysActivityTable } from "@/components/admin/Last7DaysActivityTable";
@@ -124,14 +124,7 @@ const Admin = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">{t("admin.loadingPanel")}</p>
-        </div>
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingDashboard")} />;
   }
 
   if (!isAdmin) {
