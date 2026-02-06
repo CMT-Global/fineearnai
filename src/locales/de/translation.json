@@ -932,7 +932,7 @@
       "accuracyPercentage": "{{percentage}}% accuracy",
       "noTaskDataAvailable": "No task data available",
       "noUserDataAvailable": "No user data available",
-      "loading": "Loading analytics...",
+      "loading": "Aufgaben-Analysen werden geladen...",
       "errorFailedToLoad": "Failed to load analytics data"
     },
     "scheduledEmails": {
@@ -2143,7 +2143,8 @@
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
-      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard."
+      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard.",
+      "loading": "Partner-Programm-Inhalt wird geladen..."
     },
     "voucherMonitoring": {
       "title": "Voucher Monitoring",
@@ -2223,6 +2224,7 @@
     "aiTasksGenerate": {
       "title": "Generate AI Tasks",
       "subtitle": "Use AI to automatically generate training tasks",
+      "loading": "KI-Aufgaben werden geladen...",
       "category": "Category",
       "selectCategory": "Select category",
       "difficulty": "Difficulty",
@@ -2239,6 +2241,7 @@
     "aiTasksManage": {
       "title": "AI Task Management",
       "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "KI-Aufgabenverwaltung wird geladen...",
       "generateTasks": "Generate Tasks",
       "category": "Category",
       "allCategories": "All Categories",
@@ -2422,6 +2425,7 @@
       "feeSavingsBanner": {
         "title": "Fee Savings Banner Settings",
         "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
+        "loading": "Fee-Spar-Banner wird geladen...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Fee savings banner settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2449,6 +2453,7 @@
       "dashboardContent": {
         "title": "Dashboard Content Settings",
         "subtitle": "Configure the content and visibility of sections displayed on the user dashboard",
+        "loading": "Dashboard-Inhalt wird geladen...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Dashboard content settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2489,6 +2494,7 @@
       "howItWorks": {
         "title": "How It Works Content Settings",
         "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "loading": "„How it works“-Inhalt wird geladen...",
         "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "How It Works content settings have been updated successfully.",
@@ -2515,6 +2521,7 @@
       "seoSettings": {
         "title": "SEO & Social Sharing Settings",
         "subtitle": "Configure SEO metadata and social media sharing settings for your platform",
+        "loading": "SEO & Social-Einstellungen werden geladen...",
         "discardChanges": "Discard Changes",
         "saveSettings": "Save Settings",
         "settingsSaved": "Settings saved",
@@ -2796,6 +2803,7 @@
     "emailTemplateGlobalSettings": {
       "title": "Global Email Template",
       "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "loading": "Globale E-Mail-Vorlage wird geladen...",
       "availableVariables": "Available Variables",
       "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
       "tabs": {

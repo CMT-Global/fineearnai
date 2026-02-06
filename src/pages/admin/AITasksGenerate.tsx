@@ -43,7 +43,7 @@ const AITasksGenerate = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   if (adminLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.aiTasksGenerate.loading")} />;
   }
 
   if (!isAdmin) {

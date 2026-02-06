@@ -264,7 +264,7 @@ export default function EmailTemplateGlobalSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.communications.templates.loading")} />;
+    return <PageLoading text={t("admin.emailTemplateGlobalSettings.loading")} />;
   }
 
   return (

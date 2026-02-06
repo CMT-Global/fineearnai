@@ -129,7 +129,7 @@ export default function FeeSavingsBannerSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.contentManagement.feeSavingsBanner.loading")} />;
   }
 
   return (

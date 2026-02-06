@@ -138,7 +138,7 @@ const AITasksManage = () => {
   }, [tasks]);
 
   if (adminLoading || loading || authLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.aiTasksManage.loading")} />;
   }
 
   if (!isAdmin) return null;
