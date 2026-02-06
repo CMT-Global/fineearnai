@@ -14,6 +14,7 @@ import { ArrowLeft, Save, TrendingUp, Users, DollarSign, Check, X, AlertCircle, 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -278,11 +279,7 @@ const ReferralSystemManage = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.referralSystemManage.loadingReferralSystem")} />;
   }
 
   if (!isAdmin) {

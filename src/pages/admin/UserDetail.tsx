@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { toast } from "sonner";
 import { ArrowLeft, Key, Activity, Crown, AlertCircle, RefreshCw, Copy, ExternalLink, AlertTriangle } from "lucide-react";
@@ -186,11 +187,7 @@ function UserDetailContent() {
   }
 
   if (authLoading || adminLoading || loadingDetail) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
+    return <PageLoading text={t("admin.users.loading")} />;
   }
 
   // Show error UI if fetch failed
@@ -492,7 +489,7 @@ function ActivityLogsTab({ userId }: { userId: string }) {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <PageLoading text={t("admin.users.loading")} />;
   }
 
   return (

@@ -13,25 +13,25 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL ?? ""),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ""),
     },
-    server: {
-      host: "::",
-      port: 8080,
-      allowedHosts: [
-        "profitchips.com",
-        "www.profitchips.com",
-      ],
+  server: {
+    host: "::",
+    port: 8080,
+    allowedHosts: [
+      "profitchips.com",
+      "www.profitchips.com",
+    ],
+  },
+  preview: {
+    allowedHosts: [
+      "profitchips.com",
+      "www.profitchips.com",
+    ],
+  },
+  plugins: [react(), mode === "production" && componentTagger()].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-    preview: {
-      allowedHosts: [
-        "profitchips.com",
-        "www.profitchips.com",
-      ],
-    },
-    plugins: [react(), mode === "production" && componentTagger()].filter(Boolean),
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
-    },
+  },
   };
 });

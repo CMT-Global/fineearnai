@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RefreshCw, AlertTriangle, CheckCircle, Download } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -242,7 +243,7 @@ export default function CPAYReconciliation() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">{t("admin.cpayReconciliation.loading")}</div>
+            <PageLoading text={t("admin.cpayReconciliation.loading")} />
           ) : issues && issues.length > 0 ? (
             <Table>
               <TableHeader>

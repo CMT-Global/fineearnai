@@ -11,7 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Plus, Edit, Trash2, DollarSign, Award, TrendingUp } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface BonusTier {
   id: string;
@@ -377,9 +379,7 @@ export default function PartnerBonusTiers() {
         </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">Loading tiers...</div>
-              </div>
+              <PageLoading text={t("Loading Bonus Tiers")} />
             ) : tiers && tiers.length > 0 ? (
               <Table>
                 <TableHeader>

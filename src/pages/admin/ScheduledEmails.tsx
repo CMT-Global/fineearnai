@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ArrowLeft, Calendar, Clock, Trash2, Eye, PlayCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { format } from "date-fns";
 
 interface ScheduledEmail {
@@ -179,11 +180,7 @@ const ScheduledEmails = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.scheduledEmails.loadingScheduledEmails")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.scheduledEmails.loadingScheduledEmails")} />;
   }
 
   const pendingEmails = scheduledEmails.filter(e => e.status === "pending");

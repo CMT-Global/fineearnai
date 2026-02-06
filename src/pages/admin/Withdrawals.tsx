@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Clock, DollarSign, Copy, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { getPaymentMethodDisplayName } from "@/lib/payment-processor-utils";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 
 interface WithdrawalRequest {
@@ -640,11 +640,7 @@ export default function Withdrawals() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.withdrawals.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.withdrawals.loading")} />;
   }
 
   return (

@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { formatCurrency, getTransactionTypeLabel } from "@/lib/wallet-utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { getDateLocale } from "@/lib/date-locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -183,11 +184,7 @@ const Transactions = () => {
   const transactionTypes = Array.from(new Set(transactions.map((t) => t.type)));
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.transactions.loadingTransactions")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.transactions.loadingTransactions")} />;
   }
 
   return (

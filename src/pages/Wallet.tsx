@@ -6,8 +6,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -43,11 +43,7 @@ const Wallet = () => {
 
   // Early return ONLY for auth loading (before we have user)
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("login.signingIn")} />
-      </div>
-    );
+    return <PageLoading text={t("login.signingIn")} />;
   }
 
   // ✅ Wait for all data to be fully loaded before rendering conditional content
@@ -59,16 +55,12 @@ const Wallet = () => {
   // We need to ensure we have fresh data, not just cached placeholder
   const hasFreshData = profile && profile.earnerBadge && !isProfileLoading;
 
+  if (isProfileLoading || !profile) {
+    return <PageLoading text={t("wallet.loadingWallet")} />;
+  }
+
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={isProfileLoading || !profile}
-      loadingText={t("wallet.loadingWallet")}
-    >
-      {profile && (
-        <>
+    <>
           {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
               <div className="flex items-center gap-3">
@@ -167,9 +159,7 @@ const Wallet = () => {
                 setShowEmailVerification(false);
               }}
             />
-        </>
-      )}
-    </PageLayout>
+    </>
   );
 };
 

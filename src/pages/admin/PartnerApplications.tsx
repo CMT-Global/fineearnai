@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePartnerApplications, useManagePartnerApplication } from "@/hooks/usePartnerManagement";
 import { Loader2, CheckCircle, XCircle, Clock, Users, Sparkles, MessageSquare, Globe, Calendar, HeartHandshake, DollarSign, Shield, Filter, ArrowUpDown, Briefcase, TrendingUp, Flag } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { formatDistanceToNow } from "date-fns";
 import {
   Dialog,
@@ -363,9 +365,7 @@ const PartnerApplications = () => {
             </Card>
 
             {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
+              <PageLoading text={t("admin.loadingPanel")} />
             ) : filteredAndSortedApplications && filteredAndSortedApplications.length > 0 ? (
               <div className="grid gap-4">
                 {filteredAndSortedApplications.map((app: any) => (

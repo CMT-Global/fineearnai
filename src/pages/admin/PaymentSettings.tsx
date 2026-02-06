@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowLeft, Plus, Edit, Trash2, Settings, Loader2, Info, Wallet, RefreshCw, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface PaymentProcessor {
@@ -509,11 +510,7 @@ const PaymentSettings = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.paymentSettings.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.paymentSettings.loading")} />;
   }
 
   return (

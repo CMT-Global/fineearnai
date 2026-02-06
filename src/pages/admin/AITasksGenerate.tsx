@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 
 const TASK_CATEGORIES = [
   "Sentiment Analysis",
@@ -42,11 +43,7 @@ const AITasksGenerate = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   if (adminLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   if (!isAdmin) {

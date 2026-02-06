@@ -10,6 +10,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trophy } from "lucide-react";
+import { PageLoading } from "@/components/shared/PageLoading";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 const PartnerLeaderboardSettings = () => {
   const { t } = useTranslation();
@@ -96,9 +98,7 @@ const PartnerLeaderboardSettings = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
+            <PageLoading text={t("admin.loadingPanel")} />
           ) : (
             <>
               <div className="flex items-center justify-between p-4 border rounded-lg">
