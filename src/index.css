@@ -297,3 +297,14 @@ body[data-landing-wizard-open="true"] .reamaze-content {
   pointer-events: none !important;
   opacity: 0 !important;
 }
+
+/* Hide scrollbar while keeping scroll functionality */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

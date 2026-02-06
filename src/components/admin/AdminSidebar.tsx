@@ -64,9 +64,10 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
   const { exitAdminMode } = useAdminMode();
   const [open, setOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(() => {
-    const stored = localStorage.getItem("adminExpandedCategories");
-    return stored ? JSON.parse(stored) : ["overview"];
+  const [expandedSection, setExpandedSection] = useState<string | null>(() => {
+    const stored = localStorage.getItem("adminExpandedSection");
+    if (stored) return stored;
+    return "overview";
   });
   const scrollPositionsRef = useRef<Map<string, number>>(new Map());
   const navScrollRef = useRef<HTMLElement | null>(null);
@@ -75,6 +76,11 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
   const scrollAtMouseDownRef = useRef(0);
   /** Scroll to restore after next pathname change (from the click that triggered it). */
   const pendingScrollRestoreRef = useRef<number | null>(null);
+  /** After toggle/expand, guard scroll at this position so browser can't jump to active link. */
+  const scrollGuardRef = useRef<number | null>(null);
+  const scrollGuardUntilRef = useRef<number>(0);
+  /** Scroll to restore after expandedSection state has committed (for below-the-fold clicks). */
+  const scrollToRestoreAfterExpandRef = useRef<number | null>(null);
 
   // Fetch failed commission count for badge
   const { data: failedCommissionCount } = useQuery({
@@ -206,10 +212,32 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     },
   ];
 
-  // Save expanded categories to localStorage
+  // Persist the single expanded section (accordion) to localStorage
   useEffect(() => {
-    localStorage.setItem("adminExpandedCategories", JSON.stringify(expandedCategories));
-  }, [expandedCategories]);
+    if (expandedSection) {
+      localStorage.setItem("adminExpandedSection", expandedSection);
+    } else {
+      localStorage.removeItem("adminExpandedSection");
+    }
+  }, [expandedSection]);
+
+  // On mount: expand the section that contains the current route so the active link is visible (e.g. direct link / refresh)
+  const didInitialExpandRef = useRef(false);
+  useEffect(() => {
+    if (didInitialExpandRef.current) return;
+    didInitialExpandRef.current = true;
+    const pathname = location.pathname;
+    const categoryForRoute = navCategories.find((cat) =>
+      cat.items.some((item) => {
+        if (item.path === "/admin") return pathname === "/admin";
+        if (item.exact) return pathname === item.path;
+        return pathname === item.path || pathname.startsWith(item.path + "/");
+      })
+    );
+    if (categoryForRoute) {
+      setExpandedSection(categoryForRoute.label);
+    }
+  }, [location.pathname]);
 
   // Save scroll position periodically (AdminLayout handles restoration)
   useEffect(() => {
@@ -258,25 +286,61 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     return category.items.some((item) => isActive(item.path, item.exact));
   };
 
-  const restoreSidebarScroll = useCallback((scrollTop: number) => {
+  const restoreSidebarScroll = useCallback((scrollTop: number, options?: { longGuard?: boolean }) => {
     const nav = navScrollRef.current;
     if (!nav || scrollTop < 0) return;
-    const apply = () => {
-      const maxScroll = nav.scrollHeight - nav.clientHeight;
+    const target = scrollTop;
+    const useGuardCheck = options?.longGuard ?? false;
+
+    const apply = (el?: HTMLElement) => {
+      if (useGuardCheck && (scrollGuardRef.current === null || Date.now() >= scrollGuardUntilRef.current)) return;
+      const n = el ?? navScrollRef.current;
+      if (!n) return;
+      const maxScroll = n.scrollHeight - n.clientHeight;
       if (maxScroll <= 0) return;
-      nav.scrollTop = Math.min(scrollTop, maxScroll);
+      const clampedTarget = Math.min(target, maxScroll);
+      if (n.scrollTop !== clampedTarget) {
+        n.scrollTop = clampedTarget;
+      }
     };
-    apply();
-    requestAnimationFrame(apply);
-    [0, 50, 100, 200, 400].forEach((ms) => setTimeout(apply, ms));
+
+    if (options?.longGuard) {
+      scrollGuardRef.current = target;
+      scrollGuardUntilRef.current = Date.now() + 2500;
+    }
+
+    apply(nav);
+    requestAnimationFrame(() => apply());
+    requestAnimationFrame(() => requestAnimationFrame(() => apply()));
+
+    const delays = options?.longGuard
+      ? [0, 10, 20, 30, 50, 80, 100, 150, 200, 300, 400, 500, 700, 900, 1200, 1500, 2000, 2500]
+      : [0, 10, 20, 50, 100, 200, 400];
+    delays.forEach((ms) => setTimeout(() => apply(), ms));
+
+    if (options?.longGuard) {
+      const tick = () => {
+        if (Date.now() >= scrollGuardUntilRef.current || scrollGuardRef.current === null) return;
+        apply();
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
   }, []);
 
   const toggleCategory = (label: string) => {
     const scrollAtClick = scrollAtMouseDownRef.current;
-    setExpandedCategories((prev) =>
-      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
-    );
-    restoreSidebarScroll(scrollAtClick);
+    scrollToRestoreAfterExpandRef.current = scrollAtClick;
+    const nav = navScrollRef.current;
+    if (nav && scrollAtClick >= 0) {
+      const maxScroll = nav.scrollHeight - nav.clientHeight;
+      if (maxScroll > 0) {
+        nav.scrollTop = Math.min(scrollAtClick, maxScroll);
+        scrollGuardRef.current = scrollAtClick;
+        scrollGuardUntilRef.current = Date.now() + 2500;
+      }
+    }
+    setExpandedSection((prev) => (prev === label ? null : label));
   };
 
   const captureScroll = useCallback(() => {
@@ -287,11 +351,32 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     }
   }, []);
 
+  const handleNavScroll = useCallback(() => {
+    captureScroll();
+    const nav = navScrollRef.current;
+    if (!nav) return;
+    if (scrollGuardUntilRef.current > Date.now() && scrollGuardRef.current !== null) {
+      const maxScroll = nav.scrollHeight - nav.clientHeight;
+      if (maxScroll <= 0) return;
+      const guard = Math.min(scrollGuardRef.current, maxScroll);
+      if (Math.abs(nav.scrollTop - guard) > 5) {
+        nav.scrollTop = guard;
+      }
+    }
+  }, [captureScroll]);
+
   const captureScrollOnMouseDown = useCallback(() => {
+    scrollGuardRef.current = null;
+    scrollGuardUntilRef.current = 0;
     const top = navScrollRef.current?.scrollTop ?? 0;
     scrollAtMouseDownRef.current = top;
     scrollCapturedRef.current = top;
     persistedAdminSidebarScroll = top;
+  }, []);
+
+  const clearScrollGuard = useCallback(() => {
+    scrollGuardRef.current = null;
+    scrollGuardUntilRef.current = 0;
   }, []);
 
   const handleNavigation = useCallback((path: string) => {
@@ -301,7 +386,15 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     try {
       sessionStorage.setItem(ADMIN_SIDEBAR_SCROLL_KEY, String(toSave));
     } catch (_) {}
-    // Save current main content scroll (AdminLayout will handle restoration)
+    const nav = navScrollRef.current;
+    if (nav && toSave >= 0) {
+      const maxScroll = nav.scrollHeight - nav.clientHeight;
+      if (maxScroll > 0) {
+        nav.scrollTop = Math.min(toSave, maxScroll);
+        scrollGuardRef.current = toSave;
+        scrollGuardUntilRef.current = Date.now() + 2500;
+      }
+    }
     const currentScroll = window.scrollY;
     if (currentScroll > 0) {
       scrollPositionsRef.current.set(location.pathname, currentScroll);
@@ -314,23 +407,23 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     navScrollRef.current = el;
   }, []);
 
-  // After pathname change, restore sidebar scroll to where the user was (undo any browser/focus scroll)
+  // After accordion expand/collapse: restore scroll (below-the-fold clicks cause re-render; restore after DOM update)
+  useEffect(() => {
+    const toRestore = scrollToRestoreAfterExpandRef.current;
+    if (toRestore === null) return;
+    scrollToRestoreAfterExpandRef.current = null;
+    const nav = navScrollRef.current;
+    if (!nav) return;
+    restoreSidebarScroll(toRestore, { longGuard: true });
+  }, [expandedSection, restoreSidebarScroll]);
+
+  // After pathname change (subsection click), restore sidebar scroll and guard against browser scroll
   useEffect(() => {
     const scrollToRestore = pendingScrollRestoreRef.current;
     if (scrollToRestore === null) return;
     pendingScrollRestoreRef.current = null;
-    const nav = navScrollRef.current;
-    if (!nav) return;
-    const apply = () => {
-      const maxScroll = nav.scrollHeight - nav.clientHeight;
-      if (maxScroll <= 0) return;
-      const target = Math.min(scrollToRestore, maxScroll);
-      nav.scrollTop = target;
-    };
-    apply();
-    requestAnimationFrame(apply);
-    [0, 50, 100, 150, 250, 400, 600].forEach((ms) => setTimeout(apply, ms));
-  }, [location.pathname]);
+    restoreSidebarScroll(scrollToRestore, { longGuard: true });
+  }, [location.pathname, restoreSidebarScroll]);
 
   const handleExitAdminMode = useCallback(() => {
     exitAdminMode();
@@ -348,7 +441,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
     onSignOut();
   }, [onSignOut]);
 
-  const NavContent = ({ navRef, onScrollCapture, onNavMouseDown }: { navRef: (el: HTMLElement | null) => void; onScrollCapture: () => void; onNavMouseDown: () => void }) => (
+  const NavContent = ({ navRef, onScrollCapture, onNavMouseDown, onClearScrollGuard }: { navRef: (el: HTMLElement | null) => void; onScrollCapture: () => void; onNavMouseDown: () => void; onClearScrollGuard: () => void }) => (
     <div className="flex flex-col h-full">
       {/* Admin Header */}
       <div className="p-6 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
@@ -369,35 +462,55 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       </div>
 
       {/* Navigation Categories */}
-      <nav ref={navRef} onScroll={onScrollCapture} onMouseDown={onNavMouseDown} className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+      <nav 
+        ref={navRef} 
+        onScroll={onScrollCapture} 
+        onMouseDown={onNavMouseDown}
+        onWheel={onClearScrollGuard}
+        onTouchStart={onClearScrollGuard}
+        className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0 scrollbar-hide"
+        style={{ scrollBehavior: 'auto', overflowAnchor: 'none' }}
+      >
         {navCategories.map((category) => {
-          const isExpanded = expandedCategories.includes(category.label);
+          const isExpanded = expandedSection === category.label;
           const categoryActive = isCategoryActive(category);
 
           return (
             <Collapsible
               key={category.label}
               open={isExpanded}
-              onOpenChange={() => toggleCategory(category.label)}
             >
-              <CollapsibleTrigger className="w-full">
-                <div
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
-                    categoryActive
-                      ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))]"
-                      : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-                  }`}
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="w-full"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleCategory(category.label);
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <category.icon className={`h-5 w-5 ${categoryActive ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-                    <span className="font-medium">{category.label}</span>
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      isExpanded ? "rotate-180" : ""
+                  <div
+                    className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
+                      categoryActive
+                        ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))]"
+                        : "hover:bg-[hsl(var(--sidebar-accent))]/50"
                     }`}
-                  />
-                </div>
+                  >
+                    <div className="flex items-center gap-3">
+                      <category.icon className={`h-5 w-5 ${categoryActive ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
+                      <span className="font-medium">{category.label}</span>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+                </button>
               </CollapsibleTrigger>
 
               <CollapsibleContent className="mt-1 ml-4 space-y-1">
@@ -479,7 +592,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
           </SheetTrigger>
           <SheetContent side="left" className="w-80 p-0">
             <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-              <NavContent navRef={setNavRef} onScrollCapture={captureScroll} onNavMouseDown={captureScrollOnMouseDown} />
+              <NavContent navRef={setNavRef} onScrollCapture={handleNavScroll} onNavMouseDown={captureScrollOnMouseDown} onClearScrollGuard={clearScrollGuard} />
             </div>
           </SheetContent>
         </Sheet>
@@ -487,7 +600,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
 
       {/* Desktop Admin Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
-        <NavContent navRef={setNavRef} onScrollCapture={captureScroll} onNavMouseDown={captureScrollOnMouseDown} />
+        <NavContent navRef={setNavRef} onScrollCapture={handleNavScroll} onNavMouseDown={captureScrollOnMouseDown} onClearScrollGuard={clearScrollGuard} />
       </aside>
     </>
   );
