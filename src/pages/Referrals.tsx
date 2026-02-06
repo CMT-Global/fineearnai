@@ -8,8 +8,8 @@ import { useRealtimeReferrals } from "@/hooks/useRealtimeReferrals";
 import { usePaginatedReferrals } from "@/hooks/usePaginatedReferrals";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ReferralCodeCard } from "@/components/referrals/ReferralCodeCard";
 import { ReferralStatsCard } from "@/components/referrals/ReferralStatsCard";
@@ -75,24 +75,16 @@ const Referrals = () => {
 
   // Early return ONLY for auth loading (before we have user)
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
-      </div>
-    );
+    return <PageLoading text={t("dashboard.authenticating")} />;
+  }
+
+  if (isReferralDataLoading || !profile) {
+    return <PageLoading text={t("referrals.loadingReferrals")} />;
   }
 
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={isReferralDataLoading || !profile}
-      loadingText={t("referrals.loadingReferrals")}
-    >
-      {profile && (
-        <>
-          {/* Header */}
+    <>
+      {/* Header */}
           <header className="bg-card border-b px-4 lg:px-8 py-6">
               <div className="flex-1 mb-4">
                 <h1 className="text-2xl font-bold">{t("referrals.title")}</h1>
@@ -330,9 +322,7 @@ const Referrals = () => {
             {/* Commission History */}
             <CommissionHistoryList userId={user?.id || ""} />
           </div>
-        </>
-      )}
-    </PageLayout>
+    </>
   );
 };
 

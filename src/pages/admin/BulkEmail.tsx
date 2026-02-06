@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowLeft, Send, Clock, Eye, Info, AlertTriangle, History, CheckCircle2, XCircle, Loader2, User, Mail, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { EmailHistoryTab } from "@/components/admin/EmailHistoryTab";
 import { EmailBestPractices } from "@/components/admin/EmailBestPractices";
@@ -504,11 +505,7 @@ const BulkEmail = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   return (

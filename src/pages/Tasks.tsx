@@ -8,10 +8,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
@@ -296,24 +296,15 @@ const Tasks = () => {
 
   // Early return ONLY for auth loading (before we have user)
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">{t("login.signingIn")}</p>
-        </div>
-      </div>
-    );
+    return <PageLoading text={t("login.signingIn")} />;
+  }
+
+  if (isProfileLoading || !profile) {
+    return <PageLoading text={t("tasks.loadingTasks")} />;
   }
 
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={isProfileLoading || !profile}
-      loadingText={t("tasks.loadingTasks")}
-    >
+    <>
       {/* Header */}
       <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div>
@@ -402,7 +393,7 @@ const Tasks = () => {
             />
           </div>
         </div>
-    </PageLayout>
+    </>
   );
 };
 

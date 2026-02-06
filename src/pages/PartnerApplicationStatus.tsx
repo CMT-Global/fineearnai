@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,47 +97,47 @@ const PartnerApplicationStatus = () => {
   // Phase 4: Handle errors first
   if (partnerStatusError) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <QueryErrorBoundary
           error={partnerStatusError} 
           reset={() => {
             refetchPartnerStatus();
           }}
         />
-      </PageLayout>
+      </>
     );
   }
 
   // Phase 4: Early return for navigation state
   if (isNavigating) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
   // Phase 4: Show loading state while data is being fetched
   if (!ready) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text={t("partner.applicationStatus.loading")} />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
   // Phase 4: Early return for pendingRedirect - prevents flicker before redirect
   if (pendingRedirect) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
@@ -189,7 +188,7 @@ const PartnerApplicationStatus = () => {
         refetchPartnerStatus();
       }}
     >
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
@@ -502,7 +501,7 @@ const PartnerApplicationStatus = () => {
           )}
         </div>
       </div>
-    </PageLayout>
+    </>
     </PartnerErrorBoundary>
   );
 };

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageLayout } from "@/components/layout/PageLayout";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
@@ -152,21 +151,15 @@ const Dashboard = () => {
 
   // Early return ONLY for auth loading (before we have user)
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
-      </div>
-    );
+    return <PageLoading text={t("dashboard.authenticating")} />;
+  }
+
+  if (isLoading || !profile) {
+    return <PageLoading text={t("dashboard.loadingDashboard")} />;
   }
 
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={isLoading || !profile}
-      loadingText={t("dashboard.loadingDashboard")}
-    >
+    <>
       {/* Login Message Dialog - Phase 3 with proper trigger reset */}
       {user && (
         <LoginMessageDialog 
@@ -519,7 +512,7 @@ const Dashboard = () => {
 
         </>
       )}
-    </PageLayout>
+    </>
   );
 };
 

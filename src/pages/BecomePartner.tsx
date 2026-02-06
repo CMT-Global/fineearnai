@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { PartnerWizard } from "@/components/partner/PartnerWizard";
 import { PartnerApplicationWizard } from "@/components/partner/PartnerApplicationWizard";
 import { usePartnerStatus } from "@/hooks/usePartner";
@@ -178,7 +177,7 @@ const BecomePartner = () => {
       : undefined;
 
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <QueryErrorBoundary
           error={error}
           customMessage={customMessage}
@@ -187,7 +186,7 @@ const BecomePartner = () => {
             refetchPartnerStatus();
           }}
         />
-      </PageLayout>
+      </>
     );
   }
 
@@ -212,25 +211,25 @@ const BecomePartner = () => {
   // Early return if navigation is in progress to prevent wizard flash
   if (isNavigating) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
   // Show loading state while waiting for ready state or when partner program is disabled
   if (!ready) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner
             size="lg"
             text={isPartnerProgramEnabled ? t("common.loading") : t("partner.dashboard.redirecting")}
           />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
@@ -243,11 +242,11 @@ const BecomePartner = () => {
   // Phase 1: If we're about to redirect, show redirecting UI immediately
   if (pendingRedirect) {
     return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" text={t("partner.dashboard.redirecting")} />
         </div>
-      </PageLayout>
+      </>
     );
   }
 
@@ -258,7 +257,7 @@ const BecomePartner = () => {
         refetchPartnerStatus();
       }}
     >
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
+      <>
         {/* Intro Wizard - Benefits of becoming a partner */}
         {!showApplicationWizard && isWizardEnabled && (
           <PartnerWizard
@@ -285,7 +284,7 @@ const BecomePartner = () => {
             }}
           />
         )}
-      </PageLayout>
+      </>
     </PartnerErrorBoundary>
   );
 };

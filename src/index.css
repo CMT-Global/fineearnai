@@ -255,6 +255,34 @@
   }
 }
 
+/* Reamaze Chat open window on mobile: prevent header shifting up under notch
+   - Position the open panel container below the safe area so header/close stay visible
+   - Do not override .reamaze-trigger-icon / launcher bubble (keeps bottom from first block)
+*/
+@media (max-width: 1024px) {
+  #reamaze-container,
+  #reamaze-widget-container {
+    top: env(safe-area-inset-top, 0) !important;
+    left: env(safe-area-inset-left, 0) !important;
+    right: env(safe-area-inset-right, 0) !important;
+    bottom: env(safe-area-inset-bottom, 0) !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    max-height: 100dvh !important;
+    max-height: 100vh !important;
+    z-index: 99998 !important;
+  }
+  .reamaze-content {
+    top: env(safe-area-inset-top, 0) !important;
+    left: env(safe-area-inset-left, 0) !important;
+    right: env(safe-area-inset-right, 0) !important;
+    bottom: env(safe-area-inset-bottom, 0) !important;
+    max-height: 100dvh !important;
+    max-height: 100vh !important;
+    z-index: 99998 !important;
+  }
+}
+
 /* Hide Chat Support (Reamaze) when Register as an Earner wizard is open:
    - Mobile: avoids visible-but-unclickable button (dialog overlay blocks it)
    - Desktop: avoids accidental close when clicking the widget
@@ -268,4 +296,15 @@ body[data-landing-wizard-open="true"] .reamaze-content {
   visibility: hidden !important;
   pointer-events: none !important;
   opacity: 0 !important;
+}
+
+/* Hide scrollbar while keeping scroll functionality */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

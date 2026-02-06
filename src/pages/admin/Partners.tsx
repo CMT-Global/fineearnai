@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePartners, usePartnerStats } from "@/hooks/usePartnerManagement";
-import { Loader2, Users, DollarSign, TrendingUp, Award, ExternalLink } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Award, ExternalLink } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Table,
@@ -138,9 +140,7 @@ const Partners = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <PageLoading text={t("Loading All Partners")} />
           ) : partners && partners.length > 0 ? (
             <Table>
               <TableHeader>

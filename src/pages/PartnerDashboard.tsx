@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,20 +133,20 @@ const PartnerDashboard = () => {
   // Early return for navigation state - BEFORE loading checks
   if (isNavigating) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <>
         <div className="flex justify-center items-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-3 text-muted-foreground">Redirecting...</span>
         </div>
-      </PageLayout>
+      </>
     );
   }
 
   if (checkingPartner || loadingConfig) {
     return (
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <>
         <PartnerDashboardSkeleton />
-      </PageLayout>
+      </>
     );
   }
 
@@ -278,7 +277,7 @@ const PartnerDashboard = () => {
     <PartnerErrorBoundary
       fallbackMessage={t("partner.dashboard.errorLoadingDashboard")}
     >
-      <PageLayout profile={profile} onSignOut={signOut}>
+      <>
         <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -786,7 +785,7 @@ const PartnerDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </>
     </PartnerErrorBoundary>
   );
 };

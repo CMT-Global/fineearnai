@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -31,6 +31,7 @@ import { CURRENCIES, getCurrencyName, getCurrencySymbol } from "@/lib/currencies
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { PhoneInputWithCountry } from "@/components/settings/PhoneInputWithCountry";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPPORTED_LANGUAGES, getLanguageName, getLanguageFlag, SupportedLanguage } from "@/lib/country-language-map";
 import { useTranslation } from "react-i18next";
@@ -353,15 +354,12 @@ const Settings = () => {
     );
   }
 
+  if (isLoading || !profile) {
+    return <PageLoading text={t("settings.loading")} />;
+  }
+
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={isLoading || !profile}
-      loadingText={t("common.loading")}
-    >
-      <div className="max-w-4xl mx-auto space-y-8 p-8">
+    <div className="max-w-4xl mx-auto space-y-8 p-8">
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t("settings.title")}</h1>
               <p className="text-muted-foreground mt-2">{t("settings.subtitle")}</p>
@@ -640,7 +638,14 @@ const Settings = () => {
                         <FormItem>
                           <FormLabel>{t("settings.editProfile.phone")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder={t("settings.editProfile.phonePlaceholder")} />
+                            <PhoneInputWithCountry
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              countryHint={profile?.country}
+                              placeholder={t("settings.editProfile.phonePlaceholder")}
+                              searchPlaceholder={t("common.search") + "..."}
+                              emptyText={t("common.noCountryFound")}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -675,7 +680,7 @@ const Settings = () => {
                               <Command>
                                 <CommandInput placeholder={t("common.search") + "..."} />
                                 <CommandList>
-                                  <CommandEmpty>{t("common.error")}</CommandEmpty>
+                                  <CommandEmpty>{t("common.noCountryFound")}</CommandEmpty>
                                   <CommandGroup>
                                     {countries.map((country) => (
                                       <CommandItem
@@ -1156,8 +1161,9 @@ const Settings = () => {
                   {cryptoAddressErrors.usdc ? (
                     <p className="text-sm text-destructive">{cryptoAddressErrors.usdc}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {getCryptoById('usdc-solana')?.description} • Example: {getCryptoById('usdc-solana')?.addressExample}
+                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
+                      {getCryptoById('usdc-solana')?.description} • Example:{" "}
+                      <span className="break-all">{getCryptoById('usdc-solana')?.addressExample}</span>
                     </p>
                   )}
                 </div>
@@ -1182,8 +1188,9 @@ const Settings = () => {
                   {cryptoAddressErrors.usdt ? (
                     <p className="text-sm text-destructive">{cryptoAddressErrors.usdt}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {getCryptoById('usdt-bep20')?.description} • Example: {getCryptoById('usdt-bep20')?.addressExample}
+                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
+                      {getCryptoById('usdt-bep20')?.description} • Example:{" "}
+                      <span className="break-all">{getCryptoById('usdt-bep20')?.addressExample}</span>
                     </p>
                   )}
                 </div>
@@ -1310,7 +1317,6 @@ const Settings = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
 
         {/* Email Verification Dialog */}
         <EmailVerificationDialog 
@@ -1329,7 +1335,7 @@ const Settings = () => {
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
         />
-    </PageLayout>
+    </div>
   );
 };
 
