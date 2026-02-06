@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Globe, CheckCircle2, AlertCircle, Key, TestTube, Loader2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 
@@ -186,11 +187,7 @@ export default function IPStackSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   return (

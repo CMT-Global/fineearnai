@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, RefreshCw, DollarSign, TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -131,11 +132,7 @@ const CPAYMonitoring = () => {
   };
 
   if (authLoading || adminLoading || loading || isLanguageLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.cpayMonitoring.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.cpayMonitoring.loading")} />;
   }
 
   return (

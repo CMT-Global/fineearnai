@@ -5,8 +5,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useMembershipPlans } from "@/hooks/useMembershipPlans";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
@@ -221,11 +221,7 @@ export default function MembershipPlans() {
 
   // Show skeleton loaders during initial load or auth
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("dashboard.authenticating")} />
-      </div>
-    );
+    return <PageLoading text={t("dashboard.authenticating")} />;
   }
 
   // Show error state with retry option
@@ -333,17 +329,13 @@ export default function MembershipPlans() {
     ));
   };
 
+  if (loading || !profile) {
+    return <PageLoading text={t("membershipPlans.loadingPlans")} />;
+  }
+
   return (
-    <PageLayout
-      profile={profile}
-      isAdmin={isAdmin}
-      onSignOut={signOut}
-      isLoading={loading || !profile}
-      loadingText={t("membershipPlans.loadingPlans")}
-    >
-      {profile && (
-        <>
-          <div className="container mx-auto px-4 lg:px-8 py-8">
+    <>
+      <div className="container mx-auto px-4 lg:px-8 py-8">
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold mb-4">{t("membershipPlans.title")}</h1>
                 <p className="text-muted-foreground text-lg">
@@ -481,8 +473,6 @@ export default function MembershipPlans() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-        </>
-      )}
-    </PageLayout>
+    </>
   );
 }

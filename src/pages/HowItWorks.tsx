@@ -9,10 +9,10 @@ import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranding } from "@/contexts/BrandingContext";
+import { PageLoading } from "@/components/shared/PageLoading";
 import {
   Sparkles,
   DollarSign,
@@ -108,16 +108,7 @@ const HowItWorks = () => {
 
   // While config is loading, show a lightweight loading state to avoid flashing full content
   if (isConfigLoading) {
-    return (
-      <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center px-4">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">{t("howItWorks.loading")}</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <PageLoading text={t("howItWorks.loading")} />;
   }
 
   // If hidden, render nothing here; the effect above will navigate away
@@ -538,8 +529,7 @@ const HowItWorks = () => {
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   return (
-    <PageLayout profile={profile} isAdmin={isAdmin} onSignOut={signOut}>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-8 px-4">
         <div className="container max-w-4xl mx-auto">
           {showBanner && (
             <Alert className="mb-6 bg-blue-500/10 border-blue-500/20 shadow-sm">
@@ -633,7 +623,6 @@ const HowItWorks = () => {
         </Card>
         </div>
       </div>
-    </PageLayout>
   );
 };
 

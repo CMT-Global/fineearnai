@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { cn } from "@/lib/utils";
 
 interface AITask {
@@ -138,11 +138,7 @@ const AITasksManage = () => {
   }, [tasks]);
 
   if (adminLoading || loading || authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("common.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loadingPanel")} />;
   }
 
   if (!isAdmin) return null;

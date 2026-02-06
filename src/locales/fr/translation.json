@@ -101,6 +101,7 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Manage your account settings and preferences",
+    "loading": "Loading settings...",
     "language": {
       "title": "Language Preferences",
       "description": "Choose your preferred display language",
@@ -792,6 +793,7 @@
     "dashboard": "Admin Dashboard",
     "subtitle": "Platform overview and management",
     "loadingPanel": "Loading admin panel...",
+    "loadingDashboard": "Chargement du tableau de bord...",
     "accessDenied": "Access denied. Admin privileges required.",
     "failedToLoadStats": "Failed to load statistics",
     "totalUsers": "Total Users",

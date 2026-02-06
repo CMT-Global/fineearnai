@@ -20,6 +20,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { sanitizeSearchTerm } from "@/lib/admin-validation";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
@@ -290,7 +291,7 @@ function UsersContent() {
             </div>
 
             {isLoading ? (
-              <LoadingSpinner />
+              <PageLoading text={t("admin.users.loading")} />
             ) : (
               <>
                 <div className="rounded-md border overflow-x-auto">

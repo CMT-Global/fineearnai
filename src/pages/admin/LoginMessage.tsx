@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBranding } from "@/contexts/BrandingContext";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
@@ -178,11 +179,7 @@ const LoginMessage = () => {
   };
 
   if (authLoading || adminLoading || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.loginMessage.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.loginMessage.loading")} />;
   }
 
   if (!isAdmin) {

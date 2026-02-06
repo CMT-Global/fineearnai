@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useVouchers } from "@/hooks/usePartnerManagement";
-import { Loader2, Ticket, Search, Info, CheckCircle2 } from "lucide-react";
+import { Ticket, Search, Info, CheckCircle2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatCurrency } from "@/lib/wallet-utils";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import {
   Table,
@@ -194,9 +196,7 @@ const VoucherMonitoring = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <PageLoading text={t("admin.loadingPanel")} />
           ) : filteredVouchers && filteredVouchers.length > 0 ? (
             <Table>
               <TableHeader>

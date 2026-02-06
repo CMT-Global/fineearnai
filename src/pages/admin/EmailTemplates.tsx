@@ -22,6 +22,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 interface EmailTemplate {
@@ -484,11 +485,7 @@ const EmailTemplates = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.emailTemplates.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.communications.templates.loading")} />;
   }
 
   return (

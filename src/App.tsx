@@ -12,6 +12,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { useEffect, lazy, Suspense } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useTranslation } from "react-i18next";
@@ -210,91 +211,30 @@ const RoutesWrapper = () => {
             <ProfileWizard />
           </ProtectedRoute>
         } />
-        <Route path="/dashboard" element={
+        {/* Main app routes: single layout so Sidebar stays mounted when switching Dashboard / Tasks / Wallet / Referrals etc. */}
+        <Route element={
           <ProtectedRoute>
             <ProfileCompletionGuard>
-              <Dashboard />
+              <AppLayout />
             </ProfileCompletionGuard>
           </ProtectedRoute>
-        } />
-        <Route path="/wallet" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <Wallet />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/transactions" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <Transactions />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/plans" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <MembershipPlans />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/tasks" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <Tasks />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/tasks/:userTaskId" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <TaskDetail />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/referrals" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <Referrals />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/become-partner" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <BecomePartner />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/partner/application-status" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <PartnerApplicationStatus />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/partner/dashboard" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <PartnerDashboard />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/partner/analytics" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <PartnerAnalytics />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/deposit-result" element={
-          <ProtectedRoute>
-            <ProfileCompletionGuard>
-              <DepositResult />
-            </ProfileCompletionGuard>
-          </ProtectedRoute>
-        } />
-      
+        }>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="wallet" element={<Wallet />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="plans" element={<MembershipPlans />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks/:userTaskId" element={<TaskDetail />} />
+          <Route path="referrals" element={<Referrals />} />
+          <Route path="become-partner" element={<BecomePartner />} />
+          <Route path="partner/application-status" element={<PartnerApplicationStatus />} />
+          <Route path="partner/dashboard" element={<PartnerDashboard />} />
+          <Route path="partner/analytics" element={<PartnerAnalytics />} />
+          <Route path="deposit-result" element={<DepositResult />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="how-it-works" element={<HowItWorks />} />
+        </Route>
+
       {/* Admin routes: single layout, nested children. Layout stays mounted on sidebar nav. */}
       <Route
         path="/admin"
@@ -351,16 +291,6 @@ const RoutesWrapper = () => {
         <Route path="partners/vouchers" element={<VoucherMonitoring />} />
       </Route>
       
-      <Route path="/how-it-works" element={
-        <ProtectedRoute>
-          <HowItWorks />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Settings />
-        </ProtectedRoute>
-      } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/master-login" element={<MasterLogin />} />

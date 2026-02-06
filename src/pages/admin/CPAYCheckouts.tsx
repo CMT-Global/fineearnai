@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowLeft, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { PageLoading } from "@/components/shared/PageLoading";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
@@ -209,11 +210,7 @@ const CPAYCheckouts = () => {
   };
 
   if (authLoading || adminLoading || loading || isLanguageLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" text={t("admin.cpayCheckouts.loading")} />
-      </div>
-    );
+    return <PageLoading text={t("admin.cpayCheckouts.loading")} />;
   }
 
   return (
