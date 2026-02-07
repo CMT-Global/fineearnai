@@ -1309,6 +1309,7 @@
     "userInvites": {
       "title": "User Invites",
       "subtitle": "Send personalized invitations to potential users to join the platform",
+      "loading": "Loading user invites...",
       "tabs": {
         "compose": "Compose Invite",
         "history": "History",
@@ -2108,11 +2109,13 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Loading Leaderboard..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Loading Leaderboard settings ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
@@ -2391,6 +2394,9 @@
       "accessDeniedAdminRequired": "Access denied. Admin privileges required."
     },
     "contentManagement": {
+      "reamazeSettings": {
+        "loading": "Loading Live Chat Settings..."
+      },
       "feeSavingsBanner": {
         "title": "Fee Savings Banner Settings",
         "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
@@ -2623,6 +2629,7 @@
     "influencerInvites": {
       "title": "Influencer Invites",
       "subtitle": "Send personalized invitations to potential influencer partners",
+      "loading": "Loading Influencer Invites...",
       "backToAdmin": "Back to Admin",
       "templateNotFound": "Influencer invite template not found",
       "templateNotFoundContact": "Influencer invite template not found. Please contact support.",
@@ -2675,8 +2682,8 @@
     "emailTemplates": {
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
-      "backToAdmin": "Back to Admin",
-      "loading": "Loading templates...",
+      "loading": "Loading email templates...",
+  "backToAdmin": "Back to Admin",
       "cardTitle": "Email Templates",
       "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
       "addTemplate": "Add Template",
@@ -2785,6 +2792,7 @@
     "ipstackSettings": {
       "title": "IPStack Geolocation Settings",
       "description": "Configure IPStack API key for user IP address and geolocation detection",
+      "loading": "Loading ipstack configuration...",
       "breadcrumbSettings": "Settings",
       "breadcrumbIPStack": "IPStack Configuration",
       "info": "IPStack is used to detect user IP addresses and map them to countries during registration and login. Get your API key from",
@@ -2820,6 +2828,7 @@
     "systemSecrets": {
       "title": "System Secrets",
       "subtitle": "Manage API keys and credentials for platform integrations",
+      "loading": "Loading system secrets",
       "breadcrumbSecurity": "Security",
       "breadcrumbSystemSecrets": "System Secrets",
       "discardChanges": "Discard Changes",
@@ -2880,6 +2889,7 @@
     "bulkEmail": {
       "title": "Bulk Email System",
       "subtitle": "Send emails to users based on various criteria",
+      "loading": "Loading Bulk Email...",
       "backToAdmin": "Back to Admin",
       "tabs": {
         "compose": "Compose",
@@ -3456,6 +3466,7 @@
     "emailSettings": {
       "title": "Email Settings",
       "subtitle": "Configure email sending settings and verification reminders",
+      "loading": "Loading email settings...",
       "breadcrumb": {
         "communications": "Communications",
         "emailSettings": "Email Settings"
@@ -3503,6 +3514,7 @@
     "emailTemplates": {
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
+      
       "backToAdmin": "Back to Admin",
       "loading": "Loading templates...",
       "cardTitle": "Email Templates",

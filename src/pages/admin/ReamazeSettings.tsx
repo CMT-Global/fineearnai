@@ -117,7 +117,7 @@ export default function ReamazeSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.contentManagement.reamazeSettings.loading")} />;
   }
 
   return (

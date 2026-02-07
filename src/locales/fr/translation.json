@@ -1336,6 +1336,7 @@
     "userInvites": {
       "title": "User Invites",
       "subtitle": "Send personalized invitations to potential users to join the platform",
+      "loading": "Chargement des invitations d'utilisateurs...",
       "tabs": {
         "compose": "Compose Invite",
         "history": "History",
@@ -2135,11 +2136,13 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Chargement du classement..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Chargement des paramètres du classement ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
@@ -2583,7 +2586,8 @@
           "liveChatSettings": "Paramètres de Chat en Direct"
         },
         "title": "Paramètres de Chat en Direct Reamaze",
-        "subtitle": "Configurer le widget de chat en direct Reamaze pour le support client",
+  "subtitle": "Configurer le widget de chat en direct Reamaze pour le support client",
+  "loading": "Chargement des paramètres du chat en direct...",
         "discardChanges": "Annuler les Modifications",
         "saveSettings": "Enregistrer les Paramètres",
         "important": "Important",
@@ -2614,6 +2618,7 @@
     "emailSettings": {
       "title": "Paramètres Email",
       "subtitle": "Configurer les paramètres d'envoi d'email et les rappels de vérification",
+      "loading": "Chargement des paramètres email...",
       "breadcrumb": {
         "communications": "Communications",
         "emailSettings": "Paramètres Email"
@@ -2693,7 +2698,7 @@
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
       "backToAdmin": "Back to Admin",
-      "loading": "Loading templates...",
+  "loading": "Chargement des modèles d'email...",
       "cardTitle": "Email Templates",
       "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
       "addTemplate": "Add Template",
@@ -3263,6 +3268,7 @@
     "bulkEmail": {
       "title": "Bulk Email System",
       "subtitle": "Send emails to users based on various criteria",
+      "loading": "Chargement du courrier en masse...",
       "backToAdmin": "Back to Admin",
       "tabs": {
         "compose": "Compose",
@@ -3733,6 +3739,7 @@
     "influencerInvites": {
       "title": "Influencer Invites",
       "subtitle": "Send personalized invitations to potential influencer partners",
+      "loading": "Chargement des invitations pour influenceurs...",
       "backToAdmin": "Back to Admin",
       "templateNotFound": "Influencer invite template not found",
       "templateNotFoundContact": "Influencer invite template not found. Please contact support.",

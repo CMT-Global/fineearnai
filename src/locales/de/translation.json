@@ -1336,6 +1336,7 @@
     "userInvites": {
       "title": "User Invites",
       "subtitle": "Send personalized invitations to potential users to join the platform",
+      "loading": "Benutzer-Einladungen werden geladen...",
       "tabs": {
         "compose": "Compose Invite",
         "history": "History",
@@ -2135,11 +2136,13 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Lade Bestenliste..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Lade Einstellungen der Bestenliste ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
@@ -3733,6 +3736,7 @@
     "influencerInvites": {
       "title": "Influencer Invites",
       "subtitle": "Send personalized invitations to potential influencer partners",
+      "loading": "Einladungen für Influencer werden geladen...",
       "backToAdmin": "Back to Admin",
       "templateNotFound": "Influencer invite template not found",
       "templateNotFoundContact": "Influencer invite template not found. Please contact support.",

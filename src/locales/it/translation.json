@@ -2135,11 +2135,13 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Caricamento classifica..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Caricamento impostazioni classifica ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",

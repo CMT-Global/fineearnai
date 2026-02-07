@@ -505,7 +505,7 @@ const BulkEmail = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.bulkEmail.loading")} />;
   }
 
   return (
