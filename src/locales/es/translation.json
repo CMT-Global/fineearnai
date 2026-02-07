@@ -2240,6 +2240,20 @@
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
       "errorFailedToGenerate": "Failed to generate tasks"
+    ,
+      "categories": {
+        "sentiment_analysis": "Análisis de Sentimiento",
+        "hotel_review_sentiment": "Sentimiento en reseñas de hotel",
+        "product_review_sentiment": "Sentimiento en reseñas de producto",
+        "business_review_sentiment": "Sentimiento en reseñas de negocios",
+        "social_media_sentiment": "Sentimiento en redes sociales",
+        "customer_feedback_sentiment": "Sentimiento en comentarios de clientes",
+        "fact_checking": "Verificación de hechos",
+        "tone_analysis": "Análisis de tono",
+        "grammar_correction": "Corrección gramatical",
+        "summarization": "Resumen",
+        "translation": "Traducción"
+      }
     },
     "aiTasksManage": {
       "title": "AI Task Management",
