@@ -7,6 +7,7 @@ import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import { ProfileCompletionGuard } from "@/components/shared/ProfileCompletionGuard";
+import { EmailVerificationGuard } from "@/components/shared/EmailVerificationGuard";
 import { AdminModeProvider, useAdminMode } from "@/contexts/AdminModeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -223,8 +224,10 @@ const RoutesWrapper = () => {
           <Route path="wallet" element={<Wallet />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="plans" element={<MembershipPlans />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="tasks/:userTaskId" element={<TaskDetail />} />
+          <Route path="tasks" element={<EmailVerificationGuard />}>
+            <Route index element={<Tasks />} />
+            <Route path=":userTaskId" element={<TaskDetail />} />
+          </Route>
           <Route path="referrals" element={<Referrals />} />
           <Route path="become-partner" element={<BecomePartner />} />
           <Route path="partner/application-status" element={<PartnerApplicationStatus />} />

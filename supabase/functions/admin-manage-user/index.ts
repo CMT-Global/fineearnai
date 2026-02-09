@@ -420,23 +420,37 @@ Deno.serve(async (req)=>{
           if (!plan) {
             throw new Error('Invalid or inactive plan');
           }
-          // Calculate expiry date using billing_period_days as single source of truth
-          let expiresAt = planData.expires_at;
-          if (!expiresAt) {
-            const billingPeriodDays = plan.billing_period_days;
-            if (!billingPeriodDays || billingPeriodDays <= 0) {
-              throw new Error(`Invalid billing_period_days for plan ${planData.plan_name}: ${billingPeriodDays}`);
+          const now = new Date();
+          let expiresAt = planData.expires_at ?? null;
+
+          // Free plan: use free_plan_expiry_days if no expires_at provided; otherwise allow null
+          if (plan.name === 'free') {
+            if (!expiresAt && plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0) {
+              const expiry = new Date(now);
+              expiry.setDate(expiry.getDate() + plan.free_plan_expiry_days);
+              expiresAt = expiry.toISOString();
+              console.log(`✅ Free plan expiry: free_plan_expiry_days=${plan.free_plan_expiry_days}, expiry=${expiresAt}`);
             }
-            const now = new Date();
-            now.setDate(now.getDate() + billingPeriodDays);
-            expiresAt = now.toISOString();
-            console.log(`✅ Expiry calculation: Plan=${planData.plan_name}, billing_period_days=${billingPeriodDays}, expiry=${expiresAt}`);
+            // else: expiresAt stays null (no trial or admin did not set a date)
+          } else {
+            // Paid plans: require billing_period_days when expires_at not provided
+            if (!expiresAt) {
+              const billingPeriodDays = plan.billing_period_days;
+              if (!billingPeriodDays || billingPeriodDays <= 0) {
+                throw new Error(`Invalid billing_period_days for plan ${planData.plan_name}: ${billingPeriodDays}`);
+              }
+              const expiry = new Date(now);
+              expiry.setDate(expiry.getDate() + billingPeriodDays);
+              expiresAt = expiry.toISOString();
+              console.log(`✅ Expiry calculation: Plan=${planData.plan_name}, billing_period_days=${billingPeriodDays}, expiry=${expiresAt}`);
+            }
           }
-          // Update plan
+
+          // Update plan (allow null plan_expires_at for free with no trial)
           const { error: updateError } = await supabaseClient.from('profiles').update({
             membership_plan: planData.plan_name,
             plan_expires_at: expiresAt,
-            current_plan_start_date: new Date().toISOString()
+            current_plan_start_date: now.toISOString()
           }).eq('id', userId);
           if (updateError) {
             throw new Error(`Failed to change plan: ${updateError.message}`);

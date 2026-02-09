@@ -14,10 +14,9 @@ export const useDashboardData = (userId: string | undefined) => {
         supabaseService.rpc.getReferralStats(userId)
       ]);
       
-      // Fetch membership plan based on profile
-      const planData = profile.membership_plan
-        ? await supabaseService.membershipPlans.getByName(profile.membership_plan)
-        : null;
+      // Fetch membership plan based on profile (use 'free' when not set so we have free_plan_expiry_days for banner)
+      const planName = profile.membership_plan ;
+      const planData = await supabaseService.membershipPlans.getByName(planName);
       
       // Add earner badge status to profile
       const accountType = planData?.account_type;

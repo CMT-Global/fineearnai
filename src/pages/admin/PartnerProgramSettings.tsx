@@ -165,10 +165,12 @@ export default function PartnerProgramSettings() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["partner-program-settings"] });
       queryClient.invalidateQueries({ queryKey: ["sidebar-platform-config"] });
       queryClient.invalidateQueries({ queryKey: ["partner-program-content"] });
+      queryClient.invalidateQueries({ queryKey: ["partner-program-config-wallet"] });
+      queryClient.setQueryData(["partner-program-config-wallet"], variables.program);
       setHasChanges(false);
       toast({
         title: "Settings saved",

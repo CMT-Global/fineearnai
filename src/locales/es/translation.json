@@ -295,6 +295,10 @@
     "transactionHistory": "Transaction History",
     "inviteFriends": "Invite Friends",
     "upgradePlan": "Upgrade Plan",
+    "freeBannerTitle": "⚠️ Free Access Ending Soon",
+    "freeBannerMessage_one": "Your free plan expires in 1 day. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessage_other": "Your free plan expires in {{days_left}} days. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessageNoExpiry": "Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
     "accountSettings": "Account Settings",
     "recentActivity": "Recent Activity",
     "loadingDashboard": "Loading dashboard...",
@@ -347,6 +351,8 @@
   "tasks": {
     "title": "AI Training Tasks",
     "subtitle": "Complete tasks to earn money and help train AI",
+    "requireEmailVerification": "Verifica tu correo para acceder a las tareas.",
+    "verifyEmailButton": "Verificar correo",
     "loadingTasks": "Loading tasks...",
     "understandingAITraining": "Understanding AI Training:",
     "understandingAITrainingDescription": "The 'correct' response for these tasks is determined by the collective analysis and consensus of many human evaluators, not by pre-existing AI knowledge. Your contributions are vital for refining and advancing AI models.",
@@ -416,6 +422,13 @@
     "becomeVerifiedEarner": "Become a Verified Earner",
     "recentTransactions": "Recent Transactions",
     "recentTransactionsSubtitle": "View your wallet transaction history",
+    "walletInfo": {
+      "title": "Cómo funcionan tus monederos",
+      "depositLabel": "Monedero de depósito",
+      "earningsLabel": "Monedero de ganancias",
+      "depositWallet": "Los fondos que depositas se guardan en tu Monedero de Depósito y se usan para mejoras de membresía.",
+      "earningsWallet": "Solo puedes retirar desde el Monedero de Ganancias, donde se guardan todas tus ganancias y comisiones."
+    },
     "voucherRedemption": {
       "title": "Redeem Voucher",
       "description": "Enter your voucher code to add funds to your deposit wallet",
@@ -438,7 +451,7 @@
       "forAccountUpgrades": "For account upgrades",
       "earningsWallet": "Earnings Wallet",
       "fromTasksReferrals": "From tasks & referrals",
-      "deposit": "Deposit",
+      "deposit": "Depósito y actualización",
       "withdraw": "Withdraw",
       "makeDeposit": "Make a Deposit",
       "addFundsToDepositWallet": "Add funds to your deposit wallet",
