@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
+import { getTaskOptionsDisplayOrder } from "@/lib/task-options-order";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
@@ -16,9 +17,8 @@ import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Loader2, AlertCircle, ArrowRight } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 interface AITask {
   id: string;
@@ -166,6 +166,19 @@ const Tasks = () => {
   }, [user, queryClient]);
 
   const currentTask = taskData?.task || null;
+  // Deterministic option order per task (consistent per attempt; correctness is by key "a"/"b" not position)
+  const displayOrder = useMemo(() => {
+    if (!currentTask) return null;
+    const order = getTaskOptionsDisplayOrder(currentTask);
+    if (typeof console !== "undefined" && process.env.NODE_ENV !== "test") {
+      console.log("[TaskOptions] display order", {
+        taskId: currentTask.id,
+        order: order.map((o) => o.key),
+      });
+    }
+    return order;
+  }, [currentTask?.id]);
+
   // ✅ Phase 2: All user stats from React Query (taskData)
   // Database is single source of truth - API tells us if limit is reached
   const userStats = taskData?.userStats || null;
@@ -326,29 +339,6 @@ const Tasks = () => {
             </AlertDescription>
           </Alert>
 
-          {/* Earner Status Banner - Unverified Users Only */}
-          {profile?.earnerBadge && !profile.earnerBadge.isVerified && (
-            <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
-              </div>
-              <AlertTitle className="text-orange-700 dark:text-orange-400">
-                {profile.earnerBadge.badgeText} - {t("tasks.limitedTaskAccess")}
-              </AlertTitle>
-              <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                <p>{profile.earnerBadge.upgradePrompt}</p>
-                <Button 
-                  onClick={() => navigate("/plans")}
-                  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
-                >
-                  {t("tasks.upgradeNow")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Stats Cards - Always Visible */}
           <TaskStats
             tasksCompletedToday={userStats?.tasksCompletedToday || 0}
@@ -369,9 +359,10 @@ const Tasks = () => {
               membershipPlan={userStats?.membershipPlan || 'free'}
               onUpgrade={() => navigate('/plans')}
             />
-          ) : currentTask ? (
+          ) : currentTask && displayOrder ? (
             <TaskInterface
               task={currentTask}
+              displayOrder={displayOrder}
               onSubmit={handleSubmitAnswer}
               onSkip={handleSkipTask}
               isSubmitting={isSubmitting || submitMutation.isPending}
@@ -379,6 +370,8 @@ const Tasks = () => {
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
             />
+          ) : currentTask ? (
+            <TaskSkeleton />
           ) : (
             <NoTasksAvailable onRefresh={refetchTask} />
           )}

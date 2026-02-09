@@ -364,19 +364,6 @@ export default function MembershipPlans() {
                 </Alert>
               )}
 
-              {/* Urgency Banner for Free Users */}
-              {user && profile && currentPlan === 'free' && (
-                <Alert className="mb-8 max-w-4xl mx-auto bg-orange-500/10 border-2 border-orange-500/30 animate-fade-in">
-                  <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-500" />
-                  <AlertTitle className="text-orange-900 dark:text-orange-100 text-lg font-bold">
-                    {t("membershipPlans.limitedTimeBanner")}
-                  </AlertTitle>
-                  <AlertDescription className="text-orange-800 dark:text-orange-200 mt-2">
-                    {t("membershipPlans.limitedTimeBannerDescription")}
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {user && profile && (
                 <Alert className="mb-8 max-w-3xl mx-auto">
                   <Info className="h-4 w-4" />

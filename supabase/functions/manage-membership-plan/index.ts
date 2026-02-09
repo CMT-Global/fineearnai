@@ -238,19 +238,18 @@ Deno.serve(async (req)=>{
           if (fetchError || !currentPlan) {
             throw new Error('Plan not found');
           }
-          // If name is being changed, check it's unique
+          // If name is being changed, check it's unique and sync profiles to new name
           if (planData.name && planData.name !== currentPlan.name) {
             const { data: existingPlan } = await supabaseClient.from('membership_plans').select('id').eq('name', planData.name).maybeSingle();
             if (existingPlan) {
               throw new Error(`Plan with name '${planData.name}' already exists`);
             }
-            // Check if any users are subscribed to this plan
-            const { count: subscriberCount } = await supabaseClient.from('profiles').select('id', {
-              count: 'exact',
-              head: true
+            // Update all profiles subscribed to the old plan name to the new plan name (allow rename with subscribers)
+            const { error: profilesUpdateError } = await supabaseClient.from('profiles').update({
+              membership_plan: planData.name
             }).eq('membership_plan', currentPlan.name);
-            if (subscriberCount && subscriberCount > 0) {
-              throw new Error(`Cannot rename plan: ${subscriberCount} users are currently subscribed to '${currentPlan.name}'`);
+            if (profilesUpdateError) {
+              throw new Error(`Failed to update subscriber profiles for plan rename: ${profilesUpdateError.message}`);
             }
           }
           // Update the plan
