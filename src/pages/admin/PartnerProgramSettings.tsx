@@ -210,7 +210,7 @@ export default function PartnerProgramSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.partnerProgramSettings.loading")} />;
   }
 
   return (

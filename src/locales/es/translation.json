@@ -932,7 +932,7 @@
       "accuracyPercentage": "{{percentage}}% accuracy",
       "noTaskDataAvailable": "No task data available",
       "noUserDataAvailable": "No user data available",
-      "loading": "Loading analytics...",
+      "loading": "Cargando análisis de tareas...",
       "errorFailedToLoad": "Failed to load analytics data"
     },
     "scheduledEmails": {
@@ -1336,6 +1336,7 @@
     "userInvites": {
       "title": "User Invites",
       "subtitle": "Send personalized invitations to potential users to join the platform",
+      "loading": "Cargando invitaciones de usuarios...",
       "tabs": {
         "compose": "Compose Invite",
         "history": "History",
@@ -2135,15 +2136,18 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Cargando tabla de clasificación..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Cargando configuración de la tabla de clasificación ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
-      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard."
+      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard.",
+      "loading": "Cargando contenido del programa de socios..."
     },
     "voucherMonitoring": {
       "title": "Voucher Monitoring",
@@ -2223,6 +2227,7 @@
     "aiTasksGenerate": {
       "title": "Generate AI Tasks",
       "subtitle": "Use AI to automatically generate training tasks",
+      "loading": "Cargando generar tareas IA...",
       "category": "Category",
       "selectCategory": "Select category",
       "difficulty": "Difficulty",
@@ -2235,10 +2240,25 @@
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
       "errorFailedToGenerate": "Failed to generate tasks"
+    ,
+      "categories": {
+        "sentiment_analysis": "Análisis de Sentimiento",
+        "hotel_review_sentiment": "Sentimiento en reseñas de hotel",
+        "product_review_sentiment": "Sentimiento en reseñas de producto",
+        "business_review_sentiment": "Sentimiento en reseñas de negocios",
+        "social_media_sentiment": "Sentimiento en redes sociales",
+        "customer_feedback_sentiment": "Sentimiento en comentarios de clientes",
+        "fact_checking": "Verificación de hechos",
+        "tone_analysis": "Análisis de tono",
+        "grammar_correction": "Corrección gramatical",
+        "summarization": "Resumen",
+        "translation": "Traducción"
+      }
     },
     "aiTasksManage": {
       "title": "AI Task Management",
       "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "Cargando gestionar tareas IA...",
       "generateTasks": "Generate Tasks",
       "category": "Category",
       "allCategories": "All Categories",
@@ -2422,6 +2442,7 @@
       "feeSavingsBanner": {
         "title": "Fee Savings Banner Settings",
         "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
+        "loading": "Cargando banner de ahorro en comisiones...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Fee savings banner settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2449,6 +2470,7 @@
       "dashboardContent": {
         "title": "Dashboard Content Settings",
         "subtitle": "Configure the content and visibility of sections displayed on the user dashboard",
+        "loading": "Cargando contenido del panel...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Dashboard content settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2489,6 +2511,7 @@
       "howItWorks": {
         "title": "How It Works Content Settings",
         "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "loading": "Cargando contenido Cómo funciona...",
         "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "How It Works content settings have been updated successfully.",
@@ -2515,6 +2538,7 @@
       "seoSettings": {
         "title": "SEO & Social Sharing Settings",
         "subtitle": "Configure SEO metadata and social media sharing settings for your platform",
+        "loading": "Cargando configuración SEO y redes sociales...",
         "discardChanges": "Discard Changes",
         "saveSettings": "Save Settings",
         "settingsSaved": "Settings saved",
@@ -2576,7 +2600,8 @@
           "liveChatSettings": "Configuración de Chat en Vivo"
         },
         "title": "Configuración de Chat en Vivo de Reamaze",
-        "subtitle": "Configure el widget de chat en vivo de Reamaze para atención al cliente",
+  "subtitle": "Configure el widget de chat en vivo de Reamaze para atención al cliente",
+  "loading": "Cargando configuración de chat en vivo...",
         "discardChanges": "Descartar Cambios",
         "saveSettings": "Guardar Configuración",
         "important": "Importante",
@@ -2607,6 +2632,7 @@
     "emailSettings": {
       "title": "Configuración de Email",
       "subtitle": "Configurar ajustes de envío de correo electrónico y recordatorios de verificación",
+      "loading": "Cargando configuración de correo...",
       "breadcrumb": {
         "communications": "Comunicaciones",
         "emailSettings": "Configuración de Email"
@@ -2686,7 +2712,7 @@
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
       "backToAdmin": "Back to Admin",
-      "loading": "Loading templates...",
+  "loading": "Cargando plantillas de correo...",
       "cardTitle": "Email Templates",
       "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
       "addTemplate": "Add Template",
@@ -2796,6 +2822,7 @@
     "emailTemplateGlobalSettings": {
       "title": "Global Email Template",
       "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "loading": "Cargando plantilla de correo global...",
       "availableVariables": "Available Variables",
       "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
       "tabs": {
@@ -3255,6 +3282,7 @@
     "bulkEmail": {
       "title": "Bulk Email System",
       "subtitle": "Send emails to users based on various criteria",
+      "loading": "Cargando correo masivo...",
       "backToAdmin": "Back to Admin",
       "tabs": {
         "compose": "Compose",
@@ -3725,6 +3753,7 @@
     "influencerInvites": {
       "title": "Influencer Invites",
       "subtitle": "Send personalized invitations to potential influencer partners",
+      "loading": "Cargando invitaciones de influencers...",
       "backToAdmin": "Back to Admin",
       "templateNotFound": "Influencer invite template not found",
       "templateNotFoundContact": "Influencer invite template not found. Please contact support.",

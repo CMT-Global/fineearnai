@@ -173,7 +173,7 @@ export default function UserInvites() {
   };
 
   if (authLoading || adminLoading || loading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.userInvites.loading")} />;
   }
 
   if (!template) {

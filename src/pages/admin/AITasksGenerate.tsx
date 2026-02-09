@@ -16,17 +16,17 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { PageLoading } from "@/components/shared/PageLoading";
 
 const TASK_CATEGORIES = [
-  "Sentiment Analysis",
-  "Hotel Review Sentiment",
-  "Product Review Sentiment",
-  "Business Review Sentiment",
-  "Social Media Sentiment",
-  "Customer Feedback Sentiment",
-  "Fact Checking",
-  "Tone Analysis",
-  "Grammar Correction",
-  "Summarization",
-  "Translation",
+  { value: "Sentiment Analysis", key: "sentiment_analysis" },
+  { value: "Hotel Review Sentiment", key: "hotel_review_sentiment" },
+  { value: "Product Review Sentiment", key: "product_review_sentiment" },
+  { value: "Business Review Sentiment", key: "business_review_sentiment" },
+  { value: "Social Media Sentiment", key: "social_media_sentiment" },
+  { value: "Customer Feedback Sentiment", key: "customer_feedback_sentiment" },
+  { value: "Fact Checking", key: "fact_checking" },
+  { value: "Tone Analysis", key: "tone_analysis" },
+  { value: "Grammar Correction", key: "grammar_correction" },
+  { value: "Summarization", key: "summarization" },
+  { value: "Translation", key: "translation" },
 ];
 
 const DIFFICULTY_LEVELS = ["easy", "medium", "hard"];
@@ -43,7 +43,7 @@ const AITasksGenerate = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   if (adminLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.aiTasksGenerate.loading")} />;
   }
 
   if (!isAdmin) {
@@ -108,8 +108,8 @@ const AITasksGenerate = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {TASK_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {t(`admin.aiTasksGenerate.categories.${cat.key}`, cat.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
