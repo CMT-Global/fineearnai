@@ -266,7 +266,7 @@ export default function PartnerLeaderboard() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.partnerLeaderboard.loading")} />;
   }
 
   return (

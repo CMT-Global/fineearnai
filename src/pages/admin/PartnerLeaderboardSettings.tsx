@@ -98,7 +98,7 @@ const PartnerLeaderboardSettings = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <PageLoading text={t("admin.loadingPanel")} />
+            <PageLoading text={t("admin.partnerLeaderboardSettings.loading")} />
           ) : (
             <>
               <div className="flex items-center justify-between p-4 border rounded-lg">

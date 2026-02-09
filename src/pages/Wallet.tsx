@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useWithdrawalValidation } from "@/hooks/useWithdrawalValidation";
+import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { WalletCard } from "@/components/wallet/WalletCard";
@@ -13,7 +15,8 @@ import { RecentTransactionsCard } from "@/components/transactions/RecentTransact
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet as WalletIcon, Crown, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Wallet as WalletIcon, Crown, Sparkles, Info, ArrowDownToLine, Banknote } from "lucide-react";
 import { USDCFeeSavingsBanner } from "@/components/wallet/USDCFeeSavingsBanner";
 import { EmailVerificationBanner } from "@/components/dashboard/EmailVerificationBanner";
 import { EmailVerificationDialog } from "@/components/dashboard/EmailVerificationDialog";
@@ -31,6 +34,24 @@ const Wallet = () => {
   
   // PHASE 4: Check withdrawal validation (includes VIP bypass status)
   const { data: validation, isLoading: isValidationLoading = false } = useWithdrawalValidation();
+
+  // Partner program config: voucher redemption only available when program is enabled (partners can sell vouchers)
+  const { data: partnerProgramConfig, isFetched: isPartnerProgramFetched } = useQuery({
+    queryKey: ["partner-program-config-wallet"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "partner_program_config")
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.value as { isEnabled?: boolean }) ?? { isEnabled: true };
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+  // Only show voucher block after config has loaded AND program is enabled (avoids flash when disabled)
+  const isPartnerProgramEnabled = isPartnerProgramFetched && (partnerProgramConfig?.isEnabled === true);
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
@@ -56,6 +77,10 @@ const Wallet = () => {
   const hasFreshData = profile && profile.earnerBadge && !isProfileLoading;
 
   if (isProfileLoading || !profile) {
+    return <PageLoading text={t("wallet.loadingWallet")} />;
+  }
+
+  if (!isPartnerProgramFetched) {
     return <PageLoading text={t("wallet.loadingWallet")} />;
   }
 
@@ -102,29 +127,6 @@ const Wallet = () => {
               {/* USDC Fee Savings Banner */}
               <USDCFeeSavingsBanner variant="banner" className="mb-6" />
 
-              {/* Earner Status Banner - Unverified Users Only - Only render when data is ready */}
-              {isDataReady && profile.earnerBadge && !profile.earnerBadge.isVerified && (
-                <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{profile.earnerBadge.icon}</span>
-                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
-                  </div>
-                  <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {profile.earnerBadge.badgeText} - {t("wallet.limitedWithdrawalAccess")}
-                  </AlertTitle>
-                  <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                    <p>{profile.earnerBadge.upgradePrompt}</p>
-                    <Button 
-                      onClick={() => navigate("/plans")}
-                      className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
-                    >
-                      {t("wallet.becomeVerifiedEarner")}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* Wallet Balances */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <WalletCard 
@@ -134,11 +136,55 @@ const Wallet = () => {
                 />
               </div>
 
-              {/* Voucher Redemption */}
-              <VoucherRedemptionCard 
-                userId={user?.id || ''} 
-                onRedemptionSuccess={refetchProfile}
-              />
+              {/* Wallet usage info - attractive card */}
+              <Card className="overflow-hidden border-2 border-primary/10 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+                <CardContent className="p-0">
+                  <div className="flex items-center gap-2 px-5 pt-5 pb-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <Info className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {t("wallet.walletInfo.title")}
+                    </p>
+                  </div>
+                  <div className="grid gap-0 sm:grid-cols-2">
+                    <div className="flex gap-4 border-t border-primary/10 px-5 py-4 sm:border-r sm:border-t-0 sm:px-6">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--wallet-deposit))]/15">
+                        <ArrowDownToLine className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("wallet.walletInfo.depositLabel")}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-foreground">
+                          {t("wallet.walletInfo.depositWallet")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 border-t border-primary/10 px-5 py-4 sm:border-t-0 sm:px-6">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--wallet-earnings))]/15">
+                        <Banknote className="h-5 w-5 text-[hsl(var(--wallet-earnings))]" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("wallet.walletInfo.earningsLabel")}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-foreground">
+                          {t("wallet.walletInfo.earningsWallet")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Voucher Redemption - only when Partner Program is enabled (approved partners sell vouchers) */}
+              {isPartnerProgramEnabled && (
+                <VoucherRedemptionCard 
+                  userId={user?.id || ''} 
+                  onRedemptionSuccess={refetchProfile}
+                />
+              )}
 
               {/* Recent Transactions */}
               <RecentTransactionsCard 

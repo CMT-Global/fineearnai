@@ -186,7 +186,7 @@ export default function EmailSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.emailSettings.loading")} />;
   }
 
   return (

@@ -172,7 +172,7 @@ const InfluencerInvites = () => {
   };
 
   if (authLoading || adminLoading || loading || !ready) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.influencerInvites.loading")} />;
   }
 
   if (!template) {

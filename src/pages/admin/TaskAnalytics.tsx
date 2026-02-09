@@ -259,7 +259,7 @@ const TaskAnalytics = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return <PageLoading text={t("admin.analytics.dashboard.loading")} />;
+    return <PageLoading text={t("admin.taskAnalytics.loading")} />;
   }
 
   return (

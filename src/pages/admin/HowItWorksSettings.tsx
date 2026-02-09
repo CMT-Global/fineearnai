@@ -198,7 +198,7 @@ export default function HowItWorksSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.content.howItWorks.loading")} />;
+    return <PageLoading text={t("admin.contentManagement.howItWorks.loading")} />;
   }
 
   return (
