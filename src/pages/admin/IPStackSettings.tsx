@@ -187,7 +187,7 @@ export default function IPStackSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.ipstackSettings.loading")} />;
   }
 
   return (

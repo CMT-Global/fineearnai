@@ -485,7 +485,7 @@ const EmailTemplates = () => {
   };
 
   if (authLoading || adminLoading || loading) {
-    return <PageLoading text={t("admin.communications.templates.loading")} />;
+  return <PageLoading text={t("admin.emailTemplates.loading")} />;
   }
 
   return (

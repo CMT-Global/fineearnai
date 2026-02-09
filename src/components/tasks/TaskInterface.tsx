@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { useTranslation } from "react-i18next";
+import type { TaskDisplayOption } from "@/lib/task-options-order";
 
 interface AITask {
   id: string;
@@ -25,8 +26,10 @@ interface Feedback {
   newBalance: number;
 }
 
-interface TaskInterfaceProps {
+export interface TaskInterfaceProps {
   task: AITask;
+  /** Display order for options (randomized per task); correctness is by key "a"|"b" */
+  displayOrder: TaskDisplayOption[];
   onSubmit: (response: string) => Promise<void>;
   onSkip: () => Promise<void>;
   isSubmitting: boolean;
@@ -41,8 +44,11 @@ const difficultyColors = {
   hard: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
+const OPTION_LABELS = ["optionA", "optionB"] as const;
+
 const TaskInterfaceComponent = ({
   task,
+  displayOrder,
   onSubmit,
   onSkip,
   isSubmitting,
@@ -136,55 +142,33 @@ const TaskInterfaceComponent = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div
-              className={`p-4 rounded border-2 break-words ${
-                selectedResponse === "a"
-                  ? feedback.correctAnswer === "a"
-                    ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
-                    : "border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10"
-                  : "border-transparent bg-muted/30"
-              }`}
-            >
-              <p className="font-medium text-sm mb-1">{t("tasks.interface.optionA")}:</p>
-              <p className="text-sm break-words whitespace-normal overflow-visible">{task.response_a}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedResponse === "a" && (
-                  <Badge variant="secondary">
-                    {t("tasks.interface.yourAnswer")}
-                  </Badge>
-                )}
-                {feedback.correctAnswer === "a" && (
-                  <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
-                    {t("tasks.interface.correctAnswerBadge")}
-                  </Badge>
-                )}
+            {displayOrder.map((opt, idx) => (
+              <div
+                key={opt.key}
+                className={`p-4 rounded border-2 break-words ${
+                  selectedResponse === opt.key
+                    ? feedback.correctAnswer === opt.key
+                      ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
+                      : "border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10"
+                    : "border-transparent bg-muted/30"
+                }`}
+              >
+                <p className="font-medium text-sm mb-1">{t(`tasks.interface.${OPTION_LABELS[idx]}`)}:</p>
+                <p className="text-sm break-words whitespace-normal overflow-visible">{opt.text}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedResponse === opt.key && (
+                    <Badge variant="secondary">
+                      {t("tasks.interface.yourAnswer")}
+                    </Badge>
+                  )}
+                  {feedback.correctAnswer === opt.key && (
+                    <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
+                      {t("tasks.interface.correctAnswerBadge")}
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
-
-            <div
-              className={`p-4 rounded border-2 break-words ${
-                selectedResponse === "b"
-                  ? feedback.correctAnswer === "b"
-                    ? "border-[hsl(var(--success))] bg-[hsl(var(--success))]/10"
-                    : "border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10"
-                  : "border-transparent bg-muted/30"
-              }`}
-            >
-              <p className="font-medium text-sm mb-1">{t("tasks.interface.optionB")}:</p>
-              <p className="text-sm break-words whitespace-normal overflow-visible">{task.response_b}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedResponse === "b" && (
-                  <Badge variant="secondary">
-                    {t("tasks.interface.yourAnswer")}
-                  </Badge>
-                )}
-                {feedback.correctAnswer === "b" && (
-                  <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]">
-                    {t("tasks.interface.correctAnswerBadge")}
-                  </Badge>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
 
           <p className="mt-4 text-sm text-center text-muted-foreground">
@@ -201,25 +185,27 @@ const TaskInterfaceComponent = ({
 
             <RadioGroup value={selectedResponse} onValueChange={onResponseChange}>
               <div className="space-y-4">
-                {/* Option A */}
-                <div className="flex items-start space-x-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer transition-colors">
-                  <RadioGroupItem value="a" id="option-a" className="mt-1 flex-shrink-0" />
-                  <Label htmlFor="option-a" className="cursor-pointer flex-1 min-w-0">
-                    <p className="font-medium text-primary mb-2">{t("tasks.interface.optionA")}</p>
-                    <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{task.response_a}</p>
-                  </Label>
-                </div>
-
-                {/* Option B */}
-                <div className="flex items-start space-x-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer transition-colors">
-                  <RadioGroupItem value="b" id="option-b" className="mt-1 flex-shrink-0" />
-                  <Label htmlFor="option-b" className="cursor-pointer flex-1 min-w-0">
-                    <p className="font-medium text-green-600 dark:text-green-400 mb-2">
-                      {t("tasks.interface.optionB")}
-                    </p>
-                    <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{task.response_b}</p>
-                  </Label>
-                </div>
+                {displayOrder.map((opt, idx) => (
+                  <div
+                    key={opt.key}
+                    className="flex items-start space-x-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer transition-colors"
+                  >
+                    <RadioGroupItem
+                      value={opt.key}
+                      id={`option-${opt.key}`}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <Label
+                      htmlFor={`option-${opt.key}`}
+                      className="cursor-pointer flex-1 min-w-0"
+                    >
+                      <p className={`font-medium mb-2 ${idx === 0 ? "text-primary" : "text-green-600 dark:text-green-400"}`}>
+                        {t(`tasks.interface.${OPTION_LABELS[idx]}`)}
+                      </p>
+                      <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{opt.text}</p>
+                    </Label>
+                  </div>
+                ))}
               </div>
             </RadioGroup>
           </div>
@@ -250,4 +236,4 @@ const TaskInterfaceComponent = ({
   );
 };
 
-export const TaskInterface = memo(TaskInterfaceComponent);
+export const TaskInterface = memo<TaskInterfaceProps>(TaskInterfaceComponent);

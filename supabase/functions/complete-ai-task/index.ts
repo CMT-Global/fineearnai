@@ -193,6 +193,7 @@ Deno.serve(async (req)=>{
     const isCorrect = selectedResponse === task.correct_response;
     const earningsAmount = isCorrect ? membershipPlan.earning_per_task : 0;
     console.log(`${isCorrect ? '✅' : '❌'} [${requestId}] Answer ${isCorrect ? 'correct' : 'incorrect'}. Earnings: $${earningsAmount}`);
+    console.log(`[TaskCorrectPosition] taskId=${taskId} correct_response=${task.correct_response} selectedResponse=${selectedResponse} isCorrect=${isCorrect}`);
     // Call atomic database function - everything happens in ONE transaction
     const { data: result, error: atomicError } = await supabase.rpc('complete_task_atomic', {
       p_user_id: user.id,

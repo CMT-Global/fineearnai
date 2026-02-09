@@ -295,6 +295,10 @@
     "transactionHistory": "Transaction History",
     "inviteFriends": "Invite Friends",
     "upgradePlan": "Upgrade Plan",
+    "freeBannerTitle": "⚠️ Free Access Ending Soon",
+    "freeBannerMessage_one": "Your free plan expires in 1 day. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessage_other": "Your free plan expires in {{days_left}} days. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessageNoExpiry": "Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
     "accountSettings": "Account Settings",
     "recentActivity": "Recent Activity",
     "loadingDashboard": "Loading dashboard...",
@@ -347,6 +351,8 @@
   "tasks": {
     "title": "AI Training Tasks",
     "subtitle": "Complete tasks to earn money and help train AI",
+    "requireEmailVerification": "Verifica la tua email per accedere alle attività.",
+    "verifyEmailButton": "Verifica email",
     "loadingTasks": "Loading tasks...",
     "understandingAITraining": "Understanding AI Training:",
     "understandingAITrainingDescription": "The 'correct' response for these tasks is determined by the collective analysis and consensus of many human evaluators, not by pre-existing AI knowledge. Your contributions are vital for refining and advancing AI models.",
@@ -416,6 +422,13 @@
     "becomeVerifiedEarner": "Become a Verified Earner",
     "recentTransactions": "Recent Transactions",
     "recentTransactionsSubtitle": "View your wallet transaction history",
+    "walletInfo": {
+      "title": "Come funzionano i portafogli",
+      "depositLabel": "Portafoglio depositi",
+      "earningsLabel": "Portafoglio guadagni",
+      "depositWallet": "I fondi che depositi vengono conservati nel Portafoglio Depositi e usati per gli upgrade dell'abbonamento.",
+      "earningsWallet": "Puoi prelevare solo dal Portafoglio Guadagni — dove sono conservati tutti i tuoi guadagni e le commissioni."
+    },
     "voucherRedemption": {
       "title": "Redeem Voucher",
       "description": "Enter your voucher code to add funds to your deposit wallet",
@@ -438,7 +451,7 @@
       "forAccountUpgrades": "For account upgrades",
       "earningsWallet": "Earnings Wallet",
       "fromTasksReferrals": "From tasks & referrals",
-      "deposit": "Deposit",
+      "deposit": "Deposita e aggiorna",
       "withdraw": "Withdraw",
       "makeDeposit": "Make a Deposit",
       "addFundsToDepositWallet": "Add funds to your deposit wallet",
@@ -932,7 +945,7 @@
       "accuracyPercentage": "{{percentage}}% accuracy",
       "noTaskDataAvailable": "No task data available",
       "noUserDataAvailable": "No user data available",
-      "loading": "Loading analytics...",
+      "loading": "Caricamento analisi attività...",
       "errorFailedToLoad": "Failed to load analytics data"
     },
     "scheduledEmails": {
@@ -2135,15 +2148,18 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Caricamento classifica..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Caricamento impostazioni classifica ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
-      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard."
+      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard.",
+      "loading": "Caricamento contenuto programma partner..."
     },
     "voucherMonitoring": {
       "title": "Voucher Monitoring",
@@ -2223,6 +2239,7 @@
     "aiTasksGenerate": {
       "title": "Generate AI Tasks",
       "subtitle": "Use AI to automatically generate training tasks",
+      "loading": "Caricamento genera attività IA...",
       "category": "Category",
       "selectCategory": "Select category",
       "difficulty": "Difficulty",
@@ -2239,6 +2256,7 @@
     "aiTasksManage": {
       "title": "AI Task Management",
       "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "Caricamento gestione attività IA...",
       "generateTasks": "Generate Tasks",
       "category": "Category",
       "allCategories": "All Categories",
@@ -2422,6 +2440,7 @@
       "feeSavingsBanner": {
         "title": "Fee Savings Banner Settings",
         "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
+        "loading": "Caricamento banner risparmio commissioni...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Fee savings banner settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2449,6 +2468,7 @@
       "dashboardContent": {
         "title": "Dashboard Content Settings",
         "subtitle": "Configure the content and visibility of sections displayed on the user dashboard",
+        "loading": "Caricamento contenuto dashboard...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Dashboard content settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2489,6 +2509,7 @@
       "howItWorks": {
         "title": "How It Works Content Settings",
         "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
+        "loading": "Caricamento contenuto Come funziona...",
         "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "How It Works content settings have been updated successfully.",
@@ -2515,6 +2536,7 @@
       "seoSettings": {
         "title": "SEO & Social Sharing Settings",
         "subtitle": "Configure SEO metadata and social media sharing settings for your platform",
+        "loading": "Caricamento impostazioni SEO e social...",
         "discardChanges": "Discard Changes",
         "saveSettings": "Save Settings",
         "settingsSaved": "Settings saved",
@@ -2796,6 +2818,7 @@
     "emailTemplateGlobalSettings": {
       "title": "Global Email Template",
       "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "loading": "Caricamento modello email globale...",
       "availableVariables": "Available Variables",
       "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
       "tabs": {

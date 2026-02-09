@@ -28,7 +28,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { WalletCard } from "@/components/wallet/WalletCard";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { LoginMessageDialog } from "@/components/shared/LoginMessageDialog";
@@ -43,12 +43,21 @@ const Dashboard = () => {
   const { isAdmin } = useAdmin();
   const { platformName } = useBranding();
   const navigate = useNavigate();
+  const location = useLocation();
   
   // State to track fresh login for login message dialog
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   
   // State for email verification
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+
+  // Open email verification dialog when redirected from Tasks (guard sends state)
+  useEffect(() => {
+    if ((location.state as { openEmailVerification?: boolean })?.openEmailVerification) {
+      setShowEmailVerification(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
   
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
@@ -240,19 +249,22 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* Free Account Upgrade Banner */}
-          {profile.membership_plan === 'free' && (
+          {/* Free Account Upgrade Banner - show when plan is free or not set (treated as free) */}
+          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'free') && (
             <div className="mx-4 lg:mx-8 mt-6">
               <FreeAccountUpgradeBanner 
                 userId={user.id}
                 planExpiresAt={profile.plan_expires_at}
+                planStartDate={profile.current_plan_start_date}
+                accountCreatedAt={profile.created_at}
+                freePlanExpiryDays={membershipPlan?.free_plan_expiry_days}
                 onUpgrade={() => navigate("/plans")}
               />
             </div>
           )}
 
           {/* Premium Upgrade Banner - For paid plans below the highest tier */}
-          {profile.membership_plan !== 'free' && profile.membership_plan !== 'pro' && (
+          {profile.membership_plan && profile.membership_plan !== 'free' && profile.membership_plan !== 'pro' && (
             <div className="mx-4 lg:mx-8 mt-6">
               <PremiumUpgradeBanner 
                 userId={user.id}

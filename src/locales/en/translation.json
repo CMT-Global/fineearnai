@@ -289,6 +289,10 @@
     "transactionHistory": "Transaction History",
     "inviteFriends": "Invite Friends",
     "upgradePlan": "Upgrade Plan",
+    "freeBannerTitle": "⚠️ Free Access Ending Soon",
+    "freeBannerMessage_one": "Your free plan expires in 1 day. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessage_other": "Your free plan expires in {{days_left}} days. Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
+    "freeBannerMessageNoExpiry": "Upgrade now to secure your spot, unlock more daily tasks, and avoid interruptions.",
     "accountSettings": "Account Settings",
     "recentActivity": "Recent Activity",
     "loadingDashboard": "Loading dashboard...",
@@ -341,6 +345,8 @@
   "tasks": {
     "title": "AI Training Tasks",
     "subtitle": "Complete tasks to earn money and help train AI",
+    "requireEmailVerification": "Please verify your email to access tasks.",
+    "verifyEmailButton": "Verify Email",
     "loadingTasks": "Loading tasks...",
     "understandingAITraining": "Understanding AI Training:",
     "understandingAITrainingDescription": "The 'correct' response for these tasks is determined by the collective analysis and consensus of many human evaluators, not by pre-existing AI knowledge. Your contributions are vital for refining and advancing AI models.",
@@ -413,6 +419,13 @@
     "becomeVerifiedEarner": "Become a Verified Earner",
     "recentTransactions": "Recent Transactions",
     "recentTransactionsSubtitle": "View your wallet transaction history",
+    "walletInfo": {
+      "title": "How your wallets work",
+      "depositLabel": "Deposit Wallet",
+      "earningsLabel": "Earnings Wallet",
+      "depositWallet": "Funds you deposit are stored in your Deposit Wallet and used for membership upgrades.",
+      "earningsWallet": "You can only withdraw from the Earnings Wallet — which is where all your earnings and commissions are stored."
+    },
     "voucherRedemption": {
       "title": "Redeem Voucher",
       "description": "Enter your voucher code to add funds to your deposit wallet",
@@ -435,7 +448,7 @@
       "forAccountUpgrades": "For account upgrades",
       "earningsWallet": "Earnings Wallet",
       "fromTasksReferrals": "From tasks & referrals",
-      "deposit": "Deposit",
+      "deposit": "Deposit & Upgrade",
       "withdraw": "Withdraw",
       "makeDeposit": "Make a Deposit",
       "addFundsToDepositWallet": "Add funds to your deposit wallet",
@@ -964,7 +977,7 @@
       "accuracyPercentage": "{{percentage}}% accuracy",
       "noTaskDataAvailable": "No task data available",
       "noUserDataAvailable": "No user data available",
-      "loading": "Loading analytics...",
+      "loading": "Loading task analytics...",
       "errorFailedToLoad": "Failed to load analytics data"
     },
     "scheduledEmails": {
@@ -1309,6 +1322,7 @@
     "userInvites": {
       "title": "User Invites",
       "subtitle": "Send personalized invitations to potential users to join the platform",
+      "loading": "Loading user invites...",
       "tabs": {
         "compose": "Compose Invite",
         "history": "History",
@@ -2108,15 +2122,18 @@
     },
     "partnerLeaderboard": {
       "title": "Partner Leaderboard",
-      "subtitle": "Top performing partners by sales and bonuses"
+      "subtitle": "Top performing partners by sales and bonuses",
+      "loading": "Loading Leaderboard..."
     },
     "partnerLeaderboardSettings": {
       "title": "Partner Leaderboard Settings",
-      "subtitle": "Control leaderboard visibility for partners"
+      "subtitle": "Control leaderboard visibility for partners",
+      "loading": "Loading Leaderboard settings ..."
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",
-      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard."
+      "subtitle": "Enable or disable the partner program and edit the content shown in the Become a Partner wizard.",
+      "loading": "Loading partner program content..."
     },
     "voucherMonitoring": {
       "title": "Voucher Monitoring",
@@ -2196,6 +2213,7 @@
     "aiTasksGenerate": {
       "title": "Generate AI Tasks",
       "subtitle": "Use AI to automatically generate training tasks",
+      "loading": "Loading generate AI task...",
       "category": "Category",
       "selectCategory": "Select category",
       "difficulty": "Difficulty",
@@ -2212,6 +2230,7 @@
     "aiTasksManage": {
       "title": "AI Task Management",
       "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "Loading manage AI task...",
       "generateTasks": "Generate Tasks",
       "category": "Category",
       "allCategories": "All Categories",
@@ -2388,9 +2407,13 @@
       "accessDeniedAdminRequired": "Access denied. Admin privileges required."
     },
     "contentManagement": {
+      "reamazeSettings": {
+        "loading": "Loading Live Chat Settings..."
+      },
       "feeSavingsBanner": {
         "title": "Fee Savings Banner Settings",
         "subtitle": "Configure the \"Save on Fees\" banner that appears on the wallet page and deposit dialog",
+        "loading": "Loading fee savings banner...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Fee savings banner settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2418,6 +2441,7 @@
       "dashboardContent": {
         "title": "Dashboard Content Settings",
         "subtitle": "Configure the content and visibility of sections displayed on the user dashboard",
+        "loading": "Loading dashboard content...",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Dashboard content settings have been updated successfully.",
         "errorSaving": "Error saving settings",
@@ -2458,7 +2482,7 @@
       "howItWorks": {
         "title": "How It Works Content Settings",
         "subtitle": "Configure the content and visibility of the How It Works onboarding slides",
-        "loading": "Loading How It Works settings...",
+        "loading": "Loading how it works content...",
         "platformNameNote": "Note: Use {{platformName}} in slide content to automatically replace with the configured platform name (currently: {{platformName}})",
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "How It Works content settings have been updated successfully.",
@@ -2481,6 +2505,9 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the How It Works page.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "seoSettings": {
+        "loading": "Loading SEO & social settings..."
       }
     },
     "dailyResetLogs": {
@@ -2615,6 +2642,7 @@
     "influencerInvites": {
       "title": "Influencer Invites",
       "subtitle": "Send personalized invitations to potential influencer partners",
+      "loading": "Loading Influencer Invites...",
       "backToAdmin": "Back to Admin",
       "templateNotFound": "Influencer invite template not found",
       "templateNotFoundContact": "Influencer invite template not found. Please contact support.",
@@ -2667,8 +2695,8 @@
     "emailTemplates": {
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
-      "backToAdmin": "Back to Admin",
-      "loading": "Loading templates...",
+      "loading": "Loading email templates...",
+  "backToAdmin": "Back to Admin",
       "cardTitle": "Email Templates",
       "templatesAvailable": "{{count}} template{{count, plural, one {} other {s}}} available",
       "addTemplate": "Add Template",
@@ -2777,6 +2805,7 @@
     "ipstackSettings": {
       "title": "IPStack Geolocation Settings",
       "description": "Configure IPStack API key for user IP address and geolocation detection",
+      "loading": "Loading ipstack configuration...",
       "breadcrumbSettings": "Settings",
       "breadcrumbIPStack": "IPStack Configuration",
       "info": "IPStack is used to detect user IP addresses and map them to countries during registration and login. Get your API key from",
@@ -2812,6 +2841,7 @@
     "systemSecrets": {
       "title": "System Secrets",
       "subtitle": "Manage API keys and credentials for platform integrations",
+      "loading": "Loading system secrets",
       "breadcrumbSecurity": "Security",
       "breadcrumbSystemSecrets": "System Secrets",
       "discardChanges": "Discard Changes",
@@ -2872,6 +2902,7 @@
     "bulkEmail": {
       "title": "Bulk Email System",
       "subtitle": "Send emails to users based on various criteria",
+      "loading": "Loading Bulk Email...",
       "backToAdmin": "Back to Admin",
       "tabs": {
         "compose": "Compose",
@@ -3448,6 +3479,7 @@
     "emailSettings": {
       "title": "Email Settings",
       "subtitle": "Configure email sending settings and verification reminders",
+      "loading": "Loading email settings...",
       "breadcrumb": {
         "communications": "Communications",
         "emailSettings": "Email Settings"
@@ -3495,6 +3527,7 @@
     "emailTemplates": {
       "title": "Email Template Management",
       "subtitle": "Create and manage reusable email templates",
+      
       "backToAdmin": "Back to Admin",
       "loading": "Loading templates...",
       "cardTitle": "Email Templates",
@@ -3601,6 +3634,7 @@
     "emailTemplateGlobalSettings": {
       "title": "Global Email Template",
       "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+      "loading": "Loading global email template...",
       "availableVariables": "Available Variables",
       "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
       "tabs": {

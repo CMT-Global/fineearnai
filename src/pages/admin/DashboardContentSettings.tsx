@@ -151,7 +151,7 @@ export default function DashboardContentSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.loadingPanel")} />;
+    return <PageLoading text={t("admin.contentManagement.dashboardContent.loading")} />;
   }
 
   return (
