@@ -15,8 +15,7 @@ export default function LandingEarningPotentialStep() {
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-5 text-center">
           <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
-          <p className="text-2xl font-bold text-gradient">KES 5-50+</p>
-          <p className="text-sm text-muted-foreground">Per task completed</p>
+          <p className="text-sm text-muted-foreground"> Daily Tasks Always Available</p>
         </div>
         <div className="glass-card p-5 text-center">
           <TrendingUp className="w-8 h-8 text-primary mx-auto mb-2" />
