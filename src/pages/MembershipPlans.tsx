@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Info, AlertCircle, Clock, TrendingUp } from "lucide-react";
+import { Loader2, Info, AlertCircle, TrendingUp } from "lucide-react";
 import { PlanCardSkeleton } from "@/components/membership/PlanCardSkeleton";
 import { PlanCard } from "@/components/membership/PlanCard";
 import { PlanTabs } from "@/components/membership/PlanTabs";
@@ -350,16 +350,6 @@ export default function MembershipPlans() {
                   <AlertTitle>{t("membershipPlans.planExpired")}</AlertTitle>
                   <AlertDescription>
                     {t("membershipPlans.planExpiredDescription", { plan: currentPlan })}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {planStatus && planStatus.status === 'expiring_soon' && (
-                <Alert className="mb-6 max-w-3xl mx-auto bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-amber-900 dark:text-amber-100">{t("membershipPlans.planExpiringSoon")}</AlertTitle>
-                  <AlertDescription className="text-amber-800 dark:text-amber-200">
-                    {t("membershipPlans.planExpiringSoonDescription", { plan: currentPlan, days: planStatus.daysUntilExpiry })}
                   </AlertDescription>
                 </Alert>
               )}

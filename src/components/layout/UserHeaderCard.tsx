@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
 import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface UserHeaderCardProps {
@@ -18,28 +17,6 @@ interface UserHeaderCardProps {
     earnerBadge?: EarnerBadgeStatus;
   } | null;
 }
-
-// Utility: Calculate days until expiry with human-readable format
-const calculateDaysUntilExpiry = (expiryDate?: string | null): string => {
-  if (!expiryDate) return "No expiry";
-  
-  const now = new Date();
-  const expiry = new Date(expiryDate);
-  const diffTime = expiry.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 0) return "Expired";
-  if (diffDays === 0) return "Expires today";
-  if (diffDays === 1) return "1d left";
-  if (diffDays < 30) return `${diffDays}d left`;
-  if (diffDays < 60) return "1 month";
-  if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months} months`;
-  }
-  const years = Math.floor(diffDays / 365);
-  return years === 1 ? "1 year" : `${years} years`;
-};
 
 // Utility: Get status color based on account status and expiry
 const getAccountStatusColor = (
@@ -79,31 +56,6 @@ const AccountStatusDot = ({
     <Badge variant={statusColor} className="text-xs">
       {displayStatus}
     </Badge>
-  );
-};
-
-// Sub-component: Expiry Countdown
-const ExpiryCountdown = ({ expiryDate }: { expiryDate?: string | null }) => {
-  const countdown = useMemo(() => calculateDaysUntilExpiry(expiryDate), [expiryDate]);
-  
-  if (countdown === "No expiry") return null;
-  
-  const isExpired = countdown === "Expired";
-  const isExpiringSoon = countdown.includes("d left") && 
-    parseInt(countdown) <= 7;
-  
-  return (
-    <span 
-      className={`text-xs ${
-        isExpired 
-          ? 'text-destructive font-medium' 
-          : isExpiringSoon 
-          ? 'text-orange-500 font-medium'
-          : 'text-muted-foreground'
-      }`}
-    >
-      {countdown}
-    </span>
   );
 };
 
@@ -178,7 +130,7 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
             </Link>
           </div>
           
-          {/* Plan & Status Row */}
+          {/* Plan & Status Row - days left shown only on dashboard banner, not here */}
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="text-xs font-medium">
               {planDisplayName}
@@ -187,7 +139,6 @@ export const UserHeaderCard = ({ profile }: UserHeaderCardProps) => {
               status={profile.account_status} 
               expiryDate={profile.plan_expires_at}
             />
-            <ExpiryCountdown expiryDate={profile.plan_expires_at} />
           </div>
         </div>
       </div>

@@ -28,20 +28,21 @@ export const FreeAccountUpgradeBanner = ({
   const getDaysUntilExpiry = (): number | null => {
     const now = new Date();
 
-    // 1) Prefer explicit expiry date from profile (plan_expires_at)
-    if (planExpiresAt) {
-      const expiryDate = new Date(planExpiresAt);
-      const diffMs = expiryDate.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? diffDays : null;
-    }
-
-    // 2) Derive from plan start + free plan trial length
+    // 1) For free plan: always use current plan config (plan start + free_plan_expiry_days) so when
+    //    admin changes free plan expiry days, the banner shows updated days without waiting for profile sync
     const startSource = planStartDate || accountCreatedAt;
     if (startSource && freePlanExpiryDays != null && freePlanExpiryDays > 0) {
       const start = new Date(startSource);
       const expiryDate = new Date(start);
-      expiryDate.setDate(expiryDate.getDate() + freePlanExpiryDays);
+      expiryDate.setDate(expiryDate.getDate() + Number(freePlanExpiryDays));
+      const diffMs = expiryDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) return diffDays;
+    }
+
+    // 2) Fallback: use explicit expiry date from profile (e.g. when plan config has no trial length)
+    if (planExpiresAt) {
+      const expiryDate = new Date(planExpiresAt);
       const diffMs = expiryDate.getTime() - now.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       return diffDays > 0 ? diffDays : null;

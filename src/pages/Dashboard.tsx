@@ -18,7 +18,6 @@ import {
   UserPlus,
   Zap,
   AlertCircle,  
-  Clock,
   Settings,
   Rocket,
   ArrowRight
@@ -284,26 +283,6 @@ const Dashboard = () => {
                   <span>{t("dashboard.planExpiredDescription", { plan: profile.membership_plan })}</span>
                   <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
                     {t("dashboard.upgradeNow")}
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          {planStatus && planStatus.status === 'expiring_soon' && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <Alert className="bg-yellow-500/10 border-yellow-500/20">
-                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-                <AlertTitle className="text-yellow-700 dark:text-yellow-400">{t("dashboard.planExpiringSoon")}</AlertTitle>
-                <AlertDescription className="flex items-center justify-between text-yellow-800 dark:text-yellow-300">
-                  <span>
-                    {planStatus.daysUntilExpiry === 1 
-                      ? t("dashboard.planExpiringSoonDescription", { plan: profile.membership_plan, days: planStatus.daysUntilExpiry })
-                      : t("dashboard.planExpiringSoonDescriptionPlural", { plan: profile.membership_plan, days: planStatus.daysUntilExpiry })
-                    }
-                  </span>
-                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
-                    {t("dashboard.renewAccount")}
                   </Button>
                 </AlertDescription>
               </Alert>

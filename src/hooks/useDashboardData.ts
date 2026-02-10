@@ -15,7 +15,7 @@ export const useDashboardData = (userId: string | undefined) => {
       ]);
       
       // Fetch membership plan based on profile (use 'free' when not set so we have free_plan_expiry_days for banner)
-      const planName = profile.membership_plan ;
+      const planName = profile.membership_plan || 'free';
       const planData = await supabaseService.membershipPlans.getByName(planName);
       
       // Add earner badge status to profile
@@ -29,6 +29,6 @@ export const useDashboardData = (userId: string | undefined) => {
       };
     },
     enabled: !!userId,
-    staleTime: 30000,
+    staleTime: 10000, // 10s so plan_expires_at updates (e.g. after admin changes free plan expiry) show soon when user refocuses or revisits
   });
 };
