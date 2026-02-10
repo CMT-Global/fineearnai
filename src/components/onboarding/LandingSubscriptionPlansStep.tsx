@@ -2,8 +2,8 @@ import { Check, X, Star } from "lucide-react";
 
 const plans = [
   {
-    name: "Basic",
-    dailyTasks: "10-15",
+    name: "free",
+    dailyTasks: "5/day",
     bonus: "Standard rate",
     priorityTasks: false,
     referralCommission: false,
@@ -11,17 +11,17 @@ const plans = [
     popular: false,
   },
   {
-    name: "Premium",
-    dailyTasks: "25-40",
+    name: "Basic Account",
+    dailyTasks: "50/day",
     bonus: "+10% bonus",
     priorityTasks: true,
     referralCommission: true,
     weeklyPotential: "~$120",
-    popular: true,
+    popular: false,
   },
   {
-    name: "Pro",
-    dailyTasks: "50-75",
+    name: "Premium Account",
+    dailyTasks: "20/day",
     bonus: "+20% bonus",
     priorityTasks: true,
     referralCommission: true,
@@ -29,13 +29,13 @@ const plans = [
     popular: false,
   },
   {
-    name: "Elite",
-    dailyTasks: "100+",
+    name: "Premiun",
+    dailyTasks: "50/day",
     bonus: "+30% bonus",
     priorityTasks: true,
     referralCommission: true,
     weeklyPotential: "~$300+",
-    popular: false,
+    popular: true,
   },
 ];
 
@@ -109,7 +109,7 @@ export default function LandingSubscriptionPlansStep() {
             ))}
 
             {/* Referral Commission */}
-            <div className="p-3 bg-muted/20 text-muted-foreground">Referral Income</div>
+            <div className="p-3 bg-muted/20 text-muted-foreground">Partner Commissions</div>
             {plans.map((plan) => (
               <div 
                 key={plan.name} 

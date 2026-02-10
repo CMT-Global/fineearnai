@@ -145,7 +145,7 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
         </div>
 
         {/* Step Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto scrollbar-hide max-h-[calc(90vh-200px)]">
           {isLastStep ? (
             <LandingGetStartedStep onComplete={handleComplete} />
           ) : (

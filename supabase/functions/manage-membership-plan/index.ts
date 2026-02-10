@@ -257,6 +257,22 @@ Deno.serve(async (req)=>{
           if (updateError) {
             throw new Error(`Failed to update plan: ${updateError.message}`);
           }
+
+          // When the free plan is updated, recalculate plan_expires_at for ALL users on that plan
+          // via DB RPC so the dashboard banner shows correct days left (works regardless of casing)
+          const planNameForFree = (currentPlan.name || updatedPlan.name || '').toLowerCase().trim();
+          if (planNameForFree === 'free') {
+            const newExpiryDays = updatedPlan.free_plan_expiry_days != null ? Number(updatedPlan.free_plan_expiry_days) : null;
+            const { data: updatedCount, error: rpcError } = await supabaseClient.rpc('recalculate_free_plan_expiries', {
+              p_expiry_days: newExpiryDays
+            });
+            if (rpcError) {
+              console.error('recalculate_free_plan_expiries RPC error:', rpcError);
+              throw new Error(`Failed to recalculate free plan expiries: ${rpcError.message}`);
+            }
+            console.log(`Recalculated plan_expires_at for ${updatedCount ?? 0} free plan user(s) with free_plan_expiry_days=${newExpiryDays}`);
+          }
+
           result = updatedPlan;
           auditDetails = {
             action: 'update_plan',
