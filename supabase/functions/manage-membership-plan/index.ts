@@ -133,6 +133,19 @@ import { corsHeaders } from '../_shared/cors.ts';
       errors.push("Free plan expiry days must be between 0 and 365 days");
     }
   }
+  // ========== Free Trial Days Validation (per-plan onboarding trial) ==========
+  // Coerce to number (client/JSON may send string)
+  if (planData.free_trial_days !== undefined && planData.free_trial_days !== null) {
+    const v = Number(planData.free_trial_days);
+    if (isNaN(v)) {
+      errors.push("Free trial days must be a valid number");
+    } else {
+      planData.free_trial_days = v;
+      if (planData.free_trial_days < 0 || planData.free_trial_days > 365) {
+        errors.push("Free trial days must be between 0 and 365 days");
+      }
+    }
+  }
   // ========== Business Logic Rules ==========
   if (planData.account_type === 'free' && planData.price && planData.price > 0) {
     errors.push("Free account type cannot have a price greater than 0");

@@ -24,6 +24,7 @@ export interface MembershipPlanData {
   max_daily_withdrawal?: number;
   billing_period_days?: number;
   free_plan_expiry_days?: number | null;
+  free_trial_days?: number | null;
 }
 
 /**
@@ -124,6 +125,13 @@ export const FIELD_CONSTRAINTS = {
     step: 1,
     label: 'Free Plan Expiry Days',
     help: 'Number of days before free plan expires (leave empty for lifetime access)'
+  },
+  free_trial_days: { 
+    min: 0, 
+    max: 365, 
+    step: 1,
+    label: 'Free Trial Days',
+    help: 'Number of days for free trial in onboarding when user selects this plan. 0 = no trial.'
   }
 } as const;
 
@@ -258,6 +266,13 @@ export function validateMembershipPlan(planData: MembershipPlanData): Validation
     if (planData.free_plan_expiry_days < FIELD_CONSTRAINTS.free_plan_expiry_days.min || 
         planData.free_plan_expiry_days > FIELD_CONSTRAINTS.free_plan_expiry_days.max) {
       errors.push(`Free plan expiry days must be between ${FIELD_CONSTRAINTS.free_plan_expiry_days.min} and ${FIELD_CONSTRAINTS.free_plan_expiry_days.max} days`);
+    }
+  }
+
+  if (planData.free_trial_days !== undefined && planData.free_trial_days !== null) {
+    if (planData.free_trial_days < FIELD_CONSTRAINTS.free_trial_days.min || 
+        planData.free_trial_days > FIELD_CONSTRAINTS.free_trial_days.max) {
+      errors.push(`Free trial days must be between ${FIELD_CONSTRAINTS.free_trial_days.min} and ${FIELD_CONSTRAINTS.free_trial_days.max} days`);
     }
   }
 

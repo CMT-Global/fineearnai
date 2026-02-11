@@ -225,31 +225,20 @@ const Dashboard = () => {
                     {planStatus?.status === 'expired' && ` (${t("dashboard.expired")})`}
                   </Badge>
                 </Button>
-                {planStatus && (planStatus.status === 'expired' || planStatus.status === 'expiring_soon') ? (
-                  <Button 
-                    className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                    onClick={() => navigate("/plans")}
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">{planStatus.status === 'expired' ? t("dashboard.upgradeNow") : t("dashboard.renewAccount")}</span>
-                    <span className="sm:hidden">{t("dashboard.renewAccount")}</span>
-                  </Button>
-                ) : (
-                  <Button 
-                    className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                    onClick={() => navigate("/plans")}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("dashboard.upgradeAccount")}</span>
-                    <span className="sm:hidden">{t("dashboard.upgradeAccount")}</span>
-                  </Button>
-                )}
+                <Button 
+                  className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+                  onClick={() => navigate("/plans")}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t("dashboard.upgradeNow")}</span>
+                  <span className="sm:hidden">{t("dashboard.upgradeNow")}</span>
+                </Button>
               </div>
             </div>
           </header>
 
-          {/* Free Account Upgrade Banner - show when plan is free or not set (treated as free) */}
-          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'free') && (
+          {/* Free Account Upgrade Banner - show only when plan is free and NOT expired; when expired we show Plan Expired alert below instead */}
+          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'free') && planStatus?.status !== 'expired' && (
             <div className="mx-4 lg:mx-8 mt-6">
               <FreeAccountUpgradeBanner 
                 userId={user.id}

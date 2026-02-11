@@ -71,8 +71,8 @@ export const ChangePlanDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="flex-shrink-0 px-6 pr-10 pt-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
             Change Membership Plan
@@ -82,7 +82,7 @@ export const ChangePlanDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-6 space-y-6 py-4">
           {/* Current Plan Info */}
           <div className="rounded-lg border bg-muted/50 p-4">
             <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export const ChangePlanDialog = ({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 px-6 pb-6 pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
