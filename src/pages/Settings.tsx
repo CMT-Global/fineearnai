@@ -36,6 +36,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPPORTED_LANGUAGES, getLanguageName, getLanguageFlag, SupportedLanguage } from "@/lib/country-language-map";
 import { useTranslation } from "react-i18next";
 
+const WEEKLY_GOAL_DISPLAY: Record<string, string> = {
+  "Small extra income": "Extra Income - upto 250$ Monthly",
+  "Side income goal": "Part-Time Side Hustle - upto 500$ monthly",
+  "Serious monthly target": "Full Time Hustle - Over 1,000$ monthly",
+};
+
 const Settings = () => {
   const { t } = useTranslation();
   const { user, signOut, loading: authLoading } = useAuth();
@@ -980,7 +986,7 @@ const Settings = () => {
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-between">
-                          {profile?.weekly_goal || "Not set"}
+                          {(profile?.weekly_goal && WEEKLY_GOAL_DISPLAY[profile.weekly_goal]) || profile?.weekly_goal || "Not set"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -988,7 +994,7 @@ const Settings = () => {
                         <Command>
                           <CommandList>
                             <CommandGroup>
-                              {["Small extra income", "Side income goal", "Serious monthly target", "Not sure yet"].map((goal) => (
+                              {["Extra Income - upto 250$ Monthly", "Part-Time Side Hustle - upto 500$ monthly", "Full Time Hustle - Over 1,000$ monthly", "Not sure yet"].map((goal) => (
                                 <CommandItem
                                   key={goal}
                                   onSelect={async () => {
@@ -999,7 +1005,7 @@ const Settings = () => {
                                     }
                                   }}
                                 >
-                                  <Check className={cn("mr-2 h-4 w-4", profile?.weekly_goal === goal ? "opacity-100" : "opacity-0")} />
+                                  <Check className={cn("mr-2 h-4 w-4", (WEEKLY_GOAL_DISPLAY[profile?.weekly_goal ?? ""] || profile?.weekly_goal) === goal ? "opacity-100" : "opacity-0")} />
                                   {goal}
                                 </CommandItem>
                               ))}

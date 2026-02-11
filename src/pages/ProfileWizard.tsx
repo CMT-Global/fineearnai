@@ -229,9 +229,9 @@ export default function ProfileWizard() {
             </div>
             <div className="grid grid-cols-1 gap-4">
               {[
-                { id: "small", label: "Small extra income", icon: Zap },
-                { id: "side", label: "Side income goal", icon: Target },
-                { id: "serious", label: "Serious monthly target", icon: TrendingUp },
+                { id: "small", label: "Extra Income - upto 250$ Monthly", icon: Zap },
+                { id: "side", label: "Part-Time Side Hustle - upto 500$ monthly", icon: Target },
+                { id: "serious", label: "Full Time Hustle - Over 1,000$ monthly", icon: TrendingUp },
                 { id: "not_sure", label: "Not sure yet", icon: HelpCircle },
               ].map((opt) => (
                 <Card 
@@ -485,7 +485,7 @@ export default function ProfileWizard() {
                   )}
                   onClick={() => setSelectedPlanId(plan.id)}
                 >
-                  {plan.account_type === 'free' && (
+                  {plan.display_name === 'Premium' && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500">Recommended</Badge>
                   )}
                   <CardHeader>
