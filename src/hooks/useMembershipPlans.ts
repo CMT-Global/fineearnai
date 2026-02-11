@@ -21,6 +21,7 @@ interface MembershipPlan {
   free_plan_expiry_days?: number;
   free_unlock_withdrawal_enabled?: boolean;
   free_unlock_withdrawal_days?: number;
+  free_trial_days?: number;
   is_active?: boolean;
 }
 

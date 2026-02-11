@@ -85,7 +85,7 @@ export default function ProfileWizard() {
     }
   }, [profile, navigate]);
 
-  const save = async (opts: { complete?: boolean; planId?: string } = {}): Promise<{ ok: boolean }> => {
+  const save = async (opts: { complete?: boolean; planId?: string; startTrial?: boolean } = {}): Promise<{ ok: boolean }> => {
     setError(null);
     setSaving(true);
     try {
@@ -100,6 +100,9 @@ export default function ProfileWizard() {
 
       if (opts.complete) {
         body.complete = true;
+      }
+      if (opts.startTrial === true) {
+        body.startTrial = true;
       }
 
       const { data, error: err } = await supabase.functions.invoke("save-profile-wizard", {
@@ -159,14 +162,14 @@ export default function ProfileWizard() {
   };
 
   const handleStartTrial = async () => {
-    const freePlan = plans.find(p => p.account_type === 'free');
-    if (freePlan) {
-      setSelectedPlanId(freePlan.id);
-      await save({ complete: true, planId: freePlan.id });
+    const selectedPlan = plans.find(p => p.id === selectedPlanId);
+    const trialDays = selectedPlan?.free_trial_days ?? 0;
+    if (selectedPlan && trialDays > 0) {
+      await save({ complete: true, planId: selectedPlan.id, startTrial: true });
     } else {
       toast({
         title: "Error",
-        description: "Free trial plan not found. Please contact support.",
+        description: "Free trial is not available for this plan. Please choose another plan or continue with upgrade.",
         variant: "destructive",
       });
     }
@@ -493,6 +496,11 @@ export default function ProfileWizard() {
                     <div className="text-2xl font-bold">
                       <CurrencyDisplay amountUSD={plan.price} />
                     </div>
+                    {(plan.free_trial_days ?? 0) > 0 && (
+                      <p className="text-sm font-medium text-primary mt-1">
+                        Free Trial: {plan.free_trial_days} days
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="flex-1 space-y-4">
                     <div className="space-y-2 text-sm">
@@ -544,6 +552,9 @@ export default function ProfileWizard() {
         );
 
       case 10:
+        const selectedPlan = plans.find(p => p.id === selectedPlanId);
+        const trialDays = selectedPlan?.free_trial_days ?? 0;
+        const showTrialOption = trialDays > 0;
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center space-y-4">
@@ -552,17 +563,30 @@ export default function ProfileWizard() {
                   <Star className="h-12 w-12" />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold">Start Free for 3 days or choose your plan</h2>
+              <h2 className="text-3xl font-bold">
+                {showTrialOption
+                  ? `Start free trial for ${trialDays} days or choose your plan`
+                  : "Choose your plan"}
+              </h2>
               <p className="text-xl text-muted-foreground">
-                Get access to tasks and your dashboard. Upgrade anytime to unlock more daily tasks and higher potential.
+                {showTrialOption
+                  ? "Get access to tasks and your dashboard. Upgrade anytime to unlock more daily tasks and higher potential."
+                  : "Free trial is not available for this plan. Continue to upgrade or go back to select another plan."}
               </p>
             </div>
             
             <div className="bg-card border rounded-xl p-8 space-y-6">
               <div className="flex flex-col gap-4">
-                <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={handleStartTrial}>
-                  Start Free Trial (3 Days)
-                </Button>
+                {showTrialOption && (
+                  <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={handleStartTrial}>
+                    Start Free Trial ({trialDays} Days)
+                  </Button>
+                )}
+                {!showTrialOption && (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Free trial not available for this plan. Upgrade to continue.
+                  </p>
+                )}
                 <Button variant="outline" size="lg" className="w-full h-16 text-xl" onClick={handleContinueWithPlan}>
                   Continue with Selected Plan
                 </Button>
