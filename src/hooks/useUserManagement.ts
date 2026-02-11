@@ -319,8 +319,10 @@ export const useUserManagement = () => {
         body: { 
           action: 'change_membership_plan', 
           userId,
-          planName: planData.planName,
-          expiresAt: planData.expiresAt
+          planData: {
+            plan_name: planData.plan_name ?? planData.planName,
+            expires_at: planData.expires_at ?? planData.expiresAt ?? null
+          }
         }
       });
     },

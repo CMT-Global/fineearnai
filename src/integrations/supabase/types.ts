@@ -719,6 +719,7 @@ export type Database = {
           free_plan_expiry_days: number | null
           free_unlock_withdrawal_days: number | null
           free_unlock_withdrawal_enabled: boolean
+          free_trial_days: number
           id: string
           is_active: boolean
           max_active_referrals: number
@@ -750,6 +751,7 @@ export type Database = {
           free_plan_expiry_days?: number | null
           free_unlock_withdrawal_days?: number | null
           free_unlock_withdrawal_enabled?: boolean
+          free_trial_days?: number
           id?: string
           is_active?: boolean
           max_active_referrals?: number
@@ -781,6 +783,7 @@ export type Database = {
           free_plan_expiry_days?: number | null
           free_unlock_withdrawal_days?: number | null
           free_unlock_withdrawal_enabled?: boolean
+          free_trial_days?: number
           id?: string
           is_active?: boolean
           max_active_referrals?: number
