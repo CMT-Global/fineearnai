@@ -40,6 +40,7 @@ interface MembershipPlan {
   min_daily_withdrawal: number;
   max_daily_withdrawal: number;
   free_plan_expiry_days: number | null;
+  free_trial_days: number;
   referral_eligible: boolean; // Phase 3: Control commission generation
   is_active: boolean;
   features: any;
@@ -77,6 +78,7 @@ const PlansManage = () => {
     min_daily_withdrawal: 10,
     max_daily_withdrawal: 1000,
     free_plan_expiry_days: null as number | null,
+    free_trial_days: 0,
     referral_eligible: true,
     is_active: true,
     features: "[]",
@@ -183,6 +185,7 @@ const PlansManage = () => {
         min_daily_withdrawal: formData.min_daily_withdrawal,
         max_daily_withdrawal: formData.max_daily_withdrawal,
         free_plan_expiry_days: formData.free_plan_expiry_days,
+        free_trial_days: (formData.account_type === 'free' || formData.name === 'free') ? 0 : (Number(formData.free_trial_days) || 0),
         referral_eligible: referralEligible, // Phase 3: Control commission generation
         is_active: formData.is_active,
         features,
@@ -275,6 +278,7 @@ const PlansManage = () => {
       min_daily_withdrawal: 10,
       max_daily_withdrawal: 1000,
       free_plan_expiry_days: null as number | null,
+      free_trial_days: 0,
       referral_eligible: true, // Phase 3: Default to true
       is_active: true,
       features: "[]",
@@ -301,6 +305,7 @@ const PlansManage = () => {
       min_daily_withdrawal: plan.min_daily_withdrawal,
       max_daily_withdrawal: plan.max_daily_withdrawal,
       free_plan_expiry_days: plan.free_plan_expiry_days,
+      free_trial_days: (plan as any).free_trial_days ?? 0,
       referral_eligible: plan.referral_eligible, // Phase 3: Load existing value
       is_active: plan.is_active,
       features: JSON.stringify(plan.features || [], null, 2),
@@ -740,6 +745,31 @@ const PlansManage = () => {
                         />
                         <p className="text-xs text-muted-foreground mt-1">
                           Number of days before free plan expires. Leave empty for lifetime access.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Free Trial Days - Only for paid plans; hidden for free plan */}
+                    {formData.account_type !== 'free' && formData.name !== 'free' && (
+                      <div>
+                        <Label htmlFor="free_trial_days">Free Trial Days (Onboarding)</Label>
+                        <Input
+                          id="free_trial_days"
+                          type="number"
+                          min={0}
+                          max={365}
+                          step={1}
+                          value={formData.free_trial_days}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              free_trial_days: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          placeholder="0"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Days of free trial when user selects this plan in questionnaire step 10. 0 = hide trial option; show upgrade only.
                         </p>
                       </div>
                     )}

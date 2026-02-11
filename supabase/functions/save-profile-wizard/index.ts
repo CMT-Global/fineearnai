@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       weekly_routine,
       recommended_plan_id,
       selected_plan_id,
+      startTrial,
       onboarding_version,
     } = body;
 
@@ -92,6 +93,34 @@ Deno.serve(async (req) => {
       updates.profile_completed = true;
       updates.profile_completed_at = new Date().toISOString();
       updates.onboarding_completed_at = new Date().toISOString();
+    }
+
+    // Start free trial: assign user to selected plan with plan_expires_at = now + plan.free_trial_days
+    if (complete === true && startTrial === true && selected_plan_id) {
+      const { data: plan, error: planError } = await supabaseAdmin
+        .from('membership_plans')
+        .select('name, free_trial_days')
+        .eq('id', selected_plan_id)
+        .maybeSingle();
+      if (planError || !plan) {
+        return new Response(
+          JSON.stringify({ error: 'validation_error', message: 'Selected plan not found or trial not available.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const trialDays = Number(plan.free_trial_days ?? 0);
+      if (trialDays <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'validation_error', message: 'Free trial is not available for this plan.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + trialDays);
+      updates.membership_plan = plan.name;
+      updates.plan_expires_at = expiresAt.toISOString();
+      updates.current_plan_start_date = now.toISOString();
     }
 
     if (skip_payout !== true && usdt_bep20_address != null && String(usdt_bep20_address).trim()) {
