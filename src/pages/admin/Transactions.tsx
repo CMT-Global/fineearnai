@@ -65,7 +65,7 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("completed");
   const [walletFilter, setWalletFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
