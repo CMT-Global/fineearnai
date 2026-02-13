@@ -383,7 +383,7 @@ export function PlanCard({
                 <Alert variant="destructive" className="w-full">
                   <AlertDescription className="text-xs text-center space-y-1">
                     <p>Insufficient balance</p>
-                    <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
+                    <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
                   <Button
                     variant="link"
                     size="sm"
@@ -640,7 +640,7 @@ export function PlanCard({
           <Alert variant="destructive" className="w-full">
             <AlertDescription className="text-xs text-center space-y-1">
               <p>Insufficient balance</p>
-              <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
+              <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
               <Button
                 variant="link"
                 size="sm"

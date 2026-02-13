@@ -89,7 +89,7 @@ const Transactions = () => {
     if (isAdmin) {
       loadTransactions();
     }
-  }, [isAdmin, page]);
+  }, [isAdmin, page, typeFilter, statusFilter, walletFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -103,7 +103,7 @@ const Transactions = () => {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("transactions")
         .select(`
           id,
@@ -120,8 +120,20 @@ const Transactions = () => {
             email
           )
         `, { count: 'exact' })
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        .in("type", ["deposit", "withdrawal"])
+        .order("created_at", { ascending: false });
+
+      if (typeFilter !== "all") {
+        query = query.eq("type", typeFilter as "deposit" | "withdrawal");
+      }
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter as "completed" | "pending" | "failed" | "cancelled");
+      }
+      if (walletFilter !== "all") {
+        query = query.eq("wallet_type", walletFilter as "deposit" | "earnings");
+      }
+
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
 
@@ -181,7 +193,7 @@ const Transactions = () => {
     return matchesSearch && matchesType && matchesStatus && matchesWallet;
   });
 
-  const transactionTypes = Array.from(new Set(transactions.map((t) => t.type)));
+  const transactionTypes = ["deposit", "withdrawal"];
 
   if (authLoading || adminLoading || loading) {
     return <PageLoading text={t("admin.transactions.loadingTransactions")} />;
