@@ -30,6 +30,11 @@ import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { MobileUserBadge } from "@/components/layout/MobileUserBadge";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useTranslation } from "react-i18next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /** Persists across Sidebar remounts when navigating between pages (Dashboard → Settings etc.) */
 const SIDEBAR_SCROLL_KEY = "sidebar-nav-scroll-top";
@@ -84,7 +89,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Home, label: t("navigation.dashboard"), path: "/dashboard" },
     { icon: Zap, label: t("navigation.tasks"), path: "/tasks" },
     { icon: Wallet, label: t("navigation.wallet"), path: "/wallet" },
-    { icon: Users, label: t("navigation.referrals"), path: "/referrals" },
+    { icon: Users, label: t("navigation.referrals"), path: "/referrals", tooltip: t("navigation.myTeamTooltip") },
   ], [t]);
 
   // Partner navigation - changes based on partner status and global partner program toggle - memoized
@@ -304,26 +309,37 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
         onPointerDownCapture={captureScroll}
         onMouseDownCapture={captureScroll}
       >
-        {navItems.map((item: any) => (
-          <button
-            key={item.path}
-            onClick={() => handleNavigation(item.path)}
-            onMouseEnter={() => handlePrefetch(item.path)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
-              isActive(item.path)
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                : item.highlight
-                ? "bg-green-500/10 hover:bg-green-500/20"
-                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-            } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''}`}
-          >
-            <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
-            <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''}`}>{item.label}</span>
-            {item.isPartner && (
-              <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
-            )}
-          </button>
-        ))}
+        {navItems.map((item: any) => {
+          const navButton = (
+            <button
+              onClick={() => handleNavigation(item.path)}
+              onMouseEnter={() => handlePrefetch(item.path)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
+                isActive(item.path)
+                  ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
+                  : item.highlight
+                  ? "bg-green-500/10 hover:bg-green-500/20"
+                  : "hover:bg-[hsl(var(--sidebar-accent))]/50"
+              } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''}`}
+            >
+              <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
+              <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''}`}>{item.label}</span>
+              {item.isPartner && (
+                <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+              )}
+            </button>
+          );
+          return item.tooltip ? (
+            <Tooltip key={item.path}>
+              <TooltipTrigger asChild>{navButton}</TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[200px]">
+                {item.tooltip}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <span key={item.path}>{navButton}</span>
+          );
+        })}
       </nav>
 
       {/* Switch to Admin Button - Highly Visible */}

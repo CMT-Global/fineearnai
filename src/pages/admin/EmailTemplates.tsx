@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Info, Mail, AlertTriangle, Monitor, Smartphone, Sparkles, Copy } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Eye, Info, Mail, AlertTriangle, Monitor, Smartphone, Sparkles, Copy } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -338,27 +338,6 @@ const EmailTemplates = () => {
     } catch (error: any) {
       console.error("Error saving template:", error);
       toast.error(error.message || t("admin.emailTemplates.errors.failedToSave"));
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.emailTemplates.confirm.delete"))) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("email_templates")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success(t("admin.emailTemplates.success.templateDeleted"));
-      loadTemplates();
-    } catch (error: any) {
-      console.error("Error deleting template:", error);
-      toast.error(t("admin.emailTemplates.errors.failedToDelete"));
     }
   };
 
@@ -782,14 +761,6 @@ const EmailTemplates = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(template.id)}
-                              title={t("admin.emailTemplates.deleteTemplateTooltip")}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
