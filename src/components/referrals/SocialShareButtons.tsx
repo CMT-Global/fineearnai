@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, Twitter, Facebook } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SocialShareButtonsProps {
   referralUrl: string;
@@ -8,8 +9,9 @@ interface SocialShareButtonsProps {
 }
 
 export const SocialShareButtons = ({ referralUrl, username, platformName = "ProfitChips" }: SocialShareButtonsProps) => {
-  const shareMessage = `Join me on ${platformName} and start earning by training AI! Use my referral code to get started. ${referralUrl}`;
-  const shareText = `Join me on ${platformName} and start earning by training AI! Use my referral code to get started.`;
+  const { t } = useTranslation();
+  const shareMessage = `Join me on ${platformName} and start earning by training AI! Use my invite code to get started. ${referralUrl}`;
+  const shareText = `Join me on ${platformName} and start earning by training AI! Use my invite code to get started.`;
   
   const handleWhatsAppShare = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
@@ -33,7 +35,8 @@ export const SocialShareButtons = ({ referralUrl, username, platformName = "Prof
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium">Share on Social Media</p>
+      <p className="text-sm font-medium">{t("referrals.shareOnSocialMedia")}</p>
+      <p className="text-xs text-muted-foreground">{t("referrals.inviteViaWhatsAppTelegram")}</p>
       <div className="grid grid-cols-2 gap-2">
         <Button
           variant="outline"

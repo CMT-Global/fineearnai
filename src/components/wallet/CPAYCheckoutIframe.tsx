@@ -36,7 +36,7 @@ export const CPAYCheckoutIframe = ({
   const [showingConfirmation, setShowingConfirmation] = useState(false); // ✅ NEW: Loading state during transition
   const [showScrollHint, setShowScrollHint] = useState(true);
   const isMobile = useIsMobile();
-  const MAX_POLLS = 120; // Poll for 6 minutes (120 * 3 seconds) - increased for webhook processing time
+  const MAX_POLLS = 240; // Poll for 6 minutes (240 * 1.5s) while user completes payment
 
   useEffect(() => {
     if (!open) {
@@ -49,7 +49,7 @@ export const CPAYCheckoutIframe = ({
       return;
     }
 
-    // Start polling for transaction status
+    const POLL_MS = 1500; // Poll every 1.5s so we detect webhook completion quickly
     const pollInterval = setInterval(async () => {
       setPollingCount((prev) => {
         if (prev >= MAX_POLLS) {
@@ -59,21 +59,49 @@ export const CPAYCheckoutIframe = ({
         return prev + 1;
       });
 
+      const handleDepositCompleted = (
+        data: { status: string; amount: unknown; new_balance?: unknown },
+        _wasNewTransaction: boolean
+      ) => {
+        clearInterval(pollInterval);
+        setShowingConfirmation(true);
+        setTransactionStatus("completed");
+        setLoading(false);
+        const amountNum = Number(data.amount);
+        const displayAmount = Number.isFinite(amountNum) ? amountNum.toFixed(2) : String(data.amount ?? amount);
+        console.log("✅ [CPAY-IFRAME] Deposit completed:", {
+          transactionId,
+          orderId,
+          amount: data.amount,
+          currency,
+          newBalance: data.new_balance,
+          timestamp: new Date().toISOString(),
+        });
+        toast.success(
+          `Deposit successful! $${displayAmount} ${currency} has been credited to your account.`,
+          { duration: 4000 }
+        );
+        setTimeout(() => {
+          onSuccess();
+          onOpenChange(false);
+        }, 1200);
+      };
+
       try {
-        // First check if original transaction was updated
+        // 1) Check if original transaction was updated to completed by webhook
         const { data: originalTxn, error: originalError } = await supabase
           .from("transactions")
           .select("status, amount, new_balance")
           .eq("id", transactionId)
           .single();
 
-        if (originalError) {
-          console.error("[CPAY-IFRAME] Error polling transaction:", originalError);
+        if (!originalError && originalTxn?.status === "completed") {
+          handleDepositCompleted(originalTxn, false);
           return;
         }
 
-        // Check for new completed transaction created by webhook
-        const { data: newTxnArray, error: newError } = await supabase
+        // 2) Check for new completed transaction created by webhook (metadata.original_transaction_id)
+        const { data: newTxnArray } = await supabase
           .from("transactions")
           .select("status, amount, new_balance, metadata")
           .eq("status", "completed")
@@ -82,41 +110,30 @@ export const CPAYCheckoutIframe = ({
           .order("created_at", { ascending: false })
           .limit(1);
 
-        // Use the new transaction if it exists and is completed, otherwise use original
-        const data = (newTxnArray && newTxnArray.length > 0) 
-          ? newTxnArray[0] 
-          : originalTxn;
-        
-        const wasNewTransaction = newTxnArray && newTxnArray.length > 0;
+        if (newTxnArray && newTxnArray.length > 0) {
+          handleDepositCompleted(newTxnArray[0], true);
+          return;
+        }
 
-        if (data.status === "completed") {
-          setShowingConfirmation(true); // ✅ Show our loading state immediately
-          setTransactionStatus("completed");
-          setLoading(false);
-          clearInterval(pollInterval);
-          
-          console.log('✅ [CPAY-IFRAME] Deposit completed:', {
-            transactionId,
-            orderId,
-            amount: data.amount,
-            currency,
-            newBalance: data.new_balance,
-            wasNewTransaction,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Enhanced success toast with detailed information
-          toast.success(
-            `Deposit successful! $${data.amount.toFixed(2)} ${currency} has been credited to your account.`,
-            { duration: 4000 }
-          );
-          
-          // ✅ Reduced delay for faster close (1.5s instead of 2s)
-          setTimeout(() => {
-            onSuccess(); // Triggers balance refresh
-            onOpenChange(false); // Closes iframe
-          }, 1500);
-        } else if (data.status === "failed") {
+        // 3) Fallback: find any completed CPAY deposit for this order (gateway_transaction_id = orderId)
+        const { data: byOrderId } = await supabase
+          .from("transactions")
+          .select("status, amount, new_balance")
+          .eq("gateway_transaction_id", orderId)
+          .eq("type", "deposit")
+          .eq("payment_gateway", "cpay")
+          .eq("status", "completed")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (byOrderId?.status === "completed") {
+          handleDepositCompleted(byOrderId, true);
+          return;
+        }
+
+        // 4) Handle failed
+        if (!originalError && originalTxn?.status === "failed") {
           setTransactionStatus("failed");
           setLoading(false);
           clearInterval(pollInterval);
@@ -125,7 +142,7 @@ export const CPAYCheckoutIframe = ({
       } catch (err) {
         console.error("[CPAY-IFRAME] Polling error:", err);
       }
-    }, 3000); // Poll every 3 seconds
+    }, POLL_MS);
 
     // Cleanup on unmount or when dialog closes
     return () => {
@@ -148,7 +165,13 @@ export const CPAYCheckoutIframe = ({
       <DialogContent className={`${isMobile ? 'max-w-[100vw] w-full h-[98vh]' : 'max-w-5xl w-[95vw] h-[92vh]'} flex flex-col p-0`}>
         <DialogHeader className={`${isMobile ? 'px-3 pt-3 pb-2' : 'px-5 pt-4 pb-3'} border-b shrink-0`}>
           <DialogTitle className={`flex items-center justify-between pr-8 ${isMobile ? 'text-base' : ''}`}>
-            <span>Complete Your Deposit</span>
+            <span>
+              {transactionStatus === "completed"
+                ? "Payment successful!"
+                : transactionStatus === "failed"
+                  ? "Payment failed"
+                  : "Complete Your Deposit"}
+            </span>
             {transactionStatus === "pending" && (
               <span className="text-xs font-normal text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
                 <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />

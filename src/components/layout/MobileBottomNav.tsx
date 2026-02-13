@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Zap, Crown, Wallet, Users } from "lucide-react";
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface MobileBottomNavProps {
   profile: any;
@@ -8,14 +9,14 @@ interface MobileBottomNavProps {
 
 /**
  * MobileBottomNav - Fixed bottom navigation for mobile devices (Phase 3: Polished)
- * 
+ *
  * Provides quick access to 5 primary actions:
  * 1. Home (Dashboard)
  * 2. Tasks
  * 3. Upgrade (Membership Plans) - Elevated Center FAB
  * 4. Wallet
- * 5. Invite (Referrals)
- * 
+ * 5. My Team (Referrals)
+ *
  * Features:
  * - Fixed bottom positioning with iOS safe area support
  * - Active state highlighting with gradient indicators
@@ -25,6 +26,7 @@ interface MobileBottomNavProps {
  * - Hidden on desktop (lg:hidden)
  */
 export const MobileBottomNav = memo(({ profile }: MobileBottomNavProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [pressedButton, setPressedButton] = useState<string | null>(null);
@@ -57,9 +59,9 @@ export const MobileBottomNav = memo(({ profile }: MobileBottomNavProps) => {
     },
     { 
       icon: Users, 
-      label: "Invite", 
+      label: t("navigation.referrals"), 
       path: "/referrals",
-      ariaLabel: "Invite Friends"
+      ariaLabel: t("navigation.myTeamTooltip")
     },
   ];
 
