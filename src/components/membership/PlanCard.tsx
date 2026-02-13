@@ -58,6 +58,9 @@ export function PlanCard({
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
   const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
 
+  // Trainee/free plan: no monthly/yearly earning potential (trial expires in X days)
+  const isTraineeOrFreePlan = plan.name === 'free' || plan.name === 'trainee' || plan.account_type?.toLowerCase() === 'free' || (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0);
+
   // Plan tier hierarchy for downgrade detection
   // Supports both display names (with spaces) and database names (with underscores)
   const planTiers: Record<string, number> = {
@@ -91,11 +94,6 @@ export function PlanCard({
 
   // ✅ COMBINED: Prefer price check, fallback to tier
   const isDowngrade = !isCurrentPlan && (isPriceDowngrade || (isTierDowngrade && !isPriceDowngrade));
-
-  // Calculate break even days for paid plans
-  const breakEvenDays = plan.name !== 'free' && plan.price > 0 && plan.earning_per_task > 0 && plan.daily_task_limit > 0
-    ? Math.ceil(plan.price / (plan.earning_per_task * plan.daily_task_limit))
-    : null;
 
   // Calculate annual savings vs free plan
   const annualSavingsVsFree = plan.name !== 'free' && freePlanEarning > 0 && earningPotential
@@ -229,31 +227,6 @@ export function PlanCard({
 
             {/* Middle Section - Features - Full Width on Mobile */}
             <div className="flex-1 w-full lg:w-1/2">
-              {/* Break Even Calculator for Paid Plans - Horizontal */}
-              {breakEvenDays && plan.name !== 'free' && (
-                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 mb-4 animate-fade-in">
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
-                    <DollarSign className="h-4 w-4 animate-pulse" />
-                    <span className="font-semibold text-sm">
-                      💰 Break even in {breakEvenDays} days, then pure profit!
-                    </span>
-                  </div>
-                  {/* ROI Timeline Visual */}
-                  <div className="relative pt-2">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all duration-1000 animate-pulse"
-                        style={{ width: `${Math.min((breakEvenDays / plan.billing_period_days) * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>Pay off: {breakEvenDays}d</span>
-                      <span>Earn for: {plan.billing_period_days}d</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
                   <Check className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
@@ -341,7 +314,7 @@ export function PlanCard({
 
             {/* Right Section - Earning Potential & CTA - Stack on Mobile */}
             <div className="flex-shrink-0 w-full lg:w-1/4 space-y-4">
-              {earningPotential && (
+              {earningPotential && !isTraineeOrFreePlan && (
                 <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 hover:shadow-lg transition-shadow duration-300">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
                   <div className="relative z-10">
@@ -477,33 +450,8 @@ export function PlanCard({
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1 pb-4">
-        {/* Break Even Calculator with ROI Timeline for Paid Plans */}
-        {breakEvenDays && plan.name !== 'free' && (
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 animate-fade-in">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
-              <DollarSign className="h-4 w-4 animate-pulse" />
-              <span className="font-semibold text-sm">
-                💰 Break even in {breakEvenDays} days, then pure profit!
-              </span>
-            </div>
-            {/* ROI Timeline Visual */}
-            <div className="relative pt-2">
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all duration-1000 animate-pulse"
-                  style={{ width: `${Math.min((breakEvenDays / plan.billing_period_days) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Pay off: {breakEvenDays}d</span>
-                <span>Earn for: {plan.billing_period_days}d</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Earning Potential with Glassmorphism */}
-        {earningPotential && (
+        {/* Earning Potential with Glassmorphism - hidden for free/trainee plan */}
+        {earningPotential && !isTraineeOrFreePlan && (
           <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg hover:scale-105 transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
@@ -640,7 +588,7 @@ export function PlanCard({
           <Alert variant="destructive" className="w-full">
             <AlertDescription className="text-xs text-center space-y-1">
               <p>Insufficient balance</p>
-              <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
+                  <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> More</p>
               <Button
                 variant="link"
                 size="sm"

@@ -674,7 +674,8 @@
     "noInternetConnection": "No internet connection. Please check your network and try again.",
     "networkError": "Network error during upgrade. Please check your connection and try again.",
     "authError": "Authentication error. Please log in again and retry.",
-    "upgradeSuccessWithProration": "Successfully upgraded to {{plan}}! (Saved ${{savings}} from proration)"
+    "upgradeSuccessWithProration": "Successfully upgraded to {{plan}}! (Saved ${{savings}} from proration)",
+    "yourCurrentPlan": "Your current plan"
   },
   "signup": {
     "title": "Create Account",
