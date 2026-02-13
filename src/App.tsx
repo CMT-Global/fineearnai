@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
@@ -229,6 +229,7 @@ const RoutesWrapper = () => {
             <Route path=":userTaskId" element={<TaskDetail />} />
           </Route>
           <Route path="referrals" element={<Referrals />} />
+          <Route path="team" element={<Navigate to="/referrals" replace />} />
           <Route path="become-partner" element={<BecomePartner />} />
           <Route path="partner/application-status" element={<PartnerApplicationStatus />} />
           <Route path="partner/dashboard" element={<PartnerDashboard />} />

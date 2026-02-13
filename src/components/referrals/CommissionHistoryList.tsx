@@ -87,7 +87,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
   if (loading) {
     return (
       <Card className="p-6">
-        <p className="text-sm text-muted-foreground">Loading commission history...</p>
+        <p className="text-sm text-muted-foreground">{t("referrals.loadingCommissionHistory")}</p>
       </Card>
     );
   }
@@ -96,7 +96,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="h-5 w-5" />
-        <h2 className="text-xl font-semibold">Commission History</h2>
+        <h2 className="text-xl font-semibold">{t("referrals.commissionHistoryTitle")}</h2>
       </div>
 
       <Tabs value={filter} onValueChange={setFilter} className="w-full">
@@ -106,7 +106,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
               {t("wallet.all")}
             </TabsTrigger>
             <TabsTrigger value="task_commission" className="whitespace-nowrap">
-              {t("membershipPlans.taskCommission")}
+              {t("referrals.teamTaskCommission")}
             </TabsTrigger>
             <TabsTrigger value="deposit_commission" className="whitespace-nowrap">
               {t("membershipPlans.depositCommission")}
@@ -118,7 +118,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
           {filteredEarnings.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p>No commission earnings yet</p>
+              <p>{t("referrals.noCommissionEarningsYet")}</p>
             </div>
           ) : (
             <ScrollArea className="h-[400px] pr-4">
@@ -138,13 +138,13 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
                               {getEarningTypeLabel(earning.earning_type)}
                             </span>
                             {earning.earning_type === "task_commission" && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                Task
+                              <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded">
+                                {t("referrals.teamCommission")}
                               </span>
                             )}
                             {earning.earning_type === "deposit_commission" && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                                Deposit
+                              <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded">
+                                {t("membershipPlans.depositCommission")}
                               </span>
                             )}
                           </div>

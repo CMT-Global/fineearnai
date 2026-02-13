@@ -165,32 +165,16 @@ const Signup = () => {
         }
       }
 
-      // PHASE 6A: Email verification logging and notification
-      console.log("✅ Signup successful - email verification required");
+      // Signup successful; email verification happens later via OTP when user clicks Verify Email on dashboard
+      console.log("✅ Signup successful");
       
-      // If signup successful and we have a referral code, link will be handled by database trigger
       if (authData.user && referralCode) {
         console.log('[REFERRAL] ✅ Account created with referral code:', {
           userId: authData.user.id,
           referralCode: referralCode,
           referrerUsername: referrerUsername
         });
-        
-        toast({
-          title: t("signup.accountCreated"),
-          description: referrerUsername 
-            ? t("signup.accountCreatedWithReferrer", { platform: platformName, referrer: referrerUsername })
-            : t("signup.checkEmail"),
-        });
-        
-        // Clear the stored referral code
-        console.log('[REFERRAL] 🧹 Clearing stored referral code from localStorage');
         localStorage.removeItem("pending_referral_code");
-      } else {
-        toast({
-          title: t("signup.accountCreated"),
-          description: t("signup.checkEmail"),
-        });
       }
 
       // Redirect to profile wizard (or dashboard when complete)

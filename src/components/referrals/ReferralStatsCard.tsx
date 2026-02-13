@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Users, TrendingUp, DollarSign, UserPlus } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { useTranslation } from "react-i18next";
 
 interface ReferralStatsCardProps {
   totalReferrals: number;
@@ -15,6 +16,7 @@ export const ReferralStatsCard = ({
   totalEarnings,
   taskCommissionEarnings,
 }: ReferralStatsCardProps) => {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <Card className="p-4">
@@ -23,7 +25,7 @@ export const ReferralStatsCard = ({
             <Users className="h-5 w-5 text-[hsl(var(--wallet-referrals))]" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Total Referrals</p>
+            <p className="text-sm text-muted-foreground">{t("referrals.totalTeamMembers")}</p>
             <p className="text-2xl font-bold">{totalReferrals}</p>
           </div>
         </div>
@@ -35,7 +37,7 @@ export const ReferralStatsCard = ({
             <UserPlus className="h-5 w-5 text-[hsl(var(--wallet-tasks))]" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Active Today</p>
+            <p className="text-sm text-muted-foreground">{t("referrals.activeTeamMembersToday")}</p>
             <p className="text-2xl font-bold">{activeReferrals}</p>
           </div>
         </div>
@@ -47,7 +49,7 @@ export const ReferralStatsCard = ({
             <DollarSign className="h-5 w-5 text-[hsl(var(--wallet-earnings))]" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Total Earnings</p>
+            <p className="text-sm text-muted-foreground">{t("referrals.totalTeamEarnings")}</p>
             <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={totalEarnings} /></p>
           </div>
         </div>
@@ -59,7 +61,7 @@ export const ReferralStatsCard = ({
             <TrendingUp className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Task Commissions</p>
+            <p className="text-sm text-muted-foreground">{t("referrals.teamTaskCommissions")}</p>
             <p className="text-2xl font-bold"><CurrencyDisplay amountUSD={taskCommissionEarnings} /></p>
           </div>
         </div>

@@ -117,14 +117,16 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
+    // Resolve plan name: null/empty => 'free' (align with get-next-task and DB backfill)
+    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'free';
     // Fetch membership plan separately (no FK relationship exists)
-    const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', profile.membership_plan).eq('is_active', true).maybeSingle();
+    const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
     const profileTime = Date.now() - profileStartTime;
     if (planError || !membershipPlan) {
       console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError);
       return new Response(JSON.stringify({
         error: 'plan_not_found',
-        message: `Membership plan '${profile.membership_plan}' not found or inactive`
+        message: `Membership plan '${planName}' not found or inactive`
       }), {
         headers: {
           ...corsHeaders,
@@ -135,7 +137,7 @@ Deno.serve(async (req)=>{
     }
     console.log(`📊 [${requestId}] Profile loaded (${profileTime}ms):`, {
       username: profile.username,
-      plan: profile.membership_plan,
+      plan: planName,
       tasksCompleted: profile.tasks_completed_today,
       dailyLimit: membershipPlan.daily_task_limit
     });

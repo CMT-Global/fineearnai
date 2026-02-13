@@ -18,6 +18,7 @@ import { SocialShareButtons } from "@/components/referrals/SocialShareButtons";
 import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryList";
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
 import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
+import { HowTaskCommissionsWork } from "@/components/referrals/HowTaskCommissionsWork";
 import { Users, ChevronLeft, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,11 +68,36 @@ const Referrals = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Fetch free plan display name from membership_plans (admin-configured)
+  const { data: freePlanDisplayName } = useQuery({
+    queryKey: ["free-plan-display-name"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .select("display_name")
+        .eq("name", "free")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return (data?.display_name as string) || "Free";
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    document.title = `${t("referrals.title")} | ProfitChips`;
+    return () => {
+      document.title = "ProfitChips";
+    };
+  }, [t]);
 
   // Early return ONLY for auth loading (before we have user)
   if (loading || !user) {
@@ -107,7 +133,7 @@ const Referrals = () => {
               {/* My Upline Card */}
               <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
 
-              {/* Earner Status Banner - Unverified Users Only */}
+              {/* Free plan banner - task commissions locked (only for unverified / free plan users) */}
               {profile?.earnerBadge && !profile.earnerBadge.isVerified && (
                 <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
                   <div className="flex items-center gap-2">
@@ -115,20 +141,25 @@ const Referrals = () => {
                     <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
                   <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {profile.earnerBadge.badgeText} - {t("referrals.noReferralCommissions")}
+                    {t("referrals.freePlanBannerTitle", { planName: freePlanDisplayName ?? "Free" })}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                    <p>{profile.earnerBadge.upgradePrompt}</p>
+                    <p>{t("referrals.freePlanBannerMessage", { planName: freePlanDisplayName ?? "Free" })}</p>
                     <Button 
                       onClick={() => navigate("/plans")}
                       className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"
                     >
-                      {t("referrals.upgradeToEarnCommissions")}
+                      {t("referrals.freePlanBannerCta")}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </AlertDescription>
                 </Alert>
               )}
+
+              {/* How Task Commissions Work - Collapsible */}
+              <div className="mb-6">
+                <HowTaskCommissionsWork />
+              </div>
 
               {/* Referral Code Card - Full Width */}
               <Card className="p-6 mb-8">

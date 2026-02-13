@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUserManagement } from "@/hooks/useUserManagement";
-import { UserCheck, Globe, Phone } from "lucide-react";
+import { UserCheck, Globe, Phone, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { getCountryName } from "@/lib/countries";
 import { PhoneInputWithCountry } from "@/components/settings/PhoneInputWithCountry";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +41,7 @@ interface EditProfileDialogProps {
   userId: string;
   username: string;
   currentProfile: {
+    email?: string | null;
     full_name?: string | null;
     phone?: string | null;
     country?: string | null;
@@ -64,8 +66,9 @@ export const EditProfileDialog = ({
   onSuccess,
 }: EditProfileDialogProps) => {
   const { t } = useTranslation();
-  const { updateUserProfile } = useUserManagement();
+  const { updateUserProfile, updateUserEmail } = useUserManagement();
   
+  const [email, setEmail] = useState(currentProfile.email || "");
   const [fullName, setFullName] = useState(currentProfile.full_name || "");
   const [phone, setPhone] = useState(currentProfile.phone || "");
   const [country, setCountry] = useState(currentProfile.country || "");
@@ -81,6 +84,7 @@ export const EditProfileDialog = ({
 
   useEffect(() => {
     if (open) {
+      setEmail(currentProfile.email || "");
       setFullName(currentProfile.full_name || "");
       setPhone(currentProfile.phone || "");
       setCountry(currentProfile.country || "");
@@ -98,6 +102,17 @@ export const EditProfileDialog = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const newEmail = email.trim() || null;
+      const currentEmail = (currentProfile.email || "").trim() || null;
+      if (newEmail && newEmail !== currentEmail) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+          toast.error("Please enter a valid email address");
+          setIsSubmitting(false);
+          return;
+        }
+        await updateUserEmail.mutateAsync({ userId, newEmail });
+      }
       await updateUserProfile.mutateAsync({
         userId,
         profileData: {
@@ -114,7 +129,6 @@ export const EditProfileDialog = ({
           usdt_bep20_address: usdtBep20.trim() || null,
         },
       });
-      
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
@@ -138,6 +152,23 @@ export const EditProfileDialog = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-2">
+            <Label htmlFor="admin-edit-email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              Email
+            </Label>
+            <Input
+              id="admin-edit-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@example.com"
+              autoComplete="email"
+            />
+            <p className="text-xs text-muted-foreground">
+              Changing email updates both auth and profile. User may need to sign in with the new email.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>First name</Label>
