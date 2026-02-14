@@ -183,8 +183,8 @@ Deno.serve(async (req)=>{
           let upgradedReferrals = 0;
           if (referredIds.length > 0) {
             const { data: referredUsers } = await supabaseClient.from('profiles').select('membership_plan').in('id', referredIds);
-            freeReferrals = referredUsers?.filter((u)=>u.membership_plan === 'free').length || 0;
-            upgradedReferrals = referredUsers?.filter((u)=>u.membership_plan !== 'free').length || 0;
+            freeReferrals = referredUsers?.filter((u)=>u.membership_plan === 'Trainee').length || 0;
+            upgradedReferrals = referredUsers?.filter((u)=>u.membership_plan !== 'Trainee').length || 0;
           }
           // Calculate total commission earned
           const totalCommissionEarned = referrals?.reduce((sum, r)=>sum + Number(r.total_commission_earned || 0), 0) || 0;

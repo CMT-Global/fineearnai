@@ -185,7 +185,7 @@ const PlansManage = () => {
         min_daily_withdrawal: formData.min_daily_withdrawal,
         max_daily_withdrawal: formData.max_daily_withdrawal,
         free_plan_expiry_days: formData.free_plan_expiry_days,
-        free_trial_days: (formData.account_type === 'free' || formData.name === 'free') ? 0 : (Number(formData.free_trial_days) || 0),
+        free_trial_days: (formData.account_type === 'free' || formData.name === 'Trainee') ? 0 : (Number(formData.free_trial_days) || 0),
         referral_eligible: referralEligible, // Phase 3: Control commission generation
         is_active: formData.is_active,
         features,
@@ -734,7 +734,7 @@ const PlansManage = () => {
                     </div>
 
                     {/* Free Plan Expiry Days - Only shown for free accounts */}
-                    {(formData.account_type === 'free' || formData.name === 'free') && (
+                    {(formData.account_type === 'free' || formData.name === 'Trainee') && (
                       <div>
                         <Label htmlFor="free_plan_expiry_days">Free Plan Expiry Days</Label>
                         <Input
@@ -760,7 +760,7 @@ const PlansManage = () => {
                     )}
 
                     {/* Free Trial Days - Only for paid plans; hidden for free plan */}
-                    {formData.account_type !== 'free' && formData.name !== 'free' && (
+                    {formData.account_type !== 'free' && formData.name !== 'Trainee' && (
                       <div>
                         <Label htmlFor="free_trial_days">Free Trial Days (Onboarding)</Label>
                         <Input

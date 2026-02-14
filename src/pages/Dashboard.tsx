@@ -237,8 +237,8 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* Free Account Upgrade Banner - show only when plan is free and NOT expired; when expired we show Plan Expired alert below instead */}
-          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'free') && planStatus?.status !== 'expired' && (
+          {/* Default plan (Trainee) upgrade banner - show only when on Trainee and NOT expired */}
+          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'trainee') && planStatus?.status !== 'expired' && (
             <div className="mx-4 lg:mx-8 mt-6">
               <FreeAccountUpgradeBanner 
                 userId={user.id}
@@ -252,7 +252,7 @@ const Dashboard = () => {
           )}
 
           {/* Premium Upgrade Banner - For paid plans below the highest tier */}
-          {profile.membership_plan && profile.membership_plan !== 'free' && profile.membership_plan !== 'pro' && (
+          {profile.membership_plan && profile.membership_plan !== 'Trainee' && profile.membership_plan !== 'pro' && (
             <div className="mx-4 lg:mx-8 mt-6">
               <PremiumUpgradeBanner 
                 userId={user.id}

@@ -213,7 +213,7 @@ function UsersContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin.users.filters.plan.all")}</SelectItem>
-                  <SelectItem value="free">{t("admin.users.filters.plan.free")}</SelectItem>
+                  <SelectItem value="Trainee">{t("admin.users.filters.plan.free")}</SelectItem>
                   <SelectItem value="basic">{t("admin.users.filters.plan.basic")}</SelectItem>
                   <SelectItem value="premium">{t("admin.users.filters.plan.premium")}</SelectItem>
                   <SelectItem value="vip">{t("admin.users.filters.plan.vip")}</SelectItem>

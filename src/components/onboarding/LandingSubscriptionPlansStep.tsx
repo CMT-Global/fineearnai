@@ -2,7 +2,7 @@ import { Check, X, Star } from "lucide-react";
 
 const plans = [
   {
-    name: "free",
+    name: "Trainee",
     dailyTasks: "5/day",
     bonus: "Standard rate",
     priorityTasks: false,

@@ -171,11 +171,11 @@ export const completeApplicationSchema = z.object({
     message: "You must agree to the Partner Guidelines",
   }),
 }).superRefine((data, ctx) => {
-  // Phase 2: Free plan blocking validation
-  if (data.current_membership_plan === 'free') {
+  // Phase 2: Default plan (Trainee) blocking validation
+  if (data.current_membership_plan === 'Trainee') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Users on Free plan cannot become Partners. Please upgrade your account first.",
+      message: "Users on Trainee plan cannot become Partners. Please upgrade your account first.",
       path: ["current_membership_plan"],
     });
   }

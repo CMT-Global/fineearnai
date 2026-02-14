@@ -16,6 +16,7 @@ import LandingReferralProgramStep from "./onboarding/LandingReferralProgramStep"
 import LandingWithdrawalStep from "./onboarding/LandingWithdrawalStep";
 import LandingWhyTrustUsStep from "./onboarding/LandingWhyTrustUsStep";
 import LandingGetStartedStep from "./onboarding/LandingGetStartedStep";
+import LandingSecureAccessStep from "./onboarding/LandingSecureAccessStep";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -34,6 +35,7 @@ const STEPS: { title: string; component: React.ComponentType<any> }[] = [
   { title: "Withdrawals", component: LandingWithdrawalStep },
   { title: "Trust", component: LandingWhyTrustUsStep },
   { title: "Get Started", component: LandingGetStartedStep },
+  { title: "Secure Access", component: LandingSecureAccessStep },
 ];
 
 const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
@@ -146,11 +148,7 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
 
         {/* Step Content */}
         <div className="p-6 overflow-y-auto scrollbar-hide max-h-[calc(90vh-200px)]">
-          {isLastStep ? (
-            <LandingGetStartedStep onComplete={handleComplete} />
-          ) : (
-            <CurrentStepComponent onComplete={handleComplete} />
-          )}
+          <CurrentStepComponent onComplete={handleComplete} />
         </div>
 
         {/* Footer Navigation */}

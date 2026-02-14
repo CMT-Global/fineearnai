@@ -325,6 +325,7 @@ function UserDetailContent() {
               userId={userId!}
               username={profile.username}
               currentProfile={{
+                email: profile.email,
                 full_name: profile.full_name,
                 phone: profile.phone,
                 country: profile.country,

@@ -117,7 +117,7 @@ export function useMembershipPlans() {
     const potentials: Record<string, { daily: number; weekly: number; monthly: number; quarterly: number; sixMonthly: number; annually: number } | null> = {};
     
     plans.forEach(plan => {
-      if (plan.name === 'free') {
+      if (plan.name === 'Trainee' || plan.account_type === 'free') {
         potentials[plan.id] = null;
       } else {
         const daily = plan.daily_task_limit * plan.earning_per_task;

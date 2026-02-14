@@ -56,11 +56,16 @@ export function PlanCard({
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
-  const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
+  const isDefaultPlan = plan.name === 'Trainee' || plan.account_type?.toLowerCase() === 'free';
+  const isInsufficientBalance = depositBalance < plan.price && !isDefaultPlan && !isCurrentPlan && plan.price > 0;
+
+  // Default plan (Trainee): no monthly/yearly earning potential (trial expires in X days)
+  const isTraineeOrFreePlan = isDefaultPlan || (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0);
 
   // Plan tier hierarchy for downgrade detection
   // Supports both display names (with spaces) and database names (with underscores)
   const planTiers: Record<string, number> = {
+    'trainee': 0,
     'free': 0,
     'basic': 1,
     'premium': 2,
@@ -92,13 +97,8 @@ export function PlanCard({
   // ✅ COMBINED: Prefer price check, fallback to tier
   const isDowngrade = !isCurrentPlan && (isPriceDowngrade || (isTierDowngrade && !isPriceDowngrade));
 
-  // Calculate break even days for paid plans
-  const breakEvenDays = plan.name !== 'free' && plan.price > 0 && plan.earning_per_task > 0 && plan.daily_task_limit > 0
-    ? Math.ceil(plan.price / (plan.earning_per_task * plan.daily_task_limit))
-    : null;
-
-  // Calculate annual savings vs free plan
-  const annualSavingsVsFree = plan.name !== 'free' && freePlanEarning > 0 && earningPotential
+  // Calculate annual savings vs default plan (Trainee)
+  const annualSavingsVsFree = !isDefaultPlan && freePlanEarning > 0 && earningPotential
     ? earningPotential.annually - (freePlanEarning * 365)
     : null;
 
@@ -113,7 +113,7 @@ export function PlanCard({
       return "border-2 border-primary shadow-lg bg-gradient-to-br from-primary/5 to-primary/10";
     }
     
-    if (planNameLower === 'free') {
+    if (planNameLower === 'trainee' || planNameLower === 'free') {
       return "border-2 border-dashed border-muted-foreground/30 bg-muted/20 opacity-95 hover:opacity-100 transition-all duration-300";
     }
     
@@ -175,7 +175,7 @@ export function PlanCard({
     return (
       <Card className={`relative ${getCardStyles()} animate-fade-in`}>
         {/* START HERE Banner */}
-        {plan.name === 'free' && (
+        {isDefaultPlan && (
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
             <span className="font-bold text-xs sm:text-sm uppercase tracking-wider">🎯 Free Trial Account</span>
           </div>
@@ -201,21 +201,21 @@ export function PlanCard({
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+                  Subscription Valid: {isDefaultPlan && plan.free_plan_expiry_days 
                     ? plan.free_plan_expiry_days 
                     : plan.billing_period_days} days
                 </div>
               </div>
 
               {/* Daily cost breakdown for paid plans */}
-              {dailyCost && plan.name !== 'free' && (
+              {dailyCost && !isDefaultPlan && (
                 <div className="text-xs text-muted-foreground mt-2 animate-fade-in">
                   Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
                 </div>
               )}
               
               {/* Warning Badge */}
-              {plan.name === 'free' && (
+              {isDefaultPlan && (
                 <div className="mt-4 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950 dark:to-orange-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3 animate-pulse">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-xs sm:text-sm">
                     ⚠️ Limited Earnings - Upgrade to Unlock
@@ -229,31 +229,6 @@ export function PlanCard({
 
             {/* Middle Section - Features - Full Width on Mobile */}
             <div className="flex-1 w-full lg:w-1/2">
-              {/* Break Even Calculator for Paid Plans - Horizontal */}
-              {breakEvenDays && plan.name !== 'free' && (
-                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 mb-4 animate-fade-in">
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
-                    <DollarSign className="h-4 w-4 animate-pulse" />
-                    <span className="font-semibold text-sm">
-                      💰 Break even in {breakEvenDays} days, then pure profit!
-                    </span>
-                  </div>
-                  {/* ROI Timeline Visual */}
-                  <div className="relative pt-2">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all duration-1000 animate-pulse"
-                        style={{ width: `${Math.min((breakEvenDays / plan.billing_period_days) * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>Pay off: {breakEvenDays}d</span>
-                      <span>Earn for: {plan.billing_period_days}d</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-2 min-h-[44px] sm:min-h-0">
                   <Check className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
@@ -286,8 +261,8 @@ export function PlanCard({
                   </div>
                 )}
 
-                {/* Free Plan Specifics */}
-                {plan.name === 'free' && (
+                {/* Default plan (Trainee) specifics */}
+                {isDefaultPlan && (
                   <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm mt-4">
                     {plan.free_plan_expiry_days && (
                       <div className="flex items-center gap-2">
@@ -305,7 +280,7 @@ export function PlanCard({
                 )}
 
                 {/* What Free Users DON'T Get - Strikethrough Features */}
-                {plan.name === 'free' && (
+                {isDefaultPlan && (
                   <div className="mt-4 space-y-2 border-t pt-3">
                     <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
                     <div className="flex items-center gap-2 opacity-60">
@@ -341,7 +316,7 @@ export function PlanCard({
 
             {/* Right Section - Earning Potential & CTA - Stack on Mobile */}
             <div className="flex-shrink-0 w-full lg:w-1/4 space-y-4">
-              {earningPotential && (
+              {earningPotential && !isTraineeOrFreePlan && (
                 <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 hover:shadow-lg transition-shadow duration-300">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
                   <div className="relative z-10">
@@ -364,7 +339,7 @@ export function PlanCard({
               )}
 
               {/* Upgrade CTA for Free Trial - Prominent Button */}
-              {plan.name === 'free' && (
+              {isDefaultPlan && (
                 <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30">
                   <AlertDescription className="flex items-center justify-between gap-3">
                     <div className="flex-1">
@@ -383,7 +358,7 @@ export function PlanCard({
                 <Alert variant="destructive" className="w-full">
                   <AlertDescription className="text-xs text-center space-y-1">
                     <p>Insufficient balance</p>
-                    <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
+                    <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
                   <Button
                     variant="link"
                     size="sm"
@@ -451,7 +426,7 @@ export function PlanCard({
       
       <CardHeader className="pb-3 sm:pb-6">
         <CardTitle className="text-xl sm:text-2xl">
-          {plan.name !== 'free' && '👑 '}
+          {!isDefaultPlan && '👑 '}
           {plan.display_name}
         </CardTitle>
         <div className="space-y-1 text-sm text-muted-foreground">
@@ -462,13 +437,13 @@ export function PlanCard({
               </span>
             </div>
             <span className="text-xs sm:text-sm font-normal text-muted-foreground">
-              Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+              Subscription Valid: {isDefaultPlan && plan.free_plan_expiry_days 
                 ? plan.free_plan_expiry_days 
                 : plan.billing_period_days} days
             </span>
           </div>
           {/* Daily cost breakdown */}
-          {dailyCost && plan.name !== 'free' && (
+          {dailyCost && !isDefaultPlan && (
             <div className="text-xs text-muted-foreground animate-fade-in">
               Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
             </div>
@@ -477,33 +452,8 @@ export function PlanCard({
       </CardHeader>
 
       <CardContent className="space-y-4 flex-1 pb-4">
-        {/* Break Even Calculator with ROI Timeline for Paid Plans */}
-        {breakEvenDays && plan.name !== 'free' && (
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-lg p-3 animate-fade-in">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
-              <DollarSign className="h-4 w-4 animate-pulse" />
-              <span className="font-semibold text-sm">
-                💰 Break even in {breakEvenDays} days, then pure profit!
-              </span>
-            </div>
-            {/* ROI Timeline Visual */}
-            <div className="relative pt-2">
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all duration-1000 animate-pulse"
-                  style={{ width: `${Math.min((breakEvenDays / plan.billing_period_days) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Pay off: {breakEvenDays}d</span>
-                <span>Earn for: {plan.billing_period_days}d</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Earning Potential with Glassmorphism */}
-        {earningPotential && (
+        {/* Earning Potential with Glassmorphism - hidden for free/trainee plan */}
+        {earningPotential && !isTraineeOrFreePlan && (
           <div className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 rounded-lg p-3 space-y-2 hover:shadow-lg hover:scale-105 transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
@@ -533,8 +483,8 @@ export function PlanCard({
           </div>
         )}
 
-        {/* Free Plan Specifics */}
-        {plan.name === 'free' && (
+        {/* Default plan (Trainee) specifics */}
+        {isDefaultPlan && (
           <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
             {plan.free_plan_expiry_days && (
               <div className="flex items-center gap-2">
@@ -585,8 +535,8 @@ export function PlanCard({
           )}
         </div>
 
-        {/* What Free Users DON'T Get - Strikethrough Features (Vertical) */}
-        {plan.name === 'free' && (
+        {/* What default plan users don't get - Strikethrough Features (Vertical) */}
+        {isDefaultPlan && (
           <div className="mt-4 space-y-2 border-t pt-3">
             <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
             <div className="flex items-center gap-2 opacity-60">
@@ -620,8 +570,8 @@ export function PlanCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2 relative p-4 sm:p-6">
-        {/* Upgrade CTA for Free Trial - Prominent Alert (Vertical) */}
-        {plan.name === 'free' && (
+        {/* Upgrade CTA for default plan - Prominent Alert (Vertical) */}
+        {isDefaultPlan && (
           <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 w-full">
             <AlertDescription className="flex items-center justify-between gap-3">
               <div className="flex-1">
@@ -640,7 +590,7 @@ export function PlanCard({
           <Alert variant="destructive" className="w-full">
             <AlertDescription className="text-xs text-center space-y-1">
               <p>Insufficient balance</p>
-              <p>Need <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> more</p>
+                  <p>Deposit <strong><CurrencyDisplay amountUSD={plan.price - depositBalance} /></strong> More</p>
               <Button
                 variant="link"
                 size="sm"

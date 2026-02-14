@@ -114,7 +114,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
           .eq('referrer_id', user.id)
           .eq('status', 'active');
         
-        // Get upgraded referrals (referrals whose membership_plan is not 'free')
+        // Get upgraded referrals (referrals whose membership_plan is not 'Trainee')
         const { data: upgradedReferrals } = await supabase
           .from('referrals')
           .select('referred_id')
@@ -129,7 +129,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
               .from('profiles')
               .select('*', { count: 'exact', head: true })
               .in('id', referredIds)
-              .neq('membership_plan', 'free');
+              .neq('membership_plan', 'Trainee');
             
             setReferralStats({
               total: totalCount || 0,
@@ -404,7 +404,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
     });
     
     // Phase 4: Check if user is on free plan and block submission
-    if (data.current_membership_plan === 'free') {
+    if (data.current_membership_plan === 'Trainee') {
       console.log('⚠️ [PartnerApplicationWizard] Free plan detected, showing dialog');
       setShowFreePlanDialog(true);
       return;
@@ -784,7 +784,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
                       {isLoadingProfile ? (
                         <Skeleton className="h-6 w-20" />
                       ) : (
-                        <Badge variant={profile?.membership_plan === 'free' ? 'destructive' : 'default'}>
+                        <Badge variant={profile?.membership_plan === 'Trainee' ? 'destructive' : 'default'}>
                           {profile?.membership_plan?.toUpperCase() || 'FREE'}
                         </Badge>
                       )}
@@ -796,7 +796,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
                         <p className="text-xs text-muted-foreground">
                           Your current plan: <span className="font-semibold">{profile?.membership_plan || 'Free'}</span>
                         </p>
-                        {profile?.membership_plan === 'free' && (
+                        {profile?.membership_plan === 'Trainee' && (
                           <Alert className="mt-2" variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertDescription className="text-xs">

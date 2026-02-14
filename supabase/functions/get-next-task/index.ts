@@ -80,23 +80,22 @@ const corsHeaders = {
         status: 403
       });
     }
-    // Fetch the membership plan - always fresh from database
-    const planName = (profile.membership_plan || 'free').trim();
+    // Resolve plan name: null/empty => default plan (Trainee)
+    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'Trainee';
     let { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).maybeSingle();
-    // Fallback 1: try 'free' if profile plan was missing or not found
-    if ((planError || !plan) && planName !== 'free') {
-      const fallback = await supabase.from('membership_plans').select('*').eq('name', 'free').maybeSingle();
-      plan = fallback.data;
-      planError = fallback.error;
+    // Fallback: default-tier plan (account_type = 'free', typically Trainee)
+    if ((planError || !plan) && planName !== 'Trainee') {
+      const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      plan = fallback.data ?? undefined;
+      planError = fallback.error ?? planError;
     }
-    // Fallback 2: fetch all active plans and match by case-insensitive name, or use first plan
     if (!plan && !planError) {
       const { data: allPlans, error: listError } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(50);
-      if (!listError && allPlans && allPlans.length > 0) {
+      if (!listError && allPlans?.length) {
         const match = allPlans.find((p) => (p.name || '').toLowerCase() === planName.toLowerCase());
-        plan = match || allPlans[0];
+        plan = match ?? allPlans.find((p) => (p.account_type || '').toLowerCase() === 'free') ?? allPlans[0];
         if (!match) {
-          console.warn('Plan name not found, using first active plan:', { planName, usedPlan: plan?.name });
+          console.warn('Plan name not found, using default or first active plan:', { planName, usedPlan: plan?.name });
         }
       }
     }
@@ -115,13 +114,13 @@ const corsHeaders = {
         status: 500
       });
     }
-    // Map profile and plan data to stats format
+    // Map profile and plan data to stats format (use resolved planName so UI shows correct plan)
     const userStats = {
       user_id: profile.id,
       username: profile.username,
       tasks_completed_today: profile.tasks_completed_today,
       skips_today: profile.skips_today,
-      membership_plan: profile.membership_plan,
+      membership_plan: planName,
       earnings_wallet_balance: profile.earnings_wallet_balance,
       deposit_wallet_balance: profile.deposit_wallet_balance,
       total_earned: profile.total_earned,

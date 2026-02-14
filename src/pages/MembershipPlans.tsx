@@ -113,8 +113,8 @@ export default function MembershipPlans() {
       return;
     }
 
-    // Explicit free plan check (redundant but clear)
-    if (plan.name === "free" && currentPlanPrice > 0) {
+    // Explicit default plan (Trainee) check (redundant but clear)
+    if ((plan.name === "Trainee" || plan.account_type === "free") && currentPlanPrice > 0) {
       toast.error(t("membershipPlans.cannotDowngradeToFree"));
       return;
     }
@@ -133,7 +133,7 @@ export default function MembershipPlans() {
     setSelectedPlan(plan);
     
     // Calculate proration if upgrading from paid plan
-    if (profile.current_plan_start_date && currentPlan !== 'free') {
+    if (profile.current_plan_start_date && currentPlan !== 'Trainee') {
       const currentPlanData = plans.find(p => p.name === currentPlan);
       if (currentPlanData && currentPlanData.price > 0) {
         const planStartDate = new Date(profile.current_plan_start_date);
@@ -300,10 +300,10 @@ export default function MembershipPlans() {
     p.account_type === 'business'
   );
 
-  // Calculate free plan daily earning for comparison
-  const freePlan = plans.find(p => p.name === 'free');
-  const freePlanDailyEarning = freePlan 
-    ? freePlan.earning_per_task * freePlan.daily_task_limit 
+  // Calculate default plan (Trainee) daily earning for comparison
+  const defaultPlan = plans.find(p => p.name === 'Trainee' || p.account_type === 'free');
+  const defaultPlanDailyEarning = defaultPlan 
+    ? defaultPlan.earning_per_task * defaultPlan.daily_task_limit 
     : 0;
 
   // Render plan cards function with optional variant
@@ -322,7 +322,7 @@ export default function MembershipPlans() {
         onUpgradeClick={handleUpgradeClick}
         hasProfile={!!profile}
         variant={variant}
-        freePlanEarning={freePlanDailyEarning}
+        freePlanEarning={defaultPlanDailyEarning}
         currentPlan={currentPlan}
         currentPlanPrice={currentPlanPrice}
       />
@@ -372,6 +372,7 @@ export default function MembershipPlans() {
                 personalPlans={personalPlans}
                 businessPlans={businessPlans}
                 renderPlanCards={renderPlanCards}
+                currentPlanDisplayName={profile && currentPlan ? (currentPlanObj?.display_name ?? currentPlan) : null}
               />
             </div>
 

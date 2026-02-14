@@ -132,18 +132,18 @@ Deno.serve(async (req)=>{
         userId: user.id,
         membershipPlan: profile.membership_plan
       });
-      // SERVER-SIDE FREE PLAN VALIDATION
-      if (profile.membership_plan === 'free') {
-        console.log(`⛔ [Partner Application] BLOCKED: Free plan`, {
-          event: 'partner-application.free-plan-blocked',
+      // SERVER-SIDE DEFAULT PLAN VALIDATION (Trainee cannot apply)
+      if (profile.membership_plan === 'Trainee') {
+        console.log(`⛔ [Partner Application] BLOCKED: Default plan (Trainee)`, {
+          event: 'partner-application.default-plan-blocked',
           correlationId,
           userId: user.id,
           membershipPlan: profile.membership_plan,
           timingMs: Date.now() - startTime
         });
         return new Response(JSON.stringify({
-          error: "Free plan users cannot apply to become partners. Please upgrade your membership plan first.",
-          error_code: "FREE_PLAN_BLOCKED"
+          error: "Trainee plan users cannot apply to become partners. Please upgrade your membership plan first.",
+          error_code: "DEFAULT_PLAN_BLOCKED"
         }), {
           status: 403,
           headers: {

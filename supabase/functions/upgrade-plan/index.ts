@@ -137,7 +137,7 @@ Deno.serve(async (req)=>{
     let finalCost = parseFloat(newPlan.price);
     let prorationDetails = null;
     // Calculate proration ONLY for genuine upgrades (newPrice > currentPrice)
-    if (currentPlan && profile.current_plan_start_date && parseFloat(currentPlan.price) > 0 && profile.membership_plan !== 'free' && parseFloat(newPlan.price) > parseFloat(currentPlan.price)) {
+    if (currentPlan && profile.current_plan_start_date && parseFloat(currentPlan.price) > 0 && profile.membership_plan !== 'Trainee' && parseFloat(newPlan.price) > parseFloat(currentPlan.price)) {
       console.log('Calculating proration for upgrade from paid plan');
       // Call the database function to calculate proration
       const { data: proration, error: prorationError } = await supabase.rpc('calculate_proration', {
