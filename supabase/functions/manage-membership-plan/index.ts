@@ -128,9 +128,9 @@ import { corsHeaders } from '../_shared/cors.ts';
   // ========== Free Plan Expiry Validation ==========
   if (planData.free_plan_expiry_days !== undefined && planData.free_plan_expiry_days !== null) {
     if (typeof planData.free_plan_expiry_days !== 'number' || isNaN(planData.free_plan_expiry_days)) {
-      errors.push("Free plan expiry days must be a valid number");
+      errors.push("Default plan expiry days must be a valid number");
     } else if (planData.free_plan_expiry_days < 0 || planData.free_plan_expiry_days > 365) {
-      errors.push("Free plan expiry days must be between 0 and 365 days");
+      errors.push("Default plan expiry days must be between 0 and 365 days");
     }
   }
   // ========== Free Trial Days Validation (per-plan onboarding trial) ==========
@@ -150,13 +150,13 @@ import { corsHeaders } from '../_shared/cors.ts';
   if (planData.account_type === 'free' && planData.price && planData.price > 0) {
     errors.push("Free account type cannot have a price greater than 0");
   }
-  // Phase 3: Free plans must have referral_eligible = false
+  // Phase 3: Default tier (Trainee) must have referral_eligible = false
   if (planData.account_type === 'free' && planData.referral_eligible === true) {
     errors.push("Free account type must have referral_eligible set to false");
   }
-  // Phase 3: Enforce referral_eligible for free plans
+  // Phase 3: Enforce referral_eligible for default tier (Trainee)
   if (planData.account_type === 'free') {
-    planData.referral_eligible = false; // Force to false for free plans
+    planData.referral_eligible = false; // Force to false for default plan
   }
   // Validate billing period unit if provided
   if (planData.billing_period_unit && ![
@@ -286,7 +286,7 @@ Deno.serve(async (req)=>{
             });
             if (rpcError) {
               console.error('recalculate_free_plan_expiries RPC error:', rpcError);
-              throw new Error(`Failed to recalculate free plan expiries: ${rpcError.message}`);
+              throw new Error(`Failed to recalculate default plan expiries: ${rpcError.message}`);
             }
             console.log(`Recalculated plan_expires_at for ${updatedCount ?? 0} free-tier plan user(s) with free_plan_expiry_days=${newExpiryDays}`);
           }

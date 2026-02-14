@@ -1,3 +1,8 @@
+/**
+ * Plan utilities. Plan data must come from the database (membership_plans);
+ * do not hardcode plan names, benefits, or tiers by string here.
+ */
+
 export const formatBillingPeriod = (days: number): string => {
   if (days === 1) return "day";
   if (days === 7) return "week";
@@ -6,40 +11,28 @@ export const formatBillingPeriod = (days: number): string => {
   return `${days} days`;
 };
 
-export const getPlanBenefits = (planName: string): string[] => {
-  const benefits: Record<string, string[]> = {
-    free: [
-      "Basic task access",
-      "Limited daily tasks",
-      "Community support",
-    ],
-    personal: [
-      "Increased task limits",
-      "Higher earnings per task",
-      "Task skip allowance",
-      "Referral commissions",
-      "Priority support",
-    ],
-    business: [
-      "Maximum task limits",
-      "Premium earnings rate",
-      "Unlimited task skips",
-      "Higher referral rates",
-      "Premium support",
-      "Advanced analytics",
-    ],
-    group: [
-      "Enterprise task limits",
-      "Top-tier earnings",
-      "Unlimited everything",
-      "Maximum commission rates",
-      "Dedicated account manager",
-      "Custom features",
-      "API access",
-    ],
-  };
-
-  return benefits[planName] || [];
+/**
+ * Returns the plan's features from the database (membership_plans.features).
+ * Pass the plan object from your API/query (e.g. from useMembershipPlans).
+ * Do not pass a plan name string; plan data must come from DB.
+ */
+export const getPlanBenefits = (plan: { features?: unknown } | null | undefined): string[] => {
+  if (plan == null) return [];
+  if (typeof plan === 'string') {
+    if (import.meta.env?.DEV) {
+      console.warn('[plan-utils] getPlanBenefits(planName) is deprecated. Pass the plan object from DB (e.g. membership_plans row) instead.');
+    }
+    return [];
+  }
+  const f = plan.features;
+  if (f == null) return [];
+  if (Array.isArray(f)) {
+    return f.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof f === 'object' && !Array.isArray(f)) {
+    return Object.values(f).filter((item): item is string => typeof item === 'string');
+  }
+  return [];
 };
 
 export const comparePlans = (currentPlan: string, targetPlan: string): {
@@ -48,6 +41,7 @@ export const comparePlans = (currentPlan: string, targetPlan: string): {
   tierDifference: number;
 } => {
   const planTiers: Record<string, number> = {
+    Trainee: 0,
     free: 0,
     personal: 1,
     business: 2,

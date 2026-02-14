@@ -66,7 +66,6 @@ export function PlanCard({
   // Supports both display names (with spaces) and database names (with underscores)
   const planTiers: Record<string, number> = {
     'trainee': 0,
-    'free': 0,
     'basic': 1,
     'premium': 2,
     'pro': 3,
@@ -113,7 +112,7 @@ export function PlanCard({
       return "border-2 border-primary shadow-lg bg-gradient-to-br from-primary/5 to-primary/10";
     }
     
-    if (planNameLower === 'trainee' || planNameLower === 'free') {
+    if (planNameLower === 'trainee') {
       return "border-2 border-dashed border-muted-foreground/30 bg-muted/20 opacity-95 hover:opacity-100 transition-all duration-300";
     }
     

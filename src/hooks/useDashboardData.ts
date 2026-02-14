@@ -29,6 +29,6 @@ export const useDashboardData = (userId: string | undefined) => {
       };
     },
     enabled: !!userId,
-    staleTime: 10000, // 10s so plan_expires_at updates (e.g. after admin changes free plan expiry) show soon when user refocuses or revisits
+    staleTime: 10000, // 10s so plan_expires_at updates (e.g. after admin changes default plan expiry) show soon when user refocuses or revisits
   });
 };

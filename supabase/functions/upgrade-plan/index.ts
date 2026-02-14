@@ -120,12 +120,13 @@ Deno.serve(async (req)=>{
         difference: newPrice - currentPrice
       });
     }
-    // Explicit free plan downgrade block (extra safety)
-    if (newPlan.name === 'free' && currentPlan && parseFloat(currentPlan.price) > 0) {
-      console.error('❌ Downgrade to free plan blocked');
+    // Explicit default plan (Trainee) downgrade block (extra safety)
+    const isDefaultPlan = newPlan.name === 'Trainee' || (newPlan.account_type || '').toLowerCase().trim() === 'free';
+    if (isDefaultPlan && currentPlan && parseFloat(currentPlan.price) > 0) {
+      console.error('❌ Downgrade to Trainee plan blocked');
       return new Response(JSON.stringify({
-        error: 'Cannot downgrade to free plan. Please contact support.',
-        code: 'FREE_PLAN_DOWNGRADE_NOT_ALLOWED'
+        error: 'Cannot downgrade to Trainee plan. Please contact support.',
+        code: 'DEFAULT_PLAN_DOWNGRADE_NOT_ALLOWED'
       }), {
         status: 400,
         headers: {

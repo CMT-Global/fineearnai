@@ -11,8 +11,8 @@ interface PlanTabsProps {
 }
 
 export function PlanTabs({ personalPlans, businessPlans, renderPlanCards, currentPlanDisplayName }: PlanTabsProps) {
-  // Separate free plan from paid personal plans
-  const freePlan = personalPlans.find(p => p.account_type === 'free');
+  // Default plan (Trainee) vs paid personal plans
+  const defaultPlan = personalPlans.find(p => p.account_type === 'free');
   const paidPersonalPlans = personalPlans.filter(p => p.account_type === 'personal');
   
   return (
@@ -73,7 +73,7 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards, curren
         </Alert>
 
         {/* Free Trial Card - Horizontal Layout at Bottom */}
-        {freePlan && (
+        {defaultPlan && (
           <div className="max-w-7xl mx-auto">
             {/* Current plan badge - small, right-aligned, just above / touching trainee card */}
             {currentPlanDisplayName && (
@@ -86,7 +86,7 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards, curren
                 </Badge>
               </div>
             )}
-            {renderPlanCards([freePlan], 'horizontal')}
+            {renderPlanCards([defaultPlan], 'horizontal')}
           </div>
         )}
       </TabsContent>

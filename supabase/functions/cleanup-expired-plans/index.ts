@@ -412,7 +412,7 @@ Deno.serve(async (req)=>{
               await supabaseClient.from('notifications').insert({
                 user_id: user.id,
                 title: 'Plan Expired',
-                message: `Your ${membershipPlan.display_name} plan has expired and you have been downgraded to the Free plan. Upgrade anytime to access premium features.`,
+                message: `Your ${membershipPlan.display_name} plan has expired and you have been downgraded to the Trainee plan. Upgrade anytime to access premium features.`,
                 type: 'plan_expired',
                 metadata: {
                   previous_plan: user.membership_plan,

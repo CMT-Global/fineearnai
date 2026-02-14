@@ -75,7 +75,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
     completedSections
   });
   
-  // Phase 4: Free plan blocking dialog state
+  // Phase 4: Default plan (Trainee) blocking dialog state
   const [showFreePlanDialog, setShowFreePlanDialog] = useState(false);
   
   // Phase 1: Country search state
@@ -403,9 +403,9 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
       dataKeys: Object.keys(data)
     });
     
-    // Phase 4: Check if user is on free plan and block submission
+    // Phase 4: Check if user is on default plan (Trainee) and block submission
     if (data.current_membership_plan === 'Trainee') {
-      console.log('⚠️ [PartnerApplicationWizard] Free plan detected, showing dialog');
+      console.log('⚠️ [PartnerApplicationWizard] Trainee plan detected, showing dialog');
       setShowFreePlanDialog(true);
       return;
     }
@@ -800,7 +800,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
                           <Alert className="mt-2" variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertDescription className="text-xs">
-                              Free plan users cannot become partners. Please upgrade your account to apply.
+                              Trainee plan users cannot become partners. Please upgrade your account to apply.
                             </AlertDescription>
                           </Alert>
                         )}
@@ -1619,7 +1619,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>
-                Users on the <strong>Free plan</strong> cannot become Partners. 
+                Users on the <strong>Trainee plan</strong> cannot become Partners. 
                 To submit your partner application, you need to upgrade your account to a paid membership plan.
               </p>
               <p className="text-sm text-muted-foreground">

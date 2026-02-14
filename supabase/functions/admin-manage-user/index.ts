@@ -423,13 +423,14 @@ Deno.serve(async (req)=>{
           const now = new Date();
           let expiresAt = planData.expires_at ?? null;
 
-          // Free plan: use free_plan_expiry_days if no expires_at provided; otherwise allow null
-          if (plan.name === 'free') {
+          // Default tier (Trainee / account_type free): use free_plan_expiry_days if no expires_at provided; otherwise allow null
+          const isDefaultTier = plan.name === 'Trainee' || (plan.account_type || '').toLowerCase().trim() === 'free';
+          if (isDefaultTier) {
             if (!expiresAt && plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0) {
               const expiry = new Date(now);
               expiry.setDate(expiry.getDate() + plan.free_plan_expiry_days);
               expiresAt = expiry.toISOString();
-              console.log(`✅ Free plan expiry: free_plan_expiry_days=${plan.free_plan_expiry_days}, expiry=${expiresAt}`);
+              console.log(`✅ Default plan expiry: free_plan_expiry_days=${plan.free_plan_expiry_days}, expiry=${expiresAt}`);
             }
             // else: expiresAt stays null (no trial or admin did not set a date)
           } else {
@@ -446,7 +447,7 @@ Deno.serve(async (req)=>{
             }
           }
 
-          // Update plan (allow null plan_expires_at for free with no trial)
+          // Update plan (allow null plan_expires_at for default tier with no trial)
           const { error: updateError } = await supabaseClient.from('profiles').update({
             membership_plan: planData.plan_name,
             plan_expires_at: expiresAt,
