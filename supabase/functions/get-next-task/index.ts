@@ -81,12 +81,32 @@ const corsHeaders = {
       });
     }
     // Fetch the membership plan - always fresh from database
-    const { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', profile.membership_plan).single();
+    const planName = (profile.membership_plan || 'free').trim();
+    let { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).maybeSingle();
+    // Fallback 1: try 'free' if profile plan was missing or not found
+    if ((planError || !plan) && planName !== 'free') {
+      const fallback = await supabase.from('membership_plans').select('*').eq('name', 'free').maybeSingle();
+      plan = fallback.data;
+      planError = fallback.error;
+    }
+    // Fallback 2: fetch all active plans and match by case-insensitive name, or use first plan
+    if (!plan && !planError) {
+      const { data: allPlans, error: listError } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(50);
+      if (!listError && allPlans && allPlans.length > 0) {
+        const match = allPlans.find((p) => (p.name || '').toLowerCase() === planName.toLowerCase());
+        plan = match || allPlans[0];
+        if (!match) {
+          console.warn('Plan name not found, using first active plan:', { planName, usedPlan: plan?.name });
+        }
+      }
+    }
     if (planError || !plan) {
-      console.error('Error fetching membership plan:', planError);
+      console.error('Error fetching membership plan:', { planName, planError, profilePlan: profile.membership_plan });
       return new Response(JSON.stringify({
         error: 'stats_error',
-        message: 'Failed to fetch membership plan'
+        message: profile.membership_plan
+          ? `Membership plan "${profile.membership_plan}" not found. Please ensure the plan exists in membership_plans or update the user's profile to a valid plan.`
+          : 'Failed to fetch membership plan. Profile has no plan set; ensure at least one active plan exists in membership_plans.'
       }), {
         headers: {
           ...corsHeaders,

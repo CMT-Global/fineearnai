@@ -201,7 +201,12 @@ const PlansManage = () => {
 
       if (error) throw error;
 
-      toast.success(editingPlan ? t("toasts.admin.planUpdated") : t("toasts.admin.planCreated"));
+      const count = data?.profilesUpdatedCount;
+      if (editingPlan && typeof count === "number" && count > 0) {
+        toast.success(t("toasts.admin.planUpdatedWithUsers", { count }));
+      } else {
+        toast.success(editingPlan ? t("toasts.admin.planUpdated") : t("toasts.admin.planCreated"));
+      }
       setDialogOpen(false);
       setEditingPlan(null);
       resetForm();
@@ -437,6 +442,11 @@ const PlansManage = () => {
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           placeholder="e.g., premium"
                         />
+                        {editingPlan && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {t("admin.plansManage.planNameRenameHint")}
+                          </p>
+                        )}
                       </div>
 
                       <div>

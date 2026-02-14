@@ -1,0 +1,10 @@
+-- DEPRECATED: This migration wrongly set free users to Beginner.
+-- Free users should be on Trainee; Beginner = purchased plan.
+-- Use 20260215100000_fix_plans_trainee_vs_purchased.sql instead:
+--   - Users who never purchased (no plan_upgrade) → Trainee
+--   - Users who purchased → membership_plan from latest plan_upgrade transaction.
+--
+-- Original content kept for reference only (do not re-apply):
+-- 1) free → Beginner (WRONG: free → Trainee)
+-- 2) NULL/blank → Beginner (WRONG: → Trainee)
+-- 3) Invalid plan name → Beginner (WRONG: no purchase → Trainee; purchase → from transaction)

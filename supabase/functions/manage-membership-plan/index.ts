@@ -202,6 +202,7 @@ Deno.serve(async (req)=>{
     }
     let result = null;
     let auditDetails = {};
+    let profilesUpdatedCount = undefined;
     switch(action){
       case 'create_plan':
         {
@@ -251,19 +252,23 @@ Deno.serve(async (req)=>{
           if (fetchError || !currentPlan) {
             throw new Error('Plan not found');
           }
-          // If name is being changed, check it's unique and sync profiles to new name
+          // If name is being changed, check it's unique and sync ALL users on this plan to the new name.
+          // Applies to every plan (free, premium, Beginner, Junior, etc.) – all associated users get the new plan name.
           if (planData.name && planData.name !== currentPlan.name) {
             const { data: existingPlan } = await supabaseClient.from('membership_plans').select('id').eq('name', planData.name).maybeSingle();
             if (existingPlan) {
               throw new Error(`Plan with name '${planData.name}' already exists`);
             }
-            // Update all profiles subscribed to the old plan name to the new plan name (allow rename with subscribers)
-            const { error: profilesUpdateError } = await supabaseClient.from('profiles').update({
-              membership_plan: planData.name
-            }).eq('membership_plan', currentPlan.name);
+            const { data: updatedProfiles, error: profilesUpdateError } = await supabaseClient
+              .from('profiles')
+              .update({ membership_plan: planData.name })
+              .eq('membership_plan', currentPlan.name)
+              .select('id');
             if (profilesUpdateError) {
               throw new Error(`Failed to update subscriber profiles for plan rename: ${profilesUpdateError.message}`);
             }
+            profilesUpdatedCount = updatedProfiles?.length ?? 0;
+            console.log(`Plan rename: updated ${profilesUpdatedCount} user(s) from "${currentPlan.name}" to "${planData.name}"`);
           }
           // Update the plan
           const { data: updatedPlan, error: updateError } = await supabaseClient.from('membership_plans').update(planData).eq('id', planId).select().single();
@@ -271,10 +276,10 @@ Deno.serve(async (req)=>{
             throw new Error(`Failed to update plan: ${updateError.message}`);
           }
 
-          // When the free plan is updated, recalculate plan_expires_at for ALL users on that plan
-          // via DB RPC so the dashboard banner shows correct days left (works regardless of casing)
-          const planNameForFree = (currentPlan.name || updatedPlan.name || '').toLowerCase().trim();
-          if (planNameForFree === 'free') {
+          // When the free-tier plan (account_type = 'free') is updated, recalculate plan_expires_at for ALL users on that plan
+          // via DB RPC so the dashboard banner shows correct days left (works for any plan name: free, Trainee, etc.)
+          const isFreeTierPlan = (updatedPlan.account_type || '').toLowerCase().trim() === 'free';
+          if (isFreeTierPlan) {
             const newExpiryDays = updatedPlan.free_plan_expiry_days != null ? Number(updatedPlan.free_plan_expiry_days) : null;
             const { data: updatedCount, error: rpcError } = await supabaseClient.rpc('recalculate_free_plan_expiries', {
               p_expiry_days: newExpiryDays
@@ -283,7 +288,7 @@ Deno.serve(async (req)=>{
               console.error('recalculate_free_plan_expiries RPC error:', rpcError);
               throw new Error(`Failed to recalculate free plan expiries: ${rpcError.message}`);
             }
-            console.log(`Recalculated plan_expires_at for ${updatedCount ?? 0} free plan user(s) with free_plan_expiry_days=${newExpiryDays}`);
+            console.log(`Recalculated plan_expires_at for ${updatedCount ?? 0} free-tier plan user(s) with free_plan_expiry_days=${newExpiryDays}`);
           }
 
           result = updatedPlan;
@@ -306,9 +311,9 @@ Deno.serve(async (req)=>{
           if (fetchError || !plan) {
             throw new Error('Plan not found');
           }
-          // Prevent deletion of free plan
-          if (plan.name === 'free') {
-            throw new Error('Cannot delete the free plan');
+          // Prevent deletion of default plan (Trainee / account_type = free)
+          if ((plan.account_type || '').toLowerCase().trim() === 'free') {
+            throw new Error('Cannot delete the default plan (Trainee)');
           }
           // Check if any users are subscribed to this plan
           const { data: subscribers, count: subscriberCount } = await supabaseClient.from('profiles').select('id', {
@@ -360,9 +365,9 @@ Deno.serve(async (req)=>{
             throw new Error('Plan ID is required');
           }
           // Get the plan
-          const { data: plan } = await supabaseClient.from('membership_plans').select('name').eq('id', planId).maybeSingle();
-          if (plan && plan.name === 'free') {
-            throw new Error('Cannot deactivate the free plan');
+          const { data: plan } = await supabaseClient.from('membership_plans').select('name, account_type').eq('id', planId).maybeSingle();
+          if (plan && (plan.account_type || '').toLowerCase().trim() === 'free') {
+            throw new Error('Cannot deactivate the default plan (Trainee)');
           }
           const { data: updatedPlan, error: updateError } = await supabaseClient.from('membership_plans').update({
             is_active: false
@@ -387,10 +392,11 @@ Deno.serve(async (req)=>{
       action_type: `membership_plan_${action}`,
       details: auditDetails
     });
-    return new Response(JSON.stringify({
-      success: true,
-      result
-    }), {
+    const body = { success: true, result };
+    if (profilesUpdatedCount !== undefined) {
+      body.profilesUpdatedCount = profilesUpdatedCount;
+    }
+    return new Response(JSON.stringify(body), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json'
