@@ -1,14 +1,16 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Briefcase, ArrowDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 interface PlanTabsProps {
   personalPlans: any[];
   businessPlans: any[];
   renderPlanCards: (plans: any[], variant?: 'vertical' | 'horizontal') => React.ReactNode;
+  currentPlanDisplayName?: string | null;
 }
 
-export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: PlanTabsProps) {
+export function PlanTabs({ personalPlans, businessPlans, renderPlanCards, currentPlanDisplayName }: PlanTabsProps) {
   // Separate free plan from paid personal plans
   const freePlan = personalPlans.find(p => p.account_type === 'free');
   const paidPersonalPlans = personalPlans.filter(p => p.account_type === 'personal');
@@ -73,6 +75,17 @@ export function PlanTabs({ personalPlans, businessPlans, renderPlanCards }: Plan
         {/* Free Trial Card - Horizontal Layout at Bottom */}
         {freePlan && (
           <div className="max-w-7xl mx-auto">
+            {/* Current plan badge - small, right-aligned, just above / touching trainee card */}
+            {currentPlanDisplayName && (
+              <div className="flex justify-end w-full mb-1">
+                <Badge
+                  className="bg-green-600 hover:bg-green-600 text-white border-0 text-xs px-2.5 py-1 font-semibold"
+                  variant="secondary"
+                >
+                  Current Plan
+                </Badge>
+              </div>
+            )}
             {renderPlanCards([freePlan], 'horizontal')}
           </div>
         )}

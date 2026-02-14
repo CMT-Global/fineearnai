@@ -80,8 +80,10 @@ const corsHeaders = {
         status: 403
       });
     }
+    // Resolve plan name: null/empty profile.membership_plan => 'free' (fix for users stuck with unknown plan)
+    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'free';
     // Fetch the membership plan - always fresh from database
-    const { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', profile.membership_plan).single();
+    const { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).single();
     if (planError || !plan) {
       console.error('Error fetching membership plan:', planError);
       return new Response(JSON.stringify({
@@ -95,13 +97,13 @@ const corsHeaders = {
         status: 500
       });
     }
-    // Map profile and plan data to stats format
+    // Map profile and plan data to stats format (use resolved planName so UI shows correct plan)
     const userStats = {
       user_id: profile.id,
       username: profile.username,
       tasks_completed_today: profile.tasks_completed_today,
       skips_today: profile.skips_today,
-      membership_plan: profile.membership_plan,
+      membership_plan: planName,
       earnings_wallet_balance: profile.earnings_wallet_balance,
       deposit_wallet_balance: profile.deposit_wallet_balance,
       total_earned: profile.total_earned,

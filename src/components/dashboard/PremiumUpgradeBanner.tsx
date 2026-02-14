@@ -68,19 +68,16 @@ export const PremiumUpgradeBanner = ({ userId, currentPlan, onUpgrade }: Premium
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-lg font-semibold text-foreground">
-              Ready for the Next Level?
+              Global Access, No Country Limits!
             </h3>
           </div>
           <p className="text-sm text-muted-foreground">
-            💰 Want to Boost your Earnings?
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Feel Free to Upgrade to a higher plan anytime — just{' '}
-            <strong className="font-bold text-orange-600 dark:text-orange-500">top up the difference</strong>{' '}
-            to boost your Daily and Weekly income.
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            💎 Don't miss out
+            💎 Unlike platforms that only accept users from certain countries, ProfitChips is available{' '}
+            <strong className="font-bold text-orange-600 dark:text-orange-500">worldwide</strong>. The{' '}
+            <strong className="font-bold text-orange-600 dark:text-orange-500">one-time account activation fee</strong>{' '}
+            helps <strong className="font-bold text-orange-600 dark:text-orange-500">reduce spam and keep access open globally</strong>. Upgrade your account anytime to{' '}
+            <strong className="font-bold text-orange-600 dark:text-orange-500">unlock the full earning potential</strong>{' '}
+            of your ProfitChips account.
           </p>
         </div>
 

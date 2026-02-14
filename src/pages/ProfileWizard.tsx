@@ -29,7 +29,12 @@ import {
   Star,
   ArrowRight,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Users,
+  Link2,
+  Percent,
+  Gift,
+  Lock
 } from "lucide-react";
 import { useBranding } from "@/contexts/BrandingContext";
 import { cn } from "@/lib/utils";
@@ -38,7 +43,7 @@ import { useMembershipPlans } from "@/hooks/useMembershipPlans";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const STEPS_COUNT = 10;
+const STEPS_COUNT = 11;
 
 export default function ProfileWizard() {
   const { t } = useTranslation();
@@ -141,10 +146,6 @@ export default function ProfileWizard() {
     }
     if (step === 4 && preferredCategories.length === 0) {
       setError("Please select at least one category.");
-      return;
-    }
-    if (step === 9 && !selectedPlanId) {
-      setError("Please select a plan to continue.");
       return;
     }
 
@@ -473,6 +474,176 @@ export default function ProfileWizard() {
       case 9:
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="text-center">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 rounded-full bg-primary/10 text-primary">
+                  <Lock className="h-12 w-12" />
+                </div>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                Our platform will soon be invite-only
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                To keep task quality high and protect serious earners, we&apos;re gradually limiting new access. Hence, we&apos;re onboarding new earners in batches. Soon, new registrations will require an invite code.
+              </p>
+            </div>
+
+            <Card className="bg-primary/5 border-primary/20 overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+                  <p className="text-base font-medium text-foreground">
+                    Complete your registration now & upgrade your account to secure your spot.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+                  <p className="text-base font-medium text-foreground">
+                    You&apos;ll keep access even after we switch to invite-only.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">One account per person (strict policy)</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Creating multiple accounts is not allowed and may lead to account suspension and loss of access.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+        );
+
+      case 10:
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 rounded-full bg-primary/10 text-primary">
+                  <Users className="h-12 w-12" />
+                </div>
+              </div>
+              <h2 className="text-3xl font-bold">Build Your Team & Earn Task Commissions</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                When you invite friends to {platformName}, you earn task commissions whenever the people you invited
+                complete tasks.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-base leading-relaxed text-foreground">
+                When someone joins our platform using your link, upgrades their account and completes tasks, you start
+                earning task commissions that are automatically added to your Earnings Wallet for every task they
+                complete. These can easily exceed $500 weekly in task commissions depending on the size of your team.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">What you need to know:</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-4 bg-card border rounded-lg">
+                  <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Task Commissions Are Locked On Free Account</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Task commissions are only available if the person doing the task and the person receiving the task
+                      commission have upgraded their accounts. Free accounts do not earn you task commissions due to
+                      self-referral fraud and other security policies.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-card border rounded-lg">
+                  <Percent className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Commission is paid per task</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Each time your team member completes a task, you earn up to 10% of the amount they earn per task.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-card border rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Unlimited task commissions</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      There is no limit on how much you can earn from your team — the more active they are on the
+                      platform, the more you earn.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-card border rounded-lg">
+                  <Gift className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Your team member is not charged</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Your commission is extra and does not reduce what your team member earns per task. They still
+                      receive their full task reward.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-lg">Real Example</CardTitle>
+                <CardDescription>Here&apos;s what task commissions look like:</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>• If your team member earns $0.40 per task and completes 50 tasks per day, they earn $20.00 per day.</p>
+                <p>• With a task commission of 10%, you earn $2 per day from that team member = $14 per week from 1 team member.</p>
+                <p className="font-semibold text-primary pt-2">
+                  So if you have 20 team members, that amounts to $280 weekly in task commissions.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">How Task Commissions work</h3>
+              <ol className="space-y-3 list-decimal list-inside">
+                <li className="flex gap-2">
+                  <Link2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span>You share your team invite link.</span>
+                </li>
+                <li className="flex gap-2">
+                  <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span>When someone joins using your link, they become part of your team.</span>
+                </li>
+                <li className="flex gap-2">
+                  <Percent className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    If you have already upgraded your account, you earn a percentage of what they earn per task.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <Gift className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    This commission is paid by {platformName} — it is NOT deducted from your team member&apos;s earnings.
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground italic">
+              Rewards vary by participation, accuracy, and your commitment. Multiple accounts are not allowed and may lead to ban!
+            </p>
+          </div>
+        );
+
+      case 11:
+        const selectedPlan = plans.find(p => p.id === selectedPlanId);
+        const trialDays = selectedPlan?.free_trial_days ?? 0;
+        const showTrialOption = trialDays > 0;
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold">Choose a plan to unlock task access</h2>
               <p className="text-muted-foreground">Plans control your daily limits and earning potential. Based on your goal + time, we recommend a plan below.</p>
@@ -547,34 +718,7 @@ export default function ProfileWizard() {
                 </Card>
               ))}
             </div>
-            <p className="text-xs text-center text-muted-foreground italic">Estimates are not guaranteed.</p>
-          </div>
-        );
 
-      case 10:
-        const selectedPlan = plans.find(p => p.id === selectedPlanId);
-        const trialDays = selectedPlan?.free_trial_days ?? 0;
-        const showTrialOption = trialDays > 0;
-        return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center mb-6">
-                <div className="p-4 rounded-full bg-primary/10 text-primary">
-                  <Star className="h-12 w-12" />
-                </div>
-              </div>
-              <h2 className="text-3xl font-bold">
-                {showTrialOption
-                  ? `Start free trial for ${trialDays} days or choose your plan`
-                  : "Choose your plan"}
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                {showTrialOption
-                  ? "Get access to tasks and your dashboard. Upgrade anytime to unlock more daily tasks and higher potential."
-                  : "Free trial is not available for this plan. Continue to upgrade or go back to select another plan."}
-              </p>
-            </div>
-            
             <div className="bg-card border rounded-xl p-8 space-y-6">
               <div className="flex flex-col gap-4">
                 {showTrialOption && (
@@ -590,17 +734,15 @@ export default function ProfileWizard() {
                 <Button variant="outline" size="lg" className="w-full h-16 text-xl" onClick={handleContinueWithPlan}>
                   Continue with Selected Plan
                 </Button>
-                <Button variant="ghost" size="lg" className="w-full" onClick={() => setStep(9)}>
-                  Back to Plans
+                <Button variant="ghost" size="lg" className="w-full" onClick={() => setStep(10)}>
+                  Back
                 </Button>
               </div>
             </div>
 
-            <div className="pt-8 border-t space-y-4">
-              <p className="text-xs text-center text-muted-foreground leading-relaxed">
-                Rewards vary by participation, accuracy, and your commitment. Multiple accounts are not allowed and may lead to ban!
-              </p>
-            </div>
+            <p className="text-xs text-center text-muted-foreground italic">
+              Rewards vary by participation, accuracy, and your commitment. Multiple accounts are not allowed and may lead to ban!
+            </p>
           </div>
         );
 
@@ -645,25 +787,37 @@ export default function ProfileWizard() {
         <div className="max-w-3xl mx-auto">
           {renderStep()}
 
-          {step > 1 && step < 10 && (
-            <div className="flex justify-between items-center mt-12 pt-8 border-t">
-              <Button variant="ghost" onClick={handleBack} disabled={saving} className="h-12 px-6 text-base">
-                <ChevronLeft className="h-5 w-5 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={saving} className="h-12 px-8 text-base font-semibold min-w-[140px]">
-                {saving ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ChevronRight className="h-5 w-5 ml-2" />
-                  </>
-                )}
-              </Button>
+          {step > 1 && step < 11 && (
+            <div className="mt-12 pt-8 border-t space-y-4">
+              <div className="flex justify-between items-center">
+                <Button variant="ghost" onClick={handleBack} disabled={saving} className="h-12 px-6 text-base">
+                  <ChevronLeft className="h-5 w-5 mr-2" />
+                  Back
+                </Button>
+                <Button onClick={handleNext} disabled={saving} className="h-12 px-8 text-base font-semibold min-w-[140px]">
+                  {saving ? (
+                    <>
+                      <LoadingSpinner size="sm" className="mr-2" />
+                      Saving...
+                    </>
+                  ) : step === 9 ? (
+                    <>
+                      Secure My Spot
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ChevronRight className="h-5 w-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+              {step === 9 && (
+                <p className="text-xs text-center text-muted-foreground">
+                  By continuing, you confirm you will use only one account.
+                </p>
+              )}
             </div>
           )}
         </div>

@@ -145,11 +145,43 @@ export const useUserManagement = () => {
         }
         
         // Add roles to each user
-        const usersWithRoles = data?.map(user => ({
+        let usersWithRoles = data?.map(user => ({
           ...user,
           roles: userRolesMap[user.id] || ['user']
         })) || [];
-        
+
+        // Compute total earned from transactions (task_earning + referral_commission + referral_earning + adjustment)
+        // so the Earned column matches what appears on the All transactions page
+        if (userIds.length > 0) {
+          const { data: earningsRows } = await supabase
+            .from('transactions')
+            .select('user_id, amount')
+            .in('user_id', userIds)
+            .eq('wallet_type', 'earnings')
+            .eq('status', 'completed')
+            .in('type', ['task_earning', 'referral_commission', 'referral_earning', 'adjustment']);
+
+          const totalEarnedByUser: Record<string, number> = {};
+          earningsRows?.forEach((row: { user_id: string; amount: number }) => {
+            const uid = row.user_id;
+            totalEarnedByUser[uid] = (totalEarnedByUser[uid] || 0) + Number(row.amount || 0);
+          });
+
+          usersWithRoles = usersWithRoles.map(u => ({
+            ...u,
+            total_earned: totalEarnedByUser[u.id] ?? 0
+          }));
+
+          // When sorting by total_earned, order the current page by computed value
+          if (filters.sortBy === 'total_earned') {
+            usersWithRoles = [...usersWithRoles].sort((a, b) => {
+              const aVal = Number((a as { total_earned?: number }).total_earned ?? 0);
+              const bVal = Number((b as { total_earned?: number }).total_earned ?? 0);
+              return filters.sortOrder === 'ASC' ? aVal - bVal : bVal - aVal;
+            });
+          }
+        }
+
         return {
           users: usersWithRoles,
           totalCount: count || 0,
