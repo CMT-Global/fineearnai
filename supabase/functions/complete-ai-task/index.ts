@@ -117,13 +117,28 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
-    // Resolve plan name: null/empty => 'free' (align with get-next-task and DB backfill)
-    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'free';
-    // Fetch membership plan separately (no FK relationship exists)
-    const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
+    // Resolve plan name: null/empty => default (free tier) plan from DB
+    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    if (!planName) {
+      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      planName = defaultPlan?.name ?? '';
+    }
+    const planResult = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
+    let membershipPlan = planResult.data ?? null;
+    let planError = planResult.error ?? null;
+    // Fallback: when profile has stale name (e.g. 'free') but DB uses 'Trainee', use default free-tier plan
+    if (!planError && !membershipPlan) {
+      const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      membershipPlan = fallback.data ?? null;
+      planError = fallback.error ?? null;
+      if (membershipPlan) {
+        planName = membershipPlan.name;
+        console.warn(`⚠️ [${requestId}] Plan "${profile.membership_plan ?? ''}" not found; using default free-tier plan "${planName}" for user ${userId}`);
+      }
+    }
     const profileTime = Date.now() - profileStartTime;
     if (planError || !membershipPlan) {
-      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError);
+      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError ?? 'no matching plan and no default free-tier plan');
       return new Response(JSON.stringify({
         error: 'plan_not_found',
         message: `Membership plan '${planName}' not found or inactive`

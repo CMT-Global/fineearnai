@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 export function useUserProfile(user: User | null) {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
-  const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const [currentPlan, setCurrentPlan] = useState<string>("");
   const [depositBalance, setDepositBalance] = useState<number>(0);
 
   const loadUserProfile = useCallback(async () => {
@@ -32,7 +32,7 @@ export function useUserProfile(user: User | null) {
       }
       
       setProfile(data);
-      setCurrentPlan(data?.membership_plan || "free");
+      setCurrentPlan(data?.membership_plan ?? "");
       setDepositBalance(parseFloat(String(data?.deposit_wallet_balance || 0)));
     } catch (error: any) {
       console.error("Failed to load profile:", error);

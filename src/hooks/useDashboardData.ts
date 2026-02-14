@@ -14,9 +14,14 @@ export const useDashboardData = (userId: string | undefined) => {
         supabaseService.rpc.getReferralStats(userId)
       ]);
       
-      // Fetch membership plan based on profile (use 'free' when not set so we have free_plan_expiry_days for banner)
-      const planName = profile.membership_plan || 'free';
-      const planData = await supabaseService.membershipPlans.getByName(planName);
+      // Fetch membership plan from DB: use profile's plan name, or default (free tier) plan
+      let planData = profile.membership_plan
+        ? await supabaseService.membershipPlans.getByName(profile.membership_plan)
+        : null;
+      if (!planData) {
+        const defaultPlan = await supabaseService.membershipPlans.getDefaultPlan();
+        planData = defaultPlan ?? null;
+      }
       
       // Add earner badge status to profile
       const accountType = planData?.account_type;
@@ -29,6 +34,6 @@ export const useDashboardData = (userId: string | undefined) => {
       };
     },
     enabled: !!userId,
-    staleTime: 10000, // 10s so plan_expires_at updates (e.g. after admin changes free plan expiry) show soon when user refocuses or revisits
+    staleTime: 10000, // 10s so plan_expires_at updates (e.g. after admin changes default plan expiry) show soon when user refocuses or revisits
   });
 };

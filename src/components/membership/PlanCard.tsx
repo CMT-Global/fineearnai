@@ -56,114 +56,62 @@ export function PlanCard({
 }: PlanCardProps) {
   const navigate = useNavigate();
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
-  const isInsufficientBalance = depositBalance < plan.price && plan.name !== 'free' && !isCurrentPlan && plan.price > 0;
+  const isDefaultPlan = plan.account_type?.toLowerCase() === 'free';
+  const isInsufficientBalance = depositBalance < plan.price && !isDefaultPlan && !isCurrentPlan && plan.price > 0;
 
-  // Trainee/free plan: no monthly/yearly earning potential (trial expires in X days)
-  const isTraineeOrFreePlan = plan.name === 'free' || plan.name === 'trainee' || plan.account_type?.toLowerCase() === 'free' || (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0);
+  // Default/free tier: no monthly/yearly earning potential (trial expires in X days)
+  const isTraineeOrFreePlan = isDefaultPlan || (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0);
 
-  // Plan tier hierarchy for downgrade detection
-  // Supports both display names (with spaces) and database names (with underscores)
-  const planTiers: Record<string, number> = {
-    'free': 0,
-    'basic': 1,
-    'premium': 2,
-    'pro': 3,
-    'business_level_1': 4,
-    'business level 1': 4,
-    'business_level_2': 5,
-    'business level 2': 5,
-    'business_elite': 6,
-    'business elite': 6,
-    'business_pro': 6,
-    'business pro': 6
-  };
-
-  // Normalize plan name for comparison (handles spaces, underscores, case)
-  const normalizePlanName = (name: string) => 
-    name.toLowerCase().trim().replace(/\s+/g, '_');
-
-  // ✅ PRIMARY: Price-based downgrade detection (single source of truth)
+  // ✅ PRIMARY: Price-based downgrade detection (single source of truth from DB)
   const isPriceDowngrade = currentPlanPrice > 0 && plan.price < currentPlanPrice;
+  const isDowngrade = !isCurrentPlan && isPriceDowngrade;
 
-  // ✅ FALLBACK: Tier-based detection (for edge cases where price unavailable)
-  const currentPlanNormalized = currentPlan ? normalizePlanName(currentPlan) : '';
-  const targetPlanNormalized = normalizePlanName(plan.name);
-  const currentPlanTier = planTiers[currentPlanNormalized] || 0;
-  const targetPlanTier = planTiers[targetPlanNormalized] || 0;
-  const isTierDowngrade = !isCurrentPlan && currentPlan && targetPlanTier < currentPlanTier;
-
-  // ✅ COMBINED: Prefer price check, fallback to tier
-  const isDowngrade = !isCurrentPlan && (isPriceDowngrade || (isTierDowngrade && !isPriceDowngrade));
-
-  // Calculate annual savings vs free plan
-  const annualSavingsVsFree = plan.name !== 'free' && freePlanEarning > 0 && earningPotential
+  // Calculate annual savings vs default (free tier) plan
+  const annualSavingsVsFree = !isDefaultPlan && freePlanEarning > 0 && earningPotential
     ? earningPotential.annually - (freePlanEarning * 365)
     : null;
 
   // Calculate daily cost
   const dailyCost = plan.price > 0 ? (plan.price / plan.billing_period_days).toFixed(2) : null;
 
-  // Plan-specific gradient themes with animations
+  // Plan-specific gradient themes by account_type from DB (no hardcoded plan names)
   const getCardStyles = () => {
-    const planNameLower = plan.name.toLowerCase();
-    
+    const accountType = plan.account_type?.toLowerCase() ?? '';
     if (isCurrentPlan) {
       return "border-2 border-primary shadow-lg bg-gradient-to-br from-primary/5 to-primary/10";
     }
-    
-    if (planNameLower === 'free') {
+    if (accountType === 'free') {
       return "border-2 border-dashed border-muted-foreground/30 bg-muted/20 opacity-95 hover:opacity-100 transition-all duration-300";
     }
-    
-    // Personal Account Plans
-    if (planNameLower.includes('basic')) {
+    if (accountType === 'personal') {
       return "border-2 border-transparent bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-blue-500/5 hover:from-blue-500/20 hover:via-cyan-500/20 hover:to-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
     }
-    
-    if (planNameLower.includes('premium')) {
-      return "border-2 border-transparent bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-purple-500/5 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/10 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1 animate-pulse";
+    if (accountType === 'business') {
+      return "border-2 border-transparent bg-gradient-to-br from-amber-500/15 via-yellow-500/15 to-amber-500/10 hover:from-amber-500/25 hover:via-yellow-500/25 hover:to-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1";
     }
-    
-    if (planNameLower.includes('pro') && !planNameLower.includes('business')) {
-      return "border-2 border-transparent bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 hover:from-amber-500/20 hover:via-orange-500/20 hover:to-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105 hover:-rotate-1";
-    }
-    
-    // Business Account Plans - Enhanced with vibrant gradients
-    if (planNameLower.includes('business level 1')) {
-      return "border-2 border-transparent bg-gradient-to-br from-amber-500/15 via-yellow-500/15 to-amber-500/10 hover:from-amber-500/25 hover:via-yellow-500/25 hover:to-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1 animate-pulse";
-    }
-    
-    if (planNameLower.includes('business level 2')) {
-      return "border-2 border-transparent bg-gradient-to-br from-emerald-500/15 via-green-500/15 to-emerald-500/10 hover:from-emerald-500/25 hover:via-green-500/25 hover:to-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1";
-    }
-    
-    if (planNameLower.includes('business elite') || planNameLower.includes('business pro')) {
+    if (accountType === 'group') {
       return "border-2 border-transparent bg-gradient-to-br from-violet-500/15 via-purple-500/15 to-violet-500/10 hover:from-violet-500/25 hover:via-purple-500/25 hover:to-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-300 hover:scale-105 hover:rotate-1";
     }
-    
     return "border-2 border-border hover:shadow-xl transition-all duration-300";
   };
 
-  // Get badge for special plans
+  // Get badge for special plans by account_type (optional: could add a DB field like "badge" later)
   const getSpecialBadge = () => {
-    const planNameLower = plan.name.toLowerCase();
-    
-    if (planNameLower.includes('premium')) {
-      return (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse">
-          ⭐ Most Popular
-        </Badge>
-      );
-    }
-    
-    if (planNameLower.includes('pro')) {
+    const accountType = plan.account_type?.toLowerCase() ?? '';
+    if (accountType === 'business') {
       return (
         <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
           🏆 Best Value
         </Badge>
       );
     }
-    
+    if (accountType === 'group') {
+      return (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse">
+          ⭐ Most Popular
+        </Badge>
+      );
+    }
     return null;
   };
 
@@ -173,7 +121,7 @@ export function PlanCard({
     return (
       <Card className={`relative ${getCardStyles()} animate-fade-in`}>
         {/* START HERE Banner */}
-        {plan.name === 'free' && (
+        {isDefaultPlan && (
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2 rounded-t-lg">
             <span className="font-bold text-xs sm:text-sm uppercase tracking-wider">🎯 Free Trial Account</span>
           </div>
@@ -199,21 +147,21 @@ export function PlanCard({
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+                  Subscription Valid: {isDefaultPlan && plan.free_plan_expiry_days 
                     ? plan.free_plan_expiry_days 
                     : plan.billing_period_days} days
                 </div>
               </div>
 
               {/* Daily cost breakdown for paid plans */}
-              {dailyCost && plan.name !== 'free' && (
+              {dailyCost && !isDefaultPlan && (
                 <div className="text-xs text-muted-foreground mt-2 animate-fade-in">
                   Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
                 </div>
               )}
               
               {/* Warning Badge */}
-              {plan.name === 'free' && (
+              {isDefaultPlan && (
                 <div className="mt-4 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950 dark:to-orange-950 border-2 border-amber-400 dark:border-amber-700 rounded-lg p-3 animate-pulse">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-xs sm:text-sm">
                     ⚠️ Limited Earnings - Upgrade to Unlock
@@ -259,8 +207,8 @@ export function PlanCard({
                   </div>
                 )}
 
-                {/* Free Plan Specifics */}
-                {plan.name === 'free' && (
+                {/* Default (free tier) plan specifics */}
+                {isDefaultPlan && (
                   <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm mt-4">
                     {plan.free_plan_expiry_days && (
                       <div className="flex items-center gap-2">
@@ -278,7 +226,7 @@ export function PlanCard({
                 )}
 
                 {/* What Free Users DON'T Get - Strikethrough Features */}
-                {plan.name === 'free' && (
+                {isDefaultPlan && (
                   <div className="mt-4 space-y-2 border-t pt-3">
                     <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
                     <div className="flex items-center gap-2 opacity-60">
@@ -337,7 +285,7 @@ export function PlanCard({
               )}
 
               {/* Upgrade CTA for Free Trial - Prominent Button */}
-              {plan.name === 'free' && (
+              {isDefaultPlan && (
                 <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30">
                   <AlertDescription className="flex items-center justify-between gap-3">
                     <div className="flex-1">
@@ -424,7 +372,7 @@ export function PlanCard({
       
       <CardHeader className="pb-3 sm:pb-6">
         <CardTitle className="text-xl sm:text-2xl">
-          {plan.name !== 'free' && '👑 '}
+          {!isDefaultPlan && '👑 '}
           {plan.display_name}
         </CardTitle>
         <div className="space-y-1 text-sm text-muted-foreground">
@@ -435,13 +383,13 @@ export function PlanCard({
               </span>
             </div>
             <span className="text-xs sm:text-sm font-normal text-muted-foreground">
-              Subscription Valid: {plan.name === 'free' && plan.free_plan_expiry_days 
+              Subscription Valid: {isDefaultPlan && plan.free_plan_expiry_days 
                 ? plan.free_plan_expiry_days 
                 : plan.billing_period_days} days
             </span>
           </div>
           {/* Daily cost breakdown */}
-          {dailyCost && plan.name !== 'free' && (
+          {dailyCost && !isDefaultPlan && (
             <div className="text-xs text-muted-foreground animate-fade-in">
               Costs just <CurrencyDisplay amountUSD={parseFloat(dailyCost)} showTooltip={false} className="font-semibold text-primary inline" /> per day
             </div>
@@ -481,8 +429,8 @@ export function PlanCard({
           </div>
         )}
 
-        {/* Free Plan Specifics */}
-        {plan.name === 'free' && (
+        {/* Default (free tier) plan specifics */}
+        {isDefaultPlan && (
           <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
             {plan.free_plan_expiry_days && (
               <div className="flex items-center gap-2">
@@ -533,8 +481,8 @@ export function PlanCard({
           )}
         </div>
 
-        {/* What Free Users DON'T Get - Strikethrough Features (Vertical) */}
-        {plan.name === 'free' && (
+        {/* What default plan users don't get - Strikethrough Features (Vertical) */}
+        {isDefaultPlan && (
           <div className="mt-4 space-y-2 border-t pt-3">
             <div className="text-xs font-semibold text-muted-foreground mb-2">What you're missing:</div>
             <div className="flex items-center gap-2 opacity-60">
@@ -568,8 +516,8 @@ export function PlanCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2 relative p-4 sm:p-6">
-        {/* Upgrade CTA for Free Trial - Prominent Alert (Vertical) */}
-        {plan.name === 'free' && (
+        {/* Upgrade CTA for default plan - Prominent Alert (Vertical) */}
+        {isDefaultPlan && (
           <Alert className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 w-full">
             <AlertDescription className="flex items-center justify-between gap-3">
               <div className="flex-1">

@@ -113,8 +113,7 @@ export default function MembershipPlans() {
       return;
     }
 
-    // Explicit free plan check (redundant but clear)
-    if (plan.name === "free" && currentPlanPrice > 0) {
+    if (plan.account_type === "free" && currentPlanPrice > 0) {
       toast.error(t("membershipPlans.cannotDowngradeToFree"));
       return;
     }
@@ -133,7 +132,8 @@ export default function MembershipPlans() {
     setSelectedPlan(plan);
     
     // Calculate proration if upgrading from paid plan
-    if (profile.current_plan_start_date && currentPlan !== 'free') {
+    const isCurrentPlanFreeTier = plans?.some(p => p.account_type === 'free' && p.name === currentPlan);
+    if (profile.current_plan_start_date && !isCurrentPlanFreeTier) {
       const currentPlanData = plans.find(p => p.name === currentPlan);
       if (currentPlanData && currentPlanData.price > 0) {
         const planStartDate = new Date(profile.current_plan_start_date);
@@ -300,10 +300,10 @@ export default function MembershipPlans() {
     p.account_type === 'business'
   );
 
-  // Calculate free plan daily earning for comparison
-  const freePlan = plans.find(p => p.name === 'free');
-  const freePlanDailyEarning = freePlan 
-    ? freePlan.earning_per_task * freePlan.daily_task_limit 
+  // Default (free tier) plan from DB for daily earning comparison
+  const defaultPlan = plans.find(p => p.account_type === 'free');
+  const defaultPlanDailyEarning = defaultPlan 
+    ? defaultPlan.earning_per_task * defaultPlan.daily_task_limit 
     : 0;
 
   // Render plan cards function with optional variant
@@ -322,7 +322,7 @@ export default function MembershipPlans() {
         onUpgradeClick={handleUpgradeClick}
         hasProfile={!!profile}
         variant={variant}
-        freePlanEarning={freePlanDailyEarning}
+        freePlanEarning={defaultPlanDailyEarning}
         currentPlan={currentPlan}
         currentPlanPrice={currentPlanPrice}
       />

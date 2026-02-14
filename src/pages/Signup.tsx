@@ -165,9 +165,10 @@ const Signup = () => {
         }
       }
 
-      // Signup successful; email verification happens later via OTP when user clicks Verify Email on dashboard
+      // Signup successful. Do NOT show a "check your email / we sent you a link to verify" toast:
+      // email verification happens later via OTP when the user clicks "Verify Email" on the dashboard.
       console.log("✅ Signup successful");
-      
+
       if (authData.user && referralCode) {
         console.log('[REFERRAL] ✅ Account created with referral code:', {
           userId: authData.user.id,

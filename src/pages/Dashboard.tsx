@@ -25,6 +25,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
+import { isFreeTierPlan, getHighestTierPlan } from "@/lib/plan-utils";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -61,6 +63,10 @@ const Dashboard = () => {
   // ✅ Phase 1: Single React Query hook for all dashboard data (with caching)
   const { data, isLoading, refetch } = useDashboardData(user?.id);
   const { profile, referralStats, membershipPlan } = data || {};
+  const { plans } = useMembershipPlans();
+  const highestTierPlan = getHighestTierPlan(plans ?? undefined);
+  const isOnFreeTier = !membershipPlan || isFreeTierPlan(membershipPlan);
+  const isOnHighestTier = highestTierPlan && membershipPlan?.name === highestTierPlan.name;
 
   // Dashboard content configuration
   const { data: dashboardContentData } = useQuery({
@@ -237,8 +243,8 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* Free Account Upgrade Banner - show only when plan is free and NOT expired; when expired we show Plan Expired alert below instead */}
-          {(!profile.membership_plan || String(profile.membership_plan).toLowerCase() === 'free') && planStatus?.status !== 'expired' && (
+          {/* Free tier upgrade banner - show when on default (free) plan and NOT expired */}
+          {isOnFreeTier && planStatus?.status !== 'expired' && (
             <div className="mx-4 lg:mx-8 mt-6">
               <FreeAccountUpgradeBanner 
                 userId={user.id}
@@ -251,13 +257,14 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Premium Upgrade Banner - For paid plans below the highest tier */}
-          {profile.membership_plan && profile.membership_plan !== 'free' && profile.membership_plan !== 'pro' && (
+          {/* Premium Upgrade Banner - For paid plans below the highest tier (from DB) */}
+          {membershipPlan && !isOnFreeTier && !isOnHighestTier && (
             <div className="mx-4 lg:mx-8 mt-6">
               <PremiumUpgradeBanner 
                 userId={user.id}
                 currentPlan={profile.membership_plan}
                 onUpgrade={() => navigate("/plans")}
+                highestTierPlanName={highestTierPlan?.name}
               />
             </div>
           )}

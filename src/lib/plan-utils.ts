@@ -1,3 +1,41 @@
+/**
+ * Plan utilities. Plan data must come from the database (membership_plans);
+ * do not hardcode plan names, benefits, or tiers by string here.
+ */
+
+/** Plan-like shape for helpers (from membership_plans row or profile + plan lookup) */
+export interface PlanLike {
+  name?: string;
+  account_type?: string;
+  price?: number;
+}
+
+/**
+ * Returns true if the plan is the default/free tier (source of truth: account_type from DB).
+ * Use this instead of comparing plan name to 'Trainee' or 'free'.
+ */
+export const isFreeTierPlan = (plan: PlanLike | null | undefined): boolean => {
+  if (plan == null) return false;
+  return String(plan.account_type || '').toLowerCase().trim() === 'free';
+};
+
+/**
+ * Returns the default (free tier) plan from a list of plans from the DB.
+ * Plans are typically ordered by price ascending; free tier has account_type === 'free'.
+ */
+export const getDefaultPlan = <T extends PlanLike>(plans: T[] | null | undefined): T | undefined => {
+  if (!plans?.length) return undefined;
+  return plans.find((p) => isFreeTierPlan(p));
+};
+
+/**
+ * Returns the highest-tier (by price) plan from a list. Useful for "top plan" comparisons.
+ */
+export const getHighestTierPlan = <T extends { price?: number }>(plans: T[] | null | undefined): T | undefined => {
+  if (!plans?.length) return undefined;
+  return [...plans].sort((a, b) => (b.price ?? 0) - (a.price ?? 0))[0];
+};
+
 export const formatBillingPeriod = (days: number): string => {
   if (days === 1) return "day";
   if (days === 7) return "week";
@@ -6,58 +44,67 @@ export const formatBillingPeriod = (days: number): string => {
   return `${days} days`;
 };
 
-export const getPlanBenefits = (planName: string): string[] => {
-  const benefits: Record<string, string[]> = {
-    free: [
-      "Basic task access",
-      "Limited daily tasks",
-      "Community support",
-    ],
-    personal: [
-      "Increased task limits",
-      "Higher earnings per task",
-      "Task skip allowance",
-      "Referral commissions",
-      "Priority support",
-    ],
-    business: [
-      "Maximum task limits",
-      "Premium earnings rate",
-      "Unlimited task skips",
-      "Higher referral rates",
-      "Premium support",
-      "Advanced analytics",
-    ],
-    group: [
-      "Enterprise task limits",
-      "Top-tier earnings",
-      "Unlimited everything",
-      "Maximum commission rates",
-      "Dedicated account manager",
-      "Custom features",
-      "API access",
-    ],
-  };
-
-  return benefits[planName] || [];
+/**
+ * Returns the plan's features from the database (membership_plans.features).
+ * Pass the plan object from your API/query (e.g. from useMembershipPlans).
+ * Do not pass a plan name string; plan data must come from DB.
+ */
+export const getPlanBenefits = (plan: { features?: unknown } | null | undefined): string[] => {
+  if (plan == null) return [];
+  if (typeof plan === 'string') {
+    if (import.meta.env?.DEV) {
+      console.warn('[plan-utils] getPlanBenefits(planName) is deprecated. Pass the plan object from DB (e.g. membership_plans row) instead.');
+    }
+    return [];
+  }
+  const f = plan.features;
+  if (f == null) return [];
+  if (Array.isArray(f)) {
+    return f.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof f === 'object' && !Array.isArray(f)) {
+    return Object.values(f).filter((item): item is string => typeof item === 'string');
+  }
+  return [];
 };
 
-export const comparePlans = (currentPlan: string, targetPlan: string): {
+/**
+ * Compare two plans by tier. Prefer plans from DB (ordered by price asc): tier = index.
+ * Fallback: use account_type order (free=0, personal=1, business=2, group=3) when plans array is not provided.
+ */
+export const comparePlans = (
+  currentPlan: string,
+  targetPlan: string,
+  plansOrderedByPrice?: Array<{ name: string; account_type?: string; price?: number }> | null
+): {
   isUpgrade: boolean;
   isDowngrade: boolean;
   tierDifference: number;
 } => {
-  const planTiers: Record<string, number> = {
+  if (plansOrderedByPrice?.length) {
+    const currentIdx = plansOrderedByPrice.findIndex((p) => p.name === currentPlan);
+    const targetIdx = plansOrderedByPrice.findIndex((p) => p.name === targetPlan);
+    const currentTier = currentIdx >= 0 ? currentIdx : 0;
+    const targetTier = targetIdx >= 0 ? targetIdx : 0;
+    const difference = targetTier - currentTier;
+    return {
+      isUpgrade: difference > 0,
+      isDowngrade: difference < 0,
+      tierDifference: Math.abs(difference),
+    };
+  }
+  // Fallback when no DB plans: use account_type or common plan name -> tier (avoid hardcoding; prefer passing plans)
+  const accountTypeTiers: Record<string, number> = {
     free: 0,
     personal: 1,
     business: 2,
     group: 3,
   };
-
-  const currentTier = planTiers[currentPlan] || 0;
-  const targetTier = planTiers[targetPlan] || 0;
+  const nameLower = (s: string) => (s ?? '').toLowerCase().trim();
+  const getTier = (name: string) => accountTypeTiers[nameLower(name)] ?? 0;
+  const currentTier = getTier(currentPlan);
+  const targetTier = getTier(targetPlan);
   const difference = targetTier - currentTier;
-
   return {
     isUpgrade: difference > 0,
     isDowngrade: difference < 0,

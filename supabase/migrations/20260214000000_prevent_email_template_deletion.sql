@@ -1,8 +1,11 @@
 -- Prevent deletion of email templates: admins can only SELECT, INSERT, UPDATE (enable/disable).
 -- No one can DELETE rows from email_templates (RLS + trigger for service-role safety).
 
--- 1. Drop the existing "FOR ALL" policy so we can replace with SELECT/INSERT/UPDATE only (no DELETE)
+-- 1. Drop existing policies so we can replace with SELECT/INSERT/UPDATE only (no DELETE). Idempotent.
 DROP POLICY IF EXISTS "Admins can manage email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can select email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can insert email templates" ON public.email_templates;
+DROP POLICY IF EXISTS "Admins can update email templates" ON public.email_templates;
 
 -- 2. Admins can read email templates
 CREATE POLICY "Admins can select email templates"

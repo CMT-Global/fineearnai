@@ -7,46 +7,40 @@ interface PremiumUpgradeBannerProps {
   userId: string;
   currentPlan: string;
   onUpgrade: () => void;
+  /** Plan name for the highest tier (from DB). When user is on this plan, banner is hidden. */
+  highestTierPlanName?: string | null;
 }
 
-export const PremiumUpgradeBanner = ({ userId, currentPlan, onUpgrade }: PremiumUpgradeBannerProps) => {
+export const PremiumUpgradeBanner = ({ userId, currentPlan, onUpgrade, highestTierPlanName }: PremiumUpgradeBannerProps) => {
   const [isDismissed, setIsDismissed] = useState(true);
 
-
-  
-
   useEffect(() => {
-    let isMounted= true;
-    (async()=>{
+    let isMounted = true;
+    (async () => {
       try {
         const { data, error } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userId)
-        .eq("membership_plan", "premium")
-        .limit(1);
+          .from("profiles")
+          .select("membership_plan")
+          .eq("id", userId)
+          .limit(1)
+          .maybeSingle();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      const isNotPremium = error || (data?.length ?? 0) === 0;
-
-      // If not premium, always hide the banner
-      if (isNotPremium) {
-        setIsDismissed(false);
-        return;
-      }
-        const dismissed = localStorage.getItem(`premiumUpgradeB liek this annerDismissed_${userId}_${currentPlan}`);
-        if (dismissed === "true") {
+        const userPlanName = data?.membership_plan ?? null;
+        const isOnHighestTier = highestTierPlanName && userPlanName === highestTierPlanName;
+        if (isOnHighestTier) {
           setIsDismissed(true);
+          return;
         }
+        const dismissed = localStorage.getItem(`premiumUpgradeBannerDismissed_${userId}_${currentPlan}`);
+        setIsDismissed(dismissed === "true");
       } finally {
         isMounted = false;
       }
     })();
-    return () => {
-      isMounted = false;
-    };
-  }, [userId, currentPlan]);
+    return () => { isMounted = false; };
+  }, [userId, currentPlan, highestTierPlanName]);
   if (isDismissed) return null;
 
   const handleDismiss = () => {

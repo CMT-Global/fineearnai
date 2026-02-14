@@ -55,7 +55,7 @@ export const usePaginatedReferrals = (
           id: ref.referred_id,
           username: ref.username || 'Unknown',
           email: ref.email || '',
-          membershipPlan: ref.membership_plan || 'free',
+          membershipPlan: ref.membership_plan ?? '',
           accountStatus: ref.account_status || 'active',
           joinedAt: ref.created_at,
           lastActivity: ref.last_activity || null,
