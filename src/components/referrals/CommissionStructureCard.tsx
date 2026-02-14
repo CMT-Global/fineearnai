@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseService } from "@/integrations/supabase";
 import { TrendingUp, AlertCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -30,13 +30,13 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
 
   const loadCommissionRates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("membership_plans")
-        .select("task_commission_rate, deposit_commission_rate, account_type")
-        .eq("name", userPlan)
-        .single();
-
-      if (error) throw error;
+      // Resolve plan by name; if not found (e.g. stale "free" when DB has "Trainee"), use default free-tier plan
+      let data = userPlan
+        ? await supabaseService.membershipPlans.getByName(userPlan)
+        : null;
+      if (!data) {
+        data = await supabaseService.membershipPlans.getDefaultPlan();
+      }
 
       if (data) {
         setCommissions({

@@ -123,10 +123,22 @@ Deno.serve(async (req)=>{
       const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
       planName = defaultPlan?.name ?? '';
     }
-    const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
+    const planResult = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
+    let membershipPlan = planResult.data ?? null;
+    let planError = planResult.error ?? null;
+    // Fallback: when profile has stale name (e.g. 'free') but DB uses 'Trainee', use default free-tier plan
+    if (!planError && !membershipPlan) {
+      const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      membershipPlan = fallback.data ?? null;
+      planError = fallback.error ?? null;
+      if (membershipPlan) {
+        planName = membershipPlan.name;
+        console.warn(`⚠️ [${requestId}] Plan "${profile.membership_plan ?? ''}" not found; using default free-tier plan "${planName}" for user ${userId}`);
+      }
+    }
     const profileTime = Date.now() - profileStartTime;
     if (planError || !membershipPlan) {
-      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError);
+      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError ?? 'no matching plan and no default free-tier plan');
       return new Response(JSON.stringify({
         error: 'plan_not_found',
         message: `Membership plan '${planName}' not found or inactive`

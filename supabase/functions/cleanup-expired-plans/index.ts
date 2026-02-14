@@ -76,8 +76,8 @@ Deno.serve(async (req)=>{
             });
             continue;
           }
-          // Get plan details
-          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
+          // Get plan details (fallback to default if profile has stale plan name)
+          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan ?? '', { fallbackToDefault: true });
           if (!membershipPlan) {
             console.log(`Plan not found for user ${user.id}, skipping reminder`);
             continue;
@@ -226,8 +226,8 @@ Deno.serve(async (req)=>{
             }
             continue;
           }
-          // Get the user's current membership plan details using cache
-          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
+          // Get the user's current membership plan details (fallback to default if stale plan name)
+          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan ?? '', { fallbackToDefault: true });
           if (!membershipPlan) {
             console.error(`Membership plan not found for user ${user.id}:`, user.membership_plan);
             if (defaultPlanName) {

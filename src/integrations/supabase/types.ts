@@ -2669,6 +2669,7 @@ export type Database = {
         | "withdrawal"
         | "task_earning"
         | "referral_commission"
+        | "referral_earning"
         | "plan_upgrade"
         | "transfer"
         | "adjustment"
@@ -2817,6 +2818,7 @@ export const Constants = {
         "withdrawal",
         "task_earning",
         "referral_commission",
+        "referral_earning",
         "plan_upgrade",
         "transfer",
         "adjustment",

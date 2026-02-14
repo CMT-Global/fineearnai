@@ -71,8 +71,10 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    // Get the current plan details (for proration calculation) using cache
-    const currentPlan = profile.membership_plan ? await getMembershipPlan(supabase, profile.membership_plan) : null;
+    // Get the current plan details (fallback to default if profile has stale plan name)
+    const currentPlan = profile.membership_plan
+      ? await getMembershipPlan(supabase, profile.membership_plan, { fallbackToDefault: true })
+      : null;
     // Get the new plan details using cache
     const newPlan = await getMembershipPlan(supabase, planName);
     if (!newPlan || !newPlan.is_active) {
