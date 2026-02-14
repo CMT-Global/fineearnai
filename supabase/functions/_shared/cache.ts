@@ -70,3 +70,27 @@ export async function getMembershipPlan(supabaseClient: any, planName: string) {
   plansCache.set(cacheKey, data);
   return data;
 }
+
+const DEFAULT_PLAN_NAME_KEY = 'default_plan_name';
+
+/**
+ * Returns the name of the default (free tier) plan. Source of truth: account_type = 'free'.
+ * Use this instead of hardcoding 'Trainee' so renaming the plan in DB works.
+ */
+export async function getDefaultPlanName(supabaseClient: any): Promise<string | null> {
+  const cached = plansCache.get(DEFAULT_PLAN_NAME_KEY);
+  if (cached) return cached as string;
+
+  const { data, error } = await supabaseClient
+    .from('membership_plans')
+    .select('name')
+    .eq('account_type', 'free')
+    .eq('is_active', true)
+    .order('price', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data?.name) return null;
+  plansCache.set(DEFAULT_PLAN_NAME_KEY, data.name, 15 * 60 * 1000);
+  return data.name;
+}

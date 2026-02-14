@@ -80,14 +80,19 @@ const corsHeaders = {
         status: 403
       });
     }
-    // Resolve plan name: null/empty => default plan (Trainee)
-    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'Trainee';
+    // Resolve plan name: null/empty => default (free tier) plan from DB
+    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    if (!planName) {
+      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      planName = defaultPlan?.name ?? '';
+    }
     let { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).maybeSingle();
-    // Fallback: default-tier plan (account_type = 'free', typically Trainee)
-    if ((planError || !plan) && planName !== 'Trainee') {
+    // Fallback: default-tier plan (account_type = 'free') when plan name not found
+    if (planError || !plan) {
       const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
       plan = fallback.data ?? undefined;
       planError = fallback.error ?? planError;
+      if (plan) planName = plan.name;
     }
     if (!plan && !planError) {
       const { data: allPlans, error: listError } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(50);

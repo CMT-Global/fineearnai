@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { getDefaultPlanName } from '../_shared/cache.ts';
 Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -182,9 +183,10 @@ Deno.serve(async (req)=>{
           let freeReferrals = 0;
           let upgradedReferrals = 0;
           if (referredIds.length > 0) {
+            const defaultPlanName = await getDefaultPlanName(supabaseClient);
             const { data: referredUsers } = await supabaseClient.from('profiles').select('membership_plan').in('id', referredIds);
-            freeReferrals = referredUsers?.filter((u)=>u.membership_plan === 'Trainee').length || 0;
-            upgradedReferrals = referredUsers?.filter((u)=>u.membership_plan !== 'Trainee').length || 0;
+            freeReferrals = defaultPlanName ? referredUsers?.filter((u)=>u.membership_plan === defaultPlanName).length || 0 : 0;
+            upgradedReferrals = defaultPlanName ? referredUsers?.filter((u)=>u.membership_plan !== defaultPlanName).length || 0 : (referredUsers?.length || 0);
           }
           // Calculate total commission earned
           const totalCommissionEarned = referrals?.reduce((sum, r)=>sum + Number(r.total_commission_earned || 0), 0) || 0;
@@ -423,8 +425,8 @@ Deno.serve(async (req)=>{
           const now = new Date();
           let expiresAt = planData.expires_at ?? null;
 
-          // Default tier (Trainee / account_type free): use free_plan_expiry_days if no expires_at provided; otherwise allow null
-          const isDefaultTier = plan.name === 'Trainee' || (plan.account_type || '').toLowerCase().trim() === 'free';
+          // Default tier (account_type free): use free_plan_expiry_days if no expires_at provided; otherwise allow null
+          const isDefaultTier = (plan.account_type || '').toLowerCase().trim() === 'free';
           if (isDefaultTier) {
             if (!expiresAt && plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0) {
               const expiry = new Date(now);

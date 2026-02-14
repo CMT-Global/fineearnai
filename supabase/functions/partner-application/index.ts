@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
+import { getDefaultPlanName } from "../_shared/cache.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-correlation-id"
@@ -132,9 +133,10 @@ Deno.serve(async (req)=>{
         userId: user.id,
         membershipPlan: profile.membership_plan
       });
-      // SERVER-SIDE DEFAULT PLAN VALIDATION (Trainee cannot apply)
-      if (profile.membership_plan === 'Trainee') {
-        console.log(`⛔ [Partner Application] BLOCKED: Default plan (Trainee)`, {
+      // SERVER-SIDE DEFAULT PLAN VALIDATION (default/free tier cannot apply)
+      const defaultPlanName = await getDefaultPlanName(supabaseClient);
+      if (defaultPlanName && profile.membership_plan === defaultPlanName) {
+        console.log(`⛔ [Partner Application] BLOCKED: Default plan`, {
           event: 'partner-application.default-plan-blocked',
           correlationId,
           userId: user.id,
@@ -142,7 +144,7 @@ Deno.serve(async (req)=>{
           timingMs: Date.now() - startTime
         });
         return new Response(JSON.stringify({
-          error: "Trainee plan users cannot apply to become partners. Please upgrade your membership plan first.",
+          error: "Users on the default (free) plan cannot apply to become partners. Please upgrade your membership plan first.",
           error_code: "DEFAULT_PLAN_BLOCKED"
         }), {
           status: 403,

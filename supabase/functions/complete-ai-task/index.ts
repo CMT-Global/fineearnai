@@ -117,9 +117,12 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
-    // Resolve plan name: null/empty => default plan (Trainee)
-    const planName = (profile.membership_plan && String(profile.membership_plan).trim()) || 'Trainee';
-    // Fetch membership plan separately (no FK relationship exists)
+    // Resolve plan name: null/empty => default (free tier) plan from DB
+    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    if (!planName) {
+      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      planName = defaultPlan?.name ?? '';
+    }
     const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
     const profileTime = Date.now() - profileStartTime;
     if (planError || !membershipPlan) {
