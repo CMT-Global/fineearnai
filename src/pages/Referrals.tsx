@@ -81,7 +81,7 @@ const Referrals = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return (data?.display_name as string) || "Trainee";
+      return (data?.display_name as string) || "";
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -141,10 +141,10 @@ const Referrals = () => {
                     <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
                   <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {t("referrals.freePlanBannerTitle", { planName: defaultPlanDisplayName ?? "Trainee" })}
+                    {t("referrals.freePlanBannerTitle", { planName: defaultPlanDisplayName || t("referrals.defaultPlan") })}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                    <p>{t("referrals.freePlanBannerMessage", { planName: defaultPlanDisplayName ?? "Trainee" })}</p>
+                    <p>{t("referrals.freePlanBannerMessage", { planName: defaultPlanDisplayName || t("referrals.defaultPlan") })}</p>
                     <Button 
                       onClick={() => navigate("/plans")}
                       className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"

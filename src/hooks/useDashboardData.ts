@@ -14,9 +14,14 @@ export const useDashboardData = (userId: string | undefined) => {
         supabaseService.rpc.getReferralStats(userId)
       ]);
       
-      // Fetch membership plan based on profile (default Trainee when not set)
-      const planName = profile.membership_plan || 'Trainee';
-      const planData = await supabaseService.membershipPlans.getByName(planName);
+      // Fetch membership plan from DB: use profile's plan name, or default (free tier) plan
+      let planData = profile.membership_plan
+        ? await supabaseService.membershipPlans.getByName(profile.membership_plan)
+        : null;
+      if (!planData) {
+        const defaultPlan = await supabaseService.membershipPlans.getDefaultPlan();
+        planData = defaultPlan ?? null;
+      }
       
       // Add earner badge status to profile
       const accountType = planData?.account_type;

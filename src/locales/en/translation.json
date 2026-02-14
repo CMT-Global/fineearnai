@@ -553,6 +553,7 @@
     "loadingReferrals": "Loading team...",
     "noReferralCommissions": "No Referral Commissions",
     "upgradeToEarnCommissions": "Upgrade to Earn Commissions",
+    "defaultPlan": "Default plan",
     "freePlanBannerTitle": "{{planName}} Plan — Task Commissions Locked",
     "freePlanBannerMessage": "On the {{planName}} (Free) plan, you can share your team invite link, but task commissions are only available on paid plans. Upgrade to start earning commissions when your team members complete tasks.",
     "freePlanBannerCta": "Unlock Task Commissions",

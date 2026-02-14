@@ -809,7 +809,7 @@ export default function Withdrawals() {
                       <div>
                         <p className="text-sm text-muted-foreground">{t("admin.withdrawals.membershipPlan")}</p>
                         <Badge variant="outline" className="mt-1">
-                          {withdrawal.profiles?.membership_plan || 'Trainee'}
+                          {withdrawal.profiles?.membership_plan ?? '—'}
                         </Badge>
                       </div>
                       <div>

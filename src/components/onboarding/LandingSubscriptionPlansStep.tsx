@@ -1,45 +1,34 @@
 import { Check, X, Star } from "lucide-react";
-
-const plans = [
-  {
-    name: "Trainee",
-    dailyTasks: "5/day",
-    bonus: "Standard rate",
-    priorityTasks: false,
-    referralCommission: false,
-    weeklyPotential: "~$50",
-    popular: false,
-  },
-  {
-    name: "Basic Account",
-    dailyTasks: "50/day",
-    bonus: "+10% bonus",
-    priorityTasks: true,
-    referralCommission: true,
-    weeklyPotential: "~$120",
-    popular: false,
-  },
-  {
-    name: "Premium Account",
-    dailyTasks: "20/day",
-    bonus: "+20% bonus",
-    priorityTasks: true,
-    referralCommission: true,
-    weeklyPotential: "~$200",
-    popular: false,
-  },
-  {
-    name: "Premiun",
-    dailyTasks: "50/day",
-    bonus: "+30% bonus",
-    priorityTasks: true,
-    referralCommission: true,
-    weeklyPotential: "~$300+",
-    popular: true,
-  },
-];
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
+import { getHighestTierPlan } from "@/lib/plan-utils";
 
 export default function LandingSubscriptionPlansStep() {
+  const { plans, loading } = useMembershipPlans();
+  const highestPlan = getHighestTierPlan(plans ?? []);
+
+  const planRows = (plans ?? []).map((p) => ({
+    name: p.display_name || p.name,
+    dailyTasks: `${p.daily_task_limit}/day`,
+    bonus: p.earning_per_task > 0 ? `$${p.earning_per_task}/task` : "Standard rate",
+    priorityTasks: (p.task_skip_limit_per_day ?? 0) > 0,
+    referralCommission: (p.task_commission_rate ?? 0) > 0,
+    weeklyPotential: p.daily_task_limit && p.earning_per_task
+      ? `~$${Math.round(p.daily_task_limit * p.earning_per_task * 7)}`
+      : "—",
+    popular: highestPlan?.id === p.id,
+  }));
+
+  if (loading || planRows.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Choose Your Plan</h2>
+          <p className="text-muted-foreground">Loading plans...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -56,7 +45,7 @@ export default function LandingSubscriptionPlansStep() {
           <div className="grid grid-cols-5 gap-2 text-sm">
             {/* Header */}
             <div className="p-3"></div>
-            {plans.map((plan) => (
+            {planRows.map((plan) => (
               <div 
                 key={plan.name} 
                 className={`p-3 text-center rounded-t-lg ${plan.popular ? 'bg-primary/20 border-t border-x border-primary/30' : 'bg-muted/30'}`}
@@ -73,7 +62,7 @@ export default function LandingSubscriptionPlansStep() {
 
             {/* Daily Tasks */}
             <div className="p-3 bg-muted/20 text-muted-foreground">Daily Tasks</div>
-            {plans.map((plan) => (
+            {planRows.map((plan) => (
               <div 
                 key={plan.name} 
                 className={`p-3 text-center ${plan.popular ? 'bg-primary/10 border-x border-primary/30' : 'bg-muted/10'}`}
@@ -84,7 +73,7 @@ export default function LandingSubscriptionPlansStep() {
 
             {/* Earning Bonus */}
             <div className="p-3 bg-muted/20 text-muted-foreground">Earning Rate</div>
-            {plans.map((plan) => (
+            {planRows.map((plan) => (
               <div 
                 key={plan.name} 
                 className={`p-3 text-center text-foreground ${plan.popular ? 'bg-primary/10 border-x border-primary/30' : 'bg-muted/10'}`}
@@ -95,7 +84,7 @@ export default function LandingSubscriptionPlansStep() {
 
             {/* Priority Tasks */}
             <div className="p-3 bg-muted/20 text-muted-foreground">Priority Tasks</div>
-            {plans.map((plan) => (
+            {planRows.map((plan) => (
               <div 
                 key={plan.name} 
                 className={`p-3 flex justify-center ${plan.popular ? 'bg-primary/10 border-x border-primary/30' : 'bg-muted/10'}`}
@@ -110,7 +99,7 @@ export default function LandingSubscriptionPlansStep() {
 
             {/* Referral Commission */}
             <div className="p-3 bg-muted/20 text-muted-foreground">Partner Commissions</div>
-            {plans.map((plan) => (
+            {planRows.map((plan) => (
               <div 
                 key={plan.name} 
                 className={`p-3 flex justify-center ${plan.popular ? 'bg-primary/10 border-x border-primary/30' : 'bg-muted/10'}`}
@@ -125,7 +114,7 @@ export default function LandingSubscriptionPlansStep() {
 
             {/* Weekly Potential */}
             <div className="p-3 bg-muted/20 text-muted-foreground rounded-bl-lg">Weekly Potential</div>
-            {plans.map((plan, index) => (
+            {planRows.map((plan, index) => (
               <div 
                 key={plan.name} 
                 className={`p-3 text-center ${plan.popular ? 'bg-primary/10 border-x border-b border-primary/30 rounded-b-lg' : 'bg-muted/10'} ${index === plans.length - 1 && !plan.popular ? 'rounded-br-lg' : ''}`}

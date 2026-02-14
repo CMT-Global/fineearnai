@@ -518,6 +518,23 @@ export const membershipPlansService = {
   },
 
   /**
+   * Get the default (free tier) plan. Source of truth: account_type = 'free'.
+   * Use this instead of hardcoding plan name like 'Trainee' or 'free'.
+   */
+  async getDefaultPlan() {
+    const { data, error } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('account_type', 'free')
+      .eq('is_active', true)
+      .order('price', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Get a single plan by ID
    */
   async get(planId: string) {

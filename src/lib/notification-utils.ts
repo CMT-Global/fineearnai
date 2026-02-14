@@ -183,7 +183,7 @@ export const notifyPlanRenewed = async (
 export const notifyPlanExpired = async (userId: string, planName: string) => {
   return createNotification(userId, {
     title: "Plan Expired",
-    message: `Your ${planName} plan has expired. You have been downgraded to the Trainee plan.`,
+    message: `Your ${planName} plan has expired. You have been downgraded to the default plan.`,
     type: "plan",
     priority: "high",
     metadata: { planName },

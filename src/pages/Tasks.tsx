@@ -356,7 +356,7 @@ const Tasks = () => {
             <DailyLimitReached
               tasksCompleted={userStats?.tasksCompletedToday || 0}
               dailyLimit={userStats?.dailyLimit || 0}
-              membershipPlan={userStats?.membershipPlan || 'Trainee'}
+              membershipPlan={userStats?.membershipPlan ?? ''}
               onUpgrade={() => navigate('/plans')}
             />
           ) : currentTask && displayOrder ? (

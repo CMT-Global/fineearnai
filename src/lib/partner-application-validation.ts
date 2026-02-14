@@ -170,15 +170,6 @@ export const completeApplicationSchema = z.object({
   agrees_to_guidelines: z.boolean().refine((val) => val === true, {
     message: "You must agree to the Partner Guidelines",
   }),
-}).superRefine((data, ctx) => {
-  // Phase 2: Default plan (Trainee) blocking validation
-  if (data.current_membership_plan === 'Trainee') {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Users on Trainee plan cannot become Partners. Please upgrade your account first.",
-      path: ["current_membership_plan"],
-    });
-  }
 }).refine((data) => {
   // Validate conditional fields for Section 1
   if (data.preferred_contact_method === "whatsapp" || data.preferred_contact_method === "both") {

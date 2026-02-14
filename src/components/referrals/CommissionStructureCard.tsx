@@ -26,11 +26,13 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
     loadCommissionRates();
   }, [userPlan]);
 
+  const [isEligible, setIsEligible] = useState<boolean>(false);
+
   const loadCommissionRates = async () => {
     try {
       const { data, error } = await supabase
         .from("membership_plans")
-        .select("task_commission_rate, deposit_commission_rate")
+        .select("task_commission_rate, deposit_commission_rate, account_type")
         .eq("name", userPlan)
         .single();
 
@@ -41,6 +43,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
           taskCommissionRate: Number(data.task_commission_rate),
           depositCommissionRate: Number(data.deposit_commission_rate),
         });
+        setIsEligible(String(data.account_type || "").toLowerCase() !== "free");
       }
     } catch (error) {
       console.error("Error loading commission rates:", error);
@@ -57,8 +60,6 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
       </Card>
     );
   }
-
-  const isEligible = userPlan !== "Trainee";
 
   return (
     <Card className="p-6">

@@ -166,7 +166,7 @@ const PlansManage = () => {
         return;
       }
 
-      // Phase 3: Enforce referral_eligible = false for default tier (Trainee)
+      // Phase 3: Enforce referral_eligible = false for default (free) tier
       const referralEligible = formData.account_type === 'free' ? false : formData.referral_eligible;
 
       const planData = {
@@ -185,7 +185,7 @@ const PlansManage = () => {
         min_daily_withdrawal: formData.min_daily_withdrawal,
         max_daily_withdrawal: formData.max_daily_withdrawal,
         free_plan_expiry_days: formData.free_plan_expiry_days,
-        free_trial_days: (formData.account_type === 'free' || formData.name === 'Trainee') ? 0 : (Number(formData.free_trial_days) || 0),
+        free_trial_days: formData.account_type === 'free' ? 0 : (Number(formData.free_trial_days) || 0),
         referral_eligible: referralEligible, // Phase 3: Control commission generation
         is_active: formData.is_active,
         features,
@@ -733,8 +733,8 @@ const PlansManage = () => {
                       </div>
                     </div>
 
-                    {/* Default plan (Trainee) expiry days - Only shown for default tier */}
-                    {(formData.account_type === 'free' || formData.name === 'Trainee') && (
+                    {/* Default (free tier) expiry days - Only shown for default tier */}
+                    {formData.account_type === 'free' && (
                       <div>
                         <Label htmlFor="free_plan_expiry_days">Default Plan Expiry Days</Label>
                         <Input
@@ -754,13 +754,13 @@ const PlansManage = () => {
                           placeholder="Leave empty for lifetime access"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Number of days before default plan (Trainee) expires. Leave empty for lifetime access.
+                          Number of days before default (free tier) plan expires. Leave empty for lifetime access.
                         </p>
                       </div>
                     )}
 
-                    {/* Free Trial Days - Only for paid plans; hidden for default plan (Trainee) */}
-                    {formData.account_type !== 'free' && formData.name !== 'Trainee' && (
+                    {/* Free Trial Days - Only for paid plans; hidden for default (free) plan */}
+                    {formData.account_type !== 'free' && (
                       <div>
                         <Label htmlFor="free_trial_days">Free Trial Days (Onboarding)</Label>
                         <Input
@@ -812,7 +812,7 @@ const PlansManage = () => {
                         <Switch
                           id="referral_eligible"
                           checked={formData.referral_eligible}
-                          disabled={formData.account_type === 'free'} // Disable for default tier (Trainee)
+                          disabled={formData.account_type === 'free'} // Disable for default (free) tier
                           onCheckedChange={(checked) =>
                             setFormData({ ...formData, referral_eligible: checked })
                           }
@@ -821,7 +821,7 @@ const PlansManage = () => {
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {formData.account_type === 'free' 
-                          ? "Default plan (Trainee) cannot generate referral commissions for their upline"
+                          ? "Default (free tier) plan cannot generate referral commissions for their upline"
                           : "When enabled, users on this plan can generate referral commissions for their upline. Disable to prevent commission generation."
                         }
                       </p>
