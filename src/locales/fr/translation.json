@@ -378,6 +378,11 @@
       "resetAtMidnight": "Your daily task limit will reset at midnight",
       "greatJobToday": "Great job today! Keep up the excellent work. 💪"
     },
+    "planExpired": {
+      "title": "Votre forfait a expiré",
+      "description": "Passez à un forfait supérieur pour accéder aux tâches et continuer à gagner.",
+      "upgradeToAccessTasks": "Mettre à niveau pour accéder aux tâches"
+    },
     "noTasks": {
       "title": "No Tasks Available Right Now",
       "description": "All available tasks have been completed. New tasks will be added soon.",
