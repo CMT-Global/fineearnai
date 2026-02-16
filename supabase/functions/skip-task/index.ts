@@ -71,32 +71,27 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
-    // Resolve plan: by name first, then fallback to default free-tier (e.g. profile has stale "free" but DB uses "Trainee")
-    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
-    if (!planName) {
-      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      planName = defaultPlan?.name ?? '';
+    // Resolve plan: single fetch, robust match (exact name → case-insensitive name → display_name → default free)
+    const profilePlanRaw = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    const { data: allPlans, error: plansErr } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(100);
+    if (plansErr || !allPlans?.length) {
+      console.error(`❌ [${requestId}] Failed to fetch membership plans:`, plansErr);
+      return new Response(JSON.stringify({ error: 'plan_not_found', message: 'Failed to load membership plans.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500
+      });
     }
-    let { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('task_skip_limit_per_day').eq('name', planName).eq('is_active', true).maybeSingle();
-    if (!planError && !membershipPlan) {
-      const fallback = await supabase.from('membership_plans').select('task_skip_limit_per_day').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      membershipPlan = fallback.data ?? null;
-      planError = fallback.error ?? null;
-      if (membershipPlan) {
-        console.warn(`⚠️ [${requestId}] Plan "${profile.membership_plan ?? ''}" not found; using default free-tier plan for user ${user.id}`);
-      }
+    const key = (s) => (s || '').trim().toLowerCase();
+    const defaultFree = allPlans.find((p) => (p.account_type || '').toLowerCase() === 'free') || allPlans[0];
+    let membershipPlan = defaultFree;
+    if (profilePlanRaw) {
+      const match = allPlans.find((p) => (p.name || '').trim() === profilePlanRaw)
+        || allPlans.find((p) => key(p.name) === key(profilePlanRaw))
+        || allPlans.find((p) => key(p.display_name) === key(profilePlanRaw));
+      if (match) membershipPlan = match;
     }
-    if (planError || !membershipPlan) {
-      console.error(`❌ [${requestId}] Membership plan fetch error:`, planError ?? 'no matching plan and no default free-tier plan');
-      return new Response(JSON.stringify({
-        error: 'plan_not_found',
-        message: 'Membership plan not found or inactive'
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 404
+    if (!membershipPlan) {
+      return new Response(JSON.stringify({ error: 'plan_not_found', message: 'Membership plan not found or inactive' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404
       });
     }
     console.log(`📊 [${requestId}] Current skips: ${profile.skips_today}/${membershipPlan.task_skip_limit_per_day}`);

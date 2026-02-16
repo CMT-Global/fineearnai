@@ -80,44 +80,44 @@ const corsHeaders = {
         status: 403
       });
     }
-    // Resolve plan name: null/empty => default (free tier) plan from DB
-    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
-    if (!planName) {
-      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      planName = defaultPlan?.name ?? '';
-    }
-    let { data: plan, error: planError } = await supabase.from('membership_plans').select('*').eq('name', planName).maybeSingle();
-    // Fallback: default-tier plan (account_type = 'free') when plan name not found
-    if (planError || !plan) {
-      const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      plan = fallback.data ?? undefined;
-      planError = fallback.error ?? planError;
-      if (plan) planName = plan.name;
-    }
-    if (!plan && !planError) {
-      const { data: allPlans, error: listError } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(50);
-      if (!listError && allPlans?.length) {
-        const match = allPlans.find((p) => (p.name || '').toLowerCase() === planName.toLowerCase());
-        plan = match ?? allPlans.find((p) => (p.account_type || '').toLowerCase() === 'free') ?? allPlans[0];
-        if (!match) {
-          console.warn('Plan name not found, using default or first active plan:', { planName, usedPlan: plan?.name });
-        }
-      }
-    }
-    if (planError || !plan) {
-      console.error('Error fetching membership plan:', { planName, planError, profilePlan: profile.membership_plan });
+    // Resolve plan: single fetch, robust match (exact name → case-insensitive name → display_name → default free)
+    const profilePlanRaw = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    const { data: allPlans, error: plansErr } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(100);
+    if (plansErr || !allPlans?.length) {
+      console.error('Error fetching membership plans:', plansErr);
       return new Response(JSON.stringify({
         error: 'stats_error',
-        message: profile.membership_plan
-          ? `Membership plan "${profile.membership_plan}" not found. Please ensure the plan exists in membership_plans or update the user's profile to a valid plan.`
-          : 'Failed to fetch membership plan. Profile has no plan set; ensure at least one active plan exists in membership_plans.'
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 500
-      });
+        message: 'Failed to load membership plans.'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+    }
+    const key = (s: string) => (s || '').trim().toLowerCase();
+    const defaultFree = allPlans.find((p) => (p.account_type || '').toLowerCase() === 'free') ?? allPlans[0];
+    let plan = null;
+    let planName = defaultFree?.name ?? '';
+    if (profilePlanRaw) {
+      plan = allPlans.find((p) => (p.name || '').trim() === profilePlanRaw)
+        ?? allPlans.find((p) => key(p.name) === key(profilePlanRaw))
+        ?? allPlans.find((p) => key(p.display_name) === key(profilePlanRaw));
+      if (plan) {
+        planName = plan.name;
+        if (key(plan.name) !== key(profilePlanRaw) && key(plan.display_name) === key(profilePlanRaw)) {
+          console.log('Plan resolved by display_name; using internal name for limits:', { profilePlan: profile.membership_plan, resolvedPlanName: planName });
+        }
+      } else {
+        plan = defaultFree;
+        planName = plan?.name ?? '';
+        console.warn('Plan not found for profile value, using default free tier:', { profilePlan: profile.membership_plan, usedPlan: planName });
+      }
+    } else {
+      plan = defaultFree;
+      planName = plan?.name ?? '';
+    }
+    if (!plan) {
+      console.error('No active membership plan found in DB');
+      return new Response(JSON.stringify({
+        error: 'stats_error',
+        message: 'No active membership plan found.'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
     }
     // Map profile and plan data to stats format (use resolved planName so UI shows correct plan)
     const userStats = {

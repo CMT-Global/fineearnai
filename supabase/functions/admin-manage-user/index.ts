@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import { getDefaultPlanName } from '../_shared/cache.ts';
 Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -183,10 +182,9 @@ Deno.serve(async (req)=>{
           let freeReferrals = 0;
           let upgradedReferrals = 0;
           if (referredIds.length > 0) {
-            const defaultPlanName = await getDefaultPlanName(supabaseClient);
             const { data: referredUsers } = await supabaseClient.from('profiles').select('membership_plan').in('id', referredIds);
-            freeReferrals = defaultPlanName ? referredUsers?.filter((u)=>u.membership_plan === defaultPlanName).length || 0 : 0;
-            upgradedReferrals = defaultPlanName ? referredUsers?.filter((u)=>u.membership_plan !== defaultPlanName).length || 0 : (referredUsers?.length || 0);
+            freeReferrals = referredUsers?.filter((u)=>u.membership_plan === 'free').length || 0;
+            upgradedReferrals = referredUsers?.filter((u)=>u.membership_plan !== 'free').length || 0;
           }
           // Calculate total commission earned
           const totalCommissionEarned = referrals?.reduce((sum, r)=>sum + Number(r.total_commission_earned || 0), 0) || 0;
@@ -425,14 +423,13 @@ Deno.serve(async (req)=>{
           const now = new Date();
           let expiresAt = planData.expires_at ?? null;
 
-          // Default tier (account_type free): use free_plan_expiry_days if no expires_at provided; otherwise allow null
-          const isDefaultTier = (plan.account_type || '').toLowerCase().trim() === 'free';
-          if (isDefaultTier) {
+          // Free plan: use free_plan_expiry_days if no expires_at provided; otherwise allow null
+          if (plan.name === 'free') {
             if (!expiresAt && plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0) {
               const expiry = new Date(now);
               expiry.setDate(expiry.getDate() + plan.free_plan_expiry_days);
               expiresAt = expiry.toISOString();
-              console.log(`✅ Default plan expiry: free_plan_expiry_days=${plan.free_plan_expiry_days}, expiry=${expiresAt}`);
+              console.log(`✅ Free plan expiry: free_plan_expiry_days=${plan.free_plan_expiry_days}, expiry=${expiresAt}`);
             }
             // else: expiresAt stays null (no trial or admin did not set a date)
           } else {
@@ -449,7 +446,7 @@ Deno.serve(async (req)=>{
             }
           }
 
-          // Update plan (allow null plan_expires_at for default tier with no trial)
+          // Update plan (allow null plan_expires_at for free with no trial)
           const { error: updateError } = await supabaseClient.from('profiles').update({
             membership_plan: planData.plan_name,
             plan_expires_at: expiresAt,
@@ -552,6 +549,35 @@ Deno.serve(async (req)=>{
             message: 'User banned successfully'
           };
           console.log(`Banned user ${userId} - Reason: ${banReason}`);
+          break;
+        }
+      case 'delete_user':
+        {
+          if (userId === user.id) {
+            throw new Error('Cannot delete your own account');
+          }
+          const { data: targetProfile } = await supabaseClient.from('profiles').select('username, email').eq('id', userId).maybeSingle();
+          const { error: deleteAuthError } = await supabaseClient.auth.admin.deleteUser(userId);
+          if (deleteAuthError) {
+            throw new Error(`Failed to delete user: ${deleteAuthError.message}`);
+          }
+          await supabaseClient.from('profiles').update({
+            account_status: 'deleted'
+          }).eq('id', userId);
+          await supabaseClient.from('audit_logs').insert({
+            admin_id: user.id,
+            action_type: 'delete_user',
+            target_user_id: userId,
+            details: {
+              deleted_username: targetProfile?.username,
+              deleted_email: targetProfile?.email
+            }
+          });
+          result = {
+            success: true,
+            message: 'User deleted successfully'
+          };
+          console.log(`Deleted user ${userId}`);
           break;
         }
       case 'reset_daily_limits':
