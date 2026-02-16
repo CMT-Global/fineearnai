@@ -36,6 +36,7 @@ interface OverviewTabProps {
   onChangePlan: () => void;
   onSuspend: () => void;
   onBan: () => void;
+  onDelete: () => void;
   onResetLimits: () => void;
   onMasterLogin: () => void;
   onManageRoles: () => void;
@@ -48,6 +49,7 @@ export const OverviewTab = ({
   onChangePlan,
   onSuspend,
   onBan,
+  onDelete,
   onResetLimits,
   onMasterLogin,
   onManageRoles,
@@ -1173,6 +1175,9 @@ export const OverviewTab = ({
             </Button>
             <Button variant="destructive" size="sm" onClick={onBan}>
               Ban User
+            </Button>
+            <Button variant="destructive" size="sm" onClick={onDelete}>
+              {t("admin.dialogs.deleteUser.title")}
             </Button>
             <Button variant="secondary" size="sm" onClick={onMasterLogin}>
               Generate Master Login
