@@ -17,7 +17,8 @@ import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Info, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface AITask {
@@ -191,6 +192,14 @@ const Tasks = () => {
   const userStats = taskData?.userStats || null;
   const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
 
+  // Plan expired: from API (get-next-task) or from profile (plan_expires_at in the past)
+  const isPlanExpiredFromApi = taskData?.error === 'plan_expired';
+  const isPlanExpiredFromProfile = useMemo(() => {
+    if (!profile?.plan_expires_at) return false;
+    return new Date(profile.plan_expires_at) < new Date();
+  }, [profile?.plan_expires_at]);
+  const isPlanExpired = isPlanExpiredFromApi || isPlanExpiredFromProfile;
+
   // Skip mutation - Phase 1.3: Server-side skip enforcement
   const skipMutation = useMutation({
     mutationFn: async () => {
@@ -356,8 +365,23 @@ const Tasks = () => {
             isSyncing={isSyncing || submitMutation.isPending}
           />
 
-          {/* Task Interface or Loading Skeleton */}
-          {isLoadingTask ? (
+          {/* Plan expired: show message and upgrade CTA */}
+          {isPlanExpired ? (
+            <Alert variant="destructive" className="mt-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{t("tasks.planExpired.title")}</AlertTitle>
+              <AlertDescription className="flex flex-col gap-3">
+                <span>{t("tasks.planExpired.description")}</span>
+                <Button
+                  variant="secondary"
+                  className="w-fit"
+                  onClick={() => navigate("/plans")}
+                >
+                  {t("tasks.planExpired.upgradeToAccessTasks")}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : isLoadingTask ? (
             <TaskSkeleton />
           ) : isDailyLimitReached ? (
             <DailyLimitReached
