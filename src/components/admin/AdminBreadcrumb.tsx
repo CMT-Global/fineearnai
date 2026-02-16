@@ -28,23 +28,23 @@ export const AdminBreadcrumb = ({ items = [] }: AdminBreadcrumbProps) => {
   ];
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+    <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground mb-4 min-w-0 overflow-hidden">
       {breadcrumbItems.map((item, index) => {
         const isLast = index === breadcrumbItems.length - 1;
         const isCurrent = item.path === location.pathname;
 
         return (
-          <div key={index} className="flex items-center gap-2">
-            {index > 0 && <ChevronRight className="h-4 w-4" />}
+          <div key={index} className="flex items-center gap-2 min-w-0 flex-shrink-0">
+            {index > 0 && <ChevronRight className="h-4 w-4 flex-shrink-0" />}
             
-            {index === 0 && <LayoutDashboard className="h-4 w-4" />}
+            {index === 0 && <LayoutDashboard className="h-4 w-4 flex-shrink-0" />}
             
             {isLast || isCurrent || !item.path ? (
-              <span className="font-medium text-foreground">{item.label}</span>
+              <span className="font-medium text-foreground break-words min-w-0">{item.label}</span>
             ) : (
               <Link
                 to={item.path}
-                className="hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors break-words min-w-0"
               >
                 {item.label}
               </Link>

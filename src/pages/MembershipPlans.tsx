@@ -372,7 +372,6 @@ export default function MembershipPlans() {
                 personalPlans={personalPlans}
                 businessPlans={businessPlans}
                 renderPlanCards={renderPlanCards}
-                currentPlanDisplayName={profile && currentPlan ? (currentPlanObj?.display_name ?? currentPlan) : null}
               />
             </div>
 

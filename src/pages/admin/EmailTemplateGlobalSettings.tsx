@@ -208,14 +208,14 @@ export default function EmailTemplateGlobalSettings() {
       queryClient.invalidateQueries({ queryKey: ["email-template-global"] });
       setHasChanges(false);
       toast({
-        title: t("admin.emailTemplateGlobalSettings.toasts.templateSaved"),
-        description: t("admin.emailTemplateGlobalSettings.toasts.templateSavedDescription"),
+        title: t("adminEmailTemplateGlobalSettings.toasts.templateSaved"),
+        description: t("adminEmailTemplateGlobalSettings.toasts.templateSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t("admin.emailTemplateGlobalSettings.toasts.errorSaving"),
-        description: error.message || t("admin.emailTemplateGlobalSettings.toasts.errorSavingDescription"),
+        title: t("adminEmailTemplateGlobalSettings.toasts.errorSaving"),
+        description: error.message || t("adminEmailTemplateGlobalSettings.toasts.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -264,7 +264,7 @@ export default function EmailTemplateGlobalSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.emailTemplateGlobalSettings.loading")} />;
+    return <PageLoading text={t("adminEmailTemplateGlobalSettings.loading")} />;
   }
 
   return (
@@ -272,17 +272,17 @@ export default function EmailTemplateGlobalSettings() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Mail className="h-8 w-8 text-primary" />
-          {t("admin.emailTemplateGlobalSettings.title")}
+          {t("adminEmailTemplateGlobalSettings.title")}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {t("admin.emailTemplateGlobalSettings.subtitle")}
+          {t("adminEmailTemplateGlobalSettings.subtitle")}
         </p>
       </div>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>{t("admin.emailTemplateGlobalSettings.availableVariables")}:</strong> {t("admin.emailTemplateGlobalSettings.variablesDescription")}
+          <strong>{t("adminEmailTemplateGlobalSettings.availableVariables")}:</strong> {t("adminEmailTemplateGlobalSettings.variablesDescription")}
         </AlertDescription>
       </Alert>
 
@@ -290,25 +290,25 @@ export default function EmailTemplateGlobalSettings() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="template" className="gap-2">
             <Code className="h-4 w-4" />
-            {t("admin.emailTemplateGlobalSettings.tabs.editTemplate")}
+            {t("adminEmailTemplateGlobalSettings.tabs.editTemplate")}
           </TabsTrigger>
           <TabsTrigger value="preview" className="gap-2">
             <Eye className="h-4 w-4" />
-            {t("admin.emailTemplateGlobalSettings.tabs.preview")}
+            {t("adminEmailTemplateGlobalSettings.tabs.preview")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="template" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t("admin.emailTemplateGlobalSettings.template.title")}</CardTitle>
+              <CardTitle>{t("adminEmailTemplateGlobalSettings.template.title")}</CardTitle>
               <CardDescription>
-                {t("admin.emailTemplateGlobalSettings.template.description")}
+                {t("adminEmailTemplateGlobalSettings.template.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="template">{t("admin.emailTemplateGlobalSettings.template.htmlTemplate")}</Label>
+                <Label htmlFor="template">{t("adminEmailTemplateGlobalSettings.template.htmlTemplate")}</Label>
                 <Textarea
                   id="template"
                   value={templateConfig.template}
@@ -318,10 +318,10 @@ export default function EmailTemplateGlobalSettings() {
                   }}
                   rows={30}
                   className="font-mono text-sm"
-                  placeholder={t("admin.emailTemplateGlobalSettings.template.placeholder")}
+                  placeholder={t("adminEmailTemplateGlobalSettings.template.placeholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t("admin.emailTemplateGlobalSettings.template.hint")}
+                  {t("adminEmailTemplateGlobalSettings.template.hint")}
                 </p>
               </div>
             </CardContent>
@@ -331,9 +331,9 @@ export default function EmailTemplateGlobalSettings() {
         <TabsContent value="preview" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t("admin.emailTemplateGlobalSettings.preview.title")}</CardTitle>
+              <CardTitle>{t("adminEmailTemplateGlobalSettings.preview.title")}</CardTitle>
               <CardDescription>
-                {t("admin.emailTemplateGlobalSettings.preview.description")}
+                {t("adminEmailTemplateGlobalSettings.preview.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -351,12 +351,12 @@ export default function EmailTemplateGlobalSettings() {
       <Card>
         <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
           <div className="space-y-1 text-sm text-muted-foreground text-center sm:text-left">
-            <p>{t("admin.emailTemplateGlobalSettings.changesNote")}</p>
+            <p>{t("adminEmailTemplateGlobalSettings.changesNote")}</p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending} className="w-full sm:w-auto">
               <RotateCcw className="h-4 w-4 mr-2" />
-              {t("admin.emailTemplateGlobalSettings.actions.resetToDefaults")}
+              {t("adminEmailTemplateGlobalSettings.actions.resetToDefaults")}
             </Button>
             <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending} className="w-full sm:w-auto">
               {saveMutation.isPending ? (
@@ -367,7 +367,7 @@ export default function EmailTemplateGlobalSettings() {
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {t("admin.emailTemplateGlobalSettings.actions.saveTemplate")}
+                  {t("adminEmailTemplateGlobalSettings.actions.saveTemplate")}
                 </>
               )}
             </Button>
@@ -379,7 +379,7 @@ export default function EmailTemplateGlobalSettings() {
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription>
-                {t("admin.emailTemplateGlobalSettings.success.templateSaved")}
+                {t("adminEmailTemplateGlobalSettings.success.templateSaved")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -389,7 +389,7 @@ export default function EmailTemplateGlobalSettings() {
           <CardContent className="pt-0">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{t("admin.emailTemplateGlobalSettings.errors.failedToSave")}</AlertDescription>
+              <AlertDescription>{t("adminEmailTemplateGlobalSettings.errors.failedToSave")}</AlertDescription>
             </Alert>
           </CardContent>
         )}

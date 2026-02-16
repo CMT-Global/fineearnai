@@ -127,7 +127,8 @@ export function PlanCard({
           </div>
         )}
 
-        {isCurrentPlan && (
+        {/* Current plan badge - only when not default plan to avoid duplicate with button in free-trial section */}
+        {isCurrentPlan && !isDefaultPlan && (
           <Badge className="absolute top-14 sm:top-4 right-4 text-xs z-10">
             Current Plan
           </Badge>

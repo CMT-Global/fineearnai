@@ -76,14 +76,14 @@ export default function ReamazeSettings() {
       queryClient.invalidateQueries({ queryKey: ['reamaze-config'] });
       setHasChanges(false);
       toast({
-        title: t("admin.contentManagement.reamazeSettings.settingsSaved"),
-        description: t("admin.contentManagement.reamazeSettings.settingsSavedDescription"),
+        title: t("adminReamazeSettings.settingsSaved"),
+        description: t("adminReamazeSettings.settingsSavedDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: t("admin.contentManagement.reamazeSettings.errorSaving"),
-        description: error.message || t("admin.contentManagement.reamazeSettings.errorSavingDescription"),
+        title: t("adminReamazeSettings.errorSaving"),
+        description: error.message || t("adminReamazeSettings.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -111,29 +111,29 @@ export default function ReamazeSettings() {
     }
     setHasChanges(false);
     toast({
-      title: t("admin.contentManagement.reamazeSettings.changesDiscarded"),
-      description: t("admin.contentManagement.reamazeSettings.changesDiscardedDescription"),
+      title: t("adminReamazeSettings.changesDiscarded"),
+      description: t("adminReamazeSettings.changesDiscardedDescription"),
     });
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.contentManagement.reamazeSettings.loading")} />;
+    return <PageLoading text={t("adminReamazeSettings.loading")} />;
   }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
       <AdminBreadcrumb
         items={[
-          { label: t("admin.contentManagement.reamazeSettings.breadcrumb.communications") },
-          { label: t("admin.contentManagement.reamazeSettings.breadcrumb.liveChatSettings") },
+          { label: t("adminReamazeSettings.breadcrumb.communications") },
+          { label: t("adminReamazeSettings.breadcrumb.liveChatSettings") },
         ]}
       />
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("admin.contentManagement.reamazeSettings.title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("adminReamazeSettings.title")}</h1>
           <p className="text-muted-foreground mt-1 break-words">
-            {t("admin.contentManagement.reamazeSettings.subtitle")}
+            {t("adminReamazeSettings.subtitle")}
           </p>
         </div>
 
@@ -145,7 +145,7 @@ export default function ReamazeSettings() {
             className="flex-1 sm:flex-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            <span className="truncate">{t("admin.contentManagement.reamazeSettings.discardChanges")}</span>
+            <span className="truncate">{t("adminReamazeSettings.discardChanges")}</span>
           </Button>
 
           <Button
@@ -158,16 +158,16 @@ export default function ReamazeSettings() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            <span className="truncate">{t("admin.contentManagement.reamazeSettings.saveSettings")}</span>
+            <span className="truncate">{t("adminReamazeSettings.saveSettings")}</span>
           </Button>
         </div>
       </div>
 
       <Alert className="overflow-hidden">
         <Info className="h-4 w-4" />
-        <AlertTitle>{t("admin.contentManagement.reamazeSettings.important")}</AlertTitle>
+        <AlertTitle>{t("adminReamazeSettings.important")}</AlertTitle>
         <AlertDescription className="break-words">
-          {t("admin.contentManagement.reamazeSettings.importantDescription")}
+          {t("adminReamazeSettings.importantDescription")}
         </AlertDescription>
       </Alert>
 
@@ -175,9 +175,9 @@ export default function ReamazeSettings() {
         <CardHeader>
           <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <CardTitle className="break-words">{t("admin.contentManagement.reamazeSettings.enableLiveChat.title")}</CardTitle>
+              <CardTitle className="break-words">{t("adminReamazeSettings.enableLiveChat.title")}</CardTitle>
               <CardDescription className="break-words">
-                {t("admin.contentManagement.reamazeSettings.enableLiveChat.description")}
+                {t("adminReamazeSettings.enableLiveChat.description")}
               </CardDescription>
             </div>
             <Switch
@@ -191,14 +191,14 @@ export default function ReamazeSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.contentManagement.reamazeSettings.embedCode.title")}</CardTitle>
+          <CardTitle>{t("adminReamazeSettings.embedCode.title")}</CardTitle>
           <CardDescription>
-            {t("admin.contentManagement.reamazeSettings.embedCode.description")}
+            {t("adminReamazeSettings.embedCode.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="embed_code">{t("admin.contentManagement.reamazeSettings.embedCode.label")}</Label>
+            <Label htmlFor="embed_code">{t("adminReamazeSettings.embedCode.label")}</Label>
             <Textarea
               id="embed_code"
               value={config.embedCode}
@@ -212,13 +212,13 @@ export default function ReamazeSettings() {
           <div className="bg-muted p-4 rounded-lg flex gap-3">
             <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground space-y-2">
-              <p className="font-medium text-foreground">{t("admin.contentManagement.reamazeSettings.embedCode.howToGetCode")}</p>
+              <p className="font-medium text-foreground">{t("adminReamazeSettings.embedCode.howToGetCode")}</p>
               <ol className="list-decimal ml-4 space-y-1">
-                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step1")}</li>
-                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step2")}</li>
-                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step3")}</li>
-                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step4")}</li>
-                <li>{t("admin.contentManagement.reamazeSettings.embedCode.step5")}</li>
+                <li>{t("adminReamazeSettings.embedCode.step1")}</li>
+                <li>{t("adminReamazeSettings.embedCode.step2")}</li>
+                <li>{t("adminReamazeSettings.embedCode.step3")}</li>
+                <li>{t("adminReamazeSettings.embedCode.step4")}</li>
+                <li>{t("adminReamazeSettings.embedCode.step5")}</li>
               </ol>
             </div>
           </div>

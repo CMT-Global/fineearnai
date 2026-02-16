@@ -2281,6 +2281,10 @@
       "deactivateTask": "Deactivate Task"
     },
     "loginMessage": {
+      "breadcrumb": {
+        "communications": "Communications",
+        "loginMessage": "Login Message"
+      },
       "title": "Login Message Configuration",
       "subtitle": "Customize the welcome message displayed to users after they log in",
       "howItWorks": "How it works",
@@ -3532,6 +3536,37 @@
         "footerText": "Email Footer Text"
       },
       "testEmailSent": "Test email sent successfully! Check your inbox.",
+      "verificationReminders": {
+        "title": "Email Verification Reminders",
+        "description": "Configure automated reminders for users who have not verified their email addresses",
+        "sendTestReminders": "Send Test Reminders Now",
+        "sending": "Sending...",
+        "alertDescription": "These settings control the automated email verification reminder system. Reminders are sent via the scheduled function that runs daily.",
+        "enableReminders": "Enable Reminders",
+        "enableRemindersDescription": "Automatically send verification reminders to unverified users",
+        "firstReminder": "First Reminder (days after signup)",
+        "secondReminder": "Second Reminder (days after signup)",
+        "thirdReminder": "Third Reminder (days after signup)",
+        "reminderFrequency": "Reminder Frequency (days between reminders)",
+        "maxReminders": "Max Reminders per User",
+        "howItWorks": "How it works:",
+        "howItWorksDescription": "First reminder sent after {{first}} days. Second reminder at {{second}} days. Third at {{third}} days. After that, reminders every {{frequency}} days until a maximum of {{max}} reminders.",
+        "reset": "Reset",
+        "saveSettings": "Save Settings",
+        "saving": "Saving...",
+        "toasts": {
+          "settingsSaved": "Settings saved",
+          "settingsSavedDescription": "Email verification reminder settings updated successfully",
+          "errorSaving": "Error",
+          "errorSavingDescription": "Error saving reminder settings",
+          "remindersSent": "Reminders sent",
+          "remindersSentDescription": "{{sent}} reminder emails sent successfully to {{processed}} unverified users",
+          "errorSending": "Error",
+          "errorSendingDescription": "Error sending test reminders",
+          "errorLoading": "Error",
+          "errorLoadingDescription": "Error loading reminder settings"
+        }
+      },
       "toasts": {
         "settingsSaved": "Settings saved",
         "settingsSavedDescription": "Email settings have been updated successfully.",
@@ -3943,6 +3978,262 @@
     "toasts": {
       "success": "Master login successful! Redirecting...",
       "failed": "Master login failed"
+    }
+  },
+  "adminEmailSettings": {
+    "title": "Email Settings",
+    "subtitle": "Configure email sending settings and verification reminders",
+    "loading": "Loading email settings...",
+    "breadcrumb": {
+      "communications": "Communications",
+      "emailSettings": "Email Settings"
+    },
+    "actions": {
+      "resetToDefaults": "Reset to Defaults",
+      "sendTestEmail": "Send Test Email",
+      "saveSettings": "Save Settings"
+    },
+    "senderInformation": {
+      "title": "Sender Information",
+      "description": "Configure who emails are sent from. The from_address must be verified in Resend.",
+      "fromAddress": "From Address *",
+      "fromName": "From Name *"
+    },
+    "replyToInformation": {
+      "title": "Reply-To Information",
+      "description": "Where user replies will be sent to.",
+      "replyToAddress": "Reply-To Address *",
+      "replyToName": "Reply-To Name *"
+    },
+    "platformInformation": {
+      "title": "Platform Information",
+      "description": "Basic platform details used in emails and templates.",
+      "platformName": "Platform Name *",
+      "platformUrl": "Platform URL *",
+      "supportEmail": "Support Email *",
+      "adminNotificationEmail": "Admin Notification Email *",
+      "footerText": "Email Footer Text"
+    },
+    "testEmailSent": "Test email sent successfully! Check your inbox.",
+    "verificationReminders": {
+      "title": "Email Verification Reminders",
+      "description": "Configure automated reminders for users who have not verified their email addresses",
+      "sendTestReminders": "Send Test Reminders Now",
+      "sending": "Sending...",
+      "alertDescription": "These settings control the automated email verification reminder system. Reminders are sent via the scheduled function that runs daily.",
+      "enableReminders": "Enable Reminders",
+      "enableRemindersDescription": "Automatically send verification reminders to unverified users",
+      "firstReminder": "First Reminder (days after signup)",
+      "secondReminder": "Second Reminder (days after signup)",
+      "thirdReminder": "Third Reminder (days after signup)",
+      "reminderFrequency": "Reminder Frequency (days between reminders)",
+      "maxReminders": "Max Reminders per User",
+      "howItWorks": "How it works:",
+      "howItWorksDescription": "First reminder sent after {{first}} days. Second reminder at {{second}} days. Third at {{third}} days. After that, reminders every {{frequency}} days until a maximum of {{max}} reminders.",
+      "reset": "Reset",
+      "saveSettings": "Save Settings",
+      "saving": "Saving...",
+      "toasts": {
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "Email verification reminder settings updated successfully",
+        "errorSaving": "Error",
+        "errorSavingDescription": "Error saving reminder settings",
+        "remindersSent": "Reminders sent",
+        "remindersSentDescription": "{{sent}} reminder emails sent successfully to {{processed}} unverified users",
+        "errorSending": "Error",
+        "errorSendingDescription": "Error sending test reminders",
+        "errorLoading": "Error",
+        "errorLoadingDescription": "Error loading reminder settings"
+      }
+    },
+    "toasts": {
+      "settingsSaved": "Settings saved",
+      "settingsSavedDescription": "Email settings have been updated successfully.",
+      "errorSaving": "Error saving settings",
+      "testEmailSent": "Test email sent",
+      "testEmailSentDescription": "Check your inbox for the test email.",
+      "errorSendingTest": "Error sending test email",
+      "validationError": "Validation error",
+      "validationErrorDescription": "Please fix the errors before saving.",
+      "settingsReset": "Settings reset",
+      "settingsResetDescription": "Email settings have been reset to defaults."
+    }
+  },
+  "adminLoginMessage": {
+    "breadcrumb": { "communications": "Communications", "loginMessage": "Login Message" },
+    "title": "Login Message Configuration",
+    "subtitle": "Customize the welcome message displayed to users after they log in",
+    "howItWorks": "How it works",
+    "howItWorksDescription": "This message appears as a pop-up dialog immediately after users log in. You can enable/disable it, control whether users can dismiss it, and decide if it should only show once per session. Use the rich text editor toolbar to format your message with bold, italic, headings, lists, and links.",
+    "loading": "Loading configuration...",
+    "messageConfiguration": {
+      "title": "Title",
+      "description": "Configure the login message content and behavior",
+      "enableLoginMessage": "Enable Login Message",
+      "enableDescription": "Show message to users after they log in",
+      "titlePlaceholder": "Welcome to FineEarn!",
+      "titleHint": "A short, catchy title for the message (max 100 characters)",
+      "messageBody": "Message Body",
+      "bodyPlaceholder": "We're excited to have you here. Start earning today by completing AI training tasks!"
+    },
+    "behaviorOptions": {
+      "title": "Behavior Options",
+      "allowDismissal": "Allow Dismissal",
+      "allowDismissalDescription": "Let users close the message dialog",
+      "showOncePerSession": "Show Once Per Session",
+      "showOncePerSessionDescription": "Only display once per 24-hour period",
+      "displayPriority": "Display Priority",
+      "priorityHint": "Priority level (for future use with multiple messages)"
+    },
+    "priority": { "low": "Low", "medium": "Medium", "high": "High" },
+    "preview": {
+      "livePreview": "Live Preview",
+      "hide": "Hide",
+      "show": "Show",
+      "preview": "Preview",
+      "description": "See how the message will appear to users",
+      "visual": "Visual",
+      "sourceCode": "Source Code",
+      "dismissible": "Dismissible",
+      "showOnceNote": "ℹ️ Will only show once per 24-hour period",
+      "priority": "Priority",
+      "htmlSourceCode": "HTML Source Code",
+      "htmlCopied": "HTML copied to clipboard!",
+      "disabled": "Login message is currently",
+      "disabledText": "disabled",
+      "enableToShow": "Enable it to show a preview."
+    },
+    "bestPractices": {
+      "title": "Best Practices",
+      "tip1": "Keep the title short and welcoming (under 50 chars is ideal)",
+      "tip2": "Use formatting sparingly for better readability",
+      "tip3": "Include emojis to make it more engaging",
+      "tip4": "Preview your changes before saving",
+      "tip5": "Test with \"Show Preview\" before saving",
+      "tip6": "Enable \"Show Once Per Session\" to avoid annoying users",
+      "tip7": "Make it dismissible unless it's critical information"
+    },
+    "actions": { "saveChanges": "Save Changes" },
+    "success": { "updated": "Login message updated successfully!", "reset": "Reset to default configuration" },
+    "errors": { "failedToSave": "Failed to save: {{message}}" },
+    "validation": {
+      "titleRequired": "Title is required",
+      "titleMaxLength": "Title must be 100 characters or less",
+      "bodyRequired": "Message body is required",
+      "bodyMaxLength": "Message body must be 5000 characters or less"
+    },
+    "confirm": { "reset": "Are you sure you want to reset to default settings? This cannot be undone." }
+  },
+  "adminReamazeSettings": {
+    "breadcrumb": { "communications": "Communications", "liveChatSettings": "Live Chat Settings" },
+    "title": "Reamaze Live Chat Settings",
+    "subtitle": "Configure the Reamaze live chat widget for customer support",
+    "loading": "Loading Live Chat Settings...",
+    "discardChanges": "Discard Changes",
+    "saveSettings": "Save Settings",
+    "important": "Important",
+    "importantDescription": "The embed code will be injected on all pages when live chat is enabled. Ensure the code is correct and properly formatted.",
+    "enableLiveChat": {
+      "title": "Enable Live Chat",
+      "description": "Turn the Reamaze live chat widget on or off across the platform"
+    },
+    "embedCode": {
+      "title": "Embed Code",
+      "description": "Paste your Reamaze embed code here. This code will be injected on all pages when live chat is enabled.",
+      "label": "Reamaze Embed Code",
+      "howToGetCode": "How to get your Reamaze embed code:",
+      "step1": "Log in to your Reamaze account",
+      "step2": "Go to Settings > Integrations",
+      "step3": "Find the Embed Code section",
+      "step4": "Copy the full embed code (including all script tags)",
+      "step5": "Paste it in the text area above"
+    },
+    "settingsSaved": "Settings saved",
+    "settingsSavedDescription": "Reamaze live chat settings have been updated successfully.",
+    "errorSaving": "Error saving settings",
+    "errorSavingDescription": "Failed to save settings. Please try again.",
+    "changesDiscarded": "Changes discarded",
+    "changesDiscardedDescription": "All unsaved changes have been discarded."
+  },
+  "adminEmailTemplateGlobalSettings": {
+    "title": "Global Email Template",
+    "subtitle": "Edit the global HTML email template used to wrap all emails sent from the platform. This template includes spam prevention best practices.",
+    "loading": "Loading global email template...",
+    "availableVariables": "Available Variables",
+    "variablesDescription": "Use {{variable_name}} format. Available: {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
+    "tabs": { "editTemplate": "Edit Template", "preview": "Preview" },
+    "template": {
+      "title": "Email Template HTML",
+      "description": "Edit the HTML template. The {{content}} variable will be replaced with the actual email body.",
+      "htmlTemplate": "HTML Template",
+      "placeholder": "Enter HTML template...",
+      "hint": "This template wraps all emails. Make sure to include {{content}} where the email body should appear."
+    },
+    "preview": { "title": "Email Preview", "description": "Preview how the template looks with sample data" },
+    "changesNote": "Changes are applied to all emails sent from the platform immediately after saving.",
+    "actions": { "resetToDefaults": "Reset to Defaults", "saveTemplate": "Save Template" },
+    "success": { "templateSaved": "Template saved successfully! All future emails will use this template." },
+    "errors": { "failedToSave": "Failed to save template. Please try again." },
+    "toasts": {
+      "templateSaved": "Template saved",
+      "templateSavedDescription": "Global email template has been updated successfully.",
+      "errorSaving": "Error saving template",
+      "errorSavingDescription": "Failed to save template. Please try again."
+    }
+  },
+  "adminSeoSettings": {
+    "title": "SEO & Social Sharing Settings",
+    "subtitle": "Configure SEO metadata and social media sharing settings for your platform",
+    "loading": "Loading SEO & social settings...",
+    "discardChanges": "Discard Changes",
+    "saveSettings": "Save Settings",
+    "settingsSaved": "Settings saved",
+    "settingsSavedDescription": "SEO and branding settings have been updated successfully.",
+    "errorSaving": "Error saving settings",
+    "errorSavingDescription": "Failed to save settings. Please try again.",
+    "tabs": { "branding": "Branding", "seo": "SEO", "social": "Social Sharing" },
+    "branding": {
+      "title": "Platform Branding",
+      "description": "Configure your platform's name, logo, and URL used across the site and in SEO metadata",
+      "platformName": "Platform Name",
+      "platformNameHint": "This name will be used throughout the platform and in SEO metadata",
+      "platformLogo": "Platform Logo URL",
+      "platformLogoHint": "Path to your logo image (e.g., /logo_without_bg_text.png)",
+      "platformUrl": "Platform URL"
+    },
+    "seo": {
+      "title": "SEO Configuration",
+      "description": "Configure basic SEO metadata for search engines",
+      "pageTitle": "Page Title",
+      "pageTitleHint": "The title that appears in browser tabs and search results (recommended: 50-60 characters)",
+      "metaDescription": "Meta Description",
+      "metaDescriptionHint": "Brief description shown in search results (recommended: 150-160 characters)",
+      "keywords": "Keywords",
+      "keywordsHint": "Comma-separated keywords for SEO (e.g., earn online, AI tasks, ProfitChips)",
+      "canonicalUrl": "Canonical URL",
+      "robotsMeta": "Robots Meta Tag",
+      "faviconUrl": "Favicon URL",
+      "faviconUrlHint": "Path to your favicon image (e.g., /favicon.ico)",
+      "tipTitle": "SEO Best Practices",
+      "tipDescription": "Keep titles under 60 characters, descriptions under 160 characters, and use relevant keywords naturally. Update these settings regularly to reflect your platform's current focus."
+    },
+    "social": {
+      "openGraph": {
+        "title": "Open Graph (Facebook)",
+        "description": "Configure how your platform appears when shared on Facebook and other Open Graph-compatible platforms",
+        "ogTitle": "OG Title",
+        "ogDescription": "OG Description",
+        "ogImage": "OG Image URL",
+        "ogUrl": "OG URL"
+      },
+      "twitter": {
+        "title": "Twitter Cards",
+        "description": "Configure how your platform appears when shared on Twitter/X",
+        "twitterTitle": "Twitter Title",
+        "twitterDescription": "Twitter Description",
+        "twitterImage": "Twitter Image URL",
+        "cardType": "Card Type"
+      }
     }
   }
 }
