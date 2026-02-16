@@ -940,7 +940,14 @@ export const OverviewTab = ({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Plan Type</p>
-              <Badge>{planInfo?.account_type || "unknown"}</Badge>
+              <Badge>{(() => {
+                // Use account_type from plan_info; fallback: paid plans -> personal, free tier -> free
+                const at = planInfo?.account_type;
+                if (at) return at;
+                if (planInfo && typeof planInfo.price === 'number' && planInfo.price > 0) return 'personal';
+                if (planInfo && planInfo.name) return 'free'; // Resolved plan but no account_type (legacy) -> treat as free
+                return profile.membership_plan ? 'personal' : 'unknown'; // Has plan name but no planInfo -> assume paid
+              })()}</Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Expires At</p>
