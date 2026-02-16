@@ -124,6 +124,13 @@ const Tasks = () => {
     retry: false,        // Disable automatic retry since we handle it manually
   });
 
+  // Refetch task/stats when entering Tasks page so plan limits always reflect current membership
+  useEffect(() => {
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: ['next-task', user.id] });
+    }
+  }, [user?.id, queryClient]);
+
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
   useEffect(() => {
     if (!user) return;

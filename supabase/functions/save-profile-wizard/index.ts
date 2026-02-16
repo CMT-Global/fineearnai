@@ -132,6 +132,26 @@ Deno.serve(async (req) => {
       if (!planError && plan?.name) {
         updates.membership_plan = plan.name;
       }
+    } else if (complete === true) {
+      // User completed wizard without selecting a plan: assign default Trainee (free-tier) plan
+      const { data: defaultPlan, error: defaultPlanError } = await supabaseAdmin
+        .from('membership_plans')
+        .select('name, free_plan_expiry_days')
+        .eq('account_type', 'free')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      if (!defaultPlanError && defaultPlan?.name) {
+        updates.membership_plan = defaultPlan.name;
+        const expiryDays = Number(defaultPlan.free_plan_expiry_days ?? 0);
+        if (expiryDays > 0) {
+          const now = new Date();
+          const expiresAt = new Date(now);
+          expiresAt.setDate(expiresAt.getDate() + expiryDays);
+          updates.plan_expires_at = expiresAt.toISOString();
+          updates.current_plan_start_date = now.toISOString();
+        }
+      }
     }
 
     if (skip_payout !== true && usdt_bep20_address != null && String(usdt_bep20_address).trim()) {
