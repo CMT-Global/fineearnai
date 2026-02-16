@@ -60,8 +60,8 @@ export function EmailVerificationRemindersSettings() {
       // Only show error toast for actual errors, not missing records
       if (error.code !== 'PGRST116') {
       toast({
-        title: t("admin.emailSettings.verificationReminders.toasts.errorLoading"),
-        description: t("admin.emailSettings.verificationReminders.toasts.errorLoadingDescription"),
+        title: t("adminEmailSettings.verificationReminders.toasts.errorLoading"),
+        description: t("adminEmailSettings.verificationReminders.toasts.errorLoadingDescription"),
         variant: "destructive",
       });
       }
@@ -85,14 +85,14 @@ export function EmailVerificationRemindersSettings() {
       if (error) throw error;
 
       toast({
-        title: t("admin.emailSettings.verificationReminders.toasts.settingsSaved"),
-        description: t("admin.emailSettings.verificationReminders.toasts.settingsSavedDescription"),
+        title: t("adminEmailSettings.verificationReminders.toasts.settingsSaved"),
+        description: t("adminEmailSettings.verificationReminders.toasts.settingsSavedDescription"),
       });
     } catch (error: any) {
       console.error("Error saving reminder config:", error);
       toast({
-        title: t("admin.emailSettings.verificationReminders.toasts.errorSaving"),
-        description: t("admin.emailSettings.verificationReminders.toasts.errorSavingDescription"),
+        title: t("adminEmailSettings.verificationReminders.toasts.errorSaving"),
+        description: t("adminEmailSettings.verificationReminders.toasts.errorSavingDescription"),
         variant: "destructive",
       });
     } finally {
@@ -110,8 +110,8 @@ export function EmailVerificationRemindersSettings() {
       if (error) throw error;
 
       toast({
-        title: t("admin.emailSettings.verificationReminders.toasts.remindersSent"),
-        description: t("admin.emailSettings.verificationReminders.toasts.remindersSentDescription", {
+        title: t("adminEmailSettings.verificationReminders.toasts.remindersSent"),
+        description: t("adminEmailSettings.verificationReminders.toasts.remindersSentDescription", {
           sent: data.sent,
           processed: data.processed,
         }),
@@ -119,8 +119,8 @@ export function EmailVerificationRemindersSettings() {
     } catch (error: any) {
       console.error("Error sending test reminders:", error);
       toast({
-        title: t("admin.emailSettings.verificationReminders.toasts.errorSending"),
-        description: error.message || t("admin.emailSettings.verificationReminders.toasts.errorSendingDescription"),
+        title: t("adminEmailSettings.verificationReminders.toasts.errorSending"),
+        description: error.message || t("adminEmailSettings.verificationReminders.toasts.errorSendingDescription"),
         variant: "destructive",
       });
     } finally {
@@ -130,7 +130,7 @@ export function EmailVerificationRemindersSettings() {
 
   if (isLoading && !config) {
     return (
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin" />
         </CardContent>
@@ -139,16 +139,16 @@ export function EmailVerificationRemindersSettings() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              {t("admin.emailSettings.verificationReminders.title")}
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="min-w-0 p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between min-w-0">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="flex flex-wrap items-center gap-2 break-words text-lg sm:text-xl md:text-2xl">
+              <Bell className="h-5 w-5 flex-shrink-0" />
+              {t("adminEmailSettings.verificationReminders.title")}
             </CardTitle>
-            <CardDescription>
-              {t("admin.emailSettings.verificationReminders.description")}
+            <CardDescription className="break-words min-w-0">
+              {t("adminEmailSettings.verificationReminders.description")}
             </CardDescription>
           </div>
           <Button
@@ -156,35 +156,36 @@ export function EmailVerificationRemindersSettings() {
             size="sm"
             onClick={handleTestReminders}
             disabled={isLoading || !config.enabled}
+            className="flex-shrink-0 w-full sm:w-auto"
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t("admin.emailSettings.verificationReminders.sending")}
+                {t("adminEmailSettings.verificationReminders.sending")}
               </>
             ) : (
               <>
                 <Mail className="h-4 w-4 mr-2" />
-                {t("admin.emailSettings.verificationReminders.sendTestReminders")}
+                {t("adminEmailSettings.verificationReminders.sendTestReminders")}
               </>
             )}
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {t("admin.emailSettings.verificationReminders.alertDescription")}
+      <CardContent className="space-y-6 p-4 sm:p-6 pt-0 min-w-0">
+        <Alert className="min-w-0">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <AlertDescription className="break-words min-w-0">
+            {t("adminEmailSettings.verificationReminders.alertDescription")}
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>{t("admin.emailSettings.verificationReminders.enableReminders")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.emailSettings.verificationReminders.enableRemindersDescription")}
+        <div className="space-y-4 min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+            <div className="space-y-0.5 min-w-0">
+              <Label className="break-words">{t("adminEmailSettings.verificationReminders.enableReminders")}</Label>
+              <p className="text-sm text-muted-foreground break-words min-w-0">
+                {t("adminEmailSettings.verificationReminders.enableRemindersDescription")}
               </p>
             </div>
             <Switch
@@ -197,11 +198,11 @@ export function EmailVerificationRemindersSettings() {
 
           {config.enabled && (
             <>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="first_reminder">
-                    <Clock className="h-4 w-4 inline mr-2" />
-                    {t("admin.emailSettings.verificationReminders.firstReminder")}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="first_reminder" className="break-words">
+                    <Clock className="h-4 w-4 inline mr-2 flex-shrink-0" />
+                    {t("adminEmailSettings.verificationReminders.firstReminder")}
                   </Label>
                   <Input
                     id="first_reminder"
@@ -214,12 +215,13 @@ export function EmailVerificationRemindersSettings() {
                         first_reminder_days: parseInt(e.target.value) || 0,
                       })
                     }
+                    className="min-w-0 w-full max-w-full"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="second_reminder">
-                    {t("admin.emailSettings.verificationReminders.secondReminder")}
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="second_reminder" className="break-words">
+                    {t("adminEmailSettings.verificationReminders.secondReminder")}
                   </Label>
                   <Input
                     id="second_reminder"
@@ -235,9 +237,9 @@ export function EmailVerificationRemindersSettings() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="third_reminder">
-                    {t("admin.emailSettings.verificationReminders.thirdReminder")}
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="third_reminder" className="break-words">
+                    {t("adminEmailSettings.verificationReminders.thirdReminder")}
                   </Label>
                   <Input
                     id="third_reminder"
@@ -250,12 +252,13 @@ export function EmailVerificationRemindersSettings() {
                         third_reminder_days: parseInt(e.target.value) || 0,
                       })
                     }
+                    className="min-w-0 w-full max-w-full"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reminder_frequency">
-                    {t("admin.emailSettings.verificationReminders.reminderFrequency")}
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="reminder_frequency" className="break-words">
+                    {t("adminEmailSettings.verificationReminders.reminderFrequency")}
                   </Label>
                   <Input
                     id="reminder_frequency"
@@ -268,12 +271,13 @@ export function EmailVerificationRemindersSettings() {
                         reminder_frequency_days: parseInt(e.target.value) || 0,
                       })
                     }
+                    className="min-w-0 w-full max-w-full"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="max_reminders">
-                    {t("admin.emailSettings.verificationReminders.maxReminders")}
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="max_reminders" className="break-words">
+                    {t("adminEmailSettings.verificationReminders.maxReminders")}
                   </Label>
                   <Input
                     id="max_reminders"
@@ -287,14 +291,15 @@ export function EmailVerificationRemindersSettings() {
                         max_reminders: parseInt(e.target.value) || 0,
                       })
                     }
+                    className="min-w-0 w-full max-w-full"
                   />
                 </div>
               </div>
 
-              <Alert>
-                <AlertDescription className="text-xs">
-                  <strong>{t("admin.emailSettings.verificationReminders.howItWorks")}</strong>{" "}
-                  {t("admin.emailSettings.verificationReminders.howItWorksDescription", {
+              <Alert className="min-w-0">
+                <AlertDescription className="text-xs break-words min-w-0">
+                  <strong>{t("adminEmailSettings.verificationReminders.howItWorks")}</strong>{" "}
+                  {t("adminEmailSettings.verificationReminders.howItWorksDescription", {
                     first: config.first_reminder_days,
                     second: config.second_reminder_days,
                     third: config.third_reminder_days,
@@ -307,18 +312,27 @@ export function EmailVerificationRemindersSettings() {
           )}
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={fetchConfig} disabled={isSaving}>
-            {t("admin.emailSettings.verificationReminders.reset")}
+        <div className="w-full flex flex-col-reverse sm:flex-row flex-wrap justify-end items-stretch sm:items-center gap-2 min-w-0 overflow-hidden">
+          <Button
+            variant="outline"
+            onClick={fetchConfig}
+            disabled={isSaving}
+            className="w-full sm:w-auto min-w-0 max-w-full !whitespace-normal py-2 h-auto min-h-10 text-center overflow-hidden"
+          >
+            <span className="min-w-0 break-words text-inherit">{t("adminEmailSettings.verificationReminders.reset")}</span>
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="w-full sm:w-auto min-w-0 max-w-full !whitespace-normal py-2 h-auto min-h-10 text-center overflow-hidden"
+          >
             {isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t("admin.emailSettings.verificationReminders.saving")}
+                <Loader2 className="h-4 w-4 mr-2 flex-shrink-0 animate-spin" />
+                <span className="min-w-0 break-words text-inherit">{t("adminEmailSettings.verificationReminders.saving")}</span>
               </>
             ) : (
-              t("admin.emailSettings.verificationReminders.saveSettings")
+              <span className="min-w-0 break-words text-inherit">{t("adminEmailSettings.verificationReminders.saveSettings")}</span>
             )}
           </Button>
         </div>

@@ -122,33 +122,33 @@ const LoginMessage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["login-message-admin-config"] });
       queryClient.invalidateQueries({ queryKey: ["login-message-config"] });
-      toast.success(t("admin.loginMessage.success.updated"));
+      toast.success(t("adminLoginMessage.success.updated"));
     },
     onError: (error: any) => {
       console.error("Error saving login message:", error);
-      toast.error(t("admin.loginMessage.errors.failedToSave", { message: error.message }));
+      toast.error(t("adminLoginMessage.errors.failedToSave", { message: error.message }));
     },
   });
 
   const handleSave = () => {
     // Validation
     if (!config.title.trim()) {
-      toast.error(t("admin.loginMessage.validation.titleRequired"));
+      toast.error(t("adminLoginMessage.validation.titleRequired"));
       return;
     }
 
     if (config.title.length > 100) {
-      toast.error(t("admin.loginMessage.validation.titleMaxLength"));
+      toast.error(t("adminLoginMessage.validation.titleMaxLength"));
       return;
     }
 
     if (!config.body.trim()) {
-      toast.error(t("admin.loginMessage.validation.bodyRequired"));
+      toast.error(t("adminLoginMessage.validation.bodyRequired"));
       return;
     }
 
     if (config.body.length > 5000) {
-      toast.error(t("admin.loginMessage.validation.bodyMaxLength"));
+      toast.error(t("adminLoginMessage.validation.bodyMaxLength"));
       return;
     }
 
@@ -164,10 +164,10 @@ const LoginMessage = () => {
   };
 
   const handleReset = () => {
-    if (confirm(t("admin.loginMessage.confirm.reset"))) {
+    if (confirm(t("adminLoginMessage.confirm.reset"))) {
       setConfig(DEFAULT_CONFIG);
       setCharacterCount(DEFAULT_CONFIG.title.length);
-      toast.info(t("admin.loginMessage.success.reset"));
+      toast.info(t("adminLoginMessage.success.reset"));
     }
   };
 
@@ -179,7 +179,7 @@ const LoginMessage = () => {
   };
 
   if (authLoading || adminLoading || isLoading) {
-    return <PageLoading text={t("admin.loginMessage.loading")} />;
+    return <PageLoading text={t("adminLoginMessage.loading")} />;
   }
 
   if (!isAdmin) {
@@ -190,8 +190,8 @@ const LoginMessage = () => {
     <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
       <AdminBreadcrumb
         items={[
-          { label: t("admin.loginMessage.breadcrumb.communications") },
-          { label: t("admin.loginMessage.breadcrumb.loginMessage") },
+          { label: t("adminLoginMessage.breadcrumb.communications") },
+          { label: t("adminLoginMessage.breadcrumb.loginMessage") },
         ]}
       />
 
@@ -200,11 +200,11 @@ const LoginMessage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
           <div className="flex items-center gap-3">
             <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("admin.loginMessage.title")}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">{t("adminLoginMessage.title")}</h1>
           </div>
         </div>
         <p className="text-sm sm:text-base text-muted-foreground break-words">
-          {t("admin.loginMessage.subtitle")}
+          {t("adminLoginMessage.subtitle")}
         </p>
       </div>
 
@@ -212,7 +212,7 @@ const LoginMessage = () => {
       <Alert className="mb-6">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-xs sm:text-sm">
-          <strong>{t("admin.loginMessage.howItWorks")}:</strong> {t("admin.loginMessage.howItWorksDescription")}
+          <strong>{t("adminLoginMessage.howItWorks")}:</strong> {t("adminLoginMessage.howItWorksDescription")}
         </AlertDescription>
       </Alert>
 
@@ -223,10 +223,10 @@ const LoginMessage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <MessageSquare className="h-5 w-5" />
-                {t("admin.loginMessage.messageConfiguration.title")}
+                {t("adminLoginMessage.messageConfiguration.title")}
               </CardTitle>
               <CardDescription className="text-sm">
-                {t("admin.loginMessage.messageConfiguration.description")}
+                {t("adminLoginMessage.messageConfiguration.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -234,10 +234,10 @@ const LoginMessage = () => {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5 flex-1 min-w-0">
                   <Label htmlFor="enabled" className="text-base font-medium">
-                    {t("admin.loginMessage.messageConfiguration.enableLoginMessage")}
+                    {t("adminLoginMessage.messageConfiguration.enableLoginMessage")}
                   </Label>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    {t("admin.loginMessage.messageConfiguration.enableDescription")}
+                    {t("adminLoginMessage.messageConfiguration.enableDescription")}
                   </p>
                 </div>
                 <Switch
@@ -256,7 +256,7 @@ const LoginMessage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="title" className="text-sm sm:text-base">
-                    {t("admin.loginMessage.messageConfiguration.title")} <span className="text-destructive">*</span>
+                    {t("adminLoginMessage.messageConfiguration.title")} <span className="text-destructive">*</span>
                   </Label>
                   <span className="text-xs text-muted-foreground">
                     {characterCount}/100
@@ -264,7 +264,7 @@ const LoginMessage = () => {
                 </div>
                 <Input
                   id="title"
-                  placeholder={t("admin.loginMessage.messageConfiguration.titlePlaceholder")}
+                  placeholder={t("adminLoginMessage.messageConfiguration.titlePlaceholder")}
                   value={config.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   maxLength={100}
@@ -274,19 +274,19 @@ const LoginMessage = () => {
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t("admin.loginMessage.messageConfiguration.titleHint")}
+                  {t("adminLoginMessage.messageConfiguration.titleHint")}
                 </p>
               </div>
 
               {/* Body Rich Text Editor */}
               <div className="space-y-2">
                 <Label htmlFor="body" className="text-sm sm:text-base">
-                  {t("admin.loginMessage.messageConfiguration.messageBody")} <span className="text-destructive">*</span>
+                  {t("adminLoginMessage.messageConfiguration.messageBody")} <span className="text-destructive">*</span>
                 </Label>
                 <RichTextEditor
                   value={config.body}
                   onChange={(html) => setConfig({ ...config, body: html })}
-                  placeholder={t("admin.loginMessage.messageConfiguration.bodyPlaceholder")}
+                  placeholder={t("adminLoginMessage.messageConfiguration.bodyPlaceholder")}
                   maxLength={5000}
                   className="min-h-[300px]"
                 />
@@ -296,16 +296,16 @@ const LoginMessage = () => {
 
               {/* Behavior Options */}
               <div className="space-y-4">
-                <h3 className="font-medium text-sm sm:text-base">{t("admin.loginMessage.behaviorOptions.title")}</h3>
+                <h3 className="font-medium text-sm sm:text-base">{t("adminLoginMessage.behaviorOptions.title")}</h3>
 
                 {/* Dismissible */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="dismissible" className="text-sm font-medium">
-                      {t("admin.loginMessage.behaviorOptions.allowDismissal")}
+                      {t("adminLoginMessage.behaviorOptions.allowDismissal")}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      {t("admin.loginMessage.behaviorOptions.allowDismissalDescription")}
+                      {t("adminLoginMessage.behaviorOptions.allowDismissalDescription")}
                     </p>
                   </div>
                   <Switch
@@ -322,10 +322,10 @@ const LoginMessage = () => {
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <Label htmlFor="show_once" className="text-sm font-medium">
-                      {t("admin.loginMessage.behaviorOptions.showOncePerSession")}
+                      {t("adminLoginMessage.behaviorOptions.showOncePerSession")}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      {t("admin.loginMessage.behaviorOptions.showOncePerSessionDescription")}
+                      {t("adminLoginMessage.behaviorOptions.showOncePerSessionDescription")}
                     </p>
                   </div>
                   <Switch
@@ -340,7 +340,7 @@ const LoginMessage = () => {
 
                 {/* Priority */}
                 <div className="space-y-2">
-                  <Label htmlFor="priority" className="text-sm sm:text-base">{t("admin.loginMessage.behaviorOptions.displayPriority")}</Label>
+                  <Label htmlFor="priority" className="text-sm sm:text-base">{t("adminLoginMessage.behaviorOptions.displayPriority")}</Label>
                   <Select
                     value={config.priority}
                     onValueChange={(value: "low" | "medium" | "high") =>
@@ -351,13 +351,13 @@ const LoginMessage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">{t("admin.loginMessage.priority.low")}</SelectItem>
-                      <SelectItem value="medium">{t("admin.loginMessage.priority.medium")}</SelectItem>
-                      <SelectItem value="high">{t("admin.loginMessage.priority.high")}</SelectItem>
+                      <SelectItem value="low">{t("adminLoginMessage.priority.low")}</SelectItem>
+                      <SelectItem value="medium">{t("adminLoginMessage.priority.medium")}</SelectItem>
+                      <SelectItem value="high">{t("adminLoginMessage.priority.high")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t("admin.loginMessage.behaviorOptions.priorityHint")}
+                    {t("adminLoginMessage.behaviorOptions.priorityHint")}
                   </p>
                 </div>
               </div>
@@ -380,7 +380,7 @@ const LoginMessage = () => {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {t("admin.loginMessage.actions.saveChanges")}
+                  {t("adminLoginMessage.actions.saveChanges")}
                 </>
               )}
             </Button>
@@ -408,7 +408,7 @@ const LoginMessage = () => {
                   ) : (
                     <EyeOff className="h-5 w-5" />
                   )}
-                  <span className="break-words">{t("admin.loginMessage.preview.livePreview")}</span>
+                  <span className="break-words">{t("adminLoginMessage.preview.livePreview")}</span>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
@@ -417,12 +417,12 @@ const LoginMessage = () => {
                     onClick={() => setShowPreview(!showPreview)}
                     className="h-9 touch-manipulation flex-1 sm:flex-none"
                   >
-                    {showPreview ? t("admin.loginMessage.preview.hide") : t("admin.loginMessage.preview.show")} {t("admin.loginMessage.preview.preview")}
+                    {showPreview ? t("adminLoginMessage.preview.hide") : t("adminLoginMessage.preview.show")} {t("adminLoginMessage.preview.preview")}
                   </Button>
                 </div>
               </div>
               <CardDescription className="text-sm break-words">
-                {t("admin.loginMessage.preview.description")}
+                {t("adminLoginMessage.preview.description")}
               </CardDescription>
             </CardHeader>
             {showPreview && (
@@ -438,7 +438,7 @@ const LoginMessage = () => {
                           className="h-8 text-xs touch-manipulation"
                         >
                           <Eye className="h-3 w-3 mr-1" />
-                          {t("admin.loginMessage.preview.visual")}
+                          {t("adminLoginMessage.preview.visual")}
                         </Button>
                         <Button
                           variant={showSourceCode ? "default" : "outline"}
@@ -447,7 +447,7 @@ const LoginMessage = () => {
                           className="h-8 text-xs touch-manipulation"
                         >
                           <Code className="h-3 w-3 mr-1" />
-                          {t("admin.loginMessage.preview.sourceCode")}
+                          {t("adminLoginMessage.preview.sourceCode")}
                         </Button>
                       </div>
 
@@ -462,7 +462,7 @@ const LoginMessage = () => {
                             </div>
                             {config.dismissible && (
                               <Badge variant="secondary" className="text-xs flex-shrink-0">
-                                {t("admin.loginMessage.preview.dismissible")}
+                                {t("adminLoginMessage.preview.dismissible")}
                               </Badge>
                             )}
                           </div>
@@ -473,14 +473,14 @@ const LoginMessage = () => {
                           />
                           {config.show_once_per_session && (
                             <p className="text-xs text-muted-foreground italic">
-                              ℹ️ {t("admin.loginMessage.preview.showOnceNote")}
+                              ℹ️ {t("adminLoginMessage.preview.showOnceNote")}
                             </p>
                           )}
                           <Badge
                             variant="outline"
                             className="capitalize text-xs"
                           >
-                            {t("admin.loginMessage.preview.priority")}: {t(`admin.loginMessage.priority.${config.priority}`)}
+                            {t("adminLoginMessage.preview.priority")}: {t(`adminLoginMessage.priority.${config.priority}`)}
                           </Badge>
                         </div>
                       </div>
@@ -488,13 +488,13 @@ const LoginMessage = () => {
                       <div className="border rounded-lg bg-muted/30 p-4 max-h-[400px] overflow-auto">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium text-muted-foreground">{t("admin.loginMessage.preview.htmlSourceCode")}</p>
+                            <p className="text-xs font-medium text-muted-foreground">{t("adminLoginMessage.preview.htmlSourceCode")}</p>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
                                 navigator.clipboard.writeText(config.body);
-                                toast.success(t("admin.loginMessage.preview.htmlCopied"));
+                                toast.success(t("adminLoginMessage.preview.htmlCopied"));
                               }}
                               className="h-7 text-xs"
                             >
@@ -512,8 +512,8 @@ const LoginMessage = () => {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
-                      {t("admin.loginMessage.preview.disabled")} <strong>{t("admin.loginMessage.preview.disabledText")}</strong>.
-                      {t("admin.loginMessage.preview.enableToShow")}
+                      {t("adminLoginMessage.preview.disabled")} <strong>{t("adminLoginMessage.preview.disabledText")}</strong>.
+                      {t("adminLoginMessage.preview.enableToShow")}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -524,17 +524,17 @@ const LoginMessage = () => {
           {/* Tips Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">💡 {t("admin.loginMessage.bestPractices.title")}</CardTitle>
+              <CardTitle className="text-base sm:text-lg">💡 {t("adminLoginMessage.bestPractices.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-xs sm:text-sm text-muted-foreground">
               <ul className="space-y-2 list-disc list-inside">
-                <li>{t("admin.loginMessage.bestPractices.tip1")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip2")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip3")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip4")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip5")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip6")}</li>
-                <li>{t("admin.loginMessage.bestPractices.tip7")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip1")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip2")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip3")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip4")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip5")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip6")}</li>
+                <li>{t("adminLoginMessage.bestPractices.tip7")}</li>
               </ul>
             </CardContent>
           </Card>

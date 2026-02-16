@@ -130,14 +130,14 @@ export default function SEOSettings() {
       queryClient.invalidateQueries({ queryKey: ["seo-config"] });
       setHasChanges(false);
       toast({
-        title: t("admin.contentManagement.seoSettings.settingsSaved"),
-        description: t("admin.contentManagement.seoSettings.settingsSavedDescription"),
+        title: t("adminSeoSettings.settingsSaved"),
+        description: t("adminSeoSettings.settingsSavedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t("admin.contentManagement.seoSettings.errorSaving"),
-        description: error.message || t("admin.contentManagement.seoSettings.errorSavingDescription"),
+        title: t("adminSeoSettings.errorSaving"),
+        description: error.message || t("adminSeoSettings.errorSavingDescription"),
         variant: "destructive",
       });
     },
@@ -162,7 +162,7 @@ export default function SEOSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.contentManagement.seoSettings.loading")} />;
+    return <PageLoading text={t("adminSeoSettings.loading")} />;
   }
 
   return (
@@ -171,16 +171,16 @@ export default function SEOSettings() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
             <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            {t("admin.contentManagement.seoSettings.title")}
+            {t("adminSeoSettings.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {t("admin.contentManagement.seoSettings.subtitle")}
+            {t("adminSeoSettings.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" onClick={handleReset} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
             <Undo className="h-4 w-4 mr-2" />
-            {t("admin.contentManagement.seoSettings.discardChanges")}
+            {t("adminSeoSettings.discardChanges")}
           </Button>
           <Button onClick={() => saveMutation.mutate({ seo: config, branding })} disabled={!hasChanges || saveMutation.isPending} className="flex-1 sm:flex-none">
             {saveMutation.isPending ? (
@@ -188,7 +188,7 @@ export default function SEOSettings() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {t("admin.contentManagement.seoSettings.saveSettings")}
+            {t("adminSeoSettings.saveSettings")}
           </Button>
         </div>
       </div>
@@ -197,40 +197,40 @@ export default function SEOSettings() {
         <TabsList className="flex flex-wrap h-auto p-1 bg-muted">
           <TabsTrigger value="branding" className="gap-2 flex-1">
             <Globe className="h-4 w-4" />
-            {t("admin.contentManagement.seoSettings.tabs.branding")}
+            {t("adminSeoSettings.tabs.branding")}
           </TabsTrigger>
           <TabsTrigger value="seo" className="gap-2 flex-1">
             <Globe className="h-4 w-4" />
-            {t("admin.contentManagement.seoSettings.tabs.seo")}
+            {t("adminSeoSettings.tabs.seo")}
           </TabsTrigger>
           <TabsTrigger value="social" className="gap-2 flex-1">
             <Share2 className="h-4 w-4" />
-            {t("admin.contentManagement.seoSettings.tabs.social")}
+            {t("adminSeoSettings.tabs.social")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t("admin.contentManagement.seoSettings.branding.title")}</CardTitle>
+              <CardTitle>{t("adminSeoSettings.branding.title")}</CardTitle>
               <CardDescription>
-                {t("admin.contentManagement.seoSettings.branding.description")}
+                {t("adminSeoSettings.branding.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="platformName">{t("admin.contentManagement.seoSettings.branding.platformName")}</Label>
+                <Label htmlFor="platformName">{t("adminSeoSettings.branding.platformName")}</Label>
                 <Input
                   id="platformName"
                   value={branding.name}
                   onChange={(e) => handleBrandingChange("name", e.target.value)}
                   placeholder="e.g. ProfitChips"
                 />
-                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.branding.platformNameHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminSeoSettings.branding.platformNameHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="platformLogo">{t("admin.contentManagement.seoSettings.branding.platformLogo")}</Label>
+                <Label htmlFor="platformLogo">{t("adminSeoSettings.branding.platformLogo")}</Label>
                 <div className="flex gap-4">
                   <div className="flex-1 space-y-2">
                     <Input
@@ -239,7 +239,7 @@ export default function SEOSettings() {
                       onChange={(e) => handleBrandingChange("logoUrl", e.target.value)}
                       placeholder="/logo_without_bg_text.png"
                     />
-                    <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.branding.platformLogoHint")}</p>
+                    <p className="text-xs text-muted-foreground">{t("adminSeoSettings.branding.platformLogoHint")}</p>
                   </div>
                   <div className="h-12 w-12 border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                     <img src={branding.logoUrl} alt="Preview" className="h-full w-full object-contain" />
@@ -248,7 +248,7 @@ export default function SEOSettings() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="platformUrl">{t("admin.contentManagement.seoSettings.branding.platformUrl")}</Label>
+                <Label htmlFor="platformUrl">{t("adminSeoSettings.branding.platformUrl")}</Label>
                 <Input
                   id="platformUrl"
                   value={branding.url}
@@ -263,25 +263,25 @@ export default function SEOSettings() {
         <TabsContent value="seo" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t("admin.contentManagement.seoSettings.seo.title")}</CardTitle>
+              <CardTitle>{t("adminSeoSettings.seo.title")}</CardTitle>
               <CardDescription>
-                {t("admin.contentManagement.seoSettings.seo.description")}
+                {t("adminSeoSettings.seo.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">{t("admin.contentManagement.seoSettings.seo.pageTitle")}</Label>
+                <Label htmlFor="title">{t("adminSeoSettings.seo.pageTitle")}</Label>
                 <Input
                   id="title"
                   value={config.title}
                   onChange={(e) => handleSEOChange("title", e.target.value)}
                   placeholder="Enter page title"
                 />
-                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.pageTitleHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminSeoSettings.seo.pageTitleHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="description">{t("admin.contentManagement.seoSettings.seo.metaDescription")}</Label>
+                <Label htmlFor="description">{t("adminSeoSettings.seo.metaDescription")}</Label>
                 <Textarea
                   id="description"
                   value={config.description}
@@ -289,23 +289,23 @@ export default function SEOSettings() {
                   placeholder="Enter meta description"
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.metaDescriptionHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminSeoSettings.seo.metaDescriptionHint")}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="keywords">{t("admin.contentManagement.seoSettings.seo.keywords")}</Label>
+                <Label htmlFor="keywords">{t("adminSeoSettings.seo.keywords")}</Label>
                 <Input
                   id="keywords"
                   value={config.keywords}
                   onChange={(e) => handleSEOChange("keywords", e.target.value)}
                   placeholder="e.g. earn online, AI tasks, ProfitChips"
                 />
-                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.keywordsHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminSeoSettings.seo.keywordsHint")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="canonicalUrl">{t("admin.contentManagement.seoSettings.seo.canonicalUrl")}</Label>
+                  <Label htmlFor="canonicalUrl">{t("adminSeoSettings.seo.canonicalUrl")}</Label>
                   <Input
                     id="canonicalUrl"
                     value={config.canonicalUrl}
@@ -314,7 +314,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="robots">{t("admin.contentManagement.seoSettings.seo.robotsMeta")}</Label>
+                  <Label htmlFor="robots">{t("adminSeoSettings.seo.robotsMeta")}</Label>
                   <Input
                     id="robots"
                     value={config.robots}
@@ -325,23 +325,23 @@ export default function SEOSettings() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="faviconUrl">{t("admin.contentManagement.seoSettings.seo.faviconUrl")}</Label>
+                <Label htmlFor="faviconUrl">{t("adminSeoSettings.seo.faviconUrl")}</Label>
                 <Input
                   id="faviconUrl"
                   value={config.faviconUrl}
                   onChange={(e) => handleSEOChange("faviconUrl", e.target.value)}
                   placeholder="/logo_without_bg_text.png"
                 />
-                <p className="text-xs text-muted-foreground">{t("admin.contentManagement.seoSettings.seo.faviconUrlHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminSeoSettings.seo.faviconUrlHint")}</p>
               </div>
             </CardContent>
           </Card>
 
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>{t("admin.contentManagement.seoSettings.seo.tipTitle")}</AlertTitle>
+            <AlertTitle>{t("adminSeoSettings.seo.tipTitle")}</AlertTitle>
             <AlertDescription>
-              {t("admin.contentManagement.seoSettings.seo.tipDescription")}
+              {t("adminSeoSettings.seo.tipDescription")}
             </AlertDescription>
           </Alert>
         </TabsContent>
@@ -352,15 +352,15 @@ export default function SEOSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-blue-600">
                   <Share2 className="h-5 w-5" />
-                  {t("admin.contentManagement.seoSettings.social.openGraph.title")}
+                  {t("adminSeoSettings.social.openGraph.title")}
                 </CardTitle>
                 <CardDescription>
-                  {t("admin.contentManagement.seoSettings.social.openGraph.description")}
+                  {t("adminSeoSettings.social.openGraph.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="ogTitle">{t("admin.contentManagement.seoSettings.social.openGraph.ogTitle")}</Label>
+                  <Label htmlFor="ogTitle">{t("adminSeoSettings.social.openGraph.ogTitle")}</Label>
                   <Input
                     id="ogTitle"
                     value={config.ogTitle}
@@ -368,7 +368,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogDescription">{t("admin.contentManagement.seoSettings.social.openGraph.ogDescription")}</Label>
+                  <Label htmlFor="ogDescription">{t("adminSeoSettings.social.openGraph.ogDescription")}</Label>
                   <Textarea
                     id="ogDescription"
                     value={config.ogDescription}
@@ -377,7 +377,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogImage">{t("admin.contentManagement.seoSettings.social.openGraph.ogImage")}</Label>
+                  <Label htmlFor="ogImage">{t("adminSeoSettings.social.openGraph.ogImage")}</Label>
                   <Input
                     id="ogImage"
                     value={config.ogImage}
@@ -386,7 +386,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="ogUrl">{t("admin.contentManagement.seoSettings.social.openGraph.ogUrl")}</Label>
+                  <Label htmlFor="ogUrl">{t("adminSeoSettings.social.openGraph.ogUrl")}</Label>
                   <Input
                     id="ogUrl"
                     value={config.ogUrl}
@@ -400,15 +400,15 @@ export default function SEOSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sky-500">
                   <Share2 className="h-5 w-5" />
-                  {t("admin.contentManagement.seoSettings.social.twitter.title")}
+                  {t("adminSeoSettings.social.twitter.title")}
                 </CardTitle>
                 <CardDescription>
-                  {t("admin.contentManagement.seoSettings.social.twitter.description")}
+                  {t("adminSeoSettings.social.twitter.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterTitle">{t("admin.contentManagement.seoSettings.social.twitter.twitterTitle")}</Label>
+                  <Label htmlFor="twitterTitle">{t("adminSeoSettings.social.twitter.twitterTitle")}</Label>
                   <Input
                     id="twitterTitle"
                     value={config.twitterTitle}
@@ -416,7 +416,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterDescription">{t("admin.contentManagement.seoSettings.social.twitter.twitterDescription")}</Label>
+                  <Label htmlFor="twitterDescription">{t("adminSeoSettings.social.twitter.twitterDescription")}</Label>
                   <Textarea
                     id="twitterDescription"
                     value={config.twitterDescription}
@@ -425,7 +425,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterImage">{t("admin.contentManagement.seoSettings.social.twitter.twitterImage")}</Label>
+                  <Label htmlFor="twitterImage">{t("adminSeoSettings.social.twitter.twitterImage")}</Label>
                   <Input
                     id="twitterImage"
                     value={config.twitterImage}
@@ -433,7 +433,7 @@ export default function SEOSettings() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="twitterCard">{t("admin.contentManagement.seoSettings.social.twitter.cardType")}</Label>
+                  <Label htmlFor="twitterCard">{t("adminSeoSettings.social.twitter.cardType")}</Label>
                   <Input
                     id="twitterCard"
                     value={config.twitterCard}
