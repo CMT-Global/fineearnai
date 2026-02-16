@@ -1276,6 +1276,22 @@
         "banButton": "Ban User",
         "unbanButton": "Unban User"
       },
+      "deleteUser": {
+        "title": "Delete User",
+        "description": "Permanently delete {{username}} and all their data from the platform. This cannot be undone.",
+        "warningTitle": "This action cannot be undone.",
+        "warning1": "The user account will be permanently removed",
+        "warning2": "All profile data, wallet balances, and activity will be deleted",
+        "warning3": "Referral links and history associated with this user will be affected",
+        "warning4": "The user will no longer be able to log in or recover their account",
+        "usernameLabel": "Username:",
+        "userIdLabel": "User ID:",
+        "confirmLabel": "I understand that this will permanently delete this user and all their data. This cannot be undone.",
+        "confirmRequired": "Please confirm that you want to delete this user",
+        "cancel": "Cancel",
+        "processing": "Deleting User...",
+        "deleteButton": "Delete User Permanently"
+      },
       "changePlan": {
         "title": "Change Membership Plan",
         "description": "Change {{username}}'s membership plan",
@@ -2414,6 +2430,7 @@
       "walletBalanceAdjustedSuccessfully": "Wallet balance adjusted successfully",
       "membershipPlanUpdatedSuccessfully": "Membership plan updated successfully",
       "userBannedSuccessfully": "User banned successfully",
+      "userDeletedSuccessfully": "User deleted successfully",
       "dailyLimitsResetSuccessfully": "Daily limits reset successfully",
       "uplineChangedSuccessfully": "Upline changed successfully. Future commissions will go to the new upline.",
       "failedToChangeUpline": "Failed to change upline. Please try again.",
