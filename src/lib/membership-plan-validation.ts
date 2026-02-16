@@ -31,7 +31,7 @@ export interface MembershipPlanData {
  * Account type options for dropdown selection
  */
 export const ACCOUNT_TYPES = [
-  { value: 'free', label: 'Free Account' },
+  { value: 'free', label: 'Trainee (default)' },
   { value: 'personal', label: 'Personal Account' },
   { value: 'business', label: 'Business Account' },
   { value: 'group', label: 'Group Account' }
@@ -124,7 +124,7 @@ export const FIELD_CONSTRAINTS = {
     max: 365, 
     step: 1,
     label: 'Free Plan Expiry Days',
-    help: 'Number of days before free plan expires (leave empty for lifetime access)'
+    help: 'Number of days before default plan (Trainee) expires (leave empty for lifetime access)'
   },
   free_trial_days: { 
     min: 0, 
@@ -265,7 +265,7 @@ export function validateMembershipPlan(planData: MembershipPlanData): Validation
   if (planData.free_plan_expiry_days !== undefined && planData.free_plan_expiry_days !== null) {
     if (planData.free_plan_expiry_days < FIELD_CONSTRAINTS.free_plan_expiry_days.min || 
         planData.free_plan_expiry_days > FIELD_CONSTRAINTS.free_plan_expiry_days.max) {
-      errors.push(`Free plan expiry days must be between ${FIELD_CONSTRAINTS.free_plan_expiry_days.min} and ${FIELD_CONSTRAINTS.free_plan_expiry_days.max} days`);
+      errors.push(`Default plan expiry days must be between ${FIELD_CONSTRAINTS.free_plan_expiry_days.min} and ${FIELD_CONSTRAINTS.free_plan_expiry_days.max} days`);
     }
   }
 

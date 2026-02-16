@@ -121,6 +121,17 @@ Deno.serve(async (req) => {
       updates.membership_plan = plan.name;
       updates.plan_expires_at = expiresAt.toISOString();
       updates.current_plan_start_date = now.toISOString();
+    } else if (complete === true && selected_plan_id) {
+      // User completed wizard with a selected plan (no trial): set membership_plan to selected plan name
+      const { data: plan, error: planError } = await supabaseAdmin
+        .from('membership_plans')
+        .select('name')
+        .eq('id', selected_plan_id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (!planError && plan?.name) {
+        updates.membership_plan = plan.name;
+      }
     }
 
     if (skip_payout !== true && usdt_bep20_address != null && String(usdt_bep20_address).trim()) {

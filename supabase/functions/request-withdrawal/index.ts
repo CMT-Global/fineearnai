@@ -125,8 +125,8 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    // Get membership plan details using cache
-    const plan = await getMembershipPlan(supabase, profile.membership_plan);
+    // Get membership plan details (fallback to default free-tier if profile has stale plan name)
+    const plan = await getMembershipPlan(supabase, profile.membership_plan ?? '', { fallbackToDefault: true });
     if (!plan) {
       console.error('Plan not found:', profile.membership_plan);
       return new Response(JSON.stringify({

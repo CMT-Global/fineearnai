@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 interface FreeAccountUpgradeBannerProps {
   userId: string;
   planExpiresAt: string | null;
-  /** When plan_expires_at is not set, we can derive expiry from plan start + free plan trial days */
+  /** When plan_expires_at is not set, we can derive expiry from plan start + default plan trial days */
   planStartDate?: string | null;
   /** Fallback: account created_at, used with freePlanExpiryDays when plan start is missing */
   accountCreatedAt?: string | null;
@@ -28,8 +28,8 @@ export const FreeAccountUpgradeBanner = ({
   const getDaysUntilExpiry = (): number | null => {
     const now = new Date();
 
-    // 1) For free plan: always use current plan config (plan start + free_plan_expiry_days) so when
-    //    admin changes free plan expiry days, the banner shows updated days without waiting for profile sync
+    // 1) For default plan (Trainee): use current plan config (plan start + free_plan_expiry_days) so when
+    //    admin changes default plan expiry days, the banner shows updated days without waiting for profile sync
     const startSource = planStartDate || accountCreatedAt;
     if (startSource && freePlanExpiryDays != null && freePlanExpiryDays > 0) {
       const start = new Date(startSource);

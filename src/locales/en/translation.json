@@ -553,6 +553,7 @@
     "loadingReferrals": "Loading team...",
     "noReferralCommissions": "No Referral Commissions",
     "upgradeToEarnCommissions": "Upgrade to Earn Commissions",
+    "defaultPlan": "Default plan",
     "freePlanBannerTitle": "{{planName}} Plan — Task Commissions Locked",
     "freePlanBannerMessage": "On the {{planName}} (Free) plan, you can share your team invite link, but task commissions are only available on paid plans. Upgrade to start earning commissions when your team members complete tasks.",
     "freePlanBannerCta": "Unlock Task Commissions",
@@ -1134,7 +1135,8 @@
       "deleteRankConfirmation": "Are you sure you want to delete the {{rankName}} rank? This action cannot be undone."
     },
     "plansManage": {
-      "confirmDeletePlan": "Are you sure you want to delete this membership plan?"
+      "confirmDeletePlan": "Are you sure you want to delete this membership plan?",
+      "planNameRenameHint": "Changing this will update all users on this plan to the new name (e.g. free → Beginner)."
     },
     "paymentSettings": {
       "confirmDeleteProcessor": "Are you sure you want to delete this payment processor?",
@@ -3839,6 +3841,7 @@
       "pleaseFixValidationErrors": "Please fix validation errors before saving",
       "invalidJSONFormatForFeatures": "Invalid JSON format for features. Must be an array.",
       "planUpdated": "Plan updated successfully",
+      "planUpdatedWithUsers": "Plan updated. {{count}} user(s) moved to the new plan name.",
       "planCreated": "Plan created successfully",
       "failedToSaveMembershipPlan": "Failed to save membership plan",
       "cannotDeletePlanWithSubscribers": "Cannot delete plan with {{count}} active subscribers",

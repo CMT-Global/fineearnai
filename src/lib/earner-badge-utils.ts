@@ -5,7 +5,7 @@
  * 
  * Current badges:
  * - Verified Earner: Users with upgraded plans (personal, business, group)
- * - Unverified Earner: Users on the free plan
+ * - Unverified Earner: Users on the default plan (Trainee)
  * 
  * Future extensibility:
  * - Elite Earner (top performers)
@@ -44,7 +44,7 @@ export function getEarnerBadgeStatus(accountType: string | null | undefined): Ea
     };
   }
 
-  // Unverified Earner: Free plan only
+  // Unverified Earner: Default plan (Trainee) only
   return {
     isVerified: false,
     badgeText: 'Unverified Earner',

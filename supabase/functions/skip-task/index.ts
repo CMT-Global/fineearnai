@@ -71,10 +71,23 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
-    // Fetch membership plan to get skip limit
-    const { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('task_skip_limit_per_day').eq('name', profile.membership_plan).eq('is_active', true).maybeSingle();
+    // Resolve plan: by name first, then fallback to default free-tier (e.g. profile has stale "free" but DB uses "Trainee")
+    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    if (!planName) {
+      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      planName = defaultPlan?.name ?? '';
+    }
+    let { data: membershipPlan, error: planError } = await supabase.from('membership_plans').select('task_skip_limit_per_day').eq('name', planName).eq('is_active', true).maybeSingle();
+    if (!planError && !membershipPlan) {
+      const fallback = await supabase.from('membership_plans').select('task_skip_limit_per_day').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
+      membershipPlan = fallback.data ?? null;
+      planError = fallback.error ?? null;
+      if (membershipPlan) {
+        console.warn(`⚠️ [${requestId}] Plan "${profile.membership_plan ?? ''}" not found; using default free-tier plan for user ${user.id}`);
+      }
+    }
     if (planError || !membershipPlan) {
-      console.error(`❌ [${requestId}] Membership plan fetch error:`, planError);
+      console.error(`❌ [${requestId}] Membership plan fetch error:`, planError ?? 'no matching plan and no default free-tier plan');
       return new Response(JSON.stringify({
         error: 'plan_not_found',
         message: 'Membership plan not found or inactive'

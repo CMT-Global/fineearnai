@@ -18,6 +18,7 @@ import { BulkSuspendDialog } from "@/components/admin/dialogs/BulkSuspendDialog"
 import { Search, Eye, Download, RefreshCw, ArrowUpDown, Crown, Shield, Mail, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useUserManagement } from "@/hooks/useUserManagement";
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
 import { useDebounce } from "@/hooks/useDebounce";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { PageLoading } from "@/components/shared/PageLoading";
@@ -65,6 +66,7 @@ function UsersContent() {
     bulkSuspend,
     bulkExport,
   } = useUserManagement();
+  const { plans } = useMembershipPlans();
 
   const filters = {
     searchTerm: debouncedSearch,
@@ -213,10 +215,11 @@ function UsersContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin.users.filters.plan.all")}</SelectItem>
-                  <SelectItem value="free">{t("admin.users.filters.plan.free")}</SelectItem>
-                  <SelectItem value="basic">{t("admin.users.filters.plan.basic")}</SelectItem>
-                  <SelectItem value="premium">{t("admin.users.filters.plan.premium")}</SelectItem>
-                  <SelectItem value="vip">{t("admin.users.filters.plan.vip")}</SelectItem>
+                  {plans?.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.name}>
+                      {plan.display_name || plan.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={(value) => {

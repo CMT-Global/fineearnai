@@ -71,8 +71,10 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    // Get the current plan details (for proration calculation) using cache
-    const currentPlan = profile.membership_plan ? await getMembershipPlan(supabase, profile.membership_plan) : null;
+    // Get the current plan details (fallback to default if profile has stale plan name)
+    const currentPlan = profile.membership_plan
+      ? await getMembershipPlan(supabase, profile.membership_plan, { fallbackToDefault: true })
+      : null;
     // Get the new plan details using cache
     const newPlan = await getMembershipPlan(supabase, planName);
     if (!newPlan || !newPlan.is_active) {
@@ -120,12 +122,13 @@ Deno.serve(async (req)=>{
         difference: newPrice - currentPrice
       });
     }
-    // Explicit free plan downgrade block (extra safety)
-    if (newPlan.name === 'free' && currentPlan && parseFloat(currentPlan.price) > 0) {
-      console.error('❌ Downgrade to free plan blocked');
+    // Explicit default (free tier) plan downgrade block (extra safety)
+    const isDefaultPlan = (newPlan.account_type || '').toLowerCase().trim() === 'free';
+    if (isDefaultPlan && currentPlan && parseFloat(currentPlan.price) > 0) {
+      console.error('❌ Downgrade to default plan blocked');
       return new Response(JSON.stringify({
-        error: 'Cannot downgrade to free plan. Please contact support.',
-        code: 'FREE_PLAN_DOWNGRADE_NOT_ALLOWED'
+        error: 'Cannot downgrade to the default plan. Please contact support.',
+        code: 'DEFAULT_PLAN_DOWNGRADE_NOT_ALLOWED'
       }), {
         status: 400,
         headers: {
@@ -136,8 +139,9 @@ Deno.serve(async (req)=>{
     }
     let finalCost = parseFloat(newPlan.price);
     let prorationDetails = null;
-    // Calculate proration ONLY for genuine upgrades (newPrice > currentPrice)
-    if (currentPlan && profile.current_plan_start_date && parseFloat(currentPlan.price) > 0 && profile.membership_plan !== 'free' && parseFloat(newPlan.price) > parseFloat(currentPlan.price)) {
+    // Calculate proration ONLY for genuine upgrades (newPrice > currentPrice); skip if current plan is default tier
+    const isCurrentPlanDefaultTier = currentPlan && (currentPlan.account_type || '').toLowerCase().trim() === 'free';
+    if (currentPlan && profile.current_plan_start_date && parseFloat(currentPlan.price) > 0 && !isCurrentPlanDefaultTier && parseFloat(newPlan.price) > parseFloat(currentPlan.price)) {
       console.log('Calculating proration for upgrade from paid plan');
       // Call the database function to calculate proration
       const { data: proration, error: prorationError } = await supabase.rpc('calculate_proration', {

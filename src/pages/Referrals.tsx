@@ -68,20 +68,20 @@ const Referrals = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch free plan display name from membership_plans (admin-configured)
-  const { data: freePlanDisplayName } = useQuery({
-    queryKey: ["free-plan-display-name"],
+  // Fetch default plan (Trainee) display name from membership_plans (admin-configured)
+  const { data: defaultPlanDisplayName } = useQuery({
+    queryKey: ["default-plan-display-name"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("membership_plans")
         .select("display_name")
-        .eq("name", "free")
+        .eq("account_type", "free")
         .eq("is_active", true)
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return (data?.display_name as string) || "Free";
+      return (data?.display_name as string) || "";
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -133,7 +133,7 @@ const Referrals = () => {
               {/* My Upline Card */}
               <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
 
-              {/* Free plan banner - task commissions locked (only for unverified / free plan users) */}
+              {/* Default plan (Trainee) banner - task commissions locked (only for unverified / Trainee users) */}
               {profile?.earnerBadge && !profile.earnerBadge.isVerified && (
                 <Alert className="mb-6 bg-orange-500/10 border-orange-500/20">
                   <div className="flex items-center gap-2">
@@ -141,10 +141,10 @@ const Referrals = () => {
                     <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
                   </div>
                   <AlertTitle className="text-orange-700 dark:text-orange-400">
-                    {t("referrals.freePlanBannerTitle", { planName: freePlanDisplayName ?? "Free" })}
+                    {t("referrals.freePlanBannerTitle", { planName: defaultPlanDisplayName || t("referrals.defaultPlan") })}
                   </AlertTitle>
                   <AlertDescription className="text-orange-800 dark:text-orange-300 space-y-3">
-                    <p>{t("referrals.freePlanBannerMessage", { planName: freePlanDisplayName ?? "Free" })}</p>
+                    <p>{t("referrals.freePlanBannerMessage", { planName: defaultPlanDisplayName || t("referrals.defaultPlan") })}</p>
                     <Button 
                       onClick={() => navigate("/plans")}
                       className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold"

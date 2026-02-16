@@ -1,6 +1,8 @@
 import { ShieldCheck, Globe, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
+import { getDefaultPlan } from "@/lib/plan-utils";
 
 interface LandingSecureAccessStepProps {
   onComplete: () => void;
@@ -8,6 +10,10 @@ interface LandingSecureAccessStepProps {
 
 export default function LandingSecureAccessStep({ onComplete }: LandingSecureAccessStepProps) {
   const navigate = useNavigate();
+  const { plans } = useMembershipPlans();
+  const defaultPlan = getDefaultPlan(plans ?? []);
+  const defaultPlanLabel = defaultPlan?.display_name || defaultPlan?.name || "free account";
+  const trialDays = defaultPlan?.free_plan_expiry_days ?? 3;
 
   return (
     <div className="space-y-6">
@@ -23,8 +29,8 @@ export default function LandingSecureAccessStep({ onComplete }: LandingSecureAcc
       {/* Trial & Activation Info */}
       <div className="glass-card p-5 space-y-4">
         <p className="text-foreground leading-relaxed">
-          Once you register, you'll start on a <strong className="text-primary">Trainee Account</strong> with full
-          access for <strong>3 days (trial)</strong>.
+          Once you register, you'll start on a <strong className="text-primary">{defaultPlanLabel}</strong> with full
+          access for <strong>{trialDays} days (trial)</strong>.
         </p>
         <p className="text-foreground leading-relaxed">
           After your trial ends, you'll need to activate your account to keep working — starting from{" "}

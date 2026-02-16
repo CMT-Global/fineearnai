@@ -39,6 +39,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
+import { useMembershipPlans } from "@/hooks/useMembershipPlans";
+import { getDefaultPlan } from "@/lib/plan-utils";
 import { usePartnerApplicationDraft } from "@/hooks/usePartnerApplicationDraft";
 import {
   section1Schema,
@@ -75,8 +77,12 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
     completedSections
   });
   
-  // Phase 4: Free plan blocking dialog state
+  // Phase 4: Default (free tier) plan blocking dialog state
   const [showFreePlanDialog, setShowFreePlanDialog] = useState(false);
+  
+  const { plans } = useMembershipPlans();
+  const defaultPlan = getDefaultPlan(plans ?? []);
+  const isOnDefaultPlan = defaultPlan && profile?.membership_plan === defaultPlan.name;
   
   // Phase 1: Country search state
   const [countrySearchOpen, setCountrySearchOpen] = useState(false);
@@ -114,7 +120,8 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
           .eq('referrer_id', user.id)
           .eq('status', 'active');
         
-        // Get upgraded referrals (referrals whose membership_plan is not 'free')
+        // Get upgraded referrals (referrals whose membership_plan is not the default/free tier plan)
+        const defaultPlanName = defaultPlan?.name;
         const { data: upgradedReferrals } = await supabase
           .from('referrals')
           .select('referred_id')
@@ -125,16 +132,16 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
           const referredIds = upgradedReferrals.map(r => r.referred_id);
           
           if (referredIds.length > 0) {
-            const { count: upgradedCount } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true })
-              .in('id', referredIds)
-              .neq('membership_plan', 'free');
-            
-            setReferralStats({
-              total: totalCount || 0,
-              upgraded: upgradedCount || 0
-            });
+            if (defaultPlanName) {
+              const { count: upgradedCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .in('id', referredIds)
+                .neq('membership_plan', defaultPlanName);
+              setReferralStats({ total: totalCount || 0, upgraded: upgradedCount || 0 });
+            } else {
+              setReferralStats({ total: totalCount || 0, upgraded: 0 });
+            }
           } else {
             setReferralStats({ total: totalCount || 0, upgraded: 0 });
           }
@@ -150,7 +157,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
     };
     
     fetchReferralStats();
-  }, [user?.id]);
+  }, [user?.id, defaultPlan?.name]);
 
   const form = useForm<CompleteApplicationData>({
     resolver: zodResolver(completeApplicationSchema),
@@ -403,9 +410,9 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
       dataKeys: Object.keys(data)
     });
     
-    // Phase 4: Check if user is on free plan and block submission
-    if (data.current_membership_plan === 'free') {
-      console.log('⚠️ [PartnerApplicationWizard] Free plan detected, showing dialog');
+    // Phase 4: Check if user is on default (free tier) plan and block submission
+    if (defaultPlan && data.current_membership_plan === defaultPlan.name) {
+      console.log('⚠️ [PartnerApplicationWizard] Default plan detected, showing dialog');
       setShowFreePlanDialog(true);
       return;
     }
@@ -784,8 +791,8 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
                       {isLoadingProfile ? (
                         <Skeleton className="h-6 w-20" />
                       ) : (
-                        <Badge variant={profile?.membership_plan === 'free' ? 'destructive' : 'default'}>
-                          {profile?.membership_plan?.toUpperCase() || 'FREE'}
+                        <Badge variant={isOnDefaultPlan ? 'destructive' : 'default'}>
+                          {profile?.membership_plan ? (defaultPlan?.display_name ?? profile.membership_plan).toUpperCase() : 'FREE'}
                         </Badge>
                       )}
                     </div>
@@ -794,13 +801,13 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
                     ) : (
                       <>
                         <p className="text-xs text-muted-foreground">
-                          Your current plan: <span className="font-semibold">{profile?.membership_plan || 'Free'}</span>
+                          Your current plan: <span className="font-semibold">{profile?.membership_plan ? (defaultPlan?.display_name ?? profile.membership_plan) : 'Free'}</span>
                         </p>
-                        {profile?.membership_plan === 'free' && (
+                        {isOnDefaultPlan && (
                           <Alert className="mt-2" variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertDescription className="text-xs">
-                              Free plan users cannot become partners. Please upgrade your account to apply.
+                              Users on the default (free) plan cannot become partners. Please upgrade your account to apply.
                             </AlertDescription>
                           </Alert>
                         )}
@@ -1619,7 +1626,7 @@ export const PartnerApplicationWizard = ({ correlationId, onComplete, onCancel }
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>
-                Users on the <strong>Free plan</strong> cannot become Partners. 
+                Users on the <strong>default (free) plan</strong> cannot become Partners. 
                 To submit your partner application, you need to upgrade your account to a paid membership plan.
               </p>
               <p className="text-sm text-muted-foreground">

@@ -89,22 +89,30 @@ export const useTransactions = (
       }
       
       // Client-side deduplication safety net (Phase 3)
-      // This prevents duplicate transactions from appearing in UI even if they somehow slip through database constraints
-      const uniqueTransactions = filteredTransactions.reduce((acc, tx) => {
-        // Create unique key using gateway_transaction_id or fallback to transaction id
-        const uniqueKey = tx.gateway_transaction_id || tx.id;
+      // Only dedupe deposits by gateway_transaction_id (same payment can appear twice from webhooks).
+      // Task earnings and other types have unique ids - never collapse them (fixes missing task entries in Recent Activity).
+      const uniqueTransactions = filteredTransactions.reduce((acc, tx, index) => {
+        const isDeposit = tx.type === 'deposit';
+        const gatewayId = tx.gateway_transaction_id;
+        const id = tx.id;
+        // For deposits: dedupe by gateway_transaction_id. For everything else: use row id only (always unique).
+        const uniqueKey = isDeposit && gatewayId
+          ? gatewayId
+          : (id ?? `row-${index}`);
         
-        // Check if we already have a transaction with this key
-        const isDuplicate = acc.some(existing => {
-          const existingKey = existing.gateway_transaction_id || existing.id;
-          return existingKey === uniqueKey;
-        });
+        const isDuplicate = uniqueKey
+          ? acc.some((existing) => {
+              const existingIsDeposit = existing.type === 'deposit';
+              const existingKey = existingIsDeposit && existing.gateway_transaction_id
+                ? existing.gateway_transaction_id
+                : (existing.id ?? null);
+              return existingKey === uniqueKey;
+            })
+          : false;
         
-        // Only add if not duplicate
         if (!isDuplicate) {
           acc.push(tx);
         }
-        
         return acc;
       }, [] as typeof filteredTransactions);
       

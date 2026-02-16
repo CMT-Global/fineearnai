@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import { getMembershipPlan } from '../_shared/cache.ts';
+import { getMembershipPlan, getDefaultPlanName } from '../_shared/cache.ts';
 import { sendTemplateEmail } from '../_shared/email-sender.ts';
 Deno.serve(async (req)=>{
   // Handle CORS preflight requests
@@ -35,8 +35,11 @@ Deno.serve(async (req)=>{
     oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
     oneDayFromNow.setHours(0, 0, 0, 0); // Start of day
     console.log(`Looking for plans expiring between ${oneDayFromNow.toISOString()} and ${fiveDaysFromNow.toISOString()}`);
-    // Get users whose plans expire in 1-5 days
-    const { data: upcomingExpiryUsers, error: reminderQueryError } = await supabaseClient.from('profiles').select('id, username, email, membership_plan, plan_expires_at').gte('plan_expires_at', oneDayFromNow.toISOString()).lte('plan_expires_at', fiveDaysFromNow.toISOString()).neq('membership_plan', 'free').not('plan_expires_at', 'is', null).eq('account_status', 'active');
+    const defaultPlanName = await getDefaultPlanName(supabaseClient);
+    // Get users whose plans expire in 1-5 days (exclude default/free tier plan)
+    let reminderQuery = supabaseClient.from('profiles').select('id, username, email, membership_plan, plan_expires_at').gte('plan_expires_at', oneDayFromNow.toISOString()).lte('plan_expires_at', fiveDaysFromNow.toISOString()).not('plan_expires_at', 'is', null).eq('account_status', 'active');
+    if (defaultPlanName) reminderQuery = reminderQuery.neq('membership_plan', defaultPlanName);
+    const { data: upcomingExpiryUsers, error: reminderQueryError } = await reminderQuery;
     if (reminderQueryError) {
       console.error('Error querying users for expiry reminders:', reminderQueryError);
     } else if (upcomingExpiryUsers && upcomingExpiryUsers.length > 0) {
@@ -73,8 +76,8 @@ Deno.serve(async (req)=>{
             });
             continue;
           }
-          // Get plan details
-          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
+          // Get plan details (fallback to default if profile has stale plan name)
+          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan ?? '', { fallbackToDefault: true });
           if (!membershipPlan) {
             console.log(`Plan not found for user ${user.id}, skipping reminder`);
             continue;
@@ -172,21 +175,25 @@ Deno.serve(async (req)=>{
       for (const user of expiredUsers){
         totalProcessed++;
         try {
-          // Skip if user is already on free plan
-          if (user.membership_plan === 'free') {
-            console.log(`User ${user.id} already on free plan, skipping`);
+          // Skip if user is already on default (free tier) plan
+          if (defaultPlanName && user.membership_plan === defaultPlanName) {
+            console.log(`User ${user.id} already on default plan, skipping`);
             results.push({
               userId: user.id,
               action: 'skipped',
-              reason: 'Already on free plan'
+              reason: 'Already on default plan'
             });
             continue;
           }
           // Handle suspended/banned users separately - downgrade but preserve status
           if (user.account_status === 'suspended' || user.account_status === 'banned') {
-            console.log(`User ${user.id} is ${user.account_status}, downgrading to free`);
+            if (!defaultPlanName) {
+              results.push({ userId: user.id, action: 'error', reason: 'Default plan not found' });
+              continue;
+            }
+            console.log(`User ${user.id} is ${user.account_status}, downgrading to default plan`);
             const { error: downgradeError } = await supabaseClient.from('profiles').update({
-              membership_plan: 'free',
+              membership_plan: defaultPlanName,
               plan_expires_at: null,
               current_plan_start_date: null
             }).eq('id', user.id);
@@ -203,7 +210,7 @@ Deno.serve(async (req)=>{
               results.push({
                 userId: user.id,
                 action: 'downgraded',
-                reason: `${user.account_status} user downgraded to free`
+                reason: `${user.account_status} user downgraded to default plan`
               });
               // Log activity
               await supabaseClient.from('user_activity_log').insert({
@@ -211,7 +218,7 @@ Deno.serve(async (req)=>{
                 activity_type: 'plan_downgrade',
                 details: {
                   from_plan: user.membership_plan,
-                  to_plan: 'free',
+                  to_plan: defaultPlanName,
                   reason: `${user.account_status}_user_expiry`,
                   expired_at: user.plan_expires_at
                 }
@@ -219,16 +226,17 @@ Deno.serve(async (req)=>{
             }
             continue;
           }
-          // Get the user's current membership plan details using cache
-          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan);
+          // Get the user's current membership plan details (fallback to default if stale plan name)
+          const membershipPlan = await getMembershipPlan(supabaseClient, user.membership_plan ?? '', { fallbackToDefault: true });
           if (!membershipPlan) {
             console.error(`Membership plan not found for user ${user.id}:`, user.membership_plan);
-            // Downgrade to free if plan not found
-            await supabaseClient.from('profiles').update({
-              membership_plan: 'free',
+            if (defaultPlanName) {
+              await supabaseClient.from('profiles').update({
+                membership_plan: defaultPlanName,
               plan_expires_at: null,
               current_plan_start_date: null
             }).eq('id', user.id);
+            }
             totalDowngraded++;
             results.push({
               userId: user.id,
@@ -326,10 +334,14 @@ Deno.serve(async (req)=>{
               });
               console.log(`Successfully renewed plan for user ${user.id}`);
             } else {
-              // Insufficient balance - downgrade to free
-              console.log(`User ${user.id} has insufficient balance ($${currentBalance} < $${planPrice}), downgrading to free`);
+              // Insufficient balance - downgrade to default plan
+              if (!defaultPlanName) {
+                results.push({ userId: user.id, action: 'error', reason: 'Default plan not found' });
+                continue;
+              }
+              console.log(`User ${user.id} has insufficient balance ($${currentBalance} < $${planPrice}), downgrading to default plan`);
               const { error: downgradeError } = await supabaseClient.from('profiles').update({
-                membership_plan: 'free',
+                membership_plan: defaultPlanName,
                 plan_expires_at: null,
                 current_plan_start_date: null
               }).eq('id', user.id);
@@ -349,7 +361,7 @@ Deno.serve(async (req)=>{
                 activity_type: 'plan_downgrade',
                 details: {
                   from_plan: user.membership_plan,
-                  to_plan: 'free',
+                  to_plan: defaultPlanName,
                   reason: 'insufficient_balance_for_renewal',
                   required: planPrice,
                   available: currentBalance
@@ -360,7 +372,7 @@ Deno.serve(async (req)=>{
                 await supabaseClient.from('notifications').insert({
                   user_id: user.id,
                   title: 'Auto-Renewal Failed',
-                  message: `Your ${membershipPlan.display_name} plan could not be renewed due to insufficient balance ($${currentBalance.toFixed(2)} available, $${planPrice.toFixed(2)} required). You have been downgraded to the Free plan. Please add funds to upgrade again.`,
+                  message: `Your ${membershipPlan.display_name} plan could not be renewed due to insufficient balance ($${currentBalance.toFixed(2)} available, $${planPrice.toFixed(2)} required). You have been downgraded to the default plan. Please add funds to upgrade again.`,
                   type: 'plan_renewal_failed',
                   metadata: {
                     previous_plan: user.membership_plan,
@@ -379,10 +391,14 @@ Deno.serve(async (req)=>{
               });
             }
           } else {
-            // Auto-renew is false - downgrade to free
-            console.log(`User ${user.id} has auto_renew disabled, downgrading to free`);
+            // Auto-renew is false - downgrade to default plan
+            if (!defaultPlanName) {
+              results.push({ userId: user.id, action: 'error', reason: 'Default plan not found' });
+              continue;
+            }
+            console.log(`User ${user.id} has auto_renew disabled, downgrading to default plan`);
             const { error: downgradeError } = await supabaseClient.from('profiles').update({
-              membership_plan: 'free',
+              membership_plan: defaultPlanName,
               plan_expires_at: null,
               current_plan_start_date: null
             }).eq('id', user.id);
@@ -402,7 +418,7 @@ Deno.serve(async (req)=>{
               activity_type: 'plan_downgrade',
               details: {
                 from_plan: user.membership_plan,
-                to_plan: 'free',
+                to_plan: defaultPlanName,
                 reason: 'plan_expired_no_auto_renew',
                 expired_at: user.plan_expires_at
               }
@@ -412,7 +428,7 @@ Deno.serve(async (req)=>{
               await supabaseClient.from('notifications').insert({
                 user_id: user.id,
                 title: 'Plan Expired',
-                message: `Your ${membershipPlan.display_name} plan has expired and you have been downgraded to the Free plan. Upgrade anytime to access premium features.`,
+                message: `Your ${membershipPlan.display_name} plan has expired and you have been downgraded to the default plan. Upgrade anytime to access premium features.`,
                 type: 'plan_expired',
                 metadata: {
                   previous_plan: user.membership_plan,
