@@ -733,44 +733,6 @@ Deno.serve(async (req)=>{
           console.log(`Removed role '${role}' from user ${userId} by admin ${user.id}`);
           break;
         }
-      case 'delete_user':
-        {
-          // Prevent admin from deleting themselves
-          if (userId === user.id) {
-            throw new Error('Cannot delete your own account');
-          }
-          // Get target user info for audit before deletion
-          const { data: targetUser, error: fetchError } = await supabaseClient.from('profiles').select('username, email').eq('id', userId).maybeSingle();
-          if (fetchError) {
-            throw new Error(`Failed to fetch user: ${fetchError.message}`);
-          }
-          if (!targetUser) {
-            throw new Error('User not found');
-          }
-          // Delete from auth.users (cascade will handle profiles if configured; otherwise profile may remain until cleaned up)
-          const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId);
-          if (deleteError) {
-            throw new Error(`Failed to delete user: ${deleteError.message}`);
-          }
-          // If profile still exists (no cascade), delete it
-          await supabaseClient.from('profiles').delete().eq('id', userId);
-          // Log to audit
-          await supabaseClient.from('audit_logs').insert({
-            admin_id: user.id,
-            action_type: 'delete_user',
-            target_user_id: userId,
-            details: {
-              deleted_username: targetUser.username,
-              deleted_email: targetUser.email
-            }
-          });
-          result = {
-            success: true,
-            message: 'User deleted successfully'
-          };
-          console.log(`Deleted user ${userId} (${targetUser.username}) by admin ${user.id}`);
-          break;
-        }
       default:
         throw new Error(`Invalid action: ${action}`);
     }

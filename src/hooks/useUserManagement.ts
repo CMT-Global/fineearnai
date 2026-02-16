@@ -389,7 +389,7 @@ export const useUserManagement = () => {
   const banUser = useMutation({
     mutationFn: async ({ userId, banReason }: { userId: string; banReason: string }) => {
       return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'ban_user', userId, banReason }
+        body: { action: 'ban_user', userId, reason: banReason }
       });
     },
     onSuccess: (_, variables) => {
@@ -399,24 +399,6 @@ export const useUserManagement = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to ban user');
-    }
-  });
-
-  // Delete user (permanent)
-  const deleteUser = useMutation({
-    mutationFn: async (userId: string) => {
-      return await callEdgeFunctionWithRetry('admin-manage-user', {
-        body: { action: 'delete_user', userId }
-      });
-    },
-    onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', userId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast.success(t('admin.toasts.userDeletedSuccessfully'));
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete user');
     }
   });
 
@@ -578,7 +560,6 @@ export const useUserManagement = () => {
     changeMembershipPlan,
     suspendUser,
     banUser,
-    deleteUser,
     resetDailyLimits,
     changeUpline,
     

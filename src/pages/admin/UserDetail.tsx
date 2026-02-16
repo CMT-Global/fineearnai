@@ -39,7 +39,6 @@ import { WalletAdjustmentDialog } from "@/components/admin/dialogs/WalletAdjustm
 import { ChangePlanDialog } from "@/components/admin/dialogs/ChangePlanDialog";
 import { SuspendUserDialog } from "@/components/admin/dialogs/SuspendUserDialog";
 import { BanUserDialog } from "@/components/admin/dialogs/BanUserDialog";
-import { DeleteUserDialog } from "@/components/admin/dialogs/DeleteUserDialog";
 import { ManageRolesDialog } from "@/components/admin/dialogs/ManageRolesDialog";
 import { EditProfileDialog } from "@/components/admin/dialogs/EditProfileDialog";
 
@@ -58,7 +57,6 @@ function UserDetailContent() {
   const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [manageRolesDialogOpen, setManageRolesDialogOpen] = useState(false);
   const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
 
@@ -284,7 +282,6 @@ function UserDetailContent() {
               onChangePlan={() => setChangePlanDialogOpen(true)}
               onSuspend={() => setSuspendDialogOpen(true)}
               onBan={() => setBanDialogOpen(true)}
-              onDelete={() => setDeleteDialogOpen(true)}
               onResetLimits={() => toast.info(t("admin.toasts.resetLimitsComingSoon"))}
               onMasterLogin={handleGenerateMasterLogin}
               onManageRoles={() => setManageRolesDialogOpen(true)}
@@ -378,14 +375,6 @@ function UserDetailContent() {
               userId={userId!}
               username={profile.username}
               email={profile.email}
-            />
-
-            <DeleteUserDialog
-              open={deleteDialogOpen}
-              onOpenChange={setDeleteDialogOpen}
-              userId={userId!}
-              username={profile.username}
-              onSuccess={() => navigate("/admin/users")}
             />
 
             <ManageRolesDialog
