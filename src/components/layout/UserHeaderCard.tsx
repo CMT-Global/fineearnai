@@ -35,7 +35,7 @@ const getAccountStatusColor = (
   }
   
   // Account status
-  if (status === 'suspended' || status === 'banned') return 'destructive';
+  if (status === 'expired' || status === 'suspended' || status === 'banned') return 'destructive';
   if (status === 'active') return 'default';
   
   return 'secondary';
@@ -50,7 +50,7 @@ const AccountStatusDot = ({
   expiryDate?: string | null;
 }) => {
   const statusColor = getAccountStatusColor(status, expiryDate);
-  const isExpired = expiryDate && new Date(expiryDate) < new Date();
+  const isExpired = status === 'expired' || (expiryDate && new Date(expiryDate) < new Date());
   const displayStatus = isExpired ? 'Expired' : (status.charAt(0).toUpperCase() + status.slice(1));
   
   return (

@@ -632,7 +632,7 @@ export const OverviewTab = ({
               <div className="min-h-[28px] flex items-center">
                 <Badge
                   variant={
-                    profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+                    profile.account_status === "expired" || (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date())
                       ? "destructive"
                       : profile.account_status === "active"
                       ? "default"
@@ -643,7 +643,7 @@ export const OverviewTab = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 h-7"
                 >
                   <Activity className="h-3.5 w-3.5" />
-                  {profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+                  {profile.account_status === "expired" || (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date())
                     ? "Expired"
                     : profile.account_status}
                 </Badge>
@@ -734,7 +734,7 @@ export const OverviewTab = ({
                       : "destructive"
                   }
                 >
-                  {upline.account_status}
+                  {upline.account_status === "expired" ? "Expired" : upline.account_status}
                 </Badge>
               </div>
               <div>

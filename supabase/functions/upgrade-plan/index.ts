@@ -237,6 +237,8 @@ Deno.serve(async (req)=>{
       transactionId: atomicResult.transaction_id,
       newBalance: atomicResult.new_deposit_balance
     });
+    // Restore account_status to 'active' when user was expired (so task APIs allow access again)
+    await supabase.from('profiles').update({ account_status: 'active' }).eq('id', user.id).eq('account_status', 'expired');
     // Log to user activity log
     await supabase.from('user_activity_log').insert({
       user_id: user.id,

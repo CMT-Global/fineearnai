@@ -446,11 +446,13 @@ Deno.serve(async (req)=>{
             }
           }
 
-          // Update plan (allow null plan_expires_at for free with no trial)
+          // Update plan (allow null plan_expires_at for free with no trial).
+          // Set account_status to 'active' when assigning a plan so expired users become active again.
           const { error: updateError } = await supabaseClient.from('profiles').update({
             membership_plan: planData.plan_name,
             plan_expires_at: expiresAt,
-            current_plan_start_date: now.toISOString()
+            current_plan_start_date: now.toISOString(),
+            account_status: 'active'
           }).eq('id', userId);
           if (updateError) {
             throw new Error(`Failed to change plan: ${updateError.message}`);

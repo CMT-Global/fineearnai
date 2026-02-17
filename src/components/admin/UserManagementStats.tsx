@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Ban, DollarSign, TrendingUp, Activity } from "lucide-react";
+import { Users, UserCheck, UserX, Ban, CalendarClock, DollarSign, TrendingUp, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 
@@ -59,6 +59,13 @@ export const UserManagementStats = ({ stats, isLoading }: UserManagementStatsPro
       icon: Ban,
       description: t("admin.users.stats.permanentlyBanned"),
       color: "text-red-600",
+    },
+    {
+      title: t("admin.users.stats.expired"),
+      value: stats?.expired_users?.toLocaleString() || "0",
+      icon: CalendarClock,
+      description: t("admin.users.stats.planExpired"),
+      color: "text-amber-600",
     },
     {
       title: t("admin.users.stats.platformBalance"),

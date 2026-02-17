@@ -401,7 +401,7 @@ function UsersContent() {
                           <TableCell className="text-left whitespace-nowrap">
                             <Badge
                               variant={
-                                user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+                                user.account_status === "expired" || (user.plan_expires_at && new Date(user.plan_expires_at) < new Date())
                                   ? "destructive"
                                   : user.account_status === "active"
                                   ? "default"
@@ -411,7 +411,7 @@ function UsersContent() {
                               }
                               className="inline-flex"
                             >
-                              {user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+                              {user.account_status === "expired" || (user.plan_expires_at && new Date(user.plan_expires_at) < new Date())
                                 ? "Expired"
                                 : user.account_status}
                             </Badge>
