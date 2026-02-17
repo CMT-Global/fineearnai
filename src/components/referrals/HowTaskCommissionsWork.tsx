@@ -17,10 +17,10 @@ export function HowTaskCommissionsWork() {
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
-            className="w-full justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5 h-auto rounded-none hover:bg-muted/50 text-left"
+            className="w-full justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5 h-auto rounded-none hover:bg-muted/50 hover:text-foreground text-foreground text-left"
             aria-expanded={open}
           >
-            <span className="flex items-center gap-2 font-semibold text-base sm:text-lg">
+            <span className="flex items-center gap-2 font-semibold text-base sm:text-lg text-foreground">
               <HelpCircle className="h-5 w-5 shrink-0 text-primary" />
               How Task Commissions Work?
             </span>
@@ -36,7 +36,7 @@ export function HowTaskCommissionsWork() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 border-t border-border/50">
-            <div className="pt-4 space-y-4 text-sm sm:text-base leading-relaxed text-muted-foreground max-w-3xl">
+            <div className="pt-4 space-y-4 text-sm sm:text-base leading-relaxed text-muted-foreground w-full">
               <p>
                 Build a team and earn extra commissions from the work your team
                 members complete.
