@@ -48,15 +48,21 @@ export const useTrainee4Opt = () => {
           roles_4opt: ["trainee_4opt"],
         };
         const plan = profileRes.data?.membership_plan as string | undefined;
-        const roles = (rolesRes.data?.map((r: { role: string }) => r.role) || []) as string[];
+        // User roles from DB; if none, treat as default "user" so config.roles_4opt "user" applies
+        const rawRoles = (rolesRes.data?.map((r: { role: string }) => r.role) || []) as string[];
+        const roles =
+          rawRoles.length > 0 ? rawRoles : ["user"];
+        const rolesLower = roles.map((r) => (r || "").trim().toLowerCase()).filter(Boolean);
 
         const byPlan =
           config.plans_4opt?.length > 0 &&
           plan &&
-          config.plans_4opt.includes(plan);
+          config.plans_4opt.some((p) => (p || "").trim().toLowerCase() === (plan || "").trim().toLowerCase());
         const byRole =
           config.roles_4opt?.length > 0 &&
-          config.roles_4opt.some((r) => roles.includes(r));
+          config.roles_4opt.some(
+            (r) => rolesLower.includes((r || "").trim().toLowerCase())
+          );
 
         setHas4OptAccess(!!(byPlan || byRole));
       } catch (err) {
