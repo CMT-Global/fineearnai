@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -49,6 +50,7 @@ interface MembershipPlan {
 
 export default function MembershipPlans() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -206,6 +208,10 @@ export default function MembershipPlans() {
       
       // Reload profile to get updated data
       await loadUserProfile();
+      // Invalidate dashboard data so Account Expired banner does not show after upgrade
+      if (user?.id) {
+        await queryClient.invalidateQueries({ queryKey: ["dashboard-data-v2", user.id] });
+      }
     } catch (error: any) {
       console.error("Upgrade error:", error);
       
@@ -344,15 +350,42 @@ export default function MembershipPlans() {
                 </p>
               </div>
 
-              {/* Plan Expiry Alerts */}
+              {/* Plan Expiry Alerts - same Account Expired banner as Dashboard */}
               {planStatus && planStatus.status === 'expired' && (
-                <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t("membershipPlans.planExpired")}</AlertTitle>
-                  <AlertDescription>
-                    {t("membershipPlans.planExpiredDescription", { plan: currentPlan })}
-                  </AlertDescription>
-                </Alert>
+                <div className="mb-6 w-full">
+                  <div className="relative rounded-lg border-2 border-destructive/80 bg-destructive/5 dark:bg-destructive/10 p-5 lg:p-6 shadow-lg animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/20">
+                          <AlertCircle className="h-5 w-5 text-destructive" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-destructive leading-tight mb-2">
+                            {t("dashboard.accountExpired")}
+                          </h3>
+                          <ul className="list-disc list-inside space-y-1.5 text-sm text-destructive/90 leading-relaxed marker:text-destructive">
+                            <li>{t("dashboard.accountExpiredMessage")}</li>
+                            <li>{t("dashboard.accountExpiredSubline")}</li>
+                            {planStatus.daysSinceExpiry != null && planStatus.daysSinceExpiry > 0 && (
+                              <li className="font-medium">
+                                {planStatus.daysSinceExpiry === 1
+                                  ? t("dashboard.expiredOneDayAgo")
+                                  : t("dashboard.expiredDaysAgo", { days: planStatus.daysSinceExpiry })}
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                      <Button
+                        size="lg"
+                        className="w-fit bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-md px-6"
+                        onClick={() => document.getElementById("membership-plan-cards")?.scrollIntoView({ behavior: "smooth" })}
+                      >
+                        {t("dashboard.upgradeNow")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {user && profile && (
@@ -369,11 +402,13 @@ export default function MembershipPlans() {
                 </Alert>
               )}
 
-              <PlanTabs
-                personalPlans={personalPlans}
-                businessPlans={businessPlans}
-                renderPlanCards={renderPlanCards}
-              />
+              <div id="membership-plan-cards">
+                <PlanTabs
+                  personalPlans={personalPlans}
+                  businessPlans={businessPlans}
+                  renderPlanCards={renderPlanCards}
+                />
+              </div>
             </div>
 
             {/* Upgrade Confirmation Dialog with Proration */}

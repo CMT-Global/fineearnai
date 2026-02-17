@@ -48,7 +48,7 @@ export function useUserProfile(user: User | null) {
     const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntilExpiry < 0) {
-      return { status: 'expired', daysUntilExpiry: 0 };
+      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: Math.abs(daysUntilExpiry), expiryDate };
     } else if (daysUntilExpiry <= 7) {
       return { status: 'expiring_soon', daysUntilExpiry };
     }

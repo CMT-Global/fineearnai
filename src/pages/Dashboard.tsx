@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/shared/PageLoading";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { FreeAccountUpgradeBanner } from "@/components/dashboard/FreeAccountUpgradeBanner";
 import { PremiumUpgradeBanner } from "@/components/dashboard/PremiumUpgradeBanner";
@@ -154,7 +153,7 @@ const Dashboard = () => {
     const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntilExpiry < 0) {
-      return { status: 'expired', daysUntilExpiry: 0, expiryDate };
+      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: Math.abs(daysUntilExpiry), expiryDate };
     } else if (daysUntilExpiry <= 7) {
       return { status: 'expiring_soon', daysUntilExpiry, expiryDate };
     }
@@ -272,16 +271,38 @@ const Dashboard = () => {
           {/* Plan Expiry Alerts */}
           {planStatus && planStatus.status === 'expired' && (
             <div className="mx-4 lg:mx-8 mt-6">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("dashboard.planExpired")}</AlertTitle>
-                <AlertDescription className="flex items-center justify-between">
-                  <span>{t("dashboard.planExpiredDescription", { plan: profile.membership_plan })}</span>
-                  <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => navigate("/plans")}>
+              <div className="relative rounded-lg border-2 border-destructive/80 bg-destructive/5 dark:bg-destructive/10 p-5 lg:p-6 shadow-lg animate-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/20">
+                      <AlertCircle className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-destructive leading-tight mb-2">
+                        {t("dashboard.accountExpired")}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1.5 text-sm text-destructive/90 leading-relaxed marker:text-destructive">
+                        <li>{t("dashboard.accountExpiredMessage")}</li>
+                        <li>{t("dashboard.accountExpiredSubline")}</li>
+                        {planStatus.daysSinceExpiry != null && planStatus.daysSinceExpiry > 0 && (
+                          <li className="font-medium">
+                            {planStatus.daysSinceExpiry === 1
+                              ? t("dashboard.expiredOneDayAgo")
+                              : t("dashboard.expiredDaysAgo", { days: planStatus.daysSinceExpiry })}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="w-fit bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-md px-6"
+                    onClick={() => navigate("/plans")}
+                  >
                     {t("dashboard.upgradeNow")}
                   </Button>
-                </AlertDescription>
-              </Alert>
+                </div>
+              </div>
             </div>
           )}
 
