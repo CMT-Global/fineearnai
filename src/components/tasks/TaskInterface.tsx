@@ -14,6 +14,8 @@ interface AITask {
   prompt: string;
   response_a: string;
   response_b: string;
+  response_c?: string;
+  response_d?: string;
   category: string;
   difficulty: string;
   reward: number;
@@ -28,7 +30,7 @@ interface Feedback {
 
 export interface TaskInterfaceProps {
   task: AITask;
-  /** Display order for options (randomized per task); correctness is by key "a"|"b" */
+  /** Display order for options (randomized per task); correctness is by key "a"|"b"|"c"|"d" */
   displayOrder: TaskDisplayOption[];
   onSubmit: (response: string) => Promise<void>;
   onSkip: () => Promise<void>;
@@ -44,7 +46,7 @@ const difficultyColors = {
   hard: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
-const OPTION_LABELS = ["optionA", "optionB"] as const;
+const OPTION_LABELS = ["optionA", "optionB", "optionC", "optionD"] as const;
 
 const TaskInterfaceComponent = ({
   task,
@@ -153,7 +155,7 @@ const TaskInterfaceComponent = ({
                     : "border-transparent bg-muted/30"
                 }`}
               >
-                <p className="font-medium text-sm mb-1">{t(`tasks.interface.${OPTION_LABELS[idx]}`)}:</p>
+                <p className="font-medium text-sm mb-1">{t(`tasks.interface.${OPTION_LABELS[Math.min(idx, 3)]}`)}:</p>
                 <p className="text-sm break-words whitespace-normal overflow-visible">{opt.text}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {selectedResponse === opt.key && (
@@ -200,7 +202,7 @@ const TaskInterfaceComponent = ({
                       className="cursor-pointer flex-1 min-w-0"
                     >
                       <p className={`font-medium mb-2 ${idx === 0 ? "text-primary" : "text-green-600 dark:text-green-400"}`}>
-                        {t(`tasks.interface.${OPTION_LABELS[idx]}`)}
+                        {t(`tasks.interface.${OPTION_LABELS[Math.min(idx, 3)]}`)}
                       </p>
                       <p className="text-sm leading-relaxed break-words whitespace-normal overflow-visible">{opt.text}</p>
                     </Label>

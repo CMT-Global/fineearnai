@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
-import { useTrainee4Opt } from "@/hooks/useTrainee4Opt";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
-import { getTaskOptionsDisplayOrder, getTaskOptionsDisplayOrder4 } from "@/lib/task-options-order";
+import { getTaskOptionsDisplayOrder4 } from "@/lib/task-options-order";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
@@ -21,11 +21,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 
-interface AITask {
+interface AITask4Opt {
   id: string;
   prompt: string;
   response_a: string;
   response_b: string;
+  response_c: string;
+  response_d: string;
   category: string;
   difficulty: string;
   reward: number;
@@ -53,10 +55,10 @@ interface Feedback {
   newBalance: number;
 }
 
-const Tasks = () => {
+const Tasks4Opt = () => {
   const { t } = useTranslation();
-  const { user, loading } = useAuth();
-  const { has4OptAccess, loading: trainee4OptLoading } = useTrainee4Opt();
+  const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { formatAmount } = useCurrencyConversion();
@@ -80,45 +82,56 @@ const Tasks = () => {
   }, [user, loading, navigate]);
 
   // ✅ Phase 2: React Query handles ALL server data (user stats from get-next-task)
-  // If user has trainee_4opt role -> get-next-task-4opt; else -> get-next-task (2-option)
+  // Database is the single source of truth for task resets
+  // ✅ Phase 2.3: Add retry logic for transient auth errors
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
-    queryKey: ['next-task', user?.id, has4OptAccess],
+    queryKey: ['next-task-4opt', user?.id],
     queryFn: async () => {
       let lastError = null;
-      const fn = has4OptAccess ? "get-next-task-4opt" : "get-next-task";
-
+      
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const { data, error } = await supabase.functions.invoke(fn);
+          const { data, error } = await supabase.functions.invoke("get-next-task-4opt");
 
+          // Handle HTTP errors from edge function
           if (error) {
+            // Check if it's a transient auth error worth retrying
             if (error.message?.includes('AuthSessionMissingError') && attempt === 0) {
+              console.warn(`⚠️ AuthSessionMissingError on attempt ${attempt + 1}, retrying...`);
               lastError = error;
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
               continue;
             }
+            
+            console.error('❌ Error from get-next-task-4opt:', error);
             throw error;
           }
+
+          // Success - return data
           return data;
         } catch (err) {
           lastError = err;
-          if (attempt < 1) await new Promise(resolve => setTimeout(resolve, 500));
+          if (attempt < 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       }
+      
+      // All retries failed
       throw lastError;
     },
-    enabled: !!user && !trainee4OptLoading,
-    staleTime: 10000,
-    gcTime: 60000,
-    retry: false,
+    enabled: !!user,
+    staleTime: 10000,    // Cache for 10 seconds
+    gcTime: 60000,       // Keep in cache for 1 minute
+    retry: false,        // Disable automatic retry since we handle it manually
   });
 
-  // Refetch task when entering Tasks page
+  // Refetch task/stats when entering Tasks page so plan limits always reflect current membership
   useEffect(() => {
     if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['next-task', user.id, has4OptAccess] });
+      queryClient.invalidateQueries({ queryKey: ['next-task-4opt', user.id] });
     }
-  }, [user?.id, has4OptAccess, queryClient]);
+  }, [user?.id, queryClient]);
 
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
   useEffect(() => {
@@ -142,7 +155,8 @@ const Tasks = () => {
           // Show syncing indicator
           setIsSyncing(true);
           
-          queryClient.invalidateQueries({ queryKey: ['next-task', user?.id, has4OptAccess] });
+          // Invalidate the next-task query to trigger a refetch with fresh data
+          queryClient.invalidateQueries({ queryKey: ['next-task-4opt', user?.id] });
           
           // Profile updates are handled by useProfile hook's real-time subscription
           
@@ -155,16 +169,16 @@ const Tasks = () => {
       });
 
     return () => {
+      console.log('🔌 Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [user, has4OptAccess, queryClient]);
+  }, [user, queryClient]);
 
   const currentTask = taskData?.task || null;
+  // Deterministic option order per task (consistent per attempt; correctness is by key "a"/"b" not position)
   const displayOrder = useMemo(() => {
     if (!currentTask) return null;
-    const order = has4OptAccess
-      ? getTaskOptionsDisplayOrder4(currentTask)
-      : getTaskOptionsDisplayOrder(currentTask);
+    const order = getTaskOptionsDisplayOrder4(currentTask as AITask4Opt);
     if (typeof console !== "undefined" && process.env.NODE_ENV !== "test") {
       console.log("[TaskOptions] display order", {
         taskId: currentTask.id,
@@ -172,7 +186,7 @@ const Tasks = () => {
       });
     }
     return order;
-  }, [currentTask?.id, currentTask, has4OptAccess]);
+  }, [currentTask?.id]);
 
   // ✅ Phase 2: All user stats from React Query (taskData)
   // Database is single source of truth - API tells us if limit is reached
@@ -230,9 +244,10 @@ const Tasks = () => {
   // Submit mutation - Phase 1: No optimistic updates, server response is single source of truth
   const submitMutation = useMutation({
     mutationFn: async ({ taskId, response, timeTaken }: { taskId: string; response: string; timeTaken: number }) => {
+      // Set submitting state to prevent double-clicks
       setIsSubmitting(true);
-      const fn = has4OptAccess ? "complete-ai-task-4opt" : "complete-ai-task";
-      const { data, error } = await supabase.functions.invoke(fn, {
+      
+      const { data, error } = await supabase.functions.invoke("complete-ai-task-4opt", {
         body: {
           taskId,
           selectedResponse: response,
@@ -262,7 +277,8 @@ const Tasks = () => {
         // Daily limit reached - show congratulatory message
         toast.success(t("tasks.toasts.allTasksCompleted"));
         
-        queryClient.setQueryData(['next-task', user?.id, has4OptAccess], {
+        // Set query data to show daily limit UI
+        queryClient.setQueryData(['next-task-4opt', user?.id], {
           success: false,
           error: 'daily_limit_reached',
           message: t("tasks.toasts.allTasksCompleted"),
@@ -284,7 +300,7 @@ const Tasks = () => {
         }, 2000);
       } else {
         // More tasks available - invalidate and refetch
-        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id, has4OptAccess] });
+        queryClient.invalidateQueries({ queryKey: ['next-task-4opt', user?.id] });
         
         setTimeout(() => {
           setFeedback(null);
@@ -308,7 +324,8 @@ const Tasks = () => {
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
   }, [currentTask, startTime, submitMutation, isSubmitting]);
 
-  if (loading || !user || trainee4OptLoading) {
+  // Early return ONLY for auth loading (before we have user)
+  if (loading || !user) {
     return <PageLoading text={t("login.signingIn")} />;
   }
 
@@ -321,9 +338,9 @@ const Tasks = () => {
       {/* Header */}
       <header className="bg-card border-b px-4 lg:px-8 py-6">
           <div>
-            <h1 className="text-2xl font-bold">{t("tasks.title")}</h1>
+            <h1 className="text-2xl font-bold">4-Option AI Tasks</h1>
             <p className="text-muted-foreground">
-              {t("tasks.subtitle")}
+              Complete 4-option questions to earn rewards
             </p>
           </div>
         </header>
@@ -402,4 +419,4 @@ const Tasks = () => {
   );
 };
 
-export default Tasks;
+export default Tasks4Opt;

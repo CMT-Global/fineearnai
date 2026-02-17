@@ -634,12 +634,13 @@ Deno.serve(async (req)=>{
           if (![
             'admin',
             'moderator',
-            'user'
+            'user',
+            'trainee_4opt'
           ].includes(role)) {
-            throw new Error('Invalid role. Must be admin, moderator, or user');
+            throw new Error('Invalid role. Must be admin, moderator, user, or trainee_4opt');
           }
-          // Prevent admin from assigning role to themselves (security measure)
-          if (userId === user.id) {
+          // Prevent admin from assigning role to themselves (security measure) - except trainee_4opt
+          if (userId === user.id && role !== 'trainee_4opt') {
             throw new Error('Cannot assign role to yourself');
           }
           // Check if user already has this role
@@ -706,9 +707,10 @@ Deno.serve(async (req)=>{
           if (![
             'admin',
             'moderator',
-            'user'
+            'user',
+            'trainee_4opt'
           ].includes(role)) {
-            throw new Error('Invalid role. Must be admin, moderator, or user');
+            throw new Error('Invalid role. Must be admin, moderator, user, or trainee_4opt');
           }
           // Prevent removing 'user' role - everyone must have base user role
           if (role === 'user') {

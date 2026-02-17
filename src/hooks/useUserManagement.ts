@@ -97,7 +97,7 @@ export const useUserManagement = () => {
           const { data: roleUsers, error: roleError } = await supabase
             .from('user_roles')
             .select('user_id')
-            .eq('role', filters.roleFilter as 'admin' | 'moderator' | 'user');
+            .eq('role', filters.roleFilter as 'admin' | 'moderator' | 'user' | 'trainee_4opt');
           
           if (roleError) throw roleError;
           
