@@ -25,7 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useMembershipPlans } from "@/hooks/useMembershipPlans";
-import { isFreeTierPlan, getHighestTierPlan } from "@/lib/plan-utils";
+import { isFreeTierPlan, getHighestTierPlan, getDaysSinceExpiry } from "@/lib/plan-utils";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -153,7 +153,8 @@ const Dashboard = () => {
     const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntilExpiry < 0) {
-      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: Math.abs(daysUntilExpiry), expiryDate };
+      const daysSinceExpiry = getDaysSinceExpiry(profile.plan_expires_at);
+      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: daysSinceExpiry ?? Math.abs(daysUntilExpiry), expiryDate };
     } else if (daysUntilExpiry <= 7) {
       return { status: 'expiring_soon', daysUntilExpiry, expiryDate };
     }

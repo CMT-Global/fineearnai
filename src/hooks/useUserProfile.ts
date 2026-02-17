@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
+import { getDaysSinceExpiry } from '@/lib/plan-utils';
 
 export function useUserProfile(user: User | null) {
   const { t } = useTranslation();
@@ -48,7 +49,8 @@ export function useUserProfile(user: User | null) {
     const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntilExpiry < 0) {
-      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: Math.abs(daysUntilExpiry), expiryDate };
+      const daysSinceExpiry = getDaysSinceExpiry(profile.plan_expires_at);
+      return { status: 'expired', daysUntilExpiry: 0, daysSinceExpiry: daysSinceExpiry ?? Math.abs(daysUntilExpiry), expiryDate };
     } else if (daysUntilExpiry <= 7) {
       return { status: 'expiring_soon', daysUntilExpiry };
     }
