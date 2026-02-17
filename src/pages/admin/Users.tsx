@@ -232,6 +232,7 @@ function UsersContent() {
                 <SelectContent>
                   <SelectItem value="all">{t("admin.users.filters.status.all")}</SelectItem>
                   <SelectItem value="active">{t("admin.users.filters.status.active")}</SelectItem>
+                  <SelectItem value="expired">{t("admin.users.filters.status.expired")}</SelectItem>
                   <SelectItem value="suspended">{t("admin.users.filters.status.suspended")}</SelectItem>
                   <SelectItem value="banned">{t("admin.users.filters.status.banned")}</SelectItem>
                 </SelectContent>
@@ -400,7 +401,9 @@ function UsersContent() {
                           <TableCell className="text-left whitespace-nowrap">
                             <Badge
                               variant={
-                                user.account_status === "active"
+                                user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+                                  ? "destructive"
+                                  : user.account_status === "active"
                                   ? "default"
                                   : user.account_status === "suspended"
                                   ? "secondary"
@@ -408,7 +411,9 @@ function UsersContent() {
                               }
                               className="inline-flex"
                             >
-                              {user.account_status}
+                              {user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+                                ? "Expired"
+                                : user.account_status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-left whitespace-nowrap">

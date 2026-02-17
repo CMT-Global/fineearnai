@@ -61,6 +61,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Tu cuenta ha caducado. Actualiza para seguir ganando.",
+      "planExpiringSoonBanner": "¡Tu plan caduca pronto! Renueva para seguir ganando."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Estado de la cuenta",
+      "statusActive": "Activo",
+      "statusExpired": "Caducado"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -387,6 +396,18 @@
       "title": "Tu plan ha caducado",
       "description": "Actualiza para acceder a las tareas y seguir ganando.",
       "upgradeToAccessTasks": "Actualizar para acceder a las tareas"
+    },
+    "accountExpired": {
+      "title": "Tu cuenta ha caducado",
+      "message": "Tu plan actual ha terminado, por lo que no puedes acceder a las tareas en este momento. Actualiza tu cuenta para seguir completando tareas y ganando.",
+      "currentPlan": "Plan actual",
+      "expiredOn": "Caducó el",
+      "expiredDaysAgo": "Caducó hace {{days}} días",
+      "expiredOneDayAgo": "Caducó hace 1 día",
+      "upgradeCta": "Actualizar / Renovar cuenta",
+      "goToDashboard": "Ir al Panel",
+      "needHelp": "¿Necesitas ayuda?",
+      "supportLink": "Visita help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -1197,6 +1218,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Caducado",
           "suspended": "Suspended",
           "banned": "Banned"
         },

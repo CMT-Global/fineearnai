@@ -61,6 +61,12 @@
     "login": "Anmelden",
     "signup": "Registrieren"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Ihr Konto ist abgelaufen. Upgraden Sie, um weiter zu verdienen.",
+      "planExpiringSoonBanner": "Ihr Plan läuft bald ab! Erneuern Sie, um weiter zu verdienen."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Kontostatus",
+      "statusActive": "Aktiv",
+      "statusExpired": "Abgelaufen"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -387,6 +396,18 @@
       "title": "Ihr Plan ist abgelaufen",
       "description": "Upgraden Sie, um auf Aufgaben zuzugreifen und weiter zu verdienen.",
       "upgradeToAccessTasks": "Upgraden für Zugang zu Aufgaben"
+    },
+    "accountExpired": {
+      "title": "Ihr Konto ist abgelaufen",
+      "message": "Ihr aktueller Plan ist beendet, daher können Sie derzeit nicht auf Aufgaben zugreifen. Upgraden Sie Ihr Konto, um weiter Aufgaben zu erledigen und zu verdienen.",
+      "currentPlan": "Aktueller Plan",
+      "expiredOn": "Abgelaufen am",
+      "expiredDaysAgo": "Vor {{days}} Tagen abgelaufen",
+      "expiredOneDayAgo": "Vor 1 Tag abgelaufen",
+      "upgradeCta": "Upgrade / Konto erneuern",
+      "goToDashboard": "Zum Dashboard",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "supportLink": "Besuchen Sie help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -1197,6 +1218,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Abgelaufen",
           "suspended": "Suspended",
           "banned": "Banned"
         },

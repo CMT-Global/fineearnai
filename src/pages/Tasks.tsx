@@ -15,10 +15,10 @@ import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
+import { AccountExpiredScreen } from "@/components/tasks/AccountExpiredScreen";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Info, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 
 interface AITask {
@@ -346,42 +346,37 @@ const Tasks = () => {
 
         {/* Main Content */}
         <div className="p-4 lg:p-8 max-w-5xl mx-auto">
-          {/* AI Training Explanation Alert */}
-          <Alert className="mb-6">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>{t("tasks.understandingAITraining")}</strong>{" "}
-              {t("tasks.understandingAITrainingDescription")}
-            </AlertDescription>
-          </Alert>
-
-          {/* Stats Cards - Always Visible */}
-          <TaskStats
-            tasksCompletedToday={userStats?.tasksCompletedToday || 0}
-            dailyLimit={userStats?.dailyLimit || 0}
-            remainingTasks={userStats?.remainingTasks || 0}
-            earningsBalance={userStats?.earningsBalance || 0}
-            isLoading={isLoadingTask && !userStats}
-            isSyncing={isSyncing || submitMutation.isPending}
-          />
-
-          {/* Plan expired: show message and upgrade CTA */}
           {isPlanExpired ? (
-            <Alert variant="destructive" className="mt-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t("tasks.planExpired.title")}</AlertTitle>
-              <AlertDescription className="flex flex-col gap-3">
-                <span>{t("tasks.planExpired.description")}</span>
-                <Button
-                  variant="secondary"
-                  className="w-fit"
-                  onClick={() => navigate("/plans")}
-                >
-                  {t("tasks.planExpired.upgradeToAccessTasks")}
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : isLoadingTask ? (
+            /* Account expired: dedicated screen, no task UI */
+            <AccountExpiredScreen
+              membershipPlan={profile?.membership_plan ?? ""}
+              planExpiresAt={profile?.plan_expires_at ?? null}
+              onUpgrade={() => navigate("/plans")}
+              onGoToDashboard={() => navigate("/dashboard")}
+            />
+          ) : (
+            <>
+              {/* AI Training Explanation Alert */}
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>{t("tasks.understandingAITraining")}</strong>{" "}
+                  {t("tasks.understandingAITrainingDescription")}
+                </AlertDescription>
+              </Alert>
+
+              {/* Stats Cards - Always Visible */}
+              <TaskStats
+                tasksCompletedToday={userStats?.tasksCompletedToday || 0}
+                dailyLimit={userStats?.dailyLimit || 0}
+                remainingTasks={userStats?.remainingTasks || 0}
+                earningsBalance={userStats?.earningsBalance || 0}
+                isLoading={isLoadingTask && !userStats}
+                isSyncing={isSyncing || submitMutation.isPending}
+              />
+
+              {/* Task area or daily limit or no tasks */}
+              {isLoadingTask ? (
             <TaskSkeleton />
           ) : isDailyLimitReached ? (
             <DailyLimitReached
@@ -401,21 +396,23 @@ const Tasks = () => {
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
             />
-          ) : currentTask ? (
-            <TaskSkeleton />
-          ) : (
-            <NoTasksAvailable onRefresh={refetchTask} />
-          )}
+              ) : currentTask ? (
+                <TaskSkeleton />
+              ) : (
+                <NoTasksAvailable onRefresh={refetchTask} />
+              )}
 
-          {/* Recent Activity */}
-          <div className="mt-8">
-            <RecentTransactionsCard 
-              userId={user?.id || ''} 
-              maxItems={5} 
-              showPagination={false} 
-              title={t("tasks.recentActivity")}
-            />
-          </div>
+              {/* Recent Activity */}
+              <div className="mt-8">
+                <RecentTransactionsCard 
+                  userId={user?.id || ''} 
+                  maxItems={5} 
+                  showPagination={false} 
+                  title={t("tasks.recentActivity")}
+                />
+              </div>
+            </>
+          )}
         </div>
     </>
   );

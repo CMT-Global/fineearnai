@@ -4,6 +4,7 @@ import { UserHeaderCard } from "@/components/layout/UserHeaderCard";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { EarnerBadgeStatus } from "@/lib/earner-badge-utils";
 
 interface MobileUserBadgeProps {
@@ -19,7 +20,7 @@ interface MobileUserBadgeProps {
   } | null;
 }
 
-// Check if plan is expiring soon (< 7 days)
+// Check if plan is expiring soon (< 7 days, not yet expired)
 const isPlanExpiringSoon = (expiryDate?: string | null): boolean => {
   if (!expiryDate) return false;
   
@@ -31,7 +32,14 @@ const isPlanExpiringSoon = (expiryDate?: string | null): boolean => {
   return diffDays >= 0 && diffDays <= 7;
 };
 
+// Check if plan has expired
+const isPlanExpired = (expiryDate?: string | null): boolean => {
+  if (!expiryDate) return false;
+  return new Date(expiryDate) < new Date();
+};
+
 export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
+  const { t } = useTranslation();
   // Runtime type guard - validate profile structure
   const isValidProfile = (p: any): p is NonNullable<MobileUserBadgeProps['profile']> => {
     return p && 
@@ -55,8 +63,12 @@ export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
   }
 
   const initial = profile.username?.charAt(0).toUpperCase() || 'U';
-  const showNotification = useMemo(
+  const showExpiringSoon = useMemo(
     () => isPlanExpiringSoon(profile?.plan_expires_at),
+    [profile?.plan_expires_at]
+  );
+  const showExpired = useMemo(
+    () => isPlanExpired(profile?.plan_expires_at),
     [profile?.plan_expires_at]
   );
 
@@ -81,7 +93,7 @@ export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
           )}
           
           {/* Notification Dot - Plan Expiring Soon (Top Right, takes priority over verification) */}
-          {showNotification && (
+          {showExpiringSoon && !showExpired && (
             <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500 border border-background"></span>
@@ -98,11 +110,19 @@ export const MobileUserBadge = ({ profile }: MobileUserBadgeProps) => {
           {/* Full User Details Card */}
           <UserHeaderCard profile={profile} />
           
-          {/* Expiry Warning Banner if needed */}
-          {showNotification && (
+          {/* Account Expired Banner */}
+          {showExpired && (
+            <div className="px-4 pb-4">
+              <Badge variant="destructive" className="w-full justify-center py-2">
+                {t("layout.mobile.accountExpiredBanner")}
+              </Badge>
+            </div>
+          )}
+          {/* Expiry Warning Banner - Plan Expiring Soon */}
+          {showExpiringSoon && !showExpired && (
             <div className="px-4 pb-4">
               <Badge variant="warning" className="w-full justify-center py-2">
-                ⚠️ Your plan is expiring soon! Renew to continue earning.
+                {t("layout.mobile.planExpiringSoonBanner")}
               </Badge>
             </div>
           )}

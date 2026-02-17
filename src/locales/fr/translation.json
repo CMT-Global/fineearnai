@@ -61,6 +61,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Votre compte a expiré. Passez à un forfait supérieur pour continuer à gagner.",
+      "planExpiringSoonBanner": "Votre forfait expire bientôt ! Renouvelez pour continuer à gagner."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "État du compte",
+      "statusActive": "Actif",
+      "statusExpired": "Expiré"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -387,6 +396,18 @@
       "title": "Votre forfait a expiré",
       "description": "Passez à un forfait supérieur pour accéder aux tâches et continuer à gagner.",
       "upgradeToAccessTasks": "Mettre à niveau pour accéder aux tâches"
+    },
+    "accountExpired": {
+      "title": "Votre compte a expiré",
+      "message": "Votre forfait actuel est terminé, vous ne pouvez donc pas accéder aux tâches pour le moment. Passez à un forfait supérieur pour continuer à accomplir des tâches et gagner.",
+      "currentPlan": "Forfait actuel",
+      "expiredOn": "Expiré le",
+      "expiredDaysAgo": "Expiré il y a {{days}} jours",
+      "expiredOneDayAgo": "Expiré il y a 1 jour",
+      "upgradeCta": "Mettre à niveau / Renouveler le compte",
+      "goToDashboard": "Aller au tableau de bord",
+      "needHelp": "Besoin d'aide ?",
+      "supportLink": "Visitez help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -1197,6 +1218,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Expiré",
           "suspended": "Suspended",
           "banned": "Banned"
         },

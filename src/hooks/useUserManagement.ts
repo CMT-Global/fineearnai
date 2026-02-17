@@ -78,7 +78,14 @@ export const useUserManagement = () => {
 
         // Apply status filter
         if (filters.statusFilter && filters.statusFilter !== 'all') {
-          query = query.eq('account_status', filters.statusFilter as any);
+          if (filters.statusFilter === 'expired') {
+            // Expired: plan_expires_at is in the past (from DB)
+            query = query
+              .not('plan_expires_at', 'is', null)
+              .lt('plan_expires_at', new Date().toISOString());
+          } else {
+            query = query.eq('account_status', filters.statusFilter as any);
+          }
         }
 
         // Apply country filter (using IPStack-detected registration country)

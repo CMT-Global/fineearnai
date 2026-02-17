@@ -55,6 +55,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Your account has expired. Upgrade to continue earning.",
+      "planExpiringSoonBanner": "Your plan is expiring soon! Renew to continue earning."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -116,7 +122,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Account Status",
+      "statusActive": "Active",
+      "statusExpired": "Expired"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -381,6 +390,18 @@
       "title": "Your plan has expired",
       "description": "Upgrade to access tasks and continue earning.",
       "upgradeToAccessTasks": "Upgrade to access tasks"
+    },
+    "accountExpired": {
+      "title": "Your Account Has Expired",
+      "message": "Your current plan has ended, so you can't access tasks right now. Upgrade your account to continue completing tasks and earning.",
+      "currentPlan": "Current plan",
+      "expiredOn": "Expired on",
+      "expiredDaysAgo": "Expired {{days}} days ago",
+      "expiredOneDayAgo": "Expired 1 day ago",
+      "upgradeCta": "Upgrade / Renew Account",
+      "goToDashboard": "Go to Dashboard",
+      "needHelp": "Need help?",
+      "supportLink": "Visit help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -1171,6 +1192,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Expired",
           "suspended": "Suspended",
           "banned": "Banned"
         },

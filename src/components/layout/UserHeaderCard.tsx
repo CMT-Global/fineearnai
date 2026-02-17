@@ -50,7 +50,8 @@ const AccountStatusDot = ({
   expiryDate?: string | null;
 }) => {
   const statusColor = getAccountStatusColor(status, expiryDate);
-  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+  const isExpired = expiryDate && new Date(expiryDate) < new Date();
+  const displayStatus = isExpired ? 'Expired' : (status.charAt(0).toUpperCase() + status.slice(1));
   
   return (
     <Badge variant={statusColor} className="text-xs">
