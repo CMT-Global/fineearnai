@@ -31,7 +31,11 @@ interface AITask4Opt {
   created_by: string | null;
 }
 
-const AITasksManage4 = () => {
+interface AITasksManage4Props {
+  embedded?: boolean;
+}
+
+const AITasksManage4 = ({ embedded = false }: AITasksManage4Props) => {
   const { t } = useTranslation();
   const { languageKey } = useLanguageSync();
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -163,31 +167,42 @@ const AITasksManage4 = () => {
   return (
     <div key={languageKey} className="p-6">
       <div className="container-custom">
-        <AdminBreadcrumb
-          items={[
-            { label: t("admin.sidebar.categories.taskManagement") },
-            { label: "Manage AI Tasks (4 Options)" },
-          ]}
-        />
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Manage AI Tasks (4 Options)</h1>
-            <p className="text-muted-foreground mt-1">
-              {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
-            </p>
-          </div>
-          <div className="flex gap-2">
+        {!embedded && (
+          <>
+            <AdminBreadcrumb
+              items={[
+                { label: t("admin.sidebar.categories.taskManagement") },
+                { label: "Manage AI Tasks (4 Options)" },
+              ]}
+            />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-3xl font-bold">Manage AI Tasks (4 Options)</h1>
+                <p className="text-muted-foreground mt-1">
+                  {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => { setLoading(true); loadTasks(); }} disabled={loading || !user}>
+                  <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                  {t("common.refresh")}
+                </Button>
+                <Button onClick={() => navigate("/admin/tasks/generate?mode=4opt")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("admin.aiTasksManage.generateTasks")}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+        {embedded && (
+          <div className="flex gap-2 mb-4 justify-end">
             <Button variant="outline" onClick={() => { setLoading(true); loadTasks(); }} disabled={loading || !user}>
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               {t("common.refresh")}
             </Button>
-            <Button onClick={() => navigate("/admin/tasks/generate-4opt")}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("admin.aiTasksManage.generateTasks")}
-            </Button>
           </div>
-        </div>
+        )}
 
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -301,7 +316,7 @@ const AITasksManage4 = () => {
           {filteredTasks.length === 0 && (
             <Card className="p-12 text-center">
               <p className="text-muted-foreground">{t("admin.aiTasksManage.noTasksFound")}</p>
-              <Button className="mt-4" onClick={() => navigate("/admin/tasks/generate-4opt")}>
+              <Button className="mt-4" onClick={() => navigate(embedded ? "/admin/tasks/generate?mode=4opt" : "/admin/tasks/generate?mode=4opt")}>
                 {t("admin.aiTasksManage.generateFirstTasks")}
               </Button>
             </Card>

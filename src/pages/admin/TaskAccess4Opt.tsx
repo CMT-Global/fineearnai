@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Zap, Loader2, Crown, Shield, RotateCcw, Check } from "lucide-react";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 
 interface Task4OptAccessConfig {
@@ -26,10 +26,11 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
   moderator: "Moderator",
   user: "User Only",
-  trainee_4opt: "4-Option Tasks role (assign via User Detail → Manage Roles for specific users)",
+  trainee_4opt: "4-Option Tasks (assign via User Detail → Manage Roles)",
 };
 
-const AVAILABLE_ROLES = ["admin", "moderator", "user", "trainee_4opt"] as const;
+// trainee_4opt commented out - uncomment to show "4-Option Tasks" role toggle
+const AVAILABLE_ROLES = ["admin", "moderator", "user" /* , "trainee_4opt" */] as const;
 
 function TaskAccess4OptContent() {
   const { t } = useTranslation();
@@ -134,99 +135,170 @@ function TaskAccess4OptContent() {
   const isLoading = plansLoading || configLoading;
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-3xl mx-auto">
-        <AdminBreadcrumb
-          items={[
-            { label: t("admin.sidebar.categories.taskManagement") },
-            { label: "4-Option Access Control" },
-          ]}
-        />
-
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Zap className="h-8 w-8" />
-            4-Option Access Control
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Configure which membership plans and roles get 4-option AI tasks. Users on enabled plans
-            or with enabled roles see 4-option questions instead of 2-option on the Tasks page. No
-            user list—access is controlled by plan and role rules.
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header with gradient accent */}
+      <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-b from-card/80 to-background">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.08),transparent_50%)]" />
+        <div className="relative px-6 py-8 md:px-8">
+          <div className="mx-auto max-w-4xl">
+            <AdminBreadcrumb
+              items={[
+                { label: t("admin.sidebar.categories.taskManagement") },
+                { label: "4-Option Access Control" },
+              ]}
+            />
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight md:text-3xl">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Zap className="h-5 w-5" />
+                  </span>
+                  4-Option Access Control
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground leading-relaxed">
+                  Configure which membership plans and roles get 4-option AI tasks. Users on enabled plans
+                  or with enabled roles see 4-option questions instead of 2-option.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
+      <div className="mx-auto max-w-4xl px-6 py-8 md:px-8">
         {isLoading ? (
           <PageLoading text="Loading..." />
         ) : (
-          <div className="space-y-6">
-            {/* Membership Plans */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Membership Plans with 4-Option Access</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Users on these plans automatically see 4-option tasks.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {!plans?.length ? (
-                  <p className="text-muted-foreground text-sm">No active membership plans.</p>
-                ) : (
-                  plans.map((plan: { id: string; name: string; display_name?: string }) => (
-                    <div key={plan.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`plan-${plan.id}`}
-                        checked={config.plans_4opt.includes(plan.name)}
-                        onCheckedChange={() => togglePlan(plan.name)}
-                      />
-                      <Label
-                        htmlFor={`plan-${plan.id}`}
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {plan.display_name || plan.name}
-                      </Label>
+          <div className="space-y-8">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Membership Plans Card */}
+              <Card className="overflow-hidden border-border/60 bg-card/50 transition-all hover:border-primary/20 hover:shadow-[0_0_30px_hsl(var(--primary)/0.06)]">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Crown className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <CardTitle className="text-lg">Membership Plans</CardTitle>
+                        <CardDescription className="mt-0.5">
+                          Plans that grant 4-option task access
+                        </CardDescription>
+                      </div>
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Roles */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Roles with 4-Option Access</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Users with these roles get 4-option tasks. Assign roles via User Detail → Manage
-                  Roles.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {AVAILABLE_ROLES.map((role) => (
-                  <div key={role} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`role-${role}`}
-                      checked={config.roles_4opt.includes(role)}
-                      onCheckedChange={() => toggleRole(role)}
-                    />
-                    <Label
-                      htmlFor={`role-${role}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {ROLE_LABELS[role]}
-                    </Label>
+                    <Badge variant="secondary" className="shrink-0">
+                      {config.plans_4opt.length} selected
+                    </Badge>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="space-y-2 pt-0">
+                  {!plans?.length ? (
+                    <p className="rounded-lg border border-dashed border-border/60 py-8 text-center text-sm text-muted-foreground">
+                      No active membership plans
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {plans.map((plan: { id: string; name: string; display_name?: string }) => {
+                        const isEnabled = config.plans_4opt.includes(plan.name);
+                        return (
+                          <label
+                            key={plan.id}
+                            className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 transition-all hover:bg-muted/30 ${
+                              isEnabled ? "border-primary/30 bg-primary/5" : "border-transparent"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2 text-sm font-medium">
+                              {isEnabled && <Check className="h-4 w-4 text-primary" />}
+                              {plan.display_name || plan.name}
+                            </span>
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => togglePlan(plan.name)}
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={!hasChanges || saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Save
-              </Button>
-              <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
-                Reset
-              </Button>
+              {/* Roles Card */}
+              <Card className="overflow-hidden border-border/60 bg-card/50 transition-all hover:border-primary/20 hover:shadow-[0_0_30px_hsl(var(--primary)/0.06)]">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Shield className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <CardTitle className="text-lg">Roles</CardTitle>
+                        <CardDescription className="mt-0.5">
+                          Assign via User Detail → Manage Roles
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0">
+                      {config.roles_4opt.length} selected
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 pt-0">
+                  <div className="space-y-1">
+                    {AVAILABLE_ROLES.map((role) => {
+                      const isEnabled = config.roles_4opt.includes(role);
+                      return (
+                        <label
+                          key={role}
+                          className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 transition-all hover:bg-muted/30 ${
+                            isEnabled ? "border-primary/30 bg-primary/5" : "border-transparent"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 text-sm font-medium">
+                            {isEnabled && <Check className="h-4 w-4 text-primary" />}
+                            {ROLE_LABELS[role]}
+                          </span>
+                          <Switch
+                            checked={isEnabled}
+                            onCheckedChange={() => toggleRole(role)}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Action bar - sticky with highlight when there are unsaved changes */}
+            <div
+              className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border px-4 py-3 transition-all ${
+                hasChanges
+                  ? "sticky bottom-4 z-10 border-primary/30 bg-card/95 shadow-lg backdrop-blur-sm"
+                  : "border-border/40 bg-muted/20"
+              }`}
+            >
+              <p className="text-sm text-muted-foreground">
+                {hasChanges ? "Unsaved changes" : "No changes to save"}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleReset} disabled={!hasChanges}>
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  Reset
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={!hasChanges || saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="mr-1.5 h-4 w-4" />
+                  )}
+                  Save
+                </Button>
+              </div>
             </div>
           </div>
         )}

@@ -127,14 +127,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
         { label: t("admin.sidebar.items.generateAITasks"), path: "/admin/tasks/generate" },
         { label: t("admin.sidebar.items.manageAITasks"), path: "/admin/tasks/manage" },
         { label: t("admin.sidebar.items.taskAnalytics"), path: "/admin/analytics/tasks" },
-        ...(isAdmin
-          ? [
-              { label: "4-Option Access Control", path: "/admin/tasks/access-4opt" },
-              { label: "Generate AI Tasks (4 Options)", path: "/admin/tasks/generate-4opt" },
-              { label: "Manage AI Tasks (4 Options)", path: "/admin/tasks/manage-4opt" },
-              { label: "Task Analytics (4 Options)", path: "/admin/analytics/tasks-4opt" },
-            ]
-          : []),
+        ...(isAdmin ? [{ label: "4-Option Access Control", path: "/admin/tasks/access-4opt" }] : []),
       ],
     },
     {
