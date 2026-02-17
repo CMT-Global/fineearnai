@@ -32,54 +32,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const referralCodeFromUrl = searchParams.get("ref");
   const [referrerUsername, setReferrerUsername] = useState<string | null>(null);
-
-  // Store referral code in localStorage when page loads with ref parameter
-  useEffect(() => {
-    if (referralCodeFromUrl) {
-      const upperCode = referralCodeFromUrl.toUpperCase();
-      console.log('[REFERRAL] 🔗 Detected referral code from URL:', upperCode);
-      
-      // Validate format
-      if (validateReferralCode(upperCode)) {
-        localStorage.setItem("pending_referral_code", upperCode);
-        console.log('[REFERRAL] ✅ Valid referral code stored in localStorage');
-        
-        // Fetch and display referrer info
-        fetchReferrerInfo(upperCode);
-      } else {
-        console.error('[REFERRAL] ❌ Invalid referral code format:', upperCode);
-        toast({
-          title: t("signup.invalidReferralCode"),
-          description: t("signup.invalidReferralCodeFormat"),
-          variant: "destructive",
-        });
-      }
-    }
-  }, [referralCodeFromUrl]);
-
-  const fetchReferrerInfo = async (code: string) => {
-    try {
-      console.log('[REFERRAL] 🔍 Fetching referrer info for code:', code);
-      
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("referral_code", code)
-        .single();
-
-      if (error || !data) {
-        console.error('[REFERRAL] ❌ Referral code not found in database:', { code, error });
-        // Silently handle - the database trigger will validate during signup
-        localStorage.removeItem("pending_referral_code");
-        return;
-      }
-
-      console.log('[REFERRAL] ✅ Found referrer:', data.username);
-      setReferrerUsername(data.username);
-    } catch (error) {
-      console.error('[REFERRAL] 💥 Exception while fetching referrer info:', error);
-    }
-  };
+  const [referrerDisplayName, setReferrerDisplayName] = useState<string | null>(null);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -88,9 +41,51 @@ const Signup = () => {
       fullName: "",
       email: "",
       password: "",
-      referralCode: referralCodeFromUrl || "",
+      referralCode: referralCodeFromUrl ? referralCodeFromUrl.trim().toUpperCase() : "",
     },
   });
+
+  const fetchReferrerInfo = async (code: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username, full_name")
+        .eq("referral_code", code)
+        .single();
+
+      if (error || !data) {
+        localStorage.removeItem("pending_referral_code");
+        setReferrerUsername(null);
+        setReferrerDisplayName(null);
+        return;
+      }
+
+      const displayName = (data.full_name || data.username || "").trim() || data.username;
+      setReferrerUsername(data.username);
+      setReferrerDisplayName(displayName);
+    } catch (error) {
+      console.error("[REFERRAL] Failed to fetch referrer info:", error);
+      setReferrerUsername(null);
+      setReferrerDisplayName(null);
+    }
+  };
+
+  // Store referral code from URL and sync form; fetch referrer name for display
+  useEffect(() => {
+    if (!referralCodeFromUrl) return;
+    const upperCode = referralCodeFromUrl.trim().toUpperCase();
+    if (!validateReferralCode(upperCode)) {
+      toast({
+        title: t("signup.invalidReferralCode"),
+        description: t("signup.invalidReferralCodeFormat"),
+        variant: "destructive",
+      });
+      return;
+    }
+    localStorage.setItem("pending_referral_code", upperCode);
+    form.setValue("referralCode", upperCode);
+    fetchReferrerInfo(upperCode);
+  }, [referralCodeFromUrl]);
 
   // Real-time username validation
   const usernameValue = form.watch("username");
@@ -119,10 +114,10 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Get referral code from form or localStorage
-      const referralCode = data.referralCode || localStorage.getItem("pending_referral_code");
+      // Get referral code from form or localStorage; normalize to uppercase (DB stores uppercase)
+      const rawCode = data.referralCode || localStorage.getItem("pending_referral_code");
+      const referralCode = rawCode ? String(rawCode).trim().toUpperCase() : undefined;
 
-      // Create the account - referral code passed in metadata for trigger processing
       const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -131,7 +126,7 @@ const Signup = () => {
           data: {
             username: data.username,
             full_name: data.fullName,
-            referral_code: referralCode || undefined, // Passed to handle_new_user trigger
+            referral_code: referralCode,
           },
         },
       });
@@ -225,10 +220,17 @@ const Signup = () => {
           </div>
           <h1 className="text-2xl font-bold">{t("signup.title")}</h1>
           <p className="text-muted-foreground">
-            {referrerUsername 
-              ? t("signup.subtitleWithReferrer", { referrer: referrerUsername, platform: platformName })
+            {referrerDisplayName
+              ? t("signup.subtitleWithReferrer", { referrer: referrerDisplayName, platform: platformName })
               : t("signup.subtitle", { platform: platformName })}
           </p>
+          {referrerDisplayName && (
+            <div className="rounded-lg border-2 border-[hsl(var(--wallet-deposit))]/30 bg-[hsl(var(--wallet-deposit))]/5 px-4 py-2.5">
+              <p className="text-sm font-medium text-foreground">
+                {t("signup.invitedBy", { name: referrerDisplayName })}
+              </p>
+            </div>
+          )}
         </div>
 
         <Form {...form}>
@@ -424,7 +426,7 @@ const Signup = () => {
         <p className="text-center text-sm text-muted-foreground">
           {t("signup.alreadyHaveAccount")}{" "}
           <Link 
-            to={referralCodeFromUrl ? `/login?ref=${referralCodeFromUrl}` : "/login"}
+            to={referralCodeFromUrl ? `/login?ref=${referralCodeFromUrl.trim().toUpperCase()}` : "/login"}
             className="text-[hsl(var(--wallet-deposit))] hover:underline font-medium"
           >
             {t("signup.signInLink")}
