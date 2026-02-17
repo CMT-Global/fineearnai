@@ -103,7 +103,7 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
         <div className="w-full overflow-x-auto pb-1 scrollbar-none">
           <TabsList className="inline-flex w-full min-w-[400px] sm:min-w-0 sm:grid sm:grid-cols-3">
             <TabsTrigger value="all" className="whitespace-nowrap">
-              {t("wallet.all")}
+              {t("wallet.components.all")}
             </TabsTrigger>
             <TabsTrigger value="task_commission" className="whitespace-nowrap">
               {t("referrals.teamTaskCommission")}
