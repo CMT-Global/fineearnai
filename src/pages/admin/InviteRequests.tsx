@@ -160,9 +160,9 @@ export default function InviteRequests() {
       const { data, error } = await supabase.functions.invoke("resend-invite-email", {
         body: { invite_request_id: inviteRequestId },
       });
+      const serverError = (data as { error?: string } | null)?.error;
+      if (serverError) throw new Error(serverError);
       if (error) throw new Error(error.message);
-      const err = (data as { error?: string })?.error;
-      if (err) throw new Error(err);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-invite-requests"] });
@@ -277,10 +277,10 @@ export default function InviteRequests() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={resendOtpMutation.isPending}
+                          disabled={resendOtpMutation.isPending && resendOtpMutation.variables === r.id}
                           onClick={() => resendOtpMutation.mutate(r.id)}
                         >
-                          {resendOtpMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                          {resendOtpMutation.isPending && resendOtpMutation.variables === r.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                           <span className="ml-1">Resend OTP</span>
                         </Button>
                       )}
@@ -288,10 +288,10 @@ export default function InviteRequests() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={resendEmailMutation.isPending}
+                          disabled={resendEmailMutation.isPending && resendEmailMutation.variables === r.id}
                           onClick={() => resendEmailMutation.mutate(r.id)}
                         >
-                          {resendEmailMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          {resendEmailMutation.isPending && resendEmailMutation.variables === r.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                           <span className="ml-1">Resend invite</span>
                         </Button>
                       )}

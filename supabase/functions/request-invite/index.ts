@@ -201,11 +201,15 @@ serve(async (req) => {
       // Still return success so we don't leak OTP; admin can resend
     }
 
-    await supabase.from("invite_request_events").insert({
+    // Best-effort event log; do not fail the request if this fails (email already sent)
+    const { error: eventErr } = await supabase.from("invite_request_events").insert({
       invite_request_id: inviteRequest.id,
       event_type: "otp_sent",
       meta: {},
     });
+    if (eventErr) {
+      console.warn(`[${requestId}] invite_request_events insert (non-fatal):`, eventErr);
+    }
 
     return new Response(
       JSON.stringify({ success: true, invite_request_id: inviteRequest.id }),

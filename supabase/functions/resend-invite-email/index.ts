@@ -139,25 +139,38 @@ serve(async (req) => {
       ? `${platformUrl.replace(/\/$/, "")}/signup?ref=${encodeURIComponent(assignedReferralCode)}`
       : `${platformUrl.replace(/\/$/, "")}/signup`;
 
-    const { error: sendErr } = await supabase.functions.invoke("send-template-email", {
-      body: {
-        email: inviteRequest.email,
-        template_type: "invite_link",
-        variables: {
-          name: inviteRequest.full_name,
+    let invokeResult: { data?: { error?: string; success?: boolean }; error?: Error & { message?: string } };
+    try {
+      invokeResult = await supabase.functions.invoke("send-template-email", {
+        body: {
           email: inviteRequest.email,
-          country: inviteRequest.country ?? "",
-          invite_link: inviteLink,
-          support_url: supportUrl,
-          site_name: platformName,
+          template_type: "invite_link",
+          variables: {
+            name: inviteRequest.full_name ?? "",
+            email: inviteRequest.email,
+            country: inviteRequest.country ?? "",
+            invite_link: inviteLink,
+            support_url: supportUrl,
+            site_name: platformName,
+          },
         },
-      },
-    });
-
-    if (sendErr) {
-      console.error(`[${requestId}] send invite_link:`, sendErr);
+      });
+    } catch (invokeErr) {
+      const msg = invokeErr instanceof Error ? invokeErr.message : String(invokeErr);
+      console.error(`[${requestId}] send-template-email invoke threw:`, invokeErr);
       return new Response(
-        JSON.stringify({ error: "Failed to send email" }),
+        JSON.stringify({ error: "Failed to send email", details: msg }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const sendErr = invokeResult.error;
+    const dataError = invokeResult.data && typeof invokeResult.data === "object" && "error" in invokeResult.data ? (invokeResult.data as { error?: string }).error : null;
+    if (sendErr || dataError) {
+      const message = dataError ?? sendErr?.message ?? "Failed to send email";
+      console.error(`[${requestId}] send invite_link:`, sendErr ?? dataError);
+      return new Response(
+        JSON.stringify({ error: message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -179,9 +192,16 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null
+          ? JSON.stringify(err)
+          : String(err);
+    const safeMessage = (message && message.trim()) || "Unknown error (check function logs)";
     console.error(`[${requestId}] resend-invite-email error:`, err);
     return new Response(
-      JSON.stringify({ error: "Something went wrong" }),
+      JSON.stringify({ error: safeMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
