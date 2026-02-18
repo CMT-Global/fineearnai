@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import LandingLogo from "./LandingLogo";
+import { useInviteOnlyConfig } from "@/hooks/useInviteOnlyConfig";
 
 const navLinks = [
   { name: "How It Works", href: "#how-it-works" },
@@ -14,6 +15,7 @@ const navLinks = [
 export default function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isInviteOnly } = useInviteOnlyConfig();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,13 +53,24 @@ export default function LandingNavbar() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/login">Log In</Link>
             </Button>
-            <Button variant="hero" size="default" asChild>
-              <Link to="/signup">Get Started</Link>
-            </Button>
+            {isInviteOnly ? (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/signup?have_invite=1">I Have an Invite</Link>
+                </Button>
+                <Button variant="hero" size="default" asChild>
+                  <Link to="/signup?request_invite=1">Request Invite</Link>
+                </Button>
+              </>
+            ) : (
+              <Button variant="hero" size="default" asChild>
+                <Link to="/signup">Get Started</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -87,9 +100,20 @@ export default function LandingNavbar() {
                 <Button variant="ghost" className="w-full justify-center" asChild>
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>Log In</Link>
                 </Button>
-                <Button variant="hero" className="w-full justify-center" asChild>
-                  <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
-                </Button>
+                {isInviteOnly ? (
+                  <>
+                    <Button variant="outline" className="w-full justify-center" asChild>
+                      <Link to="/signup?have_invite=1" onClick={() => setIsMobileMenuOpen(false)}>I Have an Invite</Link>
+                    </Button>
+                    <Button variant="hero" className="w-full justify-center" asChild>
+                      <Link to="/signup?request_invite=1" onClick={() => setIsMobileMenuOpen(false)}>Request Invite</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="hero" className="w-full justify-center" asChild>
+                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>

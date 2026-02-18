@@ -103,7 +103,19 @@ const TEMPLATE_TYPES = [
     description: "OTP code sent for email verification",
     variables: ["username", "otp_code", "expiry_minutes"]
   },
-  
+  // Invite-only registration
+  {
+    value: "invite_request_otp",
+    label: "Invite Request OTP",
+    description: "OTP sent when user requests an invite (invite-only mode)",
+    variables: ["name", "email", "country", "otp_code", "otp_expiry_minutes", "support_url", "site_name"]
+  },
+  {
+    value: "invite_link",
+    label: "Invite Link",
+    description: "Invite link email sent after OTP verification (invite-only mode)",
+    variables: ["name", "email", "country", "invite_link", "support_url", "site_name"]
+  },
   // Account Deletion
   {
     value: "account_deletion_otp",

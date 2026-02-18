@@ -731,6 +731,7 @@
   "signup": {
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
+    "loading": "Loading...",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
     "invitedBy": "You're invited by {{name}}",
     "username": "Username",
@@ -759,6 +760,11 @@
     "accountCreatedWithReferrer": "Welcome to {{platform}}! You've been referred by {{referrer}}. Please check your email to verify your account.",
     "usernameAlreadyExists": "Username already exists",
     "usernameTaken": "The username \"{{username}}\" is already taken. Please try another.",
+    "inviteLinkOrCode": "Invite link or code",
+    "inviteLinkPlaceholder": "Paste your invite link or enter your 8-character code",
+    "continueToSignup": "Continue to sign up",
+    "backToRequestInvite": "Request an invite",
+    "iHaveInviteLink": "I already have an invite link",
     "invalidReferralCode": "Invalid referral code",
     "invalidReferralCodeFormat": "The referral code format is invalid.",
     "error": "Error",
@@ -997,7 +1003,9 @@
         "scheduledEmails": "Scheduled Emails",
         "securitySettings": "Security Settings",
         "systemSecrets": "System Secrets",
+        "registrationControls": "Registration Controls",
         "ipstackConfiguration": "IPStack Configuration",
+        "inviteRequests": "Invite Requests",
         "dailyResetLogs": "Daily Reset Logs",
         "commissionAudit": "Commission Audit"
       }
@@ -2194,6 +2202,62 @@
       "title": "Partner Leaderboard Settings",
       "subtitle": "Control leaderboard visibility for partners",
       "loading": "Loading Leaderboard settings ..."
+    },
+    "registrationControls": {
+      "title": "Registration Controls",
+      "subtitle": "Invite-only mode and invite request settings",
+      "loading": "Loading registration controls...",
+      "saved": "Registration controls saved",
+      "saveFailed": "Failed to save: {{message}}",
+      "save": "Save",
+      "discard": "Discard",
+      "modeTitle": "Registration mode",
+      "modeDescription": "When invite-only is on, users need a valid invite link to register.",
+      "inviteOnlyMode": "Invite-only mode",
+      "inviteOnlyModeHelp": "When ON, only users with a valid referral link can access the registration form.",
+      "enableInviteRequests": "Enable invite requests",
+      "enableInviteRequestsHelp": "When ON, users without an invite can request one (OTP verification required).",
+      "referralCookieDays": "Referral cookie duration (days)",
+      "referralCookieDaysHelp": "How long the referral code is stored when user lands with ?ref= (e.g. 30).",
+      "defaultReferrer": "Default invite referrer username",
+      "defaultReferrerHelp": "Username of the profile whose referral code is used for auto-approved invite links.",
+      "copyTitle": "Editable copy",
+      "copyDescription": "Text shown on landing and registration when invite-only is ON.",
+      "landingBannerTitle": "Landing page invite-only banner title",
+      "landingBannerDescription": "Landing page invite-only banner description",
+      "inviteRequiredTitle": "Invite Required message title (registration page)",
+      "inviteRequiredDescription": "Invite Required message description (registration page)",
+      "requestSuccessMessage": "Success message after request submitted",
+      "emailTemplatesTitle": "Email templates",
+      "emailTemplatesDescription": "OTP and invite link emails are managed in Email Templates.",
+      "emailTemplatesHelp": "Edit the Invite Request OTP and Invite Link templates here:",
+      "emailTemplatesLink": "Email Templates"
+    },
+    "inviteRequests": {
+      "title": "Invite Requests",
+      "subtitle": "View and manage invite requests (invite-only mode)",
+      "loading": "Loading invite requests...",
+      "noRequests": "No invite requests yet.",
+      "tableTitle": "All requests",
+      "tableDescription": "Status: Pending verification → Verified → Invite sent",
+      "searchPlaceholder": "Search by name, email, or referral code...",
+      "filters": {
+        "status": {
+          "label": "Status",
+          "all": "All Status",
+          "pending_email_verification": "Pending verification",
+          "verified": "Verified",
+          "invite_sent": "Invite sent"
+        },
+        "country": {
+          "label": "Country",
+          "all": "All Countries"
+        }
+      },
+      "exportAll": "Export All",
+      "otpResent": "OTP email resent",
+      "inviteResent": "Invite email resent",
+      "resendFailed": "Resend failed: {{message}}"
     },
     "partnerProgramSettings": {
       "title": "Partner Program Settings",

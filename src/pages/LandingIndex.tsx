@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/LandingNavbar";
+import LandingInviteOnlyBanner from "@/components/LandingInviteOnlyBanner";
 import HeroSection from "@/components/LandingHeroSection";
+import { useInviteOnlyConfig } from "@/hooks/useInviteOnlyConfig";
 import ProjectsSection from "@/components/LandingProjectsSection";
 import HowItWorksSection from "@/components/LandingHowItsWorkSection";
 import BenefitsSection from "@/components/LandingBenefitsSection";
@@ -12,6 +14,7 @@ import OnboardingWizard from "@/components/LandingOnboardingWizard";
 
 const Index = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const { isInviteOnly } = useInviteOnlyConfig();
 
   // Hide Chat Support (Reamaze) when registration wizard is open so it's not visible-but-unclickable on mobile,
   // and to avoid accidental closes on desktop when clicking the widget
@@ -38,7 +41,8 @@ const Index = () => {
       
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main>
+        <LandingInviteOnlyBanner />
+        <main className={isInviteOnly ? "-mt-24 md:-mt-28" : undefined}>
           <HeroSection onRegisterAsEarnerClick={() => setWizardOpen(true)} />
           <ProjectsSection />
           <HowItWorksSection />

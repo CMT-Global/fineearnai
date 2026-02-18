@@ -67,6 +67,7 @@ const ScheduledEmails = lazy(() => import("@/pages/admin/ScheduledEmails"));
 const LoginMessage = lazy(() => import("@/pages/admin/LoginMessage"));
 const SystemSecrets = lazy(() => import("@/pages/admin/SystemSecrets"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
+const RegistrationControls = lazy(() => import("@/pages/admin/RegistrationControls"));
 const IPStackSettings = lazy(() => import("@/pages/admin/IPStackSettings"));
 const DailyResetLogs = lazy(() => import("@/pages/admin/DailyResetLogs"));
 const CPAYMonitoring = lazy(() => import("@/pages/admin/CPAYMonitoring"));
@@ -76,6 +77,7 @@ const ReamazeSettings = lazy(() => import("@/pages/admin/ReamazeSettings"));
 const CommissionAudit = lazy(() => import("@/pages/admin/CommissionAudit"));
 const InfluencerInvites = lazy(() => import("@/pages/admin/InfluencerInvites"));
 const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
+const InviteRequests = lazy(() => import("@/pages/admin/InviteRequests"));
 const PartnerApplications = lazy(() => import("@/pages/admin/PartnerApplications"));
 const Partners = lazy(() => import("@/pages/admin/Partners"));
 const PartnerRanks = lazy(() => import("@/pages/admin/PartnerRanks"));
@@ -282,6 +284,7 @@ const RoutesWrapper = () => {
         <Route path="communications/email" element={<BulkEmail />} />
         <Route path="communications/influencer-invites" element={<InfluencerInvites />} />
         <Route path="communications/user-invites" element={<UserInvites />} />
+        <Route path="users/invite-requests" element={<InviteRequests />} />
         <Route path="communications/templates" element={<EmailTemplates />} />
         <Route path="communications/email-settings" element={<EmailSettings />} />
         <Route path="communications/reamaze-settings" element={<ReamazeSettings />} />
@@ -289,6 +292,7 @@ const RoutesWrapper = () => {
         <Route path="communications/login-message" element={<LoginMessage />} />
         <Route path="security-settings" element={<SecuritySettings />} />
         <Route path="security/secrets" element={<SystemSecrets />} />
+        <Route path="settings/registration-controls" element={<RegistrationControls />} />
         <Route path="settings/ipstack" element={<IPStackSettings />} />
         <Route path="monitoring/daily-reset-logs" element={<DailyResetLogs />} />
         <Route path="monitoring/commission-audit" element={<CommissionAudit />} />

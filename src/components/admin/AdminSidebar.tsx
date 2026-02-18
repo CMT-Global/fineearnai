@@ -118,6 +118,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       icon: Users,
       items: [
         { label: t("admin.sidebar.items.allUsers"), path: "/admin/users" },
+        { label: t("admin.sidebar.items.inviteRequests"), path: "/admin/users/invite-requests" },
       ],
     },
     {
@@ -203,6 +204,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       items: [
         { label: t("admin.sidebar.items.securitySettings"), path: "/admin/security-settings" },
         { label: t("admin.sidebar.items.systemSecrets"), path: "/admin/security/secrets" },
+        { label: t("admin.sidebar.items.registrationControls"), path: "/admin/settings/registration-controls" },
         { label: t("admin.sidebar.items.ipstackConfiguration"), path: "/admin/settings/ipstack" },
       ],
     },
