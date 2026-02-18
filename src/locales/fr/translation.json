@@ -61,6 +61,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Votre compte a expiré. Passez à un forfait supérieur pour continuer à gagner.",
+      "planExpiringSoonBanner": "Votre forfait expire bientôt ! Renouvelez pour continuer à gagner."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "État du compte",
+      "statusActive": "Actif",
+      "statusExpired": "Expiré"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -277,6 +286,11 @@
     "planExpiringSoonDescriptionPlural": "Your {{plan}} plan expires in {{days}} days. Renew now to avoid losing access.",
     "daysLeft": "{{days}}d left",
     "expired": "Expired",
+    "accountExpired": "⚠️ Account Expired",
+    "accountExpiredMessage": "Your account has expired, so your task access and earnings are paused. Upgrade your account to continue completing tasks and earning.",
+    "accountExpiredSubline": "Upgrade now to reactivate your access instantly.",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "expiredOneDayAgo": "Expired 1 day ago",
     "earnersGuide": "{{platform}} - Earners Guide",
     "earnersGuideSubtitle": "Learn how to maximize your earnings",
     "tasksToday": "Tasks Today",
@@ -382,6 +396,18 @@
       "title": "Votre forfait a expiré",
       "description": "Passez à un forfait supérieur pour accéder aux tâches et continuer à gagner.",
       "upgradeToAccessTasks": "Mettre à niveau pour accéder aux tâches"
+    },
+    "accountExpired": {
+      "title": "Votre compte a expiré",
+      "message": "Votre forfait actuel est terminé, vous ne pouvez donc pas accéder aux tâches pour le moment. Passez à un forfait supérieur pour continuer à accomplir des tâches et gagner.",
+      "currentPlan": "Forfait actuel",
+      "expiredOn": "Expiré le",
+      "expiredDaysAgo": "Expiré il y a {{days}} jours",
+      "expiredOneDayAgo": "Expiré il y a 1 jour",
+      "upgradeCta": "Mettre à niveau / Renouveler le compte",
+      "goToDashboard": "Aller au tableau de bord",
+      "needHelp": "Besoin d'aide ?",
+      "supportLink": "Visitez help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -605,7 +631,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total : {{count}} {{count, plural, one {membre} other {membres}}}",
+    "totalReferrals": "Total : {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
@@ -706,6 +732,7 @@
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
+    "invitedBy": "You're invited by {{name}}",
     "username": "Username",
     "usernamePlaceholder": "Choose a unique username",
     "fullName": "First Name",
@@ -1192,6 +1219,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Expiré",
           "suspended": "Suspended",
           "banned": "Banned"
         },
@@ -2275,7 +2303,9 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "Le service IA est temporairement surchargé. Veuillez réessayer dans quelques minutes.",
+      "errorRateLimit": "Trop de requêtes. Veuillez patienter un moment et réessayer."
     },
     "aiTasksManage": {
       "title": "AI Task Management",

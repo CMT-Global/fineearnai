@@ -471,6 +471,24 @@ const Settings = () => {
                       </Badge>
                     </div>
                   </div>
+
+                  <div>
+                    <Label className="text-sm text-muted-foreground">{t("settings.accountInfo.accountStatus")}</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        variant={
+                          profile?.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+                            ? "destructive"
+                            : "default"
+                        }
+                        className="capitalize"
+                      >
+                        {profile?.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+                          ? t("settings.accountInfo.statusExpired")
+                          : t("settings.accountInfo.statusActive")}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

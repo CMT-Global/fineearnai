@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { PageLoading } from "@/components/shared/PageLoading";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TASK_CATEGORIES = [
   { value: "Sentiment Analysis", key: "sentiment_analysis" },
@@ -31,37 +30,15 @@ const TASK_CATEGORIES = [
 
 const DIFFICULTY_LEVELS = ["easy", "medium", "hard"];
 
-export type TaskOptionMode = "2opt" | "4opt";
-
-const AITasksGenerate = () => {
+const AITasksGenerate4 = () => {
   const { t } = useTranslation();
   useLanguageSync();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<TaskOptionMode>(() =>
-    searchParams.get("mode") === "4opt" ? "4opt" : "2opt"
-  );
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [quantity, setQuantity] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  useEffect(() => {
-    const m = searchParams.get("mode") === "4opt" ? "4opt" : "2opt";
-    setMode(m);
-  }, [searchParams]);
-
-  const setModeAndUrl = (m: TaskOptionMode) => {
-    setMode(m);
-    if (m === "4opt") {
-      searchParams.set("mode", "4opt");
-      setSearchParams(searchParams, { replace: true });
-    } else {
-      searchParams.delete("mode");
-      setSearchParams(searchParams, { replace: true });
-    }
-  };
 
   if (adminLoading) {
     return <PageLoading text={t("admin.aiTasksGenerate.loading")} />;
@@ -85,11 +62,8 @@ const AITasksGenerate = () => {
 
     setIsGenerating(true);
 
-    const edgeFunction = mode === "4opt" ? "generate-ai-tasks-4opt" : "generate-ai-tasks";
-    const managePath = mode === "4opt" ? "/admin/tasks/manage?mode=4opt" : "/admin/tasks/manage";
-
     try {
-      const { data, error } = await supabase.functions.invoke(edgeFunction, {
+      const { data, error } = await supabase.functions.invoke("generate-ai-tasks-4opt", {
         body: { category, difficulty, quantity },
       });
 
@@ -98,9 +72,9 @@ const AITasksGenerate = () => {
       if (bodyError) throw new Error(bodyError);
 
       toast.success(t("admin.aiTasksGenerate.successGenerated", { count: data.tasksCreated }));
-      navigate(managePath);
+      navigate("/admin/tasks/manage-4opt");
     } catch (error: any) {
-      console.error("Error generating tasks:", error);
+      console.error("Error generating 4-option tasks:", error);
       let message = String(error?.message ?? "");
       if (error?.context && typeof error.context?.json === "function") {
         try {
@@ -126,24 +100,18 @@ const AITasksGenerate = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
-        <AdminBreadcrumb 
+        <AdminBreadcrumb
           items={[
             { label: t("admin.sidebar.categories.taskManagement") },
-            { label: t("admin.sidebar.items.generateAITasks") }
-          ]} 
+            { label: "Generate AI Tasks (4 Options)" },
+          ]}
         />
-        
+
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">{t("admin.aiTasksGenerate.title")}</h1>
+          <h1 className="text-3xl font-bold">Generate AI Tasks (4 Options)</h1>
           <p className="text-muted-foreground mt-1">
-            {t("admin.aiTasksGenerate.subtitle")}
+            Generate questions with 4 answer options (A, B, C, D) for AI training
           </p>
-          <Tabs value={mode} onValueChange={(v) => setModeAndUrl(v as TaskOptionMode)} className="mt-4">
-            <TabsList className="grid w-full max-w-xs grid-cols-2">
-              <TabsTrigger value="2opt">2 options (A/B)</TabsTrigger>
-              <TabsTrigger value="4opt">4 options (A/B/C/D)</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
 
         <Card className="p-6">
@@ -202,11 +170,7 @@ const AITasksGenerate = () => {
               size="lg"
             >
               <Sparkles className="h-5 w-5 mr-2" />
-              {isGenerating
-                ? t("admin.aiTasksGenerate.generating")
-                : mode === "4opt"
-                  ? "Generate 4-option tasks"
-                  : t("admin.aiTasksGenerate.generateTasks")}
+              {isGenerating ? t("admin.aiTasksGenerate.generating") : "Generate 4-Option Tasks"}
             </Button>
           </div>
         </Card>
@@ -215,4 +179,4 @@ const AITasksGenerate = () => {
   );
 };
 
-export default AITasksGenerate;
+export default AITasksGenerate4;

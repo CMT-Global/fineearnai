@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
   preview: {
     allowedHosts: [
       "profitchips.com",
-      "www.profitchips.com",
+      "www.profitchips.com"
     ],
   },
   plugins: [react(), mode === "production" && componentTagger()].filter(Boolean),

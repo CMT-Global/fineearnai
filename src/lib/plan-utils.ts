@@ -217,3 +217,17 @@ export const getDaysUntilExpiry = (expiresAt: string | Date | null): number | nu
   
   return diffDays;
 };
+
+/**
+ * Returns the number of days since a plan expired. Returns null if not expired.
+ */
+export const getDaysSinceExpiry = (expiresAt: string | Date | null): number | null => {
+  if (!expiresAt) return null;
+  
+  const expiryDate = new Date(expiresAt);
+  const now = new Date();
+  if (now <= expiryDate) return null;
+  
+  const diffTime = now.getTime() - expiryDate.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};

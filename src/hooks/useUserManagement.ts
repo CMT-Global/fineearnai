@@ -78,7 +78,12 @@ export const useUserManagement = () => {
 
         // Apply status filter
         if (filters.statusFilter && filters.statusFilter !== 'all') {
-          query = query.eq('account_status', filters.statusFilter as any);
+          if (filters.statusFilter === 'expired') {
+            // Expired: use account_status column (set by cleanup-expired-plans and backfill)
+            query = query.eq('account_status', 'expired');
+          } else {
+            query = query.eq('account_status', filters.statusFilter as any);
+          }
         }
 
         // Apply country filter (using IPStack-detected registration country)
@@ -92,7 +97,7 @@ export const useUserManagement = () => {
           const { data: roleUsers, error: roleError } = await supabase
             .from('user_roles')
             .select('user_id')
-            .eq('role', filters.roleFilter as 'admin' | 'moderator' | 'user');
+            .eq('role', filters.roleFilter as 'admin' | 'moderator' | 'user' | 'trainee_4opt');
           
           if (roleError) throw roleError;
           
@@ -231,6 +236,7 @@ export const useUserManagement = () => {
           active_users: profiles?.filter(p => p.account_status === 'active').length || 0,
           suspended_users: profiles?.filter(p => p.account_status === 'suspended').length || 0,
           banned_users: profiles?.filter(p => p.account_status === 'banned').length || 0,
+          expired_users: profiles?.filter(p => p.account_status === 'expired').length || 0,
           free_plan_users: profiles?.filter(p => p.membership_plan === 'free').length || 0,
           paid_plan_users: profiles?.filter(p => p.membership_plan !== 'free').length || 0,
           total_platform_balance: profiles?.reduce((sum, p) => 

@@ -55,6 +55,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Your account has expired. Upgrade to continue earning.",
+      "planExpiringSoonBanner": "Your plan is expiring soon! Renew to continue earning."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -116,7 +122,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Account Status",
+      "statusActive": "Active",
+      "statusExpired": "Expired"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -271,6 +280,11 @@
     "planExpiringSoonDescriptionPlural": "Your {{plan}} plan expires in {{days}} days. Renew now to avoid losing access.",
     "daysLeft": "{{days}}d left",
     "expired": "Expired",
+    "accountExpired": "⚠️ Account Expired",
+    "accountExpiredMessage": "Your account has expired, so your task access and earnings are paused. Upgrade your account to continue completing tasks and earning.",
+    "accountExpiredSubline": "Upgrade now to reactivate your access instantly.",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "expiredOneDayAgo": "Expired 1 day ago",
     "earnersGuide": "{{platform}} - Earners Guide",
     "earnersGuideSubtitle": "Learn how to maximize your earnings",
     "tasksToday": "Tasks Today",
@@ -377,6 +391,18 @@
       "description": "Upgrade to access tasks and continue earning.",
       "upgradeToAccessTasks": "Upgrade to access tasks"
     },
+    "accountExpired": {
+      "title": "Your Account Has Expired",
+      "message": "Your current plan has ended, so you can't access tasks right now. Upgrade your account to continue completing tasks and earning.",
+      "currentPlan": "Current plan",
+      "expiredOn": "Expired on",
+      "expiredDaysAgo": "Expired {{days}} days ago",
+      "expiredOneDayAgo": "Expired 1 day ago",
+      "upgradeCta": "Upgrade / Renew Account",
+      "goToDashboard": "Go to Dashboard",
+      "needHelp": "Need help?",
+      "supportLink": "Visit help.profitchips.com"
+    },
     "noTasks": {
       "title": "No Tasks Available Right Now",
       "description": "All available tasks have been completed. New tasks will be added soon.",
@@ -392,6 +418,8 @@
       "noEarnings": "No earnings for this task",
       "optionA": "Option A",
       "optionB": "Option B",
+      "optionC": "Option C",
+      "optionD": "Option D",
       "yourAnswer": "Your Answer",
       "correctAnswerBadge": "Correct Answer",
       "chooseBestResponse": "Choose the best response from the options below:",
@@ -602,7 +630,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total: {{count}} {{count, plural, one {member} other {members}}}",
+    "totalReferrals": "Total: {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
@@ -704,6 +732,7 @@
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
+    "invitedBy": "You're invited by {{name}}",
     "username": "Username",
     "usernamePlaceholder": "Choose a unique username",
     "fullName": "First Name",
@@ -1166,6 +1195,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Expired",
           "suspended": "Suspended",
           "banned": "Banned"
         },
@@ -1210,6 +1240,7 @@
         "activeUsers": "Active Users",
         "suspended": "Suspended",
         "banned": "Banned",
+        "expired": "Expired",
         "platformBalance": "Platform Balance",
         "totalEarningsPaid": "Total Earnings Paid",
         "activeReferrals": "Active Referrals",
@@ -1218,6 +1249,7 @@
         "percentOfTotal": "{{percent}}% of total",
         "temporarilySuspended": "Temporarily suspended",
         "permanentlyBanned": "Permanently banned",
+        "planExpired": "Plan expired",
         "totalLockedValue": "Total locked value",
         "lifetimePayouts": "Lifetime payouts",
         "totalReferralNetwork": "Total referral network",
@@ -2258,7 +2290,9 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "The AI service is temporarily busy. Please try again in a few minutes.",
+      "errorRateLimit": "Too many requests. Please wait a moment and try again."
     },
     "aiTasksManage": {
       "title": "AI Task Management",
@@ -2278,6 +2312,8 @@
       "inactive": "Inactive",
       "optionA": "Option A:",
       "optionB": "Option B:",
+      "optionC": "Option C:",
+      "optionD": "Option D:",
       "created": "Created",
       "noTasksFound": "No tasks found",
       "generateFirstTasks": "Generate Your First Tasks",

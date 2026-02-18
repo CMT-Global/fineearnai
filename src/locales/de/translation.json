@@ -61,6 +61,12 @@
     "login": "Anmelden",
     "signup": "Registrieren"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Ihr Konto ist abgelaufen. Upgraden Sie, um weiter zu verdienen.",
+      "planExpiringSoonBanner": "Ihr Plan läuft bald ab! Erneuern Sie, um weiter zu verdienen."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Kontostatus",
+      "statusActive": "Aktiv",
+      "statusExpired": "Abgelaufen"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -277,6 +286,11 @@
     "planExpiringSoonDescriptionPlural": "Your {{plan}} plan expires in {{days}} days. Renew now to avoid losing access.",
     "daysLeft": "{{days}}d left",
     "expired": "Expired",
+    "accountExpired": "⚠️ Account Expired",
+    "accountExpiredMessage": "Your account has expired, so your task access and earnings are paused. Upgrade your account to continue completing tasks and earning.",
+    "accountExpiredSubline": "Upgrade now to reactivate your access instantly.",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "expiredOneDayAgo": "Expired 1 day ago",
     "earnersGuide": "{{platform}} - Earners Guide",
     "earnersGuideSubtitle": "Learn how to maximize your earnings",
     "tasksToday": "Tasks Today",
@@ -382,6 +396,18 @@
       "title": "Ihr Plan ist abgelaufen",
       "description": "Upgraden Sie, um auf Aufgaben zuzugreifen und weiter zu verdienen.",
       "upgradeToAccessTasks": "Upgraden für Zugang zu Aufgaben"
+    },
+    "accountExpired": {
+      "title": "Ihr Konto ist abgelaufen",
+      "message": "Ihr aktueller Plan ist beendet, daher können Sie derzeit nicht auf Aufgaben zugreifen. Upgraden Sie Ihr Konto, um weiter Aufgaben zu erledigen und zu verdienen.",
+      "currentPlan": "Aktueller Plan",
+      "expiredOn": "Abgelaufen am",
+      "expiredDaysAgo": "Vor {{days}} Tagen abgelaufen",
+      "expiredOneDayAgo": "Vor 1 Tag abgelaufen",
+      "upgradeCta": "Upgrade / Konto erneuern",
+      "goToDashboard": "Zum Dashboard",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "supportLink": "Besuchen Sie help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -605,7 +631,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total: {{count}} {{count, plural, one {member} other {members}}}",
+    "totalReferrals": "Total: {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
@@ -706,6 +732,7 @@
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
+    "invitedBy": "You're invited by {{name}}",
     "username": "Username",
     "usernamePlaceholder": "Choose a unique username",
     "fullName": "First Name",
@@ -1192,6 +1219,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Abgelaufen",
           "suspended": "Suspended",
           "banned": "Banned"
         },
@@ -2275,7 +2303,9 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "Der KI-Dienst ist vorübergehend ausgelastet. Bitte versuchen Sie es in einigen Minuten erneut.",
+      "errorRateLimit": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut."
     },
     "aiTasksManage": {
       "title": "AI Task Management",

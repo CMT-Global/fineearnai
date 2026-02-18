@@ -61,6 +61,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Tu cuenta ha caducado. Actualiza para seguir ganando.",
+      "planExpiringSoonBanner": "¡Tu plan caduca pronto! Renueva para seguir ganando."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "Estado de la cuenta",
+      "statusActive": "Activo",
+      "statusExpired": "Caducado"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -277,6 +286,11 @@
     "planExpiringSoonDescriptionPlural": "Your {{plan}} plan expires in {{days}} days. Renew now to avoid losing access.",
     "daysLeft": "{{days}}d left",
     "expired": "Expired",
+    "accountExpired": "⚠️ Account Expired",
+    "accountExpiredMessage": "Your account has expired, so your task access and earnings are paused. Upgrade your account to continue completing tasks and earning.",
+    "accountExpiredSubline": "Upgrade now to reactivate your access instantly.",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "expiredOneDayAgo": "Expired 1 day ago",
     "earnersGuide": "{{platform}} - Earners Guide",
     "earnersGuideSubtitle": "Learn how to maximize your earnings",
     "tasksToday": "Tasks Today",
@@ -382,6 +396,18 @@
       "title": "Tu plan ha caducado",
       "description": "Actualiza para acceder a las tareas y seguir ganando.",
       "upgradeToAccessTasks": "Actualizar para acceder a las tareas"
+    },
+    "accountExpired": {
+      "title": "Tu cuenta ha caducado",
+      "message": "Tu plan actual ha terminado, por lo que no puedes acceder a las tareas en este momento. Actualiza tu cuenta para seguir completando tareas y ganando.",
+      "currentPlan": "Plan actual",
+      "expiredOn": "Caducó el",
+      "expiredDaysAgo": "Caducó hace {{days}} días",
+      "expiredOneDayAgo": "Caducó hace 1 día",
+      "upgradeCta": "Actualizar / Renovar cuenta",
+      "goToDashboard": "Ir al Panel",
+      "needHelp": "¿Necesitas ayuda?",
+      "supportLink": "Visita help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -605,7 +631,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total: {{count}} {{count, plural, one {miembro} other {miembros}}}",
+    "totalReferrals": "Total: {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
@@ -706,6 +732,7 @@
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
+    "invitedBy": "You're invited by {{name}}",
     "username": "Username",
     "usernamePlaceholder": "Choose a unique username",
     "fullName": "First Name",
@@ -1192,6 +1219,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Caducado",
           "suspended": "Suspended",
           "banned": "Banned"
         },
@@ -2275,8 +2303,16 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
-    ,
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "El servicio de IA está ocupado. Inténtelo de nuevo en unos minutos.",
+      "errorRateLimit": "Demasiadas solicitudes. Espere un momento e inténtelo de nuevo."
+    },
+    "aiTasksManage": {
+      "title": "AI Task Management",
+      "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "Cargando gestionar tareas IA...",
+      "generateTasks": "Generate Tasks",
+      "category": "Category",
       "categories": {
         "sentiment_analysis": "Análisis de Sentimiento",
         "hotel_review_sentiment": "Sentimiento en reseñas de hotel",
@@ -2289,14 +2325,7 @@
         "grammar_correction": "Corrección gramatical",
         "summarization": "Resumen",
         "translation": "Traducción"
-      }
-    },
-    "aiTasksManage": {
-      "title": "AI Task Management",
-      "subtitle": "Manage all AI training tasks ({{count}} tasks)",
-      "loading": "Cargando gestionar tareas IA...",
-      "generateTasks": "Generate Tasks",
-      "category": "Category",
+      },
       "allCategories": "All Categories",
       "difficulty": "Difficulty",
       "allDifficulties": "All Difficulties",

@@ -16,11 +16,13 @@ import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { cn } from "@/lib/utils";
 
-interface AITask {
+interface AITask4Opt {
   id: string;
   prompt: string;
   response_a: string;
   response_b: string;
+  response_c: string;
+  response_d: string;
   correct_response: string;
   category: string;
   difficulty: string;
@@ -29,18 +31,17 @@ interface AITask {
   created_by: string | null;
 }
 
-interface AITasksManageProps {
-  /** When true, hide breadcrumb and page title/actions (used in unified Manage page). */
+interface AITasksManage4Props {
   embedded?: boolean;
 }
 
-const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
+const AITasksManage4 = ({ embedded = false }: AITasksManage4Props) => {
   const { t } = useTranslation();
-  const { languageKey } = useLanguageSync(); // Use languageKey to ensure re-render on language change
+  const { languageKey } = useLanguageSync();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<AITask[]>([]);
+  const [tasks, setTasks] = useState<AITask4Opt[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
@@ -54,30 +55,23 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
 
   const loadTasks = useCallback(async () => {
     if (!user) {
-      console.log("No user available, skipping task load");
       setLoading(false);
       return;
     }
 
     try {
-      console.log("Loading tasks for user:", user.id);
-      
       const query = supabase
-        .from("ai_tasks")
+        .from("ai_tasks_4opt")
         .select("*")
         .eq("created_by", user.id)
         .order("created_at", { ascending: false });
-      
+
       const { data, error } = await query;
 
-      if (error) {
-        console.error("Query error details:", error);
-        throw error;
-      }
-      
+      if (error) throw error;
       setTasks(data || []);
     } catch (error) {
-      console.error("Error loading tasks:", error);
+      console.error("Error loading 4-option tasks:", error);
       toast.error(t("admin.aiTasksManage.errorFailedToLoad"));
     } finally {
       setLoading(false);
@@ -93,12 +87,11 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
   const toggleTaskStatus = async (taskId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from("ai_tasks")
+        .from("ai_tasks_4opt")
         .update({ is_active: !currentStatus })
         .eq("id", taskId);
 
       if (error) throw error;
-
       toast.success(currentStatus ? t("admin.aiTasksManage.taskDeactivated") : t("admin.aiTasksManage.taskActivated"));
       loadTasks();
     } catch (error) {
@@ -109,15 +102,9 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
 
   const deleteTask = async (taskId: string) => {
     if (!confirm(t("admin.aiTasksManage.confirmDelete"))) return;
-
     try {
-      const { error } = await supabase
-        .from("ai_tasks")
-        .delete()
-        .eq("id", taskId);
-
+      const { error } = await supabase.from("ai_tasks_4opt").delete().eq("id", taskId);
       if (error) throw error;
-
       toast.success(t("admin.aiTasksManage.taskDeleted"));
       loadTasks();
     } catch (error) {
@@ -137,10 +124,39 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
   }, [tasks, categoryFilter, difficultyFilter, statusFilter]);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(tasks.map(t => t.category)))
+    return Array.from(new Set(tasks.map((t) => t.category)))
       .filter(Boolean)
       .sort();
   }, [tasks]);
+
+  const renderOption = (key: string, text: string, isCorrect: boolean) => (
+    <div
+      key={key}
+      className={cn(
+        "p-4 rounded-lg border-2",
+        isCorrect
+          ? "bg-green-200 dark:bg-green-800/30 border-green-500 dark:border-green-500/50"
+          : "bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700"
+      )}
+    >
+      <p
+        className={cn(
+          "text-sm font-semibold mb-2",
+          isCorrect ? "text-green-950 dark:text-green-50" : "text-gray-900 dark:text-gray-50"
+        )}
+      >
+        {t(`admin.aiTasksManage.option${key.toUpperCase()}` as any, `Option ${key.toUpperCase()}`)}
+      </p>
+      <p
+        className={cn(
+          "text-base font-medium",
+          isCorrect ? "text-green-950 dark:text-green-50" : "text-gray-900 dark:text-gray-50"
+        )}
+      >
+        {text}
+      </p>
+    </div>
+  );
 
   if (adminLoading || loading || authLoading) {
     return <PageLoading text={t("admin.aiTasksManage.loading")} />;
@@ -153,32 +169,25 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
       <div className="container-custom">
         {!embedded && (
           <>
-            <AdminBreadcrumb 
+            <AdminBreadcrumb
               items={[
                 { label: t("admin.sidebar.categories.taskManagement") },
-                { label: t("admin.sidebar.items.manageAITasks") }
-              ]} 
+                { label: "Manage AI Tasks (4 Options)" },
+              ]}
             />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h1 className="text-3xl font-bold">{t("admin.aiTasksManage.title")}</h1>
+                <h1 className="text-3xl font-bold">Manage AI Tasks (4 Options)</h1>
                 <p className="text-muted-foreground mt-1">
                   {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setLoading(true);
-                    loadTasks();
-                  }}
-                  disabled={loading || !user}
-                >
+                <Button variant="outline" onClick={() => { setLoading(true); loadTasks(); }} disabled={loading || !user}>
                   <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                   {t("common.refresh")}
                 </Button>
-                <Button onClick={() => navigate("/admin/tasks/generate")}>
+                <Button onClick={() => navigate("/admin/tasks/generate?mode=4opt")}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("admin.aiTasksManage.generateTasks")}
                 </Button>
@@ -188,18 +197,13 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
         )}
         {embedded && (
           <div className="flex gap-2 mb-4 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => { setLoading(true); loadTasks(); }}
-              disabled={loading || !user}
-            >
+            <Button variant="outline" onClick={() => { setLoading(true); loadTasks(); }} disabled={loading || !user}>
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               {t("common.refresh")}
             </Button>
           </div>
         )}
 
-        {/* Filters */}
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -211,14 +215,11 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
                 <SelectContent>
                   <SelectItem value="all">{t("admin.aiTasksManage.allCategories")}</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.difficulty")}</label>
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
@@ -233,7 +234,6 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label className="text-sm font-medium mb-2 block">{t("admin.aiTasksManage.status")}</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -250,7 +250,6 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
           </div>
         </Card>
 
-        {/* Task List */}
         <div className="space-y-4">
           {filteredTasks.map((task) => (
             <Card key={task.id} className="p-6">
@@ -265,52 +264,10 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
                   </div>
                   <p className="text-lg font-semibold mb-3">{task.prompt}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className={cn(
-                      "p-4 rounded-lg border-2",
-                      task.correct_response === 'a' 
-                        ? 'bg-green-200 dark:bg-green-800/30 border-green-500 dark:border-green-500/50' 
-                        : 'bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700'
-                    )}>
-                      <p className={cn(
-                        "text-sm font-semibold mb-2",
-                        task.correct_response === 'a' 
-                          ? 'text-green-950 dark:text-green-50' 
-                          : 'text-gray-900 dark:text-gray-50'
-                      )}>
-                        {t("admin.aiTasksManage.optionA")}
-                      </p>
-                      <p className={cn(
-                        "text-base font-medium",
-                        task.correct_response === 'a' 
-                          ? 'text-green-950 dark:text-green-50' 
-                          : 'text-gray-900 dark:text-gray-50'
-                      )}>
-                        {task.response_a}
-                      </p>
-                    </div>
-                    <div className={cn(
-                      "p-4 rounded-lg border-2",
-                      task.correct_response === 'b' 
-                        ? 'bg-green-200 dark:bg-green-800/30 border-green-500 dark:border-green-500/50' 
-                        : 'bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700'
-                    )}>
-                      <p className={cn(
-                        "text-sm font-semibold mb-2",
-                        task.correct_response === 'b' 
-                          ? 'text-green-950 dark:text-green-50' 
-                          : 'text-gray-900 dark:text-gray-50'
-                      )}>
-                        {t("admin.aiTasksManage.optionB")}
-                      </p>
-                      <p className={cn(
-                        "text-base font-medium",
-                        task.correct_response === 'b' 
-                          ? 'text-green-950 dark:text-green-50' 
-                          : 'text-gray-900 dark:text-gray-50'
-                      )}>
-                        {task.response_b}
-                      </p>
-                    </div>
+                    {renderOption("a", task.response_a, task.correct_response === "a")}
+                    {renderOption("b", task.response_b, task.correct_response === "b")}
+                    {renderOption("c", task.response_c, task.correct_response === "c")}
+                    {renderOption("d", task.response_d, task.correct_response === "d")}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -359,10 +316,7 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
           {filteredTasks.length === 0 && (
             <Card className="p-12 text-center">
               <p className="text-muted-foreground">{t("admin.aiTasksManage.noTasksFound")}</p>
-              <Button
-                className="mt-4"
-                onClick={() => navigate(embedded ? "/admin/tasks/generate" : "/admin/tasks/generate")}
-              >
+              <Button className="mt-4" onClick={() => navigate(embedded ? "/admin/tasks/generate?mode=4opt" : "/admin/tasks/generate?mode=4opt")}>
                 {t("admin.aiTasksManage.generateFirstTasks")}
               </Button>
             </Card>
@@ -373,4 +327,4 @@ const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
   );
 };
 
-export default AITasksManage;
+export default AITasksManage4;

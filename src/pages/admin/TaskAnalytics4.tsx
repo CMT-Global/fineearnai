@@ -48,11 +48,11 @@ interface TaskStats {
 
 const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
-interface TaskAnalyticsProps {
+interface TaskAnalytics4Props {
   embedded?: boolean;
 }
 
-const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
+const TaskAnalytics = ({ embedded = false }: TaskAnalytics4Props) => {
   const { t, i18n: i18nInstance } = useTranslation();
   const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   useLanguageSync(); // Sync language and force re-render when language changes
@@ -85,23 +85,21 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
     try {
       setLoading(true);
 
-      // Get total tasks
+      // Get total tasks (4-option)
       const { count: totalTasks } = await supabase
-        .from("ai_tasks")
+        .from("ai_tasks_4opt")
         .select("*", { count: "exact", head: true })
         .eq("is_active", true);
 
-      // Get all completions with task details
-      // Note: task_completions.user_id references auth.users, not profiles directly
-      // So we query task_completions with ai_tasks, then fetch usernames separately
+      // Get all completions with task details (4-option)
       const { data: completionsData, error: completionsError } = await supabase
-        .from("task_completions")
+        .from("task_completions_4opt")
         .select(`
           is_correct,
           earnings_amount,
           task_id,
           user_id,
-          ai_tasks (
+          ai_tasks_4opt (
             category,
             difficulty
           )
@@ -145,7 +143,7 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
       // Category stats
       const categoryMap = new Map<string, { total: number; correct: number }>();
       completionsData?.forEach((c: any) => {
-        const category = c.ai_tasks?.category || "Unknown";
+        const category = c.ai_tasks_4opt?.category || "Unknown";
         const current = categoryMap.get(category) || { total: 0, correct: 0 };
         current.total++;
         if (c.is_correct) current.correct++;
@@ -162,7 +160,7 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
       // Difficulty stats
       const difficultyMap = new Map<string, { total: number; correct: number }>();
       completionsData?.forEach((c: any) => {
-        const difficulty = c.ai_tasks?.difficulty || "Unknown";
+        const difficulty = c.ai_tasks_4opt?.difficulty || "Unknown";
         const current = difficultyMap.get(difficulty) || { total: 0, correct: 0 };
         current.total++;
         if (c.is_correct) current.correct++;
@@ -185,7 +183,7 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
         const current = taskCompletionMap.get(taskId) || {
           count: 0,
           correct: 0,
-          category: c.ai_tasks?.category,
+          category: c.ai_tasks_4opt?.category,
         };
         current.count++;
         if (c.is_correct) current.correct++;
@@ -198,7 +196,7 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
           .slice(0, 5)
           .map(async ([taskId, data]) => {
             const { data: taskData } = await supabase
-              .from("ai_tasks")
+              .from("ai_tasks_4opt")
               .select("prompt")
               .eq("id", taskId)
               .single();
@@ -275,9 +273,9 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t("admin.taskAnalytics.backToAdmin")}
             </Button>
-            <h1 className="text-3xl font-bold mb-2">{t("admin.taskAnalytics.title")}</h1>
+            <h1 className="text-3xl font-bold mb-2">Task Analytics (4 Options)</h1>
             <p className="text-muted-foreground">
-              {t("admin.taskAnalytics.subtitle")}
+              Analytics for 4-option AI tasks
             </p>
           </div>
         )}
@@ -443,31 +441,34 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
           <CardContent>
             <div className="space-y-4">
               {stats?.popularTasks.map((task, index) => (
-                <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className="text-lg font-bold">
-                      #{index + 1}
-                    </Badge>
-                    <div>
-                      <div className="font-medium">{task.prompt}</div>
-                      <div className="text-sm text-muted-foreground">
-                        <Badge variant="secondary" className="mr-2">
-                          {task.category}
-                        </Badge>
-                        {t("admin.taskAnalytics.completionsCount", { count: task.completion_count })}
-                      </div>
+                <div
+                  key={task.id}
+                  className="flex items-start gap-4 p-4 border rounded-lg bg-card hover:bg-muted/30 transition-colors"
+                >
+                  <Badge variant="outline" className="text-lg font-bold shrink-0 mt-0.5">
+                    #{index + 1}
+                  </Badge>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="font-medium text-foreground leading-snug break-words">
+                      {task.prompt}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                      <Badge variant="secondary" className="whitespace-nowrap">
+                        {task.category}
+                      </Badge>
+                      <span>{t("admin.taskAnalytics.completionsCount", { count: task.completion_count })}</span>
                     </div>
                   </div>
                   <Badge
                     variant={task.accuracy >= 75 ? "default" : "secondary"}
-                    className="text-base"
+                    className="text-sm font-medium whitespace-nowrap shrink-0 mt-0.5"
                   >
                     {t("admin.taskAnalytics.accuracyPercentage", { percentage: task.accuracy.toFixed(1) })}
                   </Badge>
                 </div>
               ))}
               {stats?.popularTasks.length === 0 && (
-                <p className="text-center text-muted-foreground">{t("admin.taskAnalytics.noTaskDataAvailable")}</p>
+                <p className="text-center text-muted-foreground py-8">{t("admin.taskAnalytics.noTaskDataAvailable")}</p>
               )}
             </div>
           </CardContent>
@@ -482,28 +483,29 @@ const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
           <CardContent>
             <div className="space-y-4">
               {stats?.topPerformers.map((user, index) => (
-                <div key={user.userId || `user-${index}`} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className="text-lg font-bold">
-                      #{index + 1}
-                    </Badge>
-                    <div>
-                      <div className="font-medium">{user.username}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {t("admin.taskAnalytics.tasksCompleted", { count: user.total_completed })} • {t("admin.taskAnalytics.earned", { amount: user.total_earned.toFixed(2) })}
-                      </div>
+                <div
+                  key={user.userId || `user-${index}`}
+                  className="flex items-start gap-4 p-4 border rounded-lg bg-card hover:bg-muted/30 transition-colors"
+                >
+                  <Badge variant="outline" className="text-lg font-bold shrink-0 mt-0.5">
+                    #{index + 1}
+                  </Badge>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="font-medium">{user.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("admin.taskAnalytics.tasksCompleted", { count: user.total_completed })} • {t("admin.taskAnalytics.earned", { amount: user.total_earned.toFixed(2) })}
                     </div>
                   </div>
                   <Badge
                     variant={user.accuracy >= 75 ? "default" : "secondary"}
-                    className="text-base"
+                    className="text-sm font-medium whitespace-nowrap shrink-0 mt-0.5"
                   >
                     {t("admin.taskAnalytics.accuracyPercentage", { percentage: user.accuracy.toFixed(1) })}
                   </Badge>
                 </div>
               ))}
               {stats?.topPerformers.length === 0 && (
-                <p className="text-center text-muted-foreground">{t("admin.taskAnalytics.noUserDataAvailable")}</p>
+                <p className="text-center text-muted-foreground py-8">{t("admin.taskAnalytics.noUserDataAvailable")}</p>
               )}
             </div>
           </CardContent>

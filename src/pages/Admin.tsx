@@ -101,7 +101,9 @@ const Admin = () => {
         .select("membership_plan");
 
       const membershipDistribution = membershipData?.reduce((acc: any, profile) => {
-        acc[profile.membership_plan] = (acc[profile.membership_plan] || 0) + 1;
+        const raw = profile.membership_plan ?? "";
+        const key = raw.trim() ? raw.trim().charAt(0).toUpperCase() + raw.trim().slice(1).toLowerCase() : "Unknown";
+        acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {});
 

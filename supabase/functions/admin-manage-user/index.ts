@@ -446,11 +446,13 @@ Deno.serve(async (req)=>{
             }
           }
 
-          // Update plan (allow null plan_expires_at for free with no trial)
+          // Update plan (allow null plan_expires_at for free with no trial).
+          // Set account_status to 'active' when assigning a plan so expired users become active again.
           const { error: updateError } = await supabaseClient.from('profiles').update({
             membership_plan: planData.plan_name,
             plan_expires_at: expiresAt,
-            current_plan_start_date: now.toISOString()
+            current_plan_start_date: now.toISOString(),
+            account_status: 'active'
           }).eq('id', userId);
           if (updateError) {
             throw new Error(`Failed to change plan: ${updateError.message}`);
@@ -632,12 +634,13 @@ Deno.serve(async (req)=>{
           if (![
             'admin',
             'moderator',
-            'user'
+            'user',
+            'trainee_4opt'
           ].includes(role)) {
-            throw new Error('Invalid role. Must be admin, moderator, or user');
+            throw new Error('Invalid role. Must be admin, moderator, user, or trainee_4opt');
           }
-          // Prevent admin from assigning role to themselves (security measure)
-          if (userId === user.id) {
+          // Prevent admin from assigning role to themselves (security measure) - except trainee_4opt
+          if (userId === user.id && role !== 'trainee_4opt') {
             throw new Error('Cannot assign role to yourself');
           }
           // Check if user already has this role
@@ -704,9 +707,10 @@ Deno.serve(async (req)=>{
           if (![
             'admin',
             'moderator',
-            'user'
+            'user',
+            'trainee_4opt'
           ].includes(role)) {
-            throw new Error('Invalid role. Must be admin, moderator, or user');
+            throw new Error('Invalid role. Must be admin, moderator, user, or trainee_4opt');
           }
           // Prevent removing 'user' role - everyone must have base user role
           if (role === 'user') {
