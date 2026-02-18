@@ -220,9 +220,7 @@ const Signup = () => {
           </div>
           <h1 className="text-2xl font-bold">{t("signup.title")}</h1>
           <p className="text-muted-foreground">
-            {referrerDisplayName
-              ? t("signup.subtitleWithReferrer", { referrer: referrerDisplayName, platform: platformName })
-              : t("signup.subtitle", { platform: platformName })}
+            {t("signup.subtitle", { platform: platformName })}
           </p>
           {referrerDisplayName && (
             <div className="rounded-lg border-2 border-[hsl(var(--wallet-deposit))]/30 bg-[hsl(var(--wallet-deposit))]/5 px-4 py-2.5">
