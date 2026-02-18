@@ -630,7 +630,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total: {{count}} {{count, plural, one {member} other {members}}}",
+    "totalReferrals": "Total: {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
