@@ -18,7 +18,7 @@ interface ManageRolesDialogProps {
   onSuccess: () => void;
 }
 
-type AppRole = 'user' | 'admin' | 'moderator';
+type AppRole = 'user' | 'admin' | 'moderator' | 'trainee_4opt';
 
 export function ManageRolesDialog({
   open,
@@ -73,7 +73,6 @@ export function ManageRolesDialog({
   };
 
   const handleRoleToggle = (role: AppRole) => {
-    // Can't toggle 'user' role - it's always required
     if (role === 'user') return;
 
     setSelectedRoles(prev => {
@@ -263,6 +262,22 @@ export function ManageRolesDialog({
                   className="text-sm font-normal cursor-pointer"
                 >
                   Moderator (Limited admin access - future use)
+                </Label>
+              </div>
+
+              {/* 4-Option Tasks Access */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="role-trainee_4opt"
+                  checked={selectedRoles.has('trainee_4opt')}
+                  onCheckedChange={() => handleRoleToggle('trainee_4opt')}
+                  disabled={saving}
+                />
+                <Label 
+                  htmlFor="role-trainee_4opt"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  4-Option Tasks (User sees 4-option AI tasks instead of 2-option)
                 </Label>
               </div>
             </div>

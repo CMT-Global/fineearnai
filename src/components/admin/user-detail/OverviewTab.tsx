@@ -36,6 +36,7 @@ interface OverviewTabProps {
   onChangePlan: () => void;
   onSuspend: () => void;
   onBan: () => void;
+  onDelete: () => void;
   onResetLimits: () => void;
   onMasterLogin: () => void;
   onManageRoles: () => void;
@@ -48,6 +49,7 @@ export const OverviewTab = ({
   onChangePlan,
   onSuspend,
   onBan,
+  onDelete,
   onResetLimits,
   onMasterLogin,
   onManageRoles,
@@ -630,7 +632,9 @@ export const OverviewTab = ({
               <div className="min-h-[28px] flex items-center">
                 <Badge
                   variant={
-                    profile.account_status === "active"
+                    profile.account_status === "expired" || (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date())
+                      ? "destructive"
+                      : profile.account_status === "active"
                       ? "default"
                       : profile.account_status === "suspended"
                       ? "secondary"
@@ -639,7 +643,9 @@ export const OverviewTab = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 h-7"
                 >
                   <Activity className="h-3.5 w-3.5" />
-                  {profile.account_status}
+                  {profile.account_status === "expired" || (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date())
+                    ? "Expired"
+                    : profile.account_status}
                 </Badge>
               </div>
             </div>
@@ -728,7 +734,7 @@ export const OverviewTab = ({
                       : "destructive"
                   }
                 >
-                  {upline.account_status}
+                  {upline.account_status === "expired" ? "Expired" : upline.account_status}
                 </Badge>
               </div>
               <div>
@@ -938,7 +944,14 @@ export const OverviewTab = ({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Plan Type</p>
-              <Badge>{planInfo?.account_type || "unknown"}</Badge>
+              <Badge>{(() => {
+                // Use account_type from plan_info; fallback: paid plans -> personal, free tier -> free
+                const at = planInfo?.account_type;
+                if (at) return at;
+                if (planInfo && typeof planInfo.price === 'number' && planInfo.price > 0) return 'personal';
+                if (planInfo && planInfo.name) return 'free'; // Resolved plan but no account_type (legacy) -> treat as free
+                return profile.membership_plan ? 'personal' : 'unknown'; // Has plan name but no planInfo -> assume paid
+              })()}</Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Expires At</p>
@@ -1173,6 +1186,9 @@ export const OverviewTab = ({
             </Button>
             <Button variant="destructive" size="sm" onClick={onBan}>
               Ban User
+            </Button>
+            <Button variant="destructive" size="sm" onClick={onDelete}>
+              {t("admin.dialogs.deleteUser.title")}
             </Button>
             <Button variant="secondary" size="sm" onClick={onMasterLogin}>
               Generate Master Login

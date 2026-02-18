@@ -61,6 +61,12 @@
     "login": "Login",
     "signup": "Sign Up"
   },
+  "layout": {
+    "mobile": {
+      "accountExpiredBanner": "Votre compte a expiré. Passez à un forfait supérieur pour continuer à gagner.",
+      "planExpiringSoonBanner": "Votre forfait expire bientôt ! Renouvelez pour continuer à gagner."
+    }
+  },
   "language": {
     "select": "Select Language",
     "current": "Current Language",
@@ -122,7 +128,10 @@
       "username": "Username",
       "email": "Email",
       "memberSince": "Member Since",
-      "membershipPlan": "Membership Plan"
+      "membershipPlan": "Membership Plan",
+      "accountStatus": "État du compte",
+      "statusActive": "Actif",
+      "statusExpired": "Expiré"
     },
     "emailVerification": {
       "title": "Email Verification",
@@ -277,6 +286,11 @@
     "planExpiringSoonDescriptionPlural": "Your {{plan}} plan expires in {{days}} days. Renew now to avoid losing access.",
     "daysLeft": "{{days}}d left",
     "expired": "Expired",
+    "accountExpired": "⚠️ Account Expired",
+    "accountExpiredMessage": "Your account has expired, so your task access and earnings are paused. Upgrade your account to continue completing tasks and earning.",
+    "accountExpiredSubline": "Upgrade now to reactivate your access instantly.",
+    "expiredDaysAgo": "Expired {{days}} days ago",
+    "expiredOneDayAgo": "Expired 1 day ago",
     "earnersGuide": "{{platform}} - Earners Guide",
     "earnersGuideSubtitle": "Learn how to maximize your earnings",
     "tasksToday": "Tasks Today",
@@ -377,6 +391,23 @@
       "comeBackTomorrow": "Come back tomorrow",
       "resetAtMidnight": "Your daily task limit will reset at midnight",
       "greatJobToday": "Great job today! Keep up the excellent work. 💪"
+    },
+    "planExpired": {
+      "title": "Votre forfait a expiré",
+      "description": "Passez à un forfait supérieur pour accéder aux tâches et continuer à gagner.",
+      "upgradeToAccessTasks": "Mettre à niveau pour accéder aux tâches"
+    },
+    "accountExpired": {
+      "title": "Votre compte a expiré",
+      "message": "Votre forfait actuel est terminé, vous ne pouvez donc pas accéder aux tâches pour le moment. Passez à un forfait supérieur pour continuer à accomplir des tâches et gagner.",
+      "currentPlan": "Forfait actuel",
+      "expiredOn": "Expiré le",
+      "expiredDaysAgo": "Expiré il y a {{days}} jours",
+      "expiredOneDayAgo": "Expiré il y a 1 jour",
+      "upgradeCta": "Mettre à niveau / Renouveler le compte",
+      "goToDashboard": "Aller au tableau de bord",
+      "needHelp": "Besoin d'aide ?",
+      "supportLink": "Visitez help.profitchips.com"
     },
     "noTasks": {
       "title": "No Tasks Available Right Now",
@@ -600,7 +631,7 @@
     "never": "Never",
     "previous": "Previous",
     "next": "Next",
-    "totalReferrals": "Total : {{count}} {{count, plural, one {membre} other {membres}}}",
+    "totalReferrals": "Total : {{count}}",
     "totalTeamMembers": "Total Team Members",
     "activeTeamMembersToday": "Active Team Members Today",
     "totalTeamEarnings": "Total Team Earnings",
@@ -701,6 +732,7 @@
     "title": "Create Account",
     "subtitle": "Join {{platform}} - Start earning with AI tasks in minutes",
     "subtitleWithReferrer": "Invited by {{referrer}}. Join {{platform}} and start earning!",
+    "invitedBy": "You're invited by {{name}}",
     "username": "Username",
     "usernamePlaceholder": "Choose a unique username",
     "fullName": "First Name",
@@ -1187,6 +1219,7 @@
           "label": "Filter by status",
           "all": "All Status",
           "active": "Active",
+          "expired": "Expiré",
           "suspended": "Suspended",
           "banned": "Banned"
         },
@@ -3920,6 +3953,146 @@
     "toasts": {
       "success": "Master login successful! Redirecting...",
       "failed": "Master login failed"
+    }
+  },
+  "adminEmailSettings": {
+    "title": "Paramètres Email",
+    "subtitle": "Configurer les paramètres d'envoi d'email et les rappels de vérification",
+    "loading": "Chargement des paramètres email...",
+    "breadcrumb": { "communications": "Communications", "emailSettings": "Paramètres Email" },
+    "actions": { "resetToDefaults": "Réinitialiser", "sendTestEmail": "Envoyer Email de Test", "saveSettings": "Enregistrer les Paramètres" },
+    "senderInformation": { "title": "Informations de l'Expéditeur", "description": "Configurez l'expéditeur des emails. L'adresse d'envoi doit être vérifiée dans Resend.", "fromAddress": "Adresse d'Envoi *", "fromName": "Nom de l'Expéditeur *" },
+    "replyToInformation": { "title": "Informations de Réponse", "description": "Où les réponses des utilisateurs seront envoyées.", "replyToAddress": "Adresse de Réponse *", "replyToName": "Nom de Réponse *" },
+    "platformInformation": { "title": "Informations de la Plateforme", "description": "Détails de base de la plateforme utilisés dans les emails et les modèles.", "platformName": "Nom de la Plateforme *", "platformUrl": "URL de la Plateforme *", "supportEmail": "Email de Support *", "adminNotificationEmail": "Email de Notification Admin *", "footerText": "Texte de Pied d'Email" },
+    "testEmailSent": "Email de test envoyé avec succès ! Vérifiez votre boîte de réception.",
+    "verificationReminders": {
+      "title": "Rappels de Vérification d'Email",
+      "description": "Configurer des rappels automatisés pour les utilisateurs qui n'ont pas vérifié leurs adresses e-mail",
+      "sendTestReminders": "Envoyer les Rappels de Test Maintenant",
+      "sending": "Envoi en cours...",
+      "alertDescription": "Ces paramètres contrôlent le système automatisé de rappels de vérification d'e-mail. Les rappels sont envoyés via la fonction planifiée qui s'exécute quotidiennement.",
+      "enableReminders": "Activer les Rappels",
+      "enableRemindersDescription": "Envoyer automatiquement des rappels de vérification aux utilisateurs non vérifiés",
+      "firstReminder": "Premier Rappel (jours après l'inscription)",
+      "secondReminder": "Deuxième Rappel (jours après l'inscription)",
+      "thirdReminder": "Troisième Rappel (jours après l'inscription)",
+      "reminderFrequency": "Fréquence des Rappels (jours entre les rappels)",
+      "maxReminders": "Nombre Maximum de Rappels par Utilisateur",
+      "howItWorks": "Comment ça fonctionne :",
+      "howItWorksDescription": "Premier rappel envoyé après {{first}} jours. Deuxième rappel à {{second}} jours. Troisième à {{third}} jours. Après cela, rappels tous les {{frequency}} jours jusqu'à un maximum de {{max}} rappels atteint.",
+      "reset": "Réinitialiser",
+      "saveSettings": "Enregistrer les Paramètres",
+      "saving": "Enregistrement en cours...",
+      "toasts": { "settingsSaved": "Paramètres Enregistrés", "settingsSavedDescription": "Paramètres de rappels de vérification d'e-mail mis à jour avec succès", "errorSaving": "Erreur", "errorSavingDescription": "Échec de l'enregistrement des paramètres de rappels", "remindersSent": "Rappels Envoyés", "remindersSentDescription": "{{sent}} e-mails de rappel envoyés avec succès à {{processed}} utilisateurs non vérifiés", "errorSending": "Erreur", "errorSendingDescription": "Échec de l'envoi des rappels de test", "errorLoading": "Erreur", "errorLoadingDescription": "Échec du chargement des paramètres de rappels" }
+    },
+    "toasts": { "settingsSaved": "Paramètres enregistrés", "settingsSavedDescription": "Les paramètres email ont été mis à jour avec succès.", "errorSaving": "Erreur lors de l'enregistrement des paramètres", "testEmailSent": "Email de test envoyé", "testEmailSentDescription": "Vérifiez votre boîte de réception pour l'email de test.", "errorSendingTest": "Erreur lors de l'envoi de l'email de test", "validationError": "Erreur de validation", "validationErrorDescription": "Veuillez corriger les erreurs avant d'enregistrer.", "settingsReset": "Paramètres réinitialisés", "settingsResetDescription": "Les paramètres email ont été réinitialisés aux valeurs par défaut." }
+  },
+  "adminLoginMessage": {
+    "breadcrumb": { "communications": "Communications", "loginMessage": "Message de connexion" },
+    "title": "Configuration du message de connexion",
+    "subtitle": "Personnalisez le message de bienvenue affiché aux utilisateurs après connexion",
+    "howItWorks": "Comment ça fonctionne",
+    "howItWorksDescription": "Ce message s'affiche dans une fenêtre après la connexion. Vous pouvez l'activer/désactiver et choisir s'il peut être fermé ou s'afficher une seule fois par session.",
+    "loading": "Chargement de la configuration...",
+    "messageConfiguration": { "title": "Titre", "description": "Configurer le contenu et le comportement du message", "enableLoginMessage": "Activer le message", "enableDescription": "Afficher le message après connexion", "titlePlaceholder": "Bienvenue sur FineEarn !", "titleHint": "Titre court (max 100 caractères)", "messageBody": "Corps du message", "bodyPlaceholder": "Nous sommes ravis de vous accueillir." },
+    "behaviorOptions": { "title": "Options de comportement", "allowDismissal": "Permettre de fermer", "allowDismissalDescription": "Les utilisateurs peuvent fermer le message", "showOncePerSession": "Une fois par session", "showOncePerSessionDescription": "Afficher une seule fois par 24 h", "displayPriority": "Priorité", "priorityHint": "Niveau de priorité" },
+    "priority": { "low": "Basse", "medium": "Moyenne", "high": "Haute" },
+    "preview": { "livePreview": "Aperçu", "hide": "Masquer", "show": "Afficher", "preview": "Aperçu", "description": "Aperçu du message", "visual": "Visuel", "sourceCode": "Code source", "dismissible": "Peut être fermé", "showOnceNote": "Une fois par 24 h", "priority": "Priorité", "htmlSourceCode": "Code HTML", "htmlCopied": "HTML copié !", "disabled": "Le message est actuellement", "disabledText": "désactivé", "enableToShow": "Activez-le pour l'aperçu." },
+    "bestPractices": { "title": "Bonnes pratiques", "tip1": "Titre court", "tip2": "Formatage modéré", "tip3": "Emojis pour engager", "tip4": "Aperçu avant enregistrement", "tip5": "Tester l'aperçu", "tip6": "Activer « Une fois par session »", "tip7": "Rendre fermable" },
+    "actions": { "saveChanges": "Enregistrer" },
+    "success": { "updated": "Message mis à jour !", "reset": "Réinitialiser la configuration" },
+    "errors": { "failedToSave": "Échec : {{message}}" },
+    "validation": { "titleRequired": "Le titre est requis", "titleMaxLength": "Max 100 caractères", "bodyRequired": "Le corps est requis", "bodyMaxLength": "Max 5000 caractères" },
+    "confirm": { "reset": "Réinitialiser les paramètres par défaut ? Cette action est irréversible." }
+  },
+  "adminReamazeSettings": {
+    "breadcrumb": { "communications": "Communications", "liveChatSettings": "Paramètres de Chat en Direct" },
+    "title": "Paramètres de Chat en Direct Reamaze",
+    "subtitle": "Configurer le widget de chat en direct Reamaze pour le support client",
+    "loading": "Chargement des paramètres du chat en direct...",
+    "discardChanges": "Annuler les Modifications",
+    "saveSettings": "Enregistrer les Paramètres",
+    "important": "Important",
+    "importantDescription": "Le code d'intégration sera injecté dans toutes les pages lorsque le chat en direct est activé. Assurez-vous que le code est correct et correctement formaté.",
+    "enableLiveChat": { "title": "Activer le Chat en Direct", "description": "Activer ou désactiver le widget de chat en direct Reamaze sur toute la plateforme" },
+    "embedCode": {
+      "title": "Code d'Intégration",
+      "description": "Collez votre code d'intégration Reamaze ici. Ce code sera injecté dans toutes les pages lorsque le chat en direct est activé.",
+      "label": "Code d'Intégration Reamaze",
+      "howToGetCode": "Comment obtenir votre code d'intégration Reamaze :",
+      "step1": "Connectez-vous à votre compte Reamaze",
+      "step2": "Accédez à Paramètres > Intégrations",
+      "step3": "Trouvez la section Code d'Intégration",
+      "step4": "Copiez le code d'intégration complet (y compris toutes les balises script)",
+      "step5": "Collez-le dans la zone de texte ci-dessus"
+    },
+    "settingsSaved": "Paramètres enregistrés",
+    "settingsSavedDescription": "Les paramètres de chat en direct Reamaze ont été mis à jour avec succès.",
+    "errorSaving": "Erreur lors de l'enregistrement des paramètres",
+    "errorSavingDescription": "Échec de l'enregistrement des paramètres. Veuillez réessayer.",
+    "changesDiscarded": "Modifications annulées",
+    "changesDiscardedDescription": "Toutes les modifications non enregistrées ont été annulées."
+  },
+  "adminEmailTemplateGlobalSettings": {
+    "title": "Modèle d'email global",
+    "subtitle": "Modifiez le modèle HTML global utilisé pour tous les emails envoyés depuis la plateforme. Ce modèle inclut les bonnes pratiques anti-spam.",
+    "loading": "Chargement du modèle d'email global...",
+    "availableVariables": "Variables disponibles",
+    "variablesDescription": "Utilisez le format {{variable_name}}. Disponibles : {{platform_name}}, {{platform_url}}, {{support_url}}, {{privacy_url}}, {{current_year}}, {{logo_html}}, {{preheader}}, {{content}}",
+    "tabs": { "editTemplate": "Modifier le modèle", "preview": "Aperçu" },
+    "template": {
+      "title": "Modèle HTML d'email",
+      "description": "Modifiez le modèle HTML. La variable {{content}} sera remplacée par le corps de l'email.",
+      "htmlTemplate": "Modèle HTML",
+      "placeholder": "Saisissez le modèle HTML...",
+      "hint": "Ce modèle enveloppe tous les emails. Incluez {{content}} où le corps doit apparaître."
+    },
+    "preview": { "title": "Aperçu de l'email", "description": "Aperçu du modèle avec des données d'exemple" },
+    "changesNote": "Les modifications s'appliquent à tous les emails envoyés après enregistrement.",
+    "actions": { "resetToDefaults": "Réinitialiser", "saveTemplate": "Enregistrer le modèle" },
+    "success": { "templateSaved": "Modèle enregistré ! Tous les futurs emails utiliseront ce modèle." },
+    "errors": { "failedToSave": "Échec de l'enregistrement du modèle. Veuillez réessayer." },
+    "toasts": { "templateSaved": "Modèle enregistré", "templateSavedDescription": "Le modèle d'email global a été mis à jour.", "errorSaving": "Erreur d'enregistrement",     "errorSavingDescription": "Échec de l'enregistrement du modèle. Veuillez réessayer." }
+  },
+  "adminSeoSettings": {
+    "title": "Paramètres SEO et partage social",
+    "subtitle": "Configurer les métadonnées SEO et le partage sur les réseaux sociaux",
+    "loading": "Chargement des paramètres SEO et sociaux...",
+    "discardChanges": "Annuler les modifications",
+    "saveSettings": "Enregistrer",
+    "settingsSaved": "Paramètres enregistrés",
+    "settingsSavedDescription": "Les paramètres SEO et de marque ont été mis à jour.",
+    "errorSaving": "Erreur d'enregistrement",
+    "errorSavingDescription": "Échec de l'enregistrement. Veuillez réessayer.",
+    "tabs": { "branding": "Marque", "seo": "SEO", "social": "Partage social" },
+    "branding": {
+      "title": "Marque de la plateforme",
+      "description": "Configurer le nom, le logo et l'URL utilisés sur le site et dans les métadonnées SEO",
+      "platformName": "Nom de la plateforme",
+      "platformNameHint": "Ce nom sera utilisé sur toute la plateforme et dans les métadonnées SEO",
+      "platformLogo": "URL du logo",
+      "platformLogoHint": "Chemin vers l'image du logo (ex. : /logo_without_bg_text.png)",
+      "platformUrl": "URL de la plateforme"
+    },
+    "seo": {
+      "title": "Configuration SEO",
+      "description": "Configurer les métadonnées SEO pour les moteurs de recherche",
+      "pageTitle": "Titre de page",
+      "pageTitleHint": "Titre dans l'onglet du navigateur et les résultats (recommandé : 50-60 caractères)",
+      "metaDescription": "Meta description",
+      "metaDescriptionHint": "Courte description dans les résultats (recommandé : 150-160 caractères)",
+      "keywords": "Mots-clés",
+      "keywordsHint": "Mots-clés séparés par des virgules",
+      "canonicalUrl": "URL canonique",
+      "robotsMeta": "Meta robots",
+      "faviconUrl": "URL du favicon",
+      "faviconUrlHint": "Chemin vers le favicon (ex. : /favicon.ico)",
+      "tipTitle": "Bonnes pratiques SEO",
+      "tipDescription": "Gardez les titres sous 60 caractères et les descriptions sous 160. Mettez à jour régulièrement."
+    },
+    "social": {
+      "openGraph": { "title": "Open Graph (Facebook)", "description": "Configurer l'apparence lors du partage sur Facebook", "ogTitle": "Titre OG", "ogDescription": "Description OG", "ogImage": "URL image OG", "ogUrl": "URL OG" },
+      "twitter": { "title": "Twitter Cards", "description": "Configurer l'apparence lors du partage sur Twitter/X", "twitterTitle": "Titre Twitter", "twitterDescription": "Description Twitter", "twitterImage": "URL image Twitter", "cardType": "Type de carte" }
     }
   }
 }

@@ -48,7 +48,11 @@ interface TaskStats {
 
 const COLORS = ["#B9F94D", "#C9F158", "#56CCF2", "#F2C94C", "#EB5757", "#9DB8B1"];
 
-const TaskAnalytics = () => {
+interface TaskAnalyticsProps {
+  embedded?: boolean;
+}
+
+const TaskAnalytics = ({ embedded = false }: TaskAnalyticsProps) => {
   const { t, i18n: i18nInstance } = useTranslation();
   const { userLanguage, isLoading: isLanguageLoading } = useLanguage();
   useLanguageSync(); // Sync language and force re-render when language changes
@@ -265,18 +269,18 @@ const TaskAnalytics = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("admin.taskAnalytics.backToAdmin")}
-          </Button>
-
-          <h1 className="text-3xl font-bold mb-2">{t("admin.taskAnalytics.title")}</h1>
-          <p className="text-muted-foreground">
-            {t("admin.taskAnalytics.subtitle")}
-          </p>
-        </div>
-
+        {!embedded && (
+          <div className="mb-6">
+            <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("admin.taskAnalytics.backToAdmin")}
+            </Button>
+            <h1 className="text-3xl font-bold mb-2">{t("admin.taskAnalytics.title")}</h1>
+            <p className="text-muted-foreground">
+              {t("admin.taskAnalytics.subtitle")}
+            </p>
+          </div>
+        )}
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -445,7 +449,7 @@ const TaskAnalytics = () => {
                       #{index + 1}
                     </Badge>
                     <div>
-                      <div className="font-medium line-clamp-1">{task.prompt}</div>
+                      <div className="font-medium">{task.prompt}</div>
                       <div className="text-sm text-muted-foreground">
                         <Badge variant="secondary" className="mr-2">
                           {task.category}

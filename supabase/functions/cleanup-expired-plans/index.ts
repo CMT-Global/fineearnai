@@ -233,9 +233,10 @@ Deno.serve(async (req)=>{
             if (defaultPlanName) {
               await supabaseClient.from('profiles').update({
                 membership_plan: defaultPlanName,
-              plan_expires_at: null,
-              current_plan_start_date: null
-            }).eq('id', user.id);
+                plan_expires_at: null,
+                current_plan_start_date: null,
+                account_status: 'expired'
+              }).eq('id', user.id);
             }
             totalDowngraded++;
             results.push({
@@ -269,7 +270,8 @@ Deno.serve(async (req)=>{
                 plan_expires_at: newExpiryDate.toISOString(),
                 deposit_wallet_balance: newBalance,
                 current_plan_start_date: now,
-                last_activity: now
+                last_activity: now,
+                account_status: 'active'
               }).eq('id', user.id);
               if (renewError) {
                 console.error(`Error renewing plan for user ${user.id}:`, renewError);
@@ -343,7 +345,8 @@ Deno.serve(async (req)=>{
               const { error: downgradeError } = await supabaseClient.from('profiles').update({
                 membership_plan: defaultPlanName,
                 plan_expires_at: null,
-                current_plan_start_date: null
+                current_plan_start_date: null,
+                account_status: 'expired'
               }).eq('id', user.id);
               if (downgradeError) {
                 console.error(`Error downgrading user ${user.id}:`, downgradeError);
@@ -400,7 +403,8 @@ Deno.serve(async (req)=>{
             const { error: downgradeError } = await supabaseClient.from('profiles').update({
               membership_plan: defaultPlanName,
               plan_expires_at: null,
-              current_plan_start_date: null
+              current_plan_start_date: null,
+              account_status: 'expired'
             }).eq('id', user.id);
             if (downgradeError) {
               console.error(`Error downgrading user ${user.id}:`, downgradeError);

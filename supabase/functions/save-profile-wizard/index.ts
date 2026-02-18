@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
       updates.membership_plan = plan.name;
       updates.plan_expires_at = expiresAt.toISOString();
       updates.current_plan_start_date = now.toISOString();
+      updates.account_status = 'active';
     } else if (complete === true && selected_plan_id) {
       // User completed wizard with a selected plan (no trial): set membership_plan to selected plan name
       const { data: plan, error: planError } = await supabaseAdmin
@@ -131,6 +132,28 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!planError && plan?.name) {
         updates.membership_plan = plan.name;
+        updates.account_status = 'active';
+      }
+    } else if (complete === true) {
+      // User completed wizard without selecting a plan: assign default Trainee (free-tier) plan
+      const { data: defaultPlan, error: defaultPlanError } = await supabaseAdmin
+        .from('membership_plans')
+        .select('name, free_plan_expiry_days')
+        .eq('account_type', 'free')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      if (!defaultPlanError && defaultPlan?.name) {
+        updates.membership_plan = defaultPlan.name;
+        updates.account_status = 'active';
+        const expiryDays = Number(defaultPlan.free_plan_expiry_days ?? 0);
+        if (expiryDays > 0) {
+          const now = new Date();
+          const expiresAt = new Date(now);
+          expiresAt.setDate(expiresAt.getDate() + expiryDays);
+          updates.plan_expires_at = expiresAt.toISOString();
+          updates.current_plan_start_date = now.toISOString();
+        }
       }
     }
 

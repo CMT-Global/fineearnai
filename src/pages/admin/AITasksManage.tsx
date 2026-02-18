@@ -29,7 +29,12 @@ interface AITask {
   created_by: string | null;
 }
 
-const AITasksManage = () => {
+interface AITasksManageProps {
+  /** When true, hide breadcrumb and page title/actions (used in unified Manage page). */
+  embedded?: boolean;
+}
+
+const AITasksManage = ({ embedded = false }: AITasksManageProps) => {
   const { t } = useTranslation();
   const { languageKey } = useLanguageSync(); // Use languageKey to ensure re-render on language change
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -146,38 +151,53 @@ const AITasksManage = () => {
   return (
     <div key={languageKey} className="p-6">
       <div className="container-custom">
-        <AdminBreadcrumb 
-          items={[
-            { label: t("admin.sidebar.categories.taskManagement") },
-            { label: t("admin.sidebar.items.manageAITasks") }
-          ]} 
-        />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">{t("admin.aiTasksManage.title")}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
-            </p>
-          </div>
-          <div className="flex gap-2">
+        {!embedded && (
+          <>
+            <AdminBreadcrumb 
+              items={[
+                { label: t("admin.sidebar.categories.taskManagement") },
+                { label: t("admin.sidebar.items.manageAITasks") }
+              ]} 
+            />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-3xl font-bold">{t("admin.aiTasksManage.title")}</h1>
+                <p className="text-muted-foreground mt-1">
+                  {t("admin.aiTasksManage.subtitle", { count: filteredTasks.length })}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setLoading(true);
+                    loadTasks();
+                  }}
+                  disabled={loading || !user}
+                >
+                  <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                  {t("common.refresh")}
+                </Button>
+                <Button onClick={() => navigate("/admin/tasks/generate")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("admin.aiTasksManage.generateTasks")}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+        {embedded && (
+          <div className="flex gap-2 mb-4 justify-end">
             <Button 
               variant="outline" 
-              onClick={() => {
-                setLoading(true);
-                loadTasks();
-              }}
+              onClick={() => { setLoading(true); loadTasks(); }}
               disabled={loading || !user}
             >
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               {t("common.refresh")}
             </Button>
-            <Button onClick={() => navigate("/admin/tasks/generate")}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("admin.aiTasksManage.generateTasks")}
-            </Button>
           </div>
-        </div>
+        )}
 
         {/* Filters */}
         <Card className="p-4 mb-6">
@@ -341,7 +361,7 @@ const AITasksManage = () => {
               <p className="text-muted-foreground">{t("admin.aiTasksManage.noTasksFound")}</p>
               <Button
                 className="mt-4"
-                onClick={() => navigate("/admin/tasks/generate")}
+                onClick={() => navigate(embedded ? "/admin/tasks/generate" : "/admin/tasks/generate")}
               >
                 {t("admin.aiTasksManage.generateFirstTasks")}
               </Button>

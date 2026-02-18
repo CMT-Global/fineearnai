@@ -117,37 +117,29 @@ Deno.serve(async (req)=>{
         status: 403
       });
     }
-    // Resolve plan name: null/empty => default (free tier) plan from DB
-    let planName = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
-    if (!planName) {
-      const { data: defaultPlan } = await supabase.from('membership_plans').select('name').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      planName = defaultPlan?.name ?? '';
-    }
-    const planResult = await supabase.from('membership_plans').select('*').eq('name', planName).eq('is_active', true).maybeSingle();
-    let membershipPlan = planResult.data ?? null;
-    let planError = planResult.error ?? null;
-    // Fallback: when profile has stale name (e.g. 'free') but DB uses 'Trainee', use default free-tier plan
-    if (!planError && !membershipPlan) {
-      const fallback = await supabase.from('membership_plans').select('*').eq('account_type', 'free').eq('is_active', true).limit(1).maybeSingle();
-      membershipPlan = fallback.data ?? null;
-      planError = fallback.error ?? null;
-      if (membershipPlan) {
-        planName = membershipPlan.name;
-        console.warn(`⚠️ [${requestId}] Plan "${profile.membership_plan ?? ''}" not found; using default free-tier plan "${planName}" for user ${userId}`);
-      }
-    }
+    // Resolve plan: single fetch, robust match (exact name → case-insensitive name → display_name → default free)
+    const profilePlanRaw = (profile.membership_plan && String(profile.membership_plan).trim()) || '';
+    const { data: allPlans, error: plansErr } = await supabase.from('membership_plans').select('*').eq('is_active', true).limit(100);
     const profileTime = Date.now() - profileStartTime;
-    if (planError || !membershipPlan) {
-      console.error(`❌ [${requestId}] Membership plan fetch error (${profileTime}ms):`, planError ?? 'no matching plan and no default free-tier plan');
-      return new Response(JSON.stringify({
-        error: 'plan_not_found',
-        message: `Membership plan '${planName}' not found or inactive`
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 404
+    if (plansErr || !allPlans?.length) {
+      console.error(`❌ [${requestId}] Failed to fetch membership plans:`, plansErr);
+      return new Response(JSON.stringify({ error: 'plan_not_found', message: 'Failed to load membership plans.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500
+      });
+    }
+    const key = (s) => (s || '').trim().toLowerCase();
+    const defaultFree = allPlans.find((p) => (p.account_type || '').toLowerCase() === 'free') || allPlans[0];
+    let membershipPlan = defaultFree;
+    if (profilePlanRaw) {
+      const match = allPlans.find((p) => (p.name || '').trim() === profilePlanRaw)
+        || allPlans.find((p) => key(p.name) === key(profilePlanRaw))
+        || allPlans.find((p) => key(p.display_name) === key(profilePlanRaw));
+      if (match) membershipPlan = match;
+    }
+    const planName = membershipPlan?.name || defaultFree?.name || '';
+    if (!membershipPlan) {
+      return new Response(JSON.stringify({ error: 'plan_not_found', message: 'No active membership plan found.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404
       });
     }
     console.log(`📊 [${requestId}] Profile loaded (${profileTime}ms):`, {

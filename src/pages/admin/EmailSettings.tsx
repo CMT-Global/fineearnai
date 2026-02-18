@@ -97,13 +97,13 @@ export default function EmailSettings() {
       queryClient.invalidateQueries({ queryKey: ['email-settings'] });
       setHasChanges(false);
       toast({
-        title: t("admin.emailSettings.toasts.settingsSaved"),
-        description: t("admin.emailSettings.toasts.settingsSavedDescription"),
+        title: t("adminEmailSettings.toasts.settingsSaved"),
+        description: t("adminEmailSettings.toasts.settingsSavedDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: t("admin.emailSettings.toasts.errorSaving"),
+        title: t("adminEmailSettings.toasts.errorSaving"),
         description: error.message,
         variant: "destructive",
       });
@@ -128,13 +128,13 @@ export default function EmailSettings() {
       setTestEmailSent(true);
       setTimeout(() => setTestEmailSent(false), 5000);
       toast({
-        title: t("admin.emailSettings.toasts.testEmailSent"),
-        description: t("admin.emailSettings.toasts.testEmailSentDescription"),
+        title: t("adminEmailSettings.toasts.testEmailSent"),
+        description: t("adminEmailSettings.toasts.testEmailSentDescription"),
       });
     },
     onError: (error) => {
       toast({
-        title: t("admin.emailSettings.toasts.errorSendingTest"),
+        title: t("adminEmailSettings.toasts.errorSendingTest"),
         description: error.message,
         variant: "destructive",
       });
@@ -163,8 +163,8 @@ export default function EmailSettings() {
         });
         setErrors(newErrors);
         toast({
-          title: t("admin.emailSettings.toasts.validationError"),
-          description: t("admin.emailSettings.toasts.validationErrorDescription"),
+          title: t("adminEmailSettings.toasts.validationError"),
+          description: t("adminEmailSettings.toasts.validationErrorDescription"),
           variant: "destructive",
         });
       }
@@ -176,8 +176,8 @@ export default function EmailSettings() {
     setHasChanges(true);
     setErrors({});
     toast({
-      title: t("admin.emailSettings.toasts.settingsReset"),
-      description: t("admin.emailSettings.toasts.settingsResetDescription"),
+      title: t("adminEmailSettings.toasts.settingsReset"),
+      description: t("adminEmailSettings.toasts.settingsResetDescription"),
     });
   };
 
@@ -186,27 +186,29 @@ export default function EmailSettings() {
   };
 
   if (isLoading) {
-    return <PageLoading text={t("admin.emailSettings.loading")} />;
+    return <PageLoading text={t("adminEmailSettings.loading")} />;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6 max-w-full overflow-x-hidden">
+    <div className="w-full min-w-0 container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 overflow-x-hidden">
       <AdminBreadcrumb
         items={[
-          { label: t("admin.emailSettings.breadcrumb.communications") },
-          { label: t("admin.emailSettings.breadcrumb.emailSettings") },
+          { label: t("adminEmailSettings.breadcrumb.communications") },
+          { label: t("adminEmailSettings.breadcrumb.emailSettings") },
         ]}
       />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{t("admin.emailSettings.title")}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t("admin.emailSettings.subtitle")}
+        <div className="flex flex-col gap-4 min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
+              {t("adminEmailSettings.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base break-words">
+              {t("adminEmailSettings.subtitle")}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <Button
               variant="outline"
               onClick={handleReset}
@@ -214,7 +216,7 @@ export default function EmailSettings() {
               className="flex-1 sm:flex-none"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              {t("admin.emailSettings.actions.resetToDefaults")}
+              {t("adminEmailSettings.actions.resetToDefaults")}
             </Button>
             
             <Button
@@ -228,7 +230,7 @@ export default function EmailSettings() {
               ) : (
                 <Send className="h-4 w-4 mr-2" />
               )}
-              {t("admin.emailSettings.actions.sendTestEmail")}
+              {t("adminEmailSettings.actions.sendTestEmail")}
             </Button>
 
             <Button
@@ -241,38 +243,41 @@ export default function EmailSettings() {
               ) : (
                 <Mail className="h-4 w-4 mr-2" />
               )}
-              {t("admin.emailSettings.actions.saveSettings")}
+              {t("adminEmailSettings.actions.saveSettings")}
             </Button>
           </div>
         </div>
 
         {testEmailSent && (
-          <Alert className="border-green-500 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              {t("admin.emailSettings.testEmailSent")}
+          <Alert className="border-green-500 bg-green-50 min-w-0">
+            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <AlertDescription className="text-green-800 break-words min-w-0">
+              {t("adminEmailSettings.testEmailSent")}
             </AlertDescription>
           </Alert>
         )}
 
         {/* Sender Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("admin.emailSettings.senderInformation.title")}</CardTitle>
-            <CardDescription>
-              {t("admin.emailSettings.senderInformation.description")}
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="min-w-0 p-4 sm:p-6">
+            <CardTitle className="break-words text-lg sm:text-xl md:text-2xl">
+              {t("adminEmailSettings.senderInformation.title")}
+            </CardTitle>
+            <CardDescription className="break-words">
+              {t("adminEmailSettings.senderInformation.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="from_address">{t("admin.emailSettings.senderInformation.fromAddress")}</Label>
+          <CardContent className="space-y-4 min-w-0 p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="from_address" className="break-words">{t("adminEmailSettings.senderInformation.fromAddress")}</Label>
                     <Input
                       id="from_address"
                       type="email"
                       value={settings.from_address}
                       onChange={(e) => handleInputChange('from_address', e.target.value)}
                       placeholder="noreply@profitchips.com"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.from_address && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -282,13 +287,14 @@ export default function EmailSettings() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="from_name">{t("admin.emailSettings.senderInformation.fromName")}</Label>
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="from_name" className="break-words">{t("adminEmailSettings.senderInformation.fromName")}</Label>
                     <Input
                       id="from_name"
                       value={settings.from_name}
                       onChange={(e) => handleInputChange('from_name', e.target.value)}
                       placeholder="ProfitChips"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.from_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -302,23 +308,24 @@ export default function EmailSettings() {
         </Card>
 
         {/* Reply-To Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("admin.emailSettings.replyToInformation.title")}</CardTitle>
-            <CardDescription>
-              {t("admin.emailSettings.replyToInformation.description")}
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="min-w-0 p-4 sm:p-6">
+            <CardTitle className="break-words text-lg sm:text-xl md:text-2xl">{t("adminEmailSettings.replyToInformation.title")}</CardTitle>
+            <CardDescription className="break-words">
+              {t("adminEmailSettings.replyToInformation.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reply_to_address">{t("admin.emailSettings.replyToInformation.replyToAddress")}</Label>
+          <CardContent className="space-y-4 min-w-0 p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="reply_to_address" className="break-words">{t("adminEmailSettings.replyToInformation.replyToAddress")}</Label>
                     <Input
                       id="reply_to_address"
                       type="email"
                       value={settings.reply_to_address}
                       onChange={(e) => handleInputChange('reply_to_address', e.target.value)}
                       placeholder="support@profitchips.com"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.reply_to_address && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -328,13 +335,14 @@ export default function EmailSettings() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="reply_to_name">{t("admin.emailSettings.replyToInformation.replyToName")}</Label>
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="reply_to_name" className="break-words">{t("adminEmailSettings.replyToInformation.replyToName")}</Label>
                     <Input
                       id="reply_to_name"
                       value={settings.reply_to_name}
                       onChange={(e) => handleInputChange('reply_to_name', e.target.value)}
                       placeholder="ProfitChips Support"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.reply_to_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -348,22 +356,23 @@ export default function EmailSettings() {
         </Card>
 
         {/* Platform Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("admin.emailSettings.platformInformation.title")}</CardTitle>
-            <CardDescription>
-              {t("admin.emailSettings.platformInformation.description")}
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="min-w-0 p-4 sm:p-6">
+            <CardTitle className="break-words text-lg sm:text-xl md:text-2xl">{t("adminEmailSettings.platformInformation.title")}</CardTitle>
+            <CardDescription className="break-words">
+              {t("adminEmailSettings.platformInformation.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="platform_name">{t("admin.emailSettings.platformInformation.platformName")}</Label>
+          <CardContent className="space-y-4 min-w-0 p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="platform_name" className="break-words">{t("adminEmailSettings.platformInformation.platformName")}</Label>
                     <Input
                       id="platform_name"
                       value={settings.platform_name}
                       onChange={(e) => handleInputChange('platform_name', e.target.value)}
                       placeholder="ProfitChips"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.platform_name && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -373,14 +382,15 @@ export default function EmailSettings() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="platform_url">{t("admin.emailSettings.platformInformation.platformUrl")}</Label>
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="platform_url" className="break-words">{t("adminEmailSettings.platformInformation.platformUrl")}</Label>
                     <Input
                       id="platform_url"
                       type="url"
                       value={settings.platform_url}
                       onChange={(e) => handleInputChange('platform_url', e.target.value)}
                       placeholder="https://profitchips.com"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.platform_url && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -391,15 +401,16 @@ export default function EmailSettings() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="support_email">{t("admin.emailSettings.platformInformation.supportEmail")}</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="support_email" className="break-words">{t("adminEmailSettings.platformInformation.supportEmail")}</Label>
                     <Input
                       id="support_email"
                       type="email"
                       value={settings.support_email}
                       onChange={(e) => handleInputChange('support_email', e.target.value)}
                       placeholder="support@profitchips.com"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.support_email && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -409,14 +420,15 @@ export default function EmailSettings() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="admin_notification_email">{t("admin.emailSettings.platformInformation.adminNotificationEmail")}</Label>
+                  <div className="space-y-2 min-w-0">
+                    <Label htmlFor="admin_notification_email" className="break-words">{t("adminEmailSettings.platformInformation.adminNotificationEmail")}</Label>
                     <Input
                       id="admin_notification_email"
                       type="email"
                       value={settings.admin_notification_email}
                       onChange={(e) => handleInputChange('admin_notification_email', e.target.value)}
                       placeholder="admin@profitchips.com"
+                      className="min-w-0 w-full max-w-full"
                     />
                     {errors.admin_notification_email && (
                       <p className="text-sm text-destructive flex items-center gap-1">
@@ -427,14 +439,15 @@ export default function EmailSettings() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="footer_text">{t("admin.emailSettings.platformInformation.footerText")}</Label>
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="footer_text" className="break-words">{t("adminEmailSettings.platformInformation.footerText")}</Label>
                   <Textarea
                     id="footer_text"
                     value={settings.footer_text}
                     onChange={(e) => handleInputChange('footer_text', e.target.value)}
                     placeholder="This is an automated email from ProfitChips..."
                     rows={3}
+                    className="min-w-0 w-full max-w-full"
                   />
                   {errors.footer_text && (
                     <p className="text-sm text-destructive flex items-center gap-1">

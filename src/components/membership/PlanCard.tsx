@@ -23,6 +23,7 @@ interface MembershipPlan {
   task_commission_rate: number;
   deposit_commission_rate: number;
   free_plan_expiry_days?: number;
+  free_trial_days?: number;
   free_unlock_withdrawal_enabled?: boolean;
   free_unlock_withdrawal_days?: number;
 }
@@ -127,7 +128,8 @@ export function PlanCard({
           </div>
         )}
 
-        {isCurrentPlan && (
+        {/* Current plan badge - only when not default plan to avoid duplicate with button in free-trial section */}
+        {isCurrentPlan && !isDefaultPlan && (
           <Badge className="absolute top-14 sm:top-4 right-4 text-xs z-10">
             Current Plan
           </Badge>
@@ -222,6 +224,16 @@ export function PlanCard({
                         <span>Withdrawals unlock after {plan.free_unlock_withdrawal_days} active days</span>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Paid plans: show free trial days when admin has set n days (onboarding trial) */}
+                {!isDefaultPlan && (plan.free_trial_days ?? 0) > 0 && (
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm mt-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3" />
+                      <span>Free trial: {plan.free_trial_days} days</span>
+                    </div>
                   </div>
                 )}
 
@@ -444,6 +456,16 @@ export function PlanCard({
                 <span>Withdrawals unlock after {plan.free_unlock_withdrawal_days} active days</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Paid plans: show free trial days when admin has set n days (onboarding trial) */}
+        {!isDefaultPlan && (plan.free_trial_days ?? 0) > 0 && (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              <span>Free trial: {plan.free_trial_days} days</span>
+            </div>
           </div>
         )}
 

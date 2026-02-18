@@ -31,6 +31,7 @@ const Wallet = lazy(() => import("./pages/Wallet"));
 const Transactions = lazy(() => import("./pages/Transactions"));
 const MembershipPlans = lazy(() => import("./pages/MembershipPlans"));
 const Tasks = lazy(() => import("./pages/Tasks"));
+const Tasks4Opt = lazy(() => import("./pages/Tasks4Opt"));
 const TaskDetail = lazy(() => import("./pages/TaskDetail"));
 const Referrals = lazy(() => import("./pages/Referrals"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -44,7 +45,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 // Lazy-loaded admin routes
 const Admin = lazy(() => import("./pages/Admin"));
 const AITasksGenerate = lazy(() => import("@/pages/admin/AITasksGenerate"));
-const AITasksManage = lazy(() => import("@/pages/admin/AITasksManage"));
+const AITasksManageUnified = lazy(() => import("@/pages/admin/AITasksManageUnified"));
+const TaskAccess4Opt = lazy(() => import("@/pages/admin/TaskAccess4Opt"));
 const Withdrawals = lazy(() => import("@/pages/admin/Withdrawals"));
 const Users = lazy(() => import("@/pages/admin/Users"));
 const UserDetail = lazy(() => import("@/pages/admin/UserDetail"));
@@ -57,7 +59,7 @@ const HowItWorksSettings = lazy(() => import("@/pages/admin/HowItWorksSettings")
 const EmailTemplateGlobalSettings = lazy(() => import("@/pages/admin/EmailTemplateGlobalSettings"));
 const PlansManage = lazy(() => import("@/pages/admin/PlansManage"));
 const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemManage"));
-const TaskAnalytics = lazy(() => import("@/pages/admin/TaskAnalytics"));
+const TaskAnalyticsUnified = lazy(() => import("@/pages/admin/TaskAnalyticsUnified"));
 const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const EmailSettings = lazy(() => import("@/pages/admin/EmailSettings"));
@@ -228,6 +230,9 @@ const RoutesWrapper = () => {
             <Route index element={<Tasks />} />
             <Route path=":userTaskId" element={<TaskDetail />} />
           </Route>
+          <Route path="tasks-4opt" element={<EmailVerificationGuard />}>
+            <Route index element={<Tasks4Opt />} />
+          </Route>
           <Route path="referrals" element={<Referrals />} />
           <Route path="team" element={<Navigate to="/referrals" replace />} />
           <Route path="become-partner" element={<BecomePartner />} />
@@ -250,7 +255,10 @@ const RoutesWrapper = () => {
       >
         <Route index element={<Admin />} />
         <Route path="tasks/generate" element={<AITasksGenerate />} />
-        <Route path="tasks/manage" element={<AITasksManage />} />
+        <Route path="tasks/generate-4opt" element={<Navigate to="/admin/tasks/generate?mode=4opt" replace />} />
+        <Route path="tasks/manage" element={<AITasksManageUnified />} />
+        <Route path="tasks/manage-4opt" element={<Navigate to="/admin/tasks/manage?mode=4opt" replace />} />
+        <Route path="tasks/access-4opt" element={<TaskAccess4Opt />} />
         <Route path="withdrawals" element={<Withdrawals />} />
         <Route path="users" element={<Users />} />
         <Route path="users/:userId" element={<UserDetail />} />
@@ -269,7 +277,8 @@ const RoutesWrapper = () => {
         <Route path="plans/manage" element={<PlansManage />} />
         <Route path="referrals/manage" element={<ReferralSystemManage />} />
         <Route path="analytics/dashboard" element={<AdminAnalyticsDashboard />} />
-        <Route path="analytics/tasks" element={<TaskAnalytics />} />
+        <Route path="analytics/tasks" element={<TaskAnalyticsUnified />} />
+        <Route path="analytics/tasks-4opt" element={<Navigate to="/admin/analytics/tasks?mode=4opt" replace />} />
         <Route path="communications/email" element={<BulkEmail />} />
         <Route path="communications/influencer-invites" element={<InfluencerInvites />} />
         <Route path="communications/user-invites" element={<UserInvites />} />

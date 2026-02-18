@@ -3,21 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
+import { useTrainee4Opt } from "@/hooks/useTrainee4Opt";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { supabase } from "@/integrations/supabase/client";
-import { getTaskOptionsDisplayOrder } from "@/lib/task-options-order";
+import { getTaskOptionsDisplayOrder, getTaskOptionsDisplayOrder4 } from "@/lib/task-options-order";
 import { TaskStats } from "@/components/tasks/TaskStats";
 import { TaskInterface } from "@/components/tasks/TaskInterface";
 import { TaskSkeleton } from "@/components/tasks/TaskSkeleton";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { DailyLimitReached } from "@/components/tasks/DailyLimitReached";
 import { NoTasksAvailable } from "@/components/tasks/NoTasksAvailable";
+import { AccountExpiredScreen } from "@/components/tasks/AccountExpiredScreen";
 import { RecentTransactionsCard } from "@/components/transactions/RecentTransactionsCard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 
 interface AITask {
@@ -54,8 +55,8 @@ interface Feedback {
 
 const Tasks = () => {
   const { t } = useTranslation();
-  const { user, loading, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { user, loading } = useAuth();
+  const { has4OptAccess, loading: trainee4OptLoading } = useTrainee4Opt();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { formatAmount } = useCurrencyConversion();
@@ -79,50 +80,45 @@ const Tasks = () => {
   }, [user, loading, navigate]);
 
   // ✅ Phase 2: React Query handles ALL server data (user stats from get-next-task)
-  // Database is the single source of truth for task resets
-  // ✅ Phase 2.3: Add retry logic for transient auth errors
+  // If user has trainee_4opt role -> get-next-task-4opt; else -> get-next-task (2-option)
   const { data: taskData, isLoading: isLoadingTask, refetch: refetchTask } = useQuery({
-    queryKey: ['next-task', user?.id],
+    queryKey: ['next-task', user?.id, has4OptAccess],
     queryFn: async () => {
       let lastError = null;
-      
-      // Retry up to 2 times with short delay for auth timing issues
+      const fn = has4OptAccess ? "get-next-task-4opt" : "get-next-task";
+
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const { data, error } = await supabase.functions.invoke("get-next-task");
+          const { data, error } = await supabase.functions.invoke(fn);
 
-          // Handle HTTP errors from edge function
           if (error) {
-            // Check if it's a transient auth error worth retrying
             if (error.message?.includes('AuthSessionMissingError') && attempt === 0) {
-              console.warn(`⚠️ AuthSessionMissingError on attempt ${attempt + 1}, retrying...`);
               lastError = error;
-              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+              await new Promise(resolve => setTimeout(resolve, 500));
               continue;
             }
-            
-            console.error('❌ Error from get-next-task:', error);
             throw error;
           }
-
-          // Success - return data
           return data;
         } catch (err) {
           lastError = err;
-          if (attempt < 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
+          if (attempt < 1) await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
-      
-      // All retries failed
       throw lastError;
     },
-    enabled: !!user,
-    staleTime: 10000,    // Cache for 10 seconds
-    gcTime: 60000,       // Keep in cache for 1 minute
-    retry: false,        // Disable automatic retry since we handle it manually
+    enabled: !!user && !trainee4OptLoading,
+    staleTime: 10000,
+    gcTime: 60000,
+    retry: false,
   });
+
+  // Refetch task when entering Tasks page
+  useEffect(() => {
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: ['next-task', user.id, has4OptAccess] });
+    }
+  }, [user?.id, has4OptAccess, queryClient]);
 
   // ✅ Phase 2: Real-time subscription to profile updates (React Query invalidation only)
   useEffect(() => {
@@ -146,8 +142,7 @@ const Tasks = () => {
           // Show syncing indicator
           setIsSyncing(true);
           
-          // Invalidate the next-task query to trigger a refetch with fresh data
-          queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+          queryClient.invalidateQueries({ queryKey: ['next-task', user?.id, has4OptAccess] });
           
           // Profile updates are handled by useProfile hook's real-time subscription
           
@@ -160,16 +155,16 @@ const Tasks = () => {
       });
 
     return () => {
-      console.log('🔌 Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [user, has4OptAccess, queryClient]);
 
   const currentTask = taskData?.task || null;
-  // Deterministic option order per task (consistent per attempt; correctness is by key "a"/"b" not position)
   const displayOrder = useMemo(() => {
     if (!currentTask) return null;
-    const order = getTaskOptionsDisplayOrder(currentTask);
+    const order = has4OptAccess
+      ? getTaskOptionsDisplayOrder4(currentTask)
+      : getTaskOptionsDisplayOrder(currentTask);
     if (typeof console !== "undefined" && process.env.NODE_ENV !== "test") {
       console.log("[TaskOptions] display order", {
         taskId: currentTask.id,
@@ -177,12 +172,20 @@ const Tasks = () => {
       });
     }
     return order;
-  }, [currentTask?.id]);
+  }, [currentTask?.id, currentTask, has4OptAccess]);
 
   // ✅ Phase 2: All user stats from React Query (taskData)
   // Database is single source of truth - API tells us if limit is reached
   const userStats = taskData?.userStats || null;
   const isDailyLimitReached = taskData?.error === 'daily_limit_reached';
+
+  // Plan expired: from API (get-next-task) or from profile (plan_expires_at in the past)
+  const isPlanExpiredFromApi = taskData?.error === 'plan_expired';
+  const isPlanExpiredFromProfile = useMemo(() => {
+    if (!profile?.plan_expires_at) return false;
+    return new Date(profile.plan_expires_at) < new Date();
+  }, [profile?.plan_expires_at]);
+  const isPlanExpired = isPlanExpiredFromApi || isPlanExpiredFromProfile;
 
   // Skip mutation - Phase 1.3: Server-side skip enforcement
   const skipMutation = useMutation({
@@ -227,10 +230,9 @@ const Tasks = () => {
   // Submit mutation - Phase 1: No optimistic updates, server response is single source of truth
   const submitMutation = useMutation({
     mutationFn: async ({ taskId, response, timeTaken }: { taskId: string; response: string; timeTaken: number }) => {
-      // Set submitting state to prevent double-clicks
       setIsSubmitting(true);
-      
-      const { data, error } = await supabase.functions.invoke("complete-ai-task", {
+      const fn = has4OptAccess ? "complete-ai-task-4opt" : "complete-ai-task";
+      const { data, error } = await supabase.functions.invoke(fn, {
         body: {
           taskId,
           selectedResponse: response,
@@ -260,8 +262,7 @@ const Tasks = () => {
         // Daily limit reached - show congratulatory message
         toast.success(t("tasks.toasts.allTasksCompleted"));
         
-        // Set query data to show daily limit UI
-        queryClient.setQueryData(['next-task', user?.id], {
+        queryClient.setQueryData(['next-task', user?.id, has4OptAccess], {
           success: false,
           error: 'daily_limit_reached',
           message: t("tasks.toasts.allTasksCompleted"),
@@ -283,7 +284,7 @@ const Tasks = () => {
         }, 2000);
       } else {
         // More tasks available - invalidate and refetch
-        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['next-task', user?.id, has4OptAccess] });
         
         setTimeout(() => {
           setFeedback(null);
@@ -307,8 +308,7 @@ const Tasks = () => {
     submitMutation.mutate({ taskId: currentTask.id, response, timeTaken });
   }, [currentTask, startTime, submitMutation, isSubmitting]);
 
-  // Early return ONLY for auth loading (before we have user)
-  if (loading || !user) {
+  if (loading || !user || trainee4OptLoading) {
     return <PageLoading text={t("login.signingIn")} />;
   }
 
@@ -330,27 +330,37 @@ const Tasks = () => {
 
         {/* Main Content */}
         <div className="p-4 lg:p-8 max-w-5xl mx-auto">
-          {/* AI Training Explanation Alert */}
-          <Alert className="mb-6">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>{t("tasks.understandingAITraining")}</strong>{" "}
-              {t("tasks.understandingAITrainingDescription")}
-            </AlertDescription>
-          </Alert>
+          {isPlanExpired ? (
+            /* Account expired: dedicated screen, no task UI */
+            <AccountExpiredScreen
+              membershipPlan={profile?.membership_plan ?? ""}
+              planExpiresAt={profile?.plan_expires_at ?? null}
+              onUpgrade={() => navigate("/plans")}
+              onGoToDashboard={() => navigate("/dashboard")}
+            />
+          ) : (
+            <>
+              {/* AI Training Explanation Alert */}
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>{t("tasks.understandingAITraining")}</strong>{" "}
+                  {t("tasks.understandingAITrainingDescription")}
+                </AlertDescription>
+              </Alert>
 
-          {/* Stats Cards - Always Visible */}
-          <TaskStats
-            tasksCompletedToday={userStats?.tasksCompletedToday || 0}
-            dailyLimit={userStats?.dailyLimit || 0}
-            remainingTasks={userStats?.remainingTasks || 0}
-            earningsBalance={userStats?.earningsBalance || 0}
-            isLoading={isLoadingTask && !userStats}
-            isSyncing={isSyncing || submitMutation.isPending}
-          />
+              {/* Stats Cards - Always Visible */}
+              <TaskStats
+                tasksCompletedToday={userStats?.tasksCompletedToday || 0}
+                dailyLimit={userStats?.dailyLimit || 0}
+                remainingTasks={userStats?.remainingTasks || 0}
+                earningsBalance={userStats?.earningsBalance || 0}
+                isLoading={isLoadingTask && !userStats}
+                isSyncing={isSyncing || submitMutation.isPending}
+              />
 
-          {/* Task Interface or Loading Skeleton */}
-          {isLoadingTask ? (
+              {/* Task area or daily limit or no tasks */}
+              {isLoadingTask ? (
             <TaskSkeleton />
           ) : isDailyLimitReached ? (
             <DailyLimitReached
@@ -370,21 +380,23 @@ const Tasks = () => {
               selectedResponse={selectedResponse}
               onResponseChange={setSelectedResponse}
             />
-          ) : currentTask ? (
-            <TaskSkeleton />
-          ) : (
-            <NoTasksAvailable onRefresh={refetchTask} />
-          )}
+              ) : currentTask ? (
+                <TaskSkeleton />
+              ) : (
+                <NoTasksAvailable onRefresh={refetchTask} />
+              )}
 
-          {/* Recent Activity */}
-          <div className="mt-8">
-            <RecentTransactionsCard 
-              userId={user?.id || ''} 
-              maxItems={5} 
-              showPagination={false} 
-              title={t("tasks.recentActivity")}
-            />
-          </div>
+              {/* Recent Activity */}
+              <div className="mt-8">
+                <RecentTransactionsCard 
+                  userId={user?.id || ''} 
+                  maxItems={5} 
+                  showPagination={false} 
+                  title={t("tasks.recentActivity")}
+                />
+              </div>
+            </>
+          )}
         </div>
     </>
   );

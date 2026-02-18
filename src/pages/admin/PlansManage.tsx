@@ -78,7 +78,7 @@ const PlansManage = () => {
     min_daily_withdrawal: 10,
     max_daily_withdrawal: 1000,
     free_plan_expiry_days: null as number | null,
-    free_trial_days: 0,
+    free_trial_days: "0",
     referral_eligible: true,
     is_active: true,
     features: "[]",
@@ -283,7 +283,7 @@ const PlansManage = () => {
       min_daily_withdrawal: 10,
       max_daily_withdrawal: 1000,
       free_plan_expiry_days: null as number | null,
-      free_trial_days: 0,
+      free_trial_days: "0",
       referral_eligible: true, // Phase 3: Default to true
       is_active: true,
       features: "[]",
@@ -310,7 +310,7 @@ const PlansManage = () => {
       min_daily_withdrawal: plan.min_daily_withdrawal,
       max_daily_withdrawal: plan.max_daily_withdrawal,
       free_plan_expiry_days: plan.free_plan_expiry_days,
-      free_trial_days: (plan as any).free_trial_days ?? 0,
+      free_trial_days: String((plan as any).free_trial_days ?? 0),
       referral_eligible: plan.referral_eligible, // Phase 3: Load existing value
       is_active: plan.is_active,
       features: JSON.stringify(plan.features || [], null, 2),
@@ -773,7 +773,7 @@ const PlansManage = () => {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              free_trial_days: parseInt(e.target.value) || 0,
+                              free_trial_days: e.target.value,
                             })
                           }
                           placeholder="0"
