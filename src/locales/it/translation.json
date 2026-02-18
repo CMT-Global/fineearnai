@@ -2302,7 +2302,9 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "Il servizio IA è temporaneamente occupato. Riprova tra qualche minuto.",
+      "errorRateLimit": "Troppe richieste. Attendi un momento e riprova."
     },
     "aiTasksManage": {
       "title": "AI Task Management",

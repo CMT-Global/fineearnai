@@ -94,12 +94,30 @@ const AITasksGenerate = () => {
       });
 
       if (error) throw error;
+      const bodyError = typeof data?.error === "string" ? data.error : null;
+      if (bodyError) throw new Error(bodyError);
 
       toast.success(t("admin.aiTasksGenerate.successGenerated", { count: data.tasksCreated }));
       navigate(managePath);
     } catch (error: any) {
       console.error("Error generating tasks:", error);
-      toast.error(error.message || t("admin.aiTasksGenerate.errorFailedToGenerate"));
+      let message = String(error?.message ?? "");
+      if (error?.context && typeof error.context?.json === "function") {
+        try {
+          const body = await error.context.json();
+          if (body && typeof body.error === "string") message = body.error;
+        } catch (_) {
+          /* ignore parse error */
+        }
+      }
+      const is503 = /503/.test(message);
+      const is429 = /429/.test(message);
+      const userMessage = is503
+        ? t("admin.aiTasksGenerate.errorServiceUnavailable")
+        : is429
+          ? t("admin.aiTasksGenerate.errorRateLimit")
+          : message || t("admin.aiTasksGenerate.errorFailedToGenerate");
+      toast.error(userMessage);
     } finally {
       setIsGenerating(false);
     }
