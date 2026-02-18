@@ -2303,8 +2303,16 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
-    ,
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "El servicio de IA está ocupado. Inténtelo de nuevo en unos minutos.",
+      "errorRateLimit": "Demasiadas solicitudes. Espere un momento e inténtelo de nuevo."
+    },
+    "aiTasksManage": {
+      "title": "AI Task Management",
+      "subtitle": "Manage all AI training tasks ({{count}} tasks)",
+      "loading": "Cargando gestionar tareas IA...",
+      "generateTasks": "Generate Tasks",
+      "category": "Category",
       "categories": {
         "sentiment_analysis": "Análisis de Sentimiento",
         "hotel_review_sentiment": "Sentimiento en reseñas de hotel",
@@ -2317,14 +2325,7 @@
         "grammar_correction": "Corrección gramatical",
         "summarization": "Resumen",
         "translation": "Traducción"
-      }
-    },
-    "aiTasksManage": {
-      "title": "AI Task Management",
-      "subtitle": "Manage all AI training tasks ({{count}} tasks)",
-      "loading": "Cargando gestionar tareas IA...",
-      "generateTasks": "Generate Tasks",
-      "category": "Category",
+      },
       "allCategories": "All Categories",
       "difficulty": "Difficulty",
       "allDifficulties": "All Difficulties",
