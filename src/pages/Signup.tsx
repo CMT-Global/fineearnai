@@ -98,14 +98,16 @@ const Signup = () => {
 
   const fetchReferrerInfo = async (code: string) => {
     try {
+      const upperCode = code.trim().toUpperCase();
+      const lowerCode = code.trim().toLowerCase();
       const { data, error } = await supabase
         .from("profiles")
         .select("username, full_name")
-        .eq("referral_code", code)
-        .single();
+        .in("referral_code", upperCode === lowerCode ? [upperCode] : [upperCode, lowerCode])
+        .limit(1)
+        .maybeSingle();
 
       if (error || !data) {
-        localStorage.removeItem("pending_referral_code");
         setReferrerUsername(null);
         setReferrerDisplayName(null);
         return;
@@ -166,6 +168,28 @@ const Signup = () => {
     })();
     return () => { cancelled = true; };
   }, [isInviteOnly, enableInviteRequests, inviteStep]);
+
+  // When user types a referral code in the form, fetch and show referrer name (same as referral link)
+  const referralCodeInput = form.watch("referralCode");
+  useEffect(() => {
+    const raw = (referralCodeInput ?? "").trim();
+    const upper = raw.toUpperCase();
+    if (!raw) {
+      setReferrerUsername(null);
+      setReferrerDisplayName(null);
+      return;
+    }
+    if (!validateReferralCode(upper)) {
+      setReferrerDisplayName(null);
+      setReferrerUsername(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (raw !== upper) form.setValue("referralCode", upper, { shouldValidate: false });
+      fetchReferrerInfo(upper);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [referralCodeInput]);
 
   // Real-time username validation
   const usernameValue = form.watch("username");

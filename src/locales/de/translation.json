@@ -2303,7 +2303,9 @@
       "errorSelectCategoryAndDifficulty": "Please select category and difficulty",
       "errorQuantityRange": "Quantity must be between 1 and 25",
       "successGenerated": "Successfully generated {{count}} tasks!",
-      "errorFailedToGenerate": "Failed to generate tasks"
+      "errorFailedToGenerate": "Failed to generate tasks",
+      "errorServiceUnavailable": "Der KI-Dienst ist vorübergehend ausgelastet. Bitte versuchen Sie es in einigen Minuten erneut.",
+      "errorRateLimit": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut."
     },
     "aiTasksManage": {
       "title": "AI Task Management",
