@@ -64,6 +64,7 @@ const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
 const EmailSettings = lazy(() => import("@/pages/admin/EmailSettings"));
 const ScheduledEmails = lazy(() => import("@/pages/admin/ScheduledEmails"));
+const DailyTasksReminderCampaign = lazy(() => import("@/pages/admin/DailyTasksReminderCampaign"));
 const LoginMessage = lazy(() => import("@/pages/admin/LoginMessage"));
 const SystemSecrets = lazy(() => import("@/pages/admin/SystemSecrets"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
@@ -289,6 +290,7 @@ const RoutesWrapper = () => {
         <Route path="communications/email-settings" element={<EmailSettings />} />
         <Route path="communications/reamaze-settings" element={<ReamazeSettings />} />
         <Route path="communications/scheduled" element={<ScheduledEmails />} />
+        <Route path="communications/daily-tasks-reminder" element={<DailyTasksReminderCampaign />} />
         <Route path="communications/login-message" element={<LoginMessage />} />
         <Route path="security-settings" element={<SecuritySettings />} />
         <Route path="security/secrets" element={<SystemSecrets />} />

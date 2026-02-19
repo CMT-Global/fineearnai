@@ -123,6 +123,13 @@ const TEMPLATE_TYPES = [
     description: "OTP code sent when user requests to delete their account",
     variables: ["username", "otp_code", "expiry_minutes"]
   },
+  // Daily Tasks Reminder
+  {
+    value: "daily_tasks_reminder",
+    label: "Daily Tasks Reminder",
+    description: "Daily reminder to active users that new tasks are ready",
+    variables: ["first_name", "login_url", "upgrade_url", "help_center_url", "platform_name"]
+  },
   
   // Custom
   {
@@ -533,6 +540,7 @@ const EmailTemplates = () => {
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                               placeholder={t("admin.emailTemplates.form.templateNamePlaceholder")}
+                              className="bg-background text-foreground"
                             />
                           </div>
 
@@ -572,6 +580,7 @@ const EmailTemplates = () => {
                               setFormData({ ...formData, subject: e.target.value })
                             }
                             placeholder={t("admin.emailTemplates.form.emailSubjectPlaceholder")}
+                            className="bg-background text-foreground"
                           />
                           <p className="text-xs text-muted-foreground mt-1">
                             {t("admin.emailTemplates.form.subjectVariablesHint")}
@@ -832,8 +841,8 @@ const EmailTemplates = () => {
                 {/* Subject Preview */}
                 <div>
                   <Label className="text-sm font-semibold">{t("admin.emailTemplates.preview.emailSubject")}</Label>
-                  <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border rounded-lg">
-                    <p className="font-medium text-sm">
+                  <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border rounded-lg">
+                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
                       {previewTemplate ? populateSampleData(previewTemplate.subject) : ''}
                     </p>
                   </div>
