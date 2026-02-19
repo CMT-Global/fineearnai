@@ -17,16 +17,12 @@ export default defineConfig(({ mode }) => {
     host: "::",
     port: 8080,
     allowedHosts: [
-      "profitchips.com",
-      "www.profitchips.com",
       "demo.piniscripts.com",
       "www.demo.piniscripts.com",
     ],
   },
   preview: {
     allowedHosts: [
-      "profitchips.com",
-      "www.profitchips.com",
       "demo.piniscripts.com",
       "www.demo.piniscripts.com",
     ],
