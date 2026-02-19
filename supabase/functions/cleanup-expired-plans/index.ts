@@ -24,26 +24,26 @@ Deno.serve(async (req)=>{
     let offset = 0;
     let hasMore = true;
     // ============================================
-    // PHASE 1: SEND PLAN EXPIRY REMINDERS (Daily from 5 days before to 1 day before)
+    // PHASE 1: SEND PLAN EXPIRY REMINDERS (1 day before expiry only)
     // ============================================
-    console.log('=== Phase 1: Processing plan expiry reminders (5-day window) ===');
-    // Calculate 5-day window
-    const fiveDaysFromNow = new Date();
-    fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
-    fiveDaysFromNow.setHours(23, 59, 59, 999); // End of day
-    const oneDayFromNow = new Date();
-    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
-    oneDayFromNow.setHours(0, 0, 0, 0); // Start of day
-    console.log(`Looking for plans expiring between ${oneDayFromNow.toISOString()} and ${fiveDaysFromNow.toISOString()}`);
+    console.log('=== Phase 1: Processing plan expiry reminders (1 day before expiry) ===');
+    // Window: plans that expire tomorrow (so we send the reminder 1 day before)
+    const startOfTomorrow = new Date();
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+    startOfTomorrow.setHours(0, 0, 0, 0);
+    const endOfTomorrow = new Date();
+    endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
+    endOfTomorrow.setHours(23, 59, 59, 999);
+    console.log(`Looking for plans expiring tomorrow between ${startOfTomorrow.toISOString()} and ${endOfTomorrow.toISOString()}`);
     const defaultPlanName = await getDefaultPlanName(supabaseClient);
-    // Get users whose plans expire in 1-5 days (exclude default/free tier plan)
-    let reminderQuery = supabaseClient.from('profiles').select('id, username, email, membership_plan, plan_expires_at').gte('plan_expires_at', oneDayFromNow.toISOString()).lte('plan_expires_at', fiveDaysFromNow.toISOString()).not('plan_expires_at', 'is', null).eq('account_status', 'active');
+    // Get users whose plans expire tomorrow only (exclude default/free tier plan)
+    let reminderQuery = supabaseClient.from('profiles').select('id, username, email, membership_plan, plan_expires_at').gte('plan_expires_at', startOfTomorrow.toISOString()).lte('plan_expires_at', endOfTomorrow.toISOString()).not('plan_expires_at', 'is', null).eq('account_status', 'active');
     if (defaultPlanName) reminderQuery = reminderQuery.neq('membership_plan', defaultPlanName);
     const { data: upcomingExpiryUsers, error: reminderQueryError } = await reminderQuery;
     if (reminderQueryError) {
       console.error('Error querying users for expiry reminders:', reminderQueryError);
     } else if (upcomingExpiryUsers && upcomingExpiryUsers.length > 0) {
-      console.log(`Found ${upcomingExpiryUsers.length} users with plans expiring in 1-5 days`);
+      console.log(`Found ${upcomingExpiryUsers.length} users with plans expiring tomorrow`);
 
       // Fetch platform URL from email settings once for all reminders
       const { data: emailConfig } = await supabaseClient
@@ -146,7 +146,7 @@ Deno.serve(async (req)=>{
         }
       }
     } else {
-      console.log('No users found with plans expiring in 1-5 days');
+      console.log('No users found with plans expiring tomorrow');
     }
     console.log('=== Phase 1 completed: Expiry reminders processed ===');
     console.log(`Total reminders sent: ${totalRemindersSent}`);
