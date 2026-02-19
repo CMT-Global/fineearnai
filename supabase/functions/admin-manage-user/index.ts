@@ -566,6 +566,23 @@ Deno.serve(async (req)=>{
           await supabaseClient.from('profiles').update({
             account_status: 'deleted'
           }).eq('id', userId);
+          // Remove invite_requests for this user's email so they disappear from admin/users/invite-requests
+          if (targetProfile?.email) {
+            const emailLower = targetProfile.email.trim().toLowerCase();
+            const { data: toDelete } = await supabaseClient
+              .from('invite_requests')
+              .select('id')
+              .ilike('email', emailLower);
+            if (toDelete?.length) {
+              const { error: inviteDeleteError } = await supabaseClient
+                .from('invite_requests')
+                .delete()
+                .in('id', toDelete.map((r) => r.id));
+              if (inviteDeleteError) {
+                console.warn(`Invite requests cleanup for deleted user ${userId}:`, inviteDeleteError.message);
+              }
+            }
+          }
           await supabaseClient.from('audit_logs').insert({
             admin_id: user.id,
             action_type: 'delete_user',
