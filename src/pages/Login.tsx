@@ -11,7 +11,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBranding } from "@/contexts/BrandingContext";
-import { PlatformMigrationBanner } from "@/components/shared/PlatformMigrationBanner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Form,
@@ -173,9 +172,6 @@ const Login = () => {
 
   return (
     <>
-      {/* Platform Migration Banner - Only visible on login page before authentication */}
-      <PlatformMigrationBanner />
-      
       <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4 pt-24 sm:pt-8">
         <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">

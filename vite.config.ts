@@ -19,19 +19,15 @@ export default defineConfig(({ mode }) => {
     allowedHosts: [
       "profitchips.com",
       "www.profitchips.com",
-      "demo.piniscripts.com",
-      "www.demo.piniscripts.com",
     ],
   },
   preview: {
     allowedHosts: [
       "profitchips.com",
       "www.profitchips.com",
-      "demo.piniscripts.com",
-      "www.demo.piniscripts.com",
     ],
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react(), mode === "production" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
