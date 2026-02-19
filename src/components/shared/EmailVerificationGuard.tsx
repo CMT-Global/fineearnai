@@ -1,40 +1,20 @@
-import { useEffect } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useAdmin } from "@/hooks/useAdmin";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import VerifyEmailRequired from "@/pages/VerifyEmailRequired";
 
 /**
- * Blocks access to the Tasks page (and task detail) when the user has not verified their email.
- * Redirects to dashboard and shows a toast with a "Verify Email" action that opens the verification dialog.
+ * For /tasks and /tasks-4opt: if the user has not verified their email, shows a dedicated
+ * "Verify email to access tasks" page instead of the task list. Once verified, the task list is shown.
  */
 export function EmailVerificationGuard() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id ?? undefined);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (authLoading || adminLoading || profileLoading || !user) return;
-
-    // Admins can access tasks without email verification
-    if (isAdmin) return;
-
-    const emailVerified = profile?.email_verified === true;
-    if (!emailVerified) {
-      toast.error(t("tasks.requireEmailVerification"), {
-        action: {
-          label: t("tasks.verifyEmailButton"),
-          onClick: () => navigate("/dashboard", { state: { openEmailVerification: true }, replace: false }),
-        },
-      });
-      navigate("/dashboard", { replace: true });
-    }
-  }, [user, authLoading, adminLoading, profileLoading, profile?.email_verified, isAdmin, navigate, t]);
 
   if (authLoading || adminLoading || profileLoading) {
     return (
@@ -48,9 +28,14 @@ export function EmailVerificationGuard() {
     return null;
   }
 
-  // Redirecting: don't render outlet
-  if (!isAdmin && profile && profile.email_verified !== true) {
-    return null;
+  // Admins can access tasks without email verification
+  if (isAdmin) {
+    return <Outlet />;
+  }
+
+  // Unverified (or profile not loaded): show dedicated page explaining they must verify email via Dashboard
+  if (!profile?.email_verified) {
+    return <VerifyEmailRequired />;
   }
 
   return <Outlet />;

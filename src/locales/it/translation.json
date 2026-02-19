@@ -368,6 +368,13 @@
     "subtitle": "Complete tasks to earn money and help train AI",
     "requireEmailVerification": "Verifica la tua email per accedere alle attività.",
     "verifyEmailButton": "Verifica email",
+    "verifyEmailRequiredPage": {
+      "title": "Verifica la tua email per iniziare le attività",
+      "subtitle": "Le attività sono disponibili dopo aver verificato la tua email.",
+      "description": "Clicca sul pulsante Verifica nel tuo pannello per ricevere un OTP sulla tua email registrata. Dopo aver inserito l'OTP e verificato, potrai iniziare le attività.",
+      "goToDashboard": "Vai al pannello e verifica",
+      "dashboardOnly": "Vai al pannello"
+    },
     "loadingTasks": "Loading tasks...",
     "understandingAITraining": "Understanding AI Training:",
     "understandingAITrainingDescription": "The 'correct' response for these tasks is determined by the collective analysis and consensus of many human evaluators, not by pre-existing AI knowledge. Your contributions are vital for refining and advancing AI models.",
