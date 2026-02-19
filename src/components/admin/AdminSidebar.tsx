@@ -117,7 +117,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       label: t("admin.sidebar.categories.userManagement"),
       icon: Users,
       items: [
-        { label: t("admin.sidebar.items.allUsers"), path: "/admin/users" },
+        { label: t("admin.sidebar.items.allUsers"), path: "/admin/users", exact: true },
         { label: t("admin.sidebar.items.inviteRequests"), path: "/admin/users/invite-requests" },
       ],
     },

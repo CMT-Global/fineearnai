@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupFormData } from "@/lib/auth-schema";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { validateReferralCode } from "@/lib/referral-utils";
 import { useUsernameValidation } from "@/hooks/useUsernameValidation";
@@ -76,6 +76,8 @@ const Signup = () => {
   const [requestInviteLoading, setRequestInviteLoading] = useState(false);
   const [verifyOtpLoading, setVerifyOtpLoading] = useState(false);
   const [otpValue, setOtpValue] = useState("");
+  const [otpVerificationFailedOnce, setOtpVerificationFailedOnce] = useState(false);
+  const [resendOtpLoading, setResendOtpLoading] = useState(false);
 
   const refFromCookie = getReferralFromCookie();
   const refFromStorage = typeof window !== "undefined" ? localStorage.getItem(REFERRAL_COOKIE_NAME) : null;
@@ -197,6 +199,8 @@ const Signup = () => {
 
   const INVITE_STORAGE_KEY = "invite_request_id";
   const INVITE_EMAIL_KEY = "invite_request_email";
+  const INVITE_PREFILL_NAME_KEY = "invite_prefill_name";
+  const INVITE_PREFILL_EMAIL_KEY = "invite_prefill_email";
 
   const [requestName, setRequestName] = useState("");
   const [requestEmail, setRequestEmail] = useState("");
@@ -315,10 +319,16 @@ const Signup = () => {
       if (link) {
         sessionStorage.removeItem(INVITE_STORAGE_KEY);
         sessionStorage.removeItem(INVITE_EMAIL_KEY);
+        // Store name and email so create-account page can pre-fill after they click the invite link
+        const name = requestName.trim();
+        const email = requestEmail.trim().toLowerCase();
+        if (name) sessionStorage.setItem(INVITE_PREFILL_NAME_KEY, name);
+        if (email) sessionStorage.setItem(INVITE_PREFILL_EMAIL_KEY, email);
         setInviteLink(link);
         setInviteStep("done");
       } else throw new Error("No invite link");
     } catch (err: unknown) {
+      setOtpVerificationFailedOnce(true);
       toast({
         title: "Verification failed",
         description: err instanceof Error ? err.message : "Invalid or expired code.",
@@ -327,7 +337,61 @@ const Signup = () => {
     } finally {
       setVerifyOtpLoading(false);
     }
-  }, [otpValue, inviteRequestId, requestEmail, toast]);
+  }, [otpValue, inviteRequestId, requestEmail, requestName, toast]);
+
+  const handleResendOtp = useCallback(async () => {
+    let requestId = inviteRequestId;
+    if (!requestId) {
+      const emailForLookup = requestEmail.trim().toLowerCase();
+      if (!emailForLookup || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailForLookup)) {
+        toast({ title: "Email required", description: "Enter the email you used to request the invite.", variant: "destructive" });
+        return;
+      }
+      setResendOtpLoading(true);
+      try {
+        const { data: lookupData, error: lookupError } = await supabase.functions.invoke("lookup-invite-request", {
+          body: { email: emailForLookup },
+        });
+        const lookupResp = lookupData as { error?: string; invite_request_id?: string } | null;
+        if (lookupError || lookupResp?.error) {
+          throw new Error(lookupResp?.error || lookupError?.message || "Could not find your invite request.");
+        }
+        requestId = lookupResp?.invite_request_id ?? null;
+        if (!requestId) throw new Error("No pending invite found for this email.");
+      } catch (err: unknown) {
+        toast({
+          title: "Resend failed",
+          description: err instanceof Error ? err.message : "Could not find your invite request.",
+          variant: "destructive",
+        });
+        setResendOtpLoading(false);
+        return;
+      }
+    } else {
+      setResendOtpLoading(true);
+    }
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-invite-otp-public", {
+        body: { invite_request_id: requestId },
+      });
+      const errMsg = (data as { error?: string })?.error;
+      if (error || errMsg) {
+        throw new Error(errMsg || error?.message || "Resend failed");
+      }
+      setOtpValue("");
+      toast({
+        title: inviteOnlyConfig.request_submitted_success_message || "New code sent. Check your email.",
+      });
+    } catch (err: unknown) {
+      toast({
+        title: "Resend failed",
+        description: err instanceof Error ? err.message : "Could not send a new code. Try again in a few minutes.",
+        variant: "destructive",
+      });
+    } finally {
+      setResendOtpLoading(false);
+    }
+  }, [inviteRequestId, requestEmail, inviteOnlyConfig.request_submitted_success_message, toast]);
 
   // When invite-only is enabled: new users (no valid ref) must only see the invite flow (Request invite / Enter invite link).
   // Create Account form is shown only when invite-only is off OR user has a valid invite (ref in URL or cookie).
@@ -339,6 +403,29 @@ const Signup = () => {
   // Only show Create Account when config is loaded AND (invite-only is off OR user has valid invite ref)
   const showNormalForm =
     !inviteConfigLoading && (!isInviteOnly || hasValidRef);
+
+  const invitePrefillApplied = useRef(false);
+  // Pre-fill create-account form with name/email from invite flow (URL params or sessionStorage)
+  useEffect(() => {
+    if (!showNormalForm || invitePrefillApplied.current) return;
+    const fromUrl = {
+      name: searchParams.get("invite_name"),
+      email: searchParams.get("invite_email"),
+    };
+    const fromStorage = typeof window !== "undefined" ? {
+      name: sessionStorage.getItem(INVITE_PREFILL_NAME_KEY),
+      email: sessionStorage.getItem(INVITE_PREFILL_EMAIL_KEY),
+    } : { name: null, email: null };
+    const name = fromUrl.name?.trim() || fromStorage.name?.trim() || "";
+    const email = fromUrl.email?.trim().toLowerCase() || fromStorage.email?.trim().toLowerCase() || "";
+    if (name || email) {
+      invitePrefillApplied.current = true;
+      if (name) form.setValue("fullName", name, { shouldValidate: false });
+      if (email) form.setValue("email", email, { shouldValidate: false });
+      sessionStorage.removeItem(INVITE_PREFILL_NAME_KEY);
+      sessionStorage.removeItem(INVITE_PREFILL_EMAIL_KEY);
+    }
+  }, [showNormalForm, searchParams, form]);
 
   const handleEnterInviteLinkSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -601,13 +688,41 @@ const Signup = () => {
                     {verifyOtpLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Verify
                   </Button>
+                  {otpVerificationFailedOnce && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      Didn&apos;t get the code or it didn&apos;t work?{" "}
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={resendOtpLoading}
+                        className="text-primary underline font-medium hover:no-underline disabled:opacity-50"
+                      >
+                        {resendOtpLoading ? "Sending…" : "Resend code"}
+                      </button>
+                    </p>
+                  )}
                 </form>
               )}
               {inviteStep === "done" && inviteLink && (
                 <div className="space-y-4 mt-6">
                   <p className="text-muted-foreground">Check your email for the invite link, or use the button below.</p>
                   <Button asChild className="w-full h-11">
-                    <a href={inviteLink}>Create your account</a>
+                    <a
+                      href={(() => {
+                        try {
+                          const url = new URL(inviteLink, window.location.origin);
+                          const name = requestName.trim();
+                          const email = requestEmail.trim().toLowerCase();
+                          if (name) url.searchParams.set("invite_name", name);
+                          if (email) url.searchParams.set("invite_email", email);
+                          return url.toString();
+                        } catch {
+                          return inviteLink;
+                        }
+                      })()}
+                    >
+                      Create your account
+                    </a>
                   </Button>
                 </div>
               )}

@@ -263,6 +263,7 @@ const RoutesWrapper = () => {
         <Route path="tasks/access-4opt" element={<TaskAccess4Opt />} />
         <Route path="withdrawals" element={<Withdrawals />} />
         <Route path="users" element={<Users />} />
+        <Route path="users/invite-requests" element={<InviteRequests />} />
         <Route path="users/:userId" element={<UserDetail />} />
         <Route path="deposits" element={<Deposits />} />
         <Route path="transactions" element={<AdminTransactions />} />
@@ -284,7 +285,6 @@ const RoutesWrapper = () => {
         <Route path="communications/email" element={<BulkEmail />} />
         <Route path="communications/influencer-invites" element={<InfluencerInvites />} />
         <Route path="communications/user-invites" element={<UserInvites />} />
-        <Route path="users/invite-requests" element={<InviteRequests />} />
         <Route path="communications/templates" element={<EmailTemplates />} />
         <Route path="communications/email-settings" element={<EmailSettings />} />
         <Route path="communications/reamaze-settings" element={<ReamazeSettings />} />
