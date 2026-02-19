@@ -30,6 +30,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReferralAnalyticsTab } from "@/components/referrals/ReferralAnalyticsTab";
 import { useTranslation } from "react-i18next";
 
 const Referrals = () => {
@@ -128,7 +130,17 @@ const Referrals = () => {
               />
             </header>
 
-            {/* Main Content */}
+            {/* Tabs: Overview (current content) / Analytics */}
+            <Tabs defaultValue="overview" className="w-full">
+              <div className="px-4 lg:px-8 pt-4">
+                <TabsList>
+                  <TabsTrigger value="overview">{t("referrals.tabs.overview")}</TabsTrigger>
+                  <TabsTrigger value="analytics">{t("referrals.tabs.analytics")}</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="overview" className="mt-0">
+            {/* Main Content - Overview */}
             <div className="p-4 lg:p-8">
               {/* My Upline Card */}
               <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
@@ -353,6 +365,14 @@ const Referrals = () => {
             {/* Commission History */}
             <CommissionHistoryList userId={user?.id || ""} />
           </div>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-0">
+                <div className="p-4 lg:p-8">
+                  <ReferralAnalyticsTab userId={user?.id ?? ""} />
+                </div>
+              </TabsContent>
+            </Tabs>
     </>
   );
 };

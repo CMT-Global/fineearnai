@@ -660,6 +660,46 @@
       "inactive": "Inactive",
       "pending": "Pending",
       "suspended": "Suspended"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "analytics": "Analytics"
+    },
+    "analytics": {
+      "period": { "today": "Today", "7d": "7D", "30d": "30D", "all": "All-Time" },
+      "kpis": {
+        "teamMembers": "Team Members",
+        "activeMembers": "Active Members",
+        "taskCommissions": "Task Commissions",
+        "teamEarnings": "Team Earnings",
+        "avgCommissionPerActive": "Avg Commission / Active Member",
+        "projectedWeekly": "Projected Weekly Commission"
+      },
+      "chart": {
+        "title": "Performance Trend",
+        "commissions": "Commissions",
+        "teamEarnings": "Team Earnings",
+        "activeMembers": "Active Members",
+        "noData": "No data for this period"
+      },
+      "funnel": {
+        "title": "Invite Performance",
+        "signupsFromLink": "Signups from your link",
+        "upgradedMembers": "Upgraded members",
+        "conversionRate": "Conversion rate"
+      },
+      "topContributors": {
+        "title": "Top Team Members (Selected Period)",
+        "member": "Team member",
+        "tasksCompleted": "Tasks completed",
+        "theirEarnings": "Their earnings",
+        "yourCommission": "Your commission",
+        "noData": "No contributors in this period"
+      },
+      "commissionBreakdown": { "title": "Commission Breakdown", "earned": "Earned (task commissions)" },
+      "collapsibleOpen": "View More",
+      "collapsibleClose": "View Less",
+      "noData": "No analytics data available"
     }
   },
   "membershipPlans": {

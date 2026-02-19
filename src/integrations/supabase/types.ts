@@ -2452,6 +2452,27 @@ export type Database = {
               yesterday_volume: number
             }[]
           }
+      get_referral_analytics: {
+        Args: {
+          p_referrer_id: string
+          p_start_timestamptz: string
+          p_end_timestamptz: string
+        }
+        Returns: {
+          team_members_count: number
+          active_members_count: number
+          task_commissions_sum: number
+          team_earnings_sum: number
+          daily_series: Json
+          prev_task_commissions_sum: number
+          prev_team_earnings_sum: number
+          prev_active_members_count: number
+          top_contributors: Json
+          signups_from_link: number
+          upgraded_count: number
+          conversion_rate: number
+        }[]
+      }
       get_referral_stats: {
         Args: { user_uuid: string }
         Returns: {
