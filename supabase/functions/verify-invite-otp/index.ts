@@ -180,9 +180,12 @@ serve(async (req) => {
     const platformUrl = platformBranding?.url ?? emailSettings.platform_url ?? "https://profitchips.com";
     const supportUrl = emailSettings.support_email ?? `${platformUrl}/support`;
 
-    const inviteLink = assignedReferralCode
-      ? `${platformUrl.replace(/\/$/, "")}/signup?ref=${encodeURIComponent(assignedReferralCode)}`
-      : `${platformUrl.replace(/\/$/, "")}/signup`;
+    const baseUrl = `${platformUrl.replace(/\/$/, "")}/signup`;
+    const params = new URLSearchParams();
+    if (assignedReferralCode) params.set("ref", assignedReferralCode);
+    params.set("invite_name", inviteRequest.full_name ?? "");
+    params.set("invite_email", inviteRequest.email ?? "");
+    const inviteLink = `${baseUrl}?${params.toString()}`;
 
     await supabase
       .from("invite_requests")
