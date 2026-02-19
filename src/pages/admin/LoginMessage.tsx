@@ -106,16 +106,20 @@ const LoginMessage = () => {
     }
   }, [isAdmin, adminLoading, navigate, t]);
 
-  // Save mutation
+  // Save mutation — upsert so the row is created if it doesn't exist (update alone affects 0 rows when no row exists)
   const saveMutation = useMutation({
     mutationFn: async (newConfig: LoginMessageConfig) => {
       const { error } = await supabase
         .from("platform_config")
-        .update({
-          value: newConfig as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("key", "login_message");
+        .upsert(
+          {
+            key: "login_message",
+            value: newConfig as any,
+            description: "Login message shown to users after sign-in",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "key" }
+        );
 
       if (error) throw error;
     },

@@ -38,6 +38,7 @@ export const LoginMessageDialog = ({
   const [showTopShadow, setShowTopShadow] = useState(false);
   const [showBottomShadow, setShowBottomShadow] = useState(false);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const openedForTriggerRef = useRef(false);
 
   // Fetch login message config from platform_config
   const { data: config, isLoading } = useQuery({
@@ -88,43 +89,46 @@ export const LoginMessageDialog = ({
     sessionStorage.removeItem(storageKey);
   };
 
-  // Reset hasCheckedStorage when trigger changes from false to true (new login)
+  // Reset state when trigger changes from false to true (new login)
   useEffect(() => {
     if (trigger !== lastTriggerValue) {
       setLastTriggerValue(trigger);
-      
-      // If trigger changed from false to true, reset the check flag
       if (trigger && !lastTriggerValue) {
         setHasCheckedStorage(false);
+        openedForTriggerRef.current = false;
+      }
+      if (!trigger) {
+        openedForTriggerRef.current = false;
       }
     }
   }, [trigger, lastTriggerValue]);
 
-  // Handle dialog open state
+  // Handle dialog open state — when trigger becomes true we must evaluate even if hasCheckedStorage is still true (React state race)
   useEffect(() => {
     if (isLoading || !config || !userId) return;
-    
-    // Only check once per trigger cycle
-    if (hasCheckedStorage) return;
+    if (!trigger) {
+      setHasCheckedStorage(true);
+      return;
+    }
+    if (openedForTriggerRef.current) return;
 
-    // Check all conditions to show dialog
-    const shouldShow = 
-      config.enabled && 
+    const shouldShow =
+      config.enabled &&
       !hasShownThisSession() &&
       trigger;
 
     if (shouldShow) {
-      // Small delay for smooth transition after auth
+      openedForTriggerRef.current = true;
+      setHasCheckedStorage(true);
       setTimeout(() => {
         setIsOpen(true);
-        // Only mark as shown if show_once_per_session is enabled
         if (config.show_once_per_session) {
           markAsShown();
         }
       }, 500);
+    } else {
+      setHasCheckedStorage(true);
     }
-
-    setHasCheckedStorage(true);
   }, [config, isLoading, userId, trigger, hasCheckedStorage]);
 
   // Handle scroll to update shadow indicators
@@ -174,28 +178,34 @@ export const LoginMessageDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent 
+      <DialogContent
+        hideCloseButton={!config.dismissible}
         className="
-          w-[96vw] max-w-[440px] 
-          sm:w-[90vw] sm:max-w-[520px] 
-          md:w-[640px] lg:w-[700px]
-          max-h-[90vh]
+          flex flex-col
+          left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
+          w-[calc(100vw-2rem)] max-w-[440px]
+          sm:w-[calc(100vw-3rem)] sm:max-w-[520px]
+          md:w-[640px] md:max-w-[90vw]
+          lg:max-w-[700px]
+          max-h-[min(90vh,calc(100dvh-2rem))]
           p-0
           gap-0
           overflow-hidden
+          rounded-lg
         "
         aria-describedby="login-message-description"
       >
         {/* Header with gradient background */}
         <div className="
+          flex-shrink-0
           bg-gradient-to-r from-primary/10 via-primary/5 to-background
           border-b border-border/50
           p-3 sm:p-4 md:p-6
         ">
           <DialogHeader>
             <DialogTitle className="
-              flex items-center gap-2 
-              text-xl sm:text-2xl 
+              flex items-center gap-2
+              text-lg sm:text-xl md:text-2xl
               font-bold
               text-foreground
               pr-8
@@ -210,26 +220,26 @@ export const LoginMessageDialog = ({
         </div>
 
         {/* Scrollable body content with gradient indicators */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-h-0 flex flex-col">
           {/* Top gradient shadow */}
-          <div 
+          <div
             className={`
-              absolute top-0 left-0 right-0 h-8 z-10
+              absolute top-0 left-0 right-0 h-6 sm:h-8 z-10
               bg-gradient-to-b from-background to-transparent
               pointer-events-none
               transition-opacity duration-300
-              ${showTopShadow ? 'opacity-100' : 'opacity-0'}
+              ${showTopShadow ? "opacity-100" : "opacity-0"}
             `}
           />
-          
-          <ScrollArea className="max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh]">
-            <div 
+
+          <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[55vh] md:max-h-[65vh] min-h-0">
+            <div
               ref={scrollViewportRef}
               onScroll={handleScroll}
               id="login-message-description"
               className="p-3 sm:p-4 md:p-6"
             >
-              <div 
+              <div
                 className="
                   prose prose-sm sm:prose-base
                   dark:prose-invert
@@ -256,13 +266,13 @@ export const LoginMessageDialog = ({
           </ScrollArea>
 
           {/* Bottom gradient shadow */}
-          <div 
+          <div
             className={`
-              absolute bottom-0 left-0 right-0 h-8 z-10
+              absolute bottom-0 left-0 right-0 h-6 sm:h-8 z-10
               bg-gradient-to-t from-background to-transparent
               pointer-events-none
               transition-opacity duration-300
-              ${showBottomShadow ? 'opacity-100' : 'opacity-0'}
+              ${showBottomShadow ? "opacity-100" : "opacity-0"}
             `}
           />
         </div>
@@ -270,13 +280,14 @@ export const LoginMessageDialog = ({
         {/* Footer with action button */}
         {config.dismissible && (
           <div className="
+            flex-shrink-0
             border-t border-border/50
             p-3 sm:p-4 md:p-6
             bg-muted/30
           ">
-            <Button 
+            <Button
               onClick={() => handleOpenChange(false)}
-              className="w-full h-12 sm:h-11 text-base touch-manipulation"
+              className="w-full min-h-[44px] h-12 sm:h-11 text-base touch-manipulation"
               size="lg"
             >
               Got it, thanks! 🎉

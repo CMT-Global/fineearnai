@@ -99,8 +99,10 @@ const Login = () => {
 
       // Track login location (non-blocking)
       if (session?.user) {
-        // ✅ NEW: Set login message trigger flag for Dashboard
+        // Set login message trigger and clear "already shown" so popup shows every time user logs in
         const triggerKey = `loginMessageTrigger_${session.user.id}`;
+        const shownKey = `loginMessageShown_session_${session.user.id}`;
+        sessionStorage.removeItem(shownKey);
         sessionStorage.setItem(triggerKey, 'true');
         console.info(`[LoginMessage] Trigger set for user ${session.user.id}`);
         
