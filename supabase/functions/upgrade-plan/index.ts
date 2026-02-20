@@ -312,6 +312,57 @@ Deno.serve(async (req)=>{
         }).catch((err) => console.warn('⚠️ Upgrade success email failed:', err));
       }
     }
+    // Enroll in post-upgrade team commissions sequence on first upgrade only; send Email 1 (Day 0) immediately (non-blocking)
+    try {
+      const { data: teamCommissionsConfig } = await supabase.from('platform_config').select('value').eq('key', 'post_upgrade_team_commissions_campaign').maybeSingle();
+      const teamCommissionsEnabled = (teamCommissionsConfig?.value as { enabled?: boolean } | null)?.enabled === true;
+      if (teamCommissionsEnabled) {
+        const { count, error: countErr } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('type', 'plan_upgrade');
+        if (!countErr && count === 1) {
+          const upgradedAt = new Date().toISOString();
+          await supabase.from('post_upgrade_team_commissions_enrollment').upsert(
+            {
+              user_id: user.id,
+              upgraded_at: upgradedAt,
+              status: 'active',
+              current_step: 0,
+              updated_at: upgradedAt
+            },
+            { onConflict: 'user_id', ignoreDuplicates: true }
+          );
+          // Send Email 1 (Day 0) immediately after upgrade
+          const { data: enrollProfile } = await supabase.from('profiles').select('email, full_name, username, referral_code').eq('id', user.id).single();
+          if (enrollProfile?.email && enrollProfile.email.includes('@')) {
+            const { data: configRows } = await supabase.from('platform_config').select('key, value').in('key', ['platform_branding', 'email_settings']);
+            const branding = (configRows?.find((r: { key: string }) => r.key === 'platform_branding')?.value as { name?: string; url?: string }) || {};
+            const emailSettings = (configRows?.find((r: { key: string }) => r.key === 'email_settings')?.value as { platform_url?: string }) || {};
+            const platformUrl = (branding?.url || emailSettings?.platform_url || 'https://profitchips.com').replace(/\/$/, '');
+            const teamGuideUrl = `${platformUrl}/how-it-works`;
+            const teamInviteUrl = enrollProfile.referral_code ? `${platformUrl}/signup?ref=${encodeURIComponent(enrollProfile.referral_code)}` : `${platformUrl}/referrals`;
+            const firstName = ((enrollProfile.full_name || enrollProfile.username || 'there').trim().split(/\s+/)[0]) || 'there';
+            sendTemplateEmail({
+              templateType: 'post_upgrade_team_1',
+              recipientEmail: enrollProfile.email,
+              recipientUserId: user.id,
+              variables: { first_name: firstName, team_invite_url: teamInviteUrl, team_guide_url: teamGuideUrl },
+              supabaseClient: supabase
+            }).then(async (result) => {
+              if (result.success) {
+                const nowIso = new Date().toISOString();
+                await supabase.from('post_upgrade_team_commissions_enrollment').update({
+                  current_step: 1,
+                  last_sent_at: nowIso,
+                  step_sent_map: { '1': nowIso },
+                  updated_at: nowIso
+                }).eq('user_id', user.id);
+              }
+            }).catch((err) => console.warn('⚠️ Post-upgrade team commissions Email 1 (Day 0) failed:', err));
+          }
+        }
+      }
+    } catch (enrollErr) {
+      console.warn('⚠️ Post-upgrade team commissions enrollment skip/failed:', enrollErr);
+    }
     console.log('Plan upgraded successfully:', {
       userId: user.id,
       planName,

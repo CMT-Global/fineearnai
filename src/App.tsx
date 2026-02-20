@@ -68,6 +68,7 @@ const DailyTasksReminderCampaign = lazy(() => import("@/pages/admin/DailyTasksRe
 const TrialReactivationCampaign = lazy(() => import("@/pages/admin/TrialReactivationCampaign"));
 const PayoutReminderCampaign = lazy(() => import("@/pages/admin/PayoutReminderCampaign"));
 const UpgradeSuccessEmailCampaign = lazy(() => import("@/pages/admin/UpgradeSuccessEmailCampaign"));
+const PostUpgradeTeamCommissionsCampaign = lazy(() => import("@/pages/admin/PostUpgradeTeamCommissionsCampaign"));
 const LoginMessage = lazy(() => import("@/pages/admin/LoginMessage"));
 const SystemSecrets = lazy(() => import("@/pages/admin/SystemSecrets"));
 const SecuritySettings = lazy(() => import("@/pages/admin/SecuritySettings"));
@@ -297,6 +298,7 @@ const RoutesWrapper = () => {
         <Route path="communications/trial-reactivation" element={<TrialReactivationCampaign />} />
         <Route path="communications/payout-reminder" element={<PayoutReminderCampaign />} />
         <Route path="communications/upgrade-success-email" element={<UpgradeSuccessEmailCampaign />} />
+        <Route path="communications/post-upgrade-team-commissions" element={<PostUpgradeTeamCommissionsCampaign />} />
         <Route path="communications/login-message" element={<LoginMessage />} />
         <Route path="security-settings" element={<SecuritySettings />} />
         <Route path="security/secrets" element={<SystemSecrets />} />

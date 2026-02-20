@@ -200,6 +200,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
         { label: t("admin.sidebar.items.trialReactivation"), path: "/admin/communications/trial-reactivation" },
         { label: t("admin.sidebar.items.payoutReminder"), path: "/admin/communications/payout-reminder" },
         { label: t("admin.sidebar.items.upgradeSuccessEmail"), path: "/admin/communications/upgrade-success-email" },
+        { label: t("admin.sidebar.items.postUpgradeTeamCommissions"), path: "/admin/communications/post-upgrade-team-commissions" },
       ],
     },
     {
