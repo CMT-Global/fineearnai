@@ -130,7 +130,20 @@ const TEMPLATE_TYPES = [
     description: "Daily reminder to active users that new tasks are ready",
     variables: ["first_name", "login_url", "upgrade_url", "help_center_url", "platform_name"]
   },
-  
+  // Payout Day Reminder (48h)
+  {
+    value: "payout_reminder_48h",
+    label: "Payout Reminder 48h",
+    description: "Sent 48 hours before each payout day",
+    variables: ["first_name", "payout_day", "platform_name"]
+  },
+  // Payout Day Reminder (24h)
+  {
+    value: "payout_reminder_24h",
+    label: "Payout Reminder 24h",
+    description: "Sent 24 hours before each payout day",
+    variables: ["first_name", "payout_day", "platform_name"]
+  },
   // Custom
   {
     value: "custom",

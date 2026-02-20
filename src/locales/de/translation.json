@@ -969,6 +969,7 @@
         "scheduledEmails": "Scheduled Emails",
         "dailyTasksReminder": "Daily Tasks Reminder",
         "trialReactivation": "Testablauf-Reaktivierung",
+        "payoutReminder": "Auszahlungstag-Erinnerung",
         "securitySettings": "Security Settings",
         "systemSecrets": "System Secrets",
         "ipstackConfiguration": "IPStack Configuration",
