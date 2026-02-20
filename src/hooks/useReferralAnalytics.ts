@@ -120,6 +120,10 @@ export function useReferralAnalytics(
     },
     enabled: !!userId,
     staleTime: 60 * 1000,
+    // Active members may change from task completions even when no commission row is created,
+    // so keep analytics reasonably fresh while the tab is open.
+    refetchInterval: 15 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const periodBounds = getPeriodBounds(period);

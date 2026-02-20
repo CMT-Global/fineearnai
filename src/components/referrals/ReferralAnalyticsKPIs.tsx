@@ -48,9 +48,11 @@ export function ReferralAnalyticsKPIs({
   periodLabel,
 }: ReferralAnalyticsKPIsProps) {
   const { t } = useTranslation();
+  const showActiveDelta = periodLabel !== "all";
+  const showEarningsDelta = periodLabel !== "all" && periodLabel !== "today";
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <Card className="p-4 min-w-0">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <Card className="p-4 min-w-0 min-h-[148px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-referrals))]/10 flex items-center justify-center">
             <Users className="h-5 w-5 text-[hsl(var(--wallet-referrals))]" />
@@ -62,7 +64,7 @@ export function ReferralAnalyticsKPIs({
         </div>
       </Card>
 
-      <Card className="p-4 min-w-0">
+      <Card className="p-4 min-w-0 min-h-[148px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-tasks))]/10 flex items-center justify-center">
             <UserPlus className="h-5 w-5 text-[hsl(var(--wallet-tasks))]" />
@@ -70,14 +72,18 @@ export function ReferralAnalyticsKPIs({
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{t("referrals.analytics.kpis.activeMembers")}</p>
             <p className="text-xl font-bold sm:text-2xl">{activeMembersCount}</p>
-            {periodLabel !== "all" && (
-              <Delta current={activeMembersCount} previous={prevActiveMembers} />
-            )}
+            <div className="h-4">
+              {showActiveDelta ? (
+                <Delta current={activeMembersCount} previous={prevActiveMembers} />
+              ) : (
+                <span className="invisible text-xs">placeholder</span>
+              )}
+            </div>
           </div>
         </div>
       </Card>
 
-      <Card className="p-4 min-w-0">
+      <Card className="p-4 min-w-0 min-h-[148px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
             <TrendingUp className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
@@ -87,18 +93,22 @@ export function ReferralAnalyticsKPIs({
             <p className="text-xl font-bold break-words sm:text-2xl">
               <CurrencyDisplay amountUSD={taskCommissionsSum} />
             </p>
-            {periodLabel !== "all" && periodLabel !== "today" && (
-              <Delta
-                current={taskCommissionsSum}
-                previous={prevTaskCommissions}
-                formatter={(n) => `$${n.toFixed(2)}`}
-              />
-            )}
+            <div className="h-4">
+              {showEarningsDelta ? (
+                <Delta
+                  current={taskCommissionsSum}
+                  previous={prevTaskCommissions}
+                  formatter={(n) => `$${n.toFixed(2)}`}
+                />
+              ) : (
+                <span className="invisible text-xs">placeholder</span>
+              )}
+            </div>
           </div>
         </div>
       </Card>
 
-      <Card className="p-4 min-w-0">
+      <Card className="p-4 min-w-0 min-h-[148px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-earnings))]/10 flex items-center justify-center">
             <DollarSign className="h-5 w-5 text-[hsl(var(--wallet-earnings))]" />
@@ -108,18 +118,22 @@ export function ReferralAnalyticsKPIs({
             <p className="text-xl font-bold break-words sm:text-2xl">
               <CurrencyDisplay amountUSD={teamEarningsSum} />
             </p>
-            {periodLabel !== "all" && periodLabel !== "today" && (
-              <Delta
-                current={teamEarningsSum}
-                previous={prevTeamEarnings}
-                formatter={(n) => `$${n.toFixed(2)}`}
-              />
-            )}
+            <div className="h-4">
+              {showEarningsDelta ? (
+                <Delta
+                  current={teamEarningsSum}
+                  previous={prevTeamEarnings}
+                  formatter={(n) => `$${n.toFixed(2)}`}
+                />
+              ) : (
+                <span className="invisible text-xs">placeholder</span>
+              )}
+            </div>
           </div>
         </div>
       </Card>
 
-      <Card className="p-4 min-w-0">
+      <Card className="p-4 min-w-0 min-h-[148px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-muted flex items-center justify-center">
             <BarChart3 className="h-5 w-5 text-muted-foreground" />
@@ -133,21 +147,19 @@ export function ReferralAnalyticsKPIs({
         </div>
       </Card>
 
-      {projectedWeekly != null && (
-        <Card className="p-4 min-w-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">{t("referrals.analytics.kpis.projectedWeekly")}</p>
-              <p className="text-xl font-bold break-words sm:text-2xl">
-                <CurrencyDisplay amountUSD={projectedWeekly} />
-              </p>
-            </div>
+      <Card className="p-4 min-w-0 min-h-[148px]">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-10 w-10 shrink-0 rounded-lg bg-[hsl(var(--wallet-deposit))]/10 flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-[hsl(var(--wallet-deposit))]" />
           </div>
-        </Card>
-      )}
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">{t("referrals.analytics.kpis.projectedWeekly")}</p>
+            <p className="text-xl font-bold break-words sm:text-2xl">
+              {projectedWeekly != null ? <CurrencyDisplay amountUSD={projectedWeekly} /> : "—"}
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

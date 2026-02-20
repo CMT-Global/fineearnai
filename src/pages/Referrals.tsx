@@ -112,7 +112,8 @@ const Referrals = () => {
 
   return (
     <>
-      {/* Header */}
+      {/* Header + Top Tabs */}
+            <Tabs defaultValue="overview" className="w-full">
           <header className="bg-card border-b px-4 lg:px-8 py-6">
               <div className="flex-1 mb-4">
                 <h1 className="text-2xl font-bold">{t("referrals.title")}</h1>
@@ -120,28 +121,32 @@ const Referrals = () => {
                   {t("referrals.subtitle")}
                 </p>
               </div>
-
-              {/* Stats */}
-              <ReferralStatsCard
-                totalReferrals={stats?.total_referrals || 0}
-                activeReferrals={stats?.active_referrals || 0}
-                totalEarnings={Number(stats?.total_earnings || 0)}
-                taskCommissionEarnings={Number(stats?.task_commission_earnings || 0)}
-              />
             </header>
 
-            {/* Tabs: Overview (current content) / Analytics */}
-            <Tabs defaultValue="overview" className="w-full">
-              <div className="px-4 lg:px-8 pt-4">
-                <TabsList>
-                  <TabsTrigger value="overview">{t("referrals.tabs.overview")}</TabsTrigger>
-                  <TabsTrigger value="analytics">{t("referrals.tabs.analytics")}</TabsTrigger>
-                </TabsList>
-              </div>
+            <div className="px-4 lg:px-8 py-3">
+              <TabsList className="h-12 rounded-2xl bg-muted/60 p-1">
+                <TabsTrigger value="overview" className="px-6 sm:px-8">
+                  {t("referrals.tabs.overview")}
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="px-6 sm:px-8">
+                  {t("referrals.tabs.analytics")}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
               <TabsContent value="overview" className="mt-0">
             {/* Main Content - Overview */}
             <div className="p-4 lg:p-8">
+              {/* Stats (Overview only) */}
+              <div className="mb-6">
+                <ReferralStatsCard
+                  totalReferrals={stats?.total_referrals || 0}
+                  activeReferrals={stats?.active_referrals || 0}
+                  totalEarnings={Number(stats?.total_earnings || 0)}
+                  taskCommissionEarnings={Number(stats?.task_commission_earnings || 0)}
+                />
+              </div>
+
               {/* My Upline Card */}
               <UplineInfoCard upline={upline} isLoading={isReferralDataLoading} />
 

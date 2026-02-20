@@ -47,7 +47,11 @@ export const useRealtimeReferrals = (userId: string | undefined) => {
         },
         (payload) => {
           console.log('🔗 Referral relationship changed:', payload.eventType);
+          // Overview data (v2 key) + legacy key
+          queryClient.invalidateQueries({ queryKey: ['referral-complete-data-v2', userId] });
           queryClient.invalidateQueries({ queryKey: ['referral-complete-data', userId] });
+          // Analytics tab data (all periods for this user)
+          queryClient.invalidateQueries({ queryKey: ['referral-analytics', userId] });
         }
       )
       .on(
@@ -60,13 +64,19 @@ export const useRealtimeReferrals = (userId: string | undefined) => {
         },
         (payload) => {
           console.log('🔗 Referral earnings updated:', payload.eventType);
+          // Overview data (v2 key) + legacy key
+          queryClient.invalidateQueries({ queryKey: ['referral-complete-data-v2', userId] });
           queryClient.invalidateQueries({ queryKey: ['referral-complete-data', userId] });
+          // Analytics tab data (all periods for this user)
+          queryClient.invalidateQueries({ queryKey: ['referral-analytics', userId] });
         }
       )
       .subscribe((status) => {
         console.log('🔗 Real-time referrals subscription status:', status);
         if (status === 'CHANNEL_ERROR') {
+          queryClient.invalidateQueries({ queryKey: ['referral-complete-data-v2', userId] });
           queryClient.invalidateQueries({ queryKey: ['referral-complete-data', userId] });
+          queryClient.invalidateQueries({ queryKey: ['referral-analytics', userId] });
         }
       });
 
