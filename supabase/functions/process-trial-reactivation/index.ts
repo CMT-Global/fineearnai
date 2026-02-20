@@ -257,7 +257,9 @@ Deno.serve(async (req) => {
       const daysSinceExpiry = daysBetween(expiryDate, todayUtc);
       if (daysSinceExpiry < 0) continue;
 
-      const step = SCHEDULE_DAYS_TO_STEP[daysSinceExpiry];
+      let step = SCHEDULE_DAYS_TO_STEP[daysSinceExpiry] ?? null;
+      // Ensure "day 0" (step 1) is sent first: if they expired 0 or 1 day ago and haven't had step 1, send it (cron/timing can make expiry appear as day 1)
+      if (daysSinceExpiry <= 1 && lastStepSent === 0) step = 1;
       if (step == null || step <= lastStepSent) continue;
 
       if (lastSentAt && new Date(lastSentAt).getTime() >= startOfTodayUtc.getTime()) continue;

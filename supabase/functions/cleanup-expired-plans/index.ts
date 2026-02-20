@@ -175,14 +175,30 @@ Deno.serve(async (req)=>{
       for (const user of expiredUsers){
         totalProcessed++;
         try {
-          // Skip if user is already on default (free tier) plan
+          // User on default (Trainee) plan with expired trial: mark expired so trial reactivation can email them
           if (defaultPlanName && user.membership_plan === defaultPlanName) {
-            console.log(`User ${user.id} already on default plan, skipping`);
-            results.push({
-              userId: user.id,
-              action: 'skipped',
-              reason: 'Already on default plan'
-            });
+            if (user.account_status !== 'expired') {
+              const { error: expireErr } = await supabaseClient.from('profiles').update({
+                account_status: 'expired'
+              }).eq('id', user.id);
+              if (expireErr) {
+                console.error(`Error marking default-plan user ${user.id} expired:`, expireErr);
+                results.push({ userId: user.id, action: 'error', reason: expireErr.message });
+              } else {
+                console.log(`User ${user.id} (Trainee trial expired) marked account_status=expired for trial reactivation`);
+                results.push({
+                  userId: user.id,
+                  action: 'marked_expired',
+                  reason: 'Trial expired, eligible for trial reactivation emails'
+                });
+              }
+            } else {
+              results.push({
+                userId: user.id,
+                action: 'skipped',
+                reason: 'Already on default plan and already expired'
+              });
+            }
             continue;
           }
           // Handle suspended/banned users separately - downgrade but preserve status
