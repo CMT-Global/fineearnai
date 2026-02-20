@@ -144,6 +144,13 @@ const TEMPLATE_TYPES = [
     description: "Sent 24 hours before each payout day",
     variables: ["first_name", "payout_day", "platform_name"]
   },
+  // Account Upgrade Success
+  {
+    value: "account_upgrade_success",
+    label: "Account Upgrade Success",
+    description: "Sent after a successful plan upgrade (enable/disable in Communications → Upgrade Success Email)",
+    variables: ["first_name", "login_url", "new_plan_name", "team_invite_link", "membership_url", "support_email", "platform_name", "task_commissions_earned"]
+  },
   // Custom
   {
     value: "custom",

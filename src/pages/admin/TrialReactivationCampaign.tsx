@@ -365,7 +365,7 @@ export default function TrialReactivationCampaign() {
                         value={e.body}
                         onChange={(ev) => setEdits((prev) => ({ ...prev, [templateType]: { ...(prev[templateType] ?? e), body: ev.target.value } }))}
                         rows={14}
-                        className="font-mono text-sm"
+                        className="font-mono text-sm resize-none min-h-[320px] h-[320px] overflow-y-auto"
                         placeholder={t("admin.trialReactivation.bodyPlaceholder")}
                       />
                     </div>

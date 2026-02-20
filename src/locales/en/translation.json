@@ -1011,6 +1011,7 @@
         "dailyTasksReminder": "Daily Tasks Reminder",
         "trialReactivation": "Trial Expiry Reactivation",
         "payoutReminder": "Payout Day Reminder",
+        "upgradeSuccessEmail": "Upgrade Success Email",
         "securitySettings": "Security Settings",
         "systemSecrets": "System Secrets",
         "registrationControls": "Registration Controls",

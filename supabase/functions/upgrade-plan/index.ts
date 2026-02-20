@@ -269,21 +269,48 @@ Deno.serve(async (req)=>{
     } catch (notifError) {
       console.log('Note: Could not create notification (table may not exist):', notifError);
     }
-    // Send plan upgrade email (non-blocking)
-    const { data: userProfile } = await supabase.from('profiles').select('email, username, full_name').eq('id', user.id).single();
-    if (userProfile?.email) {
-      sendTemplateEmail({
-        templateType: 'membership',
-        recipientEmail: userProfile.email,
-        recipientUserId: user.id,
-        variables: {
-          username: userProfile.username || userProfile.full_name || 'there',
-          plan_name: newPlan.display_name,
-          amount: finalCost,
-          expiry_date: new Date(expiryDate).toLocaleDateString()
-        },
-        supabaseClient: supabase
-      }).catch((err)=>console.warn('⚠️ Plan upgrade email failed:', err));
+    // Send plan upgrade success email when campaign is enabled (non-blocking)
+    const { data: campaignConfig } = await supabase.from('platform_config').select('value').eq('key', 'upgrade_success_email_campaign').maybeSingle();
+    const campaignEnabled = (campaignConfig?.value as { enabled?: boolean } | null)?.enabled === true;
+    if (campaignEnabled) {
+      const { data: userProfile } = await supabase.from('profiles').select('email, username, full_name, referral_code').eq('id', user.id).single();
+      if (userProfile?.email) {
+        const [{ data: configRows }, { data: taskCommissionsRow }] = await Promise.all([
+          supabase.from('platform_config').select('key, value').in('key', ['platform_branding', 'email_settings']),
+          supabase.from('referral_earnings').select('commission_amount').eq('referrer_id', user.id).eq('earning_type', 'task_commission')
+        ]);
+        const branding = (configRows?.find((r: { key: string }) => r.key === 'platform_branding')?.value as { name?: string; url?: string }) || {};
+        const emailSettings = (configRows?.find((r: { key: string }) => r.key === 'email_settings')?.value as { platform_url?: string; support_email?: string }) || {};
+        const platformUrl = branding?.url || emailSettings?.platform_url || 'https://profitchips.com';
+        const platformName = branding?.name || 'ProfitChips';
+        const supportEmail = emailSettings?.support_email || 'support@profitchips.com';
+        const loginUrl = `${platformUrl.replace(/\/$/, '')}/login`;
+        const membershipUrl = `${platformUrl.replace(/\/$/, '')}/app/plans`;
+        const teamInviteLink = userProfile.referral_code
+          ? `${platformUrl.replace(/\/$/, '')}/signup?ref=${encodeURIComponent(userProfile.referral_code)}`
+          : `${platformUrl.replace(/\/$/, '')}/referrals`;
+        const taskCommissionsTotal = (taskCommissionsRow || []).reduce((sum: number, r: { commission_amount: number }) => sum + Number(r.commission_amount || 0), 0);
+        const taskCommissionsFormatted = typeof taskCommissionsTotal === 'number' && !Number.isNaN(taskCommissionsTotal)
+          ? `$${taskCommissionsTotal.toFixed(2)}`
+          : '$0.00';
+        const firstName = (userProfile.full_name || userProfile.username || 'there').split(/\s+/)[0] || 'there';
+        sendTemplateEmail({
+          templateType: 'account_upgrade_success',
+          recipientEmail: userProfile.email,
+          recipientUserId: user.id,
+          variables: {
+            first_name: firstName,
+            login_url: loginUrl,
+            new_plan_name: newPlan.display_name,
+            team_invite_link: teamInviteLink,
+            membership_url: membershipUrl,
+            support_email: supportEmail,
+            platform_name: platformName,
+            task_commissions_earned: taskCommissionsFormatted
+          },
+          supabaseClient: supabase
+        }).catch((err) => console.warn('⚠️ Upgrade success email failed:', err));
+      }
     }
     console.log('Plan upgraded successfully:', {
       userId: user.id,

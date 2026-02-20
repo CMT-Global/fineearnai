@@ -359,7 +359,7 @@ export default function DailyTasksReminderCampaign() {
             </div>
             <div className="space-y-2">
               <Label>{t("admin.dailyTasksReminder.body")}</Label>
-              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={12} className="font-mono text-sm" placeholder={t("admin.dailyTasksReminder.bodyPlaceholder")} />
+              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={12} className="font-mono text-sm resize-none min-h-[320px] h-[320px] overflow-y-auto" placeholder={t("admin.dailyTasksReminder.bodyPlaceholder")} />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSaveTemplate} disabled={saving || !template}>

@@ -460,10 +460,10 @@ export const RichTextEditor = ({
         <EditorContent
           editor={editor}
           className={cn(
-            "prose prose-sm sm:prose-base max-w-none p-4 sm:p-6 focus-within:outline-none min-h-[200px] max-h-[400px] overflow-y-auto",
+            "prose prose-sm sm:prose-base max-w-none p-4 sm:p-6 focus-within:outline-none min-h-[320px] h-[320px] resize-none overflow-y-auto",
             "touch-manipulation transition-all duration-200",
             "focus-within:bg-muted/5",
-            "[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:focus:outline-none",
+            "[&_.ProseMirror]:min-h-[280px] [&_.ProseMirror]:focus:outline-none [&_.ProseMirror]:overflow-y-auto",
             "[&_.ProseMirror]:leading-relaxed",
             // Placeholder styles
             "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
