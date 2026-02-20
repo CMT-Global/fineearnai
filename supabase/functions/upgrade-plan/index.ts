@@ -239,6 +239,8 @@ Deno.serve(async (req)=>{
     });
     // Restore account_status to 'active' when user was expired (so task APIs allow access again)
     await supabase.from('profiles').update({ account_status: 'active' }).eq('id', user.id).eq('account_status', 'expired');
+    // Stop trial reactivation email sequence when user upgrades
+    await supabase.from('trial_reactivation_sequence').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('user_id', user.id).eq('status', 'active');
     // Log to user activity log
     await supabase.from('user_activity_log').insert({
       user_id: user.id,

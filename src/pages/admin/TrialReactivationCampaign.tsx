@@ -12,14 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, Send, Loader2, Clock, ChevronLeft, ChevronRight } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 
-/** Format a Date in UTC for display (e.g. "Feb 21, 2026, 5:09 AM UTC") */
+const TEMPLATE_TYPES = ["trial_reactivation_1", "trial_reactivation_2", "trial_reactivation_3", "trial_reactivation_4", "trial_reactivation_5", "trial_reactivation_6", "trial_reactivation_7"] as const;
+const SCHEDULE_DAYS = [0, 1, 3, 5, 7, 10, 14];
+const LOGS_PAGE_SIZE = 15;
+
 function formatUtc(date: Date): string {
   const y = date.getUTCFullYear();
   const m = date.getUTCMonth();
@@ -33,16 +36,15 @@ function formatUtc(date: Date): string {
   return `${monthNames[m]} ${d}, ${y}, ${h12}:${minStr} ${ampm} UTC`;
 }
 
-type RecipientType = "admins" | "all_users";
-
 interface CampaignConfig {
   enabled: boolean;
   send_time_utc: string;
-  recipient_type: RecipientType;
+  require_email_verified?: boolean;
 }
 
 interface EmailTemplateRow {
   id: string;
+  template_type: string;
   subject: string;
   body: string;
 }
@@ -57,9 +59,7 @@ interface LogRow {
 }
 
 const DEFAULT_SEND_TIME = "06:00";
-const LOGS_PAGE_SIZE = 15;
 
-/** Normalize "H:mm" or "HH:mm" to "HH:mm" (24h UTC) for consistent storage and cron matching */
 function normalizeSendTimeUtc(value: string): string {
   const trimmed = (value || "").trim();
   if (!trimmed) return DEFAULT_SEND_TIME;
@@ -82,17 +82,17 @@ function getNextRunUtc(sendTimeUtc: string): Date {
   return next;
 }
 
-export default function DailyTasksReminderCampaign() {
+export default function TrialReactivationCampaign() {
   const { t } = useTranslation();
   useLanguageSync();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
 
-  const [config, setConfig] = useState<CampaignConfig>({ enabled: false, send_time_utc: DEFAULT_SEND_TIME, recipient_type: "all_users" });
-  const [template, setTemplate] = useState<EmailTemplateRow | null>(null);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [config, setConfig] = useState<CampaignConfig>({ enabled: false, send_time_utc: DEFAULT_SEND_TIME, require_email_verified: true });
+  const [templates, setTemplates] = useState<Record<string, EmailTemplateRow>>({});
+  const [edits, setEdits] = useState<Record<string, { subject: string; body: string }>>({});
+  const [activeTab, setActiveTab] = useState("1");
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [logsPage, setLogsPage] = useState(1);
   const [totalLogsCount, setTotalLogsCount] = useState<number | null>(null);
@@ -119,26 +119,28 @@ export default function DailyTasksReminderCampaign() {
     const load = async () => {
       setLoading(true);
       try {
-        const [configRes, templateRes] = await Promise.all([
-          supabase.from("platform_config").select("value").eq("key", "daily_tasks_reminder_campaign").maybeSingle(),
-          supabase.from("email_templates").select("id, subject, body").eq("template_type", "daily_tasks_reminder").maybeSingle(),
+        const [configRes, templatesRes] = await Promise.all([
+          supabase.from("platform_config").select("value").eq("key", "trial_reactivation_campaign").maybeSingle(),
+          supabase.from("email_templates").select("id, template_type, subject, body").in("template_type", [...TEMPLATE_TYPES]),
         ]);
 
-        const cfg = (configRes.data?.value as unknown as CampaignConfig) || { enabled: false, send_time_utc: DEFAULT_SEND_TIME, recipient_type: "all_users" };
+        const cfg = (configRes.data?.value as CampaignConfig) || { enabled: false, send_time_utc: DEFAULT_SEND_TIME, require_email_verified: true };
         setConfig({
           enabled: !!cfg.enabled,
           send_time_utc: normalizeSendTimeUtc(cfg.send_time_utc || DEFAULT_SEND_TIME),
-          recipient_type: cfg.recipient_type === "admins" ? "admins" : "all_users",
+          require_email_verified: cfg.require_email_verified !== false,
         });
 
-        if (templateRes.data) {
-          setTemplate(templateRes.data as EmailTemplateRow);
-          setSubject(templateRes.data.subject);
-          setBody(templateRes.data.body);
+        const byType: Record<string, EmailTemplateRow> = {};
+        for (const row of templatesRes.data || []) {
+          const r = row as EmailTemplateRow;
+          byType[r.template_type] = r;
+          setEdits((prev) => ({ ...prev, [r.template_type]: { subject: r.subject, body: r.body } }));
         }
+        setTemplates(byType);
       } catch (e) {
         console.error(e);
-        toast.error(t("admin.dailyTasksReminder.loadFailed"));
+        toast.error(t("admin.trialReactivation.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -152,13 +154,13 @@ export default function DailyTasksReminderCampaign() {
     try {
       const from = (page - 1) * LOGS_PAGE_SIZE;
       const to = from + LOGS_PAGE_SIZE - 1;
-      const { count, error: countError } = await (supabase as any)
-        .from("daily_tasks_reminder_logs")
+      const { count, error: countError } = await supabase
+        .from("trial_reactivation_logs")
         .select("id", { count: "exact", head: true });
       if (countError) throw countError;
       setTotalLogsCount(count ?? 0);
-      const { data, error } = await (supabase as any)
-        .from("daily_tasks_reminder_logs")
+      const { data, error } = await supabase
+        .from("trial_reactivation_logs")
         .select("id, run_date, total_eligible, sent_count, failed_count, run_at")
         .order("run_date", { ascending: false })
         .range(from, to);
@@ -166,7 +168,7 @@ export default function DailyTasksReminderCampaign() {
       setLogs((data as LogRow[]) || []);
     } catch (e) {
       console.error(e);
-      toast.error(t("admin.dailyTasksReminder.loadFailed"));
+      toast.error(t("admin.trialReactivation.loadFailed"));
     } finally {
       setLogsLoading(false);
     }
@@ -185,44 +187,48 @@ export default function DailyTasksReminderCampaign() {
         send_time_utc: normalizeSendTimeUtc(config.send_time_utc),
       };
       const { error } = await supabase.from("platform_config").upsert(
-        { key: "daily_tasks_reminder_campaign", value: normalizedConfig, description: "Daily Tasks Reminder campaign", updated_at: new Date().toISOString() },
+        { key: "trial_reactivation_campaign", value: normalizedConfig, description: "Trial Expiry Reactivation (7-step)", updated_at: new Date().toISOString() },
         { onConflict: "key" }
       );
       if (error) throw error;
-      toast.success(t("admin.dailyTasksReminder.configSaved"));
+      toast.success(t("admin.trialReactivation.configSaved"));
     } catch (e: unknown) {
-      toast.error((e as Error)?.message || t("admin.dailyTasksReminder.saveFailed"));
+      toast.error((e as Error)?.message || t("admin.trialReactivation.saveFailed"));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveTemplate = async () => {
-    if (!template?.id) {
-      toast.error(t("admin.dailyTasksReminder.templateNotFound"));
+  const handleSaveTemplate = async (templateType: string) => {
+    const e = edits[templateType];
+    const tpl = templates[templateType];
+    if (!e || !tpl?.id) {
+      toast.error(t("admin.trialReactivation.templateNotFound"));
       return;
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("email_templates").update({ subject, body, updated_at: new Date().toISOString() }).eq("id", template.id);
+      const { error } = await supabase.from("email_templates").update({ subject: e.subject, body: e.body, updated_at: new Date().toISOString() }).eq("id", tpl.id);
       if (error) throw error;
-      toast.success(t("admin.dailyTasksReminder.templateSaved"));
-    } catch (e: unknown) {
-      toast.error((e as Error)?.message || t("admin.dailyTasksReminder.saveFailed"));
+      setTemplates((prev) => ({ ...prev, [templateType]: { ...tpl, subject: e.subject, body: e.body } }));
+      toast.success(t("admin.trialReactivation.templateSaved"));
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || t("admin.trialReactivation.saveFailed"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleTestSend = async () => {
+    const step = parseInt(activeTab, 10) || 1;
     setSendingTest(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-daily-tasks-reminder-test", { body: {} });
+      const { data, error } = await supabase.functions.invoke("send-trial-reactivation-test", { body: { step } });
       if (error) throw error;
       if (data?.success === false) throw new Error(data.error);
-      toast.success(t("admin.dailyTasksReminder.testSent"));
+      toast.success(t("admin.trialReactivation.testSent"));
     } catch (e: unknown) {
-      toast.error((e as Error)?.message || t("admin.dailyTasksReminder.testSendFailed"));
+      toast.error((e as Error)?.message || t("admin.trialReactivation.testSendFailed"));
     } finally {
       setSendingTest(false);
     }
@@ -231,25 +237,24 @@ export default function DailyTasksReminderCampaign() {
   const handleRunNow = async () => {
     setRunningNow(true);
     try {
-      const { data, error } = await supabase.functions.invoke("process-daily-tasks-reminder", { body: { force_run: true } });
+      const { data, error } = await supabase.functions.invoke("process-trial-reactivation", { body: { force_run: true } });
       if (error) throw error;
       if (data?.run !== true) {
-        const reason = data?.reason || "unknown";
-        throw new Error(data?.error || reason);
+        throw new Error(data?.error || data?.reason || "unknown");
       }
       const count = data?.sent_count ?? 0;
-      toast.success(t("admin.dailyTasksReminder.runNowSuccess", { count }));
+      toast.success(t("admin.trialReactivation.runNowSuccess", { count }));
       setLogsPage(1);
       loadLogs(1);
     } catch (e: unknown) {
-      toast.error((e as Error)?.message || t("admin.dailyTasksReminder.runNowFailed"));
+      toast.error((e as Error)?.message || t("admin.trialReactivation.runNowFailed"));
     } finally {
       setRunningNow(false);
     }
   };
 
   if (authLoading || adminLoading || loading) {
-    return <PageLoading text={t("admin.dailyTasksReminder.loading")} />;
+    return <PageLoading text={t("admin.trialReactivation.loading")} />;
   }
 
   return (
@@ -257,151 +262,157 @@ export default function DailyTasksReminderCampaign() {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate("/admin")} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("admin.dailyTasksReminder.backToAdmin")}
+          {t("admin.trialReactivation.backToAdmin")}
         </Button>
-        <h1 className="text-3xl font-bold">{t("admin.dailyTasksReminder.title")}</h1>
-        <p className="text-muted-foreground mt-1">{t("admin.dailyTasksReminder.subtitle")}</p>
+        <h1 className="text-3xl font-bold">{t("admin.trialReactivation.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("admin.trialReactivation.subtitle")}</p>
       </div>
 
       <div className="space-y-6">
-        {/* Campaign controls */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
-              {t("admin.dailyTasksReminder.campaignSettings")}
+              {t("admin.trialReactivation.campaignSettings")}
             </CardTitle>
-            <CardDescription>{t("admin.dailyTasksReminder.campaignDescription")}</CardDescription>
+            <CardDescription>{t("admin.trialReactivation.campaignDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <Label className="text-base">{t("admin.dailyTasksReminder.enableCampaign")}</Label>
-                <p className="text-sm text-muted-foreground">{t("admin.dailyTasksReminder.enableCampaignHelp")}</p>
+                <Label className="text-base">{t("admin.trialReactivation.enableCampaign")}</Label>
+                <p className="text-sm text-muted-foreground">{t("admin.trialReactivation.enableCampaignHelp")}</p>
               </div>
               <Switch checked={config.enabled} onCheckedChange={(v) => setConfig((c) => ({ ...c, enabled: v }))} />
             </div>
             <div className="space-y-2">
-              <Label>{t("admin.dailyTasksReminder.sendTimeUtc")}</Label>
+              <Label>{t("admin.trialReactivation.sendTimeUtc")}</Label>
               <Input
                 type="time"
                 value={config.send_time_utc}
                 onChange={(e) => setConfig((c) => ({ ...c, send_time_utc: normalizeSendTimeUtc(e.target.value || DEFAULT_SEND_TIME) }))}
                 step={60}
               />
-              <p className="text-sm text-muted-foreground">{t("admin.dailyTasksReminder.sendTimeHelp")}</p>
+              <p className="text-sm text-muted-foreground">{t("admin.trialReactivation.sendTimeHelp")}</p>
             </div>
-            <div className="space-y-2">
-              <Label>{t("admin.dailyTasksReminder.whoGetsIt")}</Label>
-              <RadioGroup
-                value={config.recipient_type}
-                onValueChange={(v) => setConfig((c) => ({ ...c, recipient_type: v as RecipientType }))}
-                className="flex flex-col gap-3"
-              >
-                <div className="flex items-start space-x-3 rounded-lg border p-4">
-                  <RadioGroupItem value="admins" id="recipient-admins" />
-                  <div className="grid gap-1">
-                    <Label htmlFor="recipient-admins" className="font-normal cursor-pointer">
-                      {t("admin.dailyTasksReminder.recipientAdmins")}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{t("admin.dailyTasksReminder.recipientAdminsHelp")}</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 rounded-lg border p-4">
-                  <RadioGroupItem value="all_users" id="recipient-all-users" />
-                  <div className="grid gap-1">
-                    <Label htmlFor="recipient-all-users" className="font-normal cursor-pointer">
-                      {t("admin.dailyTasksReminder.recipientAllUsers")}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{t("admin.dailyTasksReminder.recipientAllUsersHelp")}</p>
-                  </div>
-                </div>
-              </RadioGroup>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div>
+                <Label className="text-base">{t("admin.trialReactivation.requireEmailVerified")}</Label>
+                <p className="text-sm text-muted-foreground">{t("admin.trialReactivation.requireEmailVerifiedHelp")}</p>
+              </div>
+              <Switch
+                checked={config.require_email_verified !== false}
+                onCheckedChange={(v) => setConfig((c) => ({ ...c, require_email_verified: v }))}
+              />
             </div>
             {config.enabled && (
               <Alert className="flex items-start gap-2">
                 <Clock className="h-4 w-4 mt-0.5 shrink-0" />
                 <AlertDescription>
-                  {t("admin.dailyTasksReminder.nextRun")}{" "}
-                  <strong>{formatUtc(getNextRunUtc(config.send_time_utc))}</strong>.{" "}
-                  {t("admin.dailyTasksReminder.nextRunHelp")}
+                  {t("admin.trialReactivation.nextRun")} <strong>{formatUtc(getNextRunUtc(config.send_time_utc))}</strong>. {t("admin.trialReactivation.nextRunHelp")}
                 </AlertDescription>
               </Alert>
             )}
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleSaveConfig} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {t("admin.dailyTasksReminder.saveConfig")}
+                {t("admin.trialReactivation.saveConfig")}
               </Button>
               {config.enabled && (
-                <Button variant="outline" onClick={handleRunNow} disabled={runningNow} title={t("admin.dailyTasksReminder.runNowHelp")}>
+                <Button variant="outline" onClick={handleRunNow} disabled={runningNow} title={t("admin.trialReactivation.runNowHelp")}>
                   {runningNow ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                  {t("admin.dailyTasksReminder.runNow")}
+                  {t("admin.trialReactivation.runNow")}
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Email template */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.dailyTasksReminder.emailTemplate")}</CardTitle>
-            <CardDescription>{t("admin.dailyTasksReminder.emailTemplateDescription")}</CardDescription>
+            <CardTitle>{t("admin.trialReactivation.emailTemplatesTitle")}</CardTitle>
+            <CardDescription>{t("admin.trialReactivation.emailTemplatesDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
-              <AlertDescription>{t("admin.dailyTasksReminder.variablesHelp")}</AlertDescription>
+              <AlertDescription>{t("admin.trialReactivation.variablesHelp")}</AlertDescription>
             </Alert>
-            <div className="space-y-2">
-              <Label>{t("admin.dailyTasksReminder.subject")}</Label>
-              <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t("admin.dailyTasksReminder.subjectPlaceholder")} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("admin.dailyTasksReminder.body")}</Label>
-              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={12} className="font-mono text-sm" placeholder={t("admin.dailyTasksReminder.bodyPlaceholder")} />
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveTemplate} disabled={saving || !template}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {t("admin.dailyTasksReminder.saveTemplate")}
-              </Button>
-              <Button variant="outline" onClick={handleTestSend} disabled={sendingTest}>
-                {sendingTest ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                {t("admin.dailyTasksReminder.testSend")}
-              </Button>
-            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="flex flex-wrap h-auto gap-1">
+                {TEMPLATE_TYPES.map((_, i) => (
+                  <TabsTrigger key={i} value={String(i + 1)}>
+                    {t("admin.trialReactivation.emailStep", { step: i + 1, day: SCHEDULE_DAYS[i] })}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {TEMPLATE_TYPES.map((templateType, i) => {
+                const step = i + 1;
+                const tpl = templates[templateType];
+                const e = edits[templateType] ?? { subject: "", body: "" };
+                return (
+                  <TabsContent key={templateType} value={String(step)} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>{t("admin.trialReactivation.subject")}</Label>
+                      <Input
+                        value={e.subject}
+                        onChange={(ev) => setEdits((prev) => ({ ...prev, [templateType]: { ...(prev[templateType] ?? e), subject: ev.target.value } }))}
+                        placeholder={t("admin.trialReactivation.subjectPlaceholder")}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("admin.trialReactivation.body")}</Label>
+                      <Textarea
+                        value={e.body}
+                        onChange={(ev) => setEdits((prev) => ({ ...prev, [templateType]: { ...(prev[templateType] ?? e), body: ev.target.value } }))}
+                        rows={14}
+                        className="font-mono text-sm"
+                        placeholder={t("admin.trialReactivation.bodyPlaceholder")}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => handleSaveTemplate(templateType)} disabled={saving || !tpl}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        {t("admin.trialReactivation.saveTemplate")}
+                      </Button>
+                      <Button variant="outline" onClick={handleTestSend} disabled={sendingTest}>
+                        {sendingTest ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                        {t("admin.trialReactivation.testSend")}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           </CardContent>
         </Card>
 
-        {/* Logs */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.dailyTasksReminder.logsTitle")}</CardTitle>
-            <CardDescription>{t("admin.dailyTasksReminder.logsDescription")}</CardDescription>
+            <CardTitle>{t("admin.trialReactivation.logsTitle")}</CardTitle>
+            <CardDescription>{t("admin.trialReactivation.logsDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("admin.dailyTasksReminder.logRunDate")}</TableHead>
-                  <TableHead>{t("admin.dailyTasksReminder.logEligible")}</TableHead>
-                  <TableHead>{t("admin.dailyTasksReminder.logSent")}</TableHead>
-                  <TableHead>{t("admin.dailyTasksReminder.logFailed")}</TableHead>
-                  <TableHead>{t("admin.dailyTasksReminder.logRunAt")}</TableHead>
+                  <TableHead>{t("admin.trialReactivation.logRunDate")}</TableHead>
+                  <TableHead>{t("admin.trialReactivation.logEligible")}</TableHead>
+                  <TableHead>{t("admin.trialReactivation.logSent")}</TableHead>
+                  <TableHead>{t("admin.trialReactivation.logFailed")}</TableHead>
+                  <TableHead>{t("admin.trialReactivation.logRunAt")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logsLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      {t("admin.dailyTasksReminder.loading")}
+                      {t("admin.trialReactivation.loading")}
                     </TableCell>
                   </TableRow>
                 ) : logs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      {t("admin.dailyTasksReminder.noLogs")}
+                      {t("admin.trialReactivation.noLogs")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -420,7 +431,7 @@ export default function DailyTasksReminderCampaign() {
             {totalLogsCount !== null && totalLogsCount > 0 && (
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("admin.dailyTasksReminder.logsPageOf", {
+                  {t("admin.trialReactivation.logsPageOf", {
                     page: logsPage,
                     total: Math.ceil(totalLogsCount / LOGS_PAGE_SIZE),
                     count: totalLogsCount,
@@ -434,7 +445,7 @@ export default function DailyTasksReminderCampaign() {
                     disabled={logsPage <= 1 || logsLoading}
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    {t("admin.dailyTasksReminder.previous")}
+                    {t("admin.trialReactivation.previous")}
                   </Button>
                   <Button
                     variant="outline"
@@ -442,7 +453,7 @@ export default function DailyTasksReminderCampaign() {
                     onClick={() => setLogsPage((p) => p + 1)}
                     disabled={logsPage >= Math.ceil(totalLogsCount / LOGS_PAGE_SIZE) || logsLoading}
                   >
-                    {t("admin.dailyTasksReminder.next")}
+                    {t("admin.trialReactivation.next")}
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>

@@ -968,6 +968,7 @@
         "emailTemplates": "Email Templates",
         "scheduledEmails": "Scheduled Emails",
         "dailyTasksReminder": "Rappel des tâches quotidiennes",
+        "trialReactivation": "Réactivation après essai",
         "securitySettings": "Security Settings",
         "systemSecrets": "System Secrets",
         "ipstackConfiguration": "IPStack Configuration",

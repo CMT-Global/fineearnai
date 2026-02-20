@@ -197,6 +197,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
         { label: t("admin.sidebar.items.emailTemplates"), path: "/admin/communications/templates" },
         { label: t("admin.sidebar.items.scheduledEmails"), path: "/admin/communications/scheduled" },
         { label: t("admin.sidebar.items.dailyTasksReminder"), path: "/admin/communications/daily-tasks-reminder" },
+        { label: t("admin.sidebar.items.trialReactivation"), path: "/admin/communications/trial-reactivation" },
       ],
     },
     {
