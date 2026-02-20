@@ -36,7 +36,7 @@ Deno.serve(async (req)=>{
     endOfTomorrow.setHours(23, 59, 59, 999);
     console.log(`Looking for plans expiring tomorrow between ${startOfTomorrow.toISOString()} and ${endOfTomorrow.toISOString()}`);
     const defaultPlanName = await getDefaultPlanName(supabaseClient);
-    // Get users whose plans expire tomorrow only (exclude default/free tier plan)
+    // Get users whose paid plans expire tomorrow (1d left) — exclude default/free (Trainee)
     let reminderQuery = supabaseClient.from('profiles').select('id, username, email, membership_plan, plan_expires_at').gte('plan_expires_at', startOfTomorrow.toISOString()).lte('plan_expires_at', endOfTomorrow.toISOString()).not('plan_expires_at', 'is', null).eq('account_status', 'active');
     if (defaultPlanName) reminderQuery = reminderQuery.neq('membership_plan', defaultPlanName);
     const { data: upcomingExpiryUsers, error: reminderQueryError } = await reminderQuery;

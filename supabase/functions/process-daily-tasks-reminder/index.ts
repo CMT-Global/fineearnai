@@ -101,15 +101,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const sendTimeUtc = config.send_time_utc || '06:00';
+    // Parse send_time_utc robustly: "HH:mm" or "H:mm" in 24h UTC (e.g. "06:00", "5:09")
+    const rawSendTime = String(config.send_time_utc || '06:00').trim();
+    const [hPart, mPart] = rawSendTime.split(':');
+    const configHour = Math.min(23, Math.max(0, parseInt(hPart, 10) || 0));
     const recipientType = config.recipient_type === 'admins' ? 'admins' : 'all_users';
-    const configHour = parseInt(sendTimeUtc.split(':')[0], 10) || 0;
     const now = new Date();
     const currentHour = now.getUTCHours();
 
     if (!forceRun) {
       if (currentHour !== configHour) {
-        console.log(`[${requestId}] Not send time (configured hour ${configHour}, now ${currentHour})`);
+        console.log(`[${requestId}] Not send time (configured UTC hour ${configHour}, current UTC hour ${currentHour})`);
         return new Response(
           JSON.stringify({ run: false, reason: 'not_send_time' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -213,9 +213,11 @@ serve(async (req)=>{
       throw new Error(emailResponse.error.message || 'Resend API returned an error');
     }
 
-    // Step 5: Log to email_logs
+    // Step 5: Log to email_logs (include recipient_user_id when present for dedup e.g. plan_expiry_reminder)
+    const recipientUserId = enhancedVariables.recipient_user_id ?? null;
     await supabase.from('email_logs').insert({
       recipient_email: email,
+      ...(recipientUserId && { recipient_user_id: recipientUserId }),
       subject: subject,
       body: htmlBody,
       status: 'sent',

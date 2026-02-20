@@ -19,6 +19,20 @@ import { PageLoading } from "@/components/shared/PageLoading";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 
+/** Format a Date in UTC for display (e.g. "Feb 21, 2026, 5:09 AM UTC") */
+function formatUtc(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth();
+  const d = date.getUTCDate();
+  const h = date.getUTCHours();
+  const min = date.getUTCMinutes();
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  const minStr = min < 10 ? "0" + min : String(min);
+  return `${monthNames[m]} ${d}, ${y}, ${h12}:${minStr} ${ampm} UTC`;
+}
+
 type RecipientType = "admins" | "all_users";
 
 interface CampaignConfig {
@@ -44,8 +58,19 @@ interface LogRow {
 
 const DEFAULT_SEND_TIME = "06:00";
 
+/** Normalize "H:mm" or "HH:mm" to "HH:mm" (24h UTC) for consistent storage and cron matching */
+function normalizeSendTimeUtc(value: string): string {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return DEFAULT_SEND_TIME;
+  const [h = "0", m = "0"] = trimmed.split(":");
+  const hour = Math.min(23, Math.max(0, parseInt(h, 10) || 0));
+  const minute = Math.min(59, Math.max(0, parseInt(m, 10) || 0));
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 function getNextRunUtc(sendTimeUtc: string): Date {
-  const [h = "0", m = "0"] = sendTimeUtc.split(":");
+  const normalized = normalizeSendTimeUtc(sendTimeUtc);
+  const [h = "0", m = "0"] = normalized.split(":");
   const hour = parseInt(h, 10) || 0;
   const minute = parseInt(m, 10) || 0;
   const now = new Date();
@@ -99,7 +124,7 @@ export default function DailyTasksReminderCampaign() {
         const cfg = (configRes.data?.value as CampaignConfig) || { enabled: false, send_time_utc: DEFAULT_SEND_TIME, recipient_type: "all_users" };
         setConfig({
           enabled: !!cfg.enabled,
-          send_time_utc: cfg.send_time_utc || DEFAULT_SEND_TIME,
+          send_time_utc: normalizeSendTimeUtc(cfg.send_time_utc || DEFAULT_SEND_TIME),
           recipient_type: cfg.recipient_type === "admins" ? "admins" : "all_users",
         });
 
@@ -122,8 +147,12 @@ export default function DailyTasksReminderCampaign() {
   const handleSaveConfig = async () => {
     setSaving(true);
     try {
+      const normalizedConfig = {
+        ...config,
+        send_time_utc: normalizeSendTimeUtc(config.send_time_utc),
+      };
       const { error } = await supabase.from("platform_config").upsert(
-        { key: "daily_tasks_reminder_campaign", value: config, description: "Daily Tasks Reminder campaign", updated_at: new Date().toISOString() },
+        { key: "daily_tasks_reminder_campaign", value: normalizedConfig, description: "Daily Tasks Reminder campaign", updated_at: new Date().toISOString() },
         { onConflict: "key" }
       );
       if (error) throw error;
@@ -229,7 +258,7 @@ export default function DailyTasksReminderCampaign() {
               <Input
                 type="time"
                 value={config.send_time_utc}
-                onChange={(e) => setConfig((c) => ({ ...c, send_time_utc: e.target.value || DEFAULT_SEND_TIME }))}
+                onChange={(e) => setConfig((c) => ({ ...c, send_time_utc: normalizeSendTimeUtc(e.target.value || DEFAULT_SEND_TIME) }))}
                 step={60}
               />
               <p className="text-sm text-muted-foreground">{t("admin.dailyTasksReminder.sendTimeHelp")}</p>
@@ -266,7 +295,7 @@ export default function DailyTasksReminderCampaign() {
                 <Clock className="h-4 w-4 mt-0.5 shrink-0" />
                 <AlertDescription>
                   {t("admin.dailyTasksReminder.nextRun")}{" "}
-                  <strong>{format(getNextRunUtc(config.send_time_utc), "PPp")} UTC</strong>.{" "}
+                  <strong>{formatUtc(getNextRunUtc(config.send_time_utc))}</strong>.{" "}
                   {t("admin.dailyTasksReminder.nextRunHelp")}
                 </AlertDescription>
               </Alert>
