@@ -371,103 +371,6 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
     </div>
   );
 
-  // Mobile hamburger menu content - only secondary items
-  const MobileMenuContent = () => (
-    <>
-      <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-[hsl(var(--wallet-deposit))]" />
-          <span className="text-xl font-bold">ProfitChips</span>
-        </div>
-      </div>
-
-      {/* User Header Card */}
-      <UserHeaderCard profile={profile} />
-
-      {/* Currency Selector */}
-      <CurrencySelector />
-
-      {/* Only secondary navigation items + Partner navigation (always visible) in mobile menu */}
-      <nav className="flex-1 p-4 space-y-1">
-        {/* Partner Navigation - Respects global enable/disable toggle */}
-        {isPartnerProgramEnabled && (
-          isPartner ? (
-            <button
-              onClick={() => handleNavigation("/partner/dashboard")}
-              onMouseEnter={() => handlePrefetch("/partner/dashboard")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20 ${
-                isActive("/partner/dashboard")
-                  ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                  : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-              }`}
-            >
-              <Sparkles className={`h-5 w-5 text-[hsl(var(--wallet-deposit))]`} />
-              <span className="font-semibold">{t("components.sidebar.partnerHub")}</span>
-              <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
-            </button>
-          ) : (
-            <button
-              onClick={() => handleNavigation("/become-partner")}
-              onMouseEnter={() => handlePrefetch("/become-partner")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
-                isActive("/become-partner")
-                  ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                  : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-              }`}
-            >
-              <Sparkles className={`h-5 w-5 ${isActive("/become-partner") ? 'text-[hsl(var(--wallet-deposit))]' : ''}`} />
-              <span>{t("components.sidebar.becomePartner")}</span>
-            </button>
-          )
-        )}
-        {secondaryNavItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => handleNavigation(item.path)}
-            onMouseEnter={() => handlePrefetch(item.path)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left ${
-              isActive(item.path)
-                ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-fg))] border-l-4 border-[hsl(var(--wallet-deposit))]"
-                : item.highlight
-                ? "bg-green-500/10 hover:bg-green-500/20"
-                : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-            }`}
-          >
-            <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
-            <span className={item.highlight ? 'text-green-600 font-semibold' : ''}>{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* Switch to Admin Button - Highly Visible */}
-      {isAdmin && (
-        <div className="px-4 pb-4">
-          <Button
-            onClick={handleSwitchToAdmin}
-            className="w-full bg-gradient-to-r from-[hsl(var(--wallet-deposit))] to-[hsl(var(--wallet-tasks))] text-white hover:opacity-90 transition-opacity font-bold py-6"
-          >
-            <Shield className="h-5 w-5 mr-2" />
-            Switch to Admin Panel
-            <ArrowRight className="h-5 w-5 ml-2" />
-          </Button>
-        </div>
-      )}
-
-      {/* Logout Section - Bottom */}
-      <div className="p-4 border-t border-[hsl(var(--sidebar-border))]">
-        <Button
-          onClick={handleLogoutClick}
-          variant="destructive"
-          size="lg"
-          className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
-        >
-          <LogOut className="h-5 w-5 mr-2" />
-          {t("navigation.logout")}
-        </Button>
-      </div>
-    </>
-  );
-
   return (
     <>
       <LogoutConfirmDialog
@@ -475,8 +378,8 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
         onOpenChange={setLogoutDialogOpen}
         onConfirm={handleLogoutConfirm}
       />
-      {/* Mobile Sidebar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
+      {/* Mobile header + hamburger: only on small screens (sm and below); md and up use persistent sidebar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src={platformLogoUrl} alt={`${platformName} Logo`} className="h-12 w-12 object-contain" />
           <span className="font-bold">{platformName}</span>
@@ -495,21 +398,23 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
-              <div className="flex flex-col h-full bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))]">
-                <MobileMenuContent />
+            <SheetContent side="left" className="w-80 p-0 overflow-hidden">
+              <div className="flex flex-col h-full max-h-[100dvh] bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] overflow-hidden min-h-0">
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <NavContent />
+                </div>
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
+      {/* Sidebar: visible from md and up (tablets and desktop); matches full nav in image */}
+      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-fg))] flex-col z-40">
         <NavContent />
       </aside>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation: only on small screens */}
       <MobileBottomNav profile={profile} />
     </>
   );

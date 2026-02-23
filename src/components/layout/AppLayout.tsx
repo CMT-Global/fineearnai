@@ -32,13 +32,13 @@ export const AppLayout = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {profile ? (
         <Sidebar profile={profile} isAdmin={isAdmin} onSignOut={signOut} />
       ) : (
         <SidebarSkeleton />
       )}
-      <main className="flex-1 overflow-auto lg:mt-0 lg:ml-80 mt-16 pb-24 lg:pb-0">
+      <main className="flex-1 overflow-auto md:mt-0 md:ml-80 mt-16 pb-24 md:pb-0">
         <Suspense
           fallback={<PageLoading text={t("app.loadingPage")} />}
         >

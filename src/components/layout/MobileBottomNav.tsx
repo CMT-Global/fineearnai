@@ -76,14 +76,14 @@ export const MobileBottomNav = memo(({ profile }: MobileBottomNavProps) => {
 
   return (
     <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.3)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_16px_rgba(0,0,0,0.3)]"
       style={{ 
         paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)'
       }}
       role="navigation"
       aria-label="Mobile navigation"
     >
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around min-w-0 h-16 px-1 sm:px-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
           const active = isActive(item.path);
           const isPressed = pressedButton === item.path;
@@ -97,7 +97,7 @@ export const MobileBottomNav = memo(({ profile }: MobileBottomNavProps) => {
                 onClick={() => handleNavigation(item.path)}
                 onTouchStart={() => setPressedButton(item.path)}
                 onTouchEnd={() => setTimeout(() => setPressedButton(null), 150)}
-                className="flex flex-col items-center justify-center flex-1 h-full relative group touch-manipulation"
+                className="flex flex-col items-center justify-center flex-1 min-w-[52px] sm:min-w-0 h-full relative group touch-manipulation flex-shrink-0"
                 aria-label={item.ariaLabel}
                 aria-current={active ? "page" : undefined}
               >
@@ -151,7 +151,7 @@ export const MobileBottomNav = memo(({ profile }: MobileBottomNavProps) => {
               onClick={() => handleNavigation(item.path)}
               onTouchStart={() => setPressedButton(item.path)}
               onTouchEnd={() => setTimeout(() => setPressedButton(null), 150)}
-              className="flex flex-col items-center justify-center flex-1 h-full relative group touch-manipulation"
+              className="flex flex-col items-center justify-center flex-1 min-w-[52px] sm:min-w-0 h-full relative group touch-manipulation flex-shrink-0"
               aria-label={item.ariaLabel}
               aria-current={active ? "page" : undefined}
             >

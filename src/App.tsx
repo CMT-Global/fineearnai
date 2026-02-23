@@ -154,9 +154,9 @@ const RoutesWrapper = () => {
   }
 
   const PageLoader = () => (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      {/* Sidebar skeleton - mimics actual sidebar structure (desktop only) */}
-      <aside className="hidden lg:flex w-64 bg-[hsl(var(--sidebar-bg))] flex-col border-r border-[hsl(var(--sidebar-border))]">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Sidebar skeleton - mimics actual sidebar structure (md and up) */}
+      <aside className="hidden md:flex w-64 bg-[hsl(var(--sidebar-bg))] flex-col border-r border-[hsl(var(--sidebar-border))]">
         {/* Logo skeleton */}
         <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
           <div className="flex items-center gap-2">
@@ -194,8 +194,8 @@ const RoutesWrapper = () => {
         </div>
       </aside>
       
-      {/* Mobile header skeleton (mobile only) */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
+      {/* Mobile header skeleton (sm and below only) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-muted animate-pulse rounded" />
           <div className="h-5 w-32 bg-muted animate-pulse rounded" />
@@ -207,7 +207,7 @@ const RoutesWrapper = () => {
       </div>
       
       {/* Main content loading */}
-      <main className="flex-1 flex items-center justify-center lg:mt-0 mt-16 pb-24 lg:pb-0">
+      <main className="flex-1 flex items-center justify-center md:mt-0 mt-16 pb-24 md:pb-0">
         <LoadingSpinner size="lg" text={t("app.loadingPage")} />
       </main>
     </div>

@@ -6,7 +6,7 @@ export const SidebarSkeleton = () => {
   return (
     <>
       {/* Desktop Sidebar Skeleton */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] flex-col z-40">
+      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-80 bg-[hsl(var(--sidebar-bg))] flex-col z-40">
         {/* Logo skeleton */}
         <div className="p-6 border-b border-[hsl(var(--sidebar-border))]">
           <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export const SidebarSkeleton = () => {
       </aside>
 
       {/* Mobile Header Skeleton */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-gradient-to-r from-muted via-muted/50 to-muted animate-shimmer rounded" 
                style={{ backgroundSize: '200% 100%' }} />
