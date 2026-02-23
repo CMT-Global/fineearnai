@@ -943,6 +943,7 @@
         "cpayCheckouts": "CPAY Checkouts",
         "feeSavingsBanner": "Fee Savings Banner",
         "dashboardContent": "Dashboard Content",
+        "footerContact": "Contacto del pie de página",
         "howItWorksContent": "How It Works Content",
         "partnerProgramContent": "Partner Program Content",
         "globalEmailTemplate": "Global Email Template",
@@ -2629,6 +2630,32 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "footerContact": {
+        "title": "Configuración de contacto del pie de página",
+        "subtitle": "Gestiona la sección de contacto del pie de página: dirección, email de soporte y redes sociales. Activa o desactiva cada enlace individualmente.",
+        "loading": "Cargando configuración...",
+        "settingsSaved": "Configuración guardada",
+        "settingsSavedDescription": "La configuración de contacto del pie de página se ha actualizado.",
+        "errorSaving": "Error al guardar",
+        "errorSavingDescription": "No se pudo guardar. Inténtelo de nuevo.",
+        "addressTitle": "Dirección",
+        "addressDescription": "Dirección mostrada en la sección de contacto del pie de página.",
+        "supportEmailTitle": "Email de soporte",
+        "supportEmailDescription": "Email de soporte mostrado en el pie de página.",
+        "socialTitle": "Redes sociales",
+        "socialDescription": "URL de cada plataforma. Activa «Mostrar en el pie» para cada enlace.",
+        "social": {
+          "facebook": "Facebook",
+          "instagram": "Instagram",
+          "tiktok": "TikTok",
+          "x": "X (Twitter)"
+        },
+        "showOnFooter": "Mostrar en el pie",
+        "changesHint": "Los cambios se verán en el pie de página al guardar.",
+        "resetToDefaults": "Restablecer",
+        "successMessage": "Configuración de contacto del pie de página guardada.",
+        "errorMessage": "No se pudo guardar. Inténtelo de nuevo."
       },
       "howItWorks": {
         "title": "How It Works Content Settings",

@@ -943,6 +943,7 @@
         "cpayCheckouts": "CPAY Checkouts",
         "feeSavingsBanner": "Fee Savings Banner",
         "dashboardContent": "Dashboard Content",
+        "footerContact": "Contatto footer",
         "howItWorksContent": "How It Works Content",
         "partnerProgramContent": "Partner Program Content",
         "globalEmailTemplate": "Global Email Template",
@@ -2615,6 +2616,32 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "footerContact": {
+        "title": "Impostazioni contatto footer",
+        "subtitle": "Gestisci la sezione contatto nel footer: indirizzo, email di supporto e link social. Attiva o disattiva ogni link singolarmente.",
+        "loading": "Caricamento impostazioni...",
+        "settingsSaved": "Impostazioni salvate",
+        "settingsSavedDescription": "Le impostazioni di contatto del footer sono state aggiornate.",
+        "errorSaving": "Errore nel salvataggio",
+        "errorSavingDescription": "Salvataggio fallito. Riprova.",
+        "addressTitle": "Indirizzo",
+        "addressDescription": "Indirizzo mostrato nella sezione contatto del footer.",
+        "supportEmailTitle": "Email di supporto",
+        "supportEmailDescription": "Email di supporto mostrata nel footer.",
+        "socialTitle": "Social media",
+        "socialDescription": "URL per ogni piattaforma. Attiva \"Mostra nel footer\" per ogni link.",
+        "social": {
+          "facebook": "Facebook",
+          "instagram": "Instagram",
+          "tiktok": "TikTok",
+          "x": "X (Twitter)"
+        },
+        "showOnFooter": "Mostra nel footer",
+        "changesHint": "Le modifiche appariranno nel footer dopo il salvataggio.",
+        "resetToDefaults": "Ripristina predefiniti",
+        "successMessage": "Impostazioni contatto footer salvate.",
+        "errorMessage": "Salvataggio fallito. Riprova."
       },
       "howItWorks": {
         "title": "How It Works Content Settings",

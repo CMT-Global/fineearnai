@@ -984,6 +984,7 @@
         "cpayCheckouts": "CPAY Checkouts",
         "feeSavingsBanner": "Fee Savings Banner",
         "dashboardContent": "Dashboard Content",
+        "footerContact": "Footer Contact",
         "howItWorksContent": "How It Works Content",
         "partnerProgramContent": "Partner Program Content",
         "globalEmailTemplate": "Global Email Template",
@@ -2836,6 +2837,32 @@
         "changesApplied": "Changes will be applied to the dashboard after saving",
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
+        "errorMessage": "Failed to save settings. Please try again."
+      },
+      "footerContact": {
+        "title": "Footer Contact Settings",
+        "subtitle": "Manage the contact section on the landing page footer: address, support email, and social links. Enable or disable each social link individually.",
+        "loading": "Loading footer contact settings...",
+        "settingsSaved": "Settings saved",
+        "settingsSavedDescription": "Footer contact settings have been updated. Changes appear on the main website footer.",
+        "errorSaving": "Error saving settings",
+        "errorSavingDescription": "Failed to save settings. Please try again.",
+        "addressTitle": "Address",
+        "addressDescription": "Physical or display address shown in the footer contact section.",
+        "supportEmailTitle": "Support Email",
+        "supportEmailDescription": "Email address shown for support in the footer. Visitors can click to send an email.",
+        "socialTitle": "Social Media Links",
+        "socialDescription": "URLs for each platform. Toggle \"Show on footer\" to display or hide each link.",
+        "social": {
+          "facebook": "Facebook",
+          "instagram": "Instagram",
+          "tiktok": "TikTok",
+          "x": "X (Twitter)"
+        },
+        "showOnFooter": "Show on footer",
+        "changesHint": "Changes will appear on the landing page footer after saving.",
+        "resetToDefaults": "Reset to Defaults",
+        "successMessage": "Footer contact settings saved. The landing page footer has been updated.",
         "errorMessage": "Failed to save settings. Please try again."
       },
       "howItWorks": {

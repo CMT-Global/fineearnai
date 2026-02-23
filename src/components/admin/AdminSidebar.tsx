@@ -148,6 +148,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       icon: Settings,
       items: [
         { label: t("admin.sidebar.items.dashboardContent"), path: "/admin/content/dashboard" },
+        { label: t("admin.sidebar.items.footerContact"), path: "/admin/content/footer-contact" },
         { label: t("admin.sidebar.items.howItWorksContent"), path: "/admin/content/how-it-works" },
         { label: t("admin.sidebar.items.partnerProgramContent"), path: "/admin/content/partner-program" },
         { label: t("admin.sidebar.items.globalEmailTemplate"), path: "/admin/content/email-template" },

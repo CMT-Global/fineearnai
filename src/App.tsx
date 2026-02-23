@@ -100,6 +100,7 @@ const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationSt
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
+const FooterContactSettings = lazy(() => import("@/pages/admin/FooterContactSettings"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 import { ReamazeMobileCloseButton } from "@/components/shared/ReamazeMobileCloseButton";
@@ -274,6 +275,7 @@ const RoutesWrapper = () => {
         <Route path="transactions" element={<AdminTransactions />} />
         <Route path="settings/payments" element={<PaymentSettings />} />
         <Route path="content/dashboard" element={<DashboardContentSettings />} />
+        <Route path="content/footer-contact" element={<FooterContactSettings />} />
         <Route path="content/how-it-works" element={<HowItWorksSettings />} />
         <Route path="content/email-template" element={<EmailTemplateGlobalSettings />} />
         <Route path="content/partner-program" element={<PartnerProgramSettings />} />

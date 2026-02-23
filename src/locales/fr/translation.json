@@ -943,6 +943,7 @@
         "cpayCheckouts": "CPAY Checkouts",
         "feeSavingsBanner": "Fee Savings Banner",
         "dashboardContent": "Dashboard Content",
+        "footerContact": "Contact du pied de page",
         "howItWorksContent": "How It Works Content",
         "partnerProgramContent": "Partner Program Content",
         "globalEmailTemplate": "Global Email Template",
@@ -2616,6 +2617,32 @@
         "resetToDefaults": "Reset to Defaults",
         "successMessage": "Settings saved successfully! Changes will be reflected on the dashboard.",
         "errorMessage": "Failed to save settings. Please try again."
+      },
+      "footerContact": {
+        "title": "Paramètres de contact du pied de page",
+        "subtitle": "Gérez la section contact du pied de page : adresse, e-mail de support et liens sociaux. Activez ou désactivez chaque lien individuellement.",
+        "loading": "Chargement des paramètres...",
+        "settingsSaved": "Paramètres enregistrés",
+        "settingsSavedDescription": "Les paramètres de contact du pied de page ont été mis à jour.",
+        "errorSaving": "Erreur lors de l'enregistrement",
+        "errorSavingDescription": "Échec de l'enregistrement. Veuillez réessayer.",
+        "addressTitle": "Adresse",
+        "addressDescription": "Adresse affichée dans la section contact du pied de page.",
+        "supportEmailTitle": "E-mail de support",
+        "supportEmailDescription": "Adresse e-mail de support affichée dans le pied de page.",
+        "socialTitle": "Réseaux sociaux",
+        "socialDescription": "URL pour chaque plateforme. Activez « Afficher dans le pied de page » pour chaque lien.",
+        "social": {
+          "facebook": "Facebook",
+          "instagram": "Instagram",
+          "tiktok": "TikTok",
+          "x": "X (Twitter)"
+        },
+        "showOnFooter": "Afficher dans le pied de page",
+        "changesHint": "Les modifications apparaîtront dans le pied de page après enregistrement.",
+        "resetToDefaults": "Réinitialiser",
+        "successMessage": "Paramètres de contact du pied de page enregistrés.",
+        "errorMessage": "Échec de l'enregistrement. Veuillez réessayer."
       },
       "howItWorks": {
         "title": "How It Works Content Settings",
