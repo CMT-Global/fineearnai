@@ -53,6 +53,28 @@ const Wallet = () => {
   // Only show voucher block after config has loaded AND program is enabled (avoids flash when disabled)
   const isPartnerProgramEnabled = isPartnerProgramFetched && (partnerProgramConfig?.isEnabled === true);
 
+  // User-to-user transfers (Deposit Wallet only): show Send Funds when enabled
+  const { data: userTransfersConfig, isFetched: isUserTransfersConfigFetched } = useQuery({
+    queryKey: ["user-transfers-config-wallet"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "user_transfers_config")
+        .maybeSingle();
+      if (error) throw error;
+      const v = (data?.value as { enabled?: boolean; min_amount?: number; max_amount?: number }) ?? {};
+      return {
+        enabled: v.enabled === true,
+        min_amount: v.min_amount ?? 1,
+        max_amount: v.max_amount ?? 100000,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+  const userTransfersEnabled = isUserTransfersConfigFetched && (userTransfersConfig?.enabled === true);
+
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
 
@@ -80,7 +102,7 @@ const Wallet = () => {
     return <PageLoading text={t("wallet.loadingWallet")} />;
   }
 
-  if (!isPartnerProgramFetched) {
+  if (!isPartnerProgramFetched || !isUserTransfersConfigFetched) {
     return <PageLoading text={t("wallet.loadingWallet")} />;
   }
 
@@ -133,6 +155,9 @@ const Wallet = () => {
                   depositBalance={Number(profile.deposit_wallet_balance)}
                   earningsBalance={Number(profile.earnings_wallet_balance)}
                   onBalanceUpdate={refetchProfile}
+                  userTransfersEnabled={userTransfersEnabled}
+                  minTransfer={userTransfersConfig?.min_amount ?? 1}
+                  maxTransfer={userTransfersConfig?.max_amount ?? 100000}
                 />
               </div>
 

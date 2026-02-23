@@ -123,6 +123,25 @@ const TEMPLATE_TYPES = [
     description: "OTP code sent when user requests to delete their account",
     variables: ["username", "otp_code", "expiry_minutes"]
   },
+  // User Transfer (Deposit Wallet to Deposit Wallet)
+  {
+    value: "user_transfer_otp",
+    label: "User Transfer OTP",
+    description: "OTP sent when user requests to send funds to another user (Deposit Wallet)",
+    variables: ["username", "otp_code", "expires_in_minutes", "reference_id"]
+  },
+  {
+    value: "user_transfer_sender_confirmation",
+    label: "User Transfer – Sender Confirmation",
+    description: "Sent to sender after a successful transfer (Funds Transfer Complete)",
+    variables: ["sender_name", "sender_username", "recipient_name", "recipient_username", "amount", "currency", "reference_id", "created_at", "remaining_deposit_balance"]
+  },
+  {
+    value: "user_transfer_recipient_notification",
+    label: "User Transfer – Recipient Notification",
+    description: "Sent to recipient when they receive funds (You Received Funds)",
+    variables: ["recipient_name", "recipient_username", "sender_name", "sender_username", "amount", "currency", "reference_id", "created_at"]
+  },
   // Daily Tasks Reminder
   {
     value: "daily_tasks_reminder",

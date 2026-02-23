@@ -136,9 +136,11 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       icon: DollarSign,
       items: [
         { label: t("admin.sidebar.items.allTransactions"), path: "/admin/transactions" },
+        { label: t("admin.sidebar.items.userTransfers"), path: "/admin/user-transfers" },
         { label: t("admin.sidebar.items.deposits"), path: "/admin/deposits" },
         { label: t("admin.sidebar.items.withdrawals"), path: "/admin/withdrawals" },
         { label: t("admin.sidebar.items.paymentSettings"), path: "/admin/settings/payments" },
+        { label: t("admin.sidebar.items.financeSettings"), path: "/admin/settings/finance" },
         { label: t("admin.sidebar.items.cpayCheckouts"), path: "/admin/settings/cpay-checkouts" },
         { label: t("admin.sidebar.items.feeSavingsBanner"), path: "/admin/settings/fee-savings-banner" },
       ],

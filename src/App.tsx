@@ -52,7 +52,9 @@ const Users = lazy(() => import("@/pages/admin/Users"));
 const UserDetail = lazy(() => import("@/pages/admin/UserDetail"));
 const Deposits = lazy(() => import("@/pages/admin/Deposits"));
 const AdminTransactions = lazy(() => import("@/pages/admin/Transactions"));
+const UserTransfers = lazy(() => import("@/pages/admin/UserTransfers"));
 const PaymentSettings = lazy(() => import("@/pages/admin/PaymentSettings"));
+const FinanceSettings = lazy(() => import("@/pages/admin/FinanceSettings"));
 const FeeSavingsBannerSettings = lazy(() => import("@/pages/admin/FeeSavingsBannerSettings"));
 const DashboardContentSettings = lazy(() => import("@/pages/admin/DashboardContentSettings"));
 const HowItWorksSettings = lazy(() => import("@/pages/admin/HowItWorksSettings"));
@@ -273,7 +275,9 @@ const RoutesWrapper = () => {
         <Route path="users/:userId" element={<UserDetail />} />
         <Route path="deposits" element={<Deposits />} />
         <Route path="transactions" element={<AdminTransactions />} />
+        <Route path="user-transfers" element={<UserTransfers />} />
         <Route path="settings/payments" element={<PaymentSettings />} />
+        <Route path="settings/finance" element={<FinanceSettings />} />
         <Route path="content/dashboard" element={<DashboardContentSettings />} />
         <Route path="content/footer-contact" element={<FooterContactSettings />} />
         <Route path="content/how-it-works" element={<HowItWorksSettings />} />

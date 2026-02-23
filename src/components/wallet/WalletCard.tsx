@@ -33,6 +33,8 @@ import {
   type CryptoCurrency 
 } from "@/types/crypto-currencies";
 import { WithdrawalConfirmationDialog } from "./WithdrawalConfirmationDialog";
+import { SendFundsDialog } from "./SendFundsDialog";
+import { SendHorizontal } from "lucide-react";
 
 interface PaymentProcessor {
   id: string;
@@ -130,9 +132,19 @@ interface WalletCardProps {
   depositBalance: number;
   earningsBalance: number;
   onBalanceUpdate: () => void;
+  userTransfersEnabled?: boolean;
+  minTransfer?: number;
+  maxTransfer?: number;
 }
 
-export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }: WalletCardProps) => {
+export const WalletCard = ({
+  depositBalance,
+  earningsBalance,
+  onBalanceUpdate,
+  userTransfersEnabled = false,
+  minTransfer = 1,
+  maxTransfer = 100000,
+}: WalletCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
@@ -146,6 +158,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [sendFundsDialogOpen, setSendFundsDialogOpen] = useState(false);
   const [depositProcessors, setDepositProcessors] = useState<PaymentProcessor[]>([]);
   const [withdrawalProcessors, setWithdrawalProcessors] = useState<PaymentProcessor[]>([]);
   const [loadingProcessors, setLoadingProcessors] = useState(true);
@@ -776,13 +789,14 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
               <CurrencyDisplay amountUSD={depositBalance} />
             </p>
             <p className="text-xs text-muted-foreground mb-3">{t("wallet.components.forAccountUpgrades")}</p>
-            <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="sm">
-                  <ArrowDownRight className="mr-2 h-4 w-4" />
-                  {t("wallet.components.deposit")}
-                </Button>
-              </DialogTrigger>
+            <div className="flex flex-col gap-2">
+              <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="sm">
+                    <ArrowDownRight className="mr-2 h-4 w-4" />
+                    {t("wallet.components.deposit")}
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{t("wallet.components.makeDeposit")}</DialogTitle>
@@ -841,6 +855,28 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                 </div>
               </DialogContent>
             </Dialog>
+              {userTransfersEnabled && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full border-primary/50 text-primary hover:bg-primary/10"
+                    size="sm"
+                    onClick={() => setSendFundsDialogOpen(true)}
+                  >
+                    <SendHorizontal className="mr-2 h-4 w-4" />
+                    {t("wallet.components.sendFunds") ?? "Send Funds"}
+                  </Button>
+                  <SendFundsDialog
+                    open={sendFundsDialogOpen}
+                    onOpenChange={setSendFundsDialogOpen}
+                    depositBalance={depositBalance}
+                    minTransfer={minTransfer}
+                    maxTransfer={maxTransfer}
+                    onSuccess={onBalanceUpdate}
+                  />
+                </>
+              )}
+            </div>
           </div>
 
           <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
