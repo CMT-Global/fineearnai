@@ -16,13 +16,14 @@ export const useReferralData = (userId: string | undefined) => {
         supabaseService.referrals.getByReferred(userId)
       ]);
       
-      // Fetch membership plan for badge status
+      // Fetch membership plan for badge status and max upgraded referral limit
       let accountType = null;
+      let planData = null;
       if (profile.membership_plan) {
-        const planData = await supabaseService.membershipPlans.getByName(profile.membership_plan);
+        planData = await supabaseService.membershipPlans.getByName(profile.membership_plan);
         accountType = planData?.account_type;
       }
-      
+
       // Add earner badge status to profile
       const earnerBadge = getEarnerBadgeStatus(accountType);
       
@@ -42,9 +43,18 @@ export const useReferralData = (userId: string | undefined) => {
         }
       }
       
-      return { 
+      const rpcMax = stats?.max_active_referrals;
+      const planMax = planData?.max_active_referrals ?? 0;
+      const maxActiveReferrals =
+        rpcMax !== undefined && rpcMax !== null && !Number.isNaN(Number(rpcMax))
+          ? Number(rpcMax)
+          : planMax;
+
+      return {
         profile: { ...profile, earnerBadge },
         stats,
+        maxActiveReferrals,
+        upgradedReferrals: Number(stats?.upgraded_referrals) || 0,
         earnings: earnings || [],
         upline: uplineData ? {
           id: uplineData.id,

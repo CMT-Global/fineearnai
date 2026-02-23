@@ -47,7 +47,7 @@ const Referrals = () => {
   // ✅ Enable real-time referral updates (matches transaction pattern)
   useRealtimeReferrals(user?.id);
   
-  const { profile, stats, upline } = referralData || {};
+  const { profile, stats, upline, maxActiveReferrals = 0, upgradedReferrals = 0 } = referralData || {};
 
   // ✅ NEW: Separate hook for paginated referrals
   const { data: paginatedData, isLoading: isReferralsLoading } = usePaginatedReferrals(user?.id, currentPage);
@@ -137,6 +137,32 @@ const Referrals = () => {
               <TabsContent value="overview" className="mt-0">
             {/* Main Content - Overview */}
             <div className="p-4 lg:p-8">
+              {/* Max upgraded referrals reached - show at top so it's seen first */}
+              {Number(maxActiveReferrals) > 0 && Number(upgradedReferrals) >= Number(maxActiveReferrals) && (
+                <Alert className="mb-6 border-2 border-amber-500/30 bg-amber-500/10 shadow-sm">
+                  <div className="flex gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <AlertDescription className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
+                        {t("referrals.maxUpgradedReferralsReached", {
+                          defaultValue:
+                            "You have reached the Maximum number of Team Members allowed in your current plan, You need to upgrade to a higher plan to continue earning task commissions from any additional team members.",
+                        })}
+                      </AlertDescription>
+                      <Button
+                        onClick={() => navigate("/plans")}
+                        className="mt-2 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm"
+                      >
+                        {t("referrals.viewPlans")}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Alert>
+              )}
+
               {/* Stats (Overview only) */}
               <div className="mb-6">
                 <ReferralStatsCard

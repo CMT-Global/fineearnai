@@ -2478,9 +2478,11 @@ export type Database = {
         Returns: {
           active_referrals: number
           deposit_commission_earnings: number
+          max_active_referrals: number
           task_commission_earnings: number
           total_earnings: number
           total_referrals: number
+          upgraded_referrals: number
         }[]
       }
       get_referral_stats_overview:

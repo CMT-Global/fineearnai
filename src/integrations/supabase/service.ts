@@ -908,6 +908,8 @@ export const rpcService = {
       return {
         total_referrals: 0,
         active_referrals: 0,
+        upgraded_referrals: 0,
+        max_active_referrals: 0,
         total_earnings: 0,
         task_commission_earnings: 0,
         deposit_commission_earnings: 0,
@@ -916,6 +918,8 @@ export const rpcService = {
     return data?.[0] || {
       total_referrals: 0,
       active_referrals: 0,
+      upgraded_referrals: 0,
+      max_active_referrals: 0,
       total_earnings: 0,
       task_commission_earnings: 0,
       deposit_commission_earnings: 0,

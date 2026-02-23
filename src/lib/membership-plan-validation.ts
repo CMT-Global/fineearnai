@@ -89,7 +89,7 @@ export const FIELD_CONSTRAINTS = {
     max: 999999, 
     step: 1,
     label: 'Max Active Referrals',
-    help: 'Maximum number of active referrals allowed'
+    help: 'Maximum number of upgraded (paid) team members; free and trainee referrals are unlimited'
   },
   min_withdrawal: { 
     min: 0, 
