@@ -676,7 +676,7 @@ const Deposits = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="whitespace-nowrap">
                             {deposit.profiles?.registration_country_name || t("admin.deposits.na")}
                           </Badge>
                         </TableCell>
@@ -694,18 +694,18 @@ const Deposits = () => {
                               {deposit.upline_username}
                             </Button>
                           ) : (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs whitespace-nowrap">
                               {t("admin.deposits.noUpline")}
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={deposit.type === 'deposit' ? 'default' : 'secondary'}>
+                          <Badge variant={deposit.type === 'deposit' ? 'default' : 'secondary'} className="whitespace-nowrap">
                             {deposit.type === 'deposit' ? `💳 ${t("admin.deposits.regular")}` : `⚙️ ${t("admin.deposits.admin")}`}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="whitespace-nowrap">
                             {deposit.payment_gateway || t("admin.deposits.adminPanel")}
                           </Badge>
                         </TableCell>
@@ -721,6 +721,7 @@ const Deposits = () => {
                                 ? "secondary"
                                 : "destructive"
                             }
+                            className="whitespace-nowrap"
                           >
                             {deposit.status}
                           </Badge>
