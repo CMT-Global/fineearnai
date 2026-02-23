@@ -84,6 +84,19 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
     return type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   };
 
+  const getDisplayUsername = (earning: CommissionEarning, referredUser?: UserProfile) => {
+    if (referredUser?.username) return referredUser.username;
+
+    // If available, keep using snapshot metadata even after profile deletion.
+    const snapshot = earning?.metadata?.referred_username_snapshot;
+    if (typeof snapshot === "string" && snapshot.trim().length > 0) {
+      return `${snapshot.trim()} (${t("referrals.deletedUserFallback", { defaultValue: "deleted account" })})`;
+    }
+
+    // Fallback for deleted/missing users when no username can be resolved.
+    return t("referrals.deletedUserFallback", { defaultValue: "User deleted account" });
+  };
+
   if (loading) {
     return (
       <Card className="p-6">
@@ -149,12 +162,10 @@ export const CommissionHistoryList = ({ userId }: CommissionHistoryListProps) =>
                             )}
                           </div>
                           
-                          {referredUser && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <User className="h-3 w-3" />
-                              <span>{referredUser.username}</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            <span>{getDisplayUsername(earning, referredUser)}</span>
+                          </div>
                         </div>
 
                         <div className="text-right">
