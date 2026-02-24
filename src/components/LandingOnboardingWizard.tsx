@@ -81,14 +81,14 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-background border-border"
+        className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-background border-border flex flex-col"
         hideCloseButton
         onInteractOutside={handleInteractOutside}
       >
         <DialogTitle className="sr-only">Onboarding Wizard - {STEPS[currentStep].title}</DialogTitle>
         
         {/* Header with Progress */}
-        <div className="p-4 border-b border-border/50">
+        <div className="px-5 pt-4 pb-4 pr-6 border-b border-border/50">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">
               Step {currentStep + 1} of {STEPS.length}
@@ -117,12 +117,12 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
             ))}
           </div>
 
-          {/* Step Indicators */}
-          <div className="hidden sm:flex justify-between mt-3 overflow-x-auto">
+          {/* Step Indicators - flex-1 min-w-0 so all 11 fit without clipping */}
+          <div className="hidden sm:flex justify-between mt-3 min-w-0 gap-0.5">
             {STEPS.map((step, index) => (
               <div
                 key={index}
-                className={`flex flex-col items-center min-w-[60px] ${
+                className={`flex flex-1 min-w-0 flex-col items-center ${
                   index === currentStep ? "opacity-100" : "opacity-50"
                 }`}
               >
@@ -146,14 +146,14 @@ const OnboardingWizard = ({ open, onOpenChange }: OnboardingWizardProps) => {
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="p-6 overflow-y-auto scrollbar-hide max-h-[calc(90vh-200px)]">
+        {/* Step Content - min-w-0 so grid/cards don't overflow and get clipped */}
+        <div className="flex-1 min-h-0 min-w-0 px-5 pt-6 pb-6 pr-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
           <CurrentStepComponent onComplete={handleComplete} />
         </div>
 
         {/* Footer Navigation */}
         {!isLastStep && (
-          <div className="p-4 border-t border-border/50 flex items-center justify-between">
+          <div className="pl-5 pr-6 py-4 border-t border-border/50 flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={handleBack}
