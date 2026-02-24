@@ -675,6 +675,31 @@ export const OverviewTab = ({
               </div>
             </div>
 
+            {/* Affiliate Status */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+                {t("admin.affiliateSettings.isAffiliate")}
+              </Label>
+              <div className="min-h-[28px] flex items-center">
+                <Badge 
+                  variant={userData?.affiliate_settings?.is_affiliate ? "default" : "outline"}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 h-7"
+                >
+                  {userData?.affiliate_settings?.is_affiliate ? (
+                    <>
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      Yes
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-3.5 w-3.5" />
+                      No
+                    </>
+                  )}
+                </Badge>
+              </div>
+            </div>
+
             {/* Referral Code */}
             <div className="space-y-2 md:col-span-2 lg:col-span-1">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">

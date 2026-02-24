@@ -27,7 +27,7 @@ Deno.serve(async (req)=>{
     if (!adminRole) {
       throw new Error('Admin access required');
     }
-    const { action, userId, newUplineEmail, referralStatus, page = 1, limit = 20, profileData, newEmail, walletAdjustment, planData, banReason, suspendReason, roleData } = await req.json();
+    const { action, userId, newUplineEmail, referralStatus, page = 1, limit = 20, profileData, newEmail, walletAdjustment, planData, banReason, suspendReason, roleData, affiliateSettings } = await req.json();
     console.log(`Admin ${user.id} performing action: ${action} on user ${userId}`);
     if (!action || !userId) {
       throw new Error('Action and userId are required');
@@ -490,6 +490,115 @@ Deno.serve(async (req)=>{
             expires_at: expiresAt
           };
           console.log(`Changed plan for user ${userId} to ${plan.name}`);
+          break;
+        }
+      case 'update_affiliate_settings':
+        {
+          if (!affiliateSettings || typeof affiliateSettings !== 'object') {
+            throw new Error('Affiliate settings object is required');
+          }
+          const isAffiliate = !!affiliateSettings.is_affiliate;
+          const affiliateNameCountry = affiliateSettings.affiliate_name_country != null ? String(affiliateSettings.affiliate_name_country).trim() || null : null;
+          let depositPct = affiliateSettings.deposit_commission_pct;
+          let taskPct = affiliateSettings.task_commission_pct;
+          const overrideWithdrawalDays = !!affiliateSettings.override_withdrawal_days;
+          let withdrawalDays = affiliateSettings.withdrawal_days ?? null;
+          const affiliateMembershipPlan = affiliateSettings.affiliate_membership_plan != null ? (String(affiliateSettings.affiliate_membership_plan).trim() || null) : null;
+
+          if (depositPct != null) {
+            const n = Number(depositPct);
+            if (isNaN(n) || n < 0 || n > 100) throw new Error('Deposit commission % must be between 0 and 100');
+            depositPct = n;
+          }
+          if (taskPct != null) {
+            const n = Number(taskPct);
+            if (isNaN(n) || n < 0 || n > 100) throw new Error('Task commission % must be between 0 and 100');
+            taskPct = n;
+          }
+          if (overrideWithdrawalDays && withdrawalDays != null) {
+            if (!Array.isArray(withdrawalDays)) throw new Error('Withdrawal days must be an array');
+            const valid = withdrawalDays.every((d: any) => {
+              const day = d?.day;
+              const enabled = d?.enabled;
+              const start = d?.start_time;
+              const end = d?.end_time;
+              return typeof day === 'number' && day >= 0 && day <= 6 && typeof enabled === 'boolean' && typeof start === 'string' && /^\d{2}:\d{2}$/.test(start) && typeof end === 'string' && /^\d{2}:\d{2}$/.test(end) && start < end;
+            });
+            if (!valid) throw new Error('Each withdrawal day must have day (0-6), enabled, start_time, end_time (HH:MM)');
+          } else if (!overrideWithdrawalDays) {
+            withdrawalDays = null;
+          }
+
+          const upsertPayload: Record<string, unknown> = {
+            user_id: userId,
+            is_affiliate: isAffiliate,
+            affiliate_name_country: affiliateNameCountry,
+            deposit_commission_pct: depositPct,
+            task_commission_pct: taskPct,
+            override_withdrawal_days: overrideWithdrawalDays,
+            withdrawal_days: withdrawalDays,
+            affiliate_membership_plan: affiliateMembershipPlan,
+            updated_at: new Date().toISOString(),
+            updated_by: user.id
+          };
+
+          const { error: upsertError } = await supabaseClient.from('user_affiliate_settings').upsert(upsertPayload, { onConflict: 'user_id' });
+          if (upsertError) {
+            throw new Error(`Failed to update affiliate settings: ${upsertError.message}`);
+          }
+
+          if (isAffiliate && affiliateMembershipPlan) {
+            const { data: plan } = await supabaseClient.from('membership_plans').select('*').eq('name', affiliateMembershipPlan).eq('is_active', true).single();
+            if (!plan) {
+              throw new Error('Invalid or inactive affiliate membership plan');
+            }
+            const now = new Date();
+            let expiresAt: string | null = null;
+            if (plan.name === 'free') {
+              if (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0) {
+                const expiry = new Date(now);
+                expiry.setDate(expiry.getDate() + plan.free_plan_expiry_days);
+                expiresAt = expiry.toISOString();
+              }
+            } else {
+              const billingPeriodDays = plan.billing_period_days;
+              if (billingPeriodDays && billingPeriodDays > 0) {
+                const expiry = new Date(now);
+                expiry.setDate(expiry.getDate() + billingPeriodDays);
+                expiresAt = expiry.toISOString();
+              }
+            }
+            await supabaseClient.from('profiles').update({
+              membership_plan: affiliateMembershipPlan,
+              plan_expires_at: expiresAt,
+              current_plan_start_date: now.toISOString(),
+              account_status: 'active'
+            }).eq('id', userId);
+            await supabaseClient.from('transactions').insert({
+              user_id: userId,
+              type: 'plan_change',
+              amount: 0,
+              wallet_type: 'deposit',
+              status: 'completed',
+              description: `Admin set plan via affiliate settings: ${plan.display_name}`,
+              metadata: { changed_by: user.id, plan_name: plan.name, admin_action: true, source: 'affiliate_settings' }
+            });
+            await supabaseClient.from('audit_logs').insert({
+              admin_id: user.id,
+              action_type: 'change_membership_plan',
+              target_user_id: userId,
+              details: { plan_name: plan.name, expires_at: expiresAt, source: 'affiliate_settings' }
+            });
+          }
+
+          await supabaseClient.from('audit_logs').insert({
+            admin_id: user.id,
+            action_type: 'update_affiliate_settings',
+            target_user_id: userId,
+            details: { is_affiliate: isAffiliate, affiliate_membership_plan: affiliateMembershipPlan }
+          });
+          result = { success: true, message: 'Affiliate settings updated successfully' };
+          console.log(`Updated affiliate settings for user ${userId}`);
           break;
         }
       case 'suspend_user':

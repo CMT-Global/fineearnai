@@ -61,6 +61,7 @@ const HowItWorksSettings = lazy(() => import("@/pages/admin/HowItWorksSettings")
 const EmailTemplateGlobalSettings = lazy(() => import("@/pages/admin/EmailTemplateGlobalSettings"));
 const PlansManage = lazy(() => import("@/pages/admin/PlansManage"));
 const ReferralSystemManage = lazy(() => import("@/pages/admin/ReferralSystemManage"));
+const InfluencerSummary = lazy(() => import("@/pages/admin/InfluencerSummary"));
 const TaskAnalyticsUnified = lazy(() => import("@/pages/admin/TaskAnalyticsUnified"));
 const BulkEmail = lazy(() => import("@/pages/admin/BulkEmail"));
 const EmailTemplates = lazy(() => import("@/pages/admin/EmailTemplates"));
@@ -290,6 +291,7 @@ const RoutesWrapper = () => {
         <Route path="settings/seo" element={<SEOSettings />} />
         <Route path="plans/manage" element={<PlansManage />} />
         <Route path="referrals/manage" element={<ReferralSystemManage />} />
+        <Route path="referrals/influencer-summary" element={<InfluencerSummary />} />
         <Route path="analytics/dashboard" element={<AdminAnalyticsDashboard />} />
         <Route path="analytics/tasks" element={<TaskAnalyticsUnified />} />
         <Route path="analytics/tasks-4opt" element={<Navigate to="/admin/analytics/tasks?mode=4opt" replace />} />

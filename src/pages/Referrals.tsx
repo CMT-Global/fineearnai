@@ -189,7 +189,11 @@ const Referrals = () => {
 
             {/* Commission Structure */}
             <div className="mb-8">
-              <CommissionStructureCard userPlan={profile.membership_plan} />
+              <CommissionStructureCard
+                userPlan={profile.membership_plan}
+                effectiveRates={referralData?.effectiveRates}
+                isAffiliate={referralData?.isAffiliate}
+              />
             </div>
 
             {/* Referred Users */}

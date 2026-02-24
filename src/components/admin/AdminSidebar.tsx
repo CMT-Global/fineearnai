@@ -169,6 +169,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
       icon: TrendingUp,
       items: [
         { label: t("admin.sidebar.items.referralSystem"), path: "/admin/referrals/manage" },
+        { label: t("admin.sidebar.items.influencerSummary"), path: "/admin/referrals/influencer-summary" },
       ],
     },
       {

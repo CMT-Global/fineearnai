@@ -9,6 +9,10 @@ import { useTranslation } from "react-i18next";
 
 interface CommissionStructureCardProps {
   userPlan: string;
+  /** When provided (e.g. for affiliates), used instead of loading from plan */
+  effectiveRates?: { taskCommissionRate: number; depositCommissionRate: number };
+  /** Show "Affiliate Account" and treat as eligible even on free plan */
+  isAffiliate?: boolean;
 }
 
 interface PlanCommissions {
@@ -16,21 +20,27 @@ interface PlanCommissions {
   depositCommissionRate: number;
 }
 
-export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardProps) => {
+export const CommissionStructureCard = ({ userPlan, effectiveRates, isAffiliate }: CommissionStructureCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [commissions, setCommissions] = useState<PlanCommissions | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!effectiveRates);
 
   useEffect(() => {
+    if (effectiveRates) {
+      setCommissions(effectiveRates);
+      setIsEligible(true);
+      setLoading(false);
+      return;
+    }
     loadCommissionRates();
-  }, [userPlan]);
+  }, [userPlan, effectiveRates]);
 
-  const [isEligible, setIsEligible] = useState<boolean>(false);
+  const [isEligible, setIsEligible] = useState<boolean>(!!isAffiliate);
 
   const loadCommissionRates = async () => {
+    if (effectiveRates) return;
     try {
-      // Resolve plan by name; if not found (e.g. stale "free" when DB has "Trainee"), use default free-tier plan
       let data = userPlan
         ? await supabaseService.membershipPlans.getByName(userPlan)
         : null;
@@ -43,7 +53,7 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
           taskCommissionRate: Number(data.task_commission_rate),
           depositCommissionRate: Number(data.deposit_commission_rate),
         });
-        setIsEligible(String(data.account_type || "").toLowerCase() !== "free");
+        setIsEligible(isAffiliate || String(data.account_type || "").toLowerCase() !== "free");
       }
     } catch (error) {
       console.error("Error loading commission rates:", error);
@@ -61,14 +71,23 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
     );
   }
 
+  const eligible = isEligible || isAffiliate;
+
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="h-5 w-5" />
-        <h3 className="font-semibold">{t("referrals.yourCommissionStructure")}</h3>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          <h3 className="font-semibold">{t("referrals.yourCommissionStructure")}</h3>
+        </div>
+        {isAffiliate && (
+          <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/20 text-primary">
+            {t("referrals.affiliateAccount")}
+          </span>
+        )}
       </div>
 
-      {!isEligible ? (
+      {!eligible ? (
         <div className="space-y-4">
           <div className="p-4 bg-orange-500/10 dark:bg-orange-500/20 border border-orange-500/30 dark:border-orange-500/30 rounded-lg">
             <div className="flex gap-2">
@@ -119,7 +138,9 @@ export const CommissionStructureCard = ({ userPlan }: CommissionStructureCardPro
           </div>
 
           <div className="p-4 bg-accent/30 dark:bg-accent/20 border border-border rounded-lg">
-            <p className="text-sm font-medium mb-2 text-foreground">Current Plan: {userPlan.toUpperCase()}</p>
+            <p className="text-sm font-medium mb-2 text-foreground">
+              {isAffiliate ? t("referrals.affiliateRates") : `Current Plan: ${(userPlan || "").toUpperCase()}`}
+            </p>
             <p className="text-xs text-foreground/80">
               Upgrade to a higher tier plan to unlock better commission rates and more active referral slots.
             </p>

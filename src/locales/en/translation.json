@@ -452,6 +452,7 @@
   "wallet": {
     "title": "Wallet",
     "subtitle": "Manage your deposits, earnings, and transactions",
+    "yourWithdrawalDays": "Your withdrawal days: {{days}}",
     "loadingWallet": "Loading wallet...",
     "vipWithdrawalAccess": "VIP Withdrawal Access Enabled",
     "vip24_7Access": "24/7 Access",
@@ -682,6 +683,8 @@
     "noCommissionEarningsYet": "No commission earnings yet",
     "loadingCommissionHistory": "Loading commission history...",
     "yourCommissionStructure": "Your Commission Structure",
+    "affiliateAccount": "Affiliate Account",
+    "affiliateRates": "Your custom commission rates",
     "referralIncomeNotAvailable": "Referral Income Not Available For Free Accounts",
     "upgradeToStartEarning": "Upgrade to Start Earning",
     "planNames": {
@@ -1025,6 +1028,7 @@
         "seoSocialSettings": "SEO & Social Settings",
         "plansConfiguration": "Plans Configuration",
         "referralSystem": "Referral System",
+        "influencerSummary": "Influencer Summary",
         "partnerApplications": "Partner Applications",
         "allPartners": "All Partners",
         "partnerAnalytics": "Partner Analytics",
@@ -1368,6 +1372,25 @@
       "to": "to",
       "of": "of",
       "transactions": "transactions"
+    },
+    "influencerSummary": {
+      "title": "Influencer Summary",
+      "subtitle": "Overview of affiliates: referred users, deposits, commissions, and balance",
+      "dateFilter": "Date range (optional)",
+      "from": "From",
+      "to": "To",
+      "user": "User",
+      "affiliateName": "Affiliate name & country",
+      "totalReferred": "Total referred",
+      "referredFree": "Free",
+      "referredUpgraded": "Upgraded",
+      "depositsByReferred": "Deposits by referred",
+      "depositCommissions": "Deposit commissions",
+      "taskCommissions": "Task commissions",
+      "totalWithdrawn": "Total withdrawn",
+      "availableBalance": "Available balance",
+      "noInfluencers": "No influencers found. Mark users as affiliates in their profile.",
+      "loadError": "Failed to load influencer summary"
     },
     "referralSystemManage": {
       "title": "Referral System Management",
@@ -2613,6 +2636,7 @@
         "financial": "Financial",
         "tasks": "Tasks & Activity",
         "referrals": "Referrals",
+        "affiliate": "Affiliate Settings",
         "transactions": "Transactions",
         "activity": "Activity Logs"
       },
@@ -2628,6 +2652,25 @@
       "activityLogs": "Activity Logs",
       "noActivityLogsFound": "No activity logs found",
       "failedToLoadActivityLogs": "Failed to load activity logs"
+    },
+    "affiliateSettings": {
+      "influencerStatus": "Influencer Status",
+      "isAffiliate": "Is Affiliate",
+      "affiliateNameCountry": "Affiliate Name & Country",
+      "affiliateNameCountryPlaceholder": "e.g. John Doe, USA",
+      "customCommissionRates": "Custom Commission Rates",
+      "depositCommissionPct": "Deposit Commission %",
+      "taskCommissionPct": "Task Commission %",
+      "customWithdrawalOverride": "Custom Withdrawal Schedule Override",
+      "overrideWithdrawalDays": "Override Withdrawal Days",
+      "allowedDays": "Allowed days (click to toggle)",
+      "optionalPlan": "Optional Plan When Enabling",
+      "assignPlanWhenEnabling": "Assign membership plan when enabling as affiliate",
+      "selectPlan": "Select a plan",
+      "noPlan": "No plan (keep current)",
+      "save": "Save",
+      "savedSuccess": "Affiliate settings saved successfully",
+      "saveFailed": "Failed to save affiliate settings"
     },
     "aiTasksGenerate": {
       "title": "Generate AI Tasks",
@@ -2820,6 +2863,7 @@
       "emailUpdatedSuccessfully": "Email updated successfully",
       "walletBalanceAdjustedSuccessfully": "Wallet balance adjusted successfully",
       "membershipPlanUpdatedSuccessfully": "Membership plan updated successfully",
+      "affiliateSettingsSaved": "Affiliate settings saved successfully",
       "userBannedSuccessfully": "User banned successfully",
       "userDeletedSuccessfully": "User deleted successfully",
       "dailyLimitsResetSuccessfully": "Daily limits reset successfully",

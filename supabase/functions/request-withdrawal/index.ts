@@ -209,9 +209,9 @@ Deno.serve(async (req)=>{
     // This allows VIP users to bypass payout schedule restrictions
     const allowDailyWithdrawals = profile.allow_daily_withdrawals || false;
     if (!allowDailyWithdrawals) {
-      // Standard users: Check if withdrawal is currently allowed (using time-aware schedule)
+      // Standard users: Check if withdrawal is currently allowed (user-specific schedule supports influencer override)
       console.log('Checking withdrawal schedule for user:', user.id);
-      const { data: isAllowed, error: scheduleError } = await supabase.rpc('is_withdrawal_allowed');
+      const { data: isAllowed, error: scheduleError } = await supabase.rpc('is_withdrawal_allowed_for_user', { p_user_id: user.id });
       if (scheduleError) {
         console.error('Error checking withdrawal schedule:', scheduleError);
         // Log validation failure

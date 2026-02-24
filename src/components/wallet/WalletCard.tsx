@@ -947,6 +947,12 @@ export const WalletCard = ({
                       </Alert>
                     )}
 
+                    {/* Influencer: show custom withdrawal days */}
+                    {!validation?.hasBypass && validation?.withdrawalDaysLabel && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("wallet.yourWithdrawalDays", { days: validation.withdrawalDaysLabel })}
+                      </p>
+                    )}
                     {/* Standard users: Show schedule restrictions */}
                     {!validation?.hasBypass && validation && !validation.isAllowed && (
                       <Alert variant="destructive">

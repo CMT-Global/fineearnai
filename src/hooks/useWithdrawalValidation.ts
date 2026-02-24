@@ -23,8 +23,10 @@ interface WithdrawalValidation {
   currentDay: number;
   currentTime: string;
   message: string;
-  countdownSeconds: number | null; // NEW: Seconds until next window
-  hasBypass: boolean; // PHASE 4: User has daily withdrawal bypass
+  countdownSeconds: number | null;
+  hasBypass: boolean;
+  /** When influencer override is used: e.g. "Mon, Wed, Fri" for display */
+  withdrawalDaysLabel?: string | null;
 }
 
 export const useWithdrawalValidation = () => {
@@ -38,12 +40,11 @@ export const useWithdrawalValidation = () => {
         throw new Error('User not authenticated');
       }
 
-      // Fetch user's bypass status
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('allow_daily_withdrawals')
-        .eq('id', user.id)
-        .single();
+      // Fetch user's bypass status and optional influencer withdrawal override
+      const [{ data: profile, error: profileError }, { data: affiliateRow }] = await Promise.all([
+        supabase.from('profiles').select('allow_daily_withdrawals').eq('id', user.id).single(),
+        (supabase as any).from('user_affiliate_settings').select('override_withdrawal_days, withdrawal_days').eq('user_id', user.id).eq('is_affiliate', true).maybeSingle().then((r: { data: any }) => ({ data: r.data })),
+      ]);
 
       if (profileError) {
         console.error('Error fetching user bypass status:', profileError);
@@ -51,51 +52,37 @@ export const useWithdrawalValidation = () => {
 
       const hasBypass = profile?.allow_daily_withdrawals || false;
 
-      // If user has bypass enabled, return immediately with allowed status
       if (hasBypass) {
-        console.log('✅ VIP Bypass Active: User has daily withdrawal access');
-        return {
-          isAllowed: true,
-          schedule: null,
-          nextWindow: null,
-          currentDay: 0,
-          currentTime: '00:00',
-          message: '✅ VIP Access: Withdrawals available 24/7',
-          countdownSeconds: null,
-          hasBypass: true,
-        };
+      return {
+        isAllowed: true,
+        schedule: null,
+        nextWindow: null,
+        currentDay: 0,
+        currentTime: '00:00',
+        message: '✅ VIP Access: Withdrawals available 24/7',
+        countdownSeconds: null,
+        hasBypass: true,
+        withdrawalDaysLabel: null,
+      };
+    }
+
+      const { data: currentDay, error: dayError } = await supabase.rpc('get_current_utc_day');
+      const { data: currentTime, error: timeError } = await supabase.rpc('get_current_utc_time');
+      if (dayError || timeError) throw new Error('Failed to get current UTC time');
+
+      // Use user-specific schedule (influencer override) or global
+      const useAffiliateSchedule = affiliateRow?.override_withdrawal_days && Array.isArray(affiliateRow?.withdrawal_days) && affiliateRow.withdrawal_days.length > 0;
+      let schedule: PayoutSchedule[] | null = null;
+      if (useAffiliateSchedule && affiliateRow?.withdrawal_days) {
+        schedule = affiliateRow.withdrawal_days as unknown as PayoutSchedule[];
+      } else {
+        const { data: scheduleConfig } = await supabase.from('platform_config').select('value').eq('key', 'payout_schedule').maybeSingle();
+        schedule = (scheduleConfig?.value && Array.isArray(scheduleConfig.value)) ? scheduleConfig.value as unknown as PayoutSchedule[] : null;
       }
 
-      // Standard users: Check schedule as usual
-      // Get current UTC day and time
-      const { data: currentDay, error: dayError } = await supabase
-        .rpc('get_current_utc_day');
-      
-      const { data: currentTime, error: timeError } = await supabase
-        .rpc('get_current_utc_time');
-
-      if (dayError || timeError) {
-        throw new Error('Failed to get current UTC time');
-      }
-
-      // Check if withdrawals are currently allowed
-      const { data: isAllowed, error: allowedError } = await supabase
-        .rpc('is_withdrawal_allowed');
-
-      if (allowedError) {
-        throw new Error('Failed to check withdrawal availability');
-      }
-
-      // Get payout schedule
-      const { data: scheduleConfig } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'payout_schedule')
-        .maybeSingle();
-
-      const schedule = (scheduleConfig?.value && Array.isArray(scheduleConfig.value)) 
-        ? scheduleConfig.value as unknown as PayoutSchedule[] 
-        : null;
+      const { data: isAllowedRaw, error: allowedError } = await (supabase as any).rpc('is_withdrawal_allowed_for_user', { p_user_id: user.id });
+      if (allowedError) throw new Error('Failed to check withdrawal availability');
+      const isAllowed = Boolean(isAllowedRaw);
 
       // Calculate next available window and countdown if not currently allowed
       let nextWindow: NextWindow | null = null;
@@ -174,8 +161,13 @@ export const useWithdrawalValidation = () => {
         message = '❌ Withdrawals are currently not available';
       }
 
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const withdrawalDaysLabel: string | null = useAffiliateSchedule && schedule
+        ? schedule.filter((s) => s.enabled).sort((a, b) => a.day - b.day).map((s) => dayNames[s.day].slice(0, 3)).join(', ')
+        : null;
+
       return {
-        isAllowed: isAllowed || false,
+        isAllowed,
         schedule,
         nextWindow,
         currentDay: currentDay || 0,
@@ -183,6 +175,7 @@ export const useWithdrawalValidation = () => {
         message,
         countdownSeconds,
         hasBypass: false,
+        withdrawalDaysLabel: withdrawalDaysLabel || null,
       };
     },
     refetchInterval: 60000, // Refetch every minute

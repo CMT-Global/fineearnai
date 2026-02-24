@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/integrations/supabase';
 import { getEarnerBadgeStatus } from '@/lib/earner-badge-utils';
 
@@ -9,19 +10,36 @@ export const useReferralData = (userId: string | undefined) => {
       if (!userId) throw new Error('User ID is required');
       
       // ⚡ ALL queries run in parallel - Step 1: Fetch core data using service layer
-      const [profile, stats, earnings, referralData] = await Promise.all([
+      const [profile, stats, earnings, referralData, affiliateRow] = await Promise.all([
         supabaseService.profiles.get(userId),
         supabaseService.rpc.getReferralStats(userId),
         supabaseService.referralEarnings.getByReferrer(userId, 20),
-        supabaseService.referrals.getByReferred(userId)
+        supabaseService.referrals.getByReferred(userId),
+        supabase.from('user_affiliate_settings').select('*').eq('user_id', userId).maybeSingle().then(({ data }) => data),
       ]);
       
-      // Fetch membership plan for badge status
+      // Fetch membership plan for badge status and default commission rates
       let accountType = null;
+      let planTaskRate: number | null = null;
+      let planDepositRate: number | null = null;
       if (profile.membership_plan) {
         const planData = await supabaseService.membershipPlans.getByName(profile.membership_plan);
         accountType = planData?.account_type;
+        planTaskRate = planData?.task_commission_rate != null ? Number(planData.task_commission_rate) : null;
+        planDepositRate = planData?.deposit_commission_rate != null ? Number(planData.deposit_commission_rate) : null;
       }
+      if (planTaskRate == null || planDepositRate == null) {
+        const defaultPlan = await supabaseService.membershipPlans.getDefaultPlan();
+        planTaskRate = planTaskRate ?? (defaultPlan?.task_commission_rate != null ? Number(defaultPlan.task_commission_rate) : 0);
+        planDepositRate = planDepositRate ?? (defaultPlan?.deposit_commission_rate != null ? Number(defaultPlan.deposit_commission_rate) : 0);
+      }
+      const isAffiliate = !!(affiliateRow?.is_affiliate);
+      const effectiveRates = isAffiliate && affiliateRow
+        ? {
+            taskCommissionRate: affiliateRow.task_commission_pct != null ? Number(affiliateRow.task_commission_pct) / 100 : (planTaskRate ?? 0),
+            depositCommissionRate: affiliateRow.deposit_commission_pct != null ? Number(affiliateRow.deposit_commission_pct) / 100 : (planDepositRate ?? 0),
+          }
+        : { taskCommissionRate: planTaskRate ?? 0, depositCommissionRate: planDepositRate ?? 0 };
       
       // Add earner badge status to profile
       const earnerBadge = getEarnerBadgeStatus(accountType);
@@ -56,6 +74,9 @@ export const useReferralData = (userId: string | undefined) => {
           referralStatus: uplineData.status,
           referredOn: uplineData.created_at
         } : null,
+        isAffiliate,
+        effectiveRates,
+        affiliateSettings: affiliateRow ? { override_withdrawal_days: affiliateRow.override_withdrawal_days, withdrawal_days: affiliateRow.withdrawal_days } : null,
       };
     },
     enabled: !!userId,

@@ -374,6 +374,31 @@ export const useUserManagement = () => {
     }
   });
 
+  // Update affiliate (influencer) settings
+  const updateAffiliateSettings = useMutation({
+    mutationFn: async ({ userId, affiliateSettings }: { userId: string; affiliateSettings: {
+      is_affiliate: boolean;
+      affiliate_name_country?: string | null;
+      deposit_commission_pct?: number | null;
+      task_commission_pct?: number | null;
+      override_withdrawal_days?: boolean;
+      withdrawal_days?: Array<{ day: number; enabled: boolean; start_time: string; end_time: string }> | null;
+      affiliate_membership_plan?: string | null;
+    } }) => {
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'update_affiliate_settings', userId, affiliateSettings }
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(t('admin.affiliateSettings.savedSuccess'));
+    },
+    onError: (error: any) => {
+      toast.error(error.message || t('admin.affiliateSettings.saveFailed'));
+    }
+  });
+
   // Suspend user
   const suspendUser = useMutation({
     mutationFn: async ({ userId, suspendReason }: { userId: string; suspendReason?: string }) => {
@@ -582,6 +607,7 @@ export const useUserManagement = () => {
     updateUserEmail,
     adjustWalletBalance,
     changeMembershipPlan,
+    updateAffiliateSettings,
     suspendUser,
     banUser,
     deleteUser,

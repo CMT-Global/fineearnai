@@ -33,6 +33,7 @@ import { FinancialTab } from "@/components/admin/user-detail/FinancialTab";
 import { TasksActivityTab } from "@/components/admin/user-detail/TasksActivityTab";
 import { ReferralsTab } from "@/components/admin/user-detail/ReferralsTab";
 import { TransactionsTab } from "@/components/admin/user-detail/TransactionsTab";
+import { AffiliateSettingsTab } from "@/components/admin/user-detail/AffiliateSettingsTab";
 
 // Import dialog components
 import { WalletAdjustmentDialog } from "@/components/admin/dialogs/WalletAdjustmentDialog";
@@ -273,6 +274,7 @@ function UserDetailContent() {
             <TabsTrigger value="financial">{t("admin.userDetail.tabs.financial")}</TabsTrigger>
             <TabsTrigger value="tasks">{t("admin.userDetail.tabs.tasks")}</TabsTrigger>
             <TabsTrigger value="referrals">{t("admin.userDetail.tabs.referrals")}</TabsTrigger>
+            <TabsTrigger value="affiliate">{t("admin.userDetail.tabs.affiliate")}</TabsTrigger>
             <TabsTrigger value="transactions">{t("admin.userDetail.tabs.transactions")}</TabsTrigger>
             <TabsTrigger value="activity">{t("admin.userDetail.tabs.activity")}</TabsTrigger>
           </TabsList>
@@ -308,6 +310,10 @@ function UserDetailContent() {
               userId={userId!} 
               userData={userDetail}
             />
+          </TabsContent>
+
+          <TabsContent value="affiliate">
+            <AffiliateSettingsTab userData={userDetail} onUserUpdated={handleUserUpdated} />
           </TabsContent>
 
           <TabsContent value="transactions">
