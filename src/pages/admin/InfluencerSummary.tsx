@@ -17,16 +17,16 @@ export default function InfluencerSummary() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const { data: rows, isLoading, error } = useQuery({
+  const { data: rows, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["admin-influencer-summary", dateFrom || null, dateTo || null],
     queryFn: async () => {
       const pDateFrom = dateFrom ? new Date(dateFrom).toISOString() : null;
       const pDateTo = dateTo ? new Date(dateTo + "T23:59:59.999Z").toISOString() : null;
-      const { data, error: rpcError } = await supabase.rpc("get_influencer_summary", {
+      const { data, error: rpcError } = await (supabase.rpc as (name: string, args: object) => ReturnType<typeof supabase.rpc>)("get_influencer_summary", {
         p_date_from: pDateFrom,
         p_date_to: pDateTo,
       });
-      if (rpcError) throw rpcError;
+      if (rpcError) throw new Error(rpcError.message);
       return (data ?? []) as Array<{
         user_id: string;
         username: string | null;
@@ -94,8 +94,13 @@ export default function InfluencerSummary() {
             </div>
           )}
           {error && (
-            <div className="p-6 text-destructive">
-              {error instanceof Error ? error.message : t("admin.influencerSummary.loadError")}
+            <div className="p-6 space-y-3">
+              <p className="text-destructive">
+                {error instanceof Error ? error.message : t("admin.influencerSummary.loadError")}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+                {isRefetching ? t("common.loading") : t("admin.influencerSummary.retry")}
+              </Button>
             </div>
           )}
           {!isLoading && !error && (
@@ -120,28 +125,31 @@ export default function InfluencerSummary() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((r) => (
-                      <tr key={r.user_id} className="border-b hover:bg-muted/30">
-                        <td className="p-3">
-                          <div className="font-medium">{r.username ?? "—"}</div>
-                          <div className="text-xs text-muted-foreground truncate max-w-[180px]">{r.email ?? "—"}</div>
-                        </td>
-                        <td className="p-3 text-muted-foreground">{r.affiliate_name_country ?? "—"}</td>
-                        <td className="p-3 text-right">{Number(r.total_referred)}</td>
-                        <td className="p-3 text-right">{Number(r.referred_free)}</td>
-                        <td className="p-3 text-right">{Number(r.referred_upgraded)}</td>
-                        <td className="p-3 text-right"><CurrencyDisplay amount={Number(r.total_deposits_by_referred)} /></td>
-                        <td className="p-3 text-right"><CurrencyDisplay amount={Number(r.total_deposit_commissions)} /></td>
-                        <td className="p-3 text-right"><CurrencyDisplay amount={Number(r.total_task_commissions)} /></td>
-                        <td className="p-3 text-right"><CurrencyDisplay amount={Number(r.total_withdrawn)} /></td>
-                        <td className="p-3 text-right"><CurrencyDisplay amount={Number(r.earnings_balance)} /></td>
-                        <td className="p-3">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/users/${r.user_id}`)}>
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {rows.map((r) => {
+                      const num = (v: unknown) => (v != null && v !== "" ? Number(v) : 0);
+                      return (
+                        <tr key={r.user_id} className="border-b hover:bg-muted/30">
+                          <td className="p-3">
+                            <div className="font-medium">{r.username ?? "—"}</div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[180px]">{r.email ?? "—"}</div>
+                          </td>
+                          <td className="p-3 text-muted-foreground">{r.affiliate_name_country ?? "—"}</td>
+                          <td className="p-3 text-right tabular-nums">{num(r.total_referred)}</td>
+                          <td className="p-3 text-right tabular-nums">{num(r.referred_free)}</td>
+                          <td className="p-3 text-right tabular-nums">{num(r.referred_upgraded)}</td>
+                          <td className="p-3 text-right tabular-nums"><CurrencyDisplay amountUSD={num(r.total_deposits_by_referred)} /></td>
+                          <td className="p-3 text-right tabular-nums"><CurrencyDisplay amountUSD={num(r.total_deposit_commissions)} /></td>
+                          <td className="p-3 text-right tabular-nums"><CurrencyDisplay amountUSD={num(r.total_task_commissions)} /></td>
+                          <td className="p-3 text-right tabular-nums"><CurrencyDisplay amountUSD={num(r.total_withdrawn)} /></td>
+                          <td className="p-3 text-right tabular-nums"><CurrencyDisplay amountUSD={num(r.earnings_balance)} /></td>
+                          <td className="p-3">
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/users/${r.user_id}`)}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}

@@ -1390,7 +1390,8 @@
       "totalWithdrawn": "Total withdrawn",
       "availableBalance": "Available balance",
       "noInfluencers": "No influencers found. Mark users as affiliates in their profile.",
-      "loadError": "Failed to load influencer summary"
+      "loadError": "Failed to load influencer summary",
+      "retry": "Retry"
     },
     "referralSystemManage": {
       "title": "Referral System Management",
