@@ -10,8 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 
-# Use only Bun - avoid conflicting lock files on deploy
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 dist-ssr

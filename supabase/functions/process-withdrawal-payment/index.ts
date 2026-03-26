@@ -37,8 +37,15 @@ serve(async (req)=>{
     // Parse request body
     const { withdrawal_request_id, action, rejection_reason, manual_payment_notes } = await req.json();
     console.log(`Processing withdrawal ${withdrawal_request_id} with action: ${action}`);
-    // Fetch withdrawal request
-    const { data: withdrawal, error: fetchError } = await supabase.from('withdrawal_requests').select('*, profiles!inner(id, username, email, earnings_wallet_balance)').eq('id', withdrawal_request_id).single();
+    // Fetch withdrawal request (without profiles join to avoid PGRST201 ambiguous relationship error)
+    const { data: withdrawal, error: fetchError } = await supabase.from('withdrawal_requests').select('*').eq('id', withdrawal_request_id).single();
+    if (!fetchError && withdrawal) {
+      // Fetch profile separately to avoid ambiguous FK relationship error
+      const { data: profileData } = await supabase.from('profiles').select('id, username, email, earnings_wallet_balance').eq('id', withdrawal.user_id).single();
+      if (profileData) {
+        (withdrawal as any).profiles = profileData;
+      }
+    }
     if (fetchError || !withdrawal) {
       throw new Error('Withdrawal request not found');
     }

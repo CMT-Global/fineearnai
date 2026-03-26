@@ -171,12 +171,6 @@ const handler = async (req)=>{
       }).eq("id", job.id);
       console.log(`💓 [Queue Processor] Heartbeat updated for job ${job.id}`);
     }
-    // PHASE 2: Initialize duplicate prevention tracking
-    const existingSentIds = job.processing_metadata?.sent_recipient_ids || [];
-    console.log(`📋 [Queue Processor] Already sent to ${existingSentIds.length} recipients`);
-    // PHASE 1: Initialize idempotency keys tracking
-    const usedIdempotencyKeys = job.processing_metadata?.idempotency_keys_used || [];
-    console.log(`🔑 [Queue Processor] Tracking ${usedIdempotencyKeys.length} used idempotency keys`);
     // STEP 3: Fetch dynamic email settings
     console.log(`⚙️  [Queue Processor] Fetching email settings...`);
     const { data: configData } = await supabase.from("platform_config").select("value").eq("key", "email_settings").maybeSingle();
@@ -188,26 +182,14 @@ const handler = async (req)=>{
       platform_url: "https://profitchips.com",
     };
     console.log(`✅ [Queue Processor] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
-    // STEP 4: Build recipient query based on filter
-    const recipientFilter = job.recipient_filter;
-    let recipientsQuery = supabase.from("profiles").select("id, email, username, full_name");
-    if (recipientFilter.type === "plan" && recipientFilter.plan) {
-      recipientsQuery = recipientsQuery.eq("membership_plan", recipientFilter.plan);
-    } else if (recipientFilter.type === "country" && recipientFilter.country) {
-      recipientsQuery = recipientsQuery.eq("country", recipientFilter.country);
-    } else if (recipientFilter.type === "usernames" && recipientFilter.usernames) {
-      recipientsQuery = recipientsQuery.in("username", recipientFilter.usernames);
-    }
-    // PHASE 2 FIX: Exclude already-sent recipients to prevent duplicates on retry
-    if (existingSentIds.length > 0) {
-      console.log(`🔒 [Queue Processor] Excluding ${existingSentIds.length} already-sent recipients`);
-      recipientsQuery = recipientsQuery.not("id", "in", `(${existingSentIds.join(",")})`);
-    }
-    // PHASE 2 FIX: Fetch next batch WITHOUT offset since exclusion handles processed recipients
-    // The NOT IN clause naturally skips processed recipients, so we always fetch the "next" batch
-    recipientsQuery = recipientsQuery.limit(BATCH_SIZE);
-    console.log(`📥 [Queue Processor] Fetching next ${BATCH_SIZE} unprocessed recipients (${existingSentIds.length} already sent)`);
-    const { data: recipients, error: recipientsError } = await recipientsQuery;
+    // STEP 4: Fetch next batch via DB RPC (scalable — no URL bloat, works for 100K+ users)
+    // reserve_bulk_email_batch() atomically writes 'pending' rows BEFORE we send,
+    // so if this function crashes mid-send, the retry won't re-send the same emails.
+    console.log(`📥 [Queue Processor] Reserving next ${BATCH_SIZE} unprocessed recipients via DB RPC...`);
+    const { data: recipients, error: recipientsError } = await supabase.rpc(
+      'reserve_bulk_email_batch',
+      { p_job_id: job.id, p_batch_size: BATCH_SIZE }
+    );
     if (recipientsError) {
       console.error(`❌ [Queue Processor] Error fetching recipients:`, recipientsError);
       await supabase.from("bulk_email_jobs").update({
@@ -274,19 +256,13 @@ const handler = async (req)=>{
         console.error(`⚠️  [Queue Processor] Error checking cancellation status:`, checkError);
       } else if (currentJob?.cancel_requested) {
         console.log(`🛑 [Queue Processor] Job cancelled mid-batch at chunk ${chunkIndex + 1}/${recipientChunks.length}`);
-        // Save progress before exiting
-        const partialSentIds = recipients.slice(0, chunkIndex * RESEND_BATCH_LIMIT).map((r)=>r.id);
-        const allPartialSentIds = [
-          ...existingSentIds,
-          ...partialSentIds
-        ];
+        // bulk_email_recipients table already tracks what was sent — no array needed
         await supabase.from('bulk_email_jobs').update({
           status: 'cancelled',
           completed_at: new Date().toISOString(),
           error_message: `Cancelled by administrator at chunk ${chunkIndex + 1}/${recipientChunks.length}`,
           processing_metadata: {
             ...job.processing_metadata,
-            sent_recipient_ids: allPartialSentIds,
             cancelled_at_chunk: chunkIndex
           }
         }).eq('id', job.id);
@@ -308,17 +284,11 @@ const handler = async (req)=>{
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime >= MAX_EXECUTION_TIME_MS) {
         console.log(`⏱️  [Queue Processor] Approaching timeout limit (${elapsedTime}ms). Gracefully exiting...`);
-        // Save progress before exiting
-        const partialSentIds = recipients.slice(0, chunkIndex * RESEND_BATCH_LIMIT).map((r)=>r.id);
-        const allPartialSentIds = [
-          ...existingSentIds,
-          ...partialSentIds
-        ];
+        // bulk_email_recipients table already tracks progress — just reset status
         await supabase.from('bulk_email_jobs').update({
           status: 'queued',
           processing_metadata: {
             ...job.processing_metadata,
-            sent_recipient_ids: allPartialSentIds,
             timeout_prevention_triggered: true,
             stopped_at_chunk: chunkIndex
           },
@@ -464,37 +434,42 @@ const handler = async (req)=>{
         }
       }
     }
-    // PHASE 4 CRITICAL FIX: Only track SUCCESSFULLY SENT recipient IDs
-    // Do NOT add failed recipients to sent list, or they'll be skipped on retry
-    const newlySentIds = emailLogs.filter((log)=>log.status === 'sent').map((log)=>log.recipient_user_id);
-    const allSentIds = [
-      ...existingSentIds,
-      ...newlySentIds
-    ];
-    console.log(`📊 [Queue Processor] Tracking sent IDs:`);
-    console.log(`   - Previously sent: ${existingSentIds.length}`);
-    console.log(`   - Newly sent (successful only): ${newlySentIds.length}`);
-    console.log(`   - Total sent: ${allSentIds.length}`);
-    console.log(`   - Failed (not tracked): ${emailLogs.filter((log)=>log.status === 'failed').length}`);
-    const allIdempotencyKeys = [
-      ...usedIdempotencyKeys,
-      ...newIdempotencyKeys
-    ];
-    console.log(`🔑 [Queue Processor] Idempotency keys: previously=${usedIdempotencyKeys.length}, new=${newIdempotencyKeys.length}, total=${allIdempotencyKeys.length}`);
-    // PHASE 2 FIX: Calculate completion based on total sent (not offset-based processed_count)
-    // The trigger will sync the counts, but we determine completion by checking if all recipients are in the sent list
-    const isComplete = allSentIds.length >= job.total_recipients;
-    console.log(`📊 [Queue Processor] Progress Calculation:`);
-    console.log(`   - Total sent IDs tracked: ${allSentIds.length}`);
-    console.log(`   - Total recipients: ${job.total_recipients}`);
-    console.log(`   - Is complete: ${isComplete}`);
-    // PHASE 4 FIX: Update metadata BEFORE inserting logs (prevent duplicate sends if logs insert fails)
+    // FIX: Update recipient status in bulk_email_recipients table (replaces JSONB array tracking)
+    // This is the source of truth for deduplication — no more URL-bloating sent_ids arrays.
+    if (emailLogs.length > 0) {
+      console.log(`💾 [Queue Processor] Updating ${emailLogs.length} recipient statuses in DB...`);
+      const recipientStatusUpdates = emailLogs.map((log) => ({
+        job_id: job.id,
+        user_id: log.recipient_user_id,
+        status: log.status,                                                    // 'sent' or 'failed'
+        sent_at: log.status === 'sent' ? new Date().toISOString() : null,
+        error_message: log.error_message || null,
+      }));
+      const { error: recipientUpdateError } = await supabase
+        .from('bulk_email_recipients')
+        .upsert(recipientStatusUpdates, { onConflict: 'job_id,user_id' });
+      if (recipientUpdateError) {
+        console.error(`⚠️  [Queue Processor] Failed to update recipient statuses:`, recipientUpdateError);
+        // Non-fatal: pending rows already prevent re-sends on retry
+      } else {
+        console.log(`✅ [Queue Processor] Recipient statuses updated successfully`);
+      }
+    }
+    // FIX: Completion check — ask the DB if any unsent recipients remain (works at any scale)
+    const { data: remainingCheck, error: remainingError } = await supabase.rpc(
+      'get_bulk_email_next_batch',
+      { p_job_id: job.id, p_batch_size: 1 }
+    );
+    const isComplete = !remainingError && (!remainingCheck || remainingCheck.length === 0);
+    console.log(`📊 [Queue Processor] Progress: sent=${successCount}, failed=${failCount}, isComplete=${isComplete}`);
+    if (remainingError) {
+      console.error(`⚠️  [Queue Processor] Could not check remaining recipients:`, remainingError);
+    }
+    // Save lean metadata (no more giant sent_ids arrays)
     const metadataUpdateData = {
       last_processed_at: new Date().toISOString(),
       last_heartbeat: new Date().toISOString(),
       processing_metadata: {
-        sent_recipient_ids: allSentIds,
-        idempotency_keys_used: allIdempotencyKeys,
         rate_limit_metrics: rateLimitMetrics,
         last_batch_size: recipients.length,
         last_chunk_count: recipientChunks.length,
@@ -503,13 +478,11 @@ const handler = async (req)=>{
         worker_id: workerId
       }
     };
-    console.log(`💾 [Queue Processor] Saving metadata BEFORE email logs insert...`);
     const { error: metadataError } = await supabase.from("bulk_email_jobs").update(metadataUpdateData).eq("id", job.id);
     if (metadataError) {
-      console.error(`❌ [Queue Processor] CRITICAL: Failed to save metadata:`, metadataError);
-      throw new Error(`Failed to save sent_recipient_ids: ${metadataError.message}`);
+      console.error(`⚠️  [Queue Processor] Failed to save metadata:`, metadataError);
     } else {
-      console.log(`✅ [Queue Processor] Metadata saved successfully (${allSentIds.length} sent IDs tracked)`);
+      console.log(`✅ [Queue Processor] Metadata saved`);
     }
     // STEP 8: Insert email logs in bulk (CRITICAL: This triggers auto-count update)
     if (emailLogs.length > 0) {
@@ -545,11 +518,10 @@ const handler = async (req)=>{
     console.log(`✅ [Queue Processor] Batch complete in ${executionTime}ms`);
     console.log(`📧 [Queue Processor] Sent: ${successCount}, Failed: ${failCount}`);
     console.log(`📊 [Queue Processor] Database trigger has auto-synced counts from email_logs`);
-    // PHASE 3: Self-continuation for large jobs
-    const shouldContinue = !isComplete && successCount > 0 && allSentIds.length < job.total_recipients;
+    // Self-continuation for large jobs (DB tracks progress, not arrays)
+    const shouldContinue = !isComplete && successCount > 0;
     if (shouldContinue) {
       console.log(`🔄 [Self-Continuation] Job not complete. Triggering continuation...`);
-      console.log(`📊 [Self-Continuation] Progress: ${allSentIds.length}/${job.total_recipients} (${Math.round(allSentIds.length / job.total_recipients * 100)}%)`);
       // PHASE 4 FIX: Use immediate invocation instead of setTimeout for reliability
       // setTimeout can fail if the edge function terminates before the timeout fires
       try {
@@ -587,21 +559,20 @@ const handler = async (req)=>{
     } else if (isComplete) {
       console.log(`🎉 [Self-Continuation] Job fully complete. No continuation needed.`);
     } else {
-      console.log(`⚠️  [Self-Continuation] Skipped: successCount=${successCount}, remaining=${job.total_recipients - allSentIds.length}`);
+      console.log(`⚠️  [Self-Continuation] Skipped: successCount=${successCount}, total_recipients=${job.total_recipients}`);
     }
     return new Response(JSON.stringify({
       success: true,
       message: "Batch processed successfully",
       job_id: job.id,
       batch_id: job.batch_id,
-      processed_count: allSentIds.length,
       total_recipients: job.total_recipients,
       successful_count: (job.successful_count || 0) + successCount,
       failed_count: (job.failed_count || 0) + failCount,
       is_complete: isComplete,
       execution_time_ms: executionTime,
       continuation_scheduled: shouldContinue,
-      note: "Counts auto-synced by database trigger from email_logs"
+      note: "Deduplication via bulk_email_recipients table (URL-safe, scales to 10M users)"
     }), {
       status: 200,
       headers: {
