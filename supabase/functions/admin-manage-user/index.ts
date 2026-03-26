@@ -27,7 +27,7 @@ Deno.serve(async (req)=>{
     if (!adminRole) {
       throw new Error('Admin access required');
     }
-    const { action, userId, newUplineEmail, referralStatus, page = 1, limit = 20, profileData, newEmail, walletAdjustment, planData, banReason, suspendReason, roleData } = await req.json();
+    const { action, userId, newUplineEmail, referralStatus, page = 1, limit = 20, profileData, newEmail, walletAdjustment, planData, banReason, suspendReason, roleData, vipData } = await req.json();
     console.log(`Admin ${user.id} performing action: ${action} on user ${userId}`);
     if (!action || !userId) {
       throw new Error('Action and userId are required');
@@ -766,6 +766,49 @@ Deno.serve(async (req)=>{
           console.log(`Removed role '${role}' from user ${userId} by admin ${user.id}`);
           break;
         }
+      case 'set_vip_commission': {
+        // rate: null to remove VIP, or a decimal 0.0–1.0 (e.g. 0.10 = 10%)
+        // This sets a user-level override that takes priority over their plan rate
+        if (!vipData || vipData.rate === undefined) {
+          throw new Error('vipData.rate is required (use null to remove VIP)');
+        }
+        const vipRate = vipData.rate === null ? null : parseFloat(vipData.rate);
+        if (vipRate !== null && (isNaN(vipRate) || vipRate < 0 || vipRate > 1)) {
+          throw new Error('VIP commission rate must be null or a decimal between 0 and 1 (e.g. 0.10 for 10%)');
+        }
+        const { data: vipTarget } = await supabaseClient
+          .from('profiles')
+          .select('username, email, vip_deposit_commission_rate')
+          .eq('id', userId)
+          .single();
+        if (!vipTarget) throw new Error('User not found');
+        const { error: vipUpdateError } = await supabaseClient
+          .from('profiles')
+          .update({ vip_deposit_commission_rate: vipRate })
+          .eq('id', userId);
+        if (vipUpdateError) throw new Error(`Failed to update VIP commission: ${vipUpdateError.message}`);
+        await supabaseClient.from('audit_logs').insert({
+          admin_id: user.id,
+          action_type: 'set_vip_commission',
+          target_user_id: userId,
+          details: {
+            previous_rate: vipTarget.vip_deposit_commission_rate,
+            new_rate: vipRate,
+            target_username: vipTarget.username,
+            action: vipRate === null ? 'vip_removed' : 'vip_set'
+          }
+        });
+        result = {
+          success: true,
+          message: vipRate === null
+            ? `VIP commission removed for ${vipTarget.username}`
+            : `VIP commission set to ${(vipRate * 100).toFixed(2)}% for ${vipTarget.username}`,
+          vip_rate: vipRate,
+          username: vipTarget.username
+        };
+        console.log(`Admin ${user.id} set VIP commission for user ${userId}: rate=${vipRate}`);
+        break;
+      }
       default:
         throw new Error(`Invalid action: ${action}`);
     }

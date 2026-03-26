@@ -19,7 +19,8 @@ import { CommissionHistoryList } from "@/components/referrals/CommissionHistoryL
 import { CommissionStructureCard } from "@/components/referrals/CommissionStructureCard";
 import { UplineInfoCard } from "@/components/referrals/UplineInfoCard";
 import { HowTaskCommissionsWork } from "@/components/referrals/HowTaskCommissionsWork";
-import { Users, ChevronLeft, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, ChevronLeft, ChevronRight, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -84,6 +85,22 @@ const Referrals = () => {
       return (data?.display_name as string) || "";
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch VIP commission rate for this user (null = not VIP)
+  const { data: vipRate } = useQuery({
+    queryKey: ["vip-commission-rate", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("vip_deposit_commission_rate")
+        .eq("id", user.id)
+        .single();
+      return (data?.vip_deposit_commission_rate as number | null) ?? null;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -154,6 +171,27 @@ const Referrals = () => {
                     </Button>
                   </AlertDescription>
                 </Alert>
+              )}
+
+              {/* VIP Deposit Commission Badge */}
+              {vipRate !== null && vipRate !== undefined && vipRate > 0 && (
+                <div className="mb-6 p-4 rounded-xl border border-yellow-400/40 bg-yellow-500/10 flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-5 w-5 text-yellow-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="font-semibold text-yellow-700 dark:text-yellow-400">VIP Commission Enabled</p>
+                      <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-400/50 text-xs gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        {(vipRate * 100).toFixed(2)}% Deposit Commission
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-yellow-800/80 dark:text-yellow-300/80">
+                      You have a VIP commission rate. Every time one of your referred users deposits funds, you instantly earn <strong>{(vipRate * 100).toFixed(2)}%</strong> of their deposit amount directly to your earnings wallet.
+                    </p>
+                  </div>
+                </div>
               )}
 
               {/* How Task Commissions Work - Collapsible */}

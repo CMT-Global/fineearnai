@@ -571,6 +571,26 @@ export const useUserManagement = () => {
     }
   });
 
+  // Set VIP commission rate for a specific user (user-level override)
+  const setVipCommission = useMutation({
+    mutationFn: async ({ userId, rate }: { userId: string; rate: number | null }) => {
+      return await callEdgeFunctionWithRetry('admin-manage-user', {
+        body: { action: 'set_vip_commission', userId, vipData: { rate } }
+      });
+    },
+    onSuccess: (data: any, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      const msg = variables.rate === null
+        ? 'VIP commission removed successfully'
+        : `VIP commission set to ${((variables.rate) * 100).toFixed(2)}%`;
+      toast.success(msg);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update VIP commission');
+    }
+  });
+
   return {
     // Hooks
     useUserList,
@@ -587,6 +607,7 @@ export const useUserManagement = () => {
     deleteUser,
     resetDailyLimits,
     changeUpline,
+    setVipCommission,
     
     // Role management
     getUserRoles,

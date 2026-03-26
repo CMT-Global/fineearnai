@@ -17,6 +17,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getDateLocale } from "@/lib/date-locale";
 import { ManualEmailVerificationDialog } from "../dialogs/ManualEmailVerificationDialog";
 import { getCountryName } from "@/lib/countries";
+import { VipCommissionCard } from "./VipCommissionCard";
 
 // Helper function to get country flag emoji from country code
 const getCountryFlag = (countryCode: string | null | undefined): string => {
@@ -780,6 +781,14 @@ export const OverviewTab = ({
           </CardContent>
         </Card>
       )}
+
+      {/* VIP Commission Card */}
+      <VipCommissionCard
+        userId={profile.id}
+        username={profile.username}
+        currentRate={(profile as any).vip_deposit_commission_rate ?? null}
+        onSuccess={onUserUpdated}
+      />
 
       {/* Location & Security Information */}
       <Card>
