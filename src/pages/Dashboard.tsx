@@ -19,7 +19,8 @@ import {
   AlertCircle,  
   Settings,
   Rocket,
-  ArrowRight
+  ArrowRight,
+  Send
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -95,6 +96,24 @@ const Dashboard = () => {
 
   // Enable real-time transaction updates
   useRealtimeTransactions(user?.id);
+
+  // Fetch VIP commission rate for current user
+  const { data: vipRate } = useQuery({
+    queryKey: ["vip-commission-rate-dashboard", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("vip_deposit_commission_rate")
+        .eq("id", user.id)
+        .single();
+      return (data?.vip_deposit_commission_rate as number | null) ?? null;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const isVipUser = vipRate !== null && vipRate !== undefined && vipRate > 0;
 
   // ✅ NEW: Check for login trigger flag on mount
   useEffect(() => {
@@ -342,6 +361,35 @@ const Dashboard = () => {
             </div>
           )}
 
+          {/* Telegram Community Banner */}
+          <div className="mx-4 lg:mx-8 mt-6">
+            <a
+              href="https://t.me/profitchipsglobal"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-4 rounded-xl p-4 bg-[#229ED9]/10 border border-[#229ED9]/30 hover:bg-[#229ED9]/20 hover:border-[#229ED9]/60 transition-all duration-300 cursor-pointer"
+            >
+              {/* Telegram icon */}
+              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-[#229ED9] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Send className="h-6 w-6 text-white translate-x-0.5 -translate-y-0.5" />
+              </div>
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[#229ED9] dark:text-[#5bbfe8] text-sm sm:text-base">
+                  Join our Telegram Channel
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  Get tips, updates &amp; announcements from ProfitChips
+                </p>
+              </div>
+              {/* Arrow */}
+              <div className="flex-shrink-0 hidden sm:flex items-center gap-1 text-[#229ED9] dark:text-[#5bbfe8] font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
+                <span>Join Now</span>
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </a>
+          </div>
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 lg:p-8">
               <WalletCard 
@@ -379,6 +427,15 @@ const Dashboard = () => {
                     <p className="text-xs font-semibold text-[hsl(var(--wallet-referrals))]">
                       <CurrencyDisplay amountUSD={Number(referralStats?.total_earnings || 0)} /> {t("dashboard.earned")}
                     </p>
+                    {/* VIP Commission Badge */}
+                    {isVipUser && (
+                      <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15 border border-yellow-400/40 w-fit">
+                        <Sparkles className="h-3 w-3 text-yellow-500" />
+                        <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-400 leading-none">
+                          VIP {(vipRate! * 100).toFixed(0)}% Commission
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-[hsl(var(--wallet-referrals))]/10 flex items-center justify-center">
