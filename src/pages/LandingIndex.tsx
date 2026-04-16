@@ -27,10 +27,10 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>ProfitChips - Get Paid To Analyse Reviews | Earn Online by Analysing Reviews</title>
+        <title>ProfitChips - Get Paid to Train AI From Anywhere | AI Training Jobs Online</title>
         <meta 
           name="description" 
-          content="Join 1M+ people worldwide earning money by analysing reviews. Flexible remote work, competitive pay, and no technical experience required. Start earning today with ProfitChips." 
+          content="Join ProfitChips and get paid to train AI from anywhere. We connect everyday people with simple AI training jobs — from analyzing reviews to completing structured tasks. Start earning today." 
         />
         <meta name="keywords" content="earn money online, AI training, remote work, side income, data labeling, AI jobs" />
         <link rel="canonical" href="https://profitchips.com" />

@@ -38,16 +38,20 @@ const HeroSection = ({ onRegisterAsEarnerClick }: HeroSectionProps) => {
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 animate-fade-up delay-100">
-            <span className="text-foreground">Get Paid To</span>
+            <span className="text-foreground">Get Paid to Train AI</span>
             <br />
-            <span className="text-gradient">Analyse Reviews</span>
+            <span className="text-gradient">— From Anywhere</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-up delay-200">
-            Earn remotely by completing online tasks that help improve AI. 
-            Work at your preferred time and gain real-world, hands-on experience in shaping the future of technology.
-          </p>
+          <div className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-up delay-200 space-y-4">
+            <p>
+              At ProfitChips, we are building the future of artificial intelligence — and you get paid to be part of it.
+            </p>
+            <p>
+              We connect everyday people with simple AI training jobs that help improve real-world technology. From analyzing reviews to completing structured tasks, your work directly contributes to smarter AI systems used globally.
+            </p>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up delay-300">
