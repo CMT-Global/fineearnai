@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/LandingNavbar";
 import HeroSection from "@/components/LandingHeroSection";
+import AboutSection from "@/components/LandingAboutSection";
 import ProjectsSection from "@/components/LandingProjectsSection";
 import HowItWorksSection from "@/components/LandingHowItsWorkSection";
 import BenefitsSection from "@/components/LandingBenefitsSection";
@@ -40,6 +41,7 @@ const Index = () => {
         <Navbar />
         <main>
           <HeroSection onRegisterAsEarnerClick={() => setWizardOpen(true)} />
+          <AboutSection />
           <ProjectsSection />
           <HowItWorksSection />
           <BenefitsSection />
