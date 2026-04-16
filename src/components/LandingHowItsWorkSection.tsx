@@ -1,32 +1,32 @@
 import { useState } from "react";
-import { UserPlus, LayoutDashboard, UserCheck, Zap, ArrowRight } from "lucide-react";
+import { ClipboardList, Gift, TrendingUp, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OnboardingWizard from "./LandingOnboardingWizard";
 
 const steps = [
   {
     number: "01",
-    title: "Complete Onboarding",
-    description: "Answer a few basic questions about yourself and create your profile. Takes less than 5 minutes.",
-    icon: UserPlus,
+    title: "Complete Simple AI Training Tasks",
+    description: "Pick up available tasks from your dashboard — no experience needed. Tasks are clear, quick, and designed for everyday people.",
+    icon: ClipboardList,
   },
   {
     number: "02",
-    title: "Get Your Earners Account",
-    description: "Receive instant access to your personal Earners dashboard and start exploring available tasks.",
-    icon: LayoutDashboard,
+    title: "Earn Rewards for Each Task",
+    description: "Every completed task adds to your balance. The more tasks you complete, the faster your earnings grow.",
+    icon: Gift,
   },
   {
     number: "03",
-    title: "Complete Your Profile",
-    description: "Add your details, set your preferences, and customize your dashboard to match how you want to work.",
-    icon: UserCheck,
+    title: "Grow Your Earnings Daily",
+    description: "Stay active and watch your income compound. Daily tasks mean daily opportunities to increase your balance.",
+    icon: TrendingUp,
   },
   {
     number: "04",
-    title: "Activate & Start Earning",
-    description: "Unlock your account to access all tasks. Flexible options available — grow at your own pace anytime.",
-    icon: Zap,
+    title: "Withdraw Your Income Weekly",
+    description: "Request a withdrawal every week and get paid reliably. Your earnings, your schedule, your control.",
+    icon: Wallet,
   },
 ];
 
@@ -41,11 +41,14 @@ const HowItWorksSection = () => {
 
       <div className="container-custom relative z-10">
         <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-6">
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">💰 How You Earn</span>
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            How to <span className="text-gradient">Start Earning</span>
+            How You <span className="text-gradient">Earn</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get started in minutes. Set up your profile and activate your account to begin earning.
+            Four simple steps — from completing tasks to withdrawing your income every week.
           </p>
         </div>
 
