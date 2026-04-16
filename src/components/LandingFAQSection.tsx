@@ -7,10 +7,6 @@ import {
   
   const faqs = [
     {
-      question: "Is ProfitChips legit?",
-      answer: "Yes! ProfitChips is a legitimate global platform with earners working from countries all around the world. We partner with leading AI companies and research institutions to improve AI technology ethically and responsibly.",
-    },
-    {
       question: "Will I make real money on ProfitChips?",
       answer: "Absolutely. Once you pass the qualification for a project, you'll earn money for every task you complete. Payment rates vary by project complexity, language, and task type. Many contributors earn a sustainable side income.",
     },
