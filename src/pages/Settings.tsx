@@ -1165,34 +1165,8 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* USDC Solana Address */}
-                <div className="space-y-2">
-                  <Label htmlFor="usdc-solana">
-                    {getCryptoById('usdc-solana')?.displayName || 'USDC (Solana)'}
-                  </Label>
-                  <Input
-                    id="usdc-solana"
-                    value={usdcSolanaAddress}
-                    onChange={(e) => {
-                      setUsdcSolanaAddress(e.target.value);
-                      if (cryptoAddressErrors.usdc) {
-                        setCryptoAddressErrors(prev => ({ ...prev, usdc: undefined }));
-                      }
-                    }}
-                    placeholder={getCryptoById('usdc-solana')?.addressPlaceholder || 'Enter your USDC Solana address'}
-                    className={cn(cryptoAddressErrors.usdc && "border-destructive")}
-                  />
-                  {cryptoAddressErrors.usdc ? (
-                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdc}</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
-                      {getCryptoById('usdc-solana')?.description} • Example:{" "}
-                      <span className="break-all">{getCryptoById('usdc-solana')?.addressExample}</span>
-                    </p>
-                  )}
-                </div>
-
-                {/* USDT BEP-20 Address */}
+              {/* Note: USDC Solana withdrawals are currently disabled */}
+              {/* USDT BEP-20 Address */}
                 <div className="space-y-2">
                   <Label htmlFor="usdt-bep20">
                     {getCryptoById('usdt-bep20')?.displayName || 'USDT (BEP-20)'}

@@ -62,15 +62,14 @@ Deno.serve(async (req)=>{
       paymentProcessorId,
       cryptoId
     });
-    // Validate cryptocurrency selection
+    // Validate cryptocurrency selection — USDT (BEP-20) only
     const validCryptoIds = [
-      'usdc-solana',
       'usdt-bep20'
     ];
     if (!cryptoId || !validCryptoIds.includes(cryptoId)) {
       console.error('Invalid cryptocurrency selection:', cryptoId);
       return new Response(JSON.stringify({
-        error: 'Invalid cryptocurrency selection. Please select USDC (Solana) or USDT (BEP-20).'
+        error: 'Invalid cryptocurrency selection. Only USDT (BEP-20) withdrawals are currently supported.'
       }), {
         status: 400,
         headers: {
@@ -79,9 +78,8 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    // Map crypto ID to display name
-    const cryptoDisplayNames = {
-      'usdc-solana': 'USDC (Solana)',
+    // Map crypto ID to display name (USDT-BEP20 only)
+    const cryptoDisplayNames: Record<string, string> = {
       'usdt-bep20': 'USDT (BEP-20)'
     };
     // Get user profile and membership plan (including daily withdrawal bypass flag)

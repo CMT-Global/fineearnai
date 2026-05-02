@@ -194,24 +194,21 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
   }, [withdrawDialogOpen]);
 
-  // PHASE 3: Auto-fill crypto address from profile when dialog opens or crypto changes
+  // PHASE 3: Auto-fill USDT-BEP20 address from profile when dialog opens or crypto changes
   useEffect(() => {
     if (!withdrawDialogOpen || !profile) return;
     
-    // Get saved address for selected crypto
-    let savedAddress = '';
-    if (selectedCrypto.id === 'usdc-solana' && profile.usdc_solana_address) {
-      savedAddress = profile.usdc_solana_address;
-    } else if (selectedCrypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
-      savedAddress = profile.usdt_bep20_address;
-    }
+    // Get saved address for selected crypto (USDT-BEP20 only)
+    const savedAddress = selectedCrypto.id === 'usdt-bep20' && profile.usdt_bep20_address
+      ? profile.usdt_bep20_address
+      : '';
     
-    // Auto-fill saved address when crypto changes
+    // Auto-fill saved address when dialog opens
     if (savedAddress) {
       setAccountDetails(savedAddress);
       toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: selectedCrypto.displayName }), { duration: 2000 });
     } else {
-      // Clear if no saved address for this crypto
+      // Clear if no saved address
       setAccountDetails('');
     }
   }, [selectedCrypto.id, withdrawDialogOpen]);
@@ -479,8 +476,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
     
-    // Validate crypto selection
-    if (!selectedCrypto || !['usdc-solana', 'usdt-bep20'].includes(selectedCrypto.id)) {
+    // Validate crypto selection (USDT-BEP20 only)
+    if (!selectedCrypto || selectedCrypto.id !== 'usdt-bep20') {
       toast.error(t("toasts.wallet.selectValidWithdrawalMethod"));
       return;
     }
@@ -680,11 +677,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Validate cryptoId format
-      const validCryptoIds = ['usdc-solana', 'usdt-bep20'];
-      if (!validCryptoIds.includes(pendingWithdrawalData.cryptoId)) {
+      // Validate cryptoId format — only USDT-BEP20 is supported
+      if (pendingWithdrawalData.cryptoId !== 'usdt-bep20') {
         toast.error(t("toasts.wallet.invalidCryptocurrency"));
-        console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected one of:', validCryptoIds);
+        console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected: usdt-bep20');
         setWithdrawLoading(false);
         return;
       }
@@ -1048,15 +1044,10 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                             setSelectedCrypto(crypto);
                             setCryptoAddressError(null);
                             
-                            // Auto-fill address if saved for this crypto
-                            if (profile) {
-                              if (crypto.id === 'usdc-solana' && profile.usdc_solana_address) {
-                                setAccountDetails(profile.usdc_solana_address);
-                                toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: crypto.displayName }));
-                              } else if (crypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
-                                setAccountDetails(profile.usdt_bep20_address);
-                                toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: crypto.displayName }));
-                              }
+                            // Auto-fill USDT-BEP20 address if saved in profile
+                            if (profile && crypto.id === 'usdt-bep20' && profile.usdt_bep20_address) {
+                              setAccountDetails(profile.usdt_bep20_address);
+                              toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: crypto.displayName }));
                             }
                           }
                         }}
@@ -1117,7 +1108,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
                           <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                             <li>{t("wallet.components.step1")}</li>
                             <li>{t("wallet.components.step2")}</li>
-                            <li>{t("wallet.components.step3", { symbol: selectedCrypto.symbol })} {selectedCrypto.id === 'usdc-solana' && '(not USDT)'}</li>
+                            <li>{t("wallet.components.step3", { symbol: selectedCrypto.symbol })}</li>
                             <li>{t("wallet.components.step4", { network: selectedCrypto.network })}</li>
                             <li>{t("wallet.components.step5")}</li>
                             <li>{t("wallet.components.step6")}</li>

@@ -4,8 +4,8 @@
  */
 
 export interface CryptoCurrency {
-  id: 'usdc-solana' | 'usdt-bep20';
-  symbol: string; // 'USDC' or 'USDT'
+  id: 'usdt-bep20';
+  symbol: string; // 'USDT'
   displayName: string; // Full display name with network
   network: string; // Network name
   networkShort: string; // Short network identifier
@@ -20,22 +20,9 @@ export interface CryptoCurrency {
 
 /**
  * Supported cryptocurrencies configuration
+ * Note: USDC (Solana) withdrawals are currently disabled. Only USDT (BEP-20) is supported.
  */
 export const SUPPORTED_CRYPTOCURRENCIES: CryptoCurrency[] = [
-  {
-    id: 'usdc-solana',
-    symbol: 'USDC',
-    displayName: 'USDC (Solana)',
-    network: 'Solana (SPL)',
-    networkShort: 'SOL',
-    icon: '⚡',
-    addressPlaceholder: 'Enter your USDC Solana (SPL) wallet address',
-    addressPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, // Solana base58 address format
-    addressExample: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-    isDefault: true,
-    description: 'Ultra-fast transfers with lowest fees (~$0.001)',
-    feeInfo: 'Network fee: ~$0.001 | Processing: Instant'
-  },
   {
     id: 'usdt-bep20',
     symbol: 'USDT',
@@ -46,6 +33,7 @@ export const SUPPORTED_CRYPTOCURRENCIES: CryptoCurrency[] = [
     addressPlaceholder: 'Enter your USDT BEP-20 wallet address',
     addressPattern: /^0x[a-fA-F0-9]{40}$/, // BSC/Ethereum address format (0x + 40 hex chars)
     addressExample: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+    isDefault: true,
     description: 'Low fees on Binance Smart Chain (~$0.10-$0.50)',
     feeInfo: 'Network fee: ~$0.10-$0.50 | Processing: 1-3 minutes'
   }
@@ -54,28 +42,27 @@ export const SUPPORTED_CRYPTOCURRENCIES: CryptoCurrency[] = [
 /**
  * Payment processor cryptocurrency support mapping
  * Defines which payment processors support which cryptocurrencies
+ * Note: USDC-Solana entries preserved for reference/deposits but not active for withdrawals.
  */
 export const PROCESSOR_CRYPTO_SUPPORT: Record<string, string[]> = {
-  // GCash only supports USDC Solana (as per payment guide requirements)
-  'gcash-ph': ['usdc-solana'],
-  
-  // All other processors support both USDC-Solana and USDT-BEP20
-  'binance-global': ['usdc-solana', 'usdt-bep20'],
-  'coinsph': ['usdc-solana', 'usdt-bep20'],
-  'bybit': ['usdc-solana', 'usdt-bep20'],
-  'coinbase': ['usdc-solana', 'usdt-bep20'],
-  'kucoin': ['usdc-solana', 'usdt-bep20'],
-  'gcrypto': ['usdc-solana', 'usdt-bep20'],
-  'okx': ['usdc-solana', 'usdt-bep20'],
-  'kraken': ['usdc-solana', 'usdt-bep20'],
-  'gate-io': ['usdc-solana', 'usdt-bep20'],
-  'mexc': ['usdc-solana', 'usdt-bep20'],
-  'huobi': ['usdc-solana', 'usdt-bep20'],
-  'crypto-com': ['usdc-solana', 'usdt-bep20'],
+  // All withdrawal processors now support USDT-BEP20 only
+  'binance-global': ['usdt-bep20'],
+  'coinsph': ['usdt-bep20'],
+  'bybit': ['usdt-bep20'],
+  'coinbase': ['usdt-bep20'],
+  'kucoin': ['usdt-bep20'],
+  'gcrypto': ['usdt-bep20'],
+  'gcash-ph': ['usdt-bep20'],
+  'okx': ['usdt-bep20'],
+  'kraken': ['usdt-bep20'],
+  'gate-io': ['usdt-bep20'],
+  'mexc': ['usdt-bep20'],
+  'huobi': ['usdt-bep20'],
+  'crypto-com': ['usdt-bep20'],
   
   // CPAY processors
-  'cpay': ['usdc-solana', 'usdt-bep20'],
-  'cpay-deposit': ['usdc-solana', 'usdt-bep20'],
+  'cpay': ['usdt-bep20'],
+  'cpay-deposit': ['usdt-bep20'],
 };
 
 /**
