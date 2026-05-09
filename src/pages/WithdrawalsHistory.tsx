@@ -11,7 +11,6 @@ import {
   Loader2,
   TrendingUp,
   Users,
-  DollarSign,
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
@@ -33,7 +32,6 @@ interface PublicWithdrawal {
 
 interface StatsRow {
   count: number;
-  total: number;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -78,11 +76,7 @@ const formatAmount = (amount: number): string => {
   }).format(amount);
 };
 
-const formatTotalAmount = (amount: number): string => {
-  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M+`;
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(1)}K+`;
-  return formatAmount(amount);
-};
+
 
 const PAGE_SIZE = 20;
 
@@ -119,27 +113,21 @@ export default function WithdrawalsHistory() {
     checkEnabled();
   }, []);
 
-  // ── Fetch stats (aggregate) ─────────────────────────────────────────────
+  // ── Fetch stats (count only) ────────────────────────────────────────────
   useEffect(() => {
     if (!enabled) return;
 
     const fetchStats = async () => {
       try {
-        // Safe aggregate – only count and sum on completed rows
-        const { data, error } = await supabase
+        const { count, error } = await supabase
           .from("withdrawal_requests")
-          .select("net_amount")
+          .select("id", { count: "exact", head: true })
           .eq("status", "completed");
 
         if (error) throw error;
-
-        const rows = data || [];
-        setStats({
-          count: rows.length,
-          total: rows.reduce((sum, r) => sum + Number(r.net_amount), 0),
-        });
+        setStats({ count: count ?? 0 });
       } catch {
-        // Non-fatal — stats are supplementary
+        // Non-fatal — stat is supplementary
         setStats(null);
       }
     };
@@ -327,24 +315,15 @@ export default function WithdrawalsHistory() {
               member. Your earnings are real — and so are theirs.
             </p>
 
-            {/* Stats */}
+            {/* Stats — count only */}
             {stats && (
-              <div className="grid grid-cols-2 gap-4 mt-10 max-w-xl mx-auto">
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
-                  <div className="flex items-center gap-2 text-green-400 mb-1">
-                    <DollarSign className="h-5 w-5" />
-                    <span className="text-sm font-medium">Total Paid Out</span>
-                  </div>
-                  <div className="text-3xl font-bold text-white">
-                    {formatTotalAmount(stats.total)}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
-                  <div className="flex items-center gap-2 text-green-400 mb-1">
+              <div className="flex justify-center mt-10">
+                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-10 py-5 inline-flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2 text-green-400">
                     <Users className="h-5 w-5" />
                     <span className="text-sm font-medium">Completed Payouts</span>
                   </div>
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-4xl font-bold text-white">
                     {stats.count.toLocaleString()}
                   </div>
                 </div>
