@@ -241,7 +241,7 @@ serve(async (req)=>{
     const platformBranding = platformBrandingRow?.value || {};
     const platformName = platformBranding.name || emailSettings.platform_name || 'ProfitChips';
     const platformUrl = platformBranding.url || emailSettings.platform_url || 'https://profitchips.com';
-    const platformLogoUrl = platformBranding.logoUrl || `${platformUrl}/logo_without_bg_text.png`;
+
 
     console.log(`📧 [Auth Email Hook] Using settings - Platform: ${platformName}, URL: ${platformUrl}`);
     console.log(`📧 [Auth Email Hook] Using settings - From: ${emailSettings.from_name} <${emailSettings.from_address}>`);
