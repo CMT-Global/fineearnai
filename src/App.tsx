@@ -93,6 +93,8 @@ const PartnerApplicationStatus = lazy(() => import("./pages/PartnerApplicationSt
 const PartnerDashboard = lazy(() => import("./pages/PartnerDashboard"));
 const PartnerAnalytics = lazy(() => import("./pages/PartnerAnalytics"));
 const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSettings"));
+const PublicPagesSettings = lazy(() => import("@/pages/admin/PublicPagesSettings"));
+const WithdrawalsHistory = lazy(() => import("./pages/WithdrawalsHistory"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 import { ReamazeMobileCloseButton } from "@/components/shared/ReamazeMobileCloseButton";
@@ -269,6 +271,7 @@ const RoutesWrapper = () => {
         <Route path="content/how-it-works" element={<HowItWorksSettings />} />
         <Route path="content/email-template" element={<EmailTemplateGlobalSettings />} />
         <Route path="content/partner-program" element={<PartnerProgramSettings />} />
+        <Route path="content/public-pages" element={<PublicPagesSettings />} />
         <Route path="settings/fee-savings-banner" element={<FeeSavingsBannerSettings />} />
         <Route path="monitoring/cpay" element={<CPAYMonitoring />} />
         <Route path="monitoring/cpay-reconciliation" element={<CPAYReconciliation />} />
@@ -307,6 +310,7 @@ const RoutesWrapper = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/master-login" element={<MasterLogin />} />
+      <Route path="/withdrawals-history" element={<WithdrawalsHistory />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
       </Routes>

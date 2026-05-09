@@ -1,7 +1,10 @@
 import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import LandingLogo from "./LandingLogo";
 
-const footerLinks = {
+const staticFooterLinks = {
   Platform: [
     { name: "How It Works", href: "#how-it-works" },
     { name: "Projects", href: "#projects" },
@@ -27,6 +30,39 @@ const socialLinks = [
 ];
 
 export default function LandingFooter() {
+  const [withdrawalsHistoryEnabled, setWithdrawalsHistoryEnabled] = useState(false);
+
+  useEffect(() => {
+    // Lightweight single fetch — no react-query needed in the footer
+    supabase
+      .from("platform_config")
+      .select("value")
+      .eq("key", "public_pages")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value?.withdrawalsHistoryEnabled === true) {
+          setWithdrawalsHistoryEnabled(true);
+        }
+      })
+      .catch(() => {
+        // Non-fatal — footer still renders without the link
+      });
+  }, []);
+
+  // Build the Platform links, injecting Withdrawals History when enabled
+  const platformLinks: Array<{ name: string; href: string; isRouter?: boolean }> = [
+    ...staticFooterLinks.Platform,
+    ...(withdrawalsHistoryEnabled
+      ? [{ name: "Withdrawals History", href: "/withdrawals-history", isRouter: true }]
+      : []),
+  ];
+
+  const footerLinks = {
+    Platform: platformLinks,
+    Company: staticFooterLinks.Company as Array<{ name: string; href: string; isRouter?: boolean }>,
+    Legal: staticFooterLinks.Legal as Array<{ name: string; href: string; isRouter?: boolean }>,
+  };
+
   return (
     <footer className="bg-card/50 border-t border-border/50">
       <div className="container-custom px-4 md:px-8 py-16">
@@ -61,12 +97,21 @@ export default function LandingFooter() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.name}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.name}
-                    </a>
+                    {link.isRouter ? (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>

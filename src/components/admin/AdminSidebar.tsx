@@ -150,6 +150,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
         { label: t("admin.sidebar.items.howItWorksContent"), path: "/admin/content/how-it-works" },
         { label: t("admin.sidebar.items.partnerProgramContent"), path: "/admin/content/partner-program" },
         { label: t("admin.sidebar.items.globalEmailTemplate"), path: "/admin/content/email-template" },
+        { label: "Public Pages", path: "/admin/content/public-pages", icon: Globe },
         { label: t("admin.sidebar.items.seoSocialSettings"), path: "/admin/settings/seo", icon: Globe },
       ],
     },
