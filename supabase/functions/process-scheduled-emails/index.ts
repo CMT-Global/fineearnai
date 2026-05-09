@@ -94,7 +94,7 @@ const handler = async (req)=>{
               platformUrl: emailSettings.platform_url || 'https://profitchips.com',
               supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
               privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
-              logoHtml: '',
+              logoHtml: undefined,
             }, supabase);
 
             // Create plain text version by stripping HTML tags
@@ -218,7 +218,7 @@ const handler = async (req)=>{
               platformUrl: emailSettings.platform_url || 'https://profitchips.com',
               supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
               privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
-              logoHtml: '',
+              logoHtml: undefined,
             }, supabase);
 
             // Create plain text version by stripping HTML tags

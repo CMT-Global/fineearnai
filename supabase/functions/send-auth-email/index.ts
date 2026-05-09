@@ -305,7 +305,7 @@ serve(async (req)=>{
         platformUrl: platformUrl,
         supportUrl: `${platformUrl}/support`,
         privacyUrl: `${platformUrl}/privacy`,
-        logoHtml: `<img src="${platformLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`,
+        logoHtml: undefined,
       }, supabase);
       
       console.log(`✅ [Auth Email Hook] Professional wrapper applied successfully`);

@@ -328,7 +328,7 @@ const handler = async (req)=>{
             platformUrl: emailSettings.platform_url || "https://profitchips.com",
             supportUrl: `${emailSettings.platform_url || "https://profitchips.com"}/support`,
             privacyUrl: `${emailSettings.platform_url || "https://profitchips.com"}/privacy`,
-            logoHtml: '',
+            logoHtml: undefined,
           }, supabase);
           const textVersion = personalizedBody.replace(/<[^>]*>/g, "").trim();
           return {

@@ -221,7 +221,7 @@ serve(async (req)=>{
         platformUrl: emailSettings.platform_url || 'https://profitchips.com',
         supportUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/support`,
         privacyUrl: `${emailSettings.platform_url || 'https://profitchips.com'}/privacy`,
-        logoHtml: '',
+        logoHtml: undefined,
       }, supabaseClient);
       
       const wrapperTime = Date.now() - wrapperStart;

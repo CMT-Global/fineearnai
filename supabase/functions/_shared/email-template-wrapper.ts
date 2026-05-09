@@ -86,7 +86,11 @@ export async function wrapInProfessionalTemplate(
 
         dbPlatformName = branding?.name || emailSettings?.platform_name || 'ProfitChips';
         dbPlatformUrl = branding?.url || emailSettings?.platform_url || 'https://profitchips.com';
-        dbLogoUrl = branding?.logoUrl;
+        // Only use dbLogoUrl if it is a valid absolute HTTPS URL — reject empty, relative, or localhost values
+        const rawLogoUrl = branding?.logoUrl;
+        if (rawLogoUrl && typeof rawLogoUrl === 'string' && rawLogoUrl.startsWith('https://') && !rawLogoUrl.includes('localhost')) {
+          dbLogoUrl = rawLogoUrl;
+        }
       }
     } catch (err) {
       console.warn('⚠️ [Email Wrapper] Failed to fetch DB config:', err);
@@ -100,11 +104,14 @@ export async function wrapInProfessionalTemplate(
   const privacyLink = privacyUrl || `${platformUrl}/privacy`;
   const currentYear = new Date().getFullYear();
   
-  // Construct default logo HTML
-  const finalLogoUrl = dbLogoUrl || `${platformUrl}/logo_without_bg_text.png`;
-  const defaultLogoHtml = `<img src="${finalLogoUrl}" alt="${platformName}" width="150" class="logo-img" style="display: block; margin: 0 auto; max-width: 200px; height: auto;">`;
+  // Construct default logo HTML using the confirmed public HTTPS URL
+  // dbLogoUrl is only set above if it passed the absolute-HTTPS validation check
+  const HARDCODED_LOGO_URL = 'https://profitchips.com/logo_without_bg_text.png';
+  const finalLogoUrl = dbLogoUrl || HARDCODED_LOGO_URL;
+  const defaultLogoHtml = `<img src="${finalLogoUrl}" width="120" height="120" alt="${platformName}" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:120px;height:120px;max-width:120px;">`;
   
-  const finalLogoHtml = logoHtml || defaultLogoHtml;
+  // Only accept logoHtml override if it is a non-empty string
+  const finalLogoHtml = (logoHtml && logoHtml.trim().length > 0) ? logoHtml : defaultLogoHtml;
 
   const preheaderHtml = preheader 
     ? `<div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">${preheader}</div>` 
