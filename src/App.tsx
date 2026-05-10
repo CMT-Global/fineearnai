@@ -77,6 +77,7 @@ const CommissionAudit = lazy(() => import("@/pages/admin/CommissionAudit"));
 const InfluencerInvites = lazy(() => import("@/pages/admin/InfluencerInvites"));
 const UserInvites = lazy(() => import("@/pages/admin/UserInvites"));
 const PartnerApplications = lazy(() => import("@/pages/admin/PartnerApplications"));
+const ContentRewards = lazy(() => import("@/pages/admin/ContentRewards"));
 const Partners = lazy(() => import("@/pages/admin/Partners"));
 const PartnerRanks = lazy(() => import("@/pages/admin/PartnerRanks"));
 const PartnerLeaderboardSettings = lazy(() => import("@/pages/admin/PartnerLeaderboardSettings"));
@@ -300,6 +301,7 @@ const RoutesWrapper = () => {
         <Route path="monitoring/daily-reset-logs" element={<DailyResetLogs />} />
         <Route path="monitoring/commission-audit" element={<CommissionAudit />} />
         <Route path="partners/applications" element={<PartnerApplications />} />
+        <Route path="content/rewards" element={<ContentRewards />} />
         <Route path="partners" element={<Partners />} />
         <Route path="partner-ranks" element={<PartnerRanks />} />
         <Route path="partner-leaderboard" element={<PartnerLeaderboardSettings />} />

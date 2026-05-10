@@ -173,6 +173,7 @@ export const AdminSidebar = memo(({ profile, onSignOut }: AdminSidebarProps) => 
         icon: Sparkles,
         items: [
           { label: t("admin.sidebar.items.partnerApplications"), path: "/admin/partners/applications" },
+          { label: "Content Rewards", path: "/admin/content/rewards" },
           { label: t("admin.sidebar.items.allPartners"), path: "/admin/partners", exact: true },
           { label: t("admin.sidebar.items.partnerAnalytics"), path: "/admin/partner-analytics" },
           { label: t("admin.sidebar.items.partnerRanks"), path: "/admin/partner-ranks" },
