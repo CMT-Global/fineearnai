@@ -15,7 +15,8 @@ import {
   Menu,
   Shield,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  TrendingUp,
 } from "lucide-react";
 import { useState, useMemo, memo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       const { data, error } = await supabase
         .from("platform_config")
         .select("key, value")
-        .in("key", ["how_it_works_content", "partner_program_config"]);
+        .in("key", ["how_it_works_content", "partner_program_config", "public_pages"]);
 
       if (error) throw error;
 
@@ -76,6 +77,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       return {
         howItWorks: map.get("how_it_works_content") || {},
         partnerProgram: map.get("partner_program_config") || {},
+        publicPages: map.get("public_pages") || {},
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -83,6 +85,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
 
   const isHowItWorksVisible = sidebarConfig?.howItWorks?.isVisible ?? true;
   const isPartnerProgramEnabled = sidebarConfig?.partnerProgram?.isEnabled ?? true;
+  const isWithdrawalsHistoryEnabled = sidebarConfig?.publicPages?.withdrawalsHistoryEnabled === true;
 
   // Primary navigation items (shown in bottom nav on mobile + sidebar) - memoized
   const basePrimaryNavItems = useMemo(() => [
@@ -110,8 +113,11 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       ? { icon: HelpCircle, label: t("components.sidebar.howItWorks"), path: "/how-it-works", highlight: true }
       : null,
     { icon: History, label: t("navigation.transactions"), path: "/transactions" },
+    isWithdrawalsHistoryEnabled
+      ? { icon: TrendingUp, label: "Withdrawals History", path: "/withdrawals-history" }
+      : null,
     { icon: Settings, label: t("navigation.settings"), path: "/settings" },
-  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[], [isHowItWorksVisible, t]);
+  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[], [isHowItWorksVisible, isWithdrawalsHistoryEnabled, t]);
 
   // Combined nav items for desktop sidebar - memoized to prevent recreation on every render
   const navItems: any[] = useMemo(() => [...primaryNavItems, ...secondaryNavItems], [primaryNavItems, secondaryNavItems]);
