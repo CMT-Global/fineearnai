@@ -96,6 +96,7 @@ const PartnerProgramSettings = lazy(() => import("@/pages/admin/PartnerProgramSe
 const PublicPagesSettings = lazy(() => import("@/pages/admin/PublicPagesSettings"));
 const WithdrawalsHistory = lazy(() => import("./pages/WithdrawalsHistory"));
 const InviteEarn = lazy(() => import("./pages/InviteEarn"));
+const GetPaidToPost = lazy(() => import("./pages/GetPaidToPost"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 import { ReamazeMobileCloseButton } from "@/components/shared/ReamazeMobileCloseButton";
@@ -246,6 +247,7 @@ const RoutesWrapper = () => {
           <Route path="settings" element={<Settings />} />
           <Route path="how-it-works" element={<HowItWorks />} />
           <Route path="invite-earn" element={<InviteEarn />} />
+          <Route path="get-paid-to-post" element={<GetPaidToPost />} />
         </Route>
 
       {/* Admin routes: single layout, nested children. Layout stays mounted on sidebar nav. */}

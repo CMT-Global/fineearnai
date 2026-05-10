@@ -18,6 +18,7 @@ import {
   HelpCircle,
   TrendingUp,
   Gift,
+  Film,
 } from "lucide-react";
 import { useState, useMemo, memo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -118,8 +119,9 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
     isWithdrawalsHistoryEnabled
       ? { icon: TrendingUp, label: "Payout History", path: "/withdrawals-history" }
       : null,
+    { icon: Film, label: "Get Paid To Post", path: "/get-paid-to-post", isContent: true },
     { icon: Settings, label: t("navigation.settings"), path: "/settings" },
-  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[], [isHowItWorksVisible, isWithdrawalsHistoryEnabled, t]);
+  ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean; isContent?: boolean }[], [isHowItWorksVisible, isWithdrawalsHistoryEnabled, t]);
 
   // Combined nav items for desktop sidebar - memoized to prevent recreation on every render
   const navItems: any[] = useMemo(() => [...primaryNavItems, ...secondaryNavItems], [primaryNavItems, secondaryNavItems]);
@@ -328,15 +330,18 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
                   : item.highlight
                   ? "bg-green-500/10 hover:bg-green-500/20"
                   : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-              } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''} ${item.isInvite && !isActive(item.path) ? 'bg-gradient-to-r from-green-500/15 to-transparent border border-green-500/25 hover:from-green-500/25' : ''}`}
+              } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''} ${item.isInvite && !isActive(item.path) ? 'bg-gradient-to-r from-green-500/15 to-transparent border border-green-500/25 hover:from-green-500/25' : ''} ${item.isContent && !isActive(item.path) ? 'bg-gradient-to-r from-violet-500/10 to-transparent border border-violet-500/20 hover:from-violet-500/20' : ''}`}
             >
-              <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.isInvite ? 'text-green-400' : item.highlight ? 'text-green-600' : ''}`} />
-              <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''} ${item.isInvite ? 'font-semibold text-green-300' : ''}`}>{item.label}</span>
+              <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.isInvite ? 'text-green-400' : item.isContent ? 'text-violet-400' : item.highlight ? 'text-green-600' : ''}`} />
+              <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''} ${item.isInvite ? 'font-semibold text-green-300' : ''} ${item.isContent && !isActive(item.path) ? 'font-semibold text-violet-300' : ''}`}>{item.label}</span>
               {item.isPartner && (
                 <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
               )}
               {item.isInvite && !isActive(item.path) && (
                 <Badge className="ml-auto bg-green-500/20 text-green-300 border border-green-500/30 text-[10px]">Earn</Badge>
+              )}
+              {item.isContent && !isActive(item.path) && (
+                <Badge className="ml-auto bg-violet-500/20 text-violet-300 border border-violet-500/30 text-[10px]">New</Badge>
               )}
             </button>
           );
