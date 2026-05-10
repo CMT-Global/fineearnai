@@ -98,6 +98,10 @@ const PublicPagesSettings = lazy(() => import("@/pages/admin/PublicPagesSettings
 const WithdrawalsHistory = lazy(() => import("./pages/WithdrawalsHistory"));
 const InviteEarn = lazy(() => import("./pages/InviteEarn"));
 const GetPaidToPost = lazy(() => import("./pages/GetPaidToPost"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const CodeOfEthics = lazy(() => import("./pages/CodeOfEthics"));
 
 import { ReamazeInitializer } from "@/components/shared/ReamazeInitializer";
 import { ReamazeMobileCloseButton } from "@/components/shared/ReamazeMobileCloseButton";
@@ -212,6 +216,10 @@ const RoutesWrapper = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<LandingIndex />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/cookie-policy" element={<CookiePolicy />} />
+        <Route path="/code-of-ethics" element={<CodeOfEthics />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile-wizard" element={

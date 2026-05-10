@@ -6,25 +6,25 @@ import LandingLogo from "./LandingLogo";
 
 const staticFooterLinks = {
   Platform: [
-    { name: "How It Works", href: "#how-it-works" },
-    { name: "Projects", href: "#projects" },
-    { name: "Benefits", href: "#benefits" },
-    { name: "FAQ", href: "#faq" },
+    { name: "How It Works", href: "/#how-it-works" },
+    { name: "Projects",     href: "/#projects" },
+    { name: "Benefits",     href: "/#benefits" },
+    { name: "FAQ",          href: "/#faq" },
   ],
   Company: [
-    { name: "About Us", href: "#" },
+    { name: "About Us", href: "/" },
   ],
   Legal: [
-    { name: "Terms of Service", href: "#" },
-    { name: "Privacy Policy", href: "#" },
-    { name: "Cookie Policy", href: "#" },
-    { name: "Code of Ethics", href: "#" },
+    { name: "Terms of Service", href: "/terms" },
+    { name: "Privacy Policy",   href: "/privacy-policy" },
+    { name: "Cookie Policy",    href: "/cookie-policy" },
+    { name: "Code of Ethics",   href: "/code-of-ethics" },
   ],
 };
 
 const socialLinks = [
   { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
+  { icon: Twitter,  href: "#", label: "Twitter" },
   { icon: Instagram, href: "#", label: "Instagram" },
   { icon: Linkedin, href: "#", label: "LinkedIn" },
 ];
@@ -49,7 +49,7 @@ export default function LandingFooter() {
       });
   }, []);
 
-  // Build the Platform links, injecting Withdrawals History when enabled
+  // Build the Platform links, injecting Payout History when enabled
   const platformLinks: Array<{ name: string; href: string; isRouter?: boolean }> = [
     ...staticFooterLinks.Platform,
     ...(withdrawalsHistoryEnabled
@@ -60,21 +60,22 @@ export default function LandingFooter() {
   const footerLinks = {
     Platform: platformLinks,
     Company: staticFooterLinks.Company as Array<{ name: string; href: string; isRouter?: boolean }>,
-    Legal: staticFooterLinks.Legal as Array<{ name: string; href: string; isRouter?: boolean }>,
+    Legal:   staticFooterLinks.Legal   as Array<{ name: string; href: string; isRouter?: boolean }>,
   };
 
   return (
     <footer className="bg-card/50 border-t border-border/50">
       <div className="container-custom px-4 md:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
             <LandingLogo />
             <p className="mt-4 text-muted-foreground text-sm leading-relaxed max-w-sm">
-              ProfitChips connects people worldwide with opportunities to earn by contributing 
+              ProfitChips connects people worldwide with opportunities to earn by contributing
               to AI development. Get paid to shape the future of technology.
             </p>
-            
+
             {/* Social Links */}
             <div className="flex items-center gap-4 mt-6">
               {socialLinks.map((social) => (
@@ -88,9 +89,17 @@ export default function LandingFooter() {
                 </a>
               ))}
             </div>
+
+            {/* Support email — shown in brand column on mobile only */}
+            <div className="flex items-center gap-2 mt-5 text-sm text-muted-foreground md:hidden">
+              <Mail className="w-4 h-4 flex-shrink-0" />
+              <a href="mailto:support@profitchips.com" className="hover:text-primary transition-colors">
+                support@profitchips.com
+              </a>
+            </div>
           </div>
 
-          {/* Links */}
+          {/* Link columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
               <h3 className="font-semibold text-foreground mb-4">{category}</h3>
@@ -124,9 +133,14 @@ export default function LandingFooter() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} ProfitChips. All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+
+          {/* Support email — desktop bottom bar */}
+          <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
             <Mail className="w-4 h-4" />
-            <a href="mailto:support@profitchips.com" className="hover:text-primary transition-colors">
+            <a
+              href="mailto:support@profitchips.com"
+              className="hover:text-primary transition-colors font-medium"
+            >
               support@profitchips.com
             </a>
           </div>
