@@ -262,31 +262,128 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* Free tier upgrade banner - show when on default (free) plan and NOT expired */}
-          {isOnFreeTier && planStatus?.status !== 'expired' && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <FreeAccountUpgradeBanner 
-                userId={user.id}
-                planExpiresAt={profile.plan_expires_at}
-                planStartDate={profile.current_plan_start_date}
-                accountCreatedAt={profile.created_at}
-                freePlanExpiryDays={membershipPlan?.free_plan_expiry_days}
-                onUpgrade={() => navigate("/plans")}
-              />
-            </div>
-          )}
+          {/* ── Earning Opportunity Banners — always visible, first thing users see ── */}
+          <div className="mx-4 lg:mx-8 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-          {/* Premium Upgrade Banner - For paid plans below the highest tier (from DB) */}
-          {membershipPlan && !isOnFreeTier && !isOnHighestTier && (
-            <div className="mx-4 lg:mx-8 mt-6">
-              <PremiumUpgradeBanner 
-                userId={user.id}
-                currentPlan={profile.membership_plan}
-                onUpgrade={() => navigate("/plans")}
-                highestTierPlanName={highestTierPlan?.name}
+            {/* Banner 1: Get Paid To Post */}
+            <button
+              id="banner-get-paid-to-post"
+              onClick={() => navigate("/get-paid-to-post")}
+              className="group banner-glow-green banner-shimmer relative overflow-hidden rounded-xl border border-green-500/40 p-4 text-left transition-all duration-300 hover:scale-[1.03] hover:border-green-500/70 active:scale-[0.98]"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(145 60% 8%) 0%, hsl(145 58% 14%) 55%, hsl(145 45% 10%) 100%)",
+              }}
+            >
+              {/* Hover shimmer sweep */}
+              <div
+                className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-700 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, hsl(145 80% 60% / 0.10) 50%, transparent 60%)",
+                }}
               />
-            </div>
-          )}
+
+              <div className="relative flex items-center gap-3">
+                {/* Icon */}
+                <div
+                  className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl shadow-lg"
+                  style={{ background: "hsl(145 65% 18%)" }}
+                >
+                  🎬
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm sm:text-base font-extrabold text-white leading-tight">
+                      Earn $150 Weekly
+                    </span>
+                    <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/25 border border-green-500/40 text-green-300 uppercase tracking-wide">
+                      NEW
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/50 leading-snug">
+                    Post TikTok &amp; YouTube content about ProfitChips
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="h-4 w-4 text-green-400/50 group-hover:text-green-400 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+              </div>
+
+              {/* Live pulse dot */}
+              <span className="absolute top-2.5 left-2.5 h-1.5 w-1.5 rounded-full bg-green-400 animate-ping" />
+              <span className="absolute top-2.5 left-2.5 h-1.5 w-1.5 rounded-full bg-green-400" />
+            </button>
+
+            {/* Banner 2: Invite & Earn */}
+            <button
+              id="banner-invite-earn"
+              onClick={() => navigate("/invite-earn")}
+              className="group banner-glow-violet banner-shimmer relative overflow-hidden rounded-xl border border-violet-500/40 p-4 text-left transition-all duration-300 hover:scale-[1.03] hover:border-violet-500/70 active:scale-[0.98]"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(265 60% 8%) 0%, hsl(265 55% 14%) 55%, hsl(265 45% 10%) 100%)",
+              }}
+            >
+              {/* Hover shimmer sweep */}
+              <div
+                className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-700 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, hsl(265 80% 70% / 0.10) 50%, transparent 60%)",
+                }}
+              />
+
+              <div className="relative flex items-center gap-3">
+                {/* Icon */}
+                <div
+                  className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl shadow-lg"
+                  style={{ background: "hsl(265 60% 18%)" }}
+                >
+                  🎁
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm sm:text-base font-extrabold text-white leading-tight">
+                      Earn $800+ Monthly
+                    </span>
+                    <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/25 border border-violet-500/40 text-violet-300 uppercase tracking-wide">
+                      HOT
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/50 leading-snug">
+                    Invite friends &amp; earn daily referral commissions
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="h-4 w-4 text-violet-400/50 group-hover:text-violet-400 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+              </div>
+
+              {/* Live pulse dot */}
+              <span className="absolute top-2.5 left-2.5 h-1.5 w-1.5 rounded-full bg-violet-400 animate-ping" />
+              <span className="absolute top-2.5 left-2.5 h-1.5 w-1.5 rounded-full bg-violet-400" />
+            </button>
+
+          </div>
+
+          {/* CSS animations for banner glow */}
+          <style>{`
+            @keyframes banner-glow-green-anim {
+              0%, 100% { box-shadow: 0 0 8px hsl(145 70% 45% / 0.25), 0 0 24px hsl(145 70% 45% / 0.12); }
+              50%       { box-shadow: 0 0 18px hsl(145 70% 45% / 0.50), 0 0 48px hsl(145 70% 45% / 0.25); }
+            }
+            @keyframes banner-glow-violet-anim {
+              0%, 100% { box-shadow: 0 0 8px hsl(265 70% 55% / 0.25), 0 0 24px hsl(265 70% 55% / 0.12); }
+              50%       { box-shadow: 0 0 18px hsl(265 70% 55% / 0.50), 0 0 48px hsl(265 70% 55% / 0.25); }
+            }
+            .banner-glow-green  { animation: banner-glow-green-anim  3s ease-in-out infinite; }
+            .banner-glow-violet { animation: banner-glow-violet-anim 3s ease-in-out infinite; animation-delay: 1.5s; }
+          `}</style>
 
           {/* Plan Expiry Alerts */}
           {planStatus && planStatus.status === 'expired' && (
