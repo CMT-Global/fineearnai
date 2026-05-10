@@ -17,6 +17,7 @@ import {
   ArrowRight,
   HelpCircle,
   TrendingUp,
+  Gift,
 } from "lucide-react";
 import { useState, useMemo, memo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -92,6 +93,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
     { icon: Home, label: t("navigation.dashboard"), path: "/dashboard" },
     { icon: Zap, label: t("navigation.tasks"), path: "/tasks" },
     { icon: Wallet, label: t("navigation.wallet"), path: "/wallet" },
+    { icon: Gift, label: "Invite & Earn $800+", path: "/invite-earn", isInvite: true },
     { icon: Users, label: t("navigation.referrals"), path: "/referrals", tooltip: t("navigation.myTeamTooltip") },
   ], [t]);
 
@@ -326,12 +328,15 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
                   : item.highlight
                   ? "bg-green-500/10 hover:bg-green-500/20"
                   : "hover:bg-[hsl(var(--sidebar-accent))]/50"
-              } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''}`}
+              } ${item.isPartner ? 'bg-gradient-to-r from-[hsl(var(--wallet-deposit))]/10 to-transparent border border-[hsl(var(--wallet-deposit))]/20' : ''} ${item.isInvite && !isActive(item.path) ? 'bg-gradient-to-r from-green-500/15 to-transparent border border-green-500/25 hover:from-green-500/25' : ''}`}
             >
-              <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.highlight ? 'text-green-600' : ''}`} />
-              <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''}`}>{item.label}</span>
+              <item.icon className={`h-5 w-5 ${isActive(item.path) || item.isPartner ? 'text-[hsl(var(--wallet-deposit))]' : item.isInvite ? 'text-green-400' : item.highlight ? 'text-green-600' : ''}`} />
+              <span className={`${item.isPartner ? 'font-semibold' : ''} ${item.highlight ? 'text-green-600 font-semibold' : ''} ${item.isInvite ? 'font-semibold text-green-300' : ''}`}>{item.label}</span>
               {item.isPartner && (
                 <Badge className="ml-auto bg-[hsl(var(--wallet-deposit))] text-white">Pro</Badge>
+              )}
+              {item.isInvite && !isActive(item.path) && (
+                <Badge className="ml-auto bg-green-500/20 text-green-300 border border-green-500/30 text-[10px]">Earn</Badge>
               )}
             </button>
           );
