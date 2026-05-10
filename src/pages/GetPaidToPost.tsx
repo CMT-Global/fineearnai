@@ -14,12 +14,14 @@ import {
   Star,
   Upload,
   Play,
+  AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Platform = "youtube" | "tiktok" | "instagram" | "facebook" | "twitter" | "other";
+type Platform = "tiktok" | "youtube_shorts" | "youtube_longform";
 type Status = "pending" | "approved" | "rejected";
 
 interface Submission {
@@ -36,56 +38,84 @@ interface Submission {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const PLATFORMS: { value: Platform; label: string; emoji: string }[] = [
-  { value: "youtube",   label: "YouTube",     emoji: "🎬" },
-  { value: "tiktok",    label: "TikTok",      emoji: "🎵" },
-  { value: "instagram", label: "Instagram",   emoji: "📸" },
-  { value: "facebook",  label: "Facebook",    emoji: "👥" },
-  { value: "twitter",   label: "Twitter / X", emoji: "🐦" },
-  { value: "other",     label: "Other",       emoji: "🔗" },
+const PLATFORMS: { value: Platform; label: string; emoji: string; hint: string }[] = [
+  { value: "tiktok",           label: "TikTok",           emoji: "🎵", hint: "Short-form video" },
+  { value: "youtube_shorts",   label: "YouTube Shorts",   emoji: "▶️", hint: "Under 60 seconds" },
+  { value: "youtube_longform", label: "YouTube Longform", emoji: "🎬", hint: "Over 60 seconds" },
 ];
 
 const PAYOUT_MILESTONES = [
-  { label: "Starter",   reach: "1,000 views",    reward: "$5",   color: "hsl(145 50% 30%)" },
-  { label: "Rising",    reach: "10,000 views",   reward: "$15",  color: "hsl(145 55% 35%)" },
-  { label: "Popular",   reach: "50,000 views",   reward: "$30",  color: "hsl(145 60% 38%)" },
-  { label: "Viral",     reach: "100,000 views",  reward: "$50",  color: "hsl(145 65% 40%)" },
-  { label: "Mega",      reach: "500,000+ views", reward: "$100", color: "hsl(145 70% 43%)" },
+  {
+    label: "Starter",
+    reach: "5,000 views",
+    reward: "US$30",
+    color: "hsl(145 55% 32%)",
+    glow: "hsl(145 55% 32% / 0.25)",
+  },
+  {
+    label: "Growing",
+    reach: "10,000 views",
+    reward: "US$60",
+    color: "hsl(145 58% 36%)",
+    glow: "hsl(145 58% 36% / 0.25)",
+  },
+  {
+    label: "Popular",
+    reach: "20,000 views",
+    reward: "US$100",
+    color: "hsl(145 62% 40%)",
+    glow: "hsl(145 62% 40% / 0.25)",
+  },
+  {
+    label: "Viral",
+    reach: "30,000+ views",
+    reward: "US$150",
+    color: "hsl(145 70% 45%)",
+    glow: "hsl(145 70% 45% / 0.30)",
+    highlight: true,
+  },
 ];
 
 const HOW_IT_WORKS = [
   {
     step: "1",
-    title: "Create your content",
-    desc: "Record a video, post, or story featuring ProfitChips — your experience, earnings, or walkthrough.",
+    title: "Create your video (don't post yet)",
+    desc: "Record an authentic, educational TikTok or YouTube video about ProfitChips — how you earn, your experience, or a walkthrough.",
   },
   {
     step: "2",
-    title: "Submit your link",
-    desc: "Paste your video or post URL below along with your platform and any details that help us review it.",
+    title: "Submit for review first",
+    desc: "Paste the draft or unlisted link below. Our team reviews your content to confirm it meets guidelines before you publish.",
   },
   {
     step: "3",
-    title: "We review within 48h",
-    desc: "Our team verifies the content genuinely features ProfitChips and checks your reach/views.",
+    title: "Publish after approval",
+    desc: "Once approved, publish your video publicly. Share it to grow your views — rewards are based on verified view counts.",
   },
   {
     step: "4",
-    title: "Reward credited",
-    desc: "Approved submissions receive a cash reward directly to your Earnings Wallet — no minimum required.",
+    title: "Team verifies views → reward paid",
+    desc: "When your video hits a milestone (5K, 10K, 20K, or 30K+ views), submit for verification and receive your reward in your Earnings Wallet.",
   },
 ];
 
-// ─── Status display helper ────────────────────────────────────────────────────
+const PROGRAM_RULES = [
+  "1 video submission per day (maximum 5 per week)",
+  "Videos must be authentic and educational — not promotional ads",
+  "Submit for review before publishing publicly",
+  "Rewards are paid after our team verifies view counts",
+  "Views must be genuine — artificially inflated views will be rejected",
+  "Content must clearly feature and explain ProfitChips",
+];
+
+// ─── Status display ───────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<Status, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  pending:  { label: "Under Review",  icon: Clock,        color: "text-amber-300",  bg: "bg-amber-500/15 border-amber-500/30" },
-  approved: { label: "Approved",      icon: CheckCircle,  color: "text-green-300",  bg: "bg-green-500/15 border-green-500/30" },
-  rejected: { label: "Rejected",      icon: XCircle,      color: "text-red-300",    bg: "bg-red-500/15 border-red-500/30" },
+  pending:  { label: "Under Review",  icon: Clock,       color: "text-amber-300", bg: "bg-amber-500/15 border-amber-500/30" },
+  approved: { label: "Approved",      icon: CheckCircle, color: "text-green-300", bg: "bg-green-500/15 border-green-500/30" },
+  rejected: { label: "Rejected",      icon: XCircle,     color: "text-red-300",   bg: "bg-red-500/15 border-red-500/30" },
 };
 
-const platformLabel = (p: Platform) => PLATFORMS.find((x) => x.value === p)?.label ?? p;
-const platformEmoji = (p: Platform) => PLATFORMS.find((x) => x.value === p)?.emoji ?? "🔗";
-
+const getPlatformInfo = (p: Platform) => PLATFORMS.find((x) => x.value === p);
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
@@ -94,22 +124,21 @@ export default function GetPaidToPost() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Form state
-  const [platform, setPlatform] = useState<Platform>("youtube");
+  const [platform, setPlatform] = useState<Platform>("tiktok");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [followerCount, setFollowerCount] = useState("");
   const [notes, setNotes] = useState("");
   const [urlError, setUrlError] = useState("");
 
-  // ── Fetch user's past submissions ─────────────────────────────────────────
+  // ── Past submissions ───────────────────────────────────────────────────────
   const { data: submissions = [], isLoading: loadingSubs } = useQuery<Submission[]>({
     queryKey: ["content-reward-submissions", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("content_reward_submissions")
-        .select("id, video_url, platform, video_title, follower_count, additional_notes, status, rejection_reason, reward_amount, created_at")
+        .select("id,video_url,platform,video_title,follower_count,additional_notes,status,rejection_reason,reward_amount,created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -119,7 +148,7 @@ export default function GetPaidToPost() {
     staleTime: 60 * 1000,
   });
 
-  // ── Submit mutation ───────────────────────────────────────────────────────
+  // ── Submit mutation ────────────────────────────────────────────────────────
   const { mutate: submitVideo, isPending: submitting } = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
@@ -147,10 +176,10 @@ export default function GetPaidToPost() {
     },
   });
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  // ── Validate ───────────────────────────────────────────────────────────────
   const validateAndSubmit = () => {
     const trimmed = videoUrl.trim();
-    if (!trimmed) { setUrlError("Please enter your video or post URL."); return; }
+    if (!trimmed) { setUrlError("Please enter your video link."); return; }
     try { new URL(trimmed); } catch {
       setUrlError("Please enter a valid URL (must start with https://).");
       return;
@@ -163,16 +192,16 @@ export default function GetPaidToPost() {
   return (
     <>
       <Helmet>
-        <title>Get Paid To Post | ProfitChips Content Rewards</title>
+        <title>Get Paid To Post $150+ | ProfitChips Content Rewards</title>
         <meta
           name="description"
-          content="Earn cash rewards by posting content about ProfitChips. Submit your video link and get paid based on your reach."
+          content="Earn over US$150 weekly by creating TikTok or YouTube content about ProfitChips. Submit your video for review and get paid at verified view milestones."
         />
       </Helmet>
 
       <div className="min-h-screen pb-24 lg:pb-12">
 
-        {/* ── Hero ──────────────────────────────────────────────────────────── */}
+        {/* ── Hero ─────────────────────────────────────────────────────────── */}
         <div
           className="relative overflow-hidden px-4 pt-10 pb-14"
           style={{
@@ -190,27 +219,43 @@ export default function GetPaidToPost() {
               Content Rewards Program
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-3">
-              Get{" "}
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4">
+              Earn Over{" "}
               <span
                 className="text-transparent bg-clip-text"
                 style={{
                   backgroundImage: "linear-gradient(90deg, hsl(145 70% 55%), hsl(145 60% 72%))",
                 }}
               >
-                Paid To Post
+                US$150 Weekly
               </span>
+              <br />
+              Creating ProfitChips Content
             </h1>
+
             <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-              Create content about ProfitChips on YouTube, TikTok, Instagram, or any platform —
-              and earn real cash rewards based on your reach.
+              Create authentic TikTok or YouTube videos that educate people about ProfitChips and
+              earn rewards when your content reaches verified view milestones.
             </p>
+
+            {/* Platform badges */}
+            <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
+              {PLATFORMS.map((p) => (
+                <span
+                  key={p.value}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/15 bg-white/8 text-white/60 text-xs"
+                >
+                  <span>{p.emoji}</span>
+                  {p.label}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="max-w-3xl mx-auto px-4 -mt-2 space-y-6">
 
-          {/* ── How It Works ────────────────────────────────────────────────── */}
+          {/* ── How It Works ─────────────────────────────────────────────── */}
           <div
             className="rounded-2xl border border-white/10 p-6 md:p-8"
             style={{ background: "linear-gradient(135deg, hsl(145 55% 10%), hsl(145 45% 13%))" }}
@@ -219,7 +264,7 @@ export default function GetPaidToPost() {
               <Play className="h-5 w-5 text-green-400" />
               How It Works
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {HOW_IT_WORKS.map((step) => (
                 <div key={step.step} className="flex gap-3">
                   <div
@@ -230,14 +275,14 @@ export default function GetPaidToPost() {
                   </div>
                   <div>
                     <div className="text-white font-semibold text-sm">{step.title}</div>
-                    <div className="text-white/50 text-sm leading-relaxed">{step.desc}</div>
+                    <div className="text-white/50 text-sm leading-relaxed mt-0.5">{step.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ── Payout Milestones ────────────────────────────────────────────── */}
+          {/* ── Payout Milestones ─────────────────────────────────────────── */}
           <div
             className="rounded-2xl border border-white/10 p-6 md:p-8"
             style={{ background: "hsl(145 50% 10%)" }}
@@ -246,33 +291,63 @@ export default function GetPaidToPost() {
               <Star className="h-5 w-5 text-green-400" />
               Payout Milestones
             </h2>
-            <p className="text-white/40 text-sm mb-5">
-              Rewards are based on verified views at the time of review. Submit once you hit a milestone.
+            <p className="text-white/40 text-sm mb-6">
+              Rewards are based on verified views. You can submit for multiple milestones as your video grows.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {PAYOUT_MILESTONES.map((m) => (
                 <div
                   key={m.label}
-                  className="rounded-xl border border-white/10 p-3 text-center flex flex-col items-center gap-1"
-                  style={{ background: `${m.color}22` }}
+                  className={`rounded-xl border p-4 text-center relative overflow-hidden transition-all ${
+                    m.highlight ? "border-green-500/40" : "border-white/10"
+                  }`}
+                  style={{
+                    background: m.highlight
+                      ? `linear-gradient(135deg, ${m.glow}, hsl(145 55% 12%))`
+                      : `linear-gradient(135deg, ${m.glow}, hsl(145 50% 10%))`,
+                  }}
                 >
-                  <div className="text-white/40 text-[10px] uppercase tracking-widest">{m.label}</div>
-                  <div className="text-white text-xs font-medium">{m.reach}</div>
+                  {m.highlight && (
+                    <div className="absolute top-1.5 right-1.5 text-[10px] font-bold text-green-300 bg-green-500/20 border border-green-500/30 px-1.5 py-0.5 rounded-full">
+                      TOP
+                    </div>
+                  )}
+                  <div className="text-white/35 text-[10px] uppercase tracking-widest mb-1">{m.label}</div>
+                  <div className="text-white/70 text-xs font-medium mb-2">{m.reach}</div>
                   <div
-                    className="text-2xl font-extrabold mt-0.5"
-                    style={{ color: m.color.replace("hsl", "hsl").replace(")", " / 1)") }}
+                    className="text-2xl md:text-3xl font-extrabold"
+                    style={{ color: m.color }}
                   >
                     {m.reward}
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-white/25 text-xs mt-3">
-              * Rewards are per submission. You may submit multiple videos at different milestone levels.
+            <p className="text-white/25 text-xs mt-4">
+              * You may submit separate milestone claims as your video reaches new view thresholds.
             </p>
           </div>
 
-          {/* ── Submission Form ──────────────────────────────────────────────── */}
+          {/* ── Program Rules ─────────────────────────────────────────────── */}
+          <div
+            className="rounded-2xl border border-amber-500/20 p-5"
+            style={{ background: "hsl(38 60% 10%)" }}
+          >
+            <h2 className="text-amber-200 font-bold text-base mb-3 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-400" />
+              Program Rules
+            </h2>
+            <ul className="space-y-2">
+              {PROGRAM_RULES.map((rule, i) => (
+                <li key={i} className="flex items-start gap-2 text-amber-100/60 text-sm">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500/60 flex-shrink-0 mt-0.5" />
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* ── Submission Form ──────────────────────────────────────────── */}
           <div
             className="rounded-2xl border border-white/10 p-6 md:p-8"
             style={{ background: "hsl(145 50% 10%)" }}
@@ -282,7 +357,7 @@ export default function GetPaidToPost() {
               Submit Your Content
             </h2>
             <p className="text-white/50 text-sm mb-6">
-              Fill in the details below and our team will review your submission within 48 hours.
+              Submit your video <strong className="text-white/70">before publishing</strong>. We review within 48 hours and let you know if it's approved.
             </p>
 
             <div className="space-y-4">
@@ -291,20 +366,21 @@ export default function GetPaidToPost() {
                 <label className="block text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
                   Platform <span className="text-red-400">*</span>
                 </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {PLATFORMS.map((p) => (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => setPlatform(p.value)}
-                      className={`flex flex-col items-center gap-1 rounded-xl border py-2.5 px-1 text-xs font-medium transition-all duration-150 ${
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 px-2 text-xs font-medium transition-all duration-150 ${
                         platform === p.value
-                          ? "border-green-500/60 bg-green-500/20 text-green-300"
-                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:bg-white/10"
+                          ? "border-green-500/60 bg-green-500/20 text-green-200"
+                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:bg-white/8"
                       }`}
                     >
-                      <span className="text-xl leading-none">{p.emoji}</span>
-                      <span>{p.label}</span>
+                      <span className="text-2xl leading-none">{p.emoji}</span>
+                      <span className="font-semibold">{p.label}</span>
+                      <span className="text-[10px] opacity-60">{p.hint}</span>
                     </button>
                   ))}
                 </div>
@@ -313,67 +389,79 @@ export default function GetPaidToPost() {
               {/* Video URL */}
               <div>
                 <label htmlFor="video-url" className="block text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
-                  Video / Post URL <span className="text-red-400">*</span>
+                  Video / Draft Link <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="video-url"
                   type="url"
-                  placeholder="https://youtube.com/watch?v=..."
+                  placeholder={
+                    platform === "tiktok"
+                      ? "https://www.tiktok.com/@yourhandle/video/..."
+                      : "https://youtube.com/watch?v=... or unlisted link"
+                  }
                   value={videoUrl}
                   onChange={(e) => { setVideoUrl(e.target.value); setUrlError(""); }}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-green-500/50 focus:bg-white/8 transition-all"
                 />
                 {urlError && (
-                  <p className="text-red-400 text-xs mt-1">{urlError}</p>
+                  <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {urlError}
+                  </p>
                 )}
+                <p className="text-white/30 text-xs mt-1.5">
+                  You can submit an unlisted YouTube link or a TikTok draft link before publishing.
+                </p>
               </div>
 
-              {/* Video Title (optional) */}
+              {/* Video Title */}
               <div>
                 <label htmlFor="video-title" className="block text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
-                  Video / Post Title <span className="text-white/25 font-normal normal-case tracking-normal">(optional)</span>
+                  Video Title{" "}
+                  <span className="text-white/25 font-normal normal-case tracking-normal">(optional)</span>
                 </label>
                 <input
                   id="video-title"
                   type="text"
-                  placeholder="e.g. How I earn $300/month with ProfitChips"
+                  placeholder="e.g. How I earn $300/month on ProfitChips (honest review)"
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-green-500/50 transition-all"
                 />
               </div>
 
-              {/* Follower / Subscriber Count (optional) */}
+              {/* Follower count */}
               <div>
                 <label htmlFor="follower-count" className="block text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
-                  Your Followers / Subscribers <span className="text-white/25 font-normal normal-case tracking-normal">(optional, self-reported)</span>
+                  Your Followers / Subscribers{" "}
+                  <span className="text-white/25 font-normal normal-case tracking-normal">(optional, self-reported)</span>
                 </label>
                 <input
                   id="follower-count"
                   type="text"
-                  placeholder="e.g. 5.2K, 50K, 1.2M"
+                  placeholder="e.g. 1.2K, 50K, 200K"
                   value={followerCount}
                   onChange={(e) => setFollowerCount(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-green-500/50 transition-all"
                 />
               </div>
 
-              {/* Additional Notes (optional) */}
+              {/* Notes */}
               <div>
                 <label htmlFor="notes" className="block text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
-                  Additional Notes <span className="text-white/25 font-normal normal-case tracking-normal">(optional)</span>
+                  Additional Notes{" "}
+                  <span className="text-white/25 font-normal normal-case tracking-normal">(optional)</span>
                 </label>
                 <textarea
                   id="notes"
                   rows={3}
-                  placeholder="Tell us anything else about your content that might help us review it..."
+                  placeholder="Tell us anything else about your video that might help us review it..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-green-500/50 transition-all resize-none"
                 />
               </div>
 
-              {/* Submit */}
               <Button
                 onClick={validateAndSubmit}
                 disabled={submitting}
@@ -401,7 +489,7 @@ export default function GetPaidToPost() {
             </div>
           </div>
 
-          {/* ── Past Submissions ─────────────────────────────────────────────── */}
+          {/* ── Past Submissions ──────────────────────────────────────────── */}
           {(loadingSubs || submissions.length > 0) && (
             <div
               className="rounded-2xl border border-white/10 p-6"
@@ -420,17 +508,17 @@ export default function GetPaidToPost() {
                   {submissions.map((sub) => {
                     const sc = STATUS_CONFIG[sub.status];
                     const Icon = sc.icon;
+                    const pInfo = getPlatformInfo(sub.platform);
                     return (
                       <div
                         key={sub.id}
                         className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col sm:flex-row sm:items-center gap-3"
                       >
-                        {/* Platform + URL */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-base">{platformEmoji(sub.platform)}</span>
+                            <span className="text-base">{pInfo?.emoji ?? "🎬"}</span>
                             <span className="text-white text-sm font-medium">
-                              {platformLabel(sub.platform)}
+                              {pInfo?.label ?? sub.platform}
                             </span>
                             {sub.video_title && (
                               <span className="text-white/40 text-sm truncate">
@@ -458,8 +546,6 @@ export default function GetPaidToPost() {
                             </p>
                           )}
                         </div>
-
-                        {/* Right side */}
                         <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1 flex-shrink-0">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${sc.bg} ${sc.color}`}
@@ -477,16 +563,15 @@ export default function GetPaidToPost() {
             </div>
           )}
 
-          {/* ── Disclaimer ────────────────────────────────────────────────────── */}
+          {/* ── Disclaimer ────────────────────────────────────────────────── */}
           <div className="flex gap-3 rounded-xl border border-white/5 bg-white/3 p-4">
             <Info className="h-4 w-4 text-white/30 flex-shrink-0 mt-0.5" />
             <p className="text-white/35 text-xs leading-relaxed">
-              <strong className="text-white/50">Program Rules:</strong>{" "}
-              Submitted content must genuinely feature ProfitChips (your account, earnings, or honest review).
-              Misleading, fake, or spam content will be rejected and may result in account review.
-              Payout milestones are based on verified views at the time of review, not at time of submission.
+              <strong className="text-white/50">Program Disclaimer:</strong>{" "}
+              Rewards are based on verified view counts at the time of review, not self-reported numbers.
+              Content must authentically feature and explain ProfitChips — promotional-style ads will be rejected.
               Rewards are credited to your Earnings Wallet and are subject to standard withdrawal policies.
-              This program is subject to change without notice.
+              ProfitChips reserves the right to modify or discontinue this program at any time.
             </p>
           </div>
 
