@@ -10,7 +10,6 @@ import {
   Globe2,
   Loader2,
   TrendingUp,
-  Users,
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
@@ -30,9 +29,7 @@ interface PublicWithdrawal {
   } | null;
 }
 
-interface StatsRow {
-  count: number;
-}
+
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -85,7 +82,7 @@ const PAGE_SIZE = 20;
 export default function WithdrawalsHistory() {
   const [enabled, setEnabled] = useState<boolean | null>(null); // null = loading
   const [withdrawals, setWithdrawals] = useState<PublicWithdrawal[]>([]);
-  const [stats, setStats] = useState<StatsRow | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,27 +110,7 @@ export default function WithdrawalsHistory() {
     checkEnabled();
   }, []);
 
-  // ── Fetch stats (count only) ────────────────────────────────────────────
-  useEffect(() => {
-    if (!enabled) return;
 
-    const fetchStats = async () => {
-      try {
-        const { count, error } = await supabase
-          .from("withdrawal_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "completed");
-
-        if (error) throw error;
-        setStats({ count: count ?? 0 });
-      } catch {
-        // Non-fatal — stat is supplementary
-        setStats(null);
-      }
-    };
-
-    fetchStats();
-  }, [enabled]);
 
   // ── Fetch paginated withdrawals ─────────────────────────────────────────
   useEffect(() => {
@@ -315,20 +292,7 @@ export default function WithdrawalsHistory() {
               member. Your earnings are real — and so are theirs.
             </p>
 
-            {/* Stats — count only */}
-            {stats && (
-              <div className="flex justify-center mt-10">
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-10 py-5 inline-flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2 text-green-400">
-                    <Users className="h-5 w-5" />
-                    <span className="text-sm font-medium">Completed Payouts</span>
-                  </div>
-                  <div className="text-4xl font-bold text-white">
-                    {stats.count.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
         </section>
 
