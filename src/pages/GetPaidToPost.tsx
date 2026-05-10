@@ -79,23 +79,39 @@ const PAYOUT_MILESTONES = [
 const HOW_IT_WORKS = [
   {
     step: "1",
-    title: "Create your video (don't post yet)",
-    desc: "Record an authentic, educational TikTok or YouTube video about ProfitChips — how you earn, your experience, or a walkthrough.",
+    title: "Create your video",
+    desc: "Record an authentic TikTok or YouTube video in any language, teaching people about ProfitChips, Earning Online, AI Training Jobs, and much more — be creative!",
+    icon: "🎬",
   },
   {
     step: "2",
-    title: "Submit for review first",
-    desc: "Paste the draft or unlisted link below. Our team reviews your content to confirm it meets guidelines before you publish.",
+    title: "Submit for review",
+    desc: "Send us your draft or private video link before posting publicly so our team can check the content.",
+    icon: "📤",
   },
   {
     step: "3",
-    title: "Publish after approval",
-    desc: "Once approved, publish your video publicly. Share it to grow your views — rewards are based on verified view counts.",
+    title: "Get approved",
+    desc: "Our support team reviews your video. Approved videos can then be published on your TikTok or YouTube account.",
+    icon: "✅",
   },
   {
     step: "4",
-    title: "Team verifies views → reward paid",
-    desc: "When your video hits a milestone (5K, 10K, 20K, or 30K+ views), submit for verification and receive your reward in your Earnings Wallet.",
+    title: "Publish your video",
+    desc: "Post the approved video publicly and make sure your ProfitChips message is clear, honest, and educational.",
+    icon: "🌍",
+  },
+  {
+    step: "5",
+    title: "We verify views",
+    desc: "Keep your public link active while our team checks your views and confirms the milestone reached.",
+    icon: "👁️",
+  },
+  {
+    step: "6",
+    title: "Reward is credited",
+    desc: "Once verified, your reward is added to your ProfitChips wallet and can be withdrawn through the normal withdrawal process.",
+    icon: "💰",
   },
 ];
 
@@ -264,19 +280,37 @@ export default function GetPaidToPost() {
               <Play className="h-5 w-5 text-green-400" />
               How It Works
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {HOW_IT_WORKS.map((step) => (
-                <div key={step.step} className="flex gap-3">
-                  <div
-                    className="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                    style={{ background: "hsl(145 65% 33%)" }}
-                  >
-                    {step.step}
+
+            {/* Mobile: stacked list | Desktop: 2-col grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {HOW_IT_WORKS.map((step, idx) => (
+                <div
+                  key={step.step}
+                  className="relative flex gap-3 rounded-xl border border-white/8 bg-white/4 p-4"
+                >
+                  {/* Step number + emoji */}
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div
+                      className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: "hsl(145 65% 33%)" }}
+                    >
+                      {step.step}
+                    </div>
+                    <span className="text-xl leading-none">{step.icon}</span>
                   </div>
-                  <div>
-                    <div className="text-white font-semibold text-sm">{step.title}</div>
-                    <div className="text-white/50 text-sm leading-relaxed mt-0.5">{step.desc}</div>
+
+                  {/* Content */}
+                  <div className="min-w-0">
+                    <div className="text-white font-semibold text-sm leading-snug mb-1">
+                      {step.title}
+                    </div>
+                    <div className="text-white/50 text-xs leading-relaxed">{step.desc}</div>
                   </div>
+
+                  {/* Arrow connector — right edge on even pairs (desktop only) */}
+                  {idx % 2 === 0 && idx < HOW_IT_WORKS.length - 1 && (
+                    <ChevronRight className="hidden sm:block absolute -right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500/40 z-10" />
+                  )}
                 </div>
               ))}
             </div>
