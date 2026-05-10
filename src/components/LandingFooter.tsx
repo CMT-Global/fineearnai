@@ -53,7 +53,7 @@ export default function LandingFooter() {
   const platformLinks: Array<{ name: string; href: string; isRouter?: boolean }> = [
     ...staticFooterLinks.Platform,
     ...(withdrawalsHistoryEnabled
-      ? [{ name: "Withdrawals History", href: "/withdrawals-history", isRouter: true }]
+      ? [{ name: "Payout History", href: "/withdrawals-history", isRouter: true }]
       : []),
   ];
 

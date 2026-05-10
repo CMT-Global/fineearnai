@@ -114,7 +114,7 @@ export const Sidebar = memo(({ profile, isAdmin, onSignOut }: SidebarProps) => {
       : null,
     { icon: History, label: t("navigation.transactions"), path: "/transactions" },
     isWithdrawalsHistoryEnabled
-      ? { icon: TrendingUp, label: "Withdrawals History", path: "/withdrawals-history" }
+      ? { icon: TrendingUp, label: "Payout History", path: "/withdrawals-history" }
       : null,
     { icon: Settings, label: t("navigation.settings"), path: "/settings" },
   ].filter(Boolean) as { icon: any; label: string; path: string; highlight?: boolean }[], [isHowItWorksVisible, isWithdrawalsHistoryEnabled, t]);
