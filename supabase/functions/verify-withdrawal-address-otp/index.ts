@@ -37,7 +37,7 @@ Deno.serve(async (req)=>{
       });
     }
     console.log('[OTP Verify] Starting OTP verification for user:', user.id);
-    const { otpCode, usdcAddress, usdtAddress } = await req.json();
+    const { otpCode, usdcAddress, usdtAddress, usdtTrc20Address } = await req.json();
     // Validate OTP code format
     if (!otpCode || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) {
       return new Response(JSON.stringify({
@@ -106,15 +106,18 @@ Deno.serve(async (req)=>{
       used_at: new Date().toISOString()
     }).eq('id', otpRecord.id);
     // Update profile with new addresses
-    const updateData = {
+    const updateData: Record<string, string | null> = {
       withdrawal_addresses_updated_at: new Date().toISOString()
     };
-    // Only update addresses that were provided
+    // Only update addresses that were provided in the payload
     if (usdcAddress !== undefined) {
       updateData.usdc_solana_address = usdcAddress.trim() || null;
     }
     if (usdtAddress !== undefined) {
       updateData.usdt_bep20_address = usdtAddress.trim() || null;
+    }
+    if (usdtTrc20Address !== undefined) {
+      updateData.usdt_trc20_address = usdtTrc20Address.trim() || null;
     }
     const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', user.id);
     if (updateError) {

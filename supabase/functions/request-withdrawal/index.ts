@@ -62,14 +62,15 @@ Deno.serve(async (req)=>{
       paymentProcessorId,
       cryptoId
     });
-    // Validate cryptocurrency selection — USDT (BEP-20) only
+    // Validate cryptocurrency selection — USDT (BEP-20) and USDT (TRC-20)
     const validCryptoIds = [
-      'usdt-bep20'
+      'usdt-bep20',
+      'usdt-trc20',
     ];
     if (!cryptoId || !validCryptoIds.includes(cryptoId)) {
       console.error('Invalid cryptocurrency selection:', cryptoId);
       return new Response(JSON.stringify({
-        error: 'Invalid cryptocurrency selection. Only USDT (BEP-20) withdrawals are currently supported.'
+        error: 'Invalid cryptocurrency selection. Only USDT (BEP-20) and USDT (TRC-20) withdrawals are supported.'
       }), {
         status: 400,
         headers: {
@@ -78,9 +79,10 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    // Map crypto ID to display name (USDT-BEP20 only)
+    // Map crypto ID to display name
     const cryptoDisplayNames: Record<string, string> = {
-      'usdt-bep20': 'USDT (BEP-20)'
+      'usdt-bep20': 'USDT (BEP-20)',
+      'usdt-trc20': 'USDT (TRC-20)',
     };
     // Get user profile and membership plan (including daily withdrawal bypass flag)
     const { data: profile, error: profileError } = await supabase.from('profiles').select('*, membership_plan, allow_daily_withdrawals, email_verified').eq('id', user.id).single();

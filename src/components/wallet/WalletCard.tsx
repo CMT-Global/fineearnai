@@ -194,21 +194,19 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     }
   }, [withdrawDialogOpen]);
 
-  // PHASE 3: Auto-fill USDT-BEP20 address from profile when dialog opens or crypto changes
+  // Auto-fill the saved address from profile when dialog opens or crypto network changes
   useEffect(() => {
     if (!withdrawDialogOpen || !profile) return;
-    
-    // Get saved address for selected crypto (USDT-BEP20 only)
-    const savedAddress = selectedCrypto.id === 'usdt-bep20' && profile.usdt_bep20_address
-      ? profile.usdt_bep20_address
-      : '';
-    
-    // Auto-fill saved address when dialog opens
+
+    // Use profileAddressField to read the correct saved address for the selected network
+    const field = selectedCrypto.profileAddressField;
+    const savedAddress = (profile as any)[field] as string | null | undefined;
+
     if (savedAddress) {
       setAccountDetails(savedAddress);
       toast.success(t("toasts.wallet.autoFilledSavedAddress", { crypto: selectedCrypto.displayName }), { duration: 2000 });
     } else {
-      // Clear if no saved address
+      // Clear if no saved address for this network
       setAccountDetails('');
     }
   }, [selectedCrypto.id, withdrawDialogOpen]);
@@ -476,8 +474,8 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
       return;
     }
     
-    // Validate crypto selection (USDT-BEP20 only)
-    if (!selectedCrypto || selectedCrypto.id !== 'usdt-bep20') {
+    // Validate that a supported crypto is selected
+    if (!selectedCrypto) {
       toast.error(t("toasts.wallet.selectValidWithdrawalMethod"));
       return;
     }
@@ -669,7 +667,7 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
     console.log('🔄 Starting confirmed withdrawal request...');
 
     try {
-      // ✅ PHASE 2: Defensive validation for cryptoId
+      // ✅ Defensive validation for cryptoId
       if (!pendingWithdrawalData.cryptoId) {
         toast.error(t("toasts.wallet.cryptocurrencySelectionRequired"));
         console.error('❌ Missing cryptoId:', pendingWithdrawalData);
@@ -677,10 +675,11 @@ export const WalletCard = ({ depositBalance, earningsBalance, onBalanceUpdate }:
         return;
       }
 
-      // Validate cryptoId format — only USDT-BEP20 is supported
-      if (pendingWithdrawalData.cryptoId !== 'usdt-bep20') {
+      // Validate cryptoId is one of the supported networks
+      const supportedIds = ['usdt-bep20', 'usdt-trc20'];
+      if (!supportedIds.includes(pendingWithdrawalData.cryptoId)) {
         toast.error(t("toasts.wallet.invalidCryptocurrency"));
-        console.error('❌ Invalid cryptoId:', pendingWithdrawalData.cryptoId, 'Expected: usdt-bep20');
+        console.error('❌ Unsupported cryptoId:', pendingWithdrawalData.cryptoId);
         setWithdrawLoading(false);
         return;
       }

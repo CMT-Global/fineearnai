@@ -61,9 +61,11 @@ const Settings = () => {
   // Cryptocurrency address state
   const [usdcSolanaAddress, setUsdcSolanaAddress] = useState("");
   const [usdtBep20Address, setUsdtBep20Address] = useState("");
+  const [usdtTrc20Address, setUsdtTrc20Address] = useState("");
   const [cryptoAddressErrors, setCryptoAddressErrors] = useState<{
     usdc?: string;
-    usdt?: string;
+    usdtBep20?: string;
+    usdtTrc20?: string;
   }>({});
 
   // OTP state for withdrawal address changes
@@ -105,6 +107,7 @@ const Settings = () => {
       // Initialize crypto addresses from profile
       setUsdcSolanaAddress(data?.usdc_solana_address || "");
       setUsdtBep20Address(data?.usdt_bep20_address || "");
+      setUsdtTrc20Address((data as any)?.usdt_trc20_address || "");
       
       return data;
     },
@@ -261,14 +264,18 @@ const Settings = () => {
 
   const handleSendWithdrawalOTP = async () => {
     // Validate addresses before sending OTP
-    const errors: { usdc?: string; usdt?: string } = {};
+    const errors: { usdc?: string; usdtBep20?: string; usdtTrc20?: string } = {};
     
     if (usdcSolanaAddress.trim() && !validateCryptoAddress('usdc-solana', usdcSolanaAddress)) {
       errors.usdc = "Invalid USDC Solana address format";
     }
     
     if (usdtBep20Address.trim() && !validateCryptoAddress('usdt-bep20', usdtBep20Address)) {
-      errors.usdt = "Invalid USDT BEP-20 address format";
+      errors.usdtBep20 = "Invalid USDT BEP-20 address format. Must start with 0x followed by 40 hex characters.";
+    }
+
+    if (usdtTrc20Address.trim() && !validateCryptoAddress('usdt-trc20', usdtTrc20Address)) {
+      errors.usdtTrc20 = "Invalid USDT TRC-20 address format. Must start with T followed by 33 characters.";
     }
     
     setCryptoAddressErrors(errors);
@@ -278,7 +285,7 @@ const Settings = () => {
       return;
     }
 
-    if (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) {
+    if (!usdcSolanaAddress.trim() && !usdtBep20Address.trim() && !usdtTrc20Address.trim()) {
       toast.error(t("settings.toasts.atLeastOneAddress"));
       return;
     }
@@ -288,8 +295,9 @@ const Settings = () => {
       
       const { data, error } = await supabase.functions.invoke('send-withdrawal-address-otp', {
         body: {
-          usdcAddress: usdcSolanaAddress.trim() || undefined,
-          usdtAddress: usdtBep20Address.trim() || undefined,
+          usdcAddress:    usdcSolanaAddress.trim()  || undefined,
+          usdtAddress:    usdtBep20Address.trim()   || undefined,
+          usdtTrc20Address: usdtTrc20Address.trim() || undefined,
         },
       });
 
@@ -321,9 +329,10 @@ const Settings = () => {
 
       const { data, error } = await supabase.functions.invoke('verify-withdrawal-address-otp', {
         body: {
-          otpCode: withdrawalOTP,
-          usdcAddress: usdcSolanaAddress.trim() || undefined,
-          usdtAddress: usdtBep20Address.trim() || undefined,
+          otpCode:          withdrawalOTP,
+          usdcAddress:      usdcSolanaAddress.trim()  || undefined,
+          usdtAddress:      usdtBep20Address.trim()   || undefined,
+          usdtTrc20Address: usdtTrc20Address.trim()   || undefined,
         },
       });
 
@@ -1176,19 +1185,46 @@ const Settings = () => {
                     value={usdtBep20Address}
                     onChange={(e) => {
                       setUsdtBep20Address(e.target.value);
-                      if (cryptoAddressErrors.usdt) {
-                        setCryptoAddressErrors(prev => ({ ...prev, usdt: undefined }));
+                      if (cryptoAddressErrors.usdtBep20) {
+                        setCryptoAddressErrors(prev => ({ ...prev, usdtBep20: undefined }));
                       }
                     }}
                     placeholder={getCryptoById('usdt-bep20')?.addressPlaceholder || 'Enter your USDT BEP-20 address'}
-                    className={cn(cryptoAddressErrors.usdt && "border-destructive")}
+                    className={cn(cryptoAddressErrors.usdtBep20 && "border-destructive")}
                   />
-                  {cryptoAddressErrors.usdt ? (
-                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdt}</p>
+                  {cryptoAddressErrors.usdtBep20 ? (
+                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdtBep20}</p>
                   ) : (
                     <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
                       {getCryptoById('usdt-bep20')?.description} • Example:{" "}
                       <span className="break-all">{getCryptoById('usdt-bep20')?.addressExample}</span>
+                    </p>
+                  )}
+                </div>
+
+              {/* USDT TRC-20 Address */}
+                <div className="space-y-2">
+                  <Label htmlFor="usdt-trc20">
+                    {getCryptoById('usdt-trc20')?.displayName || 'USDT (TRC-20)'}
+                  </Label>
+                  <Input
+                    id="usdt-trc20"
+                    value={usdtTrc20Address}
+                    onChange={(e) => {
+                      setUsdtTrc20Address(e.target.value);
+                      if (cryptoAddressErrors.usdtTrc20) {
+                        setCryptoAddressErrors(prev => ({ ...prev, usdtTrc20: undefined }));
+                      }
+                    }}
+                    placeholder={getCryptoById('usdt-trc20')?.addressPlaceholder || 'Enter your USDT TRC-20 address'}
+                    className={cn(cryptoAddressErrors.usdtTrc20 && "border-destructive")}
+                  />
+                  {cryptoAddressErrors.usdtTrc20 ? (
+                    <p className="text-sm text-destructive">{cryptoAddressErrors.usdtTrc20}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground break-words max-w-full overflow-hidden">
+                      {getCryptoById('usdt-trc20')?.description} • Example:{" "}
+                      <span className="break-all">{getCryptoById('usdt-trc20')?.addressExample}</span>
                     </p>
                   )}
                 </div>
@@ -1207,8 +1243,12 @@ const Settings = () => {
                   onClick={handleSendWithdrawalOTP}
                   disabled={
                     sendingOTP ||
-                    (!usdcSolanaAddress.trim() && !usdtBep20Address.trim()) ||
-                    (usdcSolanaAddress === profile?.usdc_solana_address && usdtBep20Address === profile?.usdt_bep20_address)
+                    (!usdcSolanaAddress.trim() && !usdtBep20Address.trim() && !usdtTrc20Address.trim()) ||
+                    (
+                      usdcSolanaAddress === profile?.usdc_solana_address &&
+                      usdtBep20Address  === profile?.usdt_bep20_address &&
+                      usdtTrc20Address  === ((profile as any)?.usdt_trc20_address ?? '')
+                    )
                   }
                   className="w-full"
                 >

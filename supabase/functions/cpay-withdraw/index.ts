@@ -126,12 +126,17 @@ serve(async (req)=>{
     }
     // Handle approval - Manual processing workflow
     // Step 1: Prepare withdrawal details for manual processing
+    // Derive network label from the crypto_id stored in metadata
+    const cryptoId = withdrawal.metadata?.crypto_id ?? 'usdt-bep20';
+    const networkLabel = cryptoId === 'usdt-trc20' ? 'TRC20' : 'BEP20 (BSC)';
+    const cryptoName  = cryptoId === 'usdt-trc20' ? 'USDT (TRC-20)' : 'USDT (BEP-20)';
     const withdrawalDetails = {
       user: withdrawal.profiles.username,
       email: withdrawal.profiles.email,
       amount: withdrawal.net_amount,
       currency: 'USDT',
-      network: 'TRC20',
+      network: networkLabel,
+      crypto: cryptoName,
       address: withdrawal.payout_address,
       fee: withdrawal.fee,
       total_amount: withdrawal.amount
