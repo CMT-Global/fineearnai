@@ -58,7 +58,17 @@ export function PlanCard({
   const navigate = useNavigate();
   const isBusinessAccount = plan.account_type?.toLowerCase() === 'business';
   const isDefaultPlan = plan.account_type?.toLowerCase() === 'free';
-  const isInsufficientBalance = depositBalance < plan.price && !isDefaultPlan && !isCurrentPlan && plan.price > 0;
+  const isUpgradeFromPaidPlan = currentPlanPrice > 0 && plan.price > currentPlanPrice;
+  // For paid-to-paid upgrades the actual cost is unknown here — it depends on proration
+  // (unused days credit from current plan), which is only computed when the user clicks.
+  // Showing "Insufficient balance" in this case is misleading and incorrectly blocks
+  // users who have enough funds for the prorated cost. The dialog shows the real breakdown.
+  const isInsufficientBalance =
+    depositBalance < plan.price &&
+    !isDefaultPlan &&
+    !isCurrentPlan &&
+    plan.price > 0 &&
+    !isUpgradeFromPaidPlan;
 
   // Default/free tier: no monthly/yearly earning potential (trial expires in X days)
   const isTraineeOrFreePlan = isDefaultPlan || (plan.free_plan_expiry_days != null && plan.free_plan_expiry_days > 0);

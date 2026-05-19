@@ -121,21 +121,16 @@ export default function MembershipPlans() {
       return;
     }
 
-    // Check if sufficient funds
-    if (depositBalance < plan.price) {
-      const shortfall = plan.price - depositBalance;
-      toast.error(t("membershipPlans.needMore", { amount: shortfall.toFixed(2) }), {
-        duration: 4000
-      });
-      setTimeout(() => navigate("/wallet"), 2000);
-      return;
-    }
-
     // Show upgrade dialog with proration if applicable
     setSelectedPlan(plan);
-    
-    // Calculate proration if upgrading from paid plan
+
+    // ✅ Step 1: Calculate proration FIRST — before the balance check.
+    // For paid-to-paid upgrades the actual cost is plan.price minus the
+    // unused-days credit from the current plan. We must know this before
+    // we can decide whether the user has sufficient funds.
+    let estimatedCost = plan.price;
     const isCurrentPlanFreeTier = plans?.some(p => p.account_type === 'free' && p.name === currentPlan);
+
     if (profile.current_plan_start_date && !isCurrentPlanFreeTier) {
       const currentPlanData = plans.find(p => p.name === currentPlan);
       if (currentPlanData && currentPlanData.price > 0) {
@@ -146,7 +141,8 @@ export default function MembershipPlans() {
         const dailyRate = currentPlanData.price / currentPlanData.billing_period_days;
         const credit = dailyRate * daysRemaining;
         const newCost = Math.max(0, plan.price - credit);
-        
+        estimatedCost = newCost; // ✅ Use prorated cost for the balance guard below
+
         setProrationDetails({
           daysRemaining,
           credit: credit.toFixed(2),
@@ -156,7 +152,21 @@ export default function MembershipPlans() {
         });
       }
     }
-    
+
+    // ✅ Step 2: Check balance against the estimated (prorated) cost — not full plan.price.
+    // This fixes the bug where users upgrading from a paid plan were blocked even
+    // though their balance covered the prorated upgrade cost.
+    if (depositBalance < estimatedCost) {
+      const shortfall = estimatedCost - depositBalance;
+      setProrationDetails(null); // Clear any proration state set above
+      setSelectedPlan(null);
+      toast.error(t("membershipPlans.needMore", { amount: shortfall.toFixed(2) }), {
+        duration: 4000
+      });
+      setTimeout(() => navigate("/wallet"), 2000);
+      return;
+    }
+
     setShowUpgradeDialog(true);
   };
 
